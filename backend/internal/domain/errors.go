@@ -19,4 +19,5 @@ var (
 	ErrVisitNotInProgress      = errors.New("group: visit not in progress for this corner")
 	ErrTrackAlreadyDeleted     = errors.New("track: already deleted")
 	ErrTrackNotBusy            = errors.New("track: no visit in progress")
+	ErrVisitEndBeforeStart     = errors.New("visit: endedAt cannot be before startedAt")
 )
