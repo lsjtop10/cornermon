@@ -32,21 +32,21 @@ dependencies:
     sdk: flutter
   cupertino_icons: ^1.0.8
 
-  flutter_riverpod: ^2.5.1
-  riverpod_annotation: ^2.3.5
-  go_router: ^14.2.0
-  flutter_secure_storage: ^9.2.2
+  flutter_riverpod: ^3.3.2
+  riverpod_annotation: ^4.0.3
+  go_router: ^17.3.0
+  flutter_secure_storage: ^10.3.1
   dio: ^5.5.0
-  mobile_scanner: ^5.1.1
+  mobile_scanner: ^7.2.0
   cornermon_api_gen:
     path: lib/shared/api/gen
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^3.0.0
+  flutter_lints: ^6.0.0
   build_runner: ^2.4.9
-  riverpod_generator: ^2.4.0
+  riverpod_generator: ^4.0.4
   import_lint: any
 
 # For information on the generic Dart part of this file, see the
