@@ -477,10 +477,10 @@ func NewAuditLog(id AuditLogID, actor, action, target string, success bool, occu
 ### 5.1 아키텍처 검증
 - [x] `domain` 패키지에서 `infrastructure`/`interfaces` import 없음 (`go list -deps` 또는 `grep -r "cornermon/backend/internal/infrastructure" internal/domain`로 확인)
 - [x] `domain` 패키지 메서드가 `context.Context`를 받지 않음(§2-b 사유로 의도적 예외)
-- [x] 모든 필드명이 `api/openapi.yaml` 스키마 필드명과 camelCase↔PascalCase 1:1 대응 (Phase A, B 및 C-1 대상 검증 완료)
+- [x] 모든 필드명이 `api/openapi.yaml` 스키마 필드명과 camelCase↔PascalCase 1:1 대응 (Phase A, B 및 C-2 대상 검증 완료)
 - [x] `go vet ./internal/domain/...`, `gofmt -l internal/domain` 통과
-- [x] `domain` 패키지 내 `time.Now()` 직접 호출 없음(`grep -rn "time.Now()" internal/domain`로 확인) — 모든 시각은 `now time.Time` 인자로 주입 (§2-d) (Phase A, B 및 C-1 대상 검증 완료)
-- [x] 값 타입(시각/ID/숫자)에 대해 "없을 수 있음"을 표현하는 포인터가 없음 — `grep -rnE "\*(time\.Time|.*ID|int|string)\b" internal/domain`로 남은 옵셔널 의미 포인터가 없는지 확인(엔티티 리시버·참조용 `*Track` 등은 제외, §2-f) (Phase A, B 및 C-1 대상 검증 완료)
+- [x] `domain` 패키지 내 `time.Now()` 직접 호출 없음(`grep -rn "time.Now()" internal/domain`로 확인) — 모든 시각은 `now time.Time` 인자로 주입 (§2-d) (Phase A, B 및 C-2 대상 검증 완료)
+- [x] 값 타입(시각/ID/숫자)에 대해 "없을 수 있음"을 표현하는 포인터가 없음 — `grep -rnE "\*(time\.Time|.*ID|int|string)\b" internal/domain`로 남은 옵셔널 의미 포인터가 없는지 확인(엔티티 리시버·참조용 `*Track` 등은 제외, §2-f) (Phase A, B 및 C-2 대상 검증 완료)
 
 ### 5.2 유즈케이스별 불변식 검증 (테이블 기반 단위 테스트, `go test ./internal/domain/...`)
 - [x] UC-1 Camp: PENDING→ACTIVE→ENDED만 허용, 역행 시도 시 `ErrCampInvalidTransition`, ENDED에서 재전이 불가
@@ -490,8 +490,8 @@ func NewAuditLog(id AuditLogID, actor, action, target string, success bool, occu
 - [x] UC-3 Track: `CurrentVisitID.IsSet() == true`인 상태에서 `StartVisit` 재호출 시 `ErrTrackBusy`; 같은 상태에서 `Delete(now)` 시 `ErrTrackDeleteBlocked`; 마지막 ACTIVE 트랙 삭제는 도메인 계층에서 에러 없이 허용(경고 UX는 상위 계층 책임, §domain-model.md 5-8)
 - [x] UC-3 Track: `Delete(now)` 성공 시 `DeletedAt.Value() == (now, true)`이고 `TrackDeletedEvent{TrackID, OccurredAt: now}` 반환; `RegeneratePIN(hash, now)` 성공 시 `TrackPINRegeneratedEvent` 반환 및 `PINHash` 갱신; `CompleteVisit(now)` 성공 시 `CurrentVisitID.IsSet() == false`이고 `TrackFreedEvent.OccurredAt == now`
 - [x] UC-3 Corner: `EffectiveTargetMinutes(track)`이 현재 구현에서 `track` 값과 무관하게 항상 `c.TargetMinutes`를 반환(현재 스펙대로 override 없음을 회귀 방지)
-- [ ] UC-4 Visit: `Complete()` 이후 재호출 시 `ErrVisitAlreadyCompleted`; `DurationSeconds`/`DeviationSeconds`가 종료 전엔 `IsSet() == false`, 종료 후 `Value()`로 정확한 값 반환
-- [ ] 시각 일관성: 동일한 `now` 값을 `Visit.Complete(now)`와 `Track.CompleteVisit(now)`에 각각 전달했을 때 `visit.EndedAt.Value()`와 `trackFreedEvent.OccurredAt`이 항상 일치(§2-d 근거 회귀 테스트)
+- [x] UC-4 Visit: `Complete()` 이후 재호출 시 `ErrVisitAlreadyCompleted`; `DurationSeconds`/`DeviationSeconds`가 종료 전엔 `IsSet() == false`, 종료 후 `Value()`로 정확한 값 반환
+- [x] 시각 일관성: 동일한 `now` 값을 `Visit.Complete(now)`와 `Track.CompleteVisit(now)`에 각각 전달했을 때 `visit.EndedAt.Value()`와 `trackFreedEvent.OccurredAt`이 항상 일치(§2-d 근거 회귀 테스트)
 - [ ] UC-5 DeviceRegistration: 실패 횟수별 지연이 정확히 1~2회=0, 3회=5초, 4회=30초, 5회 이상=2분+`needsAdminAlert=true`; `ResetPinFailures()` 후 `IsLocked()==false`
 - [ ] UC-6 AdminSession: `TouchRefresh` 호출 시 `LastUsedAt` 갱신되어 `IsRefreshExpired` 재계산됨; `Revoke()` 이후 재사용 시도 시 `ErrSessionRevoked`
 - [ ] UC-7 BroadcastReceipt/AuditLog: `MarkRead`가 최초 1회만 `ReadAt` 설정, 재호출 시 최초 시각 유지(또는 명시적 정책 결정 후 테스트 반영)
