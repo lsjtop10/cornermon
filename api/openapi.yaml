@@ -1,0 +1,2757 @@
+openapi: 3.0.3
+info:
+  title: Cornermon API
+  description: |
+    코너학습 운영 시스템(Cornermon) REST API 명세서.
+
+    ## 인증 개요
+    모든 토큰은 불투명 토큰(Opaque Token)으로, 클라이언트는 `Authorization: Bearer <token>` 헤더로 전달한다.
+    서버는 매 요청마다 DB에서 토큰 유효성을 확인한다 (§technical-design.md 2.2-a).
+
+    ### 인증 스코프
+    - **PUBLIC**: 인증 불필요
+    - **TRUSTED_DEVICE**: 관리자 승인을 받은 기기 신뢰 토큰 필요
+    - **TRACK**: 트랙 세션 토큰 필요 (진행자가 PIN 로그인 후 발급)
+    - **ADMIN**: 관리자 액세스 토큰 필요
+    - **ADMIN_REFRESH**: 관리자 리프레시 토큰 전용 (액세스 토큰 재발급 엔드포인트에만 사용)
+
+    ## 캠프 컨텍스트
+    캠프 목록에서 캠프를 선택하면 이후 코너/트랙/조/리포트 등 하위 엔티티 API는
+    세션에 저장된 "현재 선택된 캠프"를 암묵적으로 사용한다.
+
+    ## 날짜/시간 규약
+    모든 `date-time` 필드는 **UTC 기준 ISO 8601** 형식(`YYYY-MM-DDTHH:mm:ssZ`)으로 표현된다.
+    클라이언트는 필요 시 표시 단계에서 로컬 타임존(예: KST +09:00)으로 변환해야 한다.
+
+  version: "1.0.0"
+  contact:
+    name: Cornermon API Team
+
+servers:
+  - url: /api/v1
+    description: API v1
+
+# ──────────────────────────────────────────────
+# Security Schemes
+# ──────────────────────────────────────────────
+components:
+  securitySchemes:
+    TrustedDeviceAuth:
+      type: http
+      scheme: bearer
+      description: 관리자 승인된 기기 신뢰 토큰 (TRUSTED_DEVICE)
+    TrackAuth:
+      type: http
+      scheme: bearer
+      description: 트랙 세션 토큰 (TRACK) — 진행자가 PIN 로그인 후 발급
+    AdminAuth:
+      type: http
+      scheme: bearer
+      description: 관리자 액세스 토큰 (ADMIN)
+    AdminRefreshAuth:
+      type: http
+      scheme: bearer
+      description: 관리자 리프레시 토큰 (ADMIN_REFRESH) — 액세스 토큰 재발급 전용
+
+  # ──────────────────────────────────────────────
+  # Common Schemas
+  # ──────────────────────────────────────────────
+  schemas:
+
+    # ── Error ──────────────────────────────────
+    ErrorResponse:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+          description: "에러 코드 (예: TRACK_BUSY, DUPLICATE_VISIT, DEVICE_NOT_TRUSTED)"
+          example: TRACK_BUSY
+        message:
+          type: string
+          description: 사람이 읽을 수 있는 에러 설명
+          example: "해당 트랙은 이미 방문이 진행 중입니다."
+        details:
+          type: object
+          additionalProperties: true
+          description: 추가 컨텍스트 (선택적)
+
+    # ── Camp ────────────────────────────────────
+    CampStatus:
+      type: string
+      enum: [PENDING, ACTIVE, ENDED]
+      description: |
+        - PENDING: 준비 중 (진행자 로그인 불가)
+        - ACTIVE: 진행 중 (모든 기능 활성화)
+        - ENDED: 종료 (리포트 조회만 허용)
+
+    Camp:
+      type: object
+      required: [id, name, startAt, endAt, status]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          example: "2026 여름 코너학습"
+        startAt:
+          type: string
+          format: date-time
+        endAt:
+          type: string
+          format: date-time
+        status:
+          $ref: '#/components/schemas/CampStatus'
+        bottleneckMinSamples:
+          type: integer
+          default: 3
+          description: 병목 판정 최소 표본 수
+        bottleneckRatioPct:
+          type: integer
+          default: 20
+          description: 병목 판정 편차 비율 기준 (%)
+
+    # ── Corner ──────────────────────────────────
+    CornerOperationalStatus:
+      type: string
+      enum: [INACTIVE, IDLE, BUSY]
+      description: |
+        - INACTIVE: 미가동 (활성 트랙 0개)
+        - IDLE: 유휴 (활성 트랙 있으나 진행중인 방문 없음)
+        - BUSY: 동작 중 (진행중인 방문 있음)
+
+    Corner:
+      type: object
+      required: [id, name, targetMinutes, status]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          example: "코너 1"
+        targetMinutes:
+          type: integer
+          default: 10
+          description: 목표 소요 시간 (분)
+        status:
+          $ref: '#/components/schemas/CornerOperationalStatus'
+        isBottleneck:
+          type: boolean
+          description: 병목 판정 여부 (실시간 집계 기반)
+        activeTracks:
+          type: array
+          items:
+            $ref: '#/components/schemas/TrackSummary'
+
+    # ── Track ───────────────────────────────────
+    TrackStatus:
+      type: string
+      enum: [ACTIVE, DELETED]
+
+    TrackOperationalStatus:
+      type: string
+      enum: [IDLE, BUSY]
+
+    TrackSummary:
+      type: object
+      required: [id, cornerId, trackNo, status]
+      properties:
+        id:
+          type: string
+          format: uuid
+        cornerId:
+          type: string
+          format: uuid
+        trackNo:
+          type: integer
+          description: 코너 내 트랙 번호 (자동 부여)
+        status:
+          $ref: '#/components/schemas/TrackStatus'
+        operationalStatus:
+          $ref: '#/components/schemas/TrackOperationalStatus'
+
+    Track:
+      allOf:
+        - $ref: '#/components/schemas/TrackSummary'
+        - type: object
+          properties:
+            pin:
+              type: string
+              description: "6자리 숫자 PIN (관리자 전용 응답에만 포함)"
+              example: "482910"
+            currentVisit:
+              $ref: '#/components/schemas/VisitSummary'
+
+    # ── Group (조) ──────────────────────────────
+    GroupStatus:
+      type: string
+      enum: [IDLE_MOVING, AT_CORNER, FINISHED]
+      description: |
+        - IDLE_MOVING: 이동 중
+        - AT_CORNER: 특정 코너에서 진행 중
+        - FINISHED: 완주
+
+    VisitStatusPerCorner:
+      type: string
+      enum: [NOT_VISITED, IN_PROGRESS, COMPLETED]
+
+    CornerProgress:
+      type: object
+      required: [cornerId, status]
+      properties:
+        cornerId:
+          type: string
+          format: uuid
+        cornerName:
+          type: string
+        status:
+          $ref: '#/components/schemas/VisitStatusPerCorner'
+
+    Group:
+      type: object
+      required: [id, name, status, itinerary, isFinished]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          example: "1조"
+        badgeId:
+          type: string
+          format: uuid
+          description: 배정된 QR 배지 ID
+        status:
+          $ref: '#/components/schemas/GroupStatus'
+        isFinished:
+          type: boolean
+        itinerary:
+          type: array
+          items:
+            $ref: '#/components/schemas/CornerProgress'
+          description: "10개 코너별 방문 상태 순회표"
+
+    # ── Visit (방문) ────────────────────────────
+    VisitInputMethod:
+      type: string
+      enum: [QR_SCAN, MANUAL]
+
+    VisitStatus:
+      type: string
+      enum: [IN_PROGRESS, COMPLETED]
+
+    VisitSummary:
+      type: object
+      required: [id, groupId, cornerId, trackId, status, startedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        groupId:
+          type: string
+          format: uuid
+        cornerId:
+          type: string
+          format: uuid
+        trackId:
+          type: string
+          format: uuid
+        status:
+          $ref: '#/components/schemas/VisitStatus'
+        inputMethod:
+          $ref: '#/components/schemas/VisitInputMethod'
+        startedAt:
+          type: string
+          format: date-time
+        endedAt:
+          type: string
+          format: date-time
+          nullable: true
+        durationSeconds:
+          type: integer
+          nullable: true
+          description: "실제 소요 시간 (초)"
+        deviationSeconds:
+          type: integer
+          nullable: true
+          description: "목표시간 편차 = 실제소요시간 - 목표시간 (초)"
+
+    # ── Badge (QR 배지) ──────────────────────────
+    BadgeStatus:
+      type: string
+      enum: [UNASSIGNED, ASSIGNED]
+
+    Badge:
+      type: object
+      required: [id, shortId, status]
+      properties:
+        id:
+          type: string
+          format: uuid
+        shortId:
+          type: string
+          description: 사람이 읽을 수 있는 짧은 ID (인쇄용)
+          example: "B-0042"
+        qrPayload:
+          type: string
+          description: QR 코드에 인코딩된 페이로드 (관리자만 조회 가능)
+        status:
+          $ref: '#/components/schemas/BadgeStatus'
+        assignedGroupId:
+          type: string
+          format: uuid
+          nullable: true
+
+    # ── Device Registration (기기 등록) ──────────
+    DeviceRegistrationStatus:
+      type: string
+      enum: [PENDING, APPROVED, REJECTED, REVOKED]
+
+    DeviceRegistration:
+      type: object
+      required: [id, deviceName, status, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        deviceName:
+          type: string
+          description: 기기 식별 이름 (등록 시 제출)
+          example: "iPad Pro #3"
+        status:
+          $ref: '#/components/schemas/DeviceRegistrationStatus'
+        createdAt:
+          type: string
+          format: date-time
+        approvedAt:
+          type: string
+          format: date-time
+          nullable: true
+
+    # ── Message (메시지) ─────────────────────────
+    MessageChannelType:
+      type: string
+      enum: [BROADCAST, DIRECT]
+
+    Message:
+      type: object
+      required: [id, channelType, senderRole, content, sentAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        channelType:
+          $ref: '#/components/schemas/MessageChannelType'
+        trackId:
+          type: string
+          format: uuid
+          nullable: true
+          description: "DIRECT 채널인 경우 대상 트랙 ID"
+        senderRole:
+          type: string
+          enum: [ADMIN, TRACK]
+        content:
+          type: string
+        sentAt:
+          type: string
+          format: date-time
+        readAt:
+          type: string
+          format: date-time
+          nullable: true
+
+    BroadcastReceipt:
+      type: object
+      required: [trackId, isRead]
+      properties:
+        trackId:
+          type: string
+          format: uuid
+        trackNo:
+          type: integer
+        cornerName:
+          type: string
+        isRead:
+          type: boolean
+        readAt:
+          type: string
+          format: date-time
+          nullable: true
+
+    # ── Audit Log (감사 로그) ────────────────────
+    AuditLog:
+      type: object
+      required: [id, actor, action, target, success, occurredAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        actor:
+          type: string
+          description: "행위자 (관리자 ID 또는 트랙 ID)"
+          example: "admin:1"
+        action:
+          type: string
+          description: "행위 종류"
+          example: "TRACK_CREATED"
+        target:
+          type: string
+          description: "행위 대상 식별자"
+          example: "track:uuid-..."
+        success:
+          type: boolean
+        occurredAt:
+          type: string
+          format: date-time
+        metadata:
+          type: object
+          additionalProperties: true
+
+    # ── Admin Session ─────────────────────────
+    AdminSession:
+      type: object
+      required: [id, adminId, createdAt, lastUsedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        adminId:
+          type: string
+        deviceInfo:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        lastUsedAt:
+          type: string
+          format: date-time
+
+    # ── Report (캠프 결과 리포트) ─────────────────
+    CampReport:
+      type: object
+      required: [campId, generatedAt, summary, cornerStats, groupStats]
+      properties:
+        campId:
+          type: string
+          format: uuid
+        generatedAt:
+          type: string
+          format: date-time
+        summary:
+          $ref: '#/components/schemas/CampSummaryStats'
+        cornerStats:
+          type: array
+          items:
+            $ref: '#/components/schemas/CornerStats'
+        trackStats:
+          type: array
+          items:
+            $ref: '#/components/schemas/TrackStats'
+        groupStats:
+          type: array
+          items:
+            $ref: '#/components/schemas/GroupStats'
+        timeline:
+          $ref: '#/components/schemas/TimelineStats'
+        operationalStats:
+          $ref: '#/components/schemas/OperationalStats'
+
+    CampSummaryStats:
+      type: object
+      properties:
+        totalGroups:
+          type: integer
+        finishedGroupCount:
+          type: integer
+        completionRate:
+          type: number
+          format: float
+          description: "완주율 (0.0 ~ 1.0)"
+        totalVisits:
+          type: integer
+        visitCompletionRate:
+          type: number
+          format: float
+          description: "방문 완료율 (완료 방문 수 / 이론상 최대 200)"
+        programDurationSeconds:
+          type: integer
+        avgDeviationSeconds:
+          type: number
+          format: float
+        manualVisitRatio:
+          type: number
+          format: float
+        ruleOverrideCount:
+          type: integer
+        trackOperationCount:
+          type: integer
+        exceptionApprovalCount:
+          type: integer
+        bottleneckRanking:
+          type: array
+          description: "코너를 평균편차 기준 내림차순 정렬한 병목 랭킹"
+          items:
+            type: object
+            properties:
+              cornerId:
+                type: string
+                format: uuid
+              cornerName:
+                type: string
+              avgDeviationSeconds:
+                type: number
+
+    CornerStats:
+      type: object
+      properties:
+        cornerId:
+          type: string
+          format: uuid
+        cornerName:
+          type: string
+        completedVisitCount:
+          type: integer
+        unvisitedGroups:
+          type: array
+          items:
+            type: object
+            properties:
+              groupId:
+                type: string
+                format: uuid
+              groupName:
+                type: string
+        avgDurationSeconds:
+          type: number
+        medianDurationSeconds:
+          type: number
+        stddevDurationSeconds:
+          type: number
+        avgDeviationSeconds:
+          type: number
+        positiveDeviationRatio:
+          type: number
+          format: float
+        busyDurationSeconds:
+          type: integer
+        idleDurationSeconds:
+          type: integer
+        inactiveDurationSeconds:
+          type: integer
+        trackThroughputs:
+          type: array
+          items:
+            type: object
+            properties:
+              trackId:
+                type: string
+                format: uuid
+              completedVisitCount:
+                type: integer
+              avgDurationSeconds:
+                type: number
+
+    TrackStats:
+      type: object
+      properties:
+        trackId:
+          type: string
+          format: uuid
+        cornerId:
+          type: string
+          format: uuid
+        trackNo:
+          type: integer
+        lifecycleStart:
+          type: string
+          format: date-time
+        lifecycleEnd:
+          type: string
+          format: date-time
+          nullable: true
+          description: "삭제된 경우 삭제 시각, 캠프 종료까지 살아있었으면 종료 시각"
+        completedVisitCount:
+          type: integer
+        avgDurationSeconds:
+          type: number
+        pinLoginFailureCount:
+          type: integer
+
+    GroupStats:
+      type: object
+      properties:
+        groupId:
+          type: string
+          format: uuid
+        groupName:
+          type: string
+        isFinished:
+          type: boolean
+        completedCornerCount:
+          type: integer
+        totalActivitySeconds:
+          type: integer
+        cornerDurations:
+          type: array
+          items:
+            type: object
+            properties:
+              cornerId:
+                type: string
+                format: uuid
+              cornerName:
+                type: string
+              durationSeconds:
+                type: integer
+                nullable: true
+        unvisitedCorners:
+          type: array
+          items:
+            type: object
+            properties:
+              cornerId:
+                type: string
+                format: uuid
+              cornerName:
+                type: string
+
+    TimelineStats:
+      type: object
+      properties:
+        bucketMinutes:
+          type: integer
+          default: 5
+          description: "시계열 버킷 크기 (분)"
+        inProgressCounts:
+          type: array
+          items:
+            type: object
+            properties:
+              bucketStart:
+                type: string
+                format: date-time
+              count:
+                type: integer
+        cumulativeCompletedCounts:
+          type: array
+          items:
+            type: object
+            properties:
+              bucketStart:
+                type: string
+                format: date-time
+              count:
+                type: integer
+
+    OperationalStats:
+      type: object
+      properties:
+        pinLoginSuccessCount:
+          type: integer
+        pinLoginFailureCount:
+          type: integer
+        pinLoginFailureRate:
+          type: number
+          format: float
+        deviceRegistrationCount:
+          type: integer
+        deviceApprovalCount:
+          type: integer
+        deviceRejectionCount:
+          type: integer
+        deviceRevocationCount:
+          type: integer
+        adminActionCounts:
+          type: array
+          items:
+            type: object
+            properties:
+              adminId:
+                type: string
+              actionCount:
+                type: integer
+        directMessageCountPerTrack:
+          type: array
+          items:
+            type: object
+            properties:
+              trackId:
+                type: string
+                format: uuid
+              messageCount:
+                type: integer
+        broadcastReadRates:
+          type: array
+          items:
+            type: object
+            properties:
+              messageId:
+                type: string
+                format: uuid
+              content:
+                type: string
+              readCount:
+                type: integer
+              totalTracks:
+                type: integer
+              readRate:
+                type: number
+                format: float
+
+    # ── SSE Event Schemas ────────────────────────
+    SseEvent:
+      type: object
+      description: |
+        SSE 이벤트 형식. `event` 필드로 이벤트 타입을 구분하고, `data` 필드에 JSON 페이로드를 담는다.
+        모든 스냅샷 이벤트(`snapshot`)는 재연결 시에도 전체 현재 상태를 포함한다.
+      properties:
+        event:
+          type: string
+          description: "이벤트 타입"
+          enum:
+            - snapshot
+            - visit.started
+            - visit.ended
+            - track.created
+            - track.deleted
+            - track.replaced
+            - corner.updated
+            - camp.started
+            - camp.ended
+            - message.broadcast
+            - message.direct
+            - session.force_logout
+            - device.approved
+            - lockout.alert
+        data:
+          type: object
+          description: "이벤트 타입별 JSON 페이로드"
+
+    AdminSseSnapshot:
+      type: object
+      description: "관리자 SSE 최초/재연결 시 전송되는 전체 스냅샷"
+      properties:
+        corners:
+          type: array
+          items:
+            $ref: '#/components/schemas/Corner'
+        groups:
+          type: array
+          items:
+            $ref: '#/components/schemas/Group'
+        unreadBroadcastCount:
+          type: integer
+
+    TrackSseSnapshot:
+      type: object
+      description: "진행자 SSE 최초/재연결 시 전송되는 트랙 스냅샷"
+      properties:
+        track:
+          $ref: '#/components/schemas/Track'
+        corner:
+          $ref: '#/components/schemas/Corner'
+        currentVisit:
+          $ref: '#/components/schemas/VisitSummary'
+          nullable: true
+        unreadBroadcastCount:
+          type: integer
+
+  # ── Common Parameters ──────────────────────────
+  parameters:
+    CampIdPath:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 캠프 ID
+
+    CornerIdPath:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 코너 ID
+
+    TrackIdPath:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 트랙 ID
+
+    GroupIdPath:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 조 ID
+
+  # ── Common Responses ──────────────────────────
+  responses:
+    Unauthorized:
+      description: "인증 토큰이 없거나 유효하지 않음"
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            code: UNAUTHORIZED
+            message: "유효하지 않은 토큰입니다."
+
+    Forbidden:
+      description: "해당 리소스에 대한 접근 권한 없음"
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            code: FORBIDDEN
+            message: "접근 권한이 없습니다."
+
+    NotFound:
+      description: "리소스를 찾을 수 없음"
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            code: NOT_FOUND
+            message: "해당 리소스를 찾을 수 없습니다."
+
+    Conflict:
+      description: "비즈니스 규칙 위반 또는 상태 충돌"
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+# ──────────────────────────────────────────────
+# Paths
+# ──────────────────────────────────────────────
+paths:
+
+  # ════════════════════════════════════════════
+  # A. 인증 / 기기 신뢰
+  # ════════════════════════════════════════════
+
+  /device-registrations:
+    post:
+      tags: [A. Auth & Device Trust]
+      summary: "기기 등록 요청"
+      description: |
+        진행자 기기가 등록 코드와 함께 신뢰 기기 등록을 요청한다.
+        성공 시 PENDING 상태의 기기 신뢰 토큰을 즉시 발급해 응답에 담아준다.
+        이 토큰은 관리자가 승인(APPROVED)할 때까지 PIN 입력 화면 진입이 불가능하다.
+      security: []  # PUBLIC
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [registrationCode, deviceName]
+              properties:
+                registrationCode:
+                  type: string
+                  description: 관리자가 공유한 등록 코드
+                deviceName:
+                  type: string
+                  description: 기기 식별 이름
+                  example: "iPad Pro #3"
+      responses:
+        "201":
+          description: "등록 요청 성공 — PENDING 토큰 발급"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  deviceRegistration:
+                    $ref: '#/components/schemas/DeviceRegistration'
+                  deviceToken:
+                    type: string
+                    description: "PENDING 상태의 불투명 기기 신뢰 토큰 (이후 Bearer로 전송)"
+        "400":
+          description: "잘못된 등록 코드"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: INVALID_REGISTRATION_CODE
+                message: "유효하지 않은 등록 코드입니다."
+
+    get:
+      tags: [A. Auth & Device Trust]
+      summary: "기기 등록 요청 목록 조회 (대기 목록)"
+      description: 관리자가 승인 대기 중인 기기 등록 요청 목록을 조회한다.
+      security:
+        - AdminAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/DeviceRegistrationStatus'
+          description: "상태 필터 (기본값: PENDING)"
+      responses:
+        "200":
+          description: "기기 등록 목록"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  deviceRegistrations:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DeviceRegistration'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+
+  /device-registrations/{id}/approve:
+    post:
+      tags: [A. Auth & Device Trust]
+      summary: "기기 등록 승인 (PENDING → APPROVED)"
+      security:
+        - AdminAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: 기기 등록 요청 ID
+      responses:
+        "200":
+          description: "승인 완료"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceRegistration'
+        "404":
+          $ref: '#/components/responses/NotFound'
+        "409":
+          description: "이미 승인/거절/회수된 요청"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /device-registrations/{id}/reject:
+    post:
+      tags: [A. Auth & Device Trust]
+      summary: "기기 등록 거절 (PENDING → REJECTED)"
+      security:
+        - AdminAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: "거절 완료"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceRegistration'
+        "404":
+          $ref: '#/components/responses/NotFound'
+        "409":
+          $ref: '#/components/responses/Conflict'
+
+  /device-registrations/{id}/revoke:
+    post:
+      tags: [A. Auth & Device Trust]
+      summary: "승인된 기기 신뢰 회수 (APPROVED → REVOKED)"
+      description: 이미 승인된 기기의 신뢰를 즉시 철회한다. 해당 기기는 PIN 입력 화면에 더 이상 접근할 수 없다.
+      security:
+        - AdminAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: "신뢰 회수 완료"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceRegistration'
+        "404":
+          $ref: '#/components/responses/NotFound'
+        "409":
+          $ref: '#/components/responses/Conflict'
+
+  /auth/track/login:
+    post:
+      tags: [A. Auth & Device Trust]
+      summary: "진행자 트랙 PIN 로그인"
+      description: |
+        신뢰 기기에서 트랙 PIN 으로 로그인하여 트랙 세션 토큰을 발급받는다.
+        - 신뢰 기기(APPROVED 토큰)가 아니면 즉시 거부 (하드 블록).
+        - 해당 트랙이 속한 캠프가 ACTIVE 상태가 아니면 거부 — PENDING 단계에서 PIN은 미리 발급돼 인쇄 가능하지만 로그인은 불가.
+        - 로그인 성공 응답에 코너·트랙 표시명을 포함해 클라이언트가 확인 모달(B1-b)에 즉시 표시할 수 있도록 한다.
+        - 연속 실패 시 점증형 지연(§domain-model.md 3.4) 적용.
+      security:
+        - TrustedDeviceAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [pin]
+              properties:
+                pin:
+                  type: string
+                  pattern: '^\d{6}$'
+                  description: "6자리 숫자 트랙 PIN"
+      responses:
+        "200":
+          description: "로그인 성공 — 트랙 세션 토큰 발급"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  trackToken:
+                    type: string
+                    description: "트랙 세션 불투명 토큰"
+                  track:
+                    $ref: '#/components/schemas/Track'
+                  corner:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                      name:
+                        type: string
+        "400":
+          description: "잘못된 PIN"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: INVALID_PIN
+                message: "PIN이 올바르지 않습니다."
+                details:
+                  retryAfterSeconds: 5
+        "403":
+          description: "신뢰 기기 아님 또는 캠프 미시작"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                notTrusted:
+                  value:
+                    code: DEVICE_NOT_TRUSTED
+                    message: "승인되지 않은 기기입니다."
+                campNotActive:
+                  value:
+                    code: CAMP_NOT_ACTIVE
+                    message: "코너학습이 아직 시작되지 않았습니다."
+        "429":
+          description: "PIN 잠금(지연) 중"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: PIN_LOCKED
+                message: "PIN 입력 잠금 중입니다."
+                details:
+                  retryAfterSeconds: 120
+
+  /auth/track/logout:
+    post:
+      tags: [A. Auth & Device Trust]
+      summary: "진행자 자발적 로그아웃"
+      description: |
+        코너·트랙 확인 모달(B1-b)에서 "아니요, 다시 로그인"을 눌렀을 때
+        방금 발급된 세션을 즉시 폐기한다. 관리자 강제 로그아웃과 달리 본인 세션을 스스로 종료하는 경로.
+      security:
+        - TrackAuth: []
+      responses:
+        "204":
+          description: "로그아웃 성공 (No Content)"
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+
+  /auth/track/lockout/{deviceId}/release:
+    post:
+      tags: [A. Auth & Device Trust]
+      summary: "PIN 잠금(지연) 즉시 해제"
+      description: 관리자가 특정 기기의 PIN 실패 카운트와 지연 상태를 즉시 초기화한다.
+      security:
+        - AdminAuth: []
+      parameters:
+        - name: deviceId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: 기기 등록 ID
+      responses:
+        "204":
+          description: "잠금 해제 성공"
+        "404":
+          $ref: '#/components/responses/NotFound'
+
+  /auth/admin/login:
+    post:
+      tags: [A. Auth & Device Trust]
+      summary: "관리자 로그인"
+      description: |
+        관리자 ID/비밀번호로 로그인하여 액세스 토큰(수명 15~30분)과
+        리프레시 토큰(슬라이딩 만료 12시간)을 발급받는다.
+      security: []  # PUBLIC
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [id, password]
+              properties:
+                id:
+                  type: string
+                password:
+                  type: string
+                  format: password
+      responses:
+        "200":
+          description: "로그인 성공 — 액세스 + 리프레시 토큰 발급"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  accessToken:
+                    type: string
+                  refreshToken:
+                    type: string
+                  expiresInSeconds:
+                    type: integer
+                    example: 1800
+        "401":
+          description: "잘못된 ID 또는 비밀번호"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/admin/refresh:
+    post:
+      tags: [A. Auth & Device Trust]
+      summary: "관리자 액세스 토큰 재발급 (Silent Refresh)"
+      description: 리프레시 토큰으로 새 액세스 토큰을 발급한다. 리프레시 토큰의 슬라이딩 만료 시계도 리셋된다.
+      security:
+        - AdminRefreshAuth: []
+      responses:
+        "200":
+          description: "새 액세스 토큰 발급"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  accessToken:
+                    type: string
+                  expiresInSeconds:
+                    type: integer
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+
+  /auth/admin/sessions:
+    get:
+      tags: [A. Auth & Device Trust]
+      summary: "관리자 활성 세션 목록 조회"
+      description: |
+        관리자 2인 모두의 활성 리프레시 토큰(세션) 목록을 조회한다.
+        기기 분실 등 상황에서 상대방 세션을 강제 종료하기 위한 목적.
+      security:
+        - AdminAuth: []
+      responses:
+        "200":
+          description: "세션 목록"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sessions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AdminSession'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+
+  /auth/admin/sessions/{id}/revoke:
+    post:
+      tags: [A. Auth & Device Trust]
+      summary: "관리자 특정 세션 강제 종료"
+      description: 자신 또는 상대 관리자의 리프레시 토큰 세션을 강제 폐기한다.
+      security:
+        - AdminAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: 세션(리프레시 토큰) ID
+      responses:
+        "204":
+          description: "세션 종료 성공"
+        "404":
+          $ref: '#/components/responses/NotFound'
+
+  /auth/track/{trackId}/force-logout:
+    post:
+      tags: [A. Auth & Device Trust]
+      summary: "특정 트랙 세션 강제 로그아웃"
+      description: 관리자가 특정 트랙의 진행자 세션을 강제 종료한다. 진행 중인 방문이 있어도 즉시 실행된다.
+      security:
+        - AdminAuth: []
+      parameters:
+        - name: trackId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: "강제 로그아웃 성공"
+        "404":
+          $ref: '#/components/responses/NotFound'
+
+  # ════════════════════════════════════════════
+  # B. 캠프 / 코너 / 트랙 관리
+  # ════════════════════════════════════════════
+
+  /camps:
+    get:
+      tags: [B. Camp / Corner / Track]
+      summary: "캠프 목록 조회"
+      description: |
+        PENDING/ACTIVE/ENDED 상태 모두 포함하여 캠프 목록을 조회한다.
+        PENDING 캠프도 목록에 표시되어 설정 작업을 재개할 수 있다.
+      security:
+        - AdminAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/CampStatus'
+          description: 상태 필터 (없으면 전체 조회)
+      responses:
+        "200":
+          description: "캠프 목록"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  camps:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Camp'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      tags: [B. Camp / Corner / Track]
+      summary: "캠프 생성"
+      description: |
+        새 캠프를 생성한다. 생성된 캠프는 항상 PENDING 상태로 시작한다.
+        코너·트랙이 갖춰져도 자동으로 ACTIVE가 되지 않으며, 관리자가 명시적으로 시작해야 한다.
+      security:
+        - AdminAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, startAt, endAt]
+              properties:
+                name:
+                  type: string
+                startAt:
+                  type: string
+                  format: date-time
+                endAt:
+                  type: string
+                  format: date-time
+      responses:
+        "201":
+          description: "캠프 생성 완료 (PENDING 상태)"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Camp'
+        "400":
+          description: "잘못된 입력 (종료일이 시작일보다 앞 등)"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /camps/{id}:
+    get:
+      tags: [B. Camp / Corner / Track]
+      summary: "캠프 상세 조회"
+      description: |
+        캠프 상세 정보를 조회한다.
+        캠프 목록에서 캠프를 선택하면 이후 코너/트랙/조/리포트 등 하위 엔티티 API는
+        세션에 저장된 "현재 선택된 캠프"를 암묵적으로 사용한다.
+      security:
+        - AdminAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CampIdPath'
+      responses:
+        "200":
+          description: "캠프 상세"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Camp'
+        "404":
+          $ref: '#/components/responses/NotFound'
+
+    patch:
+      tags: [B. Camp / Corner / Track]
+      summary: "캠프 수정 (이름/기간/병목 파라미터)"
+      description: |
+        현재 선택된 캠프의 이름·기간 및 병목 판정 파라미터를 수정한다.
+        ENDED 캠프는 수정 불가.
+      security:
+        - AdminAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CampIdPath'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                startAt:
+                  type: string
+                  format: date-time
+                endAt:
+                  type: string
+                  format: date-time
+                bottleneckMinSamples:
+                  type: integer
+                  minimum: 1
+                bottleneckRatioPct:
+                  type: integer
+                  minimum: 1
+                  maximum: 100
+      responses:
+        "200":
+          description: "수정된 캠프"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Camp'
+        "409":
+          description: "ENDED 캠프는 수정 불가"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /camps/{id}/start:
+    post:
+      tags: [B. Camp / Corner / Track]
+      summary: "캠프 시작 (PENDING → ACTIVE)"
+      description: |
+        캠프 상태를 PENDING에서 ACTIVE로 전이한다.
+        이 호출이 성공해야만 해당 캠프 트랙의 PIN 로그인이 허용된다.
+        코너가 0개여도 시작 자체는 허용된다.
+      security:
+        - AdminAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CampIdPath'
+      responses:
+        "200":
+          description: "캠프 시작 완료 (ACTIVE)"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Camp'
+        "409":
+          description: "이미 ACTIVE 또는 ENDED 캠프"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /camps/{id}/end:
+    post:
+      tags: [B. Camp / Corner / Track]
+      summary: "캠프 종료 (ACTIVE → ENDED)"
+      description: |
+        프로그램(코너학습) 종료를 선언한다.
+        부분 완주 조는 그대로 기록되고 캠프 상태가 ENDED로 전이된다.
+        성공 시 캠프 결과 리포트 배치 생성이 자동으로 트리거된다.
+      security:
+        - AdminAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CampIdPath'
+      responses:
+        "200":
+          description: "캠프 종료 완료 (ENDED)"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Camp'
+        "409":
+          description: "PENDING 또는 이미 ENDED 캠프"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /corners:
+    get:
+      tags: [B. Camp / Corner / Track]
+      summary: "코너 목록 조회"
+      description: |
+        현재 선택된 캠프의 코너 목록과 각 코너의 운영 상태를 조회한다.
+        - ADMIN: 전체 코너 목록
+        - TRACK: 자기 코너만
+      security:
+        - AdminAuth: []
+        - TrackAuth: []
+      responses:
+        "200":
+          description: "코너 목록"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  corners:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Corner'
+
+    post:
+      tags: [B. Camp / Corner / Track]
+      summary: "코너 일괄 생성"
+      description: |
+        코너 배열을 한 번에 생성한다. 초기 설정 마법사 2단계에서 사용.
+        `initialTrackCount`만큼 트랙도 함께 생성되고 각 트랙에 PIN이 자동 발급된다.
+        하나라도 실패하면 전체가 롤백된다 (원자적 트랜잭션).
+      security:
+        - AdminAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [corners]
+              properties:
+                corners:
+                  type: array
+                  minItems: 1
+                  items:
+                    type: object
+                    required: [name]
+                    properties:
+                      name:
+                        type: string
+                        example: "코너 1"
+                      targetMinutes:
+                        type: integer
+                        default: 10
+                        minimum: 1
+                      initialTrackCount:
+                        type: integer
+                        default: 1
+                        minimum: 1
+      responses:
+        "201":
+          description: "코너 일괄 생성 완료"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  corners:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Corner'
+        "409":
+          description: "코너 이름 중복 등 제약 위반 — 전체 롤백"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /corners/{id}:
+    patch:
+      tags: [B. Camp / Corner / Track]
+      summary: "코너 규칙 변경 (단건)"
+      description: |
+        코너의 목표시간 등 규칙을 변경한다 (Rule Override).
+        동시 변경 시 Last-Write-Wins 정책 적용.
+      security:
+        - AdminAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CornerIdPath'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                targetMinutes:
+                  type: integer
+                  minimum: 1
+      responses:
+        "200":
+          description: "수정된 코너"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Corner'
+        "404":
+          $ref: '#/components/responses/NotFound'
+
+  /corners/bulk-update:
+    patch:
+      tags: [B. Camp / Corner / Track]
+      summary: "코너 일괄 규칙 변경"
+      description: |
+        선택된 코너들의 목표시간을 일괄 변경한다.
+        트랙 일괄 관리(A2B) 화면의 "목표시간 일괄 변경"에서 사용.
+        하나라도 실패하면 전체 롤백.
+      security:
+        - AdminAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [cornerIds, targetMinutes]
+              properties:
+                cornerIds:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+                targetMinutes:
+                  type: integer
+                  minimum: 1
+      responses:
+        "200":
+          description: "일괄 변경 완료"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  updatedCount:
+                    type: integer
+        "404":
+          description: "존재하지 않는 코너 ID 포함"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /tracks:
+    get:
+      tags: [B. Camp / Corner / Track]
+      summary: "전체 트랙 목록 조회"
+      description: |
+        현재 선택된 캠프의 전체 트랙 목록 (ACTIVE/DELETED 포함 필터 가능).
+        코너별 그룹핑 형태로 반환.
+      security:
+        - AdminAuth: []
+      parameters:
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [cornerId, trackNo, status]
+          description: "정렬 기준"
+        - name: order
+          in: query
+          schema:
+            type: string
+            enum: [asc, desc]
+          description: "정렬 방향"
+      responses:
+        "200":
+          description: "트랙 목록"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tracks:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Track'
+
+  /corners/{cornerId}/tracks:
+    post:
+      tags: [B. Camp / Corner / Track]
+      summary: "트랙 생성"
+      description: |
+        특정 코너에 트랙을 생성한다. `count`를 지정해 한 번에 여러 개 생성 가능.
+        PIN은 자동 발급되며, 현재 ACTIVE 트랙과 겹치지 않는 유일한 값으로 부여된다.
+      security:
+        - AdminAuth: []
+      parameters:
+        - name: cornerId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: 코너 ID
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                count:
+                  type: integer
+                  default: 1
+                  minimum: 1
+                  description: "생성할 트랙 수"
+      responses:
+        "201":
+          description: "트랙 생성 완료 (PIN 포함)"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tracks:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Track'
+        "404":
+          $ref: '#/components/responses/NotFound'
+
+  /tracks/{id}:
+    delete:
+      tags: [B. Camp / Corner / Track]
+      summary: "트랙 삭제"
+      description: |
+        트랙을 삭제한다. PIN 무효화 및 해당 트랙 세션 즉시 종료.
+        - **하드 블록**: IN_PROGRESS 방문이 있는 트랙은 삭제 불가.
+        - **소프트 게이트**: 코너의 마지막 트랙인 경우 `?confirm=true` 필요.
+      security:
+        - AdminAuth: []
+      parameters:
+        - $ref: '#/components/parameters/TrackIdPath'
+        - name: confirm
+          in: query
+          schema:
+            type: boolean
+          description: "마지막 트랙 삭제 시 명시적 확인 플래그"
+      responses:
+        "204":
+          description: "삭제 완료"
+        "409":
+          description: "진행중인 방문이 있어 삭제 불가"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: TRACK_BUSY
+                message: "진행 중인 방문이 있어 삭제할 수 없습니다."
+        "428":
+          description: "마지막 트랙 삭제 시 confirm 플래그 필요"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: CONFIRM_REQUIRED
+                message: "마지막 트랙 삭제는 ?confirm=true 가 필요합니다."
+
+  /tracks/bulk-delete:
+    post:
+      tags: [B. Camp / Corner / Track]
+      summary: "트랙 일괄 삭제"
+      description: |
+        선택한 트랙 목록을 일괄 삭제한다.
+        목록 중 IN_PROGRESS 방문이 있는 트랙이 하나라도 있으면 **전체를 거부** (부분 삭제 없음).
+      security:
+        - AdminAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [trackIds]
+              properties:
+                trackIds:
+                  type: array
+                  minItems: 1
+                  items:
+                    type: string
+                    format: uuid
+      responses:
+        "204":
+          description: "일괄 삭제 완료"
+        "409":
+          description: "진행 중인 방문이 있는 트랙 포함 — 전체 거부"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: TRACK_BUSY
+                message: "진행 중인 방문이 있는 트랙이 포함되어 있습니다."
+                details:
+                  busyTrackIds: ["uuid-1", "uuid-2"]
+
+  /tracks/{id}/replace:
+    post:
+      tags: [B. Camp / Corner / Track]
+      summary: "트랙 교체 (코너 담당 변경)"
+      description: |
+        기존 트랙 삭제와 신규 코너에 신규 트랙 생성을 원자적으로 수행한다.
+        IN_PROGRESS 방문이 있으면 하드 블록.
+        교체 성공 시 SSE `track.replaced` 이벤트로 기기에 새 세션 정보 전달.
+        (세부 재인증 흐름 TBD)
+      security:
+        - AdminAuth: []
+      parameters:
+        - $ref: '#/components/parameters/TrackIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [newCornerId]
+              properties:
+                newCornerId:
+                  type: string
+                  format: uuid
+                  description: "교체될 신규 코너 ID"
+      responses:
+        "200":
+          description: "교체 완료 — 신규 트랙 정보 반환"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Track'
+        "409":
+          description: "진행 중인 방문이 있어 교체 불가"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /tracks/{id}/regenerate-pin:
+    post:
+      tags: [B. Camp / Corner / Track]
+      summary: "트랙 PIN 재발급"
+      description: |
+        트랙 ID·코너·트랙 번호는 그대로 유지하고 PIN 값만 재발급한다.
+        기존 로그인된 진행자 세션도 즉시 강제 종료된다.
+      security:
+        - AdminAuth: []
+      parameters:
+        - $ref: '#/components/parameters/TrackIdPath'
+      responses:
+        "200":
+          description: "PIN 재발급 완료 — 새 PIN 포함"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Track'
+        "404":
+          $ref: '#/components/responses/NotFound'
+
+  /tracks/export:
+    get:
+      tags: [B. Camp / Corner / Track]
+      summary: "전체 트랙 PIN 목록 엑셀 다운로드"
+      description: 현재 ACTIVE 트랙 전체의 PIN 목록을 xlsx 파일로 다운로드한다.
+      security:
+        - AdminAuth: []
+      responses:
+        "200":
+          description: "xlsx 파일"
+          content:
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+
+  /tracks/{id}/export:
+    get:
+      tags: [B. Camp / Corner / Track]
+      summary: "트랙 단건 PIN 카드 내보내기"
+      description: 특정 트랙 하나의 PIN 카드를 내보낸다. PIN 오염/분실이 의심되는 트랙만 재인쇄할 때 사용.
+      security:
+        - AdminAuth: []
+      parameters:
+        - $ref: '#/components/parameters/TrackIdPath'
+      responses:
+        "200":
+          description: "PIN 카드 파일"
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+
+  /groups:
+    get:
+      tags: [B. Camp / Corner / Track]
+      summary: "조 목록 조회"
+      description: |
+        현재 선택된 캠프의 조 목록을 조회한다.
+        - ADMIN: 전체 조 목록 (수동 처리 UI에서 조 선택용 포함)
+        - TRACK: 전체 조 목록 (방문 시작 시 조 선택용)
+        
+        조는 배지 등록 API(`POST /badges/{id}/register` 또는 `POST /badges/scan-register`)를 통해서만 생성된다.
+      security:
+        - AdminAuth: []
+        - TrackAuth: []
+      parameters:
+        - name: filter
+          in: query
+          schema:
+            type: string
+            enum: [all, finished, partial]
+          description: "완주 여부 필터"
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [n, completed, finished]
+        - name: order
+          in: query
+          schema:
+            type: string
+            enum: [asc, desc]
+      responses:
+        "200":
+          description: "조 목록"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  groups:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Group'
+
+  /groups/{id}:
+    get:
+      tags: [B. Camp / Corner / Track]
+      summary: "조 상세 조회 (순회표 포함)"
+      security:
+        - AdminAuth: []
+        - TrackAuth: []
+      parameters:
+        - $ref: '#/components/parameters/GroupIdPath'
+      responses:
+        "200":
+          description: "조 상세 및 순회표"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Group'
+        "404":
+          $ref: '#/components/responses/NotFound'
+
+  /badges/bulk-generate:
+    post:
+      tags: [B. Camp / Corner / Track]
+      summary: "QR 배지 사전 생성"
+      description: |
+        캠프 선택과 무관하게 언제든 호출 가능. 미배정(UNASSIGNED) 배지를 대량 미리 생성해 인쇄 시간을 줄인다.
+        각 배지는 고유 QR payload와 짧은 ID를 발급받는다.
+      security:
+        - AdminAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [count]
+              properties:
+                count:
+                  type: integer
+                  minimum: 1
+                  description: "생성할 배지 수"
+      responses:
+        "201":
+          description: "배지 사전 생성 완료"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  badges:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Badge'
+                  generatedCount:
+                    type: integer
+
+  /badges/export:
+    get:
+      tags: [B. Camp / Corner / Track]
+      summary: "미배정 배지 PDF 내보내기 (스티커 인쇄용)"
+      description: |
+        미배정(UNASSIGNED) 배지 전체를 스티커 인쇄용 PDF로 내보낸다.
+        iPad에서 AirPrint 없이 PDF만 내보내며, 인쇄는 별도 컴퓨터에서 수행.
+      security:
+        - AdminAuth: []
+      responses:
+        "200":
+          description: "PDF 파일"
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+
+  /badges:
+    get:
+      tags: [B. Camp / Corner / Track]
+      summary: "배지 목록 조회"
+      security:
+        - AdminAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/BadgeStatus'
+          description: "상태 필터"
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: "짧은 ID 부분 일치 검색"
+      responses:
+        "200":
+          description: "배지 목록"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  badges:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Badge'
+
+  /badges/{id}/register:
+    post:
+      tags: [B. Camp / Corner / Track]
+      summary: "배지 조 등록 (목록에서 선택)"
+      description: |
+        목록에서 선택한 미배정 배지를 특정 조 이름과 묶어 조(Group) 엔티티를 생성한다.
+        배지 상태가 ASSIGNED로 변경된다.
+        이번 캠프에서 이미 ASSIGNED인 배지를 다시 등록하려 하면 거부.
+      security:
+        - AdminAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: 배지 ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [groupName]
+              properties:
+                groupName:
+                  type: string
+                  description: "조 이름 (예: 1조, 사랑조)"
+      responses:
+        "201":
+          description: "배지 등록 및 조 생성 완료"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Group'
+        "404":
+          $ref: '#/components/responses/NotFound'
+        "409":
+          description: "이미 이번 캠프에 ASSIGNED된 배지"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /badges/scan-register:
+    post:
+      tags: [B. Camp / Corner / Track]
+      summary: "배지 조 등록 (카메라 QR 스캔)"
+      description: |
+        카메라로 스캔한 배지 QR payload로 조에 등록한다.
+        `/badges/{id}/register`와 결과는 동일하고 입력 방식만 다르다.
+      security:
+        - AdminAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [qrPayload, groupName]
+              properties:
+                qrPayload:
+                  type: string
+                  description: "QR 코드에서 스캔한 페이로드 값"
+                groupName:
+                  type: string
+      responses:
+        "201":
+          description: "배지 등록 및 조 생성 완료"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Group'
+        "404":
+          description: "해당 QR payload와 일치하는 배지 없음"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "409":
+          $ref: '#/components/responses/Conflict'
+
+  # ════════════════════════════════════════════
+  # C. 방문 처리 — 핵심 스캔 흐름
+  # ════════════════════════════════════════════
+
+  /tracks/{trackId}/visits/start:
+    post:
+      tags: [C. Visit (Scan Flow)]
+      summary: "방문 시작 (조 입장)"
+      description: |
+        진행자가 조의 입장을 처리한다.
+        - **QR 스캔**: `qrToken` 제공
+        - **수동 처리**: `groupId` + `method: "MANUAL"` 제공 (QR 배지 손상 시)
+        
+        **거부 조건**:
+        - 트랙이 이미 BUSY (동시 진행 조 있음)
+        - 해당 조가 이미 이 코너를 COMPLETED
+        - 해당 조가 다른 코너에서 IN_PROGRESS 상태
+      security:
+        - TrackAuth: []
+      parameters:
+        - name: trackId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - type: object
+                  required: [qrToken]
+                  properties:
+                    qrToken:
+                      type: string
+                      description: "QR 배지에서 스캔한 페이로드"
+                - type: object
+                  required: [groupId, method]
+                  properties:
+                    groupId:
+                      type: string
+                      format: uuid
+                    method:
+                      type: string
+                      enum: [MANUAL]
+      responses:
+        "201":
+          description: "방문 시작 성공"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VisitSummary'
+        "409":
+          description: "비즈니스 규칙 위반"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                trackBusy:
+                  value:
+                    code: TRACK_BUSY
+                    message: "이 트랙은 이미 방문이 진행 중입니다."
+                duplicateVisit:
+                  value:
+                    code: DUPLICATE_VISIT
+                    message: "이 조는 이미 이 코너를 완료했습니다."
+                groupAtCorner:
+                  value:
+                    code: GROUP_AT_CORNER
+                    message: "이 조는 현재 다른 코너에서 진행 중입니다."
+
+  /tracks/{trackId}/visits/current/end:
+    post:
+      tags: [C. Visit (Scan Flow)]
+      summary: "현재 방문 종료 (조 퇴장)"
+      description: |
+        진행 중인 방문을 종료 처리한다. (화면의 종료 확인 2회 탭)
+        재스캔 없이 트랙에 유일하게 정해진 IN_PROGRESS 방문을 종료한다.
+        소요시간 및 목표시간 편차(deviation)를 계산해 저장한다.
+      security:
+        - TrackAuth: []
+      parameters:
+        - name: trackId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: "방문 종료 완료"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VisitSummary'
+        "404":
+          description: "현재 진행 중인 방문 없음"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /tracks/{trackId}/visits/current:
+    get:
+      tags: [C. Visit (Scan Flow)]
+      summary: "현재 진행 중인 방문 조회"
+      description: 진행자 앱 화면 새로고침용. 현재 트랙에서 IN_PROGRESS 상태인 방문을 반환한다.
+      security:
+        - TrackAuth: []
+      parameters:
+        - name: trackId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: "진행 중인 방문 (없으면 null)"
+          content:
+            application/json:
+              schema:
+                nullable: true
+                oneOf:
+                  - $ref: '#/components/schemas/VisitSummary'
+                  - type: "null"
+
+  /visits/exception-approve:
+    post:
+      tags: [C. Visit (Scan Flow)]
+      summary: "중복 방문 예외 승인"
+      description: |
+        중복 방문 금지 규칙의 예외를 관리자가 명시적으로 승인한다.
+        이후 해당 조의 해당 코너에서 재방문이 허용된다.
+      security:
+        - AdminAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [groupId, cornerId]
+              properties:
+                groupId:
+                  type: string
+                  format: uuid
+                cornerId:
+                  type: string
+                  format: uuid
+      responses:
+        "200":
+          description: "예외 승인 완료"
+        "404":
+          $ref: '#/components/responses/NotFound'
+
+  /groups/{id}/visits:
+    get:
+      tags: [C. Visit (Scan Flow)]
+      summary: "특정 조의 전체 방문 이력"
+      security:
+        - AdminAuth: []
+      parameters:
+        - $ref: '#/components/parameters/GroupIdPath'
+      responses:
+        "200":
+          description: "방문 이력 목록"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  visits:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/VisitSummary'
+
+  # ════════════════════════════════════════════
+  # D. 실시간 (SSE)
+  # ════════════════════════════════════════════
+
+  /events/admin:
+    get:
+      tags: [D. Realtime (SSE)]
+      summary: "관리자 대시보드 SSE 스트림"
+      description: |
+        관리자 대시보드용 SSE(Server-Sent Events) 스트림에 연결한다.
+
+        **이벤트 흐름**:
+        1. (재)연결 직후: `event: snapshot` — 전체 코너/트랙/조 현재 상태 스냅샷 전송
+        2. 상태 변경마다: 해당 이벤트 타입으로 스냅샷 push
+        3. 15~20초 주기: SSE 하트비트 (`:` 주석 라인)
+
+        **수신 이벤트 타입**:
+        - `snapshot`: 전체 상태 스냅샷
+        - `visit.started` / `visit.ended`: 방문 시작/종료
+        - `track.created` / `track.deleted` / `track.replaced`: 트랙 생명주기
+        - `corner.updated`: 코너 규칙 변경
+        - `camp.started` / `camp.ended`: 캠프 상태 전이
+        - `message.broadcast`: 공지 발송
+        - `device.approved`: 기기 승인 완료
+        - `lockout.alert`: PIN 5회 이상 실패 경고
+      security:
+        - AdminAuth: []
+      responses:
+        "200":
+          description: "SSE 스트림 연결 성공"
+          content:
+            text/event-stream:
+              schema:
+                $ref: '#/components/schemas/SseEvent'
+              example: |
+                event: snapshot
+                data: {"corners": [...], "groups": [...], "unreadBroadcastCount": 2}
+
+                event: visit.started
+                data: {"visit": {...}, "corner": {...}, "group": {...}}
+
+                :heartbeat
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+
+  /events/track/{trackId}:
+    get:
+      tags: [D. Realtime (SSE)]
+      summary: "진행자 앱 SSE 스트림"
+      description: |
+        진행자 앱용 SSE 스트림. 자기 트랙 상태, 공지, 다이렉트 메시지를 수신한다.
+
+        **수신 이벤트 타입**:
+        - `snapshot`: 트랙/코너/현재방문 스냅샷
+        - `visit.started` / `visit.ended`: 방문 상태 변경
+        - `message.broadcast`: 공지 수신
+        - `message.direct`: 다이렉트 메시지 수신
+        - `track.replaced`: 트랙 교체 — 새 세션 정보 전달
+        - `track.deleted`: 트랙 삭제 → 즉시 B1(로그인) 화면 전환
+        - `session.force_logout`: 강제 로그아웃 → 즉시 B1 전환
+        - `camp.ended`: 캠프 종료 → 즉시 B1 전환
+
+        **세션 강제 종료 이벤트**(`track.deleted` / `session.force_logout` / `camp.ended`)가 오면
+        클라이언트는 BUSY 여부와 무관하게 즉시 B1 화면으로 전환하고 원인별 안내 문구를 표시한다.
+      security:
+        - TrackAuth: []
+      parameters:
+        - name: trackId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: "SSE 스트림 연결 성공"
+          content:
+            text/event-stream:
+              schema:
+                $ref: '#/components/schemas/SseEvent'
+              example: |
+                event: snapshot
+                data: {"track": {...}, "corner": {...}, "currentVisit": null, "unreadBroadcastCount": 0}
+
+                :heartbeat
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          description: "자기 트랙이 아님"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # ════════════════════════════════════════════
+  # E. 메시지
+  # ════════════════════════════════════════════
+
+  /messages/broadcast:
+    post:
+      tags: [E. Messages]
+      summary: "전체 공지 발송"
+      description: 현재 ACTIVE 상태인 전체 트랙에 공지를 발송한다.
+      security:
+        - AdminAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [content]
+              properties:
+                content:
+                  type: string
+                  description: "공지 내용"
+      responses:
+        "201":
+          description: "공지 발송 완료"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+
+    get:
+      tags: [E. Messages]
+      summary: "공지 이력 조회"
+      security:
+        - AdminAuth: []
+        - TrackAuth: []
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: before
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: "커서 기반 페이지네이션: 이 시각 이전 메시지 조회"
+      responses:
+        "200":
+          description: "공지 목록"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  messages:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Message'
+
+  /messages/broadcast/{id}/receipts:
+    get:
+      tags: [E. Messages]
+      summary: "공지별 트랙 읽음 현황"
+      security:
+        - AdminAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: "공지 메시지 ID"
+      responses:
+        "200":
+          description: "읽음 현황 목록"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  receipts:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/BroadcastReceipt'
+                  readRate:
+                    type: number
+                    format: float
+
+  /messages/broadcast/{id}/read:
+    post:
+      tags: [E. Messages]
+      summary: "공지 읽음 처리"
+      description: 해당 트랙이 공지를 읽음 처리한다.
+      security:
+        - TrackAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: "읽음 처리 완료"
+
+  /tracks/{trackId}/messages:
+    get:
+      tags: [E. Messages]
+      summary: "트랙 다이렉트 메시지 이력"
+      security:
+        - AdminAuth: []
+        - TrackAuth: []
+      parameters:
+        - name: trackId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: before
+          in: query
+          schema:
+            type: string
+            format: date-time
+      responses:
+        "200":
+          description: "다이렉트 메시지 목록"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  messages:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Message'
+
+    post:
+      tags: [E. Messages]
+      summary: "트랙 다이렉트 메시지 전송 (양방향)"
+      description: |
+        관리자 → 트랙 또는 트랙 → 관리자 방향으로 다이렉트 메시지를 전송한다.
+        - ADMIN: 어느 트랙에든 전송 가능
+        - TRACK: 자기 트랙 스레드에만 전송 가능
+      security:
+        - AdminAuth: []
+        - TrackAuth: []
+      parameters:
+        - name: trackId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [content]
+              properties:
+                content:
+                  type: string
+      responses:
+        "201":
+          description: "메시지 전송 완료"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+
+  # ════════════════════════════════════════════
+  # F. 통계 / 리포트
+  # ════════════════════════════════════════════
+
+  /reports/live-summary:
+    get:
+      tags: [F. Reports & Analytics]
+      summary: "실시간 스냅샷 요약"
+      description: |
+        현재 선택된 캠프의 실시간 요약 데이터를 조회한다.
+        코너/트랙의 현재 상태 중심의 가벼운 집계만 포함 (전체 기간 통계 아님).
+        SSE 스냅샷과 함께 대시보드 30초 주기 폴백 재조회에 사용된다.
+      security:
+        - AdminAuth: []
+      responses:
+        "200":
+          description: "실시간 요약"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  totalGroups:
+                    type: integer
+                  finishedGroups:
+                    type: integer
+                  corners:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        cornerId:
+                          type: string
+                          format: uuid
+                        cornerName:
+                          type: string
+                        status:
+                          $ref: '#/components/schemas/CornerOperationalStatus'
+                        isBottleneck:
+                          type: boolean
+                        completedVisitCount:
+                          type: integer
+
+  /reports/generate:
+    post:
+      tags: [F. Reports & Analytics]
+      summary: "캠프 결과 리포트 배치 생성 (내부용)"
+      description: |
+        캠프 결과 리포트를 배치로 생성한다.
+        이 API는 `POST /camps/{id}/end` 호출 시 서버 내부에서 자동 트리거되며,
+        관리자가 직접 호출할 일은 없다 (내부용).
+      security:
+        - AdminAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [campId]
+              properties:
+                campId:
+                  type: string
+                  format: uuid
+      responses:
+        "202":
+          description: "배치 생성 요청 수락"
+
+  /reports/current:
+    get:
+      tags: [F. Reports & Analytics]
+      summary: "현재 캠프 결과 리포트 조회"
+      description: |
+        현재 선택된 캠프의 전체 결과 리포트를 조회한다.
+        - 캠프 진행 중: 일부 지표만 반환 (실시간 집계)
+        - 캠프 ENDED: 캠프 종료 시 배치 생성된 최종 리포트 반환 (재계산 없음)
+        
+        클라이언트는 응답 하나를 §1.1(캠프)/§1.2(코너)/§1.4(조) 구간으로 나눠 탭별로 렌더링한다.
+      security:
+        - AdminAuth: []
+      responses:
+        "200":
+          description: "캠프 결과 리포트"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CampReport'
+        "404":
+          description: "아직 리포트가 생성되지 않음"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /reports/current/export:
+    get:
+      tags: [F. Reports & Analytics]
+      summary: "캠프 결과 리포트 PDF 내보내기"
+      description: |
+        캠프 결과 리포트를 PDF로 다운로드한다.
+        iPad에서 AirPrint 없이 PDF만 내보내며, 인쇄는 별도 컴퓨터에서 수행.
+      security:
+        - AdminAuth: []
+      responses:
+        "200":
+          description: "PDF 파일"
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        "404":
+          description: "리포트 미생성"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # ════════════════════════════════════════════
+  # G. 감사 로그
+  # ════════════════════════════════════════════
+
+  /audit-logs:
+    get:
+      tags: [G. Audit Logs]
+      summary: "감사 로그 조회"
+      description: |
+        인증 성공/실패, 스캔, 규칙 변경, 기기 승인/철회, 트랙 관리 등의 감사 로그를 조회한다.
+        메시지 통신 내역은 감사 대상에서 제외.
+        필터링·정렬을 쿼리 파라미터로 지정해 서버에서 처리한다.
+      security:
+        - AdminAuth: []
+      parameters:
+        - name: actor
+          in: query
+          schema:
+            type: string
+          description: "행위자 부분 일치 검색"
+        - name: action
+          in: query
+          schema:
+            type: string
+          description: "행위 종류 필터 (예: TRACK_CREATED, PIN_LOGIN_FAILED)"
+        - name: result
+          in: query
+          schema:
+            type: string
+            enum: [success, failure]
+          description: "성공/실패 필터"
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [occurredAt, actor, action]
+          description: "정렬 기준"
+        - name: order
+          in: query
+          schema:
+            type: string
+            enum: [asc, desc]
+          default: desc
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+            maximum: 200
+        - name: before
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: "커서 기반 페이지네이션: 이 시각 이전 항목 조회"
+      responses:
+        "200":
+          description: "감사 로그 목록"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  logs:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AuditLog'
+                  hasMore:
+                    type: boolean
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+
+# ──────────────────────────────────────────────
+# Tags (섹션 설명)
+# ──────────────────────────────────────────────
+tags:
+  - name: A. Auth & Device Trust
+    description: |
+      인증 및 기기 신뢰 관리.
+      기기 등록/승인/거절/회수, 트랙 PIN 로그인, 관리자 액세스/리프레시 토큰 관리.
+      **가장 먼저 완성돼야 하는 파트** (다른 모든 API가 이 인증에 의존).
+  - name: B. Camp / Corner / Track
+    description: |
+      캠프/코너/트랙 CRUD 및 QR 배지 관리.
+      초기 설정 마법사(일괄 생성), 운영 중 규칙 변경, PIN 내보내기, 배지 생성/등록 포함.
+  - name: C. Visit (Scan Flow)
+    description: |
+      방문 처리 — 핵심 스캔 흐름.
+      방문 시작(QR/수동)/종료, 중복방문 예외 승인, 방문 이력 조회.
+      불변식이 가장 많은 도메인 코어 파트.
+  - name: D. Realtime (SSE)
+    description: |
+      SSE 기반 실시간 이벤트 스트림.
+      관리자 대시보드용 및 진행자 앱용 스트림.
+      (재)연결 시 전체 스냅샷 전송 → 이후 변경마다 스냅샷 push.
+  - name: E. Messages
+    description: |
+      관리자-진행자 간 통신.
+      공지 채널(Broadcast, 단방향) 및 트랙 다이렉트 채널(1:1 양방향).
+  - name: F. Reports & Analytics
+    description: |
+      통계 및 결과 리포트.
+      실시간 스냅샷 요약, 캠프 종료 후 배치 결과 리포트(PDF 내보내기).
+  - name: G. Audit Logs
+    description: |
+      감사 로그 조회.
+      행위자/행위종류/성공여부/시각 기준 필터·정렬 지원.
