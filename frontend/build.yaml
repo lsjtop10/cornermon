@@ -1,0 +1,11 @@
+targets:
+  $default:
+    builders:
+      riverpod_generator:
+        enabled: true
+        generate_for:
+          include:
+            - lib/shared/api/client/*.dart
+            - lib/shared/api/providers/*.dart
+          exclude:
+            - lib/shared/api/gen/**

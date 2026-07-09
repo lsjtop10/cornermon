@@ -1,0 +1,35 @@
+rules:
+  admin_no_facilitator:
+    search_file_path_reg_exp: 'lib/admin/.*\.dart'
+    not_allow_import_reg_exps:
+      - 'package:cornermon/facilitator/.*'
+    ignore_import_reg_exps: []
+
+  facilitator_no_admin:
+    search_file_path_reg_exp: 'lib/facilitator/.*\.dart'
+    not_allow_import_reg_exps:
+      - 'package:cornermon/admin/.*'
+    ignore_import_reg_exps: []
+
+  shared_no_apps:
+    search_file_path_reg_exp: 'lib/shared/.*\.dart'
+    not_allow_import_reg_exps:
+      - 'package:cornermon/admin/.*'
+      - 'package:cornermon/facilitator/.*'
+    ignore_import_reg_exps: []
+
+  admin_entities_no_deps:
+    search_file_path_reg_exp: 'lib/admin/entities/.*\.dart'
+    not_allow_import_reg_exps:
+      - 'package:dio/.*'
+      - 'package:flutter_riverpod/.*'
+      - 'package:go_router/.*'
+    ignore_import_reg_exps: []
+
+  facilitator_entities_no_deps:
+    search_file_path_reg_exp: 'lib/facilitator/entities/.*\.dart'
+    not_allow_import_reg_exps:
+      - 'package:dio/.*'
+      - 'package:flutter_riverpod/.*'
+      - 'package:go_router/.*'
+    ignore_import_reg_exps: []
