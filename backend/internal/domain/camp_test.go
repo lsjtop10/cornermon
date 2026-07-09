@@ -12,7 +12,7 @@ func TestCamp_Activate(t *testing.T) {
 	now := time.Date(2026, 7, 9, 15, 0, 0, 0, time.UTC)
 
 	tests := []struct {
-		name        string
+		name          string
 		initialStatus domain.CampStatus
 		expectedErr   error
 		expectActive  bool

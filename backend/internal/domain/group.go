@@ -1,8 +1,5 @@
 package domain
 
-import (
-	"errors"
-)
 
 type GroupStatus string
 
@@ -72,7 +69,7 @@ func (g *Group) MarkVisitStarted(cornerID CornerID) error {
 	}
 
 	if targetIdx == -1 {
-		return errors.New("group: corner not found in itinerary")
+		return ErrCornerNotInItinerary
 	}
 
 	if g.Itinerary[targetIdx].Status == VisitCompleted {
@@ -94,11 +91,11 @@ func (g *Group) MarkVisitCompleted(cornerID CornerID) error {
 	}
 
 	if targetIdx == -1 {
-		return errors.New("group: corner not found in itinerary")
+		return ErrCornerNotInItinerary
 	}
 
 	if g.Itinerary[targetIdx].Status != VisitInProgress {
-		return errors.New("group: visit not in progress for this corner")
+		return ErrVisitNotInProgress
 	}
 
 	g.Itinerary[targetIdx].Status = VisitCompleted

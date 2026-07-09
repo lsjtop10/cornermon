@@ -126,11 +126,8 @@ func TestGroup_MarkVisitStarted_Constraints(t *testing.T) {
 		}
 
 		err := g.MarkVisitStarted(domain.CornerID("corner-unknown"))
-		if err == nil {
-			t.Fatal("expected error, got nil")
-		}
-		if err.Error() != "group: corner not found in itinerary" {
-			t.Errorf("expected corner not found error, got: %q", err.Error())
+		if !errors.Is(err, domain.ErrCornerNotInItinerary) {
+			t.Errorf("expected error %v, got %v", domain.ErrCornerNotInItinerary, err)
 		}
 	})
 }
@@ -145,11 +142,8 @@ func TestGroup_MarkVisitCompleted_Constraints(t *testing.T) {
 		}
 
 		err := g.MarkVisitCompleted(domain.CornerID("corner-1"))
-		if err == nil {
-			t.Fatal("expected error, got nil")
-		}
-		if err.Error() != "group: visit not in progress for this corner" {
-			t.Errorf("expected visit not in progress error, got: %q", err.Error())
+		if !errors.Is(err, domain.ErrVisitNotInProgress) {
+			t.Errorf("expected error %v, got %v", domain.ErrVisitNotInProgress, err)
 		}
 	})
 
@@ -162,11 +156,8 @@ func TestGroup_MarkVisitCompleted_Constraints(t *testing.T) {
 		}
 
 		err := g.MarkVisitCompleted(domain.CornerID("corner-unknown"))
-		if err == nil {
-			t.Fatal("expected error, got nil")
-		}
-		if err.Error() != "group: corner not found in itinerary" {
-			t.Errorf("expected corner not found error, got: %q", err.Error())
+		if !errors.Is(err, domain.ErrCornerNotInItinerary) {
+			t.Errorf("expected error %v, got %v", domain.ErrCornerNotInItinerary, err)
 		}
 	})
 }

@@ -146,6 +146,8 @@ var (
     ErrDeviceNotApproved     = errors.New("device: not approved")
     ErrDeviceLocked          = errors.New("device: locked due to pin failures")
     ErrSessionRevoked        = errors.New("session: already revoked")
+    ErrCornerNotInItinerary  = errors.New("group: corner not found in itinerary")
+    ErrVisitNotInProgress    = errors.New("group: visit not in progress for this corner")
 )
 ```
 
