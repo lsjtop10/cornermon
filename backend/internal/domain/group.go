@@ -1,6 +1,5 @@
 package domain
 
-
 type GroupStatus string
 
 const (

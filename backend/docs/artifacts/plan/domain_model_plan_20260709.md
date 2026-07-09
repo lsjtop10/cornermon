@@ -465,7 +465,7 @@ func NewAuditLog(id AuditLogID, actor, action, target string, success bool, occu
 | **B** | [완료] 캠프·배지·조 (신규) | `domain/camp.go`, `domain/badge.go`, `domain/group.go` | 2시간 |
 | **C** | [완료] 코너·트랙·방문 (신규) | `domain/corner.go`, `domain/track.go`, `domain/visit.go` | 2.5시간 |
 | **D** | [완료] 기기 신뢰·진행자 세션 (신규) | `domain/device_registration.go`, `domain/facilitator_session.go` | 1.5시간 |
-| **E** | 관리자·메시지·감사로그 (신규) | `domain/admin.go`, `domain/message.go`, `domain/audit_log.go` | 1시간 |
+| **E** | [완료] 관리자·메시지·감사로그 (신규) | `domain/admin.go`, `domain/message.go`, `domain/audit_log.go` | 1시간 |
 | **F** | [완료] 단위 테스트 (신규) | `domain/*_test.go` | 2시간 |
 
 각 Phase는 독립적으로 컴파일·테스트 가능해야 하며(Phase A만 완료돼도 `go build ./internal/domain/...` 통과), 300줄 내외로 커밋을 쪼갠다(`workflow/implement.md` 논리적 최소 커밋 원칙).
@@ -477,10 +477,10 @@ func NewAuditLog(id AuditLogID, actor, action, target string, success bool, occu
 ### 5.1 아키텍처 검증
 - [x] `domain` 패키지에서 `infrastructure`/`interfaces` import 없음 (`go list -deps` 또는 `grep -r "cornermon/backend/internal/infrastructure" internal/domain`로 확인)
 - [x] `domain` 패키지 메서드가 `context.Context`를 받지 않음(§2-b 사유로 의도적 예외)
-- [x] 모든 필드명이 `api/openapi.yaml` 스키마 필드명과 camelCase↔PascalCase 1:1 대응 (Phase A, B 및 D 대상 검증 완료)
+- [x] 모든 필드명이 `api/openapi.yaml` 스키마 필드명과 camelCase↔PascalCase 1:1 대응 (전 범위 검증 완료)
 - [x] `go vet ./internal/domain/...`, `gofmt -l internal/domain` 통과
-- [x] `domain` 패키지 내 `time.Now()` 직접 호출 없음(`grep -rn "time.Now()" internal/domain`로 확인) — 모든 시각은 `now time.Time` 인자로 주입 (§2-d) (Phase A, B 및 D 대상 검증 완료)
-- [x] 값 타입(시각/ID/숫자)에 대해 "없을 수 있음"을 표현하는 포인터가 없음 — `grep -rnE "\*(time\.Time|.*ID|int|string)\b" internal/domain`로 남은 옵셔널 의미 포인터가 없는지 확인(엔티티 리시버·참조용 `*Track` 등은 제외, §2-f) (Phase A, B 및 D 대상 검증 완료)
+- [x] `domain` 패키지 내 `time.Now()` 직접 호출 없음(`grep -rn "time.Now()" internal/domain`로 확인) — 모든 시각은 `now time.Time` 인자로 주입 (§2-d) (전 범위 검증 완료)
+- [x] 값 타입(시각/ID/숫자)에 대해 "없을 수 있음"을 표현하는 포인터가 없음 — `grep -rnE "\*(time\.Time|.*ID|int|string)\b" internal/domain`로 남은 옵셔널 의미 포인터가 없는지 확인(엔티티 리시버·참조용 `*Track` 등은 제외, §2-f) (전 범위 검증 완료)
 
 ### 5.2 유즈케이스별 불변식 검증 (테이블 기반 단위 테스트, `go test ./internal/domain/...`)
 - [x] UC-1 Camp: PENDING→ACTIVE→ENDED만 허용, 역행 시도 시 `ErrCampInvalidTransition`, ENDED에서 재전이 불가
@@ -493,8 +493,8 @@ func NewAuditLog(id AuditLogID, actor, action, target string, success bool, occu
 - [x] UC-4 Visit: `Complete()` 이후 재호출 시 `ErrVisitAlreadyCompleted`; `DurationSeconds`/`DeviationSeconds`가 종료 전엔 `IsSet() == false`, 종료 후 `Value()`로 정확한 값 반환
 - [x] 시각 일관성: 동일한 `now` 값을 `Visit.Complete(now)`와 `Track.CompleteVisit(now)`에 각각 전달했을 때 `visit.EndedAt.Value()`와 `trackFreedEvent.OccurredAt`이 항상 일치(§2-d 근거 회귀 테스트)
 - [x] UC-5 DeviceRegistration: 실패 횟수별 지연이 정확히 1~2회=0, 3회=5초, 4회=30초, 5회 이상=2분+`needsAdminAlert=true`; `ResetPinFailures()` 후 `IsLocked()==false`
-- [ ] UC-6 AdminSession: `TouchRefresh` 호출 시 `LastUsedAt` 갱신되어 `IsRefreshExpired` 재계산됨; `Revoke()` 이후 재사용 시도 시 `ErrSessionRevoked`
-- [ ] UC-7 BroadcastReceipt/AuditLog: `MarkRead`가 최초 1회만 `ReadAt` 설정, 재호출 시 최초 시각 유지(또는 명시적 정책 결정 후 테스트 반영)
+- [x] UC-6 AdminSession: `TouchRefresh` 호출 시 `LastUsedAt` 갱신되어 `IsRefreshExpired` 재계산됨; `Revoke()` 이후 재사용 시도 시 `ErrSessionRevoked`
+- [x] UC-7 BroadcastReceipt/AuditLog: `MarkRead`가 최초 1회만 `ReadAt` 설정, 재호출 시 최초 시각 유지(또는 명시적 정책 결정 후 테스트 반영)
 
 ### 5.3 검증 방법 및 도구
 - **자동화 테스트**: `domain` 패키지는 IO가 없는 순수 구조체+메서드이므로 목킹 없이 표준 `testing` 패키지 + 테이블 기반 케이스로 전수 검증 가능. `go test ./internal/domain/... -v -cover`로 커버리지 확인.
