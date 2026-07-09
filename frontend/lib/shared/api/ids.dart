@@ -1,0 +1,9 @@
+extension type CampId(String value) {}
+extension type GroupId(String value) {}
+extension type CornerId(String value) {}
+extension type TrackId(String value) {}
+extension type BadgeId(String value) {}
+extension type DeviceRegistrationId(String value) {}
+extension type AdminId(String value) {}
+extension type MessageId(String value) {}
+extension type AuditLogId(String value) {}
