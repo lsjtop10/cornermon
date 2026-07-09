@@ -1,0 +1,19 @@
+{
+  "$schema": "node_modules/@openapitools/openapi-generator-cli/config.schema.json",
+  "spaces": 2,
+  "generator-cli": {
+    "version": "7.23.0",
+    "generators": {
+      "cornermon-dart-client": {
+        "generatorName": "dart-dio",
+        "inputSpec": "../api/openapi.yaml",
+        "output": "lib/shared/api/gen",
+        "skipValidateSpec": true,
+        "additionalProperties": {
+          "pubName": "cornermon_api_gen",
+          "nullSafe": true
+        }
+      }
+    }
+  }
+}
