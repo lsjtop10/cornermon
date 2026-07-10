@@ -8,12 +8,14 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+// 시스템 관리자 계정을 관리하는 테이블
 type Admin struct {
 	ID           string `json:"id"`
 	Username     string `json:"username"`
 	PasswordHash string `json:"password_hash"`
 }
 
+// 관리자의 인증 토큰(Access/Refresh) 세션을 관리하는 테이블
 type AdminSession struct {
 	ID               string             `json:"id"`
 	AdminID          string             `json:"admin_id"`
@@ -25,6 +27,7 @@ type AdminSession struct {
 	RevokedAt        pgtype.Timestamptz `json:"revoked_at"`
 }
 
+// 보안 이벤트 및 주요 시스템 변경 이력을 기록하는 감사(Audit) 로그 테이블
 type AuditLog struct {
 	ID         string             `json:"id"`
 	Actor      string             `json:"actor"`
@@ -35,6 +38,7 @@ type AuditLog struct {
 	Metadata   []byte             `json:"metadata"`
 }
 
+// 물리적 QR 배지 정보를 관리하는 테이블
 type Badge struct {
 	ID              string      `json:"id"`
 	ShortID         string      `json:"short_id"`
@@ -43,12 +47,14 @@ type Badge struct {
 	AssignedGroupID pgtype.Text `json:"assigned_group_id"`
 }
 
+// 각 트랙이 전체 공지 메시지를 열람했는지 확인(수신확인)하는 테이블
 type BroadcastReceipt struct {
 	MessageID string             `json:"message_id"`
 	TrackID   string             `json:"track_id"`
 	ReadAt    pgtype.Timestamptz `json:"read_at"`
 }
 
+// 캠프(행사) 전체의 기본 정보 및 병목 판단 기준을 관리하는 테이블
 type Camp struct {
 	ID                   string             `json:"id"`
 	Name                 string             `json:"name"`
@@ -61,6 +67,7 @@ type Camp struct {
 	BottleneckRatioPct   int32              `json:"bottleneck_ratio_pct"`
 }
 
+// 캠프 내의 각 코너(부스/프로그램)를 정의하는 테이블
 type Corner struct {
 	ID            string `json:"id"`
 	CampID        string `json:"camp_id"`
@@ -69,6 +76,7 @@ type Corner struct {
 	IsMandatory   bool   `json:"is_mandatory"`
 }
 
+// 진행자 기기의 등록 요청 및 승인/잠금 상태를 관리하는 테이블
 type DeviceRegistration struct {
 	ID                string             `json:"id"`
 	CampID            string             `json:"camp_id"`
@@ -80,6 +88,7 @@ type DeviceRegistration struct {
 	ApprovedAt        pgtype.Timestamptz `json:"approved_at"`
 }
 
+// 특정 트랙에 로그인한 진행자의 세션 상태를 관리하는 테이블
 type FacilitatorSession struct {
 	ID        string             `json:"id"`
 	TrackID   string             `json:"track_id"`
@@ -88,6 +97,7 @@ type FacilitatorSession struct {
 	RevokedAt pgtype.Timestamptz `json:"revoked_at"`
 }
 
+// 캠프에 참가하여 코너를 순회하는 단위인 조(그룹) 테이블
 type Group struct {
 	ID        string `json:"id"`
 	CampID    string `json:"camp_id"`
@@ -96,6 +106,7 @@ type Group struct {
 	Itinerary []byte `json:"itinerary"`
 }
 
+// 전체 공지사항 및 트랙별 메시지 발송 내역을 저장하는 테이블
 type Message struct {
 	ID          string             `json:"id"`
 	ChannelType string             `json:"channel_type"`
@@ -105,6 +116,7 @@ type Message struct {
 	SentAt      pgtype.Timestamptz `json:"sent_at"`
 }
 
+// 코너 내에서 병렬로 진행 가능한 세부 트랙(기기/테이블)을 정의하는 테이블
 type Track struct {
 	ID             string             `json:"id"`
 	CornerID       string             `json:"corner_id"`
@@ -115,6 +127,7 @@ type Track struct {
 	DeletedAt      pgtype.Timestamptz `json:"deleted_at"`
 }
 
+// 조가 코너(트랙)를 방문하여 진행한 이력을 저장하는 테이블
 type Visit struct {
 	ID          string             `json:"id"`
 	GroupID     string             `json:"group_id"`
