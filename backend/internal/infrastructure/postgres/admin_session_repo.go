@@ -1,0 +1,98 @@
+package postgres
+
+import (
+	"context"
+	"time"
+
+	"cornermon/backend/internal/domain"
+	"cornermon/backend/internal/infrastructure/postgres/db"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/jackc/pgx/v5/pgxpool"
+)
+
+type pgAdminSessionRepository struct {
+	pool *pgxpool.Pool
+}
+
+func NewAdminSessionRepository(pool *pgxpool.Pool) *pgAdminSessionRepository {
+	return &pgAdminSessionRepository{pool: pool}
+}
+
+func (r *pgAdminSessionRepository) queries(ctx context.Context) *db.Queries {
+	if tx := ExtractTx(ctx); tx != nil {
+		return db.New(tx)
+	}
+	return db.New(r.pool)
+}
+
+func mapAdminSession(row db.AdminSession) *domain.AdminSession {
+	s := &domain.AdminSession{
+		ID:               domain.AdminSessionID(row.ID),
+		AdminID:          domain.AdminID(row.AdminID),
+		AccessTokenHash:  row.AccessTokenHash,
+		RefreshTokenHash: row.RefreshTokenHash,
+		DeviceInfo:       row.DeviceInfo,
+		CreatedAt:        row.CreatedAt.Time,
+		LastUsedAt:       row.LastUsedAt.Time,
+	}
+
+	if row.RevokedAt.Valid {
+		s.RevokedAt = domain.Some(row.RevokedAt.Time)
+	} else {
+		s.RevokedAt = domain.None[time.Time]()
+	}
+
+	return s
+}
+
+func (r *pgAdminSessionRepository) Get(ctx context.Context, id domain.AdminSessionID) (*domain.AdminSession, error) {
+	row, err := r.queries(ctx).GetAdminSession(ctx, string(id))
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return mapAdminSession(row), nil
+}
+
+func (r *pgAdminSessionRepository) GetByAccessTokenHash(ctx context.Context, hash string) (*domain.AdminSession, error) {
+	row, err := r.queries(ctx).GetAdminSessionByAccessTokenHash(ctx, hash)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return mapAdminSession(row), nil
+}
+
+func (r *pgAdminSessionRepository) GetByRefreshTokenHash(ctx context.Context, hash string) (*domain.AdminSession, error) {
+	row, err := r.queries(ctx).GetAdminSessionByRefreshTokenHash(ctx, hash)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return mapAdminSession(row), nil
+}
+
+func (r *pgAdminSessionRepository) Save(ctx context.Context, session *domain.AdminSession) error {
+	params := db.SaveAdminSessionParams{
+		ID:               string(session.ID),
+		AdminID:          string(session.AdminID),
+		AccessTokenHash:  session.AccessTokenHash,
+		RefreshTokenHash: session.RefreshTokenHash,
+		DeviceInfo:       session.DeviceInfo,
+		CreatedAt:        pgtype.Timestamptz{Time: session.CreatedAt, Valid: !session.CreatedAt.IsZero()},
+		LastUsedAt:       pgtype.Timestamptz{Time: session.LastUsedAt, Valid: !session.LastUsedAt.IsZero()},
+	}
+
+	if val, ok := session.RevokedAt.Value(); ok {
+		params.RevokedAt = pgtype.Timestamptz{Time: val, Valid: true}
+	}
+
+	return r.queries(ctx).SaveAdminSession(ctx, params)
+}

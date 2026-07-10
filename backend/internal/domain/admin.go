@@ -6,6 +6,7 @@ import (
 
 type Admin struct {
 	ID           AdminID
+	Username     string
 	PasswordHash string
 }
 
