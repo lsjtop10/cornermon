@@ -11,6 +11,7 @@ import (
 )
 
 type Querier interface {
+	DeleteCorner(ctx context.Context, id string) error
 	GetAdmin(ctx context.Context, id string) (Admin, error)
 	GetAdminByUsername(ctx context.Context, username string) (Admin, error)
 	GetAdminSession(ctx context.Context, id string) (AdminSession, error)
@@ -33,13 +34,18 @@ type Querier interface {
 	ListActiveFacilitatorSessionsByCamp(ctx context.Context, campID string) ([]FacilitatorSession, error)
 	ListActiveFacilitatorSessionsByTrack(ctx context.Context, trackID string) ([]FacilitatorSession, error)
 	ListActiveTracksByCamp(ctx context.Context, campID string) ([]Track, error)
+	ListAllBadges(ctx context.Context) ([]Badge, error)
 	ListBroadcastMessagesByCamp(ctx context.Context) ([]Message, error)
 	ListBroadcastReceiptsByMessage(ctx context.Context, messageID string) ([]BroadcastReceipt, error)
+	ListCamps(ctx context.Context) ([]Camp, error)
 	ListCornersByCamp(ctx context.Context, campID string) ([]Corner, error)
+	ListDeviceRegistrationsByCampAndStatus(ctx context.Context, arg ListDeviceRegistrationsByCampAndStatusParams) ([]DeviceRegistration, error)
 	ListDirectMessagesByTrack(ctx context.Context, trackID pgtype.Text) ([]Message, error)
 	ListGroupsByCamp(ctx context.Context, campID string) ([]Group, error)
 	ListPendingDeviceRegistrationsByCamp(ctx context.Context, campID string) ([]DeviceRegistration, error)
+	ListTracksByCamp(ctx context.Context, campID string) ([]Track, error)
 	ListTracksByCorner(ctx context.Context, cornerID string) ([]Track, error)
+	ListVisitsByCamp(ctx context.Context, campID string) ([]ListVisitsByCampRow, error)
 	SaveAdminSession(ctx context.Context, arg SaveAdminSessionParams) error
 	SaveAuditLog(ctx context.Context, arg SaveAuditLogParams) error
 	SaveBadge(ctx context.Context, arg SaveBadgeParams) error

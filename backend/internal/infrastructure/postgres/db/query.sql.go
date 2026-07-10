@@ -11,6 +11,15 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const deleteCorner = `-- name: DeleteCorner :exec
+DELETE FROM corners WHERE id = $1
+`
+
+func (q *Queries) DeleteCorner(ctx context.Context, id string) error {
+	_, err := q.db.Exec(ctx, deleteCorner, id)
+	return err
+}
+
 const getAdmin = `-- name: GetAdmin :one
 SELECT id, username, password_hash FROM admins WHERE id = $1
 `
@@ -458,6 +467,36 @@ func (q *Queries) ListActiveTracksByCamp(ctx context.Context, campID string) ([]
 	return items, nil
 }
 
+const listAllBadges = `-- name: ListAllBadges :many
+SELECT id, short_id, qr_payload, status, assigned_group_id FROM badges
+`
+
+func (q *Queries) ListAllBadges(ctx context.Context) ([]Badge, error) {
+	rows, err := q.db.Query(ctx, listAllBadges)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Badge
+	for rows.Next() {
+		var i Badge
+		if err := rows.Scan(
+			&i.ID,
+			&i.ShortID,
+			&i.QrPayload,
+			&i.Status,
+			&i.AssignedGroupID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listBroadcastMessagesByCamp = `-- name: ListBroadcastMessagesByCamp :many
 SELECT id, channel_type, track_id, sender_role, content, sent_at FROM messages WHERE channel_type = 'BROADCAST'
 `
@@ -513,6 +552,40 @@ func (q *Queries) ListBroadcastReceiptsByMessage(ctx context.Context, messageID 
 	return items, nil
 }
 
+const listCamps = `-- name: ListCamps :many
+SELECT id, name, start_at, end_at, activated_at, ended_at, status, bottleneck_min_samples, bottleneck_ratio_pct FROM camps
+`
+
+func (q *Queries) ListCamps(ctx context.Context) ([]Camp, error) {
+	rows, err := q.db.Query(ctx, listCamps)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Camp
+	for rows.Next() {
+		var i Camp
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.StartAt,
+			&i.EndAt,
+			&i.ActivatedAt,
+			&i.EndedAt,
+			&i.Status,
+			&i.BottleneckMinSamples,
+			&i.BottleneckRatioPct,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listCornersByCamp = `-- name: ListCornersByCamp :many
 SELECT id, camp_id, name, target_minutes, is_mandatory FROM corners WHERE camp_id = $1
 `
@@ -532,6 +605,45 @@ func (q *Queries) ListCornersByCamp(ctx context.Context, campID string) ([]Corne
 			&i.Name,
 			&i.TargetMinutes,
 			&i.IsMandatory,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listDeviceRegistrationsByCampAndStatus = `-- name: ListDeviceRegistrationsByCampAndStatus :many
+SELECT id, camp_id, device_name, status, token_hash, failed_pin_attempts, locked_until, approved_at FROM device_registrations
+WHERE camp_id = $1 AND ($2::VARCHAR IS NULL OR status = $2)
+`
+
+type ListDeviceRegistrationsByCampAndStatusParams struct {
+	CampID  string `json:"camp_id"`
+	Column2 string `json:"column_2"`
+}
+
+func (q *Queries) ListDeviceRegistrationsByCampAndStatus(ctx context.Context, arg ListDeviceRegistrationsByCampAndStatusParams) ([]DeviceRegistration, error) {
+	rows, err := q.db.Query(ctx, listDeviceRegistrationsByCampAndStatus, arg.CampID, arg.Column2)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []DeviceRegistration
+	for rows.Next() {
+		var i DeviceRegistration
+		if err := rows.Scan(
+			&i.ID,
+			&i.CampID,
+			&i.DeviceName,
+			&i.Status,
+			&i.TokenHash,
+			&i.FailedPinAttempts,
+			&i.LockedUntil,
+			&i.ApprovedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -637,6 +749,40 @@ func (q *Queries) ListPendingDeviceRegistrationsByCamp(ctx context.Context, camp
 	return items, nil
 }
 
+const listTracksByCamp = `-- name: ListTracksByCamp :many
+SELECT t.id, t.corner_id, t.track_no, t.status, t.pin_hash, t.current_visit_id, t.deleted_at FROM tracks t
+JOIN corners c ON t.corner_id = c.id
+WHERE c.camp_id = $1
+`
+
+func (q *Queries) ListTracksByCamp(ctx context.Context, campID string) ([]Track, error) {
+	rows, err := q.db.Query(ctx, listTracksByCamp, campID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Track
+	for rows.Next() {
+		var i Track
+		if err := rows.Scan(
+			&i.ID,
+			&i.CornerID,
+			&i.TrackNo,
+			&i.Status,
+			&i.PinHash,
+			&i.CurrentVisitID,
+			&i.DeletedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listTracksByCorner = `-- name: ListTracksByCorner :many
 SELECT id, corner_id, track_no, status, pin_hash, current_visit_id, deleted_at FROM tracks WHERE corner_id = $1
 `
@@ -658,6 +804,57 @@ func (q *Queries) ListTracksByCorner(ctx context.Context, cornerID string) ([]Tr
 			&i.PinHash,
 			&i.CurrentVisitID,
 			&i.DeletedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listVisitsByCamp = `-- name: ListVisitsByCamp :many
+SELECT v.id, v.group_id, v.corner_id, v.track_id, v.status, v.input_method, v.started_at, v.ended_at, c.target_minutes, c.name as corner_name FROM visits v
+JOIN groups g ON v.group_id = g.id
+JOIN corners c ON v.corner_id = c.id
+WHERE g.camp_id = $1
+`
+
+type ListVisitsByCampRow struct {
+	ID            string             `json:"id"`
+	GroupID       string             `json:"group_id"`
+	CornerID      string             `json:"corner_id"`
+	TrackID       string             `json:"track_id"`
+	Status        string             `json:"status"`
+	InputMethod   string             `json:"input_method"`
+	StartedAt     pgtype.Timestamptz `json:"started_at"`
+	EndedAt       pgtype.Timestamptz `json:"ended_at"`
+	TargetMinutes int32              `json:"target_minutes"`
+	CornerName    string             `json:"corner_name"`
+}
+
+func (q *Queries) ListVisitsByCamp(ctx context.Context, campID string) ([]ListVisitsByCampRow, error) {
+	rows, err := q.db.Query(ctx, listVisitsByCamp, campID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListVisitsByCampRow
+	for rows.Next() {
+		var i ListVisitsByCampRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.GroupID,
+			&i.CornerID,
+			&i.TrackID,
+			&i.Status,
+			&i.InputMethod,
+			&i.StartedAt,
+			&i.EndedAt,
+			&i.TargetMinutes,
+			&i.CornerName,
 		); err != nil {
 			return nil, err
 		}
