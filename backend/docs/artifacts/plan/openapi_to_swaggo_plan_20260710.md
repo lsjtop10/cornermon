@@ -93,6 +93,13 @@ func (h *VisitHandler) EndCurrentVisit(c echo.Context) error {
 | ~~C-1~~ | ~~`swag init` 명령어 수행하여 `docs/` 생성~~ | `cmd/server/main.go` 기준 |
 | ~~C-2~~ | ~~누락된 엔드포인트 및 DTO 불일치 100% 검수~~ | `docs/swagger.yaml` ↔ 기존 `openapi.yaml` 비교 |
 
+### Phase D: Usecase 및 비즈니스 로직 연동 (완료)
+| 순서 | 작업 | 파일 |
+| --- | --- | --- |
+| ~~D-1~~ | ~~Camp, Corner, Track 등 Resource Management 연동~~ | `internal/infrastructure/http/handler/*.go` |
+| ~~D-2~~ | ~~Badge, Group, Visit 등 Scan Flow 연동~~ | `internal/infrastructure/http/handler/*.go` |
+| ~~D-3~~ | ~~Report, Event, Message, Auth 등 부가 도메인 연동~~ | `internal/infrastructure/http/handler/*.go` |
+
 ## 5. 검증 체크리스트
 
 ### 5.1 스펙 정합성 검증
