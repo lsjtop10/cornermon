@@ -1,11 +1,10 @@
-package middleware
+package web
 
 import (
 	"errors"
 	"net/http"
 
 	"cornermon/backend/internal/domain"
-	"cornermon/backend/internal/infrastructure/http/dto"
 
 	"github.com/labstack/echo/v4"
 )
@@ -25,13 +24,13 @@ func ErrorHandler() echo.HTTPErrorHandler {
 			} else {
 				msg = err.Error()
 			}
-			_ = c.JSON(code, dto.ErrorResponse{Code: "HTTP_ERROR", Message: msg})
+			_ = c.JSON(code, ErrorResponse{Code: "HTTP_ERROR", Message: msg})
 			return
 		}
 
 		code, errCode := mapDomainError(err)
 
-		_ = c.JSON(code, dto.ErrorResponse{
+		_ = c.JSON(code, ErrorResponse{
 			Code:    errCode,
 			Message: err.Error(),
 		})

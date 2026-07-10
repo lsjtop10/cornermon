@@ -1,11 +1,11 @@
-package handler
+package web
 
 import (
 	"net/http"
 
 	"cornermon/backend/internal/domain"
-	"cornermon/backend/internal/infrastructure/http/dto"
 	"cornermon/backend/internal/usecase"
+
 	"github.com/labstack/echo/v4"
 )
 
@@ -17,8 +17,8 @@ func NewBadgeHandler(badgeUC *usecase.BadgeService) *BadgeHandler {
 	return &BadgeHandler{badgeUC: badgeUC}
 }
 
-func mapBadgeToDTO(b *domain.Badge) dto.Badge {
-	res := dto.Badge{
+func mapBadgeToDTO(b *domain.Badge) Badge {
+	res := Badge{
 		ID:        string(b.ID),
 		ShortID:   b.ShortID,
 		QRPayload: b.QRPayload,
@@ -36,14 +36,14 @@ func mapBadgeToDTO(b *domain.Badge) dto.Badge {
 // @Tags         B. Resource Management (Admin)
 // @Security     AdminAuth
 // @Produce      json
-// @Success      200 {array} dto.Badge
+// @Success      200 {array} Badge
 // @Router       /badges [get]
 func (h *BadgeHandler) ListBadges(c echo.Context) error {
 	badges, err := h.badgeUC.ListBadges(c.Request().Context())
 	if err != nil {
 		return err
 	}
-	res := make([]dto.Badge, len(badges))
+	res := make([]Badge, len(badges))
 	for i, b := range badges {
 		res[i] = mapBadgeToDTO(b)
 	}
@@ -61,7 +61,7 @@ type BulkGenerateBadgesRequest struct {
 // @Accept       json
 // @Produce      json
 // @Param        request body BulkGenerateBadgesRequest true "생성할 개수"
-// @Success      201 {array} dto.Badge
+// @Success      201 {array} Badge
 // @Router       /badges/bulk-generate [post]
 func (h *BadgeHandler) BulkGenerateBadges(c echo.Context) error {
 	var req BulkGenerateBadgesRequest
@@ -72,7 +72,7 @@ func (h *BadgeHandler) BulkGenerateBadges(c echo.Context) error {
 	if err != nil {
 		return err
 	}
-	res := make([]dto.Badge, len(badges))
+	res := make([]Badge, len(badges))
 	for i, b := range badges {
 		res[i] = mapBadgeToDTO(b)
 	}
@@ -106,7 +106,7 @@ type AssignBadgeRequest struct {
 // @Produce      json
 // @Param        id path string true "배지 ID"
 // @Param        request body AssignBadgeRequest true "배정할 조 ID"
-// @Success      200 {object} dto.Badge
+// @Success      200 {object} Badge
 // @Router       /badges/{id}/register [post]
 func (h *BadgeHandler) AssignBadge(c echo.Context) error {
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not implemented yet")
@@ -124,7 +124,7 @@ type ScanAssignBadgeRequest struct {
 // @Accept       json
 // @Produce      json
 // @Param        request body ScanAssignBadgeRequest true "매핑 정보"
-// @Success      200 {object} dto.Badge
+// @Success      200 {object} Badge
 // @Router       /badges/scan-register [post]
 func (h *BadgeHandler) ScanAssignBadge(c echo.Context) error {
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not implemented yet")

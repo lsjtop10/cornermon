@@ -1,11 +1,10 @@
-package handler
+package web
 
 import (
 	"context"
 	"net/http"
 
 	"cornermon/backend/internal/domain"
-	"cornermon/backend/internal/infrastructure/http/dto"
 
 	"github.com/labstack/echo/v4"
 )
@@ -13,7 +12,7 @@ import (
 type MessageUsecase interface {
 	SendBroadcast(ctx context.Context, campID domain.CampID, content string, actorAdminID domain.AdminID) (*domain.Message, error)
 	ListBroadcastsByCamp(ctx context.Context, campID domain.CampID) ([]*domain.Message, error)
-	GetBroadcastReceipts(ctx context.Context, messageID domain.MessageID) ([]dto.BroadcastReceipt, error)
+	GetBroadcastReceipts(ctx context.Context, messageID domain.MessageID) ([]BroadcastReceipt, error)
 	MarkBroadcastRead(ctx context.Context, facilitatorToken string, messageID domain.MessageID) error
 	SendDirect(ctx context.Context, trackID domain.TrackID, content string, senderRole domain.SenderRole) (*domain.Message, error)
 	ListDirectMessages(ctx context.Context, trackID domain.TrackID) ([]*domain.Message, error)
@@ -41,25 +40,25 @@ type BroadcastMessageRequest struct {
 // @Accept       json
 // @Produce      json
 // @Param        request body BroadcastMessageRequest true "메시지 내용"
-// @Success      201 {object} dto.Message
+// @Success      201 {object} Message
 // @Router       /messages/broadcast [post]
 func (h *MessageHandler) SendBroadcast(c echo.Context) error {
 	session, ok := c.Get("adminSession").(*domain.AdminSession)
 	if !ok {
-		return c.JSON(http.StatusUnauthorized, dto.ErrorResponse{Code: "UNAUTHORIZED", Message: "unauthorized"})
+		return c.JSON(http.StatusUnauthorized, ErrorResponse{Code: "UNAUTHORIZED", Message: "unauthorized"})
 	}
 
 	var req BroadcastMessageRequest
 	if err := c.Bind(&req); err != nil {
-		return c.JSON(http.StatusBadRequest, dto.ErrorResponse{Code: "BAD_REQUEST", Message: "invalid request"})
+		return c.JSON(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: "invalid request"})
 	}
 
 	msg, err := h.message.SendBroadcast(c.Request().Context(), domain.CampID(req.CampID), req.Content, session.AdminID)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()})
+		return c.JSON(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()})
 	}
 
-	return c.JSON(http.StatusCreated, dto.Message{
+	return c.JSON(http.StatusCreated, Message{
 		ID:          string(msg.ID),
 		ChannelType: string(msg.ChannelType),
 		SenderRole:  string(msg.SenderRole),
@@ -73,22 +72,22 @@ func (h *MessageHandler) SendBroadcast(c echo.Context) error {
 // @Tags         E. Message
 // @Security     AdminAuth
 // @Produce      json
-// @Success      200 {array} dto.Message
+// @Success      200 {array} Message
 // @Router       /messages/broadcast [get]
 func (h *MessageHandler) ListBroadcasts(c echo.Context) error {
 	campID := c.QueryParam("campId")
 	if campID == "" {
-		return c.JSON(http.StatusBadRequest, dto.ErrorResponse{Code: "BAD_REQUEST", Message: "missing campId"})
+		return c.JSON(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: "missing campId"})
 	}
 
 	msgs, err := h.message.ListBroadcastsByCamp(c.Request().Context(), domain.CampID(campID))
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()})
+		return c.JSON(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()})
 	}
 
-	res := make([]dto.Message, len(msgs))
+	res := make([]Message, len(msgs))
 	for i, msg := range msgs {
-		res[i] = dto.Message{
+		res[i] = Message{
 			ID:          string(msg.ID),
 			ChannelType: string(msg.ChannelType),
 			SenderRole:  string(msg.SenderRole),
@@ -106,14 +105,14 @@ func (h *MessageHandler) ListBroadcasts(c echo.Context) error {
 // @Security     AdminAuth
 // @Produce      json
 // @Param        id path string true "메시지 ID"
-// @Success      200 {array} dto.BroadcastReceipt
+// @Success      200 {array} BroadcastReceipt
 // @Router       /messages/broadcast/{id}/receipts [get]
 func (h *MessageHandler) GetBroadcastReceipts(c echo.Context) error {
 	msgID := domain.MessageID(c.Param("id"))
 
 	receipts, err := h.message.GetBroadcastReceipts(c.Request().Context(), msgID)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()})
+		return c.JSON(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()})
 	}
 
 	return c.JSON(http.StatusOK, receipts)
@@ -142,7 +141,7 @@ func (h *MessageHandler) ReadBroadcast(c echo.Context) error {
 
 	err := h.message.MarkBroadcastRead(c.Request().Context(), token, msgID)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()})
+		return c.JSON(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()})
 	}
 
 	return c.NoContent(http.StatusNoContent)
@@ -160,14 +159,14 @@ type DirectMessageRequest struct {
 // @Produce      json
 // @Param        trackId path string true "트랙 ID"
 // @Param        request body DirectMessageRequest true "메시지 내용"
-// @Success      201 {object} dto.Message
+// @Success      201 {object} Message
 // @Router       /tracks/{trackId}/messages [post]
 func (h *MessageHandler) SendDirect(c echo.Context) error {
 	trackID := domain.TrackID(c.Param("trackId"))
 
 	var req DirectMessageRequest
 	if err := c.Bind(&req); err != nil {
-		return c.JSON(http.StatusBadRequest, dto.ErrorResponse{Code: "BAD_REQUEST", Message: "invalid request"})
+		return c.JSON(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: "invalid request"})
 	}
 
 	var senderRole domain.SenderRole
@@ -176,12 +175,12 @@ func (h *MessageHandler) SendDirect(c echo.Context) error {
 	} else if c.Get("facilitatorSession") != nil {
 		senderRole = domain.RoleTrack
 	} else {
-		return c.JSON(http.StatusUnauthorized, dto.ErrorResponse{Code: "UNAUTHORIZED", Message: "unauthorized"})
+		return c.JSON(http.StatusUnauthorized, ErrorResponse{Code: "UNAUTHORIZED", Message: "unauthorized"})
 	}
 
 	msg, err := h.message.SendDirect(c.Request().Context(), trackID, req.Content, senderRole)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()})
+		return c.JSON(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()})
 	}
 
 	var tID *string
@@ -191,7 +190,7 @@ func (h *MessageHandler) SendDirect(c echo.Context) error {
 		tID = &valStr
 	}
 
-	return c.JSON(http.StatusCreated, dto.Message{
+	return c.JSON(http.StatusCreated, Message{
 		ID:          string(msg.ID),
 		ChannelType: string(msg.ChannelType),
 		TrackID:     tID,
@@ -207,17 +206,17 @@ func (h *MessageHandler) SendDirect(c echo.Context) error {
 // @Security     AdminAuth
 // @Produce      json
 // @Param        trackId path string true "트랙 ID"
-// @Success      200 {array} dto.Message
+// @Success      200 {array} Message
 // @Router       /tracks/{trackId}/messages [get]
 func (h *MessageHandler) ListDirectMessages(c echo.Context) error {
 	trackID := domain.TrackID(c.Param("trackId"))
 
 	msgs, err := h.message.ListDirectMessages(c.Request().Context(), trackID)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()})
+		return c.JSON(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()})
 	}
 
-	res := make([]dto.Message, len(msgs))
+	res := make([]Message, len(msgs))
 	for i, msg := range msgs {
 		var tID *string
 		if msg.TrackID.IsSet() {
@@ -225,7 +224,7 @@ func (h *MessageHandler) ListDirectMessages(c echo.Context) error {
 			valStr := string(val)
 			tID = &valStr
 		}
-		res[i] = dto.Message{
+		res[i] = Message{
 			ID:          string(msg.ID),
 			ChannelType: string(msg.ChannelType),
 			TrackID:     tID,

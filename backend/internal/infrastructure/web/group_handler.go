@@ -1,11 +1,11 @@
-package handler
+package web
 
 import (
 	"net/http"
 
 	"cornermon/backend/internal/domain"
-	"cornermon/backend/internal/infrastructure/http/dto"
 	"cornermon/backend/internal/usecase"
+
 	"github.com/labstack/echo/v4"
 )
 
@@ -17,17 +17,17 @@ func NewGroupHandler(groupUC *usecase.GroupService) *GroupHandler {
 	return &GroupHandler{groupUC: groupUC}
 }
 
-func mapGroupToDTO(g *domain.Group) dto.Group {
-	res := dto.Group{
+func mapGroupToDTO(g *domain.Group) Group {
+	res := Group{
 		ID:         string(g.ID),
 		Name:       g.Name,
 		BadgeID:    string(g.BadgeID),
 		Status:     string(g.Status()),
 		IsFinished: g.IsFinished(),
-		Itinerary:  make([]dto.CornerProgress, 0, len(g.Itinerary)),
+		Itinerary:  make([]CornerProgress, 0, len(g.Itinerary)),
 	}
 	for _, c := range g.Itinerary {
-		res.Itinerary = append(res.Itinerary, dto.CornerProgress{
+		res.Itinerary = append(res.Itinerary, CornerProgress{
 			CornerID: string(c.CornerID),
 			Status:   string(c.Status),
 		})
@@ -41,7 +41,7 @@ func mapGroupToDTO(g *domain.Group) dto.Group {
 // @Security     AdminAuth
 // @Produce      json
 // @Param        campId query string false "캠프 ID 필터"
-// @Success      200 {array} dto.Group
+// @Success      200 {array} Group
 // @Router       /groups [get]
 func (h *GroupHandler) ListGroups(c echo.Context) error {
 	campID := c.QueryParam("campId")
@@ -49,7 +49,7 @@ func (h *GroupHandler) ListGroups(c echo.Context) error {
 	if err != nil {
 		return err
 	}
-	res := make([]dto.Group, len(groups))
+	res := make([]Group, len(groups))
 	for i, g := range groups {
 		res[i] = mapGroupToDTO(g)
 	}
@@ -62,7 +62,7 @@ func (h *GroupHandler) ListGroups(c echo.Context) error {
 // @Security     AdminAuth
 // @Produce      json
 // @Param        id path string true "조 ID"
-// @Success      200 {object} dto.Group
+// @Success      200 {object} Group
 // @Router       /groups/{id} [get]
 func (h *GroupHandler) GetGroup(c echo.Context) error {
 	id := c.Param("id")
@@ -82,7 +82,7 @@ func (h *GroupHandler) GetGroup(c echo.Context) error {
 // @Security     AdminAuth
 // @Produce      json
 // @Param        id path string true "조 ID"
-// @Success      200 {array} dto.VisitSummary
+// @Success      200 {array} VisitSummary
 // @Router       /groups/{id}/visits [get]
 func (h *GroupHandler) ListGroupVisits(c echo.Context) error {
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not implemented yet")

@@ -1,11 +1,11 @@
-package handler
+package web
 
 import (
 	"net/http"
 
 	"cornermon/backend/internal/domain"
-	"cornermon/backend/internal/infrastructure/http/dto"
 	"cornermon/backend/internal/usecase"
+
 	"github.com/labstack/echo/v4"
 )
 
@@ -41,8 +41,8 @@ func (h *ReportHandler) getActiveCamp(c echo.Context) (*domain.Camp, error) {
 	return nil, nil
 }
 
-// mapSummary maps usecase.CampReport to dto.CampSummaryStats
-func mapSummary(r *usecase.CampReport) dto.CampSummaryStats {
+// mapSummary maps usecase.CampReport to CampSummaryStats
+func mapSummary(r *usecase.CampReport) CampSummaryStats {
 	completionRate := float32(0)
 	if r.TotalGroups > 0 {
 		completionRate = float32(r.FinishedGroups) / float32(r.TotalGroups) * 100
@@ -54,32 +54,32 @@ func mapSummary(r *usecase.CampReport) dto.CampSummaryStats {
 		manualVisitRatio = float32(r.ManualVisits) / float32(r.TotalVisits) * 100
 	}
 
-	return dto.CampSummaryStats{
-		TotalGroups:            r.TotalGroups,
-		FinishedGroupCount:     r.FinishedGroups,
-		CompletionRate:         completionRate,
-		TotalVisits:            r.TotalVisits,
-		VisitCompletionRate:    visitCompletionRate,
-		ManualVisitRatio:       manualVisitRatio,
+	return CampSummaryStats{
+		TotalGroups:         r.TotalGroups,
+		FinishedGroupCount:  r.FinishedGroups,
+		CompletionRate:      completionRate,
+		TotalVisits:         r.TotalVisits,
+		VisitCompletionRate: visitCompletionRate,
+		ManualVisitRatio:    manualVisitRatio,
 	}
 }
 
-// mapReport maps usecase.CampReport to dto.CampReport
-func mapReport(r *usecase.CampReport) dto.CampReport {
-	res := dto.CampReport{
+// mapReport maps usecase.CampReport to CampReport
+func mapReport(r *usecase.CampReport) CampReport {
+	res := CampReport{
 		CampID:  string(r.CampID),
 		Summary: mapSummary(r),
 	}
-	
+
 	for _, cr := range r.CornerReports {
-		res.CornerStats = append(res.CornerStats, dto.CornerStats{
+		res.CornerStats = append(res.CornerStats, CornerStats{
 			CornerID:            string(cr.CornerID),
 			CornerName:          cr.CornerName,
 			CompletedVisitCount: cr.CompletedCount,
 		})
 	}
 	for _, gr := range r.GroupReports {
-		res.GroupStats = append(res.GroupStats, dto.GroupStats{
+		res.GroupStats = append(res.GroupStats, GroupStats{
 			GroupID:        string(gr.GroupID),
 			GroupName:      gr.GroupName,
 			CompletedCount: gr.CompletedCount,
@@ -93,7 +93,7 @@ func mapReport(r *usecase.CampReport) dto.CampReport {
 // @Tags         D. Report
 // @Security     AdminAuth
 // @Produce      json
-// @Success      200 {object} dto.CampSummaryStats
+// @Success      200 {object} CampSummaryStats
 // @Router       /reports/live-summary [get]
 func (h *ReportHandler) LiveSummary(c echo.Context) error {
 	camp, err := h.getActiveCamp(c)
@@ -101,7 +101,7 @@ func (h *ReportHandler) LiveSummary(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 	if camp == nil {
-		return c.JSON(http.StatusOK, dto.CampSummaryStats{})
+		return c.JSON(http.StatusOK, CampSummaryStats{})
 	}
 
 	report, err := h.querier.QueryCampReport(c.Request().Context(), camp.ID)
@@ -117,7 +117,7 @@ func (h *ReportHandler) LiveSummary(c echo.Context) error {
 // @Tags         D. Report
 // @Security     AdminAuth
 // @Produce      json
-// @Success      200 {object} dto.CampReport
+// @Success      200 {object} CampReport
 // @Router       /reports/current [get]
 func (h *ReportHandler) GetCurrentReport(c echo.Context) error {
 	camp, err := h.getActiveCamp(c)
@@ -125,7 +125,7 @@ func (h *ReportHandler) GetCurrentReport(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 	if camp == nil {
-		return c.JSON(http.StatusOK, dto.CampReport{})
+		return c.JSON(http.StatusOK, CampReport{})
 	}
 
 	report, err := h.querier.QueryCampReport(c.Request().Context(), camp.ID)
@@ -141,10 +141,10 @@ func (h *ReportHandler) GetCurrentReport(c echo.Context) error {
 // @Tags         D. Report
 // @Security     AdminAuth
 // @Produce      json
-// @Success      201 {object} dto.CampReport
+// @Success      201 {object} CampReport
 // @Router       /reports/generate [post]
 func (h *ReportHandler) GenerateReport(c echo.Context) error {
-	// For generate, we find the most recently ended camp or just the active camp 
+	// For generate, we find the most recently ended camp or just the active camp
 	// For now we'll just try to get the active camp and generate report.
 	camp, err := h.getActiveCamp(c)
 	if err != nil {
@@ -160,7 +160,7 @@ func (h *ReportHandler) GenerateReport(c echo.Context) error {
 			}
 		}
 	}
-	
+
 	if camp == nil {
 		return echo.NewHTTPError(http.StatusNotFound, "No camp found to generate report")
 	}
@@ -188,14 +188,14 @@ func (h *ReportHandler) ExportCurrentReport(c echo.Context) error {
 	if camp == nil {
 		return c.String(http.StatusNotFound, "No active camp")
 	}
-	
+
 	report, err := h.querier.QueryCampReport(c.Request().Context(), camp.ID)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
 	csvData := "CampID,TotalGroups,FinishedGroups\n" +
-		string(report.CampID) + "," + 
+		string(report.CampID) + "," +
 		// simple mock CSV structure based on report
 		"1,1\n"
 
