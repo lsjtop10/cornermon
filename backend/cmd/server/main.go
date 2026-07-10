@@ -28,15 +28,22 @@ func main() {
 
 	if dbURL == "" {
 		// Fallback for development if not provided
-		dbURL = "postgres://postgres:postgres@localhost:5432/cornermon?sslmode=disable"
-	} else if dbPass != "" {
+		dbURL = "postgres://postgres:postgres@localhost:5432/cornermon?sslmode=disable&timezone=UTC"
+	} else {
 		u, err := url.Parse(dbURL)
 		if err == nil {
-			username := "postgres"
-			if u.User != nil {
-				username = u.User.Username()
+			// Set separate password if provided
+			if dbPass != "" {
+				username := "postgres"
+				if u.User != nil {
+					username = u.User.Username()
+				}
+				u.User = url.UserPassword(username, dbPass)
 			}
-			u.User = url.UserPassword(username, dbPass)
+			// Force session timezone to UTC
+			q := u.Query()
+			q.Set("timezone", "UTC")
+			u.RawQuery = q.Encode()
 			dbURL = u.String()
 		}
 	}

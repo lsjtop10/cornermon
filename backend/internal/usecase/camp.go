@@ -36,7 +36,7 @@ func NewCampService(
 		auditLogs:   auditLogs,
 		broadcaster: broadcaster,
 		tx:          tx,
-		nowFn:       time.Now,
+		nowFn:       func() time.Time { return time.Now().UTC() },
 		uuidFn:      uuid.NewString,
 	}
 }

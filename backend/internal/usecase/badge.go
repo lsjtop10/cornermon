@@ -29,7 +29,7 @@ func NewBadgeService(
 		badges:    badges,
 		auditLogs: auditLogs,
 		tx:        tx,
-		nowFn:     time.Now,
+		nowFn:     func() time.Time { return time.Now().UTC() },
 		uuidFn:    uuid.NewString,
 	}
 }
