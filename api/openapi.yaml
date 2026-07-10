@@ -40,6 +40,10 @@ components:
       type: http
       scheme: bearer
       description: 관리자 승인된 기기 신뢰 토큰 (TRUSTED_DEVICE)
+    DeviceTokenAuth:
+      type: http
+      scheme: bearer
+      description: 승인/미승인(PENDING) 무관하게 기기 등록 요청 시 발급된 기기 신뢰 토큰
     TrackAuth:
       type: http
       scheme: bearer
@@ -57,6 +61,22 @@ components:
   # Common Schemas
   # ──────────────────────────────────────────────
   schemas:
+    TrackLoginResponse:
+      type: object
+      properties:
+        trackToken:
+          type: string
+          description: "트랙 세션 불투명 토큰"
+        track:
+          $ref: '#/components/schemas/Track'
+        corner:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            name:
+              type: string
 
     # ── Error ──────────────────────────────────
     ErrorResponse:
@@ -723,6 +743,7 @@ components:
             - camp_updated
             - messages_changed
             - track_deleted
+            - track_replaced
             - session_revoked
             - camp_ended
             - device_registration_updated
@@ -830,6 +851,27 @@ paths:
   # ════════════════════════════════════════════
   # A. 인증 / 기기 신뢰
   # ════════════════════════════════════════════
+
+  /device-registrations/me:
+    get:
+      tags: [A. Auth & Device Trust]
+      summary: "내 기기 등록 상태 자체 조회"
+      description: |
+        미승인(PENDING) 기기가 자신의 승인 상태를 확인하기 위해 호출한다.
+      security:
+        - DeviceTokenAuth: []
+      responses:
+        "200":
+          description: "상태 반환"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    $ref: '#/components/schemas/DeviceRegistrationStatus'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
 
   /device-registrations:
     post:
@@ -1018,21 +1060,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  trackToken:
-                    type: string
-                    description: "트랙 세션 불투명 토큰"
-                  track:
-                    $ref: '#/components/schemas/Track'
-                  corner:
-                    type: object
-                    properties:
-                      id:
-                        type: string
-                        format: uuid
-                      name:
-                        type: string
+                $ref: '#/components/schemas/TrackLoginResponse'
         "400":
           description: "잘못된 PIN"
           content:
@@ -1744,10 +1772,10 @@ paths:
         기존 트랙 삭제와 신규 코너에 신규 트랙 생성을 원자적으로 수행한다.
         IN_PROGRESS 방문이 있으면 하드 블록.
         새 트랙 정보(신규 PIN 포함)는 이 응답으로 직접 반환한다 — SSE로는 전달하지 않는다.
-        기존 트랙 세션은 트랙 삭제와 동일하게 즉시 무효화되며, 기존 기기는 `GET /events/track/{trackId}`로
-        `track_deleted` 알림을 받아 즉시 B1(로그인) 화면으로 전환한다. 관리자 대시보드는 `tracks_updated`
-        알림을 받아 트랙 목록을 재조회한다.
-        (세부 재인증 흐름 TBD)
+        기존 트랙 세션은 트랙 삭제와 동일하게 삭제되나, 백엔드 유즈케이스 내에서 기존 세션들에 새 트랙 ID를
+        마이그레이션 타겟으로 마킹한다. 클라이언트는 `GET /events/track/{trackId}`로 `track_replaced` 알림을
+        받고 즉시 `POST /tracks/{oldTrackId}/migrate-session`을 호출하여 새 세션으로 자동 전환한다.
+        관리자 대시보드는 `tracks_updated` 알림을 받아 트랙 목록을 재조회한다.
       security:
         - AdminAuth: []
       parameters:
@@ -1777,6 +1805,32 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+
+  /tracks/{id}/migrate-session:
+    post:
+      tags: [B. Camp / Corner / Track]
+      summary: "교체된 트랙의 세션 마이그레이션"
+      description: |
+        트랙이 교체되어 `track_replaced` 알림을 받은 기기가 호출한다.
+        유효한 기존 세션 토큰을 헤더에 담아 전송하면, 백엔드에 기록된 마이그레이션 타겟 트랙의
+        새 세션 토큰과 트랙/코너 정보를 반환하여 자동 로그인을 수행한다.
+      security:
+        - TrackAuth: []
+      parameters:
+        - $ref: '#/components/parameters/TrackIdPath'
+      responses:
+        "200":
+          description: "마이그레이션 완료 — 새 세션 및 트랙 정보 반환"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrackLoginResponse'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        "404":
+          $ref: '#/components/responses/NotFound'
 
   /tracks/{id}/regenerate-pin:
     post:
