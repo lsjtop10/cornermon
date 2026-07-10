@@ -31,6 +31,7 @@ func RegisterRoutes(e *echo.Echo, h *Handlers, adminAuth AuthAdminUsecase, track
 	auth.POST("/track/login", h.Auth.TrackLogin)
 
 	v1.POST("/device-registrations", h.Device.RequestRegistration)
+	v1.GET("/device-registrations/me", h.Device.GetMyRegistrationStatus)
 
 	admin := v1.Group("")
 	admin.Use(AdminAuthMiddleware(adminAuth))
@@ -121,6 +122,7 @@ func RegisterRoutes(e *echo.Echo, h *Handlers, adminAuth AuthAdminUsecase, track
 	track.Use(TrackAuthMiddleware(trackAuth))
 
 	track.POST("/auth/track/logout", h.Auth.TrackLogout)
+	track.POST("/tracks/:id/migrate-session", h.Auth.MigrateSession)
 
 	// ── C. Visit ──
 	if h.Visit != nil {
