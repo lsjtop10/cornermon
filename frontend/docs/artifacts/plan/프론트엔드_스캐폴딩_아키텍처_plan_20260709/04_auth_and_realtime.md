@@ -164,9 +164,9 @@ Stream<api.AdminSnapshot> adminEvents(Ref ref); // GET /events/admin
 | D-2 | `SessionTokenSource` 인터페이스 + 미구현 provider | `frontend/lib/shared/auth/session_token_source.dart` | [x] |
 | D-3 | `AuthInterceptor` — `SessionTokenSource`만 참조, `api_client.dart`의 Dio에 부착 | `frontend/lib/shared/api/client/auth_interceptor.dart` | [x] |
 | D-4 | `DeviceTrust` provider(PENDING/APPROVED/REJECTED/REVOKED 폴링 또는 SSE 감지) | `frontend/lib/facilitator/session/device_trust_provider.dart` | [x] (PENDING→APPROVED 자동 감지는 미해결 — 아래 참고) |
-| D-5 | `TrackSession` provider + `TrackSessionTokenSource` 구현체(PIN 로그인, B1-b 확인/거부, 강제종료 3종) | `frontend/lib/facilitator/session/{track_session_provider,track_session_token_source}.dart` | [ ] |
+| D-5 | `TrackSession` provider + `TrackSessionTokenSource` 구현체(PIN 로그인, B1-b 확인/거부, 강제종료 3종) | `frontend/lib/facilitator/session/{track_session_provider,track_session_token_source}.dart` | [x] |
 | D-6 | `AdminSession` provider + `AdminSessionTokenSource` 구현체(로그인, silent refresh, 로그아웃, 공동관리자 세션 회수 §2.5-b) | `frontend/lib/admin/session/{admin_session_provider,admin_session_token_source}.dart` | 이번 스코프 제외(진행자 앱 우선 — 관리자는 Phase 06에서 착수) |
-| D-7 | `main_admin.dart`/`main_facilitator.dart`에서 `sessionTokenSourceProvider` override 배선 | `frontend/lib/main_{admin,facilitator}.dart` | [ ] (facilitator만) |
+| D-7 | `main_admin.dart`/`main_facilitator.dart`에서 `sessionTokenSourceProvider` override 배선 | `frontend/lib/main_{admin,facilitator}.dart` | [x] (facilitator만 — main_admin.dart는 Phase 06에서) |
 | D-8 | `SseClient`(하트비트/좀비연결 감지, §2.3-b) | `frontend/lib/shared/api/sse/sse_client.dart` | [ ] |
 | D-9 | `adminEvents`/`trackEvents` StreamProvider(DTO 그대로 반환) | `frontend/lib/shared/api/sse/{admin,track}_event_stream.dart` | [ ] (trackEvents만) |
 | D-10 | 관리자 대시보드용 30초 주기 REST 폴백 재조회(§2.3-b "최후 안전망") — provider 레벨 타이머 | `frontend/lib/shared/api/providers/camp_providers.dart` 내 보조 provider | 이번 스코프 제외(관리자 전용) |
