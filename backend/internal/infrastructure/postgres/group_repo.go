@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 
 	"cornermon/backend/internal/domain"
+	"cornermon/backend/internal/infrastructure/postgres/db"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -17,72 +18,70 @@ func NewGroupRepository(pool *pgxpool.Pool) *pgGroupRepository {
 	return &pgGroupRepository{pool: pool}
 }
 
-func (r *pgGroupRepository) conn(ctx context.Context) DBTx {
+func (r *pgGroupRepository) queries(ctx context.Context) *db.Queries {
 	if tx := ExtractTx(ctx); tx != nil {
-		return tx
+		return db.New(tx)
 	}
-	return r.pool
+	return db.New(r.pool)
+}
+
+func mapGroup(row db.Group) (*domain.Group, error) {
+	g := &domain.Group{
+		ID:      domain.GroupID(row.ID),
+		CampID:  domain.CampID(row.CampID),
+		Name:    row.Name,
+		BadgeID: domain.BadgeID(row.BadgeID),
+	}
+
+	if len(row.Itinerary) > 0 {
+		if err := json.Unmarshal(row.Itinerary, &g.Itinerary); err != nil {
+			return nil, err
+		}
+	}
+
+	return g, nil
 }
 
 func (r *pgGroupRepository) Get(ctx context.Context, id domain.GroupID) (*domain.Group, error) {
-	query := `SELECT id, camp_id, name, badge_id, itinerary FROM groups WHERE id = $1`
-	return r.get(ctx, query, id)
-}
-
-func (r *pgGroupRepository) GetByBadge(ctx context.Context, campID domain.CampID, badgeID domain.BadgeID) (*domain.Group, error) {
-	query := `SELECT id, camp_id, name, badge_id, itinerary FROM groups WHERE camp_id = $1 AND badge_id = $2`
-	return r.get(ctx, query, campID, badgeID)
-}
-
-func (r *pgGroupRepository) ListByCamp(ctx context.Context, campID domain.CampID) ([]*domain.Group, error) {
-	query := `SELECT id, camp_id, name, badge_id, itinerary FROM groups WHERE camp_id = $1`
-	rows, err := r.conn(ctx).Query(ctx, query, campID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	var groups []*domain.Group
-	for rows.Next() {
-		var g domain.Group
-		var itineraryJSON []byte
-
-		if err := rows.Scan(&g.ID, &g.CampID, &g.Name, &g.BadgeID, &itineraryJSON); err != nil {
-			return nil, err
-		}
-
-		if len(itineraryJSON) > 0 {
-			if err := json.Unmarshal(itineraryJSON, &g.Itinerary); err != nil {
-				return nil, err
-			}
-		}
-
-		groups = append(groups, &g)
-	}
-	return groups, rows.Err()
-}
-
-func (r *pgGroupRepository) get(ctx context.Context, query string, args ...interface{}) (*domain.Group, error) {
-	var g domain.Group
-	var itineraryJSON []byte
-
-	err := r.conn(ctx).QueryRow(ctx, query, args...).Scan(
-		&g.ID, &g.CampID, &g.Name, &g.BadgeID, &itineraryJSON,
-	)
+	row, err := r.queries(ctx).GetGroup(ctx, string(id))
 	if err != nil {
 		if err == pgx.ErrNoRows {
 			return nil, nil
 		}
 		return nil, err
 	}
+	return mapGroup(row)
+}
 
-	if len(itineraryJSON) > 0 {
-		if err := json.Unmarshal(itineraryJSON, &g.Itinerary); err != nil {
-			return nil, err
+func (r *pgGroupRepository) GetByBadge(ctx context.Context, campID domain.CampID, badgeID domain.BadgeID) (*domain.Group, error) {
+	row, err := r.queries(ctx).GetGroupByBadge(ctx, db.GetGroupByBadgeParams{
+		CampID:  string(campID),
+		BadgeID: string(badgeID),
+	})
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, nil
 		}
+		return nil, err
+	}
+	return mapGroup(row)
+}
+
+func (r *pgGroupRepository) ListByCamp(ctx context.Context, campID domain.CampID) ([]*domain.Group, error) {
+	rows, err := r.queries(ctx).ListGroupsByCamp(ctx, string(campID))
+	if err != nil {
+		return nil, err
 	}
 
-	return &g, nil
+	groups := make([]*domain.Group, len(rows))
+	for i, row := range rows {
+		g, err := mapGroup(row)
+		if err != nil {
+			return nil, err
+		}
+		groups[i] = g
+	}
+	return groups, nil
 }
 
 func (r *pgGroupRepository) Save(ctx context.Context, group *domain.Group) error {
@@ -91,16 +90,11 @@ func (r *pgGroupRepository) Save(ctx context.Context, group *domain.Group) error
 		return err
 	}
 
-	query := `
-		INSERT INTO groups (id, camp_id, name, badge_id, itinerary)
-		VALUES ($1, $2, $3, $4, $5)
-		ON CONFLICT (id) DO UPDATE SET
-			name = EXCLUDED.name,
-			badge_id = EXCLUDED.badge_id,
-			itinerary = EXCLUDED.itinerary
-	`
-	_, err = r.conn(ctx).Exec(ctx, query,
-		group.ID, group.CampID, group.Name, group.BadgeID, itineraryJSON,
-	)
-	return err
+	return r.queries(ctx).SaveGroup(ctx, db.SaveGroupParams{
+		ID:        string(group.ID),
+		CampID:    string(group.CampID),
+		Name:      group.Name,
+		BadgeID:   string(group.BadgeID),
+		Itinerary: itineraryJSON,
+	})
 }

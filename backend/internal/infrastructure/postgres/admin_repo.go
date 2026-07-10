@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"cornermon/backend/internal/domain"
+	"cornermon/backend/internal/infrastructure/postgres/db"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -16,33 +17,39 @@ func NewAdminRepository(pool *pgxpool.Pool) *pgAdminRepository {
 	return &pgAdminRepository{pool: pool}
 }
 
-func (r *pgAdminRepository) conn(ctx context.Context) DBTx {
+func (r *pgAdminRepository) queries(ctx context.Context) *db.Queries {
 	if tx := ExtractTx(ctx); tx != nil {
-		return tx
+		return db.New(tx)
 	}
-	return r.pool
+	return db.New(r.pool)
+}
+
+func mapAdmin(row db.Admin) *domain.Admin {
+	return &domain.Admin{
+		ID:           domain.AdminID(row.ID),
+		Username:     row.Username,
+		PasswordHash: row.PasswordHash,
+	}
 }
 
 func (r *pgAdminRepository) Get(ctx context.Context, id domain.AdminID) (*domain.Admin, error) {
-	query := `SELECT id, username, password_hash FROM admins WHERE id = $1`
-	return r.get(ctx, query, id)
-}
-
-func (r *pgAdminRepository) GetByUsername(ctx context.Context, username string) (*domain.Admin, error) {
-	query := `SELECT id, username, password_hash FROM admins WHERE username = $1`
-	return r.get(ctx, query, username)
-}
-
-func (r *pgAdminRepository) get(ctx context.Context, query string, args ...interface{}) (*domain.Admin, error) {
-	var a domain.Admin
-	err := r.conn(ctx).QueryRow(ctx, query, args...).Scan(
-		&a.ID, &a.Username, &a.PasswordHash,
-	)
+	row, err := r.queries(ctx).GetAdmin(ctx, string(id))
 	if err != nil {
 		if err == pgx.ErrNoRows {
 			return nil, nil
 		}
 		return nil, err
 	}
-	return &a, nil
+	return mapAdmin(row), nil
+}
+
+func (r *pgAdminRepository) GetByUsername(ctx context.Context, username string) (*domain.Admin, error) {
+	row, err := r.queries(ctx).GetAdminByUsername(ctx, username)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return mapAdmin(row), nil
 }

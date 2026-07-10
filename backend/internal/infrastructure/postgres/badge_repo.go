@@ -4,7 +4,9 @@ import (
 	"context"
 
 	"cornermon/backend/internal/domain"
+	"cornermon/backend/internal/infrastructure/postgres/db"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -16,62 +18,63 @@ func NewBadgeRepository(pool *pgxpool.Pool) *pgBadgeRepository {
 	return &pgBadgeRepository{pool: pool}
 }
 
-func (r *pgBadgeRepository) conn(ctx context.Context) DBTx {
+func (r *pgBadgeRepository) queries(ctx context.Context) *db.Queries {
 	if tx := ExtractTx(ctx); tx != nil {
-		return tx
+		return db.New(tx)
 	}
-	return r.pool
+	return db.New(r.pool)
+}
+
+func mapBadge(row db.Badge) *domain.Badge {
+	b := &domain.Badge{
+		ID:        domain.BadgeID(row.ID),
+		ShortID:   row.ShortID,
+		QRPayload: row.QrPayload,
+		Status:    domain.BadgeStatus(row.Status),
+	}
+
+	if row.AssignedGroupID.Valid {
+		b.AssignedGroupID = domain.Some(domain.GroupID(row.AssignedGroupID.String))
+	} else {
+		b.AssignedGroupID = domain.None[domain.GroupID]()
+	}
+
+	return b
 }
 
 func (r *pgBadgeRepository) Get(ctx context.Context, id domain.BadgeID) (*domain.Badge, error) {
-	query := `SELECT id, short_id, qr_payload, status, assigned_group_id FROM badges WHERE id = $1`
-	return r.get(ctx, query, id)
-}
-
-func (r *pgBadgeRepository) GetByQRPayload(ctx context.Context, payload string) (*domain.Badge, error) {
-	query := `SELECT id, short_id, qr_payload, status, assigned_group_id FROM badges WHERE qr_payload = $1`
-	return r.get(ctx, query, payload)
-}
-
-func (r *pgBadgeRepository) get(ctx context.Context, query string, args ...interface{}) (*domain.Badge, error) {
-	var b domain.Badge
-	var assignedGroupID *string
-
-	err := r.conn(ctx).QueryRow(ctx, query, args...).Scan(
-		&b.ID, &b.ShortID, &b.QRPayload, &b.Status, &assignedGroupID,
-	)
+	row, err := r.queries(ctx).GetBadge(ctx, string(id))
 	if err != nil {
 		if err == pgx.ErrNoRows {
 			return nil, nil
 		}
 		return nil, err
 	}
+	return mapBadge(row), nil
+}
 
-	if assignedGroupID != nil {
-		b.AssignedGroupID = domain.Some(domain.GroupID(*assignedGroupID))
-	} else {
-		b.AssignedGroupID = domain.None[domain.GroupID]()
+func (r *pgBadgeRepository) GetByQRPayload(ctx context.Context, payload string) (*domain.Badge, error) {
+	row, err := r.queries(ctx).GetBadgeByQRPayload(ctx, payload)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
 	}
-
-	return &b, nil
+	return mapBadge(row), nil
 }
 
 func (r *pgBadgeRepository) Save(ctx context.Context, badge *domain.Badge) error {
-	var assignedGroupID *string
-	if val, ok := badge.AssignedGroupID.Value(); ok {
-		s := string(val)
-		assignedGroupID = &s
+	params := db.SaveBadgeParams{
+		ID:        string(badge.ID),
+		ShortID:   badge.ShortID,
+		QrPayload: badge.QRPayload,
+		Status:    string(badge.Status),
 	}
 
-	query := `
-		INSERT INTO badges (id, short_id, qr_payload, status, assigned_group_id)
-		VALUES ($1, $2, $3, $4, $5)
-		ON CONFLICT (id) DO UPDATE SET
-			status = EXCLUDED.status,
-			assigned_group_id = EXCLUDED.assigned_group_id
-	`
-	_, err := r.conn(ctx).Exec(ctx, query,
-		badge.ID, badge.ShortID, badge.QRPayload, badge.Status, assignedGroupID,
-	)
-	return err
+	if val, ok := badge.AssignedGroupID.Value(); ok {
+		params.AssignedGroupID = pgtype.Text{String: string(val), Valid: true}
+	}
+
+	return r.queries(ctx).SaveBadge(ctx, params)
 }

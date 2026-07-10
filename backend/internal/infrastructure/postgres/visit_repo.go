@@ -5,7 +5,9 @@ import (
 	"time"
 
 	"cornermon/backend/internal/domain"
+	"cornermon/backend/internal/infrastructure/postgres/db"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -17,79 +19,83 @@ func NewVisitRepository(pool *pgxpool.Pool) *pgVisitRepository {
 	return &pgVisitRepository{pool: pool}
 }
 
-func (r *pgVisitRepository) conn(ctx context.Context) DBTx {
+func (r *pgVisitRepository) queries(ctx context.Context) *db.Queries {
 	if tx := ExtractTx(ctx); tx != nil {
-		return tx
+		return db.New(tx)
 	}
-	return r.pool
+	return db.New(r.pool)
+}
+
+func mapVisit(row db.Visit) *domain.Visit {
+	v := &domain.Visit{
+		ID:          domain.VisitID(row.ID),
+		GroupID:     domain.GroupID(row.GroupID),
+		CornerID:    domain.CornerID(row.CornerID),
+		TrackID:     domain.TrackID(row.TrackID),
+		Status:      domain.VisitStatus(row.Status),
+		InputMethod: domain.VisitInputMethod(row.InputMethod),
+		StartedAt:   row.StartedAt.Time,
+	}
+
+	if row.EndedAt.Valid {
+		v.EndedAt = domain.Some(row.EndedAt.Time)
+	} else {
+		v.EndedAt = domain.None[time.Time]()
+	}
+
+	return v
 }
 
 func (r *pgVisitRepository) Get(ctx context.Context, id domain.VisitID) (*domain.Visit, error) {
-	query := `SELECT id, group_id, corner_id, track_id, status, input_method, started_at, ended_at FROM visits WHERE id = $1`
-	var v domain.Visit
-	var endedAt *time.Time
-	err := r.conn(ctx).QueryRow(ctx, query, id).Scan(
-		&v.ID, &v.GroupID, &v.CornerID, &v.TrackID, &v.Status, &v.InputMethod, &v.StartedAt, &endedAt,
-	)
+	row, err := r.queries(ctx).GetVisit(ctx, string(id))
 	if err != nil {
 		if err == pgx.ErrNoRows {
 			return nil, nil
 		}
 		return nil, err
 	}
-	if endedAt != nil {
-		v.EndedAt = domain.Some(*endedAt)
-	} else {
-		v.EndedAt = domain.None[time.Time]()
-	}
-	return &v, nil
+	return mapVisit(row), nil
 }
 
 func (r *pgVisitRepository) GetInProgressByTrack(ctx context.Context, trackID domain.TrackID) (*domain.Visit, error) {
-	query := `SELECT id, group_id, corner_id, track_id, status, input_method, started_at, ended_at FROM visits WHERE track_id = $1 AND status = 'IN_PROGRESS'`
-	return r.get(ctx, query, trackID)
-}
-
-func (r *pgVisitRepository) GetCompletedByGroupAndCorner(ctx context.Context, groupID domain.GroupID, cornerID domain.CornerID) (*domain.Visit, error) {
-	query := `SELECT id, group_id, corner_id, track_id, status, input_method, started_at, ended_at FROM visits WHERE group_id = $1 AND corner_id = $2 AND status = 'COMPLETED' ORDER BY ended_at DESC LIMIT 1`
-	return r.get(ctx, query, groupID, cornerID)
-}
-
-func (r *pgVisitRepository) get(ctx context.Context, query string, args ...interface{}) (*domain.Visit, error) {
-	var v domain.Visit
-	var endedAt *time.Time
-	err := r.conn(ctx).QueryRow(ctx, query, args...).Scan(
-		&v.ID, &v.GroupID, &v.CornerID, &v.TrackID, &v.Status, &v.InputMethod, &v.StartedAt, &endedAt,
-	)
+	row, err := r.queries(ctx).GetInProgressVisitByTrack(ctx, string(trackID))
 	if err != nil {
 		if err == pgx.ErrNoRows {
 			return nil, nil
 		}
 		return nil, err
 	}
-	if endedAt != nil {
-		v.EndedAt = domain.Some(*endedAt)
-	} else {
-		v.EndedAt = domain.None[time.Time]()
+	return mapVisit(row), nil
+}
+
+func (r *pgVisitRepository) GetCompletedByGroupAndCorner(ctx context.Context, groupID domain.GroupID, cornerID domain.CornerID) (*domain.Visit, error) {
+	row, err := r.queries(ctx).GetCompletedVisitByGroupAndCorner(ctx, db.GetCompletedVisitByGroupAndCornerParams{
+		GroupID:  string(groupID),
+		CornerID: string(cornerID),
+	})
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
 	}
-	return &v, nil
+	return mapVisit(row), nil
 }
 
 func (r *pgVisitRepository) Save(ctx context.Context, visit *domain.Visit) error {
-	var endedAt *time.Time
-	if val, ok := visit.EndedAt.Value(); ok {
-		endedAt = &val
+	params := db.SaveVisitParams{
+		ID:          string(visit.ID),
+		GroupID:     string(visit.GroupID),
+		CornerID:    string(visit.CornerID),
+		TrackID:     string(visit.TrackID),
+		Status:      string(visit.Status),
+		InputMethod: string(visit.InputMethod),
+		StartedAt:   pgtype.Timestamptz{Time: visit.StartedAt, Valid: !visit.StartedAt.IsZero()},
 	}
 
-	query := `
-		INSERT INTO visits (id, group_id, corner_id, track_id, status, input_method, started_at, ended_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-		ON CONFLICT (id) DO UPDATE SET
-			status = EXCLUDED.status,
-			ended_at = EXCLUDED.ended_at
-	`
-	_, err := r.conn(ctx).Exec(ctx, query,
-		visit.ID, visit.GroupID, visit.CornerID, visit.TrackID, visit.Status, visit.InputMethod, visit.StartedAt, endedAt,
-	)
-	return err
+	if val, ok := visit.EndedAt.Value(); ok {
+		params.EndedAt = pgtype.Timestamptz{Time: val, Valid: true}
+	}
+
+	return r.queries(ctx).SaveVisit(ctx, params)
 }

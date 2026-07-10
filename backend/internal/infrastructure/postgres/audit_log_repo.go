@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 
 	"cornermon/backend/internal/domain"
+	"cornermon/backend/internal/infrastructure/postgres/db"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -16,11 +18,11 @@ func NewAuditLogRepository(pool *pgxpool.Pool) *pgAuditLogRepository {
 	return &pgAuditLogRepository{pool: pool}
 }
 
-func (r *pgAuditLogRepository) conn(ctx context.Context) DBTx {
+func (r *pgAuditLogRepository) queries(ctx context.Context) *db.Queries {
 	if tx := ExtractTx(ctx); tx != nil {
-		return tx
+		return db.New(tx)
 	}
-	return r.pool
+	return db.New(r.pool)
 }
 
 func (r *pgAuditLogRepository) Save(ctx context.Context, log *domain.AuditLog) error {
@@ -29,12 +31,13 @@ func (r *pgAuditLogRepository) Save(ctx context.Context, log *domain.AuditLog) e
 		return err
 	}
 
-	query := `
-		INSERT INTO audit_logs (id, actor, action, target, success, occurred_at, metadata)
-		VALUES ($1, $2, $3, $4, $5, $6, $7)
-	`
-	_, err = r.conn(ctx).Exec(ctx, query,
-		log.ID, log.Actor, log.Action, log.Target, log.Success, log.OccurredAt, metaJSON,
-	)
-	return err
+	return r.queries(ctx).SaveAuditLog(ctx, db.SaveAuditLogParams{
+		ID:         string(log.ID),
+		Actor:      log.Actor,
+		Action:     log.Action,
+		Target:     log.Target,
+		Success:    log.Success,
+		OccurredAt: pgtype.Timestamptz{Time: log.OccurredAt, Valid: !log.OccurredAt.IsZero()},
+		Metadata:   metaJSON,
+	})
 }

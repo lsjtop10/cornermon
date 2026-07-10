@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -38,12 +37,7 @@ type contextKey string
 
 const txKey = contextKey("tx")
 
-// DBTx is an interface that pgxpool.Pool and pgx.Tx both implement
-type DBTx interface {
-	Exec(context.Context, string, ...interface{}) (pgconn.CommandTag, error)
-	Query(context.Context, string, ...interface{}) (pgx.Rows, error)
-	QueryRow(context.Context, string, ...interface{}) pgx.Row
-}
+
 
 // ExtractTx는 context에서 트랜잭션을 추출하거나, 없으면 nil을 반환합니다.
 func ExtractTx(ctx context.Context) pgx.Tx {

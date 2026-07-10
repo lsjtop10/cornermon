@@ -5,7 +5,9 @@ import (
 	"time"
 
 	"cornermon/backend/internal/domain"
+	"cornermon/backend/internal/infrastructure/postgres/db"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -17,66 +19,80 @@ func NewAdminSessionRepository(pool *pgxpool.Pool) *pgAdminSessionRepository {
 	return &pgAdminSessionRepository{pool: pool}
 }
 
-func (r *pgAdminSessionRepository) conn(ctx context.Context) DBTx {
+func (r *pgAdminSessionRepository) queries(ctx context.Context) *db.Queries {
 	if tx := ExtractTx(ctx); tx != nil {
-		return tx
+		return db.New(tx)
 	}
-	return r.pool
+	return db.New(r.pool)
+}
+
+func mapAdminSession(row db.AdminSession) *domain.AdminSession {
+	s := &domain.AdminSession{
+		ID:               domain.AdminSessionID(row.ID),
+		AdminID:          domain.AdminID(row.AdminID),
+		AccessTokenHash:  row.AccessTokenHash,
+		RefreshTokenHash: row.RefreshTokenHash,
+		DeviceInfo:       row.DeviceInfo,
+		CreatedAt:        row.CreatedAt.Time,
+		LastUsedAt:       row.LastUsedAt.Time,
+	}
+
+	if row.RevokedAt.Valid {
+		s.RevokedAt = domain.Some(row.RevokedAt.Time)
+	} else {
+		s.RevokedAt = domain.None[time.Time]()
+	}
+
+	return s
 }
 
 func (r *pgAdminSessionRepository) Get(ctx context.Context, id domain.AdminSessionID) (*domain.AdminSession, error) {
-	query := `SELECT id, admin_id, access_token_hash, refresh_token_hash, device_info, created_at, last_used_at, revoked_at FROM admin_sessions WHERE id = $1`
-	return r.get(ctx, query, id)
-}
-
-func (r *pgAdminSessionRepository) GetByAccessTokenHash(ctx context.Context, hash string) (*domain.AdminSession, error) {
-	query := `SELECT id, admin_id, access_token_hash, refresh_token_hash, device_info, created_at, last_used_at, revoked_at FROM admin_sessions WHERE access_token_hash = $1`
-	return r.get(ctx, query, hash)
-}
-
-func (r *pgAdminSessionRepository) GetByRefreshTokenHash(ctx context.Context, hash string) (*domain.AdminSession, error) {
-	query := `SELECT id, admin_id, access_token_hash, refresh_token_hash, device_info, created_at, last_used_at, revoked_at FROM admin_sessions WHERE refresh_token_hash = $1`
-	return r.get(ctx, query, hash)
-}
-
-func (r *pgAdminSessionRepository) get(ctx context.Context, query string, args ...interface{}) (*domain.AdminSession, error) {
-	var s domain.AdminSession
-	var revokedAt *time.Time
-
-	err := r.conn(ctx).QueryRow(ctx, query, args...).Scan(
-		&s.ID, &s.AdminID, &s.AccessTokenHash, &s.RefreshTokenHash, &s.DeviceInfo, &s.CreatedAt, &s.LastUsedAt, &revokedAt,
-	)
+	row, err := r.queries(ctx).GetAdminSession(ctx, string(id))
 	if err != nil {
 		if err == pgx.ErrNoRows {
 			return nil, nil
 		}
 		return nil, err
 	}
+	return mapAdminSession(row), nil
+}
 
-	if revokedAt != nil {
-		s.RevokedAt = domain.Some(*revokedAt)
-	} else {
-		s.RevokedAt = domain.None[time.Time]()
+func (r *pgAdminSessionRepository) GetByAccessTokenHash(ctx context.Context, hash string) (*domain.AdminSession, error) {
+	row, err := r.queries(ctx).GetAdminSessionByAccessTokenHash(ctx, hash)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
 	}
+	return mapAdminSession(row), nil
+}
 
-	return &s, nil
+func (r *pgAdminSessionRepository) GetByRefreshTokenHash(ctx context.Context, hash string) (*domain.AdminSession, error) {
+	row, err := r.queries(ctx).GetAdminSessionByRefreshTokenHash(ctx, hash)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return mapAdminSession(row), nil
 }
 
 func (r *pgAdminSessionRepository) Save(ctx context.Context, session *domain.AdminSession) error {
-	var revokedAt *time.Time
-	if val, ok := session.RevokedAt.Value(); ok {
-		revokedAt = &val
+	params := db.SaveAdminSessionParams{
+		ID:               string(session.ID),
+		AdminID:          string(session.AdminID),
+		AccessTokenHash:  session.AccessTokenHash,
+		RefreshTokenHash: session.RefreshTokenHash,
+		DeviceInfo:       session.DeviceInfo,
+		CreatedAt:        pgtype.Timestamptz{Time: session.CreatedAt, Valid: !session.CreatedAt.IsZero()},
+		LastUsedAt:       pgtype.Timestamptz{Time: session.LastUsedAt, Valid: !session.LastUsedAt.IsZero()},
 	}
 
-	query := `
-		INSERT INTO admin_sessions (id, admin_id, access_token_hash, refresh_token_hash, device_info, created_at, last_used_at, revoked_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-		ON CONFLICT (id) DO UPDATE SET
-			last_used_at = EXCLUDED.last_used_at,
-			revoked_at = EXCLUDED.revoked_at
-	`
-	_, err := r.conn(ctx).Exec(ctx, query,
-		session.ID, session.AdminID, session.AccessTokenHash, session.RefreshTokenHash, session.DeviceInfo, session.CreatedAt, session.LastUsedAt, revokedAt,
-	)
-	return err
+	if val, ok := session.RevokedAt.Value(); ok {
+		params.RevokedAt = pgtype.Timestamptz{Time: val, Valid: true}
+	}
+
+	return r.queries(ctx).SaveAdminSession(ctx, params)
 }

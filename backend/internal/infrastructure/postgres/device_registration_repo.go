@@ -5,7 +5,9 @@ import (
 	"time"
 
 	"cornermon/backend/internal/domain"
+	"cornermon/backend/internal/infrastructure/postgres/db"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -17,110 +19,90 @@ func NewDeviceRegistrationRepository(pool *pgxpool.Pool) *pgDeviceRegistrationRe
 	return &pgDeviceRegistrationRepository{pool: pool}
 }
 
-func (r *pgDeviceRegistrationRepository) conn(ctx context.Context) DBTx {
+func (r *pgDeviceRegistrationRepository) queries(ctx context.Context) *db.Queries {
 	if tx := ExtractTx(ctx); tx != nil {
-		return tx
+		return db.New(tx)
 	}
-	return r.pool
+	return db.New(r.pool)
+}
+
+func mapDeviceRegistration(row db.DeviceRegistration) *domain.DeviceRegistration {
+	d := &domain.DeviceRegistration{
+		ID:                domain.DeviceRegistrationID(row.ID),
+		CampID:            domain.CampID(row.CampID),
+		DeviceName:        row.DeviceName,
+		Status:            domain.DeviceRegistrationStatus(row.Status),
+		TokenHash:         row.TokenHash,
+		FailedPinAttempts: int(row.FailedPinAttempts),
+	}
+
+	if row.LockedUntil.Valid {
+		d.LockedUntil = domain.Some(row.LockedUntil.Time)
+	} else {
+		d.LockedUntil = domain.None[time.Time]()
+	}
+
+	if row.ApprovedAt.Valid {
+		d.ApprovedAt = domain.Some(row.ApprovedAt.Time)
+	} else {
+		d.ApprovedAt = domain.None[time.Time]()
+	}
+
+	return d
 }
 
 func (r *pgDeviceRegistrationRepository) Get(ctx context.Context, id domain.DeviceRegistrationID) (*domain.DeviceRegistration, error) {
-	query := `SELECT id, camp_id, device_name, status, token_hash, failed_pin_attempts, locked_until, approved_at FROM device_registrations WHERE id = $1`
-	return r.get(ctx, query, id)
-}
-
-func (r *pgDeviceRegistrationRepository) GetByTokenHash(ctx context.Context, hash string) (*domain.DeviceRegistration, error) {
-	query := `SELECT id, camp_id, device_name, status, token_hash, failed_pin_attempts, locked_until, approved_at FROM device_registrations WHERE token_hash = $1`
-	return r.get(ctx, query, hash)
-}
-
-func (r *pgDeviceRegistrationRepository) ListPendingByCamp(ctx context.Context, campID domain.CampID) ([]*domain.DeviceRegistration, error) {
-	query := `SELECT id, camp_id, device_name, status, token_hash, failed_pin_attempts, locked_until, approved_at FROM device_registrations WHERE camp_id = $1 AND status = 'PENDING'`
-	rows, err := r.conn(ctx).Query(ctx, query, campID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	var regs []*domain.DeviceRegistration
-	for rows.Next() {
-		var d domain.DeviceRegistration
-		var lockedUntil *time.Time
-		var approvedAt *time.Time
-
-		if err := rows.Scan(&d.ID, &d.CampID, &d.DeviceName, &d.Status, &d.TokenHash, &d.FailedPinAttempts, &lockedUntil, &approvedAt); err != nil {
-			return nil, err
-		}
-
-		if lockedUntil != nil {
-			d.LockedUntil = domain.Some(*lockedUntil)
-		} else {
-			d.LockedUntil = domain.None[time.Time]()
-		}
-
-		if approvedAt != nil {
-			d.ApprovedAt = domain.Some(*approvedAt)
-		} else {
-			d.ApprovedAt = domain.None[time.Time]()
-		}
-
-		regs = append(regs, &d)
-	}
-	return regs, rows.Err()
-}
-
-func (r *pgDeviceRegistrationRepository) get(ctx context.Context, query string, args ...interface{}) (*domain.DeviceRegistration, error) {
-	var d domain.DeviceRegistration
-	var lockedUntil *time.Time
-	var approvedAt *time.Time
-
-	err := r.conn(ctx).QueryRow(ctx, query, args...).Scan(
-		&d.ID, &d.CampID, &d.DeviceName, &d.Status, &d.TokenHash, &d.FailedPinAttempts, &lockedUntil, &approvedAt,
-	)
+	row, err := r.queries(ctx).GetDeviceRegistration(ctx, string(id))
 	if err != nil {
 		if err == pgx.ErrNoRows {
 			return nil, nil
 		}
 		return nil, err
 	}
+	return mapDeviceRegistration(row), nil
+}
 
-	if lockedUntil != nil {
-		d.LockedUntil = domain.Some(*lockedUntil)
-	} else {
-		d.LockedUntil = domain.None[time.Time]()
+func (r *pgDeviceRegistrationRepository) GetByTokenHash(ctx context.Context, hash string) (*domain.DeviceRegistration, error) {
+	row, err := r.queries(ctx).GetDeviceRegistrationByTokenHash(ctx, hash)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return mapDeviceRegistration(row), nil
+}
+
+func (r *pgDeviceRegistrationRepository) ListPendingByCamp(ctx context.Context, campID domain.CampID) ([]*domain.DeviceRegistration, error) {
+	rows, err := r.queries(ctx).ListPendingDeviceRegistrationsByCamp(ctx, string(campID))
+	if err != nil {
+		return nil, err
 	}
 
-	if approvedAt != nil {
-		d.ApprovedAt = domain.Some(*approvedAt)
-	} else {
-		d.ApprovedAt = domain.None[time.Time]()
+	regs := make([]*domain.DeviceRegistration, len(rows))
+	for i, row := range rows {
+		regs[i] = mapDeviceRegistration(row)
 	}
-
-	return &d, nil
+	return regs, nil
 }
 
 func (r *pgDeviceRegistrationRepository) Save(ctx context.Context, reg *domain.DeviceRegistration) error {
-	var lockedUntil *time.Time
+	params := db.SaveDeviceRegistrationParams{
+		ID:                string(reg.ID),
+		CampID:            string(reg.CampID),
+		DeviceName:        reg.DeviceName,
+		Status:            string(reg.Status),
+		TokenHash:         reg.TokenHash,
+		FailedPinAttempts: int32(reg.FailedPinAttempts),
+	}
+
 	if val, ok := reg.LockedUntil.Value(); ok {
-		lockedUntil = &val
+		params.LockedUntil = pgtype.Timestamptz{Time: val, Valid: true}
 	}
 
-	var approvedAt *time.Time
 	if val, ok := reg.ApprovedAt.Value(); ok {
-		approvedAt = &val
+		params.ApprovedAt = pgtype.Timestamptz{Time: val, Valid: true}
 	}
 
-	query := `
-		INSERT INTO device_registrations (id, camp_id, device_name, status, token_hash, failed_pin_attempts, locked_until, approved_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-		ON CONFLICT (id) DO UPDATE SET
-			status = EXCLUDED.status,
-			failed_pin_attempts = EXCLUDED.failed_pin_attempts,
-			locked_until = EXCLUDED.locked_until,
-			approved_at = EXCLUDED.approved_at
-	`
-	_, err := r.conn(ctx).Exec(ctx, query,
-		reg.ID, reg.CampID, reg.DeviceName, reg.Status, reg.TokenHash, reg.FailedPinAttempts, lockedUntil, approvedAt,
-	)
-	return err
+	return r.queries(ctx).SaveDeviceRegistration(ctx, params)
 }
