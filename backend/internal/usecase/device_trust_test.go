@@ -92,3 +92,41 @@ func TestDeviceTrustService_ApproveDevice(t *testing.T) {
 		}
 	})
 }
+
+func TestDeviceTrustService_GetMyRegistrationStatus(t *testing.T) {
+	t.Run("ShouldReturnStatusWhenTokenIsValid", func(t *testing.T) {
+		// Arrange
+		now := time.Now()
+		camps := NewMockCampRepository()
+		camp := &domain.Camp{ID: "camp-1", Status: domain.CampActive}
+		camps.Save(context.Background(), camp)
+
+		devices := NewMockDeviceRegistrationRepository()
+		auditLogs := &MockAuditLogRepository{}
+		broadcaster := &MockBroadcaster{}
+		tx := &MockTxManager{}
+
+		s := NewDeviceTrustService(camps, devices, auditLogs, broadcaster, tx)
+		s.nowFn = func() time.Time { return now }
+		s.uuidFn = func() string { return "device-uuid" }
+
+		plainToken, _, err := s.RequestRegistration(context.Background(), "camp-1", "iPad-1")
+		if err != nil {
+			t.Fatalf("expected no error, got %v", err)
+		}
+
+		// Act
+		status, err := s.GetMyRegistrationStatus(context.Background(), plainToken)
+
+		// Assert
+		if err != nil {
+			t.Fatalf("expected no error, got %v", err)
+		}
+		if status == nil {
+			t.Fatalf("expected status to be not nil")
+		}
+		if *status != domain.DevicePending {
+			t.Errorf("expected status 'PENDING', got %s", *status)
+		}
+	})
+}
