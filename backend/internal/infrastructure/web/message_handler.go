@@ -10,7 +10,6 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-
 type MessageUsecase interface {
 	SendBroadcast(ctx context.Context, campID domain.CampID, content string, actorAdminID domain.AdminID) (*domain.Message, error)
 	ListBroadcastsByCamp(ctx context.Context, campID domain.CampID) ([]*domain.Message, error)
@@ -19,7 +18,6 @@ type MessageUsecase interface {
 	SendDirect(ctx context.Context, trackID domain.TrackID, content string, senderRole domain.SenderRole) (*domain.Message, error)
 	ListDirectMessages(ctx context.Context, trackID domain.TrackID) ([]*domain.Message, error)
 }
-
 
 type MessageHandler struct {
 	message MessageUsecase
@@ -134,7 +132,6 @@ func (h *MessageHandler) GetBroadcastReceipts(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, receipts)
 }
-
 
 // @Summary      공지사항 읽음 처리
 // @Description  트랙 진행자가 공지사항을 확인(읽음) 처리한다.

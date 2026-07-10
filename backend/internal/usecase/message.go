@@ -258,4 +258,3 @@ func (s *MessageService) GetBroadcastReceipts(ctx context.Context, messageID dom
 
 	return dtos, nil
 }
-

@@ -71,4 +71,3 @@ func (r *pgAuditLogRepository) List(ctx context.Context, limit, offset int) ([]*
 	}
 	return logs, nil
 }
-

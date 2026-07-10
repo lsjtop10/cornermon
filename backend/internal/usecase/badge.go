@@ -76,7 +76,7 @@ func (s *BadgeService) ExportBadges(ctx context.Context) ([]byte, error) {
 
 	var buf bytes.Buffer
 	writer := csv.NewWriter(&buf)
-	
+
 	_ = writer.Write([]string{"BadgeID", "ShortID", "QRPayload", "Status", "AssignedGroupID"})
 	for _, b := range badges {
 		var groupIDStr string

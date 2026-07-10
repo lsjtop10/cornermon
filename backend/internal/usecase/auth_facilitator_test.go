@@ -219,7 +219,7 @@ func TestFacilitatorAuthService_Login(t *testing.T) {
 			t.Fatalf("expected 'invalid pin' error, got %v", err)
 		}
 
-		if len(broadcaster.Broadcasts) != 1 || 
+		if len(broadcaster.Broadcasts) != 1 ||
 			broadcaster.Broadcasts[0].CampID != "camp-1" ||
 			broadcaster.Broadcasts[0].Event != EventLockoutAlert ||
 			broadcaster.Broadcasts[0].Scope != "device:device-1" {

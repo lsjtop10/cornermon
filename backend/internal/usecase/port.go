@@ -7,7 +7,6 @@ import (
 	"cornermon/backend/internal/domain"
 )
 
-
 // TxManager는 트랜잭션 경계를 정의하기 위한 유스케이스 포트입니다.
 type TxManager interface {
 	RunInTx(ctx context.Context, fn func(ctx context.Context) error) error
@@ -80,7 +79,6 @@ type FacilitatorSessionRepository interface {
 	Save(ctx context.Context, session *domain.FacilitatorSession) error
 }
 
-
 // AdminRepository는 관리자 엔티티의 지속성을 담당하는 포트입니다.
 type AdminRepository interface {
 	Get(ctx context.Context, id domain.AdminID) (*domain.Admin, error)
@@ -95,7 +93,6 @@ type AdminSessionRepository interface {
 	Save(ctx context.Context, session *domain.AdminSession) error
 	ListByAdmin(ctx context.Context, adminID domain.AdminID) ([]*domain.AdminSession, error)
 }
-
 
 // MessageRepository는 메시지 엔티티의 지속성을 담당하는 포트입니다.
 type MessageRepository interface {
@@ -119,17 +116,17 @@ type AuditLogRepository interface {
 type NotificationEvent string
 
 const (
-	EventTracksUpdated            NotificationEvent = "tracks_updated"
-	EventTrackUpdated             NotificationEvent = "track_updated"
-	EventCornersUpdated           NotificationEvent = "corners_updated"
-	EventGroupsUpdated            NotificationEvent = "groups_updated"
-	EventCampUpdated              NotificationEvent = "camp_updated"
-	EventMessagesChanged          NotificationEvent = "messages_changed"
-	EventTrackDeleted             NotificationEvent = "track_deleted"
-	EventSessionRevoked           NotificationEvent = "session_revoked"
-	EventCampEnded                NotificationEvent = "camp_ended"
+	EventTracksUpdated             NotificationEvent = "tracks_updated"
+	EventTrackUpdated              NotificationEvent = "track_updated"
+	EventCornersUpdated            NotificationEvent = "corners_updated"
+	EventGroupsUpdated             NotificationEvent = "groups_updated"
+	EventCampUpdated               NotificationEvent = "camp_updated"
+	EventMessagesChanged           NotificationEvent = "messages_changed"
+	EventTrackDeleted              NotificationEvent = "track_deleted"
+	EventSessionRevoked            NotificationEvent = "session_revoked"
+	EventCampEnded                 NotificationEvent = "camp_ended"
 	EventDeviceRegistrationUpdated NotificationEvent = "device_registration_updated"
-	EventLockoutAlert             NotificationEvent = "lockout_alert"
+	EventLockoutAlert              NotificationEvent = "lockout_alert"
 )
 
 // Broadcaster는 트랜잭션 성공 후 SSE 클라이언트에게 실시간 알림을 푸시하는 포트입니다.
@@ -189,5 +186,3 @@ type BroadcastReceiptDTO struct {
 	IsRead     bool
 	ReadAt     domain.Optional[time.Time]
 }
-
-

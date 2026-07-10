@@ -54,7 +54,6 @@ func (r *pgFacilitatorSessionRepository) Get(ctx context.Context, id domain.Faci
 	return mapFacilitatorSession(row), nil
 }
 
-
 func (r *pgFacilitatorSessionRepository) GetByTokenHash(ctx context.Context, hash string) (*domain.FacilitatorSession, error) {
 	row, err := r.queries(ctx).GetFacilitatorSessionByTokenHash(ctx, hash)
 	if err != nil {

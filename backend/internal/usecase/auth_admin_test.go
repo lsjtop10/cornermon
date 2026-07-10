@@ -62,7 +62,6 @@ func TestAdminAuthService_Login(t *testing.T) {
 
 		s := NewAdminAuthService(admins, sessions, facSessions, tracks, corners, broadcaster, auditLogs, tx)
 
-
 		// Act
 		_, _, _, err := s.Login(context.Background(), "admin-1", "wrong-password", "PC")
 

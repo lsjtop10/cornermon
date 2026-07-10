@@ -44,9 +44,9 @@ func NewCampService(
 // OpenNewCamp
 func (s *CampService) OpenNewCamp(ctx context.Context, name string) (*domain.Camp, error) {
 	camp := &domain.Camp{
-		ID:     domain.CampID(s.uuidFn()),
-		Name:   name,
-		Status: domain.CampPending,
+		ID:                   domain.CampID(s.uuidFn()),
+		Name:                 name,
+		Status:               domain.CampPending,
 		BottleneckMinSamples: 3,
 		BottleneckRatioPct:   20,
 	}

@@ -37,8 +37,6 @@ type contextKey string
 
 const txKey = contextKey("tx")
 
-
-
 // ExtractTx는 context에서 트랜잭션을 추출하거나, 없으면 nil을 반환합니다.
 func ExtractTx(ctx context.Context) pgx.Tx {
 	if tx, ok := ctx.Value(txKey).(pgx.Tx); ok {

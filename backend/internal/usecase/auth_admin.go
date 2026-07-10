@@ -51,8 +51,6 @@ func NewAdminAuthService(
 	}
 }
 
-
-
 // Login - UC-11
 func (s *AdminAuthService) Login(
 	ctx context.Context,
@@ -268,4 +266,3 @@ func (s *AdminAuthService) ForceTrackLogout(ctx context.Context, trackID domain.
 	_ = s.broadcaster.Broadcast(ctx, corner.CampID, EventSessionRevoked, string(trackID))
 	return nil
 }
-

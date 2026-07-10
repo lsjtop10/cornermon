@@ -109,4 +109,3 @@ func (r *pgAdminSessionRepository) ListByAdmin(ctx context.Context, adminID doma
 	}
 	return sessions, nil
 }
-

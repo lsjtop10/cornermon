@@ -337,7 +337,6 @@ func (r *MockFacilitatorSessionRepository) GetByTokenHash(ctx context.Context, h
 	return s, nil
 }
 
-
 func (r *MockFacilitatorSessionRepository) ListActiveByTrack(ctx context.Context, trackID domain.TrackID) ([]*domain.FacilitatorSession, error) {
 	var list []*domain.FacilitatorSession
 	for _, s := range r.Sessions {
@@ -440,7 +439,6 @@ func (r *MockAdminSessionRepository) ListByAdmin(ctx context.Context, adminID do
 	}
 	return list, nil
 }
-
 
 // MockMessageRepository
 type MockMessageRepository struct {
