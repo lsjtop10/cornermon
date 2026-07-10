@@ -1,0 +1,82 @@
+package middleware
+
+import (
+	"errors"
+	"net/http"
+
+	"cornermon/backend/internal/domain"
+	"cornermon/backend/internal/infrastructure/http/dto"
+
+	"github.com/labstack/echo/v4"
+)
+
+func ErrorHandler() echo.HTTPErrorHandler {
+	return func(err error, c echo.Context) {
+		if c.Response().Committed {
+			return
+		}
+
+		var he *echo.HTTPError
+		if errors.As(err, &he) {
+			code := he.Code
+			var msg string
+			if m, ok := he.Message.(string); ok {
+				msg = m
+			} else {
+				msg = err.Error()
+			}
+			_ = c.JSON(code, dto.ErrorResponse{Code: "HTTP_ERROR", Message: msg})
+			return
+		}
+
+		code, errCode := mapDomainError(err)
+
+		_ = c.JSON(code, dto.ErrorResponse{
+			Code:    errCode,
+			Message: err.Error(),
+		})
+	}
+}
+
+func mapDomainError(err error) (int, string) {
+	switch {
+	case errors.Is(err, domain.ErrCampInvalidTransition):
+		return http.StatusBadRequest, "INVALID_TRANSITION"
+	case errors.Is(err, domain.ErrGroupBusy):
+		return http.StatusConflict, "GROUP_BUSY"
+	case errors.Is(err, domain.ErrDuplicateVisit):
+		return http.StatusConflict, "DUPLICATE_VISIT"
+	case errors.Is(err, domain.ErrTrackNotActive):
+		return http.StatusForbidden, "TRACK_NOT_ACTIVE"
+	case errors.Is(err, domain.ErrTrackBusy):
+		return http.StatusConflict, "TRACK_BUSY"
+	case errors.Is(err, domain.ErrTrackDeleteBlocked):
+		return http.StatusConflict, "TRACK_DELETE_BLOCKED"
+	case errors.Is(err, domain.ErrVisitAlreadyCompleted):
+		return http.StatusConflict, "VISIT_ALREADY_COMPLETED"
+	case errors.Is(err, domain.ErrBadgeAlreadyAssigned):
+		return http.StatusConflict, "BADGE_ALREADY_ASSIGNED"
+	case errors.Is(err, domain.ErrBadgeNotAssigned):
+		return http.StatusBadRequest, "BADGE_NOT_ASSIGNED"
+	case errors.Is(err, domain.ErrDeviceNotApproved):
+		return http.StatusForbidden, "DEVICE_NOT_APPROVED"
+	case errors.Is(err, domain.ErrDeviceLocked):
+		return http.StatusForbidden, "DEVICE_LOCKED"
+	case errors.Is(err, domain.ErrSessionRevoked):
+		return http.StatusUnauthorized, "SESSION_REVOKED"
+	case errors.Is(err, domain.ErrCornerNotInItinerary):
+		return http.StatusBadRequest, "CORNER_NOT_IN_ITINERARY"
+	case errors.Is(err, domain.ErrVisitNotInProgress):
+		return http.StatusBadRequest, "VISIT_NOT_IN_PROGRESS"
+	case errors.Is(err, domain.ErrTrackAlreadyDeleted):
+		return http.StatusConflict, "TRACK_ALREADY_DELETED"
+	case errors.Is(err, domain.ErrTrackNotBusy):
+		return http.StatusBadRequest, "TRACK_NOT_BUSY"
+	case errors.Is(err, domain.ErrVisitEndBeforeStart):
+		return http.StatusBadRequest, "VISIT_END_BEFORE_START"
+	case errors.Is(err, domain.ErrDeviceInvalidTransition):
+		return http.StatusBadRequest, "INVALID_TRANSITION"
+	default:
+		return http.StatusInternalServerError, "INTERNAL_ERROR"
+	}
+}
