@@ -16,6 +16,10 @@ func TestFacilitatorAuthService_Login(t *testing.T) {
 		camp := &domain.Camp{ID: "camp-1", Status: domain.CampActive}
 		camps.Save(context.Background(), camp)
 
+		corners := NewMockCornerRepository()
+		corner := &domain.Corner{ID: "corner-1", CampID: "camp-1", Name: "Corner 1"}
+		corners.Save(context.Background(), corner)
+
 		tracks := NewMockTrackRepository()
 		pinHash, _ := hashPassword("123456")
 		track := &domain.Track{
@@ -42,28 +46,34 @@ func TestFacilitatorAuthService_Login(t *testing.T) {
 		broadcaster := &MockBroadcaster{}
 		tx := &MockTxManager{}
 
-		s := NewFacilitatorAuthService(camps, tracks, devices, sessions, auditLogs, broadcaster, tx)
+		s := NewFacilitatorAuthService(camps, corners, tracks, devices, sessions, auditLogs, broadcaster, tx)
 		s.nowFn = func() time.Time { return now }
 		s.uuidFn = func() string { return "session-uuid" }
 
 		// Act
-		plainToken, session, err := s.Login(context.Background(), deviceToken, "123456")
+		res, err := s.Login(context.Background(), deviceToken, "123456")
 
 		// Assert
 		if err != nil {
 			t.Fatalf("expected no error, got %v", err)
 		}
-		if plainToken == "" {
-			t.Fatal("expected plainToken, got empty")
+		if res == nil {
+			t.Fatal("expected response, got nil")
 		}
-		if session == nil {
-			t.Fatal("expected session, got nil")
+		if res.TrackToken == "" {
+			t.Fatal("expected TrackToken, got empty")
 		}
-		if session.ID != "session-uuid" {
-			t.Errorf("expected session ID to be 'session-uuid', got '%s'", session.ID)
+		if res.Track == nil {
+			t.Fatal("expected track, got nil")
 		}
-		if session.TrackID != "track-1" {
-			t.Errorf("expected track ID to be 'track-1', got '%s'", session.TrackID)
+		if res.Track.ID != "track-1" {
+			t.Errorf("expected track ID to be 'track-1', got '%s'", res.Track.ID)
+		}
+		if res.Corner == nil {
+			t.Fatal("expected corner, got nil")
+		}
+		if res.Corner.ID != "corner-1" {
+			t.Errorf("expected corner ID to be 'corner-1', got '%s'", res.Corner.ID)
 		}
 	})
 
@@ -73,6 +83,8 @@ func TestFacilitatorAuthService_Login(t *testing.T) {
 		camps := NewMockCampRepository()
 		camp := &domain.Camp{ID: "camp-1", Status: domain.CampActive}
 		camps.Save(context.Background(), camp)
+
+		corners := NewMockCornerRepository()
 
 		tracks := NewMockTrackRepository()
 		pinHash, _ := hashPassword("123456")
@@ -100,11 +112,11 @@ func TestFacilitatorAuthService_Login(t *testing.T) {
 		broadcaster := &MockBroadcaster{}
 		tx := &MockTxManager{}
 
-		s := NewFacilitatorAuthService(camps, tracks, devices, sessions, auditLogs, broadcaster, tx)
+		s := NewFacilitatorAuthService(camps, corners, tracks, devices, sessions, auditLogs, broadcaster, tx)
 		s.nowFn = func() time.Time { return now }
 
 		// Act
-		_, _, err := s.Login(context.Background(), deviceToken, "123456")
+		_, err := s.Login(context.Background(), deviceToken, "123456")
 
 		// Assert
 		if err != domain.ErrDeviceNotApproved {
@@ -118,6 +130,8 @@ func TestFacilitatorAuthService_Login(t *testing.T) {
 		camps := NewMockCampRepository()
 		camp := &domain.Camp{ID: "camp-1", Status: domain.CampActive}
 		camps.Save(context.Background(), camp)
+
+		corners := NewMockCornerRepository()
 
 		tracks := NewMockTrackRepository()
 		pinHash, _ := hashPassword("123456")
@@ -146,11 +160,11 @@ func TestFacilitatorAuthService_Login(t *testing.T) {
 		broadcaster := &MockBroadcaster{}
 		tx := &MockTxManager{}
 
-		s := NewFacilitatorAuthService(camps, tracks, devices, sessions, auditLogs, broadcaster, tx)
+		s := NewFacilitatorAuthService(camps, corners, tracks, devices, sessions, auditLogs, broadcaster, tx)
 		s.nowFn = func() time.Time { return now }
 
 		// Act
-		_, _, err := s.Login(context.Background(), deviceToken, "123456")
+		_, err := s.Login(context.Background(), deviceToken, "123456")
 
 		// Assert
 		if err != domain.ErrDeviceLocked {
@@ -164,6 +178,8 @@ func TestFacilitatorAuthService_Login(t *testing.T) {
 		camps := NewMockCampRepository()
 		camp := &domain.Camp{ID: "camp-1", Status: domain.CampActive}
 		camps.Save(context.Background(), camp)
+
+		corners := NewMockCornerRepository()
 
 		tracks := NewMockTrackRepository()
 		pinHash, _ := hashPassword("123456")
@@ -192,11 +208,11 @@ func TestFacilitatorAuthService_Login(t *testing.T) {
 		broadcaster := &MockBroadcaster{}
 		tx := &MockTxManager{}
 
-		s := NewFacilitatorAuthService(camps, tracks, devices, sessions, auditLogs, broadcaster, tx)
+		s := NewFacilitatorAuthService(camps, corners, tracks, devices, sessions, auditLogs, broadcaster, tx)
 		s.nowFn = func() time.Time { return now }
 
 		// Act
-		_, _, err := s.Login(context.Background(), deviceToken, "wrong-pin")
+		_, err := s.Login(context.Background(), deviceToken, "wrong-pin")
 
 		// Assert
 		if err == nil || err.Error() != "invalid pin" {
