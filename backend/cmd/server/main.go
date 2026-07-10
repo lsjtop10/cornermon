@@ -1,18 +1,118 @@
 package main
 
 import (
+	"context"
 	"log"
+	"os"
+
+	"cornermon/backend/internal/infrastructure/postgres"
+	"cornermon/backend/internal/infrastructure/sse"
+	"cornermon/backend/internal/infrastructure/web"
+	"cornermon/backend/internal/usecase"
+
+	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
 )
 
 func main() {
 	log.Println("Cornermon Backend Starting...")
+
+	// Load .env if exists
+	_ = godotenv.Load()
+
+	ctx := context.Background()
+	dbURL := os.Getenv("DATABASE_URL")
+	if dbURL == "" {
+		// Fallback for development if not provided
+		dbURL = "postgres://postgres:postgres@localhost:5432/cornermon?sslmode=disable"
+	}
+
+	// Initialize Database Pool
+	pool, err := pgxpool.New(ctx, dbURL)
+	if err != nil {
+		log.Fatalf("Unable to connect to database: %v\n", err)
+	}
+	defer pool.Close()
+
+	// Initialize Repositories
+	adminRepo := postgres.NewAdminRepository(pool)
+	adminSessionRepo := postgres.NewAdminSessionRepository(pool)
+	auditLogRepo := postgres.NewAuditLogRepository(pool)
+	badgeRepo := postgres.NewBadgeRepository(pool)
+	broadcastReceiptRepo := postgres.NewBroadcastReceiptRepository(pool)
+	campRepo := postgres.NewCampRepository(pool)
+	cornerRepo := postgres.NewCornerRepository(pool)
+	deviceRepo := postgres.NewDeviceRegistrationRepository(pool)
+	facilitatorSessionRepo := postgres.NewFacilitatorSessionRepository(pool)
+	groupRepo := postgres.NewGroupRepository(pool)
+	messageRepo := postgres.NewMessageRepository(pool)
+	trackRepo := postgres.NewTrackRepository(pool)
+	visitRepo := postgres.NewVisitRepository(pool)
+	reportQuerier := postgres.NewReportQuerier(pool)
+	txManager := postgres.NewTxManager(pool)
+
+	// Initialize Infrastructure Services
+	broadcaster := sse.NewBroadcaster()
+
+	// Initialize Usecases
+	authAdminService := usecase.NewAdminAuthService(adminRepo, adminSessionRepo, auditLogRepo, txManager)
+	deviceTrustService := usecase.NewDeviceTrustService(campRepo, deviceRepo, auditLogRepo, broadcaster, txManager)
+	cornerService := usecase.NewCornerService(campRepo, cornerRepo, auditLogRepo, broadcaster, txManager)
+	groupService := usecase.NewGroupService(campRepo, cornerRepo, groupRepo, badgeRepo, auditLogRepo, txManager)
+	badgeService := usecase.NewBadgeService(badgeRepo, auditLogRepo, txManager)
+	visitService := usecase.NewVisitService(campRepo, cornerRepo, trackRepo, visitRepo, groupRepo, badgeRepo, facilitatorSessionRepo, auditLogRepo, broadcaster, txManager)
+	trackService := usecase.NewTrackService(campRepo, cornerRepo, trackRepo, facilitatorSessionRepo, auditLogRepo, broadcaster, txManager)
+	reportService := usecase.NewReportService(campRepo, reportQuerier)
+	authFacilitatorService := usecase.NewFacilitatorAuthService(campRepo, cornerRepo, trackRepo, deviceRepo, facilitatorSessionRepo, auditLogRepo, broadcaster, txManager)
+	messageService := usecase.NewMessageService(campRepo, cornerRepo, trackRepo, messageRepo, broadcastReceiptRepo, facilitatorSessionRepo, auditLogRepo, broadcaster, txManager)
+	campService := usecase.NewCampService(campRepo, trackRepo, facilitatorSessionRepo, auditLogRepo, broadcaster, txManager)
+
+	// Initialize Handlers
+	authHandler := web.NewAuthHandler(authAdminService, authFacilitatorService, deviceTrustService)
+	deviceHandler := web.NewDeviceHandler(deviceTrustService)
+	campHandler := web.NewCampHandler(campService)
+	cornerHandler := web.NewCornerHandler(cornerService)
+	trackHandler := web.NewTrackHandler(trackService)
+	groupHandler := web.NewGroupHandler(groupService)
+	badgeHandler := web.NewBadgeHandler(badgeService)
+	visitHandler := web.NewVisitHandler(visitService)
+
+	// Assuming EventHandler expects a subscriber (Broadcaster could implement it)
+	// We might need to adjust this depending on sse package interfaces
+	eventHandler := web.NewEventHandler(broadcaster)
+
+	messageHandler := web.NewMessageHandler(messageService)
+	reportHandler := web.NewReportHandler(reportService, reportQuerier, campRepo)
+	auditHandler := web.NewAuditHandler(auditLogRepo)
+
+	handlers := &web.Handlers{
+		Auth:    authHandler,
+		Device:  deviceHandler,
+		Camp:    campHandler,
+		Corner:  cornerHandler,
+		Track:   trackHandler,
+		Group:   groupHandler,
+		Badge:   badgeHandler,
+		Visit:   visitHandler,
+		Event:   eventHandler,
+		Message: messageHandler,
+		Report:  reportHandler,
+		Audit:   auditHandler,
+	}
+
 	e := echo.New()
-	
+
 	// Serve the auto-generated Swagger UI spec directly
 	e.File("/openapi.yaml", "docs/swagger.yaml")
 	e.File("/openapi.json", "docs/swagger.json")
-	
-	// TODO: Initialize HTTP handlers
-	log.Fatal(e.Start(":8080"))
+
+	// Register Routes
+	web.RegisterRoutes(e, handlers, authAdminService, authFacilitatorService)
+
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+	log.Fatal(e.Start(":" + port))
 }
