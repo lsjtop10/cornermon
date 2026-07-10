@@ -11,6 +11,10 @@ type Handlers struct {
 	Auth   *handler.AuthHandler
 	Device  *handler.DeviceHandler
 	Missing *handler.MissingHandlers
+	Visit   *handler.VisitHandler
+	Event   *handler.EventHandler
+	Message *handler.MessageHandler
+	Report  *handler.ReportHandler
 }
 
 func RegisterRoutes(e *echo.Echo, h *Handlers, adminAuth middleware.AuthAdminUsecase, trackAuth middleware.AuthFacilitatorUsecase) {
@@ -58,8 +62,26 @@ func RegisterRoutes(e *echo.Echo, h *Handlers, adminAuth middleware.AuthAdminUse
 	admin.POST("/device-registrations/:id/reject", h.Device.RejectDevice)
 	admin.POST("/device-registrations/:id/revoke", h.Device.RevokeDevice)
 
+	if h.Message != nil {
+		admin.POST("/messages/broadcast", h.Message.SendBroadcast)
+		admin.POST("/tracks/:trackId/messages", h.Message.SendDirect)
+	}
+
+	if h.Report != nil {
+		admin.GET("/reports/current", h.Report.GetCurrentReport)
+	}
+
 	// Track Routes
 	track := v1.Group("")
 	track.Use(middleware.TrackAuthMiddleware(trackAuth))
-	// Add track endpoints
+	
+	if h.Visit != nil {
+		track.POST("/tracks/:trackId/visits/start", h.Visit.StartVisit)
+		track.POST("/tracks/:trackId/visits/current/end", h.Visit.EndCurrentVisit)
+	}
+
+	if h.Event != nil {
+		admin.GET("/events/admin", h.Event.AdminEvents)
+		track.GET("/events/track/:trackId", h.Event.TrackEvents)
+	}
 }

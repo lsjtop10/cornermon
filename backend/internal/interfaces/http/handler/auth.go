@@ -21,25 +21,18 @@ type FacilitatorAuthUsecase interface {
 	Login(ctx context.Context, deviceToken, pin string) (*usecase.TrackLoginResult, error)
 }
 
-type DeviceTrustUsecase interface {
-	RequestRegistration(ctx context.Context, campID domain.CampID, deviceName string) (string, *domain.DeviceRegistration, error)
-}
-
 type AuthHandler struct {
 	adminAuth       AdminAuthUsecase
 	facilitatorAuth FacilitatorAuthUsecase
-	deviceTrust     DeviceTrustUsecase
 }
 
 func NewAuthHandler(
 	adminAuth AdminAuthUsecase,
 	facilitatorAuth FacilitatorAuthUsecase,
-	deviceTrust DeviceTrustUsecase,
 ) *AuthHandler {
 	return &AuthHandler{
 		adminAuth:       adminAuth,
 		facilitatorAuth: facilitatorAuth,
-		deviceTrust:     deviceTrust,
 	}
 }
 
