@@ -189,8 +189,9 @@ func (h *AuthHandler) RevokeAdminSession(c echo.Context) error {
 // @Produce      json
 // @Param        request body TrackLoginRequest true "6자리 숫자 트랙 PIN"
 // @Success      200 {object} TrackLoginResponse "로그인 성공 — 트랙 세션 토큰 발급"
-// @Failure      400 {object} ErrorResponse "잘못된 PIN"
-// @Failure      403 {object} ErrorResponse "거부됨"
+// @Failure      400 {object} ErrorResponse "잘못된 PIN (지연 가능)"
+// @Failure      403 {object} ErrorResponse "신뢰 기기 아님 또는 캠프 미시작"
+// @Failure      429 {object} ErrorResponse "PIN 잠금(지연) 중"
 // @Router       /auth/track/login [post]
 func (h *AuthHandler) TrackLogin(c echo.Context) error {
 	var req TrackLoginRequest
@@ -205,7 +206,7 @@ func (h *AuthHandler) TrackLogin(c echo.Context) error {
 
 	res, err := h.facilitatorAuth.Login(c.Request().Context(), deviceToken, req.PIN)
 	if err != nil {
-		return c.JSON(http.StatusForbidden, ErrorResponse{Code: "FORBIDDEN", Message: err.Error()})
+		return err
 	}
 
 	return c.JSON(http.StatusOK, TrackLoginResponse{

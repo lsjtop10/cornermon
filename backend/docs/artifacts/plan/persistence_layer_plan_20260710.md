@@ -89,8 +89,9 @@ func (tm *pgTxManager) RunInTransaction(ctx context.Context, fn func(ctx context
 ## 7. 검증 체크리스트
 
 ### 7.1 컴파일 및 정적 검증
-- [ ] `go build ./...` 명령어 수행 시 `missing method` 에러 없이 100% 빌드 성공
-- [ ] `golangci-lint` 수행 시 DB 커넥션 누수(defer Close 누락) 경고 없음
+- [x] `go build ./...` 명령어 수행 시 `missing method` 에러 없이 100% 빌드 성공
+- [ ] `golangci-lint` 수행 시 DB 커넥션 누수(defer Close 누락) 경고 없음 (로컬 환경에 lint 설치 필요)
+
 
 ### 7.2 로직 검증 (통합 테스트)
 - [ ] `TxManager` 롤백 테스트: 의도적인 에러 발생 시 트랜잭션 내 이전 쿼리들이 전부 롤백되는지 확인

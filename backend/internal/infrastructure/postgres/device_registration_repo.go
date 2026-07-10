@@ -106,3 +106,26 @@ func (r *pgDeviceRegistrationRepository) Save(ctx context.Context, reg *domain.D
 
 	return r.queries(ctx).SaveDeviceRegistration(ctx, params)
 }
+
+func (r *pgDeviceRegistrationRepository) ListByCampAndStatus(ctx context.Context, campID domain.CampID, status *domain.DeviceRegistrationStatus) ([]*domain.DeviceRegistration, error) {
+	var statusStr pgtype.Text
+	if status != nil {
+		statusStr = pgtype.Text{String: string(*status), Valid: true}
+	} else {
+		statusStr = pgtype.Text{Valid: false}
+	}
+
+	rows, err := r.queries(ctx).ListDeviceRegistrationsByCampAndStatus(ctx, db.ListDeviceRegistrationsByCampAndStatusParams{
+		CampID: string(campID),
+		Status: statusStr,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	regs := make([]*domain.DeviceRegistration, len(rows))
+	for i, row := range rows {
+		regs[i] = mapDeviceRegistration(row)
+	}
+	return regs, nil
+}

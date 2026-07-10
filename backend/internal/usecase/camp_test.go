@@ -87,7 +87,7 @@ func TestCampService_EndCamp(t *testing.T) {
 			t.Errorf("expected session to be revoked")
 		}
 
-		if len(broadcaster.Broadcasts) != 2 || 
+		if len(broadcaster.Broadcasts) != 2 ||
 			broadcaster.Broadcasts[0].Event != EventCampUpdated || broadcaster.Broadcasts[0].Scope != "camp" ||
 			broadcaster.Broadcasts[1].Event != EventCampEnded || broadcaster.Broadcasts[1].Scope != "camp" {
 			t.Errorf("expected EventCampUpdated and EventCampEnded broadcast with scope 'camp', got %v", broadcaster.Broadcasts)

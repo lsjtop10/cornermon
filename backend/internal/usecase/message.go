@@ -211,3 +211,50 @@ func (s *MessageService) recordAuditLog(ctx context.Context, actor, action, targ
 	)
 	_ = s.auditLogs.Save(ctx, log)
 }
+
+func (s *MessageService) ListBroadcastsByCamp(ctx context.Context, campID domain.CampID) ([]*domain.Message, error) {
+	return s.messages.ListBroadcastsByCamp(ctx, campID)
+}
+
+func (s *MessageService) ListDirectMessages(ctx context.Context, trackID domain.TrackID) ([]*domain.Message, error) {
+	return s.messages.ListDirectByTrack(ctx, trackID)
+}
+
+func (s *MessageService) GetBroadcastReceipts(ctx context.Context, messageID domain.MessageID) ([]BroadcastReceiptDTO, error) {
+	receipts, err := s.receipts.ListByMessage(ctx, messageID)
+	if err != nil {
+		return nil, err
+	}
+
+	dtos := make([]BroadcastReceiptDTO, len(receipts))
+	for i, r := range receipts {
+		track, err := s.tracks.Get(ctx, r.TrackID)
+		if err != nil {
+			return nil, err
+		}
+
+		var trackNo int
+		var cornerName string
+		if track != nil {
+			trackNo = track.TrackNo
+
+			corner, err := s.corners.Get(ctx, track.CornerID)
+			if err != nil {
+				return nil, err
+			}
+			if corner != nil {
+				cornerName = corner.Name
+			}
+		}
+
+		dtos[i] = BroadcastReceiptDTO{
+			TrackID:    r.TrackID,
+			TrackNo:    trackNo,
+			CornerName: cornerName,
+			IsRead:     r.ReadAt.IsSet(),
+			ReadAt:     r.ReadAt,
+		}
+	}
+
+	return dtos, nil
+}

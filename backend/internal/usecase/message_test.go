@@ -52,7 +52,7 @@ func TestMessageService_SendBroadcast(t *testing.T) {
 			t.Errorf("expected 2 receipts to be saved, got %d", len(receipts.Receipts))
 		}
 
-		if len(broadcaster.Broadcasts) != 1 || 
+		if len(broadcaster.Broadcasts) != 1 ||
 			broadcaster.Broadcasts[0].CampID != "camp-1" ||
 			broadcaster.Broadcasts[0].Event != EventMessagesChanged ||
 			broadcaster.Broadcasts[0].Scope != "broadcast" {
@@ -102,7 +102,7 @@ func TestMessageService_SendDirect(t *testing.T) {
 			t.Errorf("expected message ID 'msg-uuid', got '%s'", msg.ID)
 		}
 
-		if len(broadcaster.Broadcasts) != 1 || 
+		if len(broadcaster.Broadcasts) != 1 ||
 			broadcaster.Broadcasts[0].CampID != "camp-1" ||
 			broadcaster.Broadcasts[0].Event != EventMessagesChanged ||
 			broadcaster.Broadcasts[0].Scope != "track:track-1" {

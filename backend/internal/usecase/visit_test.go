@@ -98,7 +98,7 @@ func TestVisitService_StartVisitByQR(t *testing.T) {
 			t.Errorf("expected group itinerary status to be InProgress")
 		}
 
-		if len(broadcaster.Broadcasts) != 4 || 
+		if len(broadcaster.Broadcasts) != 4 ||
 			broadcaster.Broadcasts[0].CampID != "camp-1" ||
 			broadcaster.Broadcasts[0].Event != EventCornersUpdated ||
 			broadcaster.Broadcasts[1].Event != EventGroupsUpdated ||
@@ -286,7 +286,7 @@ func TestVisitService_CompleteVisit(t *testing.T) {
 			t.Errorf("expected group itinerary to be completed")
 		}
 
-		if len(broadcaster.Broadcasts) != 4 || 
+		if len(broadcaster.Broadcasts) != 4 ||
 			broadcaster.Broadcasts[0].CampID != "camp-1" ||
 			broadcaster.Broadcasts[0].Event != EventCornersUpdated ||
 			broadcaster.Broadcasts[1].Event != EventGroupsUpdated ||

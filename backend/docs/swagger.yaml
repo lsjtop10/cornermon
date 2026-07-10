@@ -786,11 +786,15 @@ paths:
           schema:
             $ref: '#/definitions/internal_infrastructure_web.TrackLoginResponse'
         "400":
-          description: 잘못된 PIN
+          description: 잘못된 PIN (지연 가능)
           schema:
             $ref: '#/definitions/internal_infrastructure_web.ErrorResponse'
         "403":
-          description: 거부됨
+          description: 신뢰 기기 아님 또는 캠프 미시작
+          schema:
+            $ref: '#/definitions/internal_infrastructure_web.ErrorResponse'
+        "429":
+          description: PIN 잠금(지연) 중
           schema:
             $ref: '#/definitions/internal_infrastructure_web.ErrorResponse'
       security:

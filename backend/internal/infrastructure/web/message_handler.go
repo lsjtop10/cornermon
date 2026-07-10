@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"cornermon/backend/internal/domain"
+	"cornermon/backend/internal/usecase"
 
 	"github.com/labstack/echo/v4"
 )
@@ -12,7 +13,7 @@ import (
 type MessageUsecase interface {
 	SendBroadcast(ctx context.Context, campID domain.CampID, content string, actorAdminID domain.AdminID) (*domain.Message, error)
 	ListBroadcastsByCamp(ctx context.Context, campID domain.CampID) ([]*domain.Message, error)
-	GetBroadcastReceipts(ctx context.Context, messageID domain.MessageID) ([]BroadcastReceipt, error)
+	GetBroadcastReceipts(ctx context.Context, messageID domain.MessageID) ([]usecase.BroadcastReceiptDTO, error)
 	MarkBroadcastRead(ctx context.Context, facilitatorToken string, messageID domain.MessageID) error
 	SendDirect(ctx context.Context, trackID domain.TrackID, content string, senderRole domain.SenderRole) (*domain.Message, error)
 	ListDirectMessages(ctx context.Context, trackID domain.TrackID) ([]*domain.Message, error)
@@ -110,9 +111,23 @@ func (h *MessageHandler) ListBroadcasts(c echo.Context) error {
 func (h *MessageHandler) GetBroadcastReceipts(c echo.Context) error {
 	msgID := domain.MessageID(c.Param("id"))
 
-	receipts, err := h.message.GetBroadcastReceipts(c.Request().Context(), msgID)
+	dtos, err := h.message.GetBroadcastReceipts(c.Request().Context(), msgID)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()})
+	}
+
+	receipts := make([]BroadcastReceipt, len(dtos))
+	for i, dto := range dtos {
+		br := BroadcastReceipt{
+			TrackID:    string(dto.TrackID),
+			TrackNo:    dto.TrackNo,
+			CornerName: dto.CornerName,
+			IsRead:     dto.IsRead,
+		}
+		if val, ok := dto.ReadAt.Value(); ok {
+			br.ReadAt = &val
+		}
+		receipts[i] = br
 	}
 
 	return c.JSON(http.StatusOK, receipts)

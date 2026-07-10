@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"time"
 
 	"cornermon/backend/internal/domain"
 )
@@ -71,6 +72,7 @@ type DeviceRegistrationRepository interface {
 
 // FacilitatorSessionRepository는 진행자 세션 엔티티의 지속성을 담당하는 포트입니다.
 type FacilitatorSessionRepository interface {
+	Get(ctx context.Context, id domain.FacilitatorSessionID) (*domain.FacilitatorSession, error)
 	GetByTokenHash(ctx context.Context, hash string) (*domain.FacilitatorSession, error)
 	ListActiveByTrack(ctx context.Context, trackID domain.TrackID) ([]*domain.FacilitatorSession, error)
 	ListActiveByCamp(ctx context.Context, campID domain.CampID) ([]*domain.FacilitatorSession, error)
@@ -89,6 +91,7 @@ type AdminSessionRepository interface {
 	GetByAccessTokenHash(ctx context.Context, hash string) (*domain.AdminSession, error)
 	GetByRefreshTokenHash(ctx context.Context, hash string) (*domain.AdminSession, error)
 	Save(ctx context.Context, session *domain.AdminSession) error
+	ListByAdmin(ctx context.Context, adminID domain.AdminID) ([]*domain.AdminSession, error)
 }
 
 // MessageRepository는 메시지 엔티티의 지속성을 담당하는 포트입니다.
@@ -113,17 +116,17 @@ type AuditLogRepository interface {
 type NotificationEvent string
 
 const (
-	EventTracksUpdated            NotificationEvent = "tracks_updated"
-	EventTrackUpdated             NotificationEvent = "track_updated"
-	EventCornersUpdated           NotificationEvent = "corners_updated"
-	EventGroupsUpdated            NotificationEvent = "groups_updated"
-	EventCampUpdated              NotificationEvent = "camp_updated"
-	EventMessagesChanged          NotificationEvent = "messages_changed"
-	EventTrackDeleted             NotificationEvent = "track_deleted"
-	EventSessionRevoked           NotificationEvent = "session_revoked"
-	EventCampEnded                NotificationEvent = "camp_ended"
+	EventTracksUpdated             NotificationEvent = "tracks_updated"
+	EventTrackUpdated              NotificationEvent = "track_updated"
+	EventCornersUpdated            NotificationEvent = "corners_updated"
+	EventGroupsUpdated             NotificationEvent = "groups_updated"
+	EventCampUpdated               NotificationEvent = "camp_updated"
+	EventMessagesChanged           NotificationEvent = "messages_changed"
+	EventTrackDeleted              NotificationEvent = "track_deleted"
+	EventSessionRevoked            NotificationEvent = "session_revoked"
+	EventCampEnded                 NotificationEvent = "camp_ended"
 	EventDeviceRegistrationUpdated NotificationEvent = "device_registration_updated"
-	EventLockoutAlert             NotificationEvent = "lockout_alert"
+	EventLockoutAlert              NotificationEvent = "lockout_alert"
 )
 
 // Broadcaster는 트랜잭션 성공 후 SSE 클라이언트에게 실시간 알림을 푸시하는 포트입니다.
@@ -174,4 +177,12 @@ type VisitDetail struct {
 	CornerID     domain.CornerID
 	DurationSec  int
 	DeviationSec int
+}
+
+type BroadcastReceiptDTO struct {
+	TrackID    domain.TrackID
+	TrackNo    int
+	CornerName string
+	IsRead     bool
+	ReadAt     domain.Optional[time.Time]
 }

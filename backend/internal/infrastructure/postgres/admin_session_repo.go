@@ -96,3 +96,16 @@ func (r *pgAdminSessionRepository) Save(ctx context.Context, session *domain.Adm
 
 	return r.queries(ctx).SaveAdminSession(ctx, params)
 }
+
+func (r *pgAdminSessionRepository) ListByAdmin(ctx context.Context, adminID domain.AdminID) ([]*domain.AdminSession, error) {
+	rows, err := r.queries(ctx).ListAdminSessionsByAdmin(ctx, string(adminID))
+	if err != nil {
+		return nil, err
+	}
+
+	sessions := make([]*domain.AdminSession, len(rows))
+	for i, row := range rows {
+		sessions[i] = mapAdminSession(row)
+	}
+	return sessions, nil
+}

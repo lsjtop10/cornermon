@@ -20,8 +20,13 @@ func TestAdminAuthService_Login(t *testing.T) {
 		sessions := NewMockAdminSessionRepository()
 		auditLogs := &MockAuditLogRepository{}
 		tx := &MockTxManager{}
+		facSessions := NewMockFacilitatorSessionRepository()
+		tracks := NewMockTrackRepository()
+		corners := NewMockCornerRepository()
+		broadcaster := &MockBroadcaster{}
 
-		s := NewAdminAuthService(admins, sessions, auditLogs, tx)
+		s := NewAdminAuthService(admins, sessions, facSessions, tracks, corners, broadcaster, auditLogs, tx)
+
 		s.nowFn = func() time.Time { return now }
 		s.uuidFn = func() string { return "session-uuid" }
 
@@ -50,8 +55,12 @@ func TestAdminAuthService_Login(t *testing.T) {
 		sessions := NewMockAdminSessionRepository()
 		auditLogs := &MockAuditLogRepository{}
 		tx := &MockTxManager{}
+		facSessions := NewMockFacilitatorSessionRepository()
+		tracks := NewMockTrackRepository()
+		corners := NewMockCornerRepository()
+		broadcaster := &MockBroadcaster{}
 
-		s := NewAdminAuthService(admins, sessions, auditLogs, tx)
+		s := NewAdminAuthService(admins, sessions, facSessions, tracks, corners, broadcaster, auditLogs, tx)
 
 		// Act
 		_, _, _, err := s.Login(context.Background(), "admin-1", "wrong-password", "PC")
@@ -78,7 +87,8 @@ func TestAdminAuthService_RefreshToken(t *testing.T) {
 		}
 		sessions.Sessions["session-1"] = session
 
-		s := NewAdminAuthService(nil, sessions, nil, &MockTxManager{})
+		s := NewAdminAuthService(nil, sessions, nil, nil, nil, nil, nil, &MockTxManager{})
+
 		s.nowFn = func() time.Time { return now }
 
 		// Act

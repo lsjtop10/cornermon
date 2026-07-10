@@ -78,3 +78,42 @@ func (r *pgBadgeRepository) Save(ctx context.Context, badge *domain.Badge) error
 
 	return r.queries(ctx).SaveBadge(ctx, params)
 }
+
+func (r *pgBadgeRepository) ListAll(ctx context.Context) ([]*domain.Badge, error) {
+	rows, err := r.queries(ctx).ListAllBadges(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	badges := make([]*domain.Badge, len(rows))
+	for i, row := range rows {
+		badges[i] = mapBadge(row)
+	}
+	return badges, nil
+}
+
+func (r *pgBadgeRepository) SaveBulk(ctx context.Context, badges []*domain.Badge) error {
+	if tx := ExtractTx(ctx); tx != nil {
+		for _, b := range badges {
+			if err := r.Save(ctx, b); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+
+	tx, err := r.pool.BeginTx(ctx, pgx.TxOptions{})
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+
+	txCtx := context.WithValue(ctx, txKey, tx)
+	for _, b := range badges {
+		if err := r.Save(txCtx, b); err != nil {
+			return err
+		}
+	}
+
+	return tx.Commit(ctx)
+}

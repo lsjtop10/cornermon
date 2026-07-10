@@ -75,7 +75,8 @@ func (s *FacilitatorAuthService) Login(
 
 	if device.IsLocked(now) {
 		s.recordAuditLog(ctx, "anonymous", "FACILITATOR_LOGIN", "", false, map[string]any{"error": domain.ErrDeviceLocked.Error()})
-		return nil, domain.ErrDeviceLocked
+		lockedUntil, _ := device.LockedUntil.Value()
+		return nil, &domain.DeviceLockedError{LockedUntil: lockedUntil}
 	}
 
 	campID := device.CampID
@@ -106,7 +107,7 @@ func (s *FacilitatorAuthService) Login(
 
 	if track == nil {
 		// PIN 검증 실패 시
-		_, needsAdminAlert := device.RecordPinFailure(now)
+		delay, needsAdminAlert := device.RecordPinFailure(now)
 		_ = s.devices.Save(ctx, device)
 
 		if needsAdminAlert {
@@ -114,7 +115,15 @@ func (s *FacilitatorAuthService) Login(
 		}
 
 		s.recordAuditLog(ctx, "anonymous", "FACILITATOR_LOGIN", "", false, map[string]any{"error": "invalid pin", "device_failures": device.FailedPinAttempts})
-		return nil, errors.New("invalid pin")
+
+		var optLocked domain.Optional[time.Time]
+		if delay > 0 {
+			lockedUntil, _ := device.LockedUntil.Value()
+			optLocked = domain.Some(lockedUntil)
+		} else {
+			optLocked = domain.None[time.Time]()
+		}
+		return nil, &domain.InvalidPinError{LockedUntil: optLocked}
 	}
 
 	trackID := track.ID
@@ -185,7 +194,39 @@ func (s *FacilitatorAuthService) ValidateSession(
 	return session, nil
 }
 
+func (s *FacilitatorAuthService) Logout(
+	ctx context.Context,
+	sessionID domain.FacilitatorSessionID,
+) error {
+	now := s.nowFn()
+
+	session, err := s.sessions.Get(ctx, sessionID)
+	if err != nil {
+		return err
+	}
+	if session == nil {
+		return errors.New("session not found")
+	}
+
+	if err := session.Revoke(now); err != nil {
+		return err
+	}
+
+	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
+		return s.sessions.Save(ctx, session)
+	})
+
+	if err != nil {
+		s.recordAuditLog(ctx, string(session.TrackID), "FACILITATOR_LOGOUT", string(sessionID), false, map[string]any{"error": err.Error()})
+		return err
+	}
+
+	s.recordAuditLog(ctx, string(session.TrackID), "FACILITATOR_LOGOUT", string(sessionID), true, nil)
+	return nil
+}
+
 func (s *FacilitatorAuthService) recordAuditLog(ctx context.Context, actor, action, target string, success bool, metadata map[string]any) {
+
 	log := domain.NewAuditLog(
 		domain.AuditLogID(s.uuidFn()),
 		actor,

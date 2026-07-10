@@ -14,10 +14,14 @@ const AdminAccessTokenTTL = 30 * time.Minute
 const AdminRefreshTokenIdleTTL = 12 * time.Hour
 
 type AdminAuthService struct {
-	admins    AdminRepository
-	sessions  AdminSessionRepository
-	auditLogs AuditLogRepository
-	tx        TxManager
+	admins              AdminRepository
+	sessions            AdminSessionRepository
+	facilitatorSessions FacilitatorSessionRepository
+	tracks              TrackRepository
+	corners             CornerRepository
+	broadcaster         Broadcaster
+	auditLogs           AuditLogRepository
+	tx                  TxManager
 
 	nowFn  func() time.Time
 	uuidFn func() string
@@ -26,16 +30,24 @@ type AdminAuthService struct {
 func NewAdminAuthService(
 	admins AdminRepository,
 	sessions AdminSessionRepository,
+	facilitatorSessions FacilitatorSessionRepository,
+	tracks TrackRepository,
+	corners CornerRepository,
+	broadcaster Broadcaster,
 	auditLogs AuditLogRepository,
 	tx TxManager,
 ) *AdminAuthService {
 	return &AdminAuthService{
-		admins:    admins,
-		sessions:  sessions,
-		auditLogs: auditLogs,
-		tx:        tx,
-		nowFn:     time.Now,
-		uuidFn:    uuid.NewString,
+		admins:              admins,
+		sessions:            sessions,
+		facilitatorSessions: facilitatorSessions,
+		tracks:              tracks,
+		corners:             corners,
+		broadcaster:         broadcaster,
+		auditLogs:           auditLogs,
+		tx:                  tx,
+		nowFn:               time.Now,
+		uuidFn:              uuid.NewString,
 	}
 }
 
@@ -203,4 +215,54 @@ func (s *AdminAuthService) recordAuditLog(ctx context.Context, actor, action, ta
 		metadata,
 	)
 	_ = s.auditLogs.Save(ctx, log)
+}
+
+func (s *AdminAuthService) ListSessions(ctx context.Context, adminID domain.AdminID) ([]*domain.AdminSession, error) {
+	return s.sessions.ListByAdmin(ctx, adminID)
+}
+
+func (s *AdminAuthService) ForceTrackLogout(ctx context.Context, trackID domain.TrackID, actorAdminID domain.AdminID) error {
+	now := s.nowFn()
+
+	track, err := s.tracks.Get(ctx, trackID)
+	if err != nil {
+		return err
+	}
+	if track == nil {
+		return errors.New("track not found")
+	}
+
+	corner, err := s.corners.Get(ctx, track.CornerID)
+	if err != nil {
+		return err
+	}
+	if corner == nil {
+		return errors.New("corner not found")
+	}
+
+	activeSessions, err := s.facilitatorSessions.ListActiveByTrack(ctx, trackID)
+	if err != nil {
+		return err
+	}
+
+	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
+		for _, sess := range activeSessions {
+			if err := sess.Revoke(now); err != nil {
+				return err
+			}
+			if err := s.facilitatorSessions.Save(ctx, sess); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+
+	if err != nil {
+		s.recordAuditLog(ctx, string(actorAdminID), "TRACK_FORCE_LOGOUT", string(trackID), false, map[string]any{"error": err.Error()})
+		return err
+	}
+
+	s.recordAuditLog(ctx, string(actorAdminID), "TRACK_FORCE_LOGOUT", string(trackID), true, nil)
+	_ = s.broadcaster.Broadcast(ctx, corner.CampID, EventSessionRevoked, string(trackID))
+	return nil
 }

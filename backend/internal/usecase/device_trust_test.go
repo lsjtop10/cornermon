@@ -41,7 +41,7 @@ func TestDeviceTrustService_RequestRegistration(t *testing.T) {
 		if reg.Status != domain.DevicePending {
 			t.Errorf("expected status 'PENDING', got %s", reg.Status)
 		}
-		if len(broadcaster.Broadcasts) != 1 || 
+		if len(broadcaster.Broadcasts) != 1 ||
 			broadcaster.Broadcasts[0].CampID != "camp-1" ||
 			broadcaster.Broadcasts[0].Event != EventDeviceRegistrationUpdated ||
 			broadcaster.Broadcasts[0].Scope != "camp" {
@@ -84,7 +84,7 @@ func TestDeviceTrustService_ApproveDevice(t *testing.T) {
 			t.Errorf("expected status 'APPROVED', got %s", updated.Status)
 		}
 
-		if len(broadcaster.Broadcasts) != 1 || 
+		if len(broadcaster.Broadcasts) != 1 ||
 			broadcaster.Broadcasts[0].CampID != "camp-1" ||
 			broadcaster.Broadcasts[0].Event != EventDeviceRegistrationUpdated ||
 			broadcaster.Broadcasts[0].Scope != "camp" {

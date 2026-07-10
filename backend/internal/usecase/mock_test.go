@@ -320,6 +320,15 @@ func NewMockFacilitatorSessionRepository() *MockFacilitatorSessionRepository {
 	return &MockFacilitatorSessionRepository{Sessions: make(map[string]*domain.FacilitatorSession)}
 }
 
+func (r *MockFacilitatorSessionRepository) Get(ctx context.Context, id domain.FacilitatorSessionID) (*domain.FacilitatorSession, error) {
+	for _, s := range r.Sessions {
+		if s.ID == id {
+			return s, nil
+		}
+	}
+	return nil, nil
+}
+
 func (r *MockFacilitatorSessionRepository) GetByTokenHash(ctx context.Context, hash string) (*domain.FacilitatorSession, error) {
 	s, ok := r.Sessions[hash]
 	if !ok {
@@ -419,6 +428,16 @@ func (r *MockAdminSessionRepository) GetByRefreshTokenHash(ctx context.Context, 
 func (r *MockAdminSessionRepository) Save(ctx context.Context, session *domain.AdminSession) error {
 	r.Sessions[session.ID] = session
 	return nil
+}
+
+func (r *MockAdminSessionRepository) ListByAdmin(ctx context.Context, adminID domain.AdminID) ([]*domain.AdminSession, error) {
+	var list []*domain.AdminSession
+	for _, s := range r.Sessions {
+		if s.AdminID == adminID && !s.RevokedAt.IsSet() {
+			list = append(list, s)
+		}
+	}
+	return list, nil
 }
 
 // MockMessageRepository
