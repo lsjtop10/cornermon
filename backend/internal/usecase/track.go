@@ -220,19 +220,6 @@ func (s *TrackService) ReplaceTrack(
 			return err
 		}
 
-		// 기존 트랙 세션 일괄 Revoke
-		sessions, err := s.sessions.ListActiveByTrack(ctx, oldTrackID)
-		if err != nil {
-			return err
-		}
-		for _, sess := range sessions {
-			if err := sess.Revoke(now); err == nil {
-				if err := s.sessions.Save(ctx, sess); err != nil {
-					return err
-				}
-			}
-		}
-
 		if err := s.tracks.Save(ctx, oldTrack); err != nil {
 			return err
 		}
@@ -250,8 +237,9 @@ func (s *TrackService) ReplaceTrack(
 			}
 		}
 
+		newTrackID := domain.TrackID(s.uuidFn())
 		newTrack = &domain.Track{
-			ID:             domain.TrackID(s.uuidFn()),
+			ID:             newTrackID,
 			CornerID:       newCornerID,
 			TrackNo:        nextTrackNo,
 			Status:         domain.TrackActive,
@@ -259,7 +247,23 @@ func (s *TrackService) ReplaceTrack(
 			CurrentVisitID: domain.None[domain.VisitID](),
 		}
 
-		return s.tracks.Save(ctx, newTrack)
+		if err := s.tracks.Save(ctx, newTrack); err != nil {
+			return err
+		}
+
+		// 기존 트랙 세션에 마이그레이션 타겟 설정 (Revoke 하지 않음)
+		sessions, err := s.sessions.ListActiveByTrack(ctx, oldTrackID)
+		if err != nil {
+			return err
+		}
+		for _, sess := range sessions {
+			sess.SetMigrationTarget(newTrackID)
+			if err := s.sessions.Save(ctx, sess); err != nil {
+				return err
+			}
+		}
+
+		return nil
 	})
 
 	if err != nil {
@@ -269,7 +273,7 @@ func (s *TrackService) ReplaceTrack(
 
 	s.recordAuditLog(ctx, "admin", "TRACK_REPLACE", string(newTrack.ID), true, map[string]any{"oldTrackID": string(oldTrackID)})
 	_ = s.broadcaster.Broadcast(ctx, newCorner.CampID, EventTracksUpdated, "camp")
-	_ = s.broadcaster.Broadcast(ctx, newCorner.CampID, EventTrackDeleted, "track:"+string(oldTrackID))
+	_ = s.broadcaster.Broadcast(ctx, newCorner.CampID, EventTrackReplaced, "track:"+string(oldTrackID))
 
 	return newTrack, plainPIN, nil
 }

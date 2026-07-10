@@ -123,6 +123,7 @@ const (
 	EventCampUpdated               NotificationEvent = "camp_updated"
 	EventMessagesChanged           NotificationEvent = "messages_changed"
 	EventTrackDeleted              NotificationEvent = "track_deleted"
+	EventTrackReplaced             NotificationEvent = "track_replaced"
 	EventSessionRevoked            NotificationEvent = "session_revoked"
 	EventCampEnded                 NotificationEvent = "camp_ended"
 	EventDeviceRegistrationUpdated NotificationEvent = "device_registration_updated"
