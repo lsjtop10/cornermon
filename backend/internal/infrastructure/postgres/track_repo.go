@@ -106,3 +106,16 @@ func (r *pgTrackRepository) Save(ctx context.Context, track *domain.Track) error
 
 	return r.queries(ctx).SaveTrack(ctx, params)
 }
+
+func (r *pgTrackRepository) ListByCamp(ctx context.Context, campID domain.CampID) ([]*domain.Track, error) {
+	rows, err := r.queries(ctx).ListTracksByCamp(ctx, string(campID))
+	if err != nil {
+		return nil, err
+	}
+
+	tracks := make([]*domain.Track, len(rows))
+	for i, row := range rows {
+		tracks[i] = mapTrack(row)
+	}
+	return tracks, nil
+}
