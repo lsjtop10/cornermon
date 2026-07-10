@@ -177,3 +177,27 @@ SELECT * FROM broadcast_receipts WHERE message_id = $1;
 -- name: SaveAuditLog :exec
 INSERT INTO audit_logs (id, actor, action, target, success, occurred_at, metadata)
 VALUES ($1, $2, $3, $4, $5, $6, $7);
+
+-- name: ListCamps :many
+SELECT * FROM camps;
+
+-- name: DeleteCorner :exec
+DELETE FROM corners WHERE id = $1;
+
+-- name: ListTracksByCamp :many
+SELECT t.* FROM tracks t
+JOIN corners c ON t.corner_id = c.id
+WHERE c.camp_id = $1;
+
+-- name: ListAllBadges :many
+SELECT * FROM badges;
+
+-- name: ListDeviceRegistrationsByCampAndStatus :many
+SELECT * FROM device_registrations
+WHERE camp_id = $1 AND ($2::VARCHAR IS NULL OR status = $2);
+
+-- name: ListVisitsByCamp :many
+SELECT v.*, c.target_minutes, c.name as corner_name FROM visits v
+JOIN groups g ON v.group_id = g.id
+JOIN corners c ON v.corner_id = c.id
+WHERE g.camp_id = $1;

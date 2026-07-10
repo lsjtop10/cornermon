@@ -96,3 +96,86 @@ func (tm *pgTxManager) RunInTransaction(ctx context.Context, fn func(ctx context
 - [ ] `TxManager` 롤백 테스트: 의도적인 에러 발생 시 트랜잭션 내 이전 쿼리들이 전부 롤백되는지 확인
 - [ ] DB 타임아웃 테스트: DB 지연 시 응답이 무한 대기하지 않고 Context Timeout이 정상 작동하는지 확인
 - [ ] 유니크 키 충돌 시 Usecase로 `domain.ErrAlreadyExists`가 정확히 전달되는지 확인
+
+## 8. 구현 대상 저장소(Repository)별 메서드 명세
+
+다음은 `postgres` 계층에서 `usecase` 인터페이스 충족을 위해 구현해야 하는 14개 Repository와 `TxManager`의 구체적인 메서드 목록입니다.
+
+### 8.1 Admin 및 세션 관리
+* **AdminRepository** (`internal/usecase/auth_admin.go`)
+  - `Get(ctx context.Context, id domain.AdminID) (*domain.Admin, error)`
+  - `GetByUsername(ctx context.Context, username string) (*domain.Admin, error)`
+* **AdminSessionRepository** (`internal/usecase/auth_admin.go`)
+  - `Get(ctx context.Context, id domain.AdminSessionID) (*domain.AdminSession, error)`
+  - `GetByAccessTokenHash(ctx context.Context, hash string) (*domain.AdminSession, error)`
+  - `GetByRefreshTokenHash(ctx context.Context, hash string) (*domain.AdminSession, error)`
+  - `Save(ctx context.Context, session *domain.AdminSession) error`
+
+### 8.2 캠프 및 코너, 트랙 (도메인 리소스)
+* **CampRepository** (`internal/usecase/camp.go`)
+  - `Get(ctx context.Context, id domain.CampID) (*domain.Camp, error)`
+  - `List(ctx context.Context) ([]*domain.Camp, error)`
+  - `Save(ctx context.Context, camp *domain.Camp) error`
+* **CornerRepository** (`internal/usecase/corner.go`)
+  - `Get(ctx context.Context, id domain.CornerID) (*domain.Corner, error)`
+  - `ListByCamp(ctx context.Context, campID domain.CampID) ([]*domain.Corner, error)`
+  - `Save(ctx context.Context, corner *domain.Corner) error`
+  - `Delete(ctx context.Context, id domain.CornerID) error`
+* **TrackRepository** (`internal/usecase/track.go`)
+  - `Get(ctx context.Context, id domain.TrackID) (*domain.Track, error)`
+  - `ListByCorner(ctx context.Context, cornerID domain.CornerID) ([]*domain.Track, error)`
+  - `ListActiveByCamp(ctx context.Context, campID domain.CampID) ([]*domain.Track, error)`
+  - `ListByCamp(ctx context.Context, campID domain.CampID) ([]*domain.Track, error)`
+  - `Save(ctx context.Context, track *domain.Track) error`
+
+### 8.3 스캔 및 그룹 방문 흐름
+* **GroupRepository** (`internal/usecase/group.go`)
+  - `Get(ctx context.Context, id domain.GroupID) (*domain.Group, error)`
+  - `GetByBadge(ctx context.Context, campID domain.CampID, badgeID domain.BadgeID) (*domain.Group, error)`
+  - `ListByCamp(ctx context.Context, campID domain.CampID) ([]*domain.Group, error)`
+  - `Save(ctx context.Context, group *domain.Group) error`
+* **BadgeRepository** (`internal/usecase/badge.go`)
+  - `Get(ctx context.Context, id domain.BadgeID) (*domain.Badge, error)`
+  - `GetByQRPayload(ctx context.Context, payload string) (*domain.Badge, error)`
+  - `ListAll(ctx context.Context) ([]*domain.Badge, error)`
+  - `Save(ctx context.Context, badge *domain.Badge) error`
+  - `SaveBulk(ctx context.Context, badges []*domain.Badge) error`
+* **VisitRepository** (`internal/usecase/visit.go`)
+  - `Get(ctx context.Context, id domain.VisitID) (*domain.Visit, error)`
+  - `GetInProgressByTrack(ctx context.Context, trackID domain.TrackID) (*domain.Visit, error)`
+  - `GetCompletedByGroupAndCorner(ctx context.Context, groupID domain.GroupID, cornerID domain.CornerID) (*domain.Visit, error)`
+  - `Save(ctx context.Context, visit *domain.Visit) error`
+
+### 8.4 퍼실리테이터 세션 및 디바이스
+* **DeviceRegistrationRepository** (`internal/usecase/device_trust.go`)
+  - `Get(ctx context.Context, id domain.DeviceRegistrationID) (*domain.DeviceRegistration, error)`
+  - `GetByTokenHash(ctx context.Context, hash string) (*domain.DeviceRegistration, error)`
+  - `ListPendingByCamp(ctx context.Context, campID domain.CampID) ([]*domain.DeviceRegistration, error)`
+  - `ListByCampAndStatus(ctx context.Context, campID domain.CampID, status *domain.DeviceRegistrationStatus) ([]*domain.DeviceRegistration, error)`
+  - `Save(ctx context.Context, reg *domain.DeviceRegistration) error`
+* **FacilitatorSessionRepository** (`internal/usecase/auth_facilitator.go`)
+  - `GetByTokenHash(ctx context.Context, hash string) (*domain.FacilitatorSession, error)`
+  - `ListActiveByTrack(ctx context.Context, trackID domain.TrackID) ([]*domain.FacilitatorSession, error)`
+  - `ListActiveByCamp(ctx context.Context, campID domain.CampID) ([]*domain.FacilitatorSession, error)`
+  - `Save(ctx context.Context, session *domain.FacilitatorSession) error`
+
+### 8.5 메시지 및 수신 이력
+* **MessageRepository** (`internal/usecase/message.go`)
+  - `Save(ctx context.Context, msg *domain.Message) error`
+  - `ListBroadcastsByCamp(ctx context.Context, campID domain.CampID) ([]*domain.Message, error)`
+  - `ListDirectByTrack(ctx context.Context, trackID domain.TrackID) ([]*domain.Message, error)`
+* **BroadcastReceiptRepository** (`internal/usecase/message.go`)
+  - `Save(ctx context.Context, receipt *domain.BroadcastReceipt) error`
+  - `GetByMessageAndTrack(ctx context.Context, msgID domain.MessageID, trackID domain.TrackID) (*domain.BroadcastReceipt, error)`
+  - `ListByMessage(ctx context.Context, msgID domain.MessageID) ([]*domain.BroadcastReceipt, error)`
+
+### 8.6 리포트 및 감사 로그
+* **ReportQuerier** (`internal/usecase/report.go`)
+  - `QueryCampReport(ctx context.Context, campID domain.CampID) (*CampReport, error)`
+* **AuditLogRepository** (`internal/usecase/auth_admin.go` 등)
+  - `Save(ctx context.Context, log *domain.AuditLog) error`
+
+### 8.7 트랜잭션 관리
+* **TxManager** (`internal/usecase/auth_admin.go` 등)
+  - `RunInTx(ctx context.Context, fn func(ctx context.Context) error) error`
+
