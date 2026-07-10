@@ -11,12 +11,13 @@ import (
 )
 
 type FacilitatorAuthService struct {
-	camps     CampRepository
-	tracks    TrackRepository
-	devices   DeviceRegistrationRepository
-	sessions  FacilitatorSessionRepository
-	auditLogs AuditLogRepository
-	tx        TxManager
+	camps       CampRepository
+	tracks      TrackRepository
+	devices     DeviceRegistrationRepository
+	sessions    FacilitatorSessionRepository
+	auditLogs   AuditLogRepository
+	broadcaster Broadcaster
+	tx          TxManager
 
 	nowFn  func() time.Time
 	uuidFn func() string
@@ -28,17 +29,19 @@ func NewFacilitatorAuthService(
 	devices DeviceRegistrationRepository,
 	sessions FacilitatorSessionRepository,
 	auditLogs AuditLogRepository,
+	broadcaster Broadcaster,
 	tx TxManager,
 ) *FacilitatorAuthService {
 	return &FacilitatorAuthService{
-		camps:     camps,
-		tracks:    tracks,
-		devices:   devices,
-		sessions:  sessions,
-		auditLogs: auditLogs,
-		tx:        tx,
-		nowFn:     time.Now,
-		uuidFn:    uuid.NewString,
+		camps:       camps,
+		tracks:      tracks,
+		devices:     devices,
+		sessions:    sessions,
+		auditLogs:   auditLogs,
+		broadcaster: broadcaster,
+		tx:          tx,
+		nowFn:       time.Now,
+		uuidFn:      uuid.NewString,
 	}
 }
 
@@ -91,8 +94,12 @@ func (s *FacilitatorAuthService) Login(
 	// 4. PIN 검증
 	if err := verifyPassword(track.PINHash, pin); err != nil {
 		// PIN 검증 실패 시
-		_, _ = device.RecordPinFailure(now)
+		_, needsAdminAlert := device.RecordPinFailure(now)
 		_ = s.devices.Save(ctx, device)
+
+		if needsAdminAlert {
+			_ = s.broadcaster.Broadcast(ctx, device.CampID, EventLockoutAlert, "device:"+string(device.ID))
+		}
 
 		s.recordAuditLog(ctx, "anonymous", "FACILITATOR_LOGIN", string(trackID), false, map[string]any{"error": "invalid pin", "device_failures": device.FailedPinAttempts})
 		return "", nil, errors.New("invalid pin")

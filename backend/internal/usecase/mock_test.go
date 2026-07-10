@@ -455,13 +455,24 @@ func (r *MockAuditLogRepository) Save(ctx context.Context, log *domain.AuditLog)
 	return nil
 }
 
-// MockBroadcaster
-type MockBroadcaster struct {
-	Broadcasts []domain.CampID
+// BroadcastCall은 MockBroadcaster의 호출 기록을 추적하는 구조체입니다.
+type BroadcastCall struct {
+	CampID domain.CampID
+	Event  NotificationEvent
+	Scope  string
 }
 
-func (b *MockBroadcaster) BroadcastSnapshot(ctx context.Context, campID domain.CampID) error {
-	b.Broadcasts = append(b.Broadcasts, campID)
+// MockBroadcaster
+type MockBroadcaster struct {
+	Broadcasts []BroadcastCall
+}
+
+func (b *MockBroadcaster) Broadcast(ctx context.Context, campID domain.CampID, event NotificationEvent, scope string) error {
+	b.Broadcasts = append(b.Broadcasts, BroadcastCall{
+		CampID: campID,
+		Event:  event,
+		Scope:  scope,
+	})
 	return nil
 }
 

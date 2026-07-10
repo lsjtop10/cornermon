@@ -103,7 +103,7 @@ func (s *TrackService) CreateTrack(
 	}
 
 	s.recordAuditLog(ctx, "admin", "TRACK_CREATE", string(track.ID), true, map[string]any{"campID": string(campID), "cornerID": string(cornerID)})
-	_ = s.broadcaster.BroadcastSnapshot(ctx, campID)
+	_ = s.broadcaster.Broadcast(ctx, campID, EventTracksUpdated, "camp")
 
 	return track, plainPIN, nil
 }
@@ -177,7 +177,8 @@ func (s *TrackService) DeleteTrack(
 
 	s.recordAuditLog(ctx, "admin", "TRACK_DELETE", string(trackID), true, map[string]any{"isLastTrack": isLastTrack})
 	if cornerCampID != "" {
-		_ = s.broadcaster.BroadcastSnapshot(ctx, cornerCampID)
+		_ = s.broadcaster.Broadcast(ctx, cornerCampID, EventTracksUpdated, "camp")
+		_ = s.broadcaster.Broadcast(ctx, cornerCampID, EventTrackDeleted, "track:"+string(trackID))
 	}
 
 	return isLastTrack, nil
@@ -267,7 +268,8 @@ func (s *TrackService) ReplaceTrack(
 	}
 
 	s.recordAuditLog(ctx, "admin", "TRACK_REPLACE", string(newTrack.ID), true, map[string]any{"oldTrackID": string(oldTrackID)})
-	_ = s.broadcaster.BroadcastSnapshot(ctx, newCorner.CampID)
+	_ = s.broadcaster.Broadcast(ctx, newCorner.CampID, EventTracksUpdated, "camp")
+	_ = s.broadcaster.Broadcast(ctx, newCorner.CampID, EventTrackDeleted, "track:"+string(oldTrackID))
 
 	return newTrack, plainPIN, nil
 }
@@ -330,7 +332,8 @@ func (s *TrackService) RegeneratePIN(
 
 	s.recordAuditLog(ctx, "admin", "PIN_REGENERATE", string(trackID), true, nil)
 	if cornerCampID != "" {
-		_ = s.broadcaster.BroadcastSnapshot(ctx, cornerCampID)
+		_ = s.broadcaster.Broadcast(ctx, cornerCampID, EventTracksUpdated, "camp")
+		_ = s.broadcaster.Broadcast(ctx, cornerCampID, EventSessionRevoked, "track:"+string(trackID))
 	}
 
 	return plainPIN, nil

@@ -98,8 +98,14 @@ func TestVisitService_StartVisitByQR(t *testing.T) {
 			t.Errorf("expected group itinerary status to be InProgress")
 		}
 
-		if len(broadcaster.Broadcasts) != 1 || broadcaster.Broadcasts[0] != "camp-1" {
-			t.Errorf("expected broadcast to be sent for camp-1")
+		if len(broadcaster.Broadcasts) != 4 || 
+			broadcaster.Broadcasts[0].CampID != "camp-1" ||
+			broadcaster.Broadcasts[0].Event != EventCornersUpdated ||
+			broadcaster.Broadcasts[1].Event != EventGroupsUpdated ||
+			broadcaster.Broadcasts[2].Event != EventTracksUpdated ||
+			broadcaster.Broadcasts[3].Event != EventTrackUpdated ||
+			broadcaster.Broadcasts[3].Scope != "track:track-1" {
+			t.Errorf("expected corners, groups, tracks, track alerts, got %v", broadcaster.Broadcasts)
 		}
 
 		if len(auditLogs.Logs) != 1 || !auditLogs.Logs[0].Success {
@@ -278,6 +284,16 @@ func TestVisitService_CompleteVisit(t *testing.T) {
 		updatedGroup, _ := groups.Get(context.Background(), "group-1")
 		if updatedGroup.Itinerary[0].Status != domain.VisitCompleted {
 			t.Errorf("expected group itinerary to be completed")
+		}
+
+		if len(broadcaster.Broadcasts) != 4 || 
+			broadcaster.Broadcasts[0].CampID != "camp-1" ||
+			broadcaster.Broadcasts[0].Event != EventCornersUpdated ||
+			broadcaster.Broadcasts[1].Event != EventGroupsUpdated ||
+			broadcaster.Broadcasts[2].Event != EventTracksUpdated ||
+			broadcaster.Broadcasts[3].Event != EventTrackUpdated ||
+			broadcaster.Broadcasts[3].Scope != "track:track-1" {
+			t.Errorf("expected corners, groups, tracks, track alerts, got %v", broadcaster.Broadcasts)
 		}
 	})
 

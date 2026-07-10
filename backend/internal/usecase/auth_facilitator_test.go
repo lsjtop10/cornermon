@@ -31,6 +31,7 @@ func TestFacilitatorAuthService_Login(t *testing.T) {
 		deviceTokenHash := hashSHA256(deviceToken)
 		device := &domain.DeviceRegistration{
 			ID:        "device-1",
+			CampID:    "camp-1",
 			Status:    domain.DeviceApproved,
 			TokenHash: deviceTokenHash,
 		}
@@ -38,9 +39,10 @@ func TestFacilitatorAuthService_Login(t *testing.T) {
 
 		sessions := NewMockFacilitatorSessionRepository()
 		auditLogs := &MockAuditLogRepository{}
+		broadcaster := &MockBroadcaster{}
 		tx := &MockTxManager{}
 
-		s := NewFacilitatorAuthService(camps, tracks, devices, sessions, auditLogs, tx)
+		s := NewFacilitatorAuthService(camps, tracks, devices, sessions, auditLogs, broadcaster, tx)
 		s.nowFn = func() time.Time { return now }
 		s.uuidFn = func() string { return "session-uuid" }
 
@@ -87,6 +89,7 @@ func TestFacilitatorAuthService_Login(t *testing.T) {
 		deviceTokenHash := hashSHA256(deviceToken)
 		device := &domain.DeviceRegistration{
 			ID:        "device-1",
+			CampID:    "camp-1",
 			Status:    domain.DevicePending,
 			TokenHash: deviceTokenHash,
 		}
@@ -94,9 +97,10 @@ func TestFacilitatorAuthService_Login(t *testing.T) {
 
 		sessions := NewMockFacilitatorSessionRepository()
 		auditLogs := &MockAuditLogRepository{}
+		broadcaster := &MockBroadcaster{}
 		tx := &MockTxManager{}
 
-		s := NewFacilitatorAuthService(camps, tracks, devices, sessions, auditLogs, tx)
+		s := NewFacilitatorAuthService(camps, tracks, devices, sessions, auditLogs, broadcaster, tx)
 		s.nowFn = func() time.Time { return now }
 
 		// Act
@@ -130,6 +134,7 @@ func TestFacilitatorAuthService_Login(t *testing.T) {
 		deviceTokenHash := hashSHA256(deviceToken)
 		device := &domain.DeviceRegistration{
 			ID:          "device-1",
+			CampID:      "camp-1",
 			Status:      domain.DeviceApproved,
 			TokenHash:   deviceTokenHash,
 			LockedUntil: domain.Some(now.Add(5 * time.Minute)),
@@ -138,9 +143,10 @@ func TestFacilitatorAuthService_Login(t *testing.T) {
 
 		sessions := NewMockFacilitatorSessionRepository()
 		auditLogs := &MockAuditLogRepository{}
+		broadcaster := &MockBroadcaster{}
 		tx := &MockTxManager{}
 
-		s := NewFacilitatorAuthService(camps, tracks, devices, sessions, auditLogs, tx)
+		s := NewFacilitatorAuthService(camps, tracks, devices, sessions, auditLogs, broadcaster, tx)
 		s.nowFn = func() time.Time { return now }
 
 		// Act
@@ -149,6 +155,59 @@ func TestFacilitatorAuthService_Login(t *testing.T) {
 		// Assert
 		if err != domain.ErrDeviceLocked {
 			t.Errorf("expected ErrDeviceLocked, got %v", err)
+		}
+	})
+
+	t.Run("ShouldTriggerLockoutAlertOnFifthPinFailure", func(t *testing.T) {
+		// Arrange
+		now := time.Now()
+		camps := NewMockCampRepository()
+		camp := &domain.Camp{ID: "camp-1", Status: domain.CampActive}
+		camps.Save(context.Background(), camp)
+
+		tracks := NewMockTrackRepository()
+		pinHash, _ := hashPassword("123456")
+		track := &domain.Track{
+			ID:       "track-1",
+			CornerID: "corner-1",
+			Status:   domain.TrackActive,
+			PINHash:  pinHash,
+		}
+		tracks.Save(context.Background(), track)
+
+		devices := NewMockDeviceRegistrationRepository()
+		deviceToken := "device-token-1"
+		deviceTokenHash := hashSHA256(deviceToken)
+		device := &domain.DeviceRegistration{
+			ID:                "device-1",
+			CampID:            "camp-1",
+			Status:            domain.DeviceApproved,
+			TokenHash:         deviceTokenHash,
+			FailedPinAttempts: 4, // 5번째 실패 유도
+		}
+		devices.Save(context.Background(), device)
+
+		sessions := NewMockFacilitatorSessionRepository()
+		auditLogs := &MockAuditLogRepository{}
+		broadcaster := &MockBroadcaster{}
+		tx := &MockTxManager{}
+
+		s := NewFacilitatorAuthService(camps, tracks, devices, sessions, auditLogs, broadcaster, tx)
+		s.nowFn = func() time.Time { return now }
+
+		// Act
+		_, _, err := s.Login(context.Background(), "camp-1", "track-1", deviceToken, "wrong-pin")
+
+		// Assert
+		if err == nil || err.Error() != "invalid pin" {
+			t.Fatalf("expected 'invalid pin' error, got %v", err)
+		}
+
+		if len(broadcaster.Broadcasts) != 1 || 
+			broadcaster.Broadcasts[0].CampID != "camp-1" ||
+			broadcaster.Broadcasts[0].Event != EventLockoutAlert ||
+			broadcaster.Broadcasts[0].Scope != "device:device-1" {
+			t.Errorf("expected EventLockoutAlert broadcast, got %v", broadcaster.Broadcasts)
 		}
 	})
 }

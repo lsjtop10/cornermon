@@ -11,6 +11,7 @@ import (
 
 type MessageService struct {
 	camps       CampRepository
+	corners     CornerRepository
 	tracks      TrackRepository
 	messages    MessageRepository
 	receipts    BroadcastReceiptRepository
@@ -25,6 +26,7 @@ type MessageService struct {
 
 func NewMessageService(
 	camps CampRepository,
+	corners CornerRepository,
 	tracks TrackRepository,
 	messages MessageRepository,
 	receipts BroadcastReceiptRepository,
@@ -35,6 +37,7 @@ func NewMessageService(
 ) *MessageService {
 	return &MessageService{
 		camps:       camps,
+		corners:     corners,
 		tracks:      tracks,
 		messages:    messages,
 		receipts:    receipts,
@@ -103,7 +106,7 @@ func (s *MessageService) SendBroadcast(
 	}
 
 	s.recordAuditLog(ctx, string(actorAdminID), "MESSAGE_BROADCAST", string(msg.ID), true, map[string]any{"campID": string(campID)})
-	_ = s.broadcaster.BroadcastSnapshot(ctx, campID)
+	_ = s.broadcaster.Broadcast(ctx, campID, EventMessagesChanged, "broadcast")
 
 	return msg, nil
 }
@@ -151,8 +154,16 @@ func (s *MessageService) SendDirect(
 	s.recordAuditLog(ctx, actor, "MESSAGE_DIRECT", string(msg.ID), true, map[string]any{"trackID": string(trackID)})
 
 	// SSE 푸시를 위해 해당 트랙 소속 코너/캠프 조회
-	// Mock/기본 구조상 트랙 -> 코너 -> 캠프 정보를 통해 캠프 ID를 획득할 수 있도록 브로드캐스트한다.
-	// 이 기능은 테스트 시 캠프 ID 정보가 필요 없으면 단순 로그로 확인한다.
+	corner, err := s.corners.Get(ctx, track.CornerID)
+	if err != nil {
+		return nil, err
+	}
+	if corner == nil {
+		return nil, domain.ErrCornerNotInItinerary
+	}
+
+	_ = s.broadcaster.Broadcast(ctx, corner.CampID, EventMessagesChanged, "track:"+string(trackID))
+
 	return msg, nil
 }
 

@@ -37,6 +37,10 @@ func TestCampService_ActivateCamp(t *testing.T) {
 		if updated.Status != domain.CampActive {
 			t.Errorf("expected status 'ACTIVE', got %s", updated.Status)
 		}
+
+		if len(broadcaster.Broadcasts) != 1 || broadcaster.Broadcasts[0].Event != EventCampUpdated || broadcaster.Broadcasts[0].Scope != "camp" {
+			t.Errorf("expected EventCampUpdated broadcast with scope 'camp', got %v", broadcaster.Broadcasts)
+		}
 	})
 }
 
@@ -81,6 +85,12 @@ func TestCampService_EndCamp(t *testing.T) {
 		updatedSession, _ := sessions.GetByTokenHash(context.Background(), "token-hash-1")
 		if updatedSession.IsActive() {
 			t.Errorf("expected session to be revoked")
+		}
+
+		if len(broadcaster.Broadcasts) != 2 || 
+			broadcaster.Broadcasts[0].Event != EventCampUpdated || broadcaster.Broadcasts[0].Scope != "camp" ||
+			broadcaster.Broadcasts[1].Event != EventCampEnded || broadcaster.Broadcasts[1].Scope != "camp" {
+			t.Errorf("expected EventCampUpdated and EventCampEnded broadcast with scope 'camp', got %v", broadcaster.Broadcasts)
 		}
 	})
 }

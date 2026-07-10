@@ -18,9 +18,10 @@ func TestDeviceTrustService_RequestRegistration(t *testing.T) {
 
 		devices := NewMockDeviceRegistrationRepository()
 		auditLogs := &MockAuditLogRepository{}
+		broadcaster := &MockBroadcaster{}
 		tx := &MockTxManager{}
 
-		s := NewDeviceTrustService(camps, devices, auditLogs, tx)
+		s := NewDeviceTrustService(camps, devices, auditLogs, broadcaster, tx)
 		s.nowFn = func() time.Time { return now }
 		s.uuidFn = func() string { return "device-uuid" }
 
@@ -40,6 +41,12 @@ func TestDeviceTrustService_RequestRegistration(t *testing.T) {
 		if reg.Status != domain.DevicePending {
 			t.Errorf("expected status 'PENDING', got %s", reg.Status)
 		}
+		if len(broadcaster.Broadcasts) != 1 || 
+			broadcaster.Broadcasts[0].CampID != "camp-1" ||
+			broadcaster.Broadcasts[0].Event != EventDeviceRegistrationUpdated ||
+			broadcaster.Broadcasts[0].Scope != "camp" {
+			t.Errorf("expected EventDeviceRegistrationUpdated broadcast, got %v", broadcaster.Broadcasts)
+		}
 	})
 }
 
@@ -51,14 +58,16 @@ func TestDeviceTrustService_ApproveDevice(t *testing.T) {
 		devices := NewMockDeviceRegistrationRepository()
 		device := &domain.DeviceRegistration{
 			ID:     "device-1",
+			CampID: "camp-1",
 			Status: domain.DevicePending,
 		}
 		devices.Devices["device-1"] = device
 
 		auditLogs := &MockAuditLogRepository{}
+		broadcaster := &MockBroadcaster{}
 		tx := &MockTxManager{}
 
-		s := NewDeviceTrustService(camps, devices, auditLogs, tx)
+		s := NewDeviceTrustService(camps, devices, auditLogs, broadcaster, tx)
 		s.nowFn = func() time.Time { return now }
 		s.uuidFn = func() string { return "audit-uuid" }
 
@@ -73,6 +82,13 @@ func TestDeviceTrustService_ApproveDevice(t *testing.T) {
 		updated, _ := devices.Get(context.Background(), "device-1")
 		if updated.Status != domain.DeviceApproved {
 			t.Errorf("expected status 'APPROVED', got %s", updated.Status)
+		}
+
+		if len(broadcaster.Broadcasts) != 1 || 
+			broadcaster.Broadcasts[0].CampID != "camp-1" ||
+			broadcaster.Broadcasts[0].Event != EventDeviceRegistrationUpdated ||
+			broadcaster.Broadcasts[0].Scope != "camp" {
+			t.Errorf("expected EventDeviceRegistrationUpdated broadcast, got %v", broadcaster.Broadcasts)
 		}
 	})
 }

@@ -10,10 +10,11 @@ import (
 )
 
 type DeviceTrustService struct {
-	camps     CampRepository
-	devices   DeviceRegistrationRepository
-	auditLogs AuditLogRepository
-	tx        TxManager
+	camps       CampRepository
+	devices     DeviceRegistrationRepository
+	auditLogs   AuditLogRepository
+	broadcaster Broadcaster
+	tx          TxManager
 
 	nowFn  func() time.Time
 	uuidFn func() string
@@ -23,15 +24,17 @@ func NewDeviceTrustService(
 	camps CampRepository,
 	devices DeviceRegistrationRepository,
 	auditLogs AuditLogRepository,
+	broadcaster Broadcaster,
 	tx TxManager,
 ) *DeviceTrustService {
 	return &DeviceTrustService{
-		camps:     camps,
-		devices:   devices,
-		auditLogs: auditLogs,
-		tx:        tx,
-		nowFn:     time.Now,
-		uuidFn:    uuid.NewString,
+		camps:       camps,
+		devices:     devices,
+		auditLogs:   auditLogs,
+		broadcaster: broadcaster,
+		tx:          tx,
+		nowFn:       time.Now,
+		uuidFn:      uuid.NewString,
 	}
 }
 
@@ -57,6 +60,7 @@ func (s *DeviceTrustService) RequestRegistration(
 	regID := domain.DeviceRegistrationID(s.uuidFn())
 	reg := &domain.DeviceRegistration{
 		ID:                regID,
+		CampID:            campID,
 		DeviceName:        deviceName,
 		Status:            domain.DevicePending,
 		TokenHash:         tokenHash,
@@ -75,6 +79,7 @@ func (s *DeviceTrustService) RequestRegistration(
 	}
 
 	s.recordAuditLog(ctx, "anonymous", "DEVICE_REQUEST", string(reg.ID), true, map[string]any{"campID": string(campID)})
+	_ = s.broadcaster.Broadcast(ctx, campID, EventDeviceRegistrationUpdated, "camp")
 	return plainToken, reg, nil
 }
 
@@ -107,6 +112,7 @@ func (s *DeviceTrustService) ApproveDevice(
 	}
 
 	s.recordAuditLog(ctx, string(actorAdminID), "DEVICE_APPROVED", string(regID), true, nil)
+	_ = s.broadcaster.Broadcast(ctx, device.CampID, EventDeviceRegistrationUpdated, "camp")
 	return nil
 }
 
@@ -138,6 +144,7 @@ func (s *DeviceTrustService) RejectDevice(
 	}
 
 	s.recordAuditLog(ctx, string(actorAdminID), "DEVICE_REJECTED", string(regID), true, nil)
+	_ = s.broadcaster.Broadcast(ctx, device.CampID, EventDeviceRegistrationUpdated, "camp")
 	return nil
 }
 
@@ -169,6 +176,7 @@ func (s *DeviceTrustService) RevokeDevice(
 	}
 
 	s.recordAuditLog(ctx, string(actorAdminID), "DEVICE_REVOKED", string(regID), true, nil)
+	_ = s.broadcaster.Broadcast(ctx, device.CampID, EventDeviceRegistrationUpdated, "camp")
 	return nil
 }
 
@@ -198,6 +206,7 @@ func (s *DeviceTrustService) ResetPinFailures(
 	}
 
 	s.recordAuditLog(ctx, string(actorAdminID), "PIN_LOCK_RESET", string(regID), true, nil)
+	_ = s.broadcaster.Broadcast(ctx, device.CampID, EventDeviceRegistrationUpdated, "camp")
 	return nil
 }
 

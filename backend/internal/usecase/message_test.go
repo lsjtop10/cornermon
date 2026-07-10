@@ -22,6 +22,7 @@ func TestMessageService_SendBroadcast(t *testing.T) {
 		tracks.Save(context.Background(), track1)
 		tracks.Save(context.Background(), track2)
 
+		corners := NewMockCornerRepository()
 		messages := NewMockMessageRepository()
 		receipts := NewMockBroadcastReceiptRepository()
 		sessions := NewMockFacilitatorSessionRepository()
@@ -29,7 +30,7 @@ func TestMessageService_SendBroadcast(t *testing.T) {
 		broadcaster := &MockBroadcaster{}
 		tx := &MockTxManager{}
 
-		s := NewMessageService(camps, tracks, messages, receipts, sessions, auditLogs, broadcaster, tx)
+		s := NewMessageService(camps, corners, tracks, messages, receipts, sessions, auditLogs, broadcaster, tx)
 		s.nowFn = func() time.Time { return now }
 		s.uuidFn = func() string { return "msg-uuid" }
 
@@ -49,6 +50,63 @@ func TestMessageService_SendBroadcast(t *testing.T) {
 
 		if len(receipts.Receipts) != 2 {
 			t.Errorf("expected 2 receipts to be saved, got %d", len(receipts.Receipts))
+		}
+
+		if len(broadcaster.Broadcasts) != 1 || 
+			broadcaster.Broadcasts[0].CampID != "camp-1" ||
+			broadcaster.Broadcasts[0].Event != EventMessagesChanged ||
+			broadcaster.Broadcasts[0].Scope != "broadcast" {
+			t.Errorf("expected EventMessagesChanged broadcast with scope 'broadcast', got %v", broadcaster.Broadcasts)
+		}
+	})
+}
+
+func TestMessageService_SendDirect(t *testing.T) {
+	t.Run("ShouldSendDirectSuccessfullyAndNotify", func(t *testing.T) {
+		// Arrange
+		now := time.Now()
+		camps := NewMockCampRepository()
+		camp := &domain.Camp{ID: "camp-1", Status: domain.CampActive}
+		camps.Save(context.Background(), camp)
+
+		corners := NewMockCornerRepository()
+		corner := &domain.Corner{ID: "corner-1", CampID: "camp-1"}
+		corners.Save(context.Background(), corner)
+
+		tracks := NewMockTrackRepository()
+		track := &domain.Track{ID: "track-1", CornerID: "corner-1", Status: domain.TrackActive}
+		tracks.Save(context.Background(), track)
+
+		messages := NewMockMessageRepository()
+		receipts := NewMockBroadcastReceiptRepository()
+		sessions := NewMockFacilitatorSessionRepository()
+		auditLogs := &MockAuditLogRepository{}
+		broadcaster := &MockBroadcaster{}
+		tx := &MockTxManager{}
+
+		s := NewMessageService(camps, corners, tracks, messages, receipts, sessions, auditLogs, broadcaster, tx)
+		s.nowFn = func() time.Time { return now }
+		s.uuidFn = func() string { return "msg-uuid" }
+
+		// Act
+		msg, err := s.SendDirect(context.Background(), "track-1", "Hello Track", domain.RoleAdmin)
+
+		// Assert
+		if err != nil {
+			t.Fatalf("expected no error, got %v", err)
+		}
+		if msg == nil {
+			t.Fatal("expected message, got nil")
+		}
+		if msg.ID != "msg-uuid" {
+			t.Errorf("expected message ID 'msg-uuid', got '%s'", msg.ID)
+		}
+
+		if len(broadcaster.Broadcasts) != 1 || 
+			broadcaster.Broadcasts[0].CampID != "camp-1" ||
+			broadcaster.Broadcasts[0].Event != EventMessagesChanged ||
+			broadcaster.Broadcasts[0].Scope != "track:track-1" {
+			t.Errorf("expected EventMessagesChanged broadcast with scope 'track:track-1', got %v", broadcaster.Broadcasts)
 		}
 	})
 }

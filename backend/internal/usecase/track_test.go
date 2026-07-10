@@ -49,8 +49,11 @@ func TestTrackService_CreateTrack(t *testing.T) {
 		if len(plainPIN) != 6 {
 			t.Errorf("expected 6-digit plain PIN, got length %d", len(plainPIN))
 		}
-		if len(broadcaster.Broadcasts) != 1 || broadcaster.Broadcasts[0] != "camp-1" {
-			t.Errorf("expected camp-1 snapshot to be broadcasted")
+		if len(broadcaster.Broadcasts) != 1 || 
+			broadcaster.Broadcasts[0].CampID != "camp-1" || 
+			broadcaster.Broadcasts[0].Event != EventTracksUpdated || 
+			broadcaster.Broadcasts[0].Scope != "camp" {
+			t.Errorf("expected EventTracksUpdated broadcast with scope 'camp', got %v", broadcaster.Broadcasts)
 		}
 	})
 
@@ -136,6 +139,12 @@ func TestTrackService_DeleteTrack(t *testing.T) {
 		updatedSession, _ := sessions.GetByTokenHash(context.Background(), "hash-1")
 		if updatedSession.IsActive() {
 			t.Errorf("expected session to be revoked")
+		}
+
+		if len(broadcaster.Broadcasts) != 2 || 
+			broadcaster.Broadcasts[0].Event != EventTracksUpdated || broadcaster.Broadcasts[0].Scope != "camp" ||
+			broadcaster.Broadcasts[1].Event != EventTrackDeleted || broadcaster.Broadcasts[1].Scope != "track:track-1" {
+			t.Errorf("expected EventTracksUpdated and EventTrackDeleted broadcasts, got %v", broadcaster.Broadcasts)
 		}
 	})
 

@@ -104,9 +104,25 @@ type AuditLogRepository interface {
 	Save(ctx context.Context, log *domain.AuditLog) error
 }
 
-// Broadcaster는 트랜잭션 성공 후 SSE 클라이언트에게 캠프 전체 스냅샷을 푸시하는 포트입니다.
+type NotificationEvent string
+
+const (
+	EventTracksUpdated            NotificationEvent = "tracks_updated"
+	EventTrackUpdated             NotificationEvent = "track_updated"
+	EventCornersUpdated           NotificationEvent = "corners_updated"
+	EventGroupsUpdated            NotificationEvent = "groups_updated"
+	EventCampUpdated              NotificationEvent = "camp_updated"
+	EventMessagesChanged          NotificationEvent = "messages_changed"
+	EventTrackDeleted             NotificationEvent = "track_deleted"
+	EventSessionRevoked           NotificationEvent = "session_revoked"
+	EventCampEnded                NotificationEvent = "camp_ended"
+	EventDeviceRegistrationUpdated NotificationEvent = "device_registration_updated"
+	EventLockoutAlert             NotificationEvent = "lockout_alert"
+)
+
+// Broadcaster는 트랜잭션 성공 후 SSE 클라이언트에게 실시간 알림을 푸시하는 포트입니다.
 type Broadcaster interface {
-	BroadcastSnapshot(ctx context.Context, campID domain.CampID) error
+	Broadcast(ctx context.Context, campID domain.CampID, event NotificationEvent, scope string) error
 }
 
 // ReportQuerier는 캠프 종료 시 사후 통계 집계를 담당하는 포트입니다.

@@ -150,7 +150,10 @@ func (s *VisitService) StartVisitByQR(
 	}
 
 	s.recordAuditLog(ctx, actor, "VISIT_START", string(visit.ID), true, map[string]any{"method": string(domain.VisitQRScan), "groupID": string(visit.GroupID)})
-	_ = s.broadcaster.BroadcastSnapshot(ctx, groupCampID)
+	_ = s.broadcaster.Broadcast(ctx, groupCampID, EventCornersUpdated, "camp")
+	_ = s.broadcaster.Broadcast(ctx, groupCampID, EventGroupsUpdated, "camp")
+	_ = s.broadcaster.Broadcast(ctx, groupCampID, EventTracksUpdated, "camp")
+	_ = s.broadcaster.Broadcast(ctx, groupCampID, EventTrackUpdated, "track:"+string(session.TrackID))
 
 	return visit, nil
 }
@@ -238,7 +241,10 @@ func (s *VisitService) StartVisitManual(
 	}
 
 	s.recordAuditLog(ctx, actor, "VISIT_START", string(visit.ID), true, map[string]any{"method": string(domain.VisitManual), "groupID": string(visit.GroupID)})
-	_ = s.broadcaster.BroadcastSnapshot(ctx, groupCampID)
+	_ = s.broadcaster.Broadcast(ctx, groupCampID, EventCornersUpdated, "camp")
+	_ = s.broadcaster.Broadcast(ctx, groupCampID, EventGroupsUpdated, "camp")
+	_ = s.broadcaster.Broadcast(ctx, groupCampID, EventTracksUpdated, "camp")
+	_ = s.broadcaster.Broadcast(ctx, groupCampID, EventTrackUpdated, "track:"+string(session.TrackID))
 
 	return visit, nil
 }
@@ -327,7 +333,10 @@ func (s *VisitService) CompleteVisit(
 	}
 
 	s.recordAuditLog(ctx, actor, "VISIT_COMPLETE", string(visit.ID), true, map[string]any{"groupID": string(visit.GroupID)})
-	_ = s.broadcaster.BroadcastSnapshot(ctx, groupCampID)
+	_ = s.broadcaster.Broadcast(ctx, groupCampID, EventCornersUpdated, "camp")
+	_ = s.broadcaster.Broadcast(ctx, groupCampID, EventGroupsUpdated, "camp")
+	_ = s.broadcaster.Broadcast(ctx, groupCampID, EventTracksUpdated, "camp")
+	_ = s.broadcaster.Broadcast(ctx, groupCampID, EventTrackUpdated, "track:"+string(session.TrackID))
 
 	return visit, nil
 }

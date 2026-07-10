@@ -15,6 +15,7 @@ const (
 
 type DeviceRegistration struct {
 	ID                DeviceRegistrationID
+	CampID            CampID
 	DeviceName        string
 	Status            DeviceRegistrationStatus
 	TokenHash         string
