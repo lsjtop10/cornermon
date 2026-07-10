@@ -10,8 +10,15 @@ import (
 	"github.com/google/uuid"
 )
 
+type TrackLoginResult struct {
+	TrackToken string
+	Track      *domain.Track
+	Corner     *domain.Corner
+}
+
 type FacilitatorAuthService struct {
 	camps       CampRepository
+	corners     CornerRepository
 	tracks      TrackRepository
 	devices     DeviceRegistrationRepository
 	sessions    FacilitatorSessionRepository
@@ -25,6 +32,7 @@ type FacilitatorAuthService struct {
 
 func NewFacilitatorAuthService(
 	camps CampRepository,
+	corners CornerRepository,
 	tracks TrackRepository,
 	devices DeviceRegistrationRepository,
 	sessions FacilitatorSessionRepository,
@@ -34,6 +42,7 @@ func NewFacilitatorAuthService(
 ) *FacilitatorAuthService {
 	return &FacilitatorAuthService{
 		camps:       camps,
+		corners:     corners,
 		tracks:      tracks,
 		devices:     devices,
 		sessions:    sessions,
@@ -50,23 +59,23 @@ func (s *FacilitatorAuthService) Login(
 	ctx context.Context,
 	deviceToken string,
 	pin string,
-) (string, *domain.FacilitatorSession, error) {
+) (*TrackLoginResult, error) {
 	now := s.nowFn()
 	deviceTokenHash := hashSHA256(deviceToken)
 
 	// 1. 기기 정보 조회 및 검증
 	device, err := s.devices.GetByTokenHash(ctx, deviceTokenHash)
 	if err != nil {
-		return "", nil, err
+		return nil, err
 	}
 	if device == nil || device.Status != domain.DeviceApproved {
 		s.recordAuditLog(ctx, "anonymous", "FACILITATOR_LOGIN", "", false, map[string]any{"error": domain.ErrDeviceNotApproved.Error()})
-		return "", nil, domain.ErrDeviceNotApproved
+		return nil, domain.ErrDeviceNotApproved
 	}
 
 	if device.IsLocked(now) {
 		s.recordAuditLog(ctx, "anonymous", "FACILITATOR_LOGIN", "", false, map[string]any{"error": domain.ErrDeviceLocked.Error()})
-		return "", nil, domain.ErrDeviceLocked
+		return nil, domain.ErrDeviceLocked
 	}
 
 	campID := device.CampID
@@ -74,17 +83,17 @@ func (s *FacilitatorAuthService) Login(
 	// 2. 캠프 정보 조회 및 검증
 	camp, err := s.camps.Get(ctx, campID)
 	if err != nil {
-		return "", nil, err
+		return nil, err
 	}
 	if camp == nil || !camp.IsActive() {
 		s.recordAuditLog(ctx, "anonymous", "FACILITATOR_LOGIN", "", false, map[string]any{"error": domain.ErrCampInvalidTransition.Error()})
-		return "", nil, domain.ErrCampInvalidTransition
+		return nil, domain.ErrCampInvalidTransition
 	}
 
 	// 3. 트랙 찾기 및 PIN 검증
 	activeTracks, err := s.tracks.ListActiveByCamp(ctx, campID)
 	if err != nil {
-		return "", nil, err
+		return nil, err
 	}
 
 	var track *domain.Track
@@ -105,18 +114,27 @@ func (s *FacilitatorAuthService) Login(
 		}
 
 		s.recordAuditLog(ctx, "anonymous", "FACILITATOR_LOGIN", "", false, map[string]any{"error": "invalid pin", "device_failures": device.FailedPinAttempts})
-		return "", nil, errors.New("invalid pin")
+		return nil, errors.New("invalid pin")
 	}
 
 	trackID := track.ID
 
+	// 4. 코너 정보 조회
+	corner, err := s.corners.Get(ctx, track.CornerID)
+	if err != nil {
+		return nil, err
+	}
+	if corner == nil {
+		return nil, domain.ErrCornerNotInItinerary
+	}
+
 	// PIN 검증 성공 시 실패 횟수 리셋
 	device.ResetPinFailures()
 
-	// 4. 신규 세션 토큰 및 세션 정보 생성
+	// 5. 신규 세션 토큰 및 세션 정보 생성
 	plainToken, sessionTokenHash, err := generateOpaqueToken()
 	if err != nil {
-		return "", nil, err
+		return nil, err
 	}
 
 	sessionID := domain.FacilitatorSessionID(s.uuidFn())
@@ -128,7 +146,7 @@ func (s *FacilitatorAuthService) Login(
 		RevokedAt: domain.None[time.Time](),
 	}
 
-	// 5. DB 트랜잭션 내에서 기기 상태 및 세션 정보 저장
+	// 6. DB 트랜잭션 내에서 기기 상태 및 세션 정보 저장
 	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
 		if err := s.devices.Save(ctx, device); err != nil {
 			return err
@@ -138,11 +156,15 @@ func (s *FacilitatorAuthService) Login(
 
 	if err != nil {
 		s.recordAuditLog(ctx, "anonymous", "FACILITATOR_LOGIN", string(trackID), false, map[string]any{"error": err.Error()})
-		return "", nil, err
+		return nil, err
 	}
 
 	s.recordAuditLog(ctx, string(trackID), "FACILITATOR_LOGIN", string(session.ID), true, nil)
-	return plainToken, session, nil
+	return &TrackLoginResult{
+		TrackToken: plainToken,
+		Track:      track,
+		Corner:     corner,
+	}, nil
 }
 
 // ValidateSession - UC-10
