@@ -117,6 +117,11 @@ func (s *GroupService) ListGroups(
 	return s.groups.ListByCamp(ctx, campID)
 }
 
+// RetrieveGroupRotationSchedule
+func (s *GroupService) RetrieveGroupRotationSchedule(ctx context.Context, groupID domain.GroupID) (*domain.Group, error) {
+	return s.groups.Get(ctx, groupID)
+}
+
 func (s *GroupService) recordAuditLog(ctx context.Context, actor, action, target string, success bool, metadata map[string]any) {
 	log := domain.NewAuditLog(
 		domain.AuditLogID(s.uuidFn()),

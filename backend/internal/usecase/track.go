@@ -339,6 +339,11 @@ func (s *TrackService) RegeneratePIN(
 	return plainPIN, nil
 }
 
+// ListTracksByCamp
+func (s *TrackService) ListTracksByCamp(ctx context.Context, campID domain.CampID) ([]*domain.Track, error) {
+	return s.tracks.ListByCamp(ctx, campID)
+}
+
 func (s *TrackService) recordAuditLog(ctx context.Context, actor, action, target string, success bool, metadata map[string]any) {
 	log := domain.NewAuditLog(
 		domain.AuditLogID(s.uuidFn()),

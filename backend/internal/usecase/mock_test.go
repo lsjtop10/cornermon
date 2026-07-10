@@ -36,6 +36,14 @@ func (r *MockCampRepository) Save(ctx context.Context, camp *domain.Camp) error 
 	return nil
 }
 
+func (r *MockCampRepository) List(ctx context.Context) ([]*domain.Camp, error) {
+	var list []*domain.Camp
+	for _, c := range r.Camps {
+		list = append(list, c)
+	}
+	return list, nil
+}
+
 // MockCornerRepository
 type MockCornerRepository struct {
 	Corners map[domain.CornerID]*domain.Corner
@@ -65,6 +73,11 @@ func (r *MockCornerRepository) ListByCamp(ctx context.Context, campID domain.Cam
 
 func (r *MockCornerRepository) Save(ctx context.Context, corner *domain.Corner) error {
 	r.Corners[corner.ID] = corner
+	return nil
+}
+
+func (r *MockCornerRepository) Delete(ctx context.Context, id domain.CornerID) error {
+	delete(r.Corners, id)
 	return nil
 }
 
@@ -109,6 +122,14 @@ func (r *MockTrackRepository) ListActiveByCamp(ctx context.Context, campID domai
 func (r *MockTrackRepository) Save(ctx context.Context, track *domain.Track) error {
 	r.Tracks[track.ID] = track
 	return nil
+}
+
+func (r *MockTrackRepository) ListByCamp(ctx context.Context, campID domain.CampID) ([]*domain.Track, error) {
+	var list []*domain.Track
+	for _, t := range r.Tracks {
+		list = append(list, t)
+	}
+	return list, nil
 }
 
 // MockVisitRepository
@@ -223,6 +244,21 @@ func (r *MockBadgeRepository) Save(ctx context.Context, badge *domain.Badge) err
 	return nil
 }
 
+func (r *MockBadgeRepository) ListAll(ctx context.Context) ([]*domain.Badge, error) {
+	var list []*domain.Badge
+	for _, b := range r.Badges {
+		list = append(list, b)
+	}
+	return list, nil
+}
+
+func (r *MockBadgeRepository) SaveBulk(ctx context.Context, badges []*domain.Badge) error {
+	for _, b := range badges {
+		r.Badges[b.ID] = b
+	}
+	return nil
+}
+
 // MockDeviceRegistrationRepository
 type MockDeviceRegistrationRepository struct {
 	Devices map[domain.DeviceRegistrationID]*domain.DeviceRegistration
@@ -263,6 +299,16 @@ func (r *MockDeviceRegistrationRepository) ListPendingByCamp(ctx context.Context
 func (r *MockDeviceRegistrationRepository) Save(ctx context.Context, reg *domain.DeviceRegistration) error {
 	r.Devices[reg.ID] = reg
 	return nil
+}
+
+func (r *MockDeviceRegistrationRepository) ListByCampAndStatus(ctx context.Context, campID domain.CampID, status *domain.DeviceRegistrationStatus) ([]*domain.DeviceRegistration, error) {
+	var list []*domain.DeviceRegistration
+	for _, d := range r.Devices {
+		if d.CampID == campID && (status == nil || d.Status == *status) {
+			list = append(list, d)
+		}
+	}
+	return list, nil
 }
 
 // MockFacilitatorSessionRepository

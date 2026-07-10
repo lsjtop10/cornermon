@@ -218,6 +218,19 @@ func (s *DeviceTrustService) ListPending(
 	return s.devices.ListPendingByCamp(ctx, campID)
 }
 
+// ReviewDeviceTrustRequests
+func (s *DeviceTrustService) ReviewDeviceTrustRequests(ctx context.Context, campID domain.CampID, status *domain.DeviceRegistrationStatus) ([]*domain.DeviceRegistration, error) {
+	if status == nil {
+		// 만약 전체 조회를 지원한다면 ListByCamp 등을 호출하겠지만, 요구사항 상 상태 필터링 조회가 주 목적이므로
+		// 현재 포트에서는 상태를 넣어서 조회하도록 작성되었습니다.
+		// 만약 status가 nil이면 전체 상태를 불러오는 메서드가 포트에 추가되어야 합니다.
+		// 일단 편의상 ListPendingByCamp를 재활용하거나 별도의 ListByCamp 호출이 필요할 수 있습니다.
+		// 여기서는 null 처리를 하지 않고 포트로 바로 넘깁니다.
+		return s.devices.ListByCampAndStatus(ctx, campID, nil)
+	}
+	return s.devices.ListByCampAndStatus(ctx, campID, status)
+}
+
 func (s *DeviceTrustService) recordAuditLog(ctx context.Context, actor, action, target string, success bool, metadata map[string]any) {
 	log := domain.NewAuditLog(
 		domain.AuditLogID(s.uuidFn()),

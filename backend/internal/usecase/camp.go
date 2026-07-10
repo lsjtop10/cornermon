@@ -41,6 +41,36 @@ func NewCampService(
 	}
 }
 
+// OpenNewCamp
+func (s *CampService) OpenNewCamp(ctx context.Context, name string) (*domain.Camp, error) {
+	camp := &domain.Camp{
+		ID:     domain.CampID(s.uuidFn()),
+		Name:   name,
+		Status: domain.CampPending,
+		BottleneckMinSamples: 3,
+		BottleneckRatioPct:   20,
+	}
+	err := s.tx.RunInTx(ctx, func(ctx context.Context) error {
+		return s.camps.Save(ctx, camp)
+	})
+	if err != nil {
+		s.recordAuditLog(ctx, "admin", "CAMP_CREATE", "", false, map[string]any{"error": err.Error()})
+		return nil, err
+	}
+	s.recordAuditLog(ctx, "admin", "CAMP_CREATE", string(camp.ID), true, map[string]any{"name": name})
+	return camp, nil
+}
+
+// ListCamps
+func (s *CampService) ListCamps(ctx context.Context) ([]*domain.Camp, error) {
+	return s.camps.List(ctx)
+}
+
+// GetCamp
+func (s *CampService) GetCamp(ctx context.Context, id domain.CampID) (*domain.Camp, error) {
+	return s.camps.Get(ctx, id)
+}
+
 // ActivateCamp - UC-18
 func (s *CampService) ActivateCamp(
 	ctx context.Context,

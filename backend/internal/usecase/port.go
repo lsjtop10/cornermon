@@ -14,6 +14,7 @@ type TxManager interface {
 // CampRepository는 캠프 엔티티의 지속성을 담당하는 포트입니다.
 type CampRepository interface {
 	Get(ctx context.Context, id domain.CampID) (*domain.Camp, error)
+	List(ctx context.Context) ([]*domain.Camp, error)
 	Save(ctx context.Context, camp *domain.Camp) error
 }
 
@@ -22,6 +23,7 @@ type CornerRepository interface {
 	Get(ctx context.Context, id domain.CornerID) (*domain.Corner, error)
 	ListByCamp(ctx context.Context, campID domain.CampID) ([]*domain.Corner, error)
 	Save(ctx context.Context, corner *domain.Corner) error
+	Delete(ctx context.Context, id domain.CornerID) error
 }
 
 // TrackRepository는 트랙 엔티티의 지속성을 담당하는 포트입니다.
@@ -29,6 +31,7 @@ type TrackRepository interface {
 	Get(ctx context.Context, id domain.TrackID) (*domain.Track, error)
 	ListByCorner(ctx context.Context, cornerID domain.CornerID) ([]*domain.Track, error)
 	ListActiveByCamp(ctx context.Context, campID domain.CampID) ([]*domain.Track, error)
+	ListByCamp(ctx context.Context, campID domain.CampID) ([]*domain.Track, error)
 	Save(ctx context.Context, track *domain.Track) error
 }
 
@@ -52,7 +55,9 @@ type GroupRepository interface {
 type BadgeRepository interface {
 	Get(ctx context.Context, id domain.BadgeID) (*domain.Badge, error)
 	GetByQRPayload(ctx context.Context, payload string) (*domain.Badge, error)
+	ListAll(ctx context.Context) ([]*domain.Badge, error)
 	Save(ctx context.Context, badge *domain.Badge) error
+	SaveBulk(ctx context.Context, badges []*domain.Badge) error
 }
 
 // DeviceRegistrationRepository는 기기 등록 엔티티의 지속성을 담당하는 포트입니다.
@@ -60,6 +65,7 @@ type DeviceRegistrationRepository interface {
 	Get(ctx context.Context, id domain.DeviceRegistrationID) (*domain.DeviceRegistration, error)
 	GetByTokenHash(ctx context.Context, hash string) (*domain.DeviceRegistration, error)
 	ListPendingByCamp(ctx context.Context, campID domain.CampID) ([]*domain.DeviceRegistration, error)
+	ListByCampAndStatus(ctx context.Context, campID domain.CampID, status *domain.DeviceRegistrationStatus) ([]*domain.DeviceRegistration, error)
 	Save(ctx context.Context, reg *domain.DeviceRegistration) error
 }
 
