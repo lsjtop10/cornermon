@@ -1,8 +1,8 @@
 package handler
 
 import (
-	"strings"
 	"net/http"
+	"strings"
 
 	"cornermon/backend/internal/domain"
 	"cornermon/backend/internal/infrastructure/http/dto"
@@ -22,6 +22,25 @@ type VisitStartRequest struct {
 	QRToken string `json:"qrToken"`
 	Method  string `json:"method" enums:"MANUAL"`
 	GroupID string `json:"groupId"`
+}
+
+func mapVisitToDTO(v *domain.Visit) dto.VisitSummary {
+	res := dto.VisitSummary{
+		ID:          string(v.ID),
+		GroupID:     string(v.GroupID),
+		CornerID:    string(v.CornerID),
+		TrackID:     string(v.TrackID),
+		Status:      string(v.Status),
+		InputMethod: string(v.InputMethod),
+		StartedAt:   v.StartedAt,
+	}
+	if endedAt, ok := v.EndedAt.Value(); ok {
+		res.EndedAt = &endedAt
+	}
+	if dur, ok := v.DurationSeconds().Value(); ok {
+		res.DurationSeconds = &dur
+	}
+	return res
 }
 
 // @Summary      방문 시작 (조 입장)
@@ -57,7 +76,7 @@ func (h *VisitHandler) StartVisit(c echo.Context) error {
 		return err
 	}
 
-	return c.JSON(http.StatusCreated, visit)
+	return c.JSON(http.StatusCreated, mapVisitToDTO(visit))
 }
 
 // @Summary      현재 방문 종료 (조 퇴장)
@@ -78,7 +97,7 @@ func (h *VisitHandler) EndCurrentVisit(c echo.Context) error {
 		return err
 	}
 
-	return c.JSON(http.StatusOK, visit)
+	return c.JSON(http.StatusOK, mapVisitToDTO(visit))
 }
 
 // @Summary      현재 진행 중인 방문 상태 조회
@@ -91,7 +110,7 @@ func (h *VisitHandler) EndCurrentVisit(c echo.Context) error {
 // @Failure      404 "진행 중인 방문 없음"
 // @Router       /tracks/{trackId}/visits/current [get]
 func (h *VisitHandler) GetCurrentVisit(c echo.Context) error {
-	return c.JSON(http.StatusOK, dto.VisitSummary{})
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not implemented yet")
 }
 
 type ExceptionApproveRequest struct {
@@ -109,5 +128,5 @@ type ExceptionApproveRequest struct {
 // @Success      200 {object} dto.VisitSummary
 // @Router       /visits/exception-approve [post]
 func (h *VisitHandler) ExceptionApprove(c echo.Context) error {
-	return c.JSON(http.StatusOK, dto.VisitSummary{})
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not implemented yet")
 }

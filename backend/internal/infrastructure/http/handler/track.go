@@ -3,15 +3,33 @@ package handler
 import (
 	"net/http"
 
+	"cornermon/backend/internal/domain"
 	"cornermon/backend/internal/infrastructure/http/dto"
+	"cornermon/backend/internal/usecase"
 	"github.com/labstack/echo/v4"
 )
 
 type TrackHandler struct {
+	svc *usecase.TrackService
 }
 
-func NewTrackHandler() *TrackHandler {
-	return &TrackHandler{}
+func NewTrackHandler(svc *usecase.TrackService) *TrackHandler {
+	return &TrackHandler{svc: svc}
+}
+
+func mapDomainTrackToDTO(track *domain.Track) dto.Track {
+	if track == nil {
+		return dto.Track{}
+	}
+	return dto.Track{
+		TrackSummary: dto.TrackSummary{
+			ID:                string(track.ID),
+			CornerID:          string(track.CornerID),
+			TrackNo:           track.TrackNo,
+			Status:            string(track.Status),
+			OperationalStatus: string(track.OperationalStatus()),
+		},
+	}
 }
 
 // @Summary      트랙 목록 조회
@@ -23,10 +41,23 @@ func NewTrackHandler() *TrackHandler {
 // @Success      200 {array} dto.Track
 // @Router       /tracks [get]
 func (h *TrackHandler) ListTracks(c echo.Context) error {
-	return c.JSON(http.StatusOK, []dto.Track{})
+	campID := domain.CampID(c.QueryParam("campId"))
+	if campID == "" {
+		return c.JSON(http.StatusBadRequest, dto.ErrorResponse{Code: "BAD_REQUEST", Message: "campId is required"})
+	}
+	tracks, err := h.svc.ListTracksByCamp(c.Request().Context(), campID)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Code: "INTERNAL_ERROR", Message: err.Error()})
+	}
+	res := make([]dto.Track, len(tracks))
+	for i, tr := range tracks {
+		res[i] = mapDomainTrackToDTO(tr)
+	}
+	return c.JSON(http.StatusOK, res)
 }
 
 type CreateTracksRequest struct {
+	CampID   string `json:"campId"`
 	CornerID string `json:"cornerId"`
 	Count    int    `json:"count"`
 }
@@ -41,7 +72,21 @@ type CreateTracksRequest struct {
 // @Success      201 {array} dto.Track
 // @Router       /tracks [post]
 func (h *TrackHandler) CreateTracks(c echo.Context) error {
-	return c.JSON(http.StatusCreated, []dto.Track{})
+	var req CreateTracksRequest
+	if err := c.Bind(&req); err != nil {
+		return c.JSON(http.StatusBadRequest, dto.ErrorResponse{Code: "BAD_REQUEST", Message: "Invalid request body"})
+	}
+	var res []dto.Track
+	for i := 0; i < req.Count; i++ {
+		track, pin, err := h.svc.CreateTrack(c.Request().Context(), domain.CampID(req.CampID), domain.CornerID(req.CornerID))
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Code: "INTERNAL_ERROR", Message: err.Error()})
+		}
+		dtoTrack := mapDomainTrackToDTO(track)
+		dtoTrack.PIN = pin
+		res = append(res, dtoTrack)
+	}
+	return c.JSON(http.StatusCreated, res)
 }
 
 // @Summary      코너별 트랙 목록 조회
@@ -82,6 +127,16 @@ type BulkDeleteTracksRequest struct {
 // @Success      204 "성공적으로 삭제됨"
 // @Router       /tracks/bulk-delete [delete]
 func (h *TrackHandler) BulkDeleteTracks(c echo.Context) error {
+	var req BulkDeleteTracksRequest
+	if err := c.Bind(&req); err != nil {
+		return c.JSON(http.StatusBadRequest, dto.ErrorResponse{Code: "BAD_REQUEST", Message: "Invalid request body"})
+	}
+	for _, id := range req.TrackIDs {
+		_, err := h.svc.DeleteTrack(c.Request().Context(), domain.TrackID(id))
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Code: "INTERNAL_ERROR", Message: err.Error()})
+		}
+	}
 	return c.NoContent(http.StatusNoContent)
 }
 
@@ -106,7 +161,12 @@ func (h *TrackHandler) ReplaceTrack(c echo.Context) error {
 // @Success      200 {object} dto.Track
 // @Router       /tracks/{id}/regenerate-pin [post]
 func (h *TrackHandler) RegeneratePin(c echo.Context) error {
-	return c.JSON(http.StatusOK, dto.Track{})
+	id := domain.TrackID(c.Param("id"))
+	plainPIN, err := h.svc.RegeneratePIN(c.Request().Context(), id)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Code: "INTERNAL_ERROR", Message: err.Error()})
+	}
+	return c.JSON(http.StatusOK, map[string]string{"pin": plainPIN})
 }
 
 // @Summary      트랙 인증 정보 전체 내보내기
