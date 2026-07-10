@@ -21,7 +21,7 @@ type TrackLoginRequest struct {
 }
 
 type TrackLoginResponse struct {
-	TrackToken string    `json:"trackToken"`
-	Track      TrackDTO  `json:"track"`
-	Corner     CornerDTO `json:"corner"`
+	TrackToken string `json:"trackToken"`
+	Track      Track  `json:"track"`
+	Corner     Corner `json:"corner"`
 }
