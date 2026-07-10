@@ -67,3 +67,7 @@ func (r *pgCornerRepository) Save(ctx context.Context, corner *domain.Corner) er
 		IsMandatory:   corner.IsMandatory,
 	})
 }
+
+func (r *pgCornerRepository) Delete(ctx context.Context, id domain.CornerID) error {
+	return r.queries(ctx).DeleteCorner(ctx, string(id))
+}

@@ -81,3 +81,39 @@ func (r *pgCampRepository) Save(ctx context.Context, camp *domain.Camp) error {
 
 	return r.queries(ctx).SaveCamp(ctx, params)
 }
+
+func (r *pgCampRepository) List(ctx context.Context) ([]*domain.Camp, error) {
+	rows, err := r.queries(ctx).ListCamps(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	camps := make([]*domain.Camp, len(rows))
+	for i, row := range rows {
+		camp := &domain.Camp{
+			ID:                   domain.CampID(row.ID),
+			Name:                 row.Name,
+			StartAt:              row.StartAt.Time,
+			EndAt:                row.EndAt.Time,
+			Status:               domain.CampStatus(row.Status),
+			BottleneckMinSamples: int(row.BottleneckMinSamples),
+			BottleneckRatioPct:   int(row.BottleneckRatioPct),
+		}
+
+		if row.ActivatedAt.Valid {
+			camp.ActivatedAt = domain.Some(row.ActivatedAt.Time)
+		} else {
+			camp.ActivatedAt = domain.None[time.Time]()
+		}
+
+		if row.EndedAt.Valid {
+			camp.EndedAt = domain.Some(row.EndedAt.Time)
+		} else {
+			camp.EndedAt = domain.None[time.Time]()
+		}
+
+		camps[i] = camp
+	}
+
+	return camps, nil
+}
