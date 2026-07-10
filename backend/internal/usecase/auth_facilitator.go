@@ -176,6 +176,84 @@ func (s *FacilitatorAuthService) Login(
 	}, nil
 }
 
+// MigrateSession - UC-2 (이슈 #30)
+func (s *FacilitatorAuthService) MigrateSession(
+	ctx context.Context,
+	oldSessionToken string,
+) (*TrackLoginResult, error) {
+	now := s.nowFn()
+	oldSessionTokenHash := hashSHA256(oldSessionToken)
+
+	// 1. 기존 세션 검증
+	oldSession, err := s.sessions.GetByTokenHash(ctx, oldSessionTokenHash)
+	if err != nil {
+		return nil, err
+	}
+	if oldSession == nil || !oldSession.IsActive() {
+		return nil, domain.ErrSessionRevoked
+	}
+
+	// 2. 승계 대상 트랙 확인
+	if !oldSession.MigrationTargetTrackID.IsSet() {
+		return nil, errors.New("no migration target for this session")
+	}
+	newTrackID, _ := oldSession.MigrationTargetTrackID.Value()
+
+	// 3. 새 트랙 및 코너 조회
+	newTrack, err := s.tracks.Get(ctx, newTrackID)
+	if err != nil {
+		return nil, err
+	}
+	if newTrack == nil {
+		return nil, errors.New("migration target track not found")
+	}
+
+	corner, err := s.corners.Get(ctx, newTrack.CornerID)
+	if err != nil {
+		return nil, err
+	}
+	if corner == nil {
+		return nil, domain.ErrCornerNotInItinerary
+	}
+
+	// 4. 신규 세션 발급
+	plainToken, sessionTokenHash, err := generateOpaqueToken()
+	if err != nil {
+		return nil, err
+	}
+
+	sessionID := domain.FacilitatorSessionID(s.uuidFn())
+	newSession := &domain.FacilitatorSession{
+		ID:                     sessionID,
+		TrackID:                newTrackID,
+		TokenHash:              sessionTokenHash,
+		CreatedAt:              now,
+		RevokedAt:              domain.None[time.Time](),
+		MigrationTargetTrackID: domain.None[domain.TrackID](),
+	}
+
+	// 5. DB 트랜잭션 내에서 기존 세션 만료 및 신규 세션 저장
+	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
+		_ = oldSession.Revoke(now)
+		if err := s.sessions.Save(ctx, oldSession); err != nil {
+			return err
+		}
+		return s.sessions.Save(ctx, newSession)
+	})
+
+	if err != nil {
+		s.recordAuditLog(ctx, string(oldSession.TrackID), "SESSION_MIGRATE", string(newTrackID), false, map[string]any{"error": err.Error()})
+		return nil, err
+	}
+
+	s.recordAuditLog(ctx, string(oldSession.TrackID), "SESSION_MIGRATE", string(newSession.ID), true, nil)
+	return &TrackLoginResult{
+		TrackToken: plainToken,
+		Track:      newTrack,
+		Corner:     corner,
+	}, nil
+}
+
 // ValidateSession - UC-10
 func (s *FacilitatorAuthService) ValidateSession(
 	ctx context.Context,
