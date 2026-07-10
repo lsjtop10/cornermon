@@ -75,7 +75,8 @@ func (s *FacilitatorAuthService) Login(
 
 	if device.IsLocked(now) {
 		s.recordAuditLog(ctx, "anonymous", "FACILITATOR_LOGIN", "", false, map[string]any{"error": domain.ErrDeviceLocked.Error()})
-		return nil, domain.ErrDeviceLocked
+		lockedUntil, _ := device.LockedUntil.Value()
+		return nil, &domain.DeviceLockedError{LockedUntil: lockedUntil}
 	}
 
 	campID := device.CampID
@@ -106,7 +107,7 @@ func (s *FacilitatorAuthService) Login(
 
 	if track == nil {
 		// PIN 검증 실패 시
-		_, needsAdminAlert := device.RecordPinFailure(now)
+		delay, needsAdminAlert := device.RecordPinFailure(now)
 		_ = s.devices.Save(ctx, device)
 
 		if needsAdminAlert {
@@ -114,7 +115,15 @@ func (s *FacilitatorAuthService) Login(
 		}
 
 		s.recordAuditLog(ctx, "anonymous", "FACILITATOR_LOGIN", "", false, map[string]any{"error": "invalid pin", "device_failures": device.FailedPinAttempts})
-		return nil, errors.New("invalid pin")
+
+		var optLocked domain.Optional[time.Time]
+		if delay > 0 {
+			lockedUntil, _ := device.LockedUntil.Value()
+			optLocked = domain.Some(lockedUntil)
+		} else {
+			optLocked = domain.None[time.Time]()
+		}
+		return nil, &domain.InvalidPinError{LockedUntil: optLocked}
 	}
 
 	trackID := track.ID

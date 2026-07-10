@@ -2,7 +2,9 @@ package web
 
 import (
 	"errors"
+	"math"
 	"net/http"
+	"time"
 
 	"cornermon/backend/internal/domain"
 
@@ -30,9 +32,36 @@ func ErrorHandler() echo.HTTPErrorHandler {
 
 		code, errCode := mapDomainError(err)
 
+		var details map[string]interface{}
+		var lockedErr *domain.DeviceLockedError
+		var invalidPinErr *domain.InvalidPinError
+
+		if errors.As(err, &lockedErr) {
+			now := time.Now()
+			sec := int(math.Ceil(lockedErr.LockedUntil.Sub(now).Seconds()))
+			if sec < 1 {
+				sec = 1
+			}
+			details = map[string]interface{}{
+				"retryAfterSeconds": sec,
+			}
+		} else if errors.As(err, &invalidPinErr) {
+			if lockedUntil, ok := invalidPinErr.LockedUntil.Value(); ok {
+				now := time.Now()
+				sec := int(math.Ceil(lockedUntil.Sub(now).Seconds()))
+				if sec < 1 {
+					sec = 1
+				}
+				details = map[string]interface{}{
+					"retryAfterSeconds": sec,
+				}
+			}
+		}
+
 		_ = c.JSON(code, ErrorResponse{
 			Code:    errCode,
 			Message: err.Error(),
+			Details: details,
 		})
 	}
 }
@@ -60,7 +89,9 @@ func mapDomainError(err error) (int, string) {
 	case errors.Is(err, domain.ErrDeviceNotApproved):
 		return http.StatusForbidden, "DEVICE_NOT_APPROVED"
 	case errors.Is(err, domain.ErrDeviceLocked):
-		return http.StatusForbidden, "DEVICE_LOCKED"
+		return http.StatusTooManyRequests, "PIN_LOCKED"
+	case errors.Is(err, domain.ErrInvalidPin):
+		return http.StatusBadRequest, "INVALID_PIN"
 	case errors.Is(err, domain.ErrSessionRevoked):
 		return http.StatusUnauthorized, "SESSION_REVOKED"
 	case errors.Is(err, domain.ErrCornerNotInItinerary):

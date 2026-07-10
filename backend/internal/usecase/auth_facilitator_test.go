@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -167,7 +168,7 @@ func TestFacilitatorAuthService_Login(t *testing.T) {
 		_, err := s.Login(context.Background(), deviceToken, "123456")
 
 		// Assert
-		if err != domain.ErrDeviceLocked {
+		if !errors.Is(err, domain.ErrDeviceLocked) {
 			t.Errorf("expected ErrDeviceLocked, got %v", err)
 		}
 	})
@@ -215,8 +216,20 @@ func TestFacilitatorAuthService_Login(t *testing.T) {
 		_, err := s.Login(context.Background(), deviceToken, "wrong-pin")
 
 		// Assert
-		if err == nil || err.Error() != "invalid pin" {
-			t.Fatalf("expected 'invalid pin' error, got %v", err)
+		if !errors.Is(err, domain.ErrInvalidPin) {
+			t.Fatalf("expected ErrInvalidPin error, got %v", err)
+		}
+		var pinErr *domain.InvalidPinError
+		if !errors.As(err, &pinErr) {
+			t.Fatalf("expected InvalidPinError struct, got %v", err)
+		}
+		lockedUntil, ok := pinErr.LockedUntil.Value()
+		if !ok {
+			t.Fatalf("expected LockedUntil to be set, but it was none")
+		}
+		expectedTime := now.Add(2 * time.Minute)
+		if !lockedUntil.Equal(expectedTime) {
+			t.Errorf("expected LockedUntil to be %v, got %v", expectedTime, lockedUntil)
 		}
 
 		if len(broadcaster.Broadcasts) != 1 ||

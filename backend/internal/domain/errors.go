@@ -1,6 +1,9 @@
 package domain
 
-import "errors"
+import (
+	"errors"
+	"time"
+)
 
 var (
 	ErrCampInvalidTransition   = errors.New("camp: invalid status transition")
@@ -22,3 +25,29 @@ var (
 	ErrVisitEndBeforeStart     = errors.New("visit: endedAt cannot be before startedAt")
 	ErrDeviceInvalidTransition = errors.New("device: invalid status transition")
 )
+
+type DeviceLockedError struct {
+	LockedUntil time.Time
+}
+
+func (e *DeviceLockedError) Error() string {
+	return ErrDeviceLocked.Error()
+}
+
+func (e *DeviceLockedError) Is(target error) bool {
+	return target == ErrDeviceLocked
+}
+
+var ErrInvalidPin = errors.New("auth: invalid pin")
+
+type InvalidPinError struct {
+	LockedUntil Optional[time.Time]
+}
+
+func (e *InvalidPinError) Error() string {
+	return ErrInvalidPin.Error()
+}
+
+func (e *InvalidPinError) Is(target error) bool {
+	return target == ErrInvalidPin
+}
