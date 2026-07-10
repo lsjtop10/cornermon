@@ -10,15 +10,15 @@ class _$CornersGet200Response extends CornersGet200Response {
   @override
   final BuiltList<Corner>? corners;
 
-  factory _$CornersGet200Response(
-          [void Function(CornersGet200ResponseBuilder)? updates]) =>
-      (CornersGet200ResponseBuilder()..update(updates))._build();
+  factory _$CornersGet200Response([
+    void Function(CornersGet200ResponseBuilder)? updates,
+  ]) => (CornersGet200ResponseBuilder()..update(updates))._build();
 
   _$CornersGet200Response._({this.corners}) : super._();
   @override
   CornersGet200Response rebuild(
-          void Function(CornersGet200ResponseBuilder) updates) =>
-      (toBuilder()..update(updates)).build();
+    void Function(CornersGet200ResponseBuilder) updates,
+  ) => (toBuilder()..update(updates)).build();
 
   @override
   CornersGet200ResponseBuilder toBuilder() =>
@@ -40,9 +40,9 @@ class _$CornersGet200Response extends CornersGet200Response {
 
   @override
   String toString() {
-    return (newBuiltValueToStringHelper(r'CornersGet200Response')
-          ..add('corners', corners))
-        .toString();
+    return (newBuiltValueToStringHelper(
+      r'CornersGet200Response',
+    )..add('corners', corners)).toString();
   }
 }
 
@@ -83,10 +83,7 @@ class CornersGet200ResponseBuilder
   _$CornersGet200Response _build() {
     _$CornersGet200Response _$result;
     try {
-      _$result = _$v ??
-          _$CornersGet200Response._(
-            corners: _corners?.build(),
-          );
+      _$result = _$v ?? _$CornersGet200Response._(corners: _corners?.build());
     } catch (_) {
       late String _$failedField;
       try {
@@ -94,7 +91,10 @@ class CornersGet200ResponseBuilder
         _corners?.build();
       } catch (e) {
         throw BuiltValueNestedFieldError(
-            r'CornersGet200Response', _$failedField, e.toString());
+          r'CornersGet200Response',
+          _$failedField,
+          e.toString(),
+        );
       }
       rethrow;
     }

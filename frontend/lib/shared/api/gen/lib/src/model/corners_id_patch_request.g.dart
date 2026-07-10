@@ -12,15 +12,15 @@ class _$CornersIdPatchRequest extends CornersIdPatchRequest {
   @override
   final int? targetMinutes;
 
-  factory _$CornersIdPatchRequest(
-          [void Function(CornersIdPatchRequestBuilder)? updates]) =>
-      (CornersIdPatchRequestBuilder()..update(updates))._build();
+  factory _$CornersIdPatchRequest([
+    void Function(CornersIdPatchRequestBuilder)? updates,
+  ]) => (CornersIdPatchRequestBuilder()..update(updates))._build();
 
   _$CornersIdPatchRequest._({this.name, this.targetMinutes}) : super._();
   @override
   CornersIdPatchRequest rebuild(
-          void Function(CornersIdPatchRequestBuilder) updates) =>
-      (toBuilder()..update(updates)).build();
+    void Function(CornersIdPatchRequestBuilder) updates,
+  ) => (toBuilder()..update(updates)).build();
 
   @override
   CornersIdPatchRequestBuilder toBuilder() =>
@@ -93,11 +93,9 @@ class CornersIdPatchRequestBuilder
   CornersIdPatchRequest build() => _build();
 
   _$CornersIdPatchRequest _build() {
-    final _$result = _$v ??
-        _$CornersIdPatchRequest._(
-          name: name,
-          targetMinutes: targetMinutes,
-        );
+    final _$result =
+        _$v ??
+        _$CornersIdPatchRequest._(name: name, targetMinutes: targetMinutes);
     replace(_$result);
     return _$result;
   }

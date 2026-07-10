@@ -14,17 +14,19 @@ class _$GroupStatsCornerDurationsInner extends GroupStatsCornerDurationsInner {
   @override
   final int? durationSeconds;
 
-  factory _$GroupStatsCornerDurationsInner(
-          [void Function(GroupStatsCornerDurationsInnerBuilder)? updates]) =>
-      (GroupStatsCornerDurationsInnerBuilder()..update(updates))._build();
+  factory _$GroupStatsCornerDurationsInner([
+    void Function(GroupStatsCornerDurationsInnerBuilder)? updates,
+  ]) => (GroupStatsCornerDurationsInnerBuilder()..update(updates))._build();
 
-  _$GroupStatsCornerDurationsInner._(
-      {this.cornerId, this.cornerName, this.durationSeconds})
-      : super._();
+  _$GroupStatsCornerDurationsInner._({
+    this.cornerId,
+    this.cornerName,
+    this.durationSeconds,
+  }) : super._();
   @override
   GroupStatsCornerDurationsInner rebuild(
-          void Function(GroupStatsCornerDurationsInnerBuilder) updates) =>
-      (toBuilder()..update(updates)).build();
+    void Function(GroupStatsCornerDurationsInnerBuilder) updates,
+  ) => (toBuilder()..update(updates)).build();
 
   @override
   GroupStatsCornerDurationsInnerBuilder toBuilder() =>
@@ -61,8 +63,10 @@ class _$GroupStatsCornerDurationsInner extends GroupStatsCornerDurationsInner {
 
 class GroupStatsCornerDurationsInnerBuilder
     implements
-        Builder<GroupStatsCornerDurationsInner,
-            GroupStatsCornerDurationsInnerBuilder> {
+        Builder<
+          GroupStatsCornerDurationsInner,
+          GroupStatsCornerDurationsInnerBuilder
+        > {
   _$GroupStatsCornerDurationsInner? _$v;
 
   String? _cornerId;
@@ -107,7 +111,8 @@ class GroupStatsCornerDurationsInnerBuilder
   GroupStatsCornerDurationsInner build() => _build();
 
   _$GroupStatsCornerDurationsInner _build() {
-    final _$result = _$v ??
+    final _$result =
+        _$v ??
         _$GroupStatsCornerDurationsInner._(
           cornerId: cornerId,
           cornerName: cornerName,

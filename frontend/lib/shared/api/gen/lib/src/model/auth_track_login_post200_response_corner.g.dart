@@ -13,16 +13,16 @@ class _$AuthTrackLoginPost200ResponseCorner
   @override
   final String? name;
 
-  factory _$AuthTrackLoginPost200ResponseCorner(
-          [void Function(AuthTrackLoginPost200ResponseCornerBuilder)?
-              updates]) =>
+  factory _$AuthTrackLoginPost200ResponseCorner([
+    void Function(AuthTrackLoginPost200ResponseCornerBuilder)? updates,
+  ]) =>
       (AuthTrackLoginPost200ResponseCornerBuilder()..update(updates))._build();
 
   _$AuthTrackLoginPost200ResponseCorner._({this.id, this.name}) : super._();
   @override
   AuthTrackLoginPost200ResponseCorner rebuild(
-          void Function(AuthTrackLoginPost200ResponseCornerBuilder) updates) =>
-      (toBuilder()..update(updates)).build();
+    void Function(AuthTrackLoginPost200ResponseCornerBuilder) updates,
+  ) => (toBuilder()..update(updates)).build();
 
   @override
   AuthTrackLoginPost200ResponseCornerBuilder toBuilder() =>
@@ -56,8 +56,10 @@ class _$AuthTrackLoginPost200ResponseCorner
 
 class AuthTrackLoginPost200ResponseCornerBuilder
     implements
-        Builder<AuthTrackLoginPost200ResponseCorner,
-            AuthTrackLoginPost200ResponseCornerBuilder> {
+        Builder<
+          AuthTrackLoginPost200ResponseCorner,
+          AuthTrackLoginPost200ResponseCornerBuilder
+        > {
   _$AuthTrackLoginPost200ResponseCorner? _$v;
 
   String? _id;
@@ -89,7 +91,8 @@ class AuthTrackLoginPost200ResponseCornerBuilder
 
   @override
   void update(
-      void Function(AuthTrackLoginPost200ResponseCornerBuilder)? updates) {
+    void Function(AuthTrackLoginPost200ResponseCornerBuilder)? updates,
+  ) {
     if (updates != null) updates(this);
   }
 
@@ -97,11 +100,8 @@ class AuthTrackLoginPost200ResponseCornerBuilder
   AuthTrackLoginPost200ResponseCorner build() => _build();
 
   _$AuthTrackLoginPost200ResponseCorner _build() {
-    final _$result = _$v ??
-        _$AuthTrackLoginPost200ResponseCorner._(
-          id: id,
-          name: name,
-        );
+    final _$result =
+        _$v ?? _$AuthTrackLoginPost200ResponseCorner._(id: id, name: name);
     replace(_$result);
     return _$result;
   }

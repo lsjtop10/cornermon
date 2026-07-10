@@ -12,16 +12,16 @@ class _$AuthAdminLoginPostRequest extends AuthAdminLoginPostRequest {
   @override
   final String password;
 
-  factory _$AuthAdminLoginPostRequest(
-          [void Function(AuthAdminLoginPostRequestBuilder)? updates]) =>
-      (AuthAdminLoginPostRequestBuilder()..update(updates))._build();
+  factory _$AuthAdminLoginPostRequest([
+    void Function(AuthAdminLoginPostRequestBuilder)? updates,
+  ]) => (AuthAdminLoginPostRequestBuilder()..update(updates))._build();
 
   _$AuthAdminLoginPostRequest._({required this.id, required this.password})
-      : super._();
+    : super._();
   @override
   AuthAdminLoginPostRequest rebuild(
-          void Function(AuthAdminLoginPostRequestBuilder) updates) =>
-      (toBuilder()..update(updates)).build();
+    void Function(AuthAdminLoginPostRequestBuilder) updates,
+  ) => (toBuilder()..update(updates)).build();
 
   @override
   AuthAdminLoginPostRequestBuilder toBuilder() =>
@@ -94,12 +94,19 @@ class AuthAdminLoginPostRequestBuilder
   AuthAdminLoginPostRequest build() => _build();
 
   _$AuthAdminLoginPostRequest _build() {
-    final _$result = _$v ??
+    final _$result =
+        _$v ??
         _$AuthAdminLoginPostRequest._(
           id: BuiltValueNullFieldError.checkNotNull(
-              id, r'AuthAdminLoginPostRequest', 'id'),
+            id,
+            r'AuthAdminLoginPostRequest',
+            'id',
+          ),
           password: BuiltValueNullFieldError.checkNotNull(
-              password, r'AuthAdminLoginPostRequest', 'password'),
+            password,
+            r'AuthAdminLoginPostRequest',
+            'password',
+          ),
         );
     replace(_$result);
     return _$result;

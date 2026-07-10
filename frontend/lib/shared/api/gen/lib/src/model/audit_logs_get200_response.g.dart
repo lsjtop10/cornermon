@@ -12,15 +12,15 @@ class _$AuditLogsGet200Response extends AuditLogsGet200Response {
   @override
   final bool? hasMore;
 
-  factory _$AuditLogsGet200Response(
-          [void Function(AuditLogsGet200ResponseBuilder)? updates]) =>
-      (AuditLogsGet200ResponseBuilder()..update(updates))._build();
+  factory _$AuditLogsGet200Response([
+    void Function(AuditLogsGet200ResponseBuilder)? updates,
+  ]) => (AuditLogsGet200ResponseBuilder()..update(updates))._build();
 
   _$AuditLogsGet200Response._({this.logs, this.hasMore}) : super._();
   @override
   AuditLogsGet200Response rebuild(
-          void Function(AuditLogsGet200ResponseBuilder) updates) =>
-      (toBuilder()..update(updates)).build();
+    void Function(AuditLogsGet200ResponseBuilder) updates,
+  ) => (toBuilder()..update(updates)).build();
 
   @override
   AuditLogsGet200ResponseBuilder toBuilder() =>
@@ -95,11 +95,9 @@ class AuditLogsGet200ResponseBuilder
   _$AuditLogsGet200Response _build() {
     _$AuditLogsGet200Response _$result;
     try {
-      _$result = _$v ??
-          _$AuditLogsGet200Response._(
-            logs: _logs?.build(),
-            hasMore: hasMore,
-          );
+      _$result =
+          _$v ??
+          _$AuditLogsGet200Response._(logs: _logs?.build(), hasMore: hasMore);
     } catch (_) {
       late String _$failedField;
       try {
@@ -107,7 +105,10 @@ class AuditLogsGet200ResponseBuilder
         _logs?.build();
       } catch (e) {
         throw BuiltValueNestedFieldError(
-            r'AuditLogsGet200Response', _$failedField, e.toString());
+          r'AuditLogsGet200Response',
+          _$failedField,
+          e.toString(),
+        );
       }
       rethrow;
     }

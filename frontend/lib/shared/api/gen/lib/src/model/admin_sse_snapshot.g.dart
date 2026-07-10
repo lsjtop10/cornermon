@@ -14,12 +14,12 @@ class _$AdminSseSnapshot extends AdminSseSnapshot {
   @override
   final int? unreadBroadcastCount;
 
-  factory _$AdminSseSnapshot(
-          [void Function(AdminSseSnapshotBuilder)? updates]) =>
-      (AdminSseSnapshotBuilder()..update(updates))._build();
+  factory _$AdminSseSnapshot([
+    void Function(AdminSseSnapshotBuilder)? updates,
+  ]) => (AdminSseSnapshotBuilder()..update(updates))._build();
 
   _$AdminSseSnapshot._({this.corners, this.groups, this.unreadBroadcastCount})
-      : super._();
+    : super._();
   @override
   AdminSseSnapshot rebuild(void Function(AdminSseSnapshotBuilder) updates) =>
       (toBuilder()..update(updates)).build();
@@ -105,7 +105,8 @@ class AdminSseSnapshotBuilder
   _$AdminSseSnapshot _build() {
     _$AdminSseSnapshot _$result;
     try {
-      _$result = _$v ??
+      _$result =
+          _$v ??
           _$AdminSseSnapshot._(
             corners: _corners?.build(),
             groups: _groups?.build(),
@@ -120,7 +121,10 @@ class AdminSseSnapshotBuilder
         _groups?.build();
       } catch (e) {
         throw BuiltValueNestedFieldError(
-            r'AdminSseSnapshot', _$failedField, e.toString());
+          r'AdminSseSnapshot',
+          _$failedField,
+          e.toString(),
+        );
       }
       rethrow;
     }

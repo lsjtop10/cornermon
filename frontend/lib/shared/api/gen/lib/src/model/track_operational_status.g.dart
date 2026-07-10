@@ -22,9 +22,9 @@ TrackOperationalStatus _$valueOf(String name) {
 
 final BuiltSet<TrackOperationalStatus> _$values =
     BuiltSet<TrackOperationalStatus>(const <TrackOperationalStatus>[
-  _$IDLE,
-  _$BUSY,
-]);
+      _$IDLE,
+      _$BUSY,
+    ]);
 
 class _$TrackOperationalStatusMeta {
   const _$TrackOperationalStatusMeta();
@@ -34,7 +34,7 @@ class _$TrackOperationalStatusMeta {
   BuiltSet<TrackOperationalStatus> get values => _$values;
 }
 
-abstract class _$TrackOperationalStatusMixin {
+mixin _$TrackOperationalStatusMixin {
   // ignore: non_constant_identifier_names
   _$TrackOperationalStatusMeta get TrackOperationalStatus =>
       const _$TrackOperationalStatusMeta();
@@ -60,15 +60,20 @@ class _$TrackOperationalStatusSerializer
   final String wireName = 'TrackOperationalStatus';
 
   @override
-  Object serialize(Serializers serializers, TrackOperationalStatus object,
-          {FullType specifiedType = FullType.unspecified}) =>
-      _toWire[object.name] ?? object.name;
+  Object serialize(
+    Serializers serializers,
+    TrackOperationalStatus object, {
+    FullType specifiedType = FullType.unspecified,
+  }) => _toWire[object.name] ?? object.name;
 
   @override
-  TrackOperationalStatus deserialize(Serializers serializers, Object serialized,
-          {FullType specifiedType = FullType.unspecified}) =>
-      TrackOperationalStatus.valueOf(
-          _fromWire[serialized] ?? (serialized is String ? serialized : ''));
+  TrackOperationalStatus deserialize(
+    Serializers serializers,
+    Object serialized, {
+    FullType specifiedType = FullType.unspecified,
+  }) => TrackOperationalStatus.valueOf(
+    _fromWire[serialized] ?? (serialized is String ? serialized : ''),
+  );
 }
 
 // ignore_for_file: deprecated_member_use_from_same_package,type=lint

@@ -12,17 +12,18 @@ class _$DeviceRegistrationsPostRequest extends DeviceRegistrationsPostRequest {
   @override
   final String deviceName;
 
-  factory _$DeviceRegistrationsPostRequest(
-          [void Function(DeviceRegistrationsPostRequestBuilder)? updates]) =>
-      (DeviceRegistrationsPostRequestBuilder()..update(updates))._build();
+  factory _$DeviceRegistrationsPostRequest([
+    void Function(DeviceRegistrationsPostRequestBuilder)? updates,
+  ]) => (DeviceRegistrationsPostRequestBuilder()..update(updates))._build();
 
-  _$DeviceRegistrationsPostRequest._(
-      {required this.registrationCode, required this.deviceName})
-      : super._();
+  _$DeviceRegistrationsPostRequest._({
+    required this.registrationCode,
+    required this.deviceName,
+  }) : super._();
   @override
   DeviceRegistrationsPostRequest rebuild(
-          void Function(DeviceRegistrationsPostRequestBuilder) updates) =>
-      (toBuilder()..update(updates)).build();
+    void Function(DeviceRegistrationsPostRequestBuilder) updates,
+  ) => (toBuilder()..update(updates)).build();
 
   @override
   DeviceRegistrationsPostRequestBuilder toBuilder() =>
@@ -56,8 +57,10 @@ class _$DeviceRegistrationsPostRequest extends DeviceRegistrationsPostRequest {
 
 class DeviceRegistrationsPostRequestBuilder
     implements
-        Builder<DeviceRegistrationsPostRequest,
-            DeviceRegistrationsPostRequestBuilder> {
+        Builder<
+          DeviceRegistrationsPostRequest,
+          DeviceRegistrationsPostRequestBuilder
+        > {
   _$DeviceRegistrationsPostRequest? _$v;
 
   String? _registrationCode;
@@ -97,14 +100,19 @@ class DeviceRegistrationsPostRequestBuilder
   DeviceRegistrationsPostRequest build() => _build();
 
   _$DeviceRegistrationsPostRequest _build() {
-    final _$result = _$v ??
+    final _$result =
+        _$v ??
         _$DeviceRegistrationsPostRequest._(
           registrationCode: BuiltValueNullFieldError.checkNotNull(
-              registrationCode,
-              r'DeviceRegistrationsPostRequest',
-              'registrationCode'),
+            registrationCode,
+            r'DeviceRegistrationsPostRequest',
+            'registrationCode',
+          ),
           deviceName: BuiltValueNullFieldError.checkNotNull(
-              deviceName, r'DeviceRegistrationsPostRequest', 'deviceName'),
+            deviceName,
+            r'DeviceRegistrationsPostRequest',
+            'deviceName',
+          ),
         );
     replace(_$result);
     return _$result;

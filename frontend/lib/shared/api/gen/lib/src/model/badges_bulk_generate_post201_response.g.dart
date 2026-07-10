@@ -13,16 +13,16 @@ class _$BadgesBulkGeneratePost201Response
   @override
   final int? generatedCount;
 
-  factory _$BadgesBulkGeneratePost201Response(
-          [void Function(BadgesBulkGeneratePost201ResponseBuilder)? updates]) =>
-      (BadgesBulkGeneratePost201ResponseBuilder()..update(updates))._build();
+  factory _$BadgesBulkGeneratePost201Response([
+    void Function(BadgesBulkGeneratePost201ResponseBuilder)? updates,
+  ]) => (BadgesBulkGeneratePost201ResponseBuilder()..update(updates))._build();
 
   _$BadgesBulkGeneratePost201Response._({this.badges, this.generatedCount})
-      : super._();
+    : super._();
   @override
   BadgesBulkGeneratePost201Response rebuild(
-          void Function(BadgesBulkGeneratePost201ResponseBuilder) updates) =>
-      (toBuilder()..update(updates)).build();
+    void Function(BadgesBulkGeneratePost201ResponseBuilder) updates,
+  ) => (toBuilder()..update(updates)).build();
 
   @override
   BadgesBulkGeneratePost201ResponseBuilder toBuilder() =>
@@ -56,8 +56,10 @@ class _$BadgesBulkGeneratePost201Response
 
 class BadgesBulkGeneratePost201ResponseBuilder
     implements
-        Builder<BadgesBulkGeneratePost201Response,
-            BadgesBulkGeneratePost201ResponseBuilder> {
+        Builder<
+          BadgesBulkGeneratePost201Response,
+          BadgesBulkGeneratePost201ResponseBuilder
+        > {
   _$BadgesBulkGeneratePost201Response? _$v;
 
   ListBuilder<Badge>? _badges;
@@ -90,7 +92,8 @@ class BadgesBulkGeneratePost201ResponseBuilder
 
   @override
   void update(
-      void Function(BadgesBulkGeneratePost201ResponseBuilder)? updates) {
+    void Function(BadgesBulkGeneratePost201ResponseBuilder)? updates,
+  ) {
     if (updates != null) updates(this);
   }
 
@@ -100,7 +103,8 @@ class BadgesBulkGeneratePost201ResponseBuilder
   _$BadgesBulkGeneratePost201Response _build() {
     _$BadgesBulkGeneratePost201Response _$result;
     try {
-      _$result = _$v ??
+      _$result =
+          _$v ??
           _$BadgesBulkGeneratePost201Response._(
             badges: _badges?.build(),
             generatedCount: generatedCount,
@@ -112,7 +116,10 @@ class BadgesBulkGeneratePost201ResponseBuilder
         _badges?.build();
       } catch (e) {
         throw BuiltValueNestedFieldError(
-            r'BadgesBulkGeneratePost201Response', _$failedField, e.toString());
+          r'BadgesBulkGeneratePost201Response',
+          _$failedField,
+          e.toString(),
+        );
       }
       rethrow;
     }

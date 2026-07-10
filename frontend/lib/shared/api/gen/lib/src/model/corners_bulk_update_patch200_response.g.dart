@@ -11,15 +11,15 @@ class _$CornersBulkUpdatePatch200Response
   @override
   final int? updatedCount;
 
-  factory _$CornersBulkUpdatePatch200Response(
-          [void Function(CornersBulkUpdatePatch200ResponseBuilder)? updates]) =>
-      (CornersBulkUpdatePatch200ResponseBuilder()..update(updates))._build();
+  factory _$CornersBulkUpdatePatch200Response([
+    void Function(CornersBulkUpdatePatch200ResponseBuilder)? updates,
+  ]) => (CornersBulkUpdatePatch200ResponseBuilder()..update(updates))._build();
 
   _$CornersBulkUpdatePatch200Response._({this.updatedCount}) : super._();
   @override
   CornersBulkUpdatePatch200Response rebuild(
-          void Function(CornersBulkUpdatePatch200ResponseBuilder) updates) =>
-      (toBuilder()..update(updates)).build();
+    void Function(CornersBulkUpdatePatch200ResponseBuilder) updates,
+  ) => (toBuilder()..update(updates)).build();
 
   @override
   CornersBulkUpdatePatch200ResponseBuilder toBuilder() =>
@@ -42,16 +42,18 @@ class _$CornersBulkUpdatePatch200Response
 
   @override
   String toString() {
-    return (newBuiltValueToStringHelper(r'CornersBulkUpdatePatch200Response')
-          ..add('updatedCount', updatedCount))
-        .toString();
+    return (newBuiltValueToStringHelper(
+      r'CornersBulkUpdatePatch200Response',
+    )..add('updatedCount', updatedCount)).toString();
   }
 }
 
 class CornersBulkUpdatePatch200ResponseBuilder
     implements
-        Builder<CornersBulkUpdatePatch200Response,
-            CornersBulkUpdatePatch200ResponseBuilder> {
+        Builder<
+          CornersBulkUpdatePatch200Response,
+          CornersBulkUpdatePatch200ResponseBuilder
+        > {
   _$CornersBulkUpdatePatch200Response? _$v;
 
   int? _updatedCount;
@@ -78,7 +80,8 @@ class CornersBulkUpdatePatch200ResponseBuilder
 
   @override
   void update(
-      void Function(CornersBulkUpdatePatch200ResponseBuilder)? updates) {
+    void Function(CornersBulkUpdatePatch200ResponseBuilder)? updates,
+  ) {
     if (updates != null) updates(this);
   }
 
@@ -86,10 +89,9 @@ class CornersBulkUpdatePatch200ResponseBuilder
   CornersBulkUpdatePatch200Response build() => _build();
 
   _$CornersBulkUpdatePatch200Response _build() {
-    final _$result = _$v ??
-        _$CornersBulkUpdatePatch200Response._(
-          updatedCount: updatedCount,
-        );
+    final _$result =
+        _$v ??
+        _$CornersBulkUpdatePatch200Response._(updatedCount: updatedCount);
     replace(_$result);
     return _$result;
   }

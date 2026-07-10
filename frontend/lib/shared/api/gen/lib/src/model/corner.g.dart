@@ -23,14 +23,14 @@ class _$Corner extends Corner {
   factory _$Corner([void Function(CornerBuilder)? updates]) =>
       (CornerBuilder()..update(updates))._build();
 
-  _$Corner._(
-      {required this.id,
-      required this.name,
-      required this.targetMinutes,
-      required this.status,
-      this.isBottleneck,
-      this.activeTracks})
-      : super._();
+  _$Corner._({
+    required this.id,
+    required this.name,
+    required this.targetMinutes,
+    required this.status,
+    this.isBottleneck,
+    this.activeTracks,
+  }) : super._();
   @override
   Corner rebuild(void Function(CornerBuilder) updates) =>
       (toBuilder()..update(updates)).build();
@@ -140,15 +140,25 @@ class CornerBuilder implements Builder<Corner, CornerBuilder> {
   _$Corner _build() {
     _$Corner _$result;
     try {
-      _$result = _$v ??
+      _$result =
+          _$v ??
           _$Corner._(
             id: BuiltValueNullFieldError.checkNotNull(id, r'Corner', 'id'),
-            name:
-                BuiltValueNullFieldError.checkNotNull(name, r'Corner', 'name'),
+            name: BuiltValueNullFieldError.checkNotNull(
+              name,
+              r'Corner',
+              'name',
+            ),
             targetMinutes: BuiltValueNullFieldError.checkNotNull(
-                targetMinutes, r'Corner', 'targetMinutes'),
+              targetMinutes,
+              r'Corner',
+              'targetMinutes',
+            ),
             status: BuiltValueNullFieldError.checkNotNull(
-                status, r'Corner', 'status'),
+              status,
+              r'Corner',
+              'status',
+            ),
             isBottleneck: isBottleneck,
             activeTracks: _activeTracks?.build(),
           );
@@ -159,7 +169,10 @@ class CornerBuilder implements Builder<Corner, CornerBuilder> {
         _activeTracks?.build();
       } catch (e) {
         throw BuiltValueNestedFieldError(
-            r'Corner', _$failedField, e.toString());
+          r'Corner',
+          _$failedField,
+          e.toString(),
+        );
       }
       rethrow;
     }

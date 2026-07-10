@@ -72,21 +72,21 @@ SseEventEventEnum _$sseEventEventEnumValueOf(String name) {
 
 final BuiltSet<SseEventEventEnum> _$sseEventEventEnumValues =
     BuiltSet<SseEventEventEnum>(const <SseEventEventEnum>[
-  _$sseEventEventEnum_snapshot,
-  _$sseEventEventEnum_visitPeriodStarted,
-  _$sseEventEventEnum_visitPeriodEnded,
-  _$sseEventEventEnum_trackPeriodCreated,
-  _$sseEventEventEnum_trackPeriodDeleted,
-  _$sseEventEventEnum_trackPeriodReplaced,
-  _$sseEventEventEnum_cornerPeriodUpdated,
-  _$sseEventEventEnum_campPeriodStarted,
-  _$sseEventEventEnum_campPeriodEnded,
-  _$sseEventEventEnum_messagePeriodBroadcast,
-  _$sseEventEventEnum_messagePeriodDirect,
-  _$sseEventEventEnum_sessionPeriodForceLogout,
-  _$sseEventEventEnum_devicePeriodApproved,
-  _$sseEventEventEnum_lockoutPeriodAlert,
-]);
+      _$sseEventEventEnum_snapshot,
+      _$sseEventEventEnum_visitPeriodStarted,
+      _$sseEventEventEnum_visitPeriodEnded,
+      _$sseEventEventEnum_trackPeriodCreated,
+      _$sseEventEventEnum_trackPeriodDeleted,
+      _$sseEventEventEnum_trackPeriodReplaced,
+      _$sseEventEventEnum_cornerPeriodUpdated,
+      _$sseEventEventEnum_campPeriodStarted,
+      _$sseEventEventEnum_campPeriodEnded,
+      _$sseEventEventEnum_messagePeriodBroadcast,
+      _$sseEventEventEnum_messagePeriodDirect,
+      _$sseEventEventEnum_sessionPeriodForceLogout,
+      _$sseEventEventEnum_devicePeriodApproved,
+      _$sseEventEventEnum_lockoutPeriodAlert,
+    ]);
 
 Serializer<SseEventEventEnum> _$sseEventEventEnumSerializer =
     _$SseEventEventEnumSerializer();
@@ -132,15 +132,20 @@ class _$SseEventEventEnumSerializer
   final String wireName = 'SseEventEventEnum';
 
   @override
-  Object serialize(Serializers serializers, SseEventEventEnum object,
-          {FullType specifiedType = FullType.unspecified}) =>
-      _toWire[object.name] ?? object.name;
+  Object serialize(
+    Serializers serializers,
+    SseEventEventEnum object, {
+    FullType specifiedType = FullType.unspecified,
+  }) => _toWire[object.name] ?? object.name;
 
   @override
-  SseEventEventEnum deserialize(Serializers serializers, Object serialized,
-          {FullType specifiedType = FullType.unspecified}) =>
-      SseEventEventEnum.valueOf(
-          _fromWire[serialized] ?? (serialized is String ? serialized : ''));
+  SseEventEventEnum deserialize(
+    Serializers serializers,
+    Object serialized, {
+    FullType specifiedType = FullType.unspecified,
+  }) => SseEventEventEnum.valueOf(
+    _fromWire[serialized] ?? (serialized is String ? serialized : ''),
+  );
 }
 
 class _$SseEvent extends SseEvent {
@@ -223,11 +228,7 @@ class SseEventBuilder implements Builder<SseEvent, SseEventBuilder> {
   SseEvent build() => _build();
 
   _$SseEvent _build() {
-    final _$result = _$v ??
-        _$SseEvent._(
-          event: event,
-          data: data,
-        );
+    final _$result = _$v ?? _$SseEvent._(event: event, data: data);
     replace(_$result);
     return _$result;
   }

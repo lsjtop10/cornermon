@@ -12,17 +12,18 @@ class _$BadgesScanRegisterPostRequest extends BadgesScanRegisterPostRequest {
   @override
   final String groupName;
 
-  factory _$BadgesScanRegisterPostRequest(
-          [void Function(BadgesScanRegisterPostRequestBuilder)? updates]) =>
-      (BadgesScanRegisterPostRequestBuilder()..update(updates))._build();
+  factory _$BadgesScanRegisterPostRequest([
+    void Function(BadgesScanRegisterPostRequestBuilder)? updates,
+  ]) => (BadgesScanRegisterPostRequestBuilder()..update(updates))._build();
 
-  _$BadgesScanRegisterPostRequest._(
-      {required this.qrPayload, required this.groupName})
-      : super._();
+  _$BadgesScanRegisterPostRequest._({
+    required this.qrPayload,
+    required this.groupName,
+  }) : super._();
   @override
   BadgesScanRegisterPostRequest rebuild(
-          void Function(BadgesScanRegisterPostRequestBuilder) updates) =>
-      (toBuilder()..update(updates)).build();
+    void Function(BadgesScanRegisterPostRequestBuilder) updates,
+  ) => (toBuilder()..update(updates)).build();
 
   @override
   BadgesScanRegisterPostRequestBuilder toBuilder() =>
@@ -56,8 +57,10 @@ class _$BadgesScanRegisterPostRequest extends BadgesScanRegisterPostRequest {
 
 class BadgesScanRegisterPostRequestBuilder
     implements
-        Builder<BadgesScanRegisterPostRequest,
-            BadgesScanRegisterPostRequestBuilder> {
+        Builder<
+          BadgesScanRegisterPostRequest,
+          BadgesScanRegisterPostRequestBuilder
+        > {
   _$BadgesScanRegisterPostRequest? _$v;
 
   String? _qrPayload;
@@ -96,12 +99,19 @@ class BadgesScanRegisterPostRequestBuilder
   BadgesScanRegisterPostRequest build() => _build();
 
   _$BadgesScanRegisterPostRequest _build() {
-    final _$result = _$v ??
+    final _$result =
+        _$v ??
         _$BadgesScanRegisterPostRequest._(
           qrPayload: BuiltValueNullFieldError.checkNotNull(
-              qrPayload, r'BadgesScanRegisterPostRequest', 'qrPayload'),
+            qrPayload,
+            r'BadgesScanRegisterPostRequest',
+            'qrPayload',
+          ),
           groupName: BuiltValueNullFieldError.checkNotNull(
-              groupName, r'BadgesScanRegisterPostRequest', 'groupName'),
+            groupName,
+            r'BadgesScanRegisterPostRequest',
+            'groupName',
+          ),
         );
     replace(_$result);
     return _$result;

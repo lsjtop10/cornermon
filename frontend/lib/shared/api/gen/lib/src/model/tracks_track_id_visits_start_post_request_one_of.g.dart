@@ -11,19 +11,17 @@ class _$TracksTrackIdVisitsStartPostRequestOneOf
   @override
   final String qrToken;
 
-  factory _$TracksTrackIdVisitsStartPostRequestOneOf(
-          [void Function(TracksTrackIdVisitsStartPostRequestOneOfBuilder)?
-              updates]) =>
-      (TracksTrackIdVisitsStartPostRequestOneOfBuilder()..update(updates))
-          ._build();
+  factory _$TracksTrackIdVisitsStartPostRequestOneOf([
+    void Function(TracksTrackIdVisitsStartPostRequestOneOfBuilder)? updates,
+  ]) => (TracksTrackIdVisitsStartPostRequestOneOfBuilder()..update(updates))
+      ._build();
 
   _$TracksTrackIdVisitsStartPostRequestOneOf._({required this.qrToken})
-      : super._();
+    : super._();
   @override
   TracksTrackIdVisitsStartPostRequestOneOf rebuild(
-          void Function(TracksTrackIdVisitsStartPostRequestOneOfBuilder)
-              updates) =>
-      (toBuilder()..update(updates)).build();
+    void Function(TracksTrackIdVisitsStartPostRequestOneOfBuilder) updates,
+  ) => (toBuilder()..update(updates)).build();
 
   @override
   TracksTrackIdVisitsStartPostRequestOneOfBuilder toBuilder() =>
@@ -47,16 +45,17 @@ class _$TracksTrackIdVisitsStartPostRequestOneOf
   @override
   String toString() {
     return (newBuiltValueToStringHelper(
-            r'TracksTrackIdVisitsStartPostRequestOneOf')
-          ..add('qrToken', qrToken))
-        .toString();
+      r'TracksTrackIdVisitsStartPostRequestOneOf',
+    )..add('qrToken', qrToken)).toString();
   }
 }
 
 class TracksTrackIdVisitsStartPostRequestOneOfBuilder
     implements
-        Builder<TracksTrackIdVisitsStartPostRequestOneOf,
-            TracksTrackIdVisitsStartPostRequestOneOfBuilder> {
+        Builder<
+          TracksTrackIdVisitsStartPostRequestOneOf,
+          TracksTrackIdVisitsStartPostRequestOneOfBuilder
+        > {
   _$TracksTrackIdVisitsStartPostRequestOneOf? _$v;
 
   String? _qrToken;
@@ -83,7 +82,8 @@ class TracksTrackIdVisitsStartPostRequestOneOfBuilder
 
   @override
   void update(
-      void Function(TracksTrackIdVisitsStartPostRequestOneOfBuilder)? updates) {
+    void Function(TracksTrackIdVisitsStartPostRequestOneOfBuilder)? updates,
+  ) {
     if (updates != null) updates(this);
   }
 
@@ -91,10 +91,14 @@ class TracksTrackIdVisitsStartPostRequestOneOfBuilder
   TracksTrackIdVisitsStartPostRequestOneOf build() => _build();
 
   _$TracksTrackIdVisitsStartPostRequestOneOf _build() {
-    final _$result = _$v ??
+    final _$result =
+        _$v ??
         _$TracksTrackIdVisitsStartPostRequestOneOf._(
           qrToken: BuiltValueNullFieldError.checkNotNull(
-              qrToken, r'TracksTrackIdVisitsStartPostRequestOneOf', 'qrToken'),
+            qrToken,
+            r'TracksTrackIdVisitsStartPostRequestOneOf',
+            'qrToken',
+          ),
         );
     replace(_$result);
     return _$result;

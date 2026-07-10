@@ -10,15 +10,15 @@ class _$CampsGet200Response extends CampsGet200Response {
   @override
   final BuiltList<Camp>? camps;
 
-  factory _$CampsGet200Response(
-          [void Function(CampsGet200ResponseBuilder)? updates]) =>
-      (CampsGet200ResponseBuilder()..update(updates))._build();
+  factory _$CampsGet200Response([
+    void Function(CampsGet200ResponseBuilder)? updates,
+  ]) => (CampsGet200ResponseBuilder()..update(updates))._build();
 
   _$CampsGet200Response._({this.camps}) : super._();
   @override
   CampsGet200Response rebuild(
-          void Function(CampsGet200ResponseBuilder) updates) =>
-      (toBuilder()..update(updates)).build();
+    void Function(CampsGet200ResponseBuilder) updates,
+  ) => (toBuilder()..update(updates)).build();
 
   @override
   CampsGet200ResponseBuilder toBuilder() =>
@@ -40,9 +40,9 @@ class _$CampsGet200Response extends CampsGet200Response {
 
   @override
   String toString() {
-    return (newBuiltValueToStringHelper(r'CampsGet200Response')
-          ..add('camps', camps))
-        .toString();
+    return (newBuiltValueToStringHelper(
+      r'CampsGet200Response',
+    )..add('camps', camps)).toString();
   }
 }
 
@@ -83,10 +83,7 @@ class CampsGet200ResponseBuilder
   _$CampsGet200Response _build() {
     _$CampsGet200Response _$result;
     try {
-      _$result = _$v ??
-          _$CampsGet200Response._(
-            camps: _camps?.build(),
-          );
+      _$result = _$v ?? _$CampsGet200Response._(camps: _camps?.build());
     } catch (_) {
       late String _$failedField;
       try {
@@ -94,7 +91,10 @@ class CampsGet200ResponseBuilder
         _camps?.build();
       } catch (e) {
         throw BuiltValueNestedFieldError(
-            r'CampsGet200Response', _$failedField, e.toString());
+          r'CampsGet200Response',
+          _$failedField,
+          e.toString(),
+        );
       }
       rethrow;
     }

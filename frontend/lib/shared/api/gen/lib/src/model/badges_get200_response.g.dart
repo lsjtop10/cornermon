@@ -10,15 +10,15 @@ class _$BadgesGet200Response extends BadgesGet200Response {
   @override
   final BuiltList<Badge>? badges;
 
-  factory _$BadgesGet200Response(
-          [void Function(BadgesGet200ResponseBuilder)? updates]) =>
-      (BadgesGet200ResponseBuilder()..update(updates))._build();
+  factory _$BadgesGet200Response([
+    void Function(BadgesGet200ResponseBuilder)? updates,
+  ]) => (BadgesGet200ResponseBuilder()..update(updates))._build();
 
   _$BadgesGet200Response._({this.badges}) : super._();
   @override
   BadgesGet200Response rebuild(
-          void Function(BadgesGet200ResponseBuilder) updates) =>
-      (toBuilder()..update(updates)).build();
+    void Function(BadgesGet200ResponseBuilder) updates,
+  ) => (toBuilder()..update(updates)).build();
 
   @override
   BadgesGet200ResponseBuilder toBuilder() =>
@@ -40,9 +40,9 @@ class _$BadgesGet200Response extends BadgesGet200Response {
 
   @override
   String toString() {
-    return (newBuiltValueToStringHelper(r'BadgesGet200Response')
-          ..add('badges', badges))
-        .toString();
+    return (newBuiltValueToStringHelper(
+      r'BadgesGet200Response',
+    )..add('badges', badges)).toString();
   }
 }
 
@@ -83,10 +83,7 @@ class BadgesGet200ResponseBuilder
   _$BadgesGet200Response _build() {
     _$BadgesGet200Response _$result;
     try {
-      _$result = _$v ??
-          _$BadgesGet200Response._(
-            badges: _badges?.build(),
-          );
+      _$result = _$v ?? _$BadgesGet200Response._(badges: _badges?.build());
     } catch (_) {
       late String _$failedField;
       try {
@@ -94,7 +91,10 @@ class BadgesGet200ResponseBuilder
         _badges?.build();
       } catch (e) {
         throw BuiltValueNestedFieldError(
-            r'BadgesGet200Response', _$failedField, e.toString());
+          r'BadgesGet200Response',
+          _$failedField,
+          e.toString(),
+        );
       }
       rethrow;
     }

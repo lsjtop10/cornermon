@@ -11,15 +11,15 @@ class _$AuthAdminSessionsGet200Response
   @override
   final BuiltList<AdminSession>? sessions;
 
-  factory _$AuthAdminSessionsGet200Response(
-          [void Function(AuthAdminSessionsGet200ResponseBuilder)? updates]) =>
-      (AuthAdminSessionsGet200ResponseBuilder()..update(updates))._build();
+  factory _$AuthAdminSessionsGet200Response([
+    void Function(AuthAdminSessionsGet200ResponseBuilder)? updates,
+  ]) => (AuthAdminSessionsGet200ResponseBuilder()..update(updates))._build();
 
   _$AuthAdminSessionsGet200Response._({this.sessions}) : super._();
   @override
   AuthAdminSessionsGet200Response rebuild(
-          void Function(AuthAdminSessionsGet200ResponseBuilder) updates) =>
-      (toBuilder()..update(updates)).build();
+    void Function(AuthAdminSessionsGet200ResponseBuilder) updates,
+  ) => (toBuilder()..update(updates)).build();
 
   @override
   AuthAdminSessionsGet200ResponseBuilder toBuilder() =>
@@ -42,16 +42,18 @@ class _$AuthAdminSessionsGet200Response
 
   @override
   String toString() {
-    return (newBuiltValueToStringHelper(r'AuthAdminSessionsGet200Response')
-          ..add('sessions', sessions))
-        .toString();
+    return (newBuiltValueToStringHelper(
+      r'AuthAdminSessionsGet200Response',
+    )..add('sessions', sessions)).toString();
   }
 }
 
 class AuthAdminSessionsGet200ResponseBuilder
     implements
-        Builder<AuthAdminSessionsGet200Response,
-            AuthAdminSessionsGet200ResponseBuilder> {
+        Builder<
+          AuthAdminSessionsGet200Response,
+          AuthAdminSessionsGet200ResponseBuilder
+        > {
   _$AuthAdminSessionsGet200Response? _$v;
 
   ListBuilder<AdminSession>? _sessions;
@@ -89,10 +91,9 @@ class AuthAdminSessionsGet200ResponseBuilder
   _$AuthAdminSessionsGet200Response _build() {
     _$AuthAdminSessionsGet200Response _$result;
     try {
-      _$result = _$v ??
-          _$AuthAdminSessionsGet200Response._(
-            sessions: _sessions?.build(),
-          );
+      _$result =
+          _$v ??
+          _$AuthAdminSessionsGet200Response._(sessions: _sessions?.build());
     } catch (_) {
       late String _$failedField;
       try {
@@ -100,7 +101,10 @@ class AuthAdminSessionsGet200ResponseBuilder
         _sessions?.build();
       } catch (e) {
         throw BuiltValueNestedFieldError(
-            r'AuthAdminSessionsGet200Response', _$failedField, e.toString());
+          r'AuthAdminSessionsGet200Response',
+          _$failedField,
+          e.toString(),
+        );
       }
       rethrow;
     }

@@ -13,17 +13,18 @@ class _$VisitsExceptionApprovePostRequest
   @override
   final String cornerId;
 
-  factory _$VisitsExceptionApprovePostRequest(
-          [void Function(VisitsExceptionApprovePostRequestBuilder)? updates]) =>
-      (VisitsExceptionApprovePostRequestBuilder()..update(updates))._build();
+  factory _$VisitsExceptionApprovePostRequest([
+    void Function(VisitsExceptionApprovePostRequestBuilder)? updates,
+  ]) => (VisitsExceptionApprovePostRequestBuilder()..update(updates))._build();
 
-  _$VisitsExceptionApprovePostRequest._(
-      {required this.groupId, required this.cornerId})
-      : super._();
+  _$VisitsExceptionApprovePostRequest._({
+    required this.groupId,
+    required this.cornerId,
+  }) : super._();
   @override
   VisitsExceptionApprovePostRequest rebuild(
-          void Function(VisitsExceptionApprovePostRequestBuilder) updates) =>
-      (toBuilder()..update(updates)).build();
+    void Function(VisitsExceptionApprovePostRequestBuilder) updates,
+  ) => (toBuilder()..update(updates)).build();
 
   @override
   VisitsExceptionApprovePostRequestBuilder toBuilder() =>
@@ -57,8 +58,10 @@ class _$VisitsExceptionApprovePostRequest
 
 class VisitsExceptionApprovePostRequestBuilder
     implements
-        Builder<VisitsExceptionApprovePostRequest,
-            VisitsExceptionApprovePostRequestBuilder> {
+        Builder<
+          VisitsExceptionApprovePostRequest,
+          VisitsExceptionApprovePostRequestBuilder
+        > {
   _$VisitsExceptionApprovePostRequest? _$v;
 
   String? _groupId;
@@ -90,7 +93,8 @@ class VisitsExceptionApprovePostRequestBuilder
 
   @override
   void update(
-      void Function(VisitsExceptionApprovePostRequestBuilder)? updates) {
+    void Function(VisitsExceptionApprovePostRequestBuilder)? updates,
+  ) {
     if (updates != null) updates(this);
   }
 
@@ -98,12 +102,19 @@ class VisitsExceptionApprovePostRequestBuilder
   VisitsExceptionApprovePostRequest build() => _build();
 
   _$VisitsExceptionApprovePostRequest _build() {
-    final _$result = _$v ??
+    final _$result =
+        _$v ??
         _$VisitsExceptionApprovePostRequest._(
           groupId: BuiltValueNullFieldError.checkNotNull(
-              groupId, r'VisitsExceptionApprovePostRequest', 'groupId'),
+            groupId,
+            r'VisitsExceptionApprovePostRequest',
+            'groupId',
+          ),
           cornerId: BuiltValueNullFieldError.checkNotNull(
-              cornerId, r'VisitsExceptionApprovePostRequest', 'cornerId'),
+            cornerId,
+            r'VisitsExceptionApprovePostRequest',
+            'cornerId',
+          ),
         );
     replace(_$result);
     return _$result;

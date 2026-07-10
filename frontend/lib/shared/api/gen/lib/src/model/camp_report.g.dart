@@ -27,16 +27,16 @@ class _$CampReport extends CampReport {
   factory _$CampReport([void Function(CampReportBuilder)? updates]) =>
       (CampReportBuilder()..update(updates))._build();
 
-  _$CampReport._(
-      {required this.campId,
-      required this.generatedAt,
-      required this.summary,
-      required this.cornerStats,
-      this.trackStats,
-      required this.groupStats,
-      this.timeline,
-      this.operationalStats})
-      : super._();
+  _$CampReport._({
+    required this.campId,
+    required this.generatedAt,
+    required this.summary,
+    required this.cornerStats,
+    this.trackStats,
+    required this.groupStats,
+    this.timeline,
+    this.operationalStats,
+  }) : super._();
   @override
   CampReport rebuild(void Function(CampReportBuilder) updates) =>
       (toBuilder()..update(updates)).build();
@@ -169,12 +169,19 @@ class CampReportBuilder implements Builder<CampReport, CampReportBuilder> {
   _$CampReport _build() {
     _$CampReport _$result;
     try {
-      _$result = _$v ??
+      _$result =
+          _$v ??
           _$CampReport._(
             campId: BuiltValueNullFieldError.checkNotNull(
-                campId, r'CampReport', 'campId'),
+              campId,
+              r'CampReport',
+              'campId',
+            ),
             generatedAt: BuiltValueNullFieldError.checkNotNull(
-                generatedAt, r'CampReport', 'generatedAt'),
+              generatedAt,
+              r'CampReport',
+              'generatedAt',
+            ),
             summary: summary.build(),
             cornerStats: cornerStats.build(),
             trackStats: _trackStats?.build(),
@@ -199,7 +206,10 @@ class CampReportBuilder implements Builder<CampReport, CampReportBuilder> {
         _operationalStats?.build();
       } catch (e) {
         throw BuiltValueNestedFieldError(
-            r'CampReport', _$failedField, e.toString());
+          r'CampReport',
+          _$failedField,
+          e.toString(),
+        );
       }
       rethrow;
     }

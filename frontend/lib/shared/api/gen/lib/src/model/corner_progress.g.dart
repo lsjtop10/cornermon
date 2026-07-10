@@ -17,9 +17,11 @@ class _$CornerProgress extends CornerProgress {
   factory _$CornerProgress([void Function(CornerProgressBuilder)? updates]) =>
       (CornerProgressBuilder()..update(updates))._build();
 
-  _$CornerProgress._(
-      {required this.cornerId, this.cornerName, required this.status})
-      : super._();
+  _$CornerProgress._({
+    required this.cornerId,
+    this.cornerName,
+    required this.status,
+  }) : super._();
   @override
   CornerProgress rebuild(void Function(CornerProgressBuilder) updates) =>
       (toBuilder()..update(updates)).build();
@@ -101,13 +103,20 @@ class CornerProgressBuilder
   CornerProgress build() => _build();
 
   _$CornerProgress _build() {
-    final _$result = _$v ??
+    final _$result =
+        _$v ??
         _$CornerProgress._(
           cornerId: BuiltValueNullFieldError.checkNotNull(
-              cornerId, r'CornerProgress', 'cornerId'),
+            cornerId,
+            r'CornerProgress',
+            'cornerId',
+          ),
           cornerName: cornerName,
           status: BuiltValueNullFieldError.checkNotNull(
-              status, r'CornerProgress', 'status'),
+            status,
+            r'CornerProgress',
+            'status',
+          ),
         );
     replace(_$result);
     return _$result;

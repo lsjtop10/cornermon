@@ -6,7 +6,7 @@ part of 'track_summary.dart';
 // BuiltValueGenerator
 // **************************************************************************
 
-abstract class TrackSummaryBuilder {
+abstract mixin class TrackSummaryBuilder {
   void replace(TrackSummary other);
   void update(void Function(TrackSummaryBuilder) updates);
   String? get id;
@@ -40,13 +40,13 @@ class _$$TrackSummary extends $TrackSummary {
   factory _$$TrackSummary([void Function($TrackSummaryBuilder)? updates]) =>
       ($TrackSummaryBuilder()..update(updates))._build();
 
-  _$$TrackSummary._(
-      {required this.id,
-      required this.cornerId,
-      required this.trackNo,
-      required this.status,
-      this.operationalStatus})
-      : super._();
+  _$$TrackSummary._({
+    required this.id,
+    required this.cornerId,
+    required this.trackNo,
+    required this.status,
+    this.operationalStatus,
+  }) : super._();
   @override
   $TrackSummary rebuild(void Function($TrackSummaryBuilder) updates) =>
       (toBuilder()..update(updates)).build();
@@ -147,15 +147,25 @@ class $TrackSummaryBuilder
   $TrackSummary build() => _build();
 
   _$$TrackSummary _build() {
-    final _$result = _$v ??
+    final _$result =
+        _$v ??
         _$$TrackSummary._(
           id: BuiltValueNullFieldError.checkNotNull(id, r'$TrackSummary', 'id'),
           cornerId: BuiltValueNullFieldError.checkNotNull(
-              cornerId, r'$TrackSummary', 'cornerId'),
+            cornerId,
+            r'$TrackSummary',
+            'cornerId',
+          ),
           trackNo: BuiltValueNullFieldError.checkNotNull(
-              trackNo, r'$TrackSummary', 'trackNo'),
+            trackNo,
+            r'$TrackSummary',
+            'trackNo',
+          ),
           status: BuiltValueNullFieldError.checkNotNull(
-              status, r'$TrackSummary', 'status'),
+            status,
+            r'$TrackSummary',
+            'status',
+          ),
           operationalStatus: operationalStatus,
         );
     replace(_$result);

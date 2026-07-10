@@ -10,15 +10,15 @@ class _$ReportsGeneratePostRequest extends ReportsGeneratePostRequest {
   @override
   final String campId;
 
-  factory _$ReportsGeneratePostRequest(
-          [void Function(ReportsGeneratePostRequestBuilder)? updates]) =>
-      (ReportsGeneratePostRequestBuilder()..update(updates))._build();
+  factory _$ReportsGeneratePostRequest([
+    void Function(ReportsGeneratePostRequestBuilder)? updates,
+  ]) => (ReportsGeneratePostRequestBuilder()..update(updates))._build();
 
   _$ReportsGeneratePostRequest._({required this.campId}) : super._();
   @override
   ReportsGeneratePostRequest rebuild(
-          void Function(ReportsGeneratePostRequestBuilder) updates) =>
-      (toBuilder()..update(updates)).build();
+    void Function(ReportsGeneratePostRequestBuilder) updates,
+  ) => (toBuilder()..update(updates)).build();
 
   @override
   ReportsGeneratePostRequestBuilder toBuilder() =>
@@ -40,9 +40,9 @@ class _$ReportsGeneratePostRequest extends ReportsGeneratePostRequest {
 
   @override
   String toString() {
-    return (newBuiltValueToStringHelper(r'ReportsGeneratePostRequest')
-          ..add('campId', campId))
-        .toString();
+    return (newBuiltValueToStringHelper(
+      r'ReportsGeneratePostRequest',
+    )..add('campId', campId)).toString();
   }
 }
 
@@ -82,10 +82,14 @@ class ReportsGeneratePostRequestBuilder
   ReportsGeneratePostRequest build() => _build();
 
   _$ReportsGeneratePostRequest _build() {
-    final _$result = _$v ??
+    final _$result =
+        _$v ??
         _$ReportsGeneratePostRequest._(
           campId: BuiltValueNullFieldError.checkNotNull(
-              campId, r'ReportsGeneratePostRequest', 'campId'),
+            campId,
+            r'ReportsGeneratePostRequest',
+            'campId',
+          ),
         );
     replace(_$result);
     return _$result;

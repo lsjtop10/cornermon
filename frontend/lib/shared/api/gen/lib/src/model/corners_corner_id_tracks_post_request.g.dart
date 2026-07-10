@@ -11,15 +11,15 @@ class _$CornersCornerIdTracksPostRequest
   @override
   final int? count;
 
-  factory _$CornersCornerIdTracksPostRequest(
-          [void Function(CornersCornerIdTracksPostRequestBuilder)? updates]) =>
-      (CornersCornerIdTracksPostRequestBuilder()..update(updates))._build();
+  factory _$CornersCornerIdTracksPostRequest([
+    void Function(CornersCornerIdTracksPostRequestBuilder)? updates,
+  ]) => (CornersCornerIdTracksPostRequestBuilder()..update(updates))._build();
 
   _$CornersCornerIdTracksPostRequest._({this.count}) : super._();
   @override
   CornersCornerIdTracksPostRequest rebuild(
-          void Function(CornersCornerIdTracksPostRequestBuilder) updates) =>
-      (toBuilder()..update(updates)).build();
+    void Function(CornersCornerIdTracksPostRequestBuilder) updates,
+  ) => (toBuilder()..update(updates)).build();
 
   @override
   CornersCornerIdTracksPostRequestBuilder toBuilder() =>
@@ -41,16 +41,18 @@ class _$CornersCornerIdTracksPostRequest
 
   @override
   String toString() {
-    return (newBuiltValueToStringHelper(r'CornersCornerIdTracksPostRequest')
-          ..add('count', count))
-        .toString();
+    return (newBuiltValueToStringHelper(
+      r'CornersCornerIdTracksPostRequest',
+    )..add('count', count)).toString();
   }
 }
 
 class CornersCornerIdTracksPostRequestBuilder
     implements
-        Builder<CornersCornerIdTracksPostRequest,
-            CornersCornerIdTracksPostRequestBuilder> {
+        Builder<
+          CornersCornerIdTracksPostRequest,
+          CornersCornerIdTracksPostRequestBuilder
+        > {
   _$CornersCornerIdTracksPostRequest? _$v;
 
   int? _count;
@@ -84,10 +86,7 @@ class CornersCornerIdTracksPostRequestBuilder
   CornersCornerIdTracksPostRequest build() => _build();
 
   _$CornersCornerIdTracksPostRequest _build() {
-    final _$result = _$v ??
-        _$CornersCornerIdTracksPostRequest._(
-          count: count,
-        );
+    final _$result = _$v ?? _$CornersCornerIdTracksPostRequest._(count: count);
     replace(_$result);
     return _$result;
   }

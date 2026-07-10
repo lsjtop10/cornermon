@@ -18,21 +18,21 @@ class _$DeviceRegistration extends DeviceRegistration {
   @override
   final DateTime? approvedAt;
 
-  factory _$DeviceRegistration(
-          [void Function(DeviceRegistrationBuilder)? updates]) =>
-      (DeviceRegistrationBuilder()..update(updates))._build();
+  factory _$DeviceRegistration([
+    void Function(DeviceRegistrationBuilder)? updates,
+  ]) => (DeviceRegistrationBuilder()..update(updates))._build();
 
-  _$DeviceRegistration._(
-      {required this.id,
-      required this.deviceName,
-      required this.status,
-      required this.createdAt,
-      this.approvedAt})
-      : super._();
+  _$DeviceRegistration._({
+    required this.id,
+    required this.deviceName,
+    required this.status,
+    required this.createdAt,
+    this.approvedAt,
+  }) : super._();
   @override
   DeviceRegistration rebuild(
-          void Function(DeviceRegistrationBuilder) updates) =>
-      (toBuilder()..update(updates)).build();
+    void Function(DeviceRegistrationBuilder) updates,
+  ) => (toBuilder()..update(updates)).build();
 
   @override
   DeviceRegistrationBuilder toBuilder() =>
@@ -128,16 +128,29 @@ class DeviceRegistrationBuilder
   DeviceRegistration build() => _build();
 
   _$DeviceRegistration _build() {
-    final _$result = _$v ??
+    final _$result =
+        _$v ??
         _$DeviceRegistration._(
           id: BuiltValueNullFieldError.checkNotNull(
-              id, r'DeviceRegistration', 'id'),
+            id,
+            r'DeviceRegistration',
+            'id',
+          ),
           deviceName: BuiltValueNullFieldError.checkNotNull(
-              deviceName, r'DeviceRegistration', 'deviceName'),
+            deviceName,
+            r'DeviceRegistration',
+            'deviceName',
+          ),
           status: BuiltValueNullFieldError.checkNotNull(
-              status, r'DeviceRegistration', 'status'),
+            status,
+            r'DeviceRegistration',
+            'status',
+          ),
           createdAt: BuiltValueNullFieldError.checkNotNull(
-              createdAt, r'DeviceRegistration', 'createdAt'),
+            createdAt,
+            r'DeviceRegistration',
+            'createdAt',
+          ),
           approvedAt: approvedAt,
         );
     replace(_$result);

@@ -12,17 +12,18 @@ class _$CornersBulkUpdatePatchRequest extends CornersBulkUpdatePatchRequest {
   @override
   final int targetMinutes;
 
-  factory _$CornersBulkUpdatePatchRequest(
-          [void Function(CornersBulkUpdatePatchRequestBuilder)? updates]) =>
-      (CornersBulkUpdatePatchRequestBuilder()..update(updates))._build();
+  factory _$CornersBulkUpdatePatchRequest([
+    void Function(CornersBulkUpdatePatchRequestBuilder)? updates,
+  ]) => (CornersBulkUpdatePatchRequestBuilder()..update(updates))._build();
 
-  _$CornersBulkUpdatePatchRequest._(
-      {required this.cornerIds, required this.targetMinutes})
-      : super._();
+  _$CornersBulkUpdatePatchRequest._({
+    required this.cornerIds,
+    required this.targetMinutes,
+  }) : super._();
   @override
   CornersBulkUpdatePatchRequest rebuild(
-          void Function(CornersBulkUpdatePatchRequestBuilder) updates) =>
-      (toBuilder()..update(updates)).build();
+    void Function(CornersBulkUpdatePatchRequestBuilder) updates,
+  ) => (toBuilder()..update(updates)).build();
 
   @override
   CornersBulkUpdatePatchRequestBuilder toBuilder() =>
@@ -56,8 +57,10 @@ class _$CornersBulkUpdatePatchRequest extends CornersBulkUpdatePatchRequest {
 
 class CornersBulkUpdatePatchRequestBuilder
     implements
-        Builder<CornersBulkUpdatePatchRequest,
-            CornersBulkUpdatePatchRequestBuilder> {
+        Builder<
+          CornersBulkUpdatePatchRequest,
+          CornersBulkUpdatePatchRequestBuilder
+        > {
   _$CornersBulkUpdatePatchRequest? _$v;
 
   ListBuilder<String>? _cornerIds;
@@ -101,11 +104,15 @@ class CornersBulkUpdatePatchRequestBuilder
   _$CornersBulkUpdatePatchRequest _build() {
     _$CornersBulkUpdatePatchRequest _$result;
     try {
-      _$result = _$v ??
+      _$result =
+          _$v ??
           _$CornersBulkUpdatePatchRequest._(
             cornerIds: cornerIds.build(),
-            targetMinutes: BuiltValueNullFieldError.checkNotNull(targetMinutes,
-                r'CornersBulkUpdatePatchRequest', 'targetMinutes'),
+            targetMinutes: BuiltValueNullFieldError.checkNotNull(
+              targetMinutes,
+              r'CornersBulkUpdatePatchRequest',
+              'targetMinutes',
+            ),
           );
     } catch (_) {
       late String _$failedField;
@@ -114,7 +121,10 @@ class CornersBulkUpdatePatchRequestBuilder
         cornerIds.build();
       } catch (e) {
         throw BuiltValueNestedFieldError(
-            r'CornersBulkUpdatePatchRequest', _$failedField, e.toString());
+          r'CornersBulkUpdatePatchRequest',
+          _$failedField,
+          e.toString(),
+        );
       }
       rethrow;
     }

@@ -20,11 +20,9 @@ MessageChannelType _$valueOf(String name) {
   }
 }
 
-final BuiltSet<MessageChannelType> _$values =
-    BuiltSet<MessageChannelType>(const <MessageChannelType>[
-  _$BROADCAST,
-  _$DIRECT,
-]);
+final BuiltSet<MessageChannelType> _$values = BuiltSet<MessageChannelType>(
+  const <MessageChannelType>[_$BROADCAST, _$DIRECT],
+);
 
 class _$MessageChannelTypeMeta {
   const _$MessageChannelTypeMeta();
@@ -34,7 +32,7 @@ class _$MessageChannelTypeMeta {
   BuiltSet<MessageChannelType> get values => _$values;
 }
 
-abstract class _$MessageChannelTypeMixin {
+mixin _$MessageChannelTypeMixin {
   // ignore: non_constant_identifier_names
   _$MessageChannelTypeMeta get MessageChannelType =>
       const _$MessageChannelTypeMeta();
@@ -60,15 +58,20 @@ class _$MessageChannelTypeSerializer
   final String wireName = 'MessageChannelType';
 
   @override
-  Object serialize(Serializers serializers, MessageChannelType object,
-          {FullType specifiedType = FullType.unspecified}) =>
-      _toWire[object.name] ?? object.name;
+  Object serialize(
+    Serializers serializers,
+    MessageChannelType object, {
+    FullType specifiedType = FullType.unspecified,
+  }) => _toWire[object.name] ?? object.name;
 
   @override
-  MessageChannelType deserialize(Serializers serializers, Object serialized,
-          {FullType specifiedType = FullType.unspecified}) =>
-      MessageChannelType.valueOf(
-          _fromWire[serialized] ?? (serialized is String ? serialized : ''));
+  MessageChannelType deserialize(
+    Serializers serializers,
+    Object serialized, {
+    FullType specifiedType = FullType.unspecified,
+  }) => MessageChannelType.valueOf(
+    _fromWire[serialized] ?? (serialized is String ? serialized : ''),
+  );
 }
 
 // ignore_for_file: deprecated_member_use_from_same_package,type=lint

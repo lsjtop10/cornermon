@@ -27,16 +27,16 @@ class _$TrackStats extends TrackStats {
   factory _$TrackStats([void Function(TrackStatsBuilder)? updates]) =>
       (TrackStatsBuilder()..update(updates))._build();
 
-  _$TrackStats._(
-      {this.trackId,
-      this.cornerId,
-      this.trackNo,
-      this.lifecycleStart,
-      this.lifecycleEnd,
-      this.completedVisitCount,
-      this.avgDurationSeconds,
-      this.pinLoginFailureCount})
-      : super._();
+  _$TrackStats._({
+    this.trackId,
+    this.cornerId,
+    this.trackNo,
+    this.lifecycleStart,
+    this.lifecycleEnd,
+    this.completedVisitCount,
+    this.avgDurationSeconds,
+    this.pinLoginFailureCount,
+  }) : super._();
   @override
   TrackStats rebuild(void Function(TrackStatsBuilder) updates) =>
       (toBuilder()..update(updates)).build();
@@ -162,7 +162,8 @@ class TrackStatsBuilder implements Builder<TrackStats, TrackStatsBuilder> {
   TrackStats build() => _build();
 
   _$TrackStats _build() {
-    final _$result = _$v ??
+    final _$result =
+        _$v ??
         _$TrackStats._(
           trackId: trackId,
           cornerId: cornerId,

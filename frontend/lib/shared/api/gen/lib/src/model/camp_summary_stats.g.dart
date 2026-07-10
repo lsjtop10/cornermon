@@ -32,24 +32,24 @@ class _$CampSummaryStats extends CampSummaryStats {
   @override
   final BuiltList<CampSummaryStatsBottleneckRankingInner>? bottleneckRanking;
 
-  factory _$CampSummaryStats(
-          [void Function(CampSummaryStatsBuilder)? updates]) =>
-      (CampSummaryStatsBuilder()..update(updates))._build();
+  factory _$CampSummaryStats([
+    void Function(CampSummaryStatsBuilder)? updates,
+  ]) => (CampSummaryStatsBuilder()..update(updates))._build();
 
-  _$CampSummaryStats._(
-      {this.totalGroups,
-      this.finishedGroupCount,
-      this.completionRate,
-      this.totalVisits,
-      this.visitCompletionRate,
-      this.programDurationSeconds,
-      this.avgDeviationSeconds,
-      this.manualVisitRatio,
-      this.ruleOverrideCount,
-      this.trackOperationCount,
-      this.exceptionApprovalCount,
-      this.bottleneckRanking})
-      : super._();
+  _$CampSummaryStats._({
+    this.totalGroups,
+    this.finishedGroupCount,
+    this.completionRate,
+    this.totalVisits,
+    this.visitCompletionRate,
+    this.programDurationSeconds,
+    this.avgDeviationSeconds,
+    this.manualVisitRatio,
+    this.ruleOverrideCount,
+    this.trackOperationCount,
+    this.exceptionApprovalCount,
+    this.bottleneckRanking,
+  }) : super._();
   @override
   CampSummaryStats rebuild(void Function(CampSummaryStatsBuilder) updates) =>
       (toBuilder()..update(updates)).build();
@@ -176,9 +176,8 @@ class CampSummaryStatsBuilder
       _$this._bottleneckRanking ??=
           ListBuilder<CampSummaryStatsBottleneckRankingInner>();
   set bottleneckRanking(
-          ListBuilder<CampSummaryStatsBottleneckRankingInner>?
-              bottleneckRanking) =>
-      _$this._bottleneckRanking = bottleneckRanking;
+    ListBuilder<CampSummaryStatsBottleneckRankingInner>? bottleneckRanking,
+  ) => _$this._bottleneckRanking = bottleneckRanking;
 
   CampSummaryStatsBuilder() {
     CampSummaryStats._defaults(this);
@@ -220,7 +219,8 @@ class CampSummaryStatsBuilder
   _$CampSummaryStats _build() {
     _$CampSummaryStats _$result;
     try {
-      _$result = _$v ??
+      _$result =
+          _$v ??
           _$CampSummaryStats._(
             totalGroups: totalGroups,
             finishedGroupCount: finishedGroupCount,
@@ -242,7 +242,10 @@ class CampSummaryStatsBuilder
         _bottleneckRanking?.build();
       } catch (e) {
         throw BuiltValueNestedFieldError(
-            r'CampSummaryStats', _$failedField, e.toString());
+          r'CampSummaryStats',
+          _$failedField,
+          e.toString(),
+        );
       }
       rethrow;
     }

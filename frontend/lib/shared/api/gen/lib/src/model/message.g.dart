@@ -24,9 +24,9 @@ MessageSenderRoleEnum _$messageSenderRoleEnumValueOf(String name) {
 
 final BuiltSet<MessageSenderRoleEnum> _$messageSenderRoleEnumValues =
     BuiltSet<MessageSenderRoleEnum>(const <MessageSenderRoleEnum>[
-  _$messageSenderRoleEnum_ADMIN,
-  _$messageSenderRoleEnum_TRACK,
-]);
+      _$messageSenderRoleEnum_ADMIN,
+      _$messageSenderRoleEnum_TRACK,
+    ]);
 
 Serializer<MessageSenderRoleEnum> _$messageSenderRoleEnumSerializer =
     _$MessageSenderRoleEnumSerializer();
@@ -48,15 +48,20 @@ class _$MessageSenderRoleEnumSerializer
   final String wireName = 'MessageSenderRoleEnum';
 
   @override
-  Object serialize(Serializers serializers, MessageSenderRoleEnum object,
-          {FullType specifiedType = FullType.unspecified}) =>
-      _toWire[object.name] ?? object.name;
+  Object serialize(
+    Serializers serializers,
+    MessageSenderRoleEnum object, {
+    FullType specifiedType = FullType.unspecified,
+  }) => _toWire[object.name] ?? object.name;
 
   @override
-  MessageSenderRoleEnum deserialize(Serializers serializers, Object serialized,
-          {FullType specifiedType = FullType.unspecified}) =>
-      MessageSenderRoleEnum.valueOf(
-          _fromWire[serialized] ?? (serialized is String ? serialized : ''));
+  MessageSenderRoleEnum deserialize(
+    Serializers serializers,
+    Object serialized, {
+    FullType specifiedType = FullType.unspecified,
+  }) => MessageSenderRoleEnum.valueOf(
+    _fromWire[serialized] ?? (serialized is String ? serialized : ''),
+  );
 }
 
 class _$Message extends Message {
@@ -78,15 +83,15 @@ class _$Message extends Message {
   factory _$Message([void Function(MessageBuilder)? updates]) =>
       (MessageBuilder()..update(updates))._build();
 
-  _$Message._(
-      {required this.id,
-      required this.channelType,
-      this.trackId,
-      required this.senderRole,
-      required this.content,
-      required this.sentAt,
-      this.readAt})
-      : super._();
+  _$Message._({
+    required this.id,
+    required this.channelType,
+    this.trackId,
+    required this.senderRole,
+    required this.content,
+    required this.sentAt,
+    this.readAt,
+  }) : super._();
   @override
   Message rebuild(void Function(MessageBuilder) updates) =>
       (toBuilder()..update(updates)).build();
@@ -201,18 +206,31 @@ class MessageBuilder implements Builder<Message, MessageBuilder> {
   Message build() => _build();
 
   _$Message _build() {
-    final _$result = _$v ??
+    final _$result =
+        _$v ??
         _$Message._(
           id: BuiltValueNullFieldError.checkNotNull(id, r'Message', 'id'),
           channelType: BuiltValueNullFieldError.checkNotNull(
-              channelType, r'Message', 'channelType'),
+            channelType,
+            r'Message',
+            'channelType',
+          ),
           trackId: trackId,
           senderRole: BuiltValueNullFieldError.checkNotNull(
-              senderRole, r'Message', 'senderRole'),
+            senderRole,
+            r'Message',
+            'senderRole',
+          ),
           content: BuiltValueNullFieldError.checkNotNull(
-              content, r'Message', 'content'),
+            content,
+            r'Message',
+            'content',
+          ),
           sentAt: BuiltValueNullFieldError.checkNotNull(
-              sentAt, r'Message', 'sentAt'),
+            sentAt,
+            r'Message',
+            'sentAt',
+          ),
           readAt: readAt,
         );
     replace(_$result);

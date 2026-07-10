@@ -10,15 +10,15 @@ class _$GroupsIdVisitsGet200Response extends GroupsIdVisitsGet200Response {
   @override
   final BuiltList<VisitSummary>? visits;
 
-  factory _$GroupsIdVisitsGet200Response(
-          [void Function(GroupsIdVisitsGet200ResponseBuilder)? updates]) =>
-      (GroupsIdVisitsGet200ResponseBuilder()..update(updates))._build();
+  factory _$GroupsIdVisitsGet200Response([
+    void Function(GroupsIdVisitsGet200ResponseBuilder)? updates,
+  ]) => (GroupsIdVisitsGet200ResponseBuilder()..update(updates))._build();
 
   _$GroupsIdVisitsGet200Response._({this.visits}) : super._();
   @override
   GroupsIdVisitsGet200Response rebuild(
-          void Function(GroupsIdVisitsGet200ResponseBuilder) updates) =>
-      (toBuilder()..update(updates)).build();
+    void Function(GroupsIdVisitsGet200ResponseBuilder) updates,
+  ) => (toBuilder()..update(updates)).build();
 
   @override
   GroupsIdVisitsGet200ResponseBuilder toBuilder() =>
@@ -40,16 +40,18 @@ class _$GroupsIdVisitsGet200Response extends GroupsIdVisitsGet200Response {
 
   @override
   String toString() {
-    return (newBuiltValueToStringHelper(r'GroupsIdVisitsGet200Response')
-          ..add('visits', visits))
-        .toString();
+    return (newBuiltValueToStringHelper(
+      r'GroupsIdVisitsGet200Response',
+    )..add('visits', visits)).toString();
   }
 }
 
 class GroupsIdVisitsGet200ResponseBuilder
     implements
-        Builder<GroupsIdVisitsGet200Response,
-            GroupsIdVisitsGet200ResponseBuilder> {
+        Builder<
+          GroupsIdVisitsGet200Response,
+          GroupsIdVisitsGet200ResponseBuilder
+        > {
   _$GroupsIdVisitsGet200Response? _$v;
 
   ListBuilder<VisitSummary>? _visits;
@@ -86,10 +88,8 @@ class GroupsIdVisitsGet200ResponseBuilder
   _$GroupsIdVisitsGet200Response _build() {
     _$GroupsIdVisitsGet200Response _$result;
     try {
-      _$result = _$v ??
-          _$GroupsIdVisitsGet200Response._(
-            visits: _visits?.build(),
-          );
+      _$result =
+          _$v ?? _$GroupsIdVisitsGet200Response._(visits: _visits?.build());
     } catch (_) {
       late String _$failedField;
       try {
@@ -97,7 +97,10 @@ class GroupsIdVisitsGet200ResponseBuilder
         _visits?.build();
       } catch (e) {
         throw BuiltValueNestedFieldError(
-            r'GroupsIdVisitsGet200Response', _$failedField, e.toString());
+          r'GroupsIdVisitsGet200Response',
+          _$failedField,
+          e.toString(),
+        );
       }
       rethrow;
     }

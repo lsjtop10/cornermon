@@ -31,18 +31,18 @@ class _$VisitSummary extends VisitSummary {
   factory _$VisitSummary([void Function(VisitSummaryBuilder)? updates]) =>
       (VisitSummaryBuilder()..update(updates))._build();
 
-  _$VisitSummary._(
-      {required this.id,
-      required this.groupId,
-      required this.cornerId,
-      required this.trackId,
-      required this.status,
-      this.inputMethod,
-      required this.startedAt,
-      this.endedAt,
-      this.durationSeconds,
-      this.deviationSeconds})
-      : super._();
+  _$VisitSummary._({
+    required this.id,
+    required this.groupId,
+    required this.cornerId,
+    required this.trackId,
+    required this.status,
+    this.inputMethod,
+    required this.startedAt,
+    this.endedAt,
+    this.durationSeconds,
+    this.deviationSeconds,
+  }) : super._();
   @override
   VisitSummary rebuild(void Function(VisitSummaryBuilder) updates) =>
       (toBuilder()..update(updates)).build();
@@ -183,20 +183,36 @@ class VisitSummaryBuilder
   VisitSummary build() => _build();
 
   _$VisitSummary _build() {
-    final _$result = _$v ??
+    final _$result =
+        _$v ??
         _$VisitSummary._(
           id: BuiltValueNullFieldError.checkNotNull(id, r'VisitSummary', 'id'),
           groupId: BuiltValueNullFieldError.checkNotNull(
-              groupId, r'VisitSummary', 'groupId'),
+            groupId,
+            r'VisitSummary',
+            'groupId',
+          ),
           cornerId: BuiltValueNullFieldError.checkNotNull(
-              cornerId, r'VisitSummary', 'cornerId'),
+            cornerId,
+            r'VisitSummary',
+            'cornerId',
+          ),
           trackId: BuiltValueNullFieldError.checkNotNull(
-              trackId, r'VisitSummary', 'trackId'),
+            trackId,
+            r'VisitSummary',
+            'trackId',
+          ),
           status: BuiltValueNullFieldError.checkNotNull(
-              status, r'VisitSummary', 'status'),
+            status,
+            r'VisitSummary',
+            'status',
+          ),
           inputMethod: inputMethod,
           startedAt: BuiltValueNullFieldError.checkNotNull(
-              startedAt, r'VisitSummary', 'startedAt'),
+            startedAt,
+            r'VisitSummary',
+            'startedAt',
+          ),
           endedAt: endedAt,
           durationSeconds: durationSeconds,
           deviationSeconds: deviationSeconds,

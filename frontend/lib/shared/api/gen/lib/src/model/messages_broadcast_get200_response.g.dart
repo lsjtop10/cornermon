@@ -11,15 +11,15 @@ class _$MessagesBroadcastGet200Response
   @override
   final BuiltList<Message>? messages;
 
-  factory _$MessagesBroadcastGet200Response(
-          [void Function(MessagesBroadcastGet200ResponseBuilder)? updates]) =>
-      (MessagesBroadcastGet200ResponseBuilder()..update(updates))._build();
+  factory _$MessagesBroadcastGet200Response([
+    void Function(MessagesBroadcastGet200ResponseBuilder)? updates,
+  ]) => (MessagesBroadcastGet200ResponseBuilder()..update(updates))._build();
 
   _$MessagesBroadcastGet200Response._({this.messages}) : super._();
   @override
   MessagesBroadcastGet200Response rebuild(
-          void Function(MessagesBroadcastGet200ResponseBuilder) updates) =>
-      (toBuilder()..update(updates)).build();
+    void Function(MessagesBroadcastGet200ResponseBuilder) updates,
+  ) => (toBuilder()..update(updates)).build();
 
   @override
   MessagesBroadcastGet200ResponseBuilder toBuilder() =>
@@ -42,16 +42,18 @@ class _$MessagesBroadcastGet200Response
 
   @override
   String toString() {
-    return (newBuiltValueToStringHelper(r'MessagesBroadcastGet200Response')
-          ..add('messages', messages))
-        .toString();
+    return (newBuiltValueToStringHelper(
+      r'MessagesBroadcastGet200Response',
+    )..add('messages', messages)).toString();
   }
 }
 
 class MessagesBroadcastGet200ResponseBuilder
     implements
-        Builder<MessagesBroadcastGet200Response,
-            MessagesBroadcastGet200ResponseBuilder> {
+        Builder<
+          MessagesBroadcastGet200Response,
+          MessagesBroadcastGet200ResponseBuilder
+        > {
   _$MessagesBroadcastGet200Response? _$v;
 
   ListBuilder<Message>? _messages;
@@ -88,10 +90,9 @@ class MessagesBroadcastGet200ResponseBuilder
   _$MessagesBroadcastGet200Response _build() {
     _$MessagesBroadcastGet200Response _$result;
     try {
-      _$result = _$v ??
-          _$MessagesBroadcastGet200Response._(
-            messages: _messages?.build(),
-          );
+      _$result =
+          _$v ??
+          _$MessagesBroadcastGet200Response._(messages: _messages?.build());
     } catch (_) {
       late String _$failedField;
       try {
@@ -99,7 +100,10 @@ class MessagesBroadcastGet200ResponseBuilder
         _messages?.build();
       } catch (e) {
         throw BuiltValueNestedFieldError(
-            r'MessagesBroadcastGet200Response', _$failedField, e.toString());
+          r'MessagesBroadcastGet200Response',
+          _$failedField,
+          e.toString(),
+        );
       }
       rethrow;
     }

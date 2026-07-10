@@ -25,15 +25,15 @@ class _$GroupStats extends GroupStats {
   factory _$GroupStats([void Function(GroupStatsBuilder)? updates]) =>
       (GroupStatsBuilder()..update(updates))._build();
 
-  _$GroupStats._(
-      {this.groupId,
-      this.groupName,
-      this.isFinished,
-      this.completedCornerCount,
-      this.totalActivitySeconds,
-      this.cornerDurations,
-      this.unvisitedCorners})
-      : super._();
+  _$GroupStats._({
+    this.groupId,
+    this.groupName,
+    this.isFinished,
+    this.completedCornerCount,
+    this.totalActivitySeconds,
+    this.cornerDurations,
+    this.unvisitedCorners,
+  }) : super._();
   @override
   GroupStats rebuild(void Function(GroupStatsBuilder) updates) =>
       (toBuilder()..update(updates)).build();
@@ -111,16 +111,16 @@ class GroupStatsBuilder implements Builder<GroupStats, GroupStatsBuilder> {
   ListBuilder<GroupStatsCornerDurationsInner> get cornerDurations =>
       _$this._cornerDurations ??= ListBuilder<GroupStatsCornerDurationsInner>();
   set cornerDurations(
-          ListBuilder<GroupStatsCornerDurationsInner>? cornerDurations) =>
-      _$this._cornerDurations = cornerDurations;
+    ListBuilder<GroupStatsCornerDurationsInner>? cornerDurations,
+  ) => _$this._cornerDurations = cornerDurations;
 
   ListBuilder<GroupStatsUnvisitedCornersInner>? _unvisitedCorners;
   ListBuilder<GroupStatsUnvisitedCornersInner> get unvisitedCorners =>
       _$this._unvisitedCorners ??=
           ListBuilder<GroupStatsUnvisitedCornersInner>();
   set unvisitedCorners(
-          ListBuilder<GroupStatsUnvisitedCornersInner>? unvisitedCorners) =>
-      _$this._unvisitedCorners = unvisitedCorners;
+    ListBuilder<GroupStatsUnvisitedCornersInner>? unvisitedCorners,
+  ) => _$this._unvisitedCorners = unvisitedCorners;
 
   GroupStatsBuilder() {
     GroupStats._defaults(this);
@@ -157,7 +157,8 @@ class GroupStatsBuilder implements Builder<GroupStats, GroupStatsBuilder> {
   _$GroupStats _build() {
     _$GroupStats _$result;
     try {
-      _$result = _$v ??
+      _$result =
+          _$v ??
           _$GroupStats._(
             groupId: groupId,
             groupName: groupName,
@@ -176,7 +177,10 @@ class GroupStatsBuilder implements Builder<GroupStats, GroupStatsBuilder> {
         _unvisitedCorners?.build();
       } catch (e) {
         throw BuiltValueNestedFieldError(
-            r'GroupStats', _$failedField, e.toString());
+          r'GroupStats',
+          _$failedField,
+          e.toString(),
+        );
       }
       rethrow;
     }

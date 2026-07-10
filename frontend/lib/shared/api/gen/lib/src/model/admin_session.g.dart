@@ -21,13 +21,13 @@ class _$AdminSession extends AdminSession {
   factory _$AdminSession([void Function(AdminSessionBuilder)? updates]) =>
       (AdminSessionBuilder()..update(updates))._build();
 
-  _$AdminSession._(
-      {required this.id,
-      required this.adminId,
-      this.deviceInfo,
-      required this.createdAt,
-      required this.lastUsedAt})
-      : super._();
+  _$AdminSession._({
+    required this.id,
+    required this.adminId,
+    this.deviceInfo,
+    required this.createdAt,
+    required this.lastUsedAt,
+  }) : super._();
   @override
   AdminSession rebuild(void Function(AdminSessionBuilder) updates) =>
       (toBuilder()..update(updates)).build();
@@ -125,16 +125,26 @@ class AdminSessionBuilder
   AdminSession build() => _build();
 
   _$AdminSession _build() {
-    final _$result = _$v ??
+    final _$result =
+        _$v ??
         _$AdminSession._(
           id: BuiltValueNullFieldError.checkNotNull(id, r'AdminSession', 'id'),
           adminId: BuiltValueNullFieldError.checkNotNull(
-              adminId, r'AdminSession', 'adminId'),
+            adminId,
+            r'AdminSession',
+            'adminId',
+          ),
           deviceInfo: deviceInfo,
           createdAt: BuiltValueNullFieldError.checkNotNull(
-              createdAt, r'AdminSession', 'createdAt'),
+            createdAt,
+            r'AdminSession',
+            'createdAt',
+          ),
           lastUsedAt: BuiltValueNullFieldError.checkNotNull(
-              lastUsedAt, r'AdminSession', 'lastUsedAt'),
+            lastUsedAt,
+            r'AdminSession',
+            'lastUsedAt',
+          ),
         );
     replace(_$result);
     return _$result;

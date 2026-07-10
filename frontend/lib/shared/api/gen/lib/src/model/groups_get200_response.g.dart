@@ -10,15 +10,15 @@ class _$GroupsGet200Response extends GroupsGet200Response {
   @override
   final BuiltList<Group>? groups;
 
-  factory _$GroupsGet200Response(
-          [void Function(GroupsGet200ResponseBuilder)? updates]) =>
-      (GroupsGet200ResponseBuilder()..update(updates))._build();
+  factory _$GroupsGet200Response([
+    void Function(GroupsGet200ResponseBuilder)? updates,
+  ]) => (GroupsGet200ResponseBuilder()..update(updates))._build();
 
   _$GroupsGet200Response._({this.groups}) : super._();
   @override
   GroupsGet200Response rebuild(
-          void Function(GroupsGet200ResponseBuilder) updates) =>
-      (toBuilder()..update(updates)).build();
+    void Function(GroupsGet200ResponseBuilder) updates,
+  ) => (toBuilder()..update(updates)).build();
 
   @override
   GroupsGet200ResponseBuilder toBuilder() =>
@@ -40,9 +40,9 @@ class _$GroupsGet200Response extends GroupsGet200Response {
 
   @override
   String toString() {
-    return (newBuiltValueToStringHelper(r'GroupsGet200Response')
-          ..add('groups', groups))
-        .toString();
+    return (newBuiltValueToStringHelper(
+      r'GroupsGet200Response',
+    )..add('groups', groups)).toString();
   }
 }
 
@@ -83,10 +83,7 @@ class GroupsGet200ResponseBuilder
   _$GroupsGet200Response _build() {
     _$GroupsGet200Response _$result;
     try {
-      _$result = _$v ??
-          _$GroupsGet200Response._(
-            groups: _groups?.build(),
-          );
+      _$result = _$v ?? _$GroupsGet200Response._(groups: _groups?.build());
     } catch (_) {
       late String _$failedField;
       try {
@@ -94,7 +91,10 @@ class GroupsGet200ResponseBuilder
         _groups?.build();
       } catch (e) {
         throw BuiltValueNestedFieldError(
-            r'GroupsGet200Response', _$failedField, e.toString());
+          r'GroupsGet200Response',
+          _$failedField,
+          e.toString(),
+        );
       }
       rethrow;
     }

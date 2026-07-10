@@ -14,16 +14,16 @@ class _$AuthTrackLoginPost200Response extends AuthTrackLoginPost200Response {
   @override
   final AuthTrackLoginPost200ResponseCorner? corner;
 
-  factory _$AuthTrackLoginPost200Response(
-          [void Function(AuthTrackLoginPost200ResponseBuilder)? updates]) =>
-      (AuthTrackLoginPost200ResponseBuilder()..update(updates))._build();
+  factory _$AuthTrackLoginPost200Response([
+    void Function(AuthTrackLoginPost200ResponseBuilder)? updates,
+  ]) => (AuthTrackLoginPost200ResponseBuilder()..update(updates))._build();
 
   _$AuthTrackLoginPost200Response._({this.trackToken, this.track, this.corner})
-      : super._();
+    : super._();
   @override
   AuthTrackLoginPost200Response rebuild(
-          void Function(AuthTrackLoginPost200ResponseBuilder) updates) =>
-      (toBuilder()..update(updates)).build();
+    void Function(AuthTrackLoginPost200ResponseBuilder) updates,
+  ) => (toBuilder()..update(updates)).build();
 
   @override
   AuthTrackLoginPost200ResponseBuilder toBuilder() =>
@@ -60,8 +60,10 @@ class _$AuthTrackLoginPost200Response extends AuthTrackLoginPost200Response {
 
 class AuthTrackLoginPost200ResponseBuilder
     implements
-        Builder<AuthTrackLoginPost200Response,
-            AuthTrackLoginPost200ResponseBuilder> {
+        Builder<
+          AuthTrackLoginPost200Response,
+          AuthTrackLoginPost200ResponseBuilder
+        > {
   _$AuthTrackLoginPost200Response? _$v;
 
   String? _trackToken;
@@ -109,7 +111,8 @@ class AuthTrackLoginPost200ResponseBuilder
   _$AuthTrackLoginPost200Response _build() {
     _$AuthTrackLoginPost200Response _$result;
     try {
-      _$result = _$v ??
+      _$result =
+          _$v ??
           _$AuthTrackLoginPost200Response._(
             trackToken: trackToken,
             track: _track?.build(),
@@ -124,7 +127,10 @@ class AuthTrackLoginPost200ResponseBuilder
         _corner?.build();
       } catch (e) {
         throw BuiltValueNestedFieldError(
-            r'AuthTrackLoginPost200Response', _$failedField, e.toString());
+          r'AuthTrackLoginPost200Response',
+          _$failedField,
+          e.toString(),
+        );
       }
       rethrow;
     }

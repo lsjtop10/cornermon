@@ -6,14 +6,18 @@ part of 'device_registration_status.dart';
 // BuiltValueGenerator
 // **************************************************************************
 
-const DeviceRegistrationStatus _$PENDING =
-    const DeviceRegistrationStatus._('PENDING');
-const DeviceRegistrationStatus _$APPROVED =
-    const DeviceRegistrationStatus._('APPROVED');
-const DeviceRegistrationStatus _$REJECTED =
-    const DeviceRegistrationStatus._('REJECTED');
-const DeviceRegistrationStatus _$REVOKED =
-    const DeviceRegistrationStatus._('REVOKED');
+const DeviceRegistrationStatus _$PENDING = const DeviceRegistrationStatus._(
+  'PENDING',
+);
+const DeviceRegistrationStatus _$APPROVED = const DeviceRegistrationStatus._(
+  'APPROVED',
+);
+const DeviceRegistrationStatus _$REJECTED = const DeviceRegistrationStatus._(
+  'REJECTED',
+);
+const DeviceRegistrationStatus _$REVOKED = const DeviceRegistrationStatus._(
+  'REVOKED',
+);
 
 DeviceRegistrationStatus _$valueOf(String name) {
   switch (name) {
@@ -32,11 +36,11 @@ DeviceRegistrationStatus _$valueOf(String name) {
 
 final BuiltSet<DeviceRegistrationStatus> _$values =
     BuiltSet<DeviceRegistrationStatus>(const <DeviceRegistrationStatus>[
-  _$PENDING,
-  _$APPROVED,
-  _$REJECTED,
-  _$REVOKED,
-]);
+      _$PENDING,
+      _$APPROVED,
+      _$REJECTED,
+      _$REVOKED,
+    ]);
 
 class _$DeviceRegistrationStatusMeta {
   const _$DeviceRegistrationStatusMeta();
@@ -48,7 +52,7 @@ class _$DeviceRegistrationStatusMeta {
   BuiltSet<DeviceRegistrationStatus> get values => _$values;
 }
 
-abstract class _$DeviceRegistrationStatusMixin {
+mixin _$DeviceRegistrationStatusMixin {
   // ignore: non_constant_identifier_names
   _$DeviceRegistrationStatusMeta get DeviceRegistrationStatus =>
       const _$DeviceRegistrationStatusMeta();
@@ -78,16 +82,20 @@ class _$DeviceRegistrationStatusSerializer
   final String wireName = 'DeviceRegistrationStatus';
 
   @override
-  Object serialize(Serializers serializers, DeviceRegistrationStatus object,
-          {FullType specifiedType = FullType.unspecified}) =>
-      _toWire[object.name] ?? object.name;
+  Object serialize(
+    Serializers serializers,
+    DeviceRegistrationStatus object, {
+    FullType specifiedType = FullType.unspecified,
+  }) => _toWire[object.name] ?? object.name;
 
   @override
   DeviceRegistrationStatus deserialize(
-          Serializers serializers, Object serialized,
-          {FullType specifiedType = FullType.unspecified}) =>
-      DeviceRegistrationStatus.valueOf(
-          _fromWire[serialized] ?? (serialized is String ? serialized : ''));
+    Serializers serializers,
+    Object serialized, {
+    FullType specifiedType = FullType.unspecified,
+  }) => DeviceRegistrationStatus.valueOf(
+    _fromWire[serialized] ?? (serialized is String ? serialized : ''),
+  );
 }
 
 // ignore_for_file: deprecated_member_use_from_same_package,type=lint

@@ -6,8 +6,9 @@ part of 'corner_operational_status.dart';
 // BuiltValueGenerator
 // **************************************************************************
 
-const CornerOperationalStatus _$INACTIVE =
-    const CornerOperationalStatus._('INACTIVE');
+const CornerOperationalStatus _$INACTIVE = const CornerOperationalStatus._(
+  'INACTIVE',
+);
 const CornerOperationalStatus _$IDLE = const CornerOperationalStatus._('IDLE');
 const CornerOperationalStatus _$BUSY = const CornerOperationalStatus._('BUSY');
 
@@ -26,10 +27,10 @@ CornerOperationalStatus _$valueOf(String name) {
 
 final BuiltSet<CornerOperationalStatus> _$values =
     BuiltSet<CornerOperationalStatus>(const <CornerOperationalStatus>[
-  _$INACTIVE,
-  _$IDLE,
-  _$BUSY,
-]);
+      _$INACTIVE,
+      _$IDLE,
+      _$BUSY,
+    ]);
 
 class _$CornerOperationalStatusMeta {
   const _$CornerOperationalStatusMeta();
@@ -40,7 +41,7 @@ class _$CornerOperationalStatusMeta {
   BuiltSet<CornerOperationalStatus> get values => _$values;
 }
 
-abstract class _$CornerOperationalStatusMixin {
+mixin _$CornerOperationalStatusMixin {
   // ignore: non_constant_identifier_names
   _$CornerOperationalStatusMeta get CornerOperationalStatus =>
       const _$CornerOperationalStatusMeta();
@@ -68,16 +69,20 @@ class _$CornerOperationalStatusSerializer
   final String wireName = 'CornerOperationalStatus';
 
   @override
-  Object serialize(Serializers serializers, CornerOperationalStatus object,
-          {FullType specifiedType = FullType.unspecified}) =>
-      _toWire[object.name] ?? object.name;
+  Object serialize(
+    Serializers serializers,
+    CornerOperationalStatus object, {
+    FullType specifiedType = FullType.unspecified,
+  }) => _toWire[object.name] ?? object.name;
 
   @override
   CornerOperationalStatus deserialize(
-          Serializers serializers, Object serialized,
-          {FullType specifiedType = FullType.unspecified}) =>
-      CornerOperationalStatus.valueOf(
-          _fromWire[serialized] ?? (serialized is String ? serialized : ''));
+    Serializers serializers,
+    Object serialized, {
+    FullType specifiedType = FullType.unspecified,
+  }) => CornerOperationalStatus.valueOf(
+    _fromWire[serialized] ?? (serialized is String ? serialized : ''),
+  );
 }
 
 // ignore_for_file: deprecated_member_use_from_same_package,type=lint

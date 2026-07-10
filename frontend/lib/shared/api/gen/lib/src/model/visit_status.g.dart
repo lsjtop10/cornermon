@@ -20,11 +20,9 @@ VisitStatus _$valueOf(String name) {
   }
 }
 
-final BuiltSet<VisitStatus> _$values =
-    BuiltSet<VisitStatus>(const <VisitStatus>[
-  _$IN_PROGRESS,
-  _$COMPLETED,
-]);
+final BuiltSet<VisitStatus> _$values = BuiltSet<VisitStatus>(
+  const <VisitStatus>[_$IN_PROGRESS, _$COMPLETED],
+);
 
 class _$VisitStatusMeta {
   const _$VisitStatusMeta();
@@ -34,7 +32,7 @@ class _$VisitStatusMeta {
   BuiltSet<VisitStatus> get values => _$values;
 }
 
-abstract class _$VisitStatusMixin {
+mixin _$VisitStatusMixin {
   // ignore: non_constant_identifier_names
   _$VisitStatusMeta get VisitStatus => const _$VisitStatusMeta();
 }
@@ -57,15 +55,20 @@ class _$VisitStatusSerializer implements PrimitiveSerializer<VisitStatus> {
   final String wireName = 'VisitStatus';
 
   @override
-  Object serialize(Serializers serializers, VisitStatus object,
-          {FullType specifiedType = FullType.unspecified}) =>
-      _toWire[object.name] ?? object.name;
+  Object serialize(
+    Serializers serializers,
+    VisitStatus object, {
+    FullType specifiedType = FullType.unspecified,
+  }) => _toWire[object.name] ?? object.name;
 
   @override
-  VisitStatus deserialize(Serializers serializers, Object serialized,
-          {FullType specifiedType = FullType.unspecified}) =>
-      VisitStatus.valueOf(
-          _fromWire[serialized] ?? (serialized is String ? serialized : ''));
+  VisitStatus deserialize(
+    Serializers serializers,
+    Object serialized, {
+    FullType specifiedType = FullType.unspecified,
+  }) => VisitStatus.valueOf(
+    _fromWire[serialized] ?? (serialized is String ? serialized : ''),
+  );
 }
 
 // ignore_for_file: deprecated_member_use_from_same_package,type=lint

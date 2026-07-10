@@ -13,22 +13,23 @@ class _$OperationalStatsDirectMessageCountPerTrackInner
   @override
   final int? messageCount;
 
-  factory _$OperationalStatsDirectMessageCountPerTrackInner(
-          [void Function(
-                  OperationalStatsDirectMessageCountPerTrackInnerBuilder)?
-              updates]) =>
+  factory _$OperationalStatsDirectMessageCountPerTrackInner([
+    void Function(OperationalStatsDirectMessageCountPerTrackInnerBuilder)?
+    updates,
+  ]) =>
       (OperationalStatsDirectMessageCountPerTrackInnerBuilder()
             ..update(updates))
           ._build();
 
-  _$OperationalStatsDirectMessageCountPerTrackInner._(
-      {this.trackId, this.messageCount})
-      : super._();
+  _$OperationalStatsDirectMessageCountPerTrackInner._({
+    this.trackId,
+    this.messageCount,
+  }) : super._();
   @override
   OperationalStatsDirectMessageCountPerTrackInner rebuild(
-          void Function(OperationalStatsDirectMessageCountPerTrackInnerBuilder)
-              updates) =>
-      (toBuilder()..update(updates)).build();
+    void Function(OperationalStatsDirectMessageCountPerTrackInnerBuilder)
+    updates,
+  ) => (toBuilder()..update(updates)).build();
 
   @override
   OperationalStatsDirectMessageCountPerTrackInnerBuilder toBuilder() =>
@@ -54,7 +55,8 @@ class _$OperationalStatsDirectMessageCountPerTrackInner
   @override
   String toString() {
     return (newBuiltValueToStringHelper(
-            r'OperationalStatsDirectMessageCountPerTrackInner')
+            r'OperationalStatsDirectMessageCountPerTrackInner',
+          )
           ..add('trackId', trackId)
           ..add('messageCount', messageCount))
         .toString();
@@ -63,8 +65,10 @@ class _$OperationalStatsDirectMessageCountPerTrackInner
 
 class OperationalStatsDirectMessageCountPerTrackInnerBuilder
     implements
-        Builder<OperationalStatsDirectMessageCountPerTrackInner,
-            OperationalStatsDirectMessageCountPerTrackInnerBuilder> {
+        Builder<
+          OperationalStatsDirectMessageCountPerTrackInner,
+          OperationalStatsDirectMessageCountPerTrackInnerBuilder
+        > {
   _$OperationalStatsDirectMessageCountPerTrackInner? _$v;
 
   String? _trackId;
@@ -96,8 +100,9 @@ class OperationalStatsDirectMessageCountPerTrackInnerBuilder
 
   @override
   void update(
-      void Function(OperationalStatsDirectMessageCountPerTrackInnerBuilder)?
-          updates) {
+    void Function(OperationalStatsDirectMessageCountPerTrackInnerBuilder)?
+    updates,
+  ) {
     if (updates != null) updates(this);
   }
 
@@ -105,7 +110,8 @@ class OperationalStatsDirectMessageCountPerTrackInnerBuilder
   OperationalStatsDirectMessageCountPerTrackInner build() => _build();
 
   _$OperationalStatsDirectMessageCountPerTrackInner _build() {
-    final _$result = _$v ??
+    final _$result =
+        _$v ??
         _$OperationalStatsDirectMessageCountPerTrackInner._(
           trackId: trackId,
           messageCount: messageCount,

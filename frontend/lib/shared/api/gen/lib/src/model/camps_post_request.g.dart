@@ -14,13 +14,15 @@ class _$CampsPostRequest extends CampsPostRequest {
   @override
   final DateTime endAt;
 
-  factory _$CampsPostRequest(
-          [void Function(CampsPostRequestBuilder)? updates]) =>
-      (CampsPostRequestBuilder()..update(updates))._build();
+  factory _$CampsPostRequest([
+    void Function(CampsPostRequestBuilder)? updates,
+  ]) => (CampsPostRequestBuilder()..update(updates))._build();
 
-  _$CampsPostRequest._(
-      {required this.name, required this.startAt, required this.endAt})
-      : super._();
+  _$CampsPostRequest._({
+    required this.name,
+    required this.startAt,
+    required this.endAt,
+  }) : super._();
   @override
   CampsPostRequest rebuild(void Function(CampsPostRequestBuilder) updates) =>
       (toBuilder()..update(updates)).build();
@@ -103,14 +105,24 @@ class CampsPostRequestBuilder
   CampsPostRequest build() => _build();
 
   _$CampsPostRequest _build() {
-    final _$result = _$v ??
+    final _$result =
+        _$v ??
         _$CampsPostRequest._(
           name: BuiltValueNullFieldError.checkNotNull(
-              name, r'CampsPostRequest', 'name'),
+            name,
+            r'CampsPostRequest',
+            'name',
+          ),
           startAt: BuiltValueNullFieldError.checkNotNull(
-              startAt, r'CampsPostRequest', 'startAt'),
+            startAt,
+            r'CampsPostRequest',
+            'startAt',
+          ),
           endAt: BuiltValueNullFieldError.checkNotNull(
-              endAt, r'CampsPostRequest', 'endAt'),
+            endAt,
+            r'CampsPostRequest',
+            'endAt',
+          ),
         );
     replace(_$result);
     return _$result;

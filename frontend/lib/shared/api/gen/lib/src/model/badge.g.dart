@@ -21,13 +21,13 @@ class _$Badge extends Badge {
   factory _$Badge([void Function(BadgeBuilder)? updates]) =>
       (BadgeBuilder()..update(updates))._build();
 
-  _$Badge._(
-      {required this.id,
-      required this.shortId,
-      this.qrPayload,
-      required this.status,
-      this.assignedGroupId})
-      : super._();
+  _$Badge._({
+    required this.id,
+    required this.shortId,
+    this.qrPayload,
+    required this.status,
+    this.assignedGroupId,
+  }) : super._();
   @override
   Badge rebuild(void Function(BadgeBuilder) updates) =>
       (toBuilder()..update(updates)).build();
@@ -125,14 +125,21 @@ class BadgeBuilder implements Builder<Badge, BadgeBuilder> {
   Badge build() => _build();
 
   _$Badge _build() {
-    final _$result = _$v ??
+    final _$result =
+        _$v ??
         _$Badge._(
           id: BuiltValueNullFieldError.checkNotNull(id, r'Badge', 'id'),
           shortId: BuiltValueNullFieldError.checkNotNull(
-              shortId, r'Badge', 'shortId'),
+            shortId,
+            r'Badge',
+            'shortId',
+          ),
           qrPayload: qrPayload,
-          status:
-              BuiltValueNullFieldError.checkNotNull(status, r'Badge', 'status'),
+          status: BuiltValueNullFieldError.checkNotNull(
+            status,
+            r'Badge',
+            'status',
+          ),
           assignedGroupId: assignedGroupId,
         );
     replace(_$result);

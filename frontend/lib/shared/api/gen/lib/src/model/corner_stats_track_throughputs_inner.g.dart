@@ -15,17 +15,19 @@ class _$CornerStatsTrackThroughputsInner
   @override
   final num? avgDurationSeconds;
 
-  factory _$CornerStatsTrackThroughputsInner(
-          [void Function(CornerStatsTrackThroughputsInnerBuilder)? updates]) =>
-      (CornerStatsTrackThroughputsInnerBuilder()..update(updates))._build();
+  factory _$CornerStatsTrackThroughputsInner([
+    void Function(CornerStatsTrackThroughputsInnerBuilder)? updates,
+  ]) => (CornerStatsTrackThroughputsInnerBuilder()..update(updates))._build();
 
-  _$CornerStatsTrackThroughputsInner._(
-      {this.trackId, this.completedVisitCount, this.avgDurationSeconds})
-      : super._();
+  _$CornerStatsTrackThroughputsInner._({
+    this.trackId,
+    this.completedVisitCount,
+    this.avgDurationSeconds,
+  }) : super._();
   @override
   CornerStatsTrackThroughputsInner rebuild(
-          void Function(CornerStatsTrackThroughputsInnerBuilder) updates) =>
-      (toBuilder()..update(updates)).build();
+    void Function(CornerStatsTrackThroughputsInnerBuilder) updates,
+  ) => (toBuilder()..update(updates)).build();
 
   @override
   CornerStatsTrackThroughputsInnerBuilder toBuilder() =>
@@ -62,8 +64,10 @@ class _$CornerStatsTrackThroughputsInner
 
 class CornerStatsTrackThroughputsInnerBuilder
     implements
-        Builder<CornerStatsTrackThroughputsInner,
-            CornerStatsTrackThroughputsInnerBuilder> {
+        Builder<
+          CornerStatsTrackThroughputsInner,
+          CornerStatsTrackThroughputsInnerBuilder
+        > {
   _$CornerStatsTrackThroughputsInner? _$v;
 
   String? _trackId;
@@ -109,7 +113,8 @@ class CornerStatsTrackThroughputsInnerBuilder
   CornerStatsTrackThroughputsInner build() => _build();
 
   _$CornerStatsTrackThroughputsInner _build() {
-    final _$result = _$v ??
+    final _$result =
+        _$v ??
         _$CornerStatsTrackThroughputsInner._(
           trackId: trackId,
           completedVisitCount: completedVisitCount,

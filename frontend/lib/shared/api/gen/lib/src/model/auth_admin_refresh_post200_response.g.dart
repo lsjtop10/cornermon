@@ -13,16 +13,16 @@ class _$AuthAdminRefreshPost200Response
   @override
   final int? expiresInSeconds;
 
-  factory _$AuthAdminRefreshPost200Response(
-          [void Function(AuthAdminRefreshPost200ResponseBuilder)? updates]) =>
-      (AuthAdminRefreshPost200ResponseBuilder()..update(updates))._build();
+  factory _$AuthAdminRefreshPost200Response([
+    void Function(AuthAdminRefreshPost200ResponseBuilder)? updates,
+  ]) => (AuthAdminRefreshPost200ResponseBuilder()..update(updates))._build();
 
   _$AuthAdminRefreshPost200Response._({this.accessToken, this.expiresInSeconds})
-      : super._();
+    : super._();
   @override
   AuthAdminRefreshPost200Response rebuild(
-          void Function(AuthAdminRefreshPost200ResponseBuilder) updates) =>
-      (toBuilder()..update(updates)).build();
+    void Function(AuthAdminRefreshPost200ResponseBuilder) updates,
+  ) => (toBuilder()..update(updates)).build();
 
   @override
   AuthAdminRefreshPost200ResponseBuilder toBuilder() =>
@@ -56,8 +56,10 @@ class _$AuthAdminRefreshPost200Response
 
 class AuthAdminRefreshPost200ResponseBuilder
     implements
-        Builder<AuthAdminRefreshPost200Response,
-            AuthAdminRefreshPost200ResponseBuilder> {
+        Builder<
+          AuthAdminRefreshPost200Response,
+          AuthAdminRefreshPost200ResponseBuilder
+        > {
   _$AuthAdminRefreshPost200Response? _$v;
 
   String? _accessToken;
@@ -97,7 +99,8 @@ class AuthAdminRefreshPost200ResponseBuilder
   AuthAdminRefreshPost200Response build() => _build();
 
   _$AuthAdminRefreshPost200Response _build() {
-    final _$result = _$v ??
+    final _$result =
+        _$v ??
         _$AuthAdminRefreshPost200Response._(
           accessToken: accessToken,
           expiresInSeconds: expiresInSeconds,

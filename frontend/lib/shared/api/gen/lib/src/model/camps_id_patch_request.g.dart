@@ -18,21 +18,21 @@ class _$CampsIdPatchRequest extends CampsIdPatchRequest {
   @override
   final int? bottleneckRatioPct;
 
-  factory _$CampsIdPatchRequest(
-          [void Function(CampsIdPatchRequestBuilder)? updates]) =>
-      (CampsIdPatchRequestBuilder()..update(updates))._build();
+  factory _$CampsIdPatchRequest([
+    void Function(CampsIdPatchRequestBuilder)? updates,
+  ]) => (CampsIdPatchRequestBuilder()..update(updates))._build();
 
-  _$CampsIdPatchRequest._(
-      {this.name,
-      this.startAt,
-      this.endAt,
-      this.bottleneckMinSamples,
-      this.bottleneckRatioPct})
-      : super._();
+  _$CampsIdPatchRequest._({
+    this.name,
+    this.startAt,
+    this.endAt,
+    this.bottleneckMinSamples,
+    this.bottleneckRatioPct,
+  }) : super._();
   @override
   CampsIdPatchRequest rebuild(
-          void Function(CampsIdPatchRequestBuilder) updates) =>
-      (toBuilder()..update(updates)).build();
+    void Function(CampsIdPatchRequestBuilder) updates,
+  ) => (toBuilder()..update(updates)).build();
 
   @override
   CampsIdPatchRequestBuilder toBuilder() =>
@@ -130,7 +130,8 @@ class CampsIdPatchRequestBuilder
   CampsIdPatchRequest build() => _build();
 
   _$CampsIdPatchRequest _build() {
-    final _$result = _$v ??
+    final _$result =
+        _$v ??
         _$CampsIdPatchRequest._(
           name: name,
           startAt: startAt,

@@ -19,24 +19,22 @@ class _$ReportsLiveSummaryGet200ResponseCornersInner
   @override
   final int? completedVisitCount;
 
-  factory _$ReportsLiveSummaryGet200ResponseCornersInner(
-          [void Function(ReportsLiveSummaryGet200ResponseCornersInnerBuilder)?
-              updates]) =>
-      (ReportsLiveSummaryGet200ResponseCornersInnerBuilder()..update(updates))
-          ._build();
+  factory _$ReportsLiveSummaryGet200ResponseCornersInner([
+    void Function(ReportsLiveSummaryGet200ResponseCornersInnerBuilder)? updates,
+  ]) => (ReportsLiveSummaryGet200ResponseCornersInnerBuilder()..update(updates))
+      ._build();
 
-  _$ReportsLiveSummaryGet200ResponseCornersInner._(
-      {this.cornerId,
-      this.cornerName,
-      this.status,
-      this.isBottleneck,
-      this.completedVisitCount})
-      : super._();
+  _$ReportsLiveSummaryGet200ResponseCornersInner._({
+    this.cornerId,
+    this.cornerName,
+    this.status,
+    this.isBottleneck,
+    this.completedVisitCount,
+  }) : super._();
   @override
   ReportsLiveSummaryGet200ResponseCornersInner rebuild(
-          void Function(ReportsLiveSummaryGet200ResponseCornersInnerBuilder)
-              updates) =>
-      (toBuilder()..update(updates)).build();
+    void Function(ReportsLiveSummaryGet200ResponseCornersInnerBuilder) updates,
+  ) => (toBuilder()..update(updates)).build();
 
   @override
   ReportsLiveSummaryGet200ResponseCornersInnerBuilder toBuilder() =>
@@ -68,7 +66,8 @@ class _$ReportsLiveSummaryGet200ResponseCornersInner
   @override
   String toString() {
     return (newBuiltValueToStringHelper(
-            r'ReportsLiveSummaryGet200ResponseCornersInner')
+            r'ReportsLiveSummaryGet200ResponseCornersInner',
+          )
           ..add('cornerId', cornerId)
           ..add('cornerName', cornerName)
           ..add('status', status)
@@ -80,8 +79,10 @@ class _$ReportsLiveSummaryGet200ResponseCornersInner
 
 class ReportsLiveSummaryGet200ResponseCornersInnerBuilder
     implements
-        Builder<ReportsLiveSummaryGet200ResponseCornersInner,
-            ReportsLiveSummaryGet200ResponseCornersInnerBuilder> {
+        Builder<
+          ReportsLiveSummaryGet200ResponseCornersInner,
+          ReportsLiveSummaryGet200ResponseCornersInnerBuilder
+        > {
   _$ReportsLiveSummaryGet200ResponseCornersInner? _$v;
 
   String? _cornerId;
@@ -129,8 +130,8 @@ class ReportsLiveSummaryGet200ResponseCornersInnerBuilder
 
   @override
   void update(
-      void Function(ReportsLiveSummaryGet200ResponseCornersInnerBuilder)?
-          updates) {
+    void Function(ReportsLiveSummaryGet200ResponseCornersInnerBuilder)? updates,
+  ) {
     if (updates != null) updates(this);
   }
 
@@ -138,7 +139,8 @@ class ReportsLiveSummaryGet200ResponseCornersInnerBuilder
   ReportsLiveSummaryGet200ResponseCornersInner build() => _build();
 
   _$ReportsLiveSummaryGet200ResponseCornersInner _build() {
-    final _$result = _$v ??
+    final _$result =
+        _$v ??
         _$ReportsLiveSummaryGet200ResponseCornersInner._(
           cornerId: cornerId,
           cornerName: cornerName,

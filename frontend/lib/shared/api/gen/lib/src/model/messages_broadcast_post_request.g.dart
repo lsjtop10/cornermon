@@ -10,15 +10,15 @@ class _$MessagesBroadcastPostRequest extends MessagesBroadcastPostRequest {
   @override
   final String content;
 
-  factory _$MessagesBroadcastPostRequest(
-          [void Function(MessagesBroadcastPostRequestBuilder)? updates]) =>
-      (MessagesBroadcastPostRequestBuilder()..update(updates))._build();
+  factory _$MessagesBroadcastPostRequest([
+    void Function(MessagesBroadcastPostRequestBuilder)? updates,
+  ]) => (MessagesBroadcastPostRequestBuilder()..update(updates))._build();
 
   _$MessagesBroadcastPostRequest._({required this.content}) : super._();
   @override
   MessagesBroadcastPostRequest rebuild(
-          void Function(MessagesBroadcastPostRequestBuilder) updates) =>
-      (toBuilder()..update(updates)).build();
+    void Function(MessagesBroadcastPostRequestBuilder) updates,
+  ) => (toBuilder()..update(updates)).build();
 
   @override
   MessagesBroadcastPostRequestBuilder toBuilder() =>
@@ -40,16 +40,18 @@ class _$MessagesBroadcastPostRequest extends MessagesBroadcastPostRequest {
 
   @override
   String toString() {
-    return (newBuiltValueToStringHelper(r'MessagesBroadcastPostRequest')
-          ..add('content', content))
-        .toString();
+    return (newBuiltValueToStringHelper(
+      r'MessagesBroadcastPostRequest',
+    )..add('content', content)).toString();
   }
 }
 
 class MessagesBroadcastPostRequestBuilder
     implements
-        Builder<MessagesBroadcastPostRequest,
-            MessagesBroadcastPostRequestBuilder> {
+        Builder<
+          MessagesBroadcastPostRequest,
+          MessagesBroadcastPostRequestBuilder
+        > {
   _$MessagesBroadcastPostRequest? _$v;
 
   String? _content;
@@ -83,10 +85,14 @@ class MessagesBroadcastPostRequestBuilder
   MessagesBroadcastPostRequest build() => _build();
 
   _$MessagesBroadcastPostRequest _build() {
-    final _$result = _$v ??
+    final _$result =
+        _$v ??
         _$MessagesBroadcastPostRequest._(
           content: BuiltValueNullFieldError.checkNotNull(
-              content, r'MessagesBroadcastPostRequest', 'content'),
+            content,
+            r'MessagesBroadcastPostRequest',
+            'content',
+          ),
         );
     replace(_$result);
     return _$result;

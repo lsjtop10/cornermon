@@ -20,11 +20,9 @@ TrackStatus _$valueOf(String name) {
   }
 }
 
-final BuiltSet<TrackStatus> _$values =
-    BuiltSet<TrackStatus>(const <TrackStatus>[
-  _$ACTIVE,
-  _$DELETED,
-]);
+final BuiltSet<TrackStatus> _$values = BuiltSet<TrackStatus>(
+  const <TrackStatus>[_$ACTIVE, _$DELETED],
+);
 
 class _$TrackStatusMeta {
   const _$TrackStatusMeta();
@@ -34,7 +32,7 @@ class _$TrackStatusMeta {
   BuiltSet<TrackStatus> get values => _$values;
 }
 
-abstract class _$TrackStatusMixin {
+mixin _$TrackStatusMixin {
   // ignore: non_constant_identifier_names
   _$TrackStatusMeta get TrackStatus => const _$TrackStatusMeta();
 }
@@ -57,15 +55,20 @@ class _$TrackStatusSerializer implements PrimitiveSerializer<TrackStatus> {
   final String wireName = 'TrackStatus';
 
   @override
-  Object serialize(Serializers serializers, TrackStatus object,
-          {FullType specifiedType = FullType.unspecified}) =>
-      _toWire[object.name] ?? object.name;
+  Object serialize(
+    Serializers serializers,
+    TrackStatus object, {
+    FullType specifiedType = FullType.unspecified,
+  }) => _toWire[object.name] ?? object.name;
 
   @override
-  TrackStatus deserialize(Serializers serializers, Object serialized,
-          {FullType specifiedType = FullType.unspecified}) =>
-      TrackStatus.valueOf(
-          _fromWire[serialized] ?? (serialized is String ? serialized : ''));
+  TrackStatus deserialize(
+    Serializers serializers,
+    Object serialized, {
+    FullType specifiedType = FullType.unspecified,
+  }) => TrackStatus.valueOf(
+    _fromWire[serialized] ?? (serialized is String ? serialized : ''),
+  );
 }
 
 // ignore_for_file: deprecated_member_use_from_same_package,type=lint

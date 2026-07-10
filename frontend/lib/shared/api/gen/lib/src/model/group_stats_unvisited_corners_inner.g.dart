@@ -13,16 +13,16 @@ class _$GroupStatsUnvisitedCornersInner
   @override
   final String? cornerName;
 
-  factory _$GroupStatsUnvisitedCornersInner(
-          [void Function(GroupStatsUnvisitedCornersInnerBuilder)? updates]) =>
-      (GroupStatsUnvisitedCornersInnerBuilder()..update(updates))._build();
+  factory _$GroupStatsUnvisitedCornersInner([
+    void Function(GroupStatsUnvisitedCornersInnerBuilder)? updates,
+  ]) => (GroupStatsUnvisitedCornersInnerBuilder()..update(updates))._build();
 
   _$GroupStatsUnvisitedCornersInner._({this.cornerId, this.cornerName})
-      : super._();
+    : super._();
   @override
   GroupStatsUnvisitedCornersInner rebuild(
-          void Function(GroupStatsUnvisitedCornersInnerBuilder) updates) =>
-      (toBuilder()..update(updates)).build();
+    void Function(GroupStatsUnvisitedCornersInnerBuilder) updates,
+  ) => (toBuilder()..update(updates)).build();
 
   @override
   GroupStatsUnvisitedCornersInnerBuilder toBuilder() =>
@@ -56,8 +56,10 @@ class _$GroupStatsUnvisitedCornersInner
 
 class GroupStatsUnvisitedCornersInnerBuilder
     implements
-        Builder<GroupStatsUnvisitedCornersInner,
-            GroupStatsUnvisitedCornersInnerBuilder> {
+        Builder<
+          GroupStatsUnvisitedCornersInner,
+          GroupStatsUnvisitedCornersInnerBuilder
+        > {
   _$GroupStatsUnvisitedCornersInner? _$v;
 
   String? _cornerId;
@@ -96,7 +98,8 @@ class GroupStatsUnvisitedCornersInnerBuilder
   GroupStatsUnvisitedCornersInner build() => _build();
 
   _$GroupStatsUnvisitedCornersInner _build() {
-    final _$result = _$v ??
+    final _$result =
+        _$v ??
         _$GroupStatsUnvisitedCornersInner._(
           cornerId: cornerId,
           cornerName: cornerName,

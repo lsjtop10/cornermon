@@ -11,15 +11,15 @@ class _$DeviceRegistrationsGet200Response
   @override
   final BuiltList<DeviceRegistration>? deviceRegistrations;
 
-  factory _$DeviceRegistrationsGet200Response(
-          [void Function(DeviceRegistrationsGet200ResponseBuilder)? updates]) =>
-      (DeviceRegistrationsGet200ResponseBuilder()..update(updates))._build();
+  factory _$DeviceRegistrationsGet200Response([
+    void Function(DeviceRegistrationsGet200ResponseBuilder)? updates,
+  ]) => (DeviceRegistrationsGet200ResponseBuilder()..update(updates))._build();
 
   _$DeviceRegistrationsGet200Response._({this.deviceRegistrations}) : super._();
   @override
   DeviceRegistrationsGet200Response rebuild(
-          void Function(DeviceRegistrationsGet200ResponseBuilder) updates) =>
-      (toBuilder()..update(updates)).build();
+    void Function(DeviceRegistrationsGet200ResponseBuilder) updates,
+  ) => (toBuilder()..update(updates)).build();
 
   @override
   DeviceRegistrationsGet200ResponseBuilder toBuilder() =>
@@ -42,24 +42,26 @@ class _$DeviceRegistrationsGet200Response
 
   @override
   String toString() {
-    return (newBuiltValueToStringHelper(r'DeviceRegistrationsGet200Response')
-          ..add('deviceRegistrations', deviceRegistrations))
-        .toString();
+    return (newBuiltValueToStringHelper(
+      r'DeviceRegistrationsGet200Response',
+    )..add('deviceRegistrations', deviceRegistrations)).toString();
   }
 }
 
 class DeviceRegistrationsGet200ResponseBuilder
     implements
-        Builder<DeviceRegistrationsGet200Response,
-            DeviceRegistrationsGet200ResponseBuilder> {
+        Builder<
+          DeviceRegistrationsGet200Response,
+          DeviceRegistrationsGet200ResponseBuilder
+        > {
   _$DeviceRegistrationsGet200Response? _$v;
 
   ListBuilder<DeviceRegistration>? _deviceRegistrations;
   ListBuilder<DeviceRegistration> get deviceRegistrations =>
       _$this._deviceRegistrations ??= ListBuilder<DeviceRegistration>();
   set deviceRegistrations(
-          ListBuilder<DeviceRegistration>? deviceRegistrations) =>
-      _$this._deviceRegistrations = deviceRegistrations;
+    ListBuilder<DeviceRegistration>? deviceRegistrations,
+  ) => _$this._deviceRegistrations = deviceRegistrations;
 
   DeviceRegistrationsGet200ResponseBuilder() {
     DeviceRegistrationsGet200Response._defaults(this);
@@ -81,7 +83,8 @@ class DeviceRegistrationsGet200ResponseBuilder
 
   @override
   void update(
-      void Function(DeviceRegistrationsGet200ResponseBuilder)? updates) {
+    void Function(DeviceRegistrationsGet200ResponseBuilder)? updates,
+  ) {
     if (updates != null) updates(this);
   }
 
@@ -91,7 +94,8 @@ class DeviceRegistrationsGet200ResponseBuilder
   _$DeviceRegistrationsGet200Response _build() {
     _$DeviceRegistrationsGet200Response _$result;
     try {
-      _$result = _$v ??
+      _$result =
+          _$v ??
           _$DeviceRegistrationsGet200Response._(
             deviceRegistrations: _deviceRegistrations?.build(),
           );
@@ -102,7 +106,10 @@ class DeviceRegistrationsGet200ResponseBuilder
         _deviceRegistrations?.build();
       } catch (e) {
         throw BuiltValueNestedFieldError(
-            r'DeviceRegistrationsGet200Response', _$failedField, e.toString());
+          r'DeviceRegistrationsGet200Response',
+          _$failedField,
+          e.toString(),
+        );
       }
       rethrow;
     }

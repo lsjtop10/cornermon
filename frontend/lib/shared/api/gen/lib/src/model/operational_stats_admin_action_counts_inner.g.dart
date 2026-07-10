@@ -13,19 +13,17 @@ class _$OperationalStatsAdminActionCountsInner
   @override
   final int? actionCount;
 
-  factory _$OperationalStatsAdminActionCountsInner(
-          [void Function(OperationalStatsAdminActionCountsInnerBuilder)?
-              updates]) =>
-      (OperationalStatsAdminActionCountsInnerBuilder()..update(updates))
-          ._build();
+  factory _$OperationalStatsAdminActionCountsInner([
+    void Function(OperationalStatsAdminActionCountsInnerBuilder)? updates,
+  ]) => (OperationalStatsAdminActionCountsInnerBuilder()..update(updates))
+      ._build();
 
   _$OperationalStatsAdminActionCountsInner._({this.adminId, this.actionCount})
-      : super._();
+    : super._();
   @override
   OperationalStatsAdminActionCountsInner rebuild(
-          void Function(OperationalStatsAdminActionCountsInnerBuilder)
-              updates) =>
-      (toBuilder()..update(updates)).build();
+    void Function(OperationalStatsAdminActionCountsInnerBuilder) updates,
+  ) => (toBuilder()..update(updates)).build();
 
   @override
   OperationalStatsAdminActionCountsInnerBuilder toBuilder() =>
@@ -51,7 +49,8 @@ class _$OperationalStatsAdminActionCountsInner
   @override
   String toString() {
     return (newBuiltValueToStringHelper(
-            r'OperationalStatsAdminActionCountsInner')
+            r'OperationalStatsAdminActionCountsInner',
+          )
           ..add('adminId', adminId)
           ..add('actionCount', actionCount))
         .toString();
@@ -60,8 +59,10 @@ class _$OperationalStatsAdminActionCountsInner
 
 class OperationalStatsAdminActionCountsInnerBuilder
     implements
-        Builder<OperationalStatsAdminActionCountsInner,
-            OperationalStatsAdminActionCountsInnerBuilder> {
+        Builder<
+          OperationalStatsAdminActionCountsInner,
+          OperationalStatsAdminActionCountsInnerBuilder
+        > {
   _$OperationalStatsAdminActionCountsInner? _$v;
 
   String? _adminId;
@@ -93,7 +94,8 @@ class OperationalStatsAdminActionCountsInnerBuilder
 
   @override
   void update(
-      void Function(OperationalStatsAdminActionCountsInnerBuilder)? updates) {
+    void Function(OperationalStatsAdminActionCountsInnerBuilder)? updates,
+  ) {
     if (updates != null) updates(this);
   }
 
@@ -101,7 +103,8 @@ class OperationalStatsAdminActionCountsInnerBuilder
   OperationalStatsAdminActionCountsInner build() => _build();
 
   _$OperationalStatsAdminActionCountsInner _build() {
-    final _$result = _$v ??
+    final _$result =
+        _$v ??
         _$OperationalStatsAdminActionCountsInner._(
           adminId: adminId,
           actionCount: actionCount,

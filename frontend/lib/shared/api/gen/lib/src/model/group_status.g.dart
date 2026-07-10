@@ -23,12 +23,9 @@ GroupStatus _$valueOf(String name) {
   }
 }
 
-final BuiltSet<GroupStatus> _$values =
-    BuiltSet<GroupStatus>(const <GroupStatus>[
-  _$IDLE_MOVING,
-  _$AT_CORNER,
-  _$FINISHED,
-]);
+final BuiltSet<GroupStatus> _$values = BuiltSet<GroupStatus>(
+  const <GroupStatus>[_$IDLE_MOVING, _$AT_CORNER, _$FINISHED],
+);
 
 class _$GroupStatusMeta {
   const _$GroupStatusMeta();
@@ -39,7 +36,7 @@ class _$GroupStatusMeta {
   BuiltSet<GroupStatus> get values => _$values;
 }
 
-abstract class _$GroupStatusMixin {
+mixin _$GroupStatusMixin {
   // ignore: non_constant_identifier_names
   _$GroupStatusMeta get GroupStatus => const _$GroupStatusMeta();
 }
@@ -64,15 +61,20 @@ class _$GroupStatusSerializer implements PrimitiveSerializer<GroupStatus> {
   final String wireName = 'GroupStatus';
 
   @override
-  Object serialize(Serializers serializers, GroupStatus object,
-          {FullType specifiedType = FullType.unspecified}) =>
-      _toWire[object.name] ?? object.name;
+  Object serialize(
+    Serializers serializers,
+    GroupStatus object, {
+    FullType specifiedType = FullType.unspecified,
+  }) => _toWire[object.name] ?? object.name;
 
   @override
-  GroupStatus deserialize(Serializers serializers, Object serialized,
-          {FullType specifiedType = FullType.unspecified}) =>
-      GroupStatus.valueOf(
-          _fromWire[serialized] ?? (serialized is String ? serialized : ''));
+  GroupStatus deserialize(
+    Serializers serializers,
+    Object serialized, {
+    FullType specifiedType = FullType.unspecified,
+  }) => GroupStatus.valueOf(
+    _fromWire[serialized] ?? (serialized is String ? serialized : ''),
+  );
 }
 
 // ignore_for_file: deprecated_member_use_from_same_package,type=lint

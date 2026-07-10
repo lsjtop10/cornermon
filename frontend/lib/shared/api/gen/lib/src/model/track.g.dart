@@ -25,15 +25,15 @@ class _$Track extends Track {
   factory _$Track([void Function(TrackBuilder)? updates]) =>
       (TrackBuilder()..update(updates))._build();
 
-  _$Track._(
-      {this.pin,
-      this.currentVisit,
-      required this.id,
-      required this.cornerId,
-      required this.trackNo,
-      required this.status,
-      this.operationalStatus})
-      : super._();
+  _$Track._({
+    this.pin,
+    this.currentVisit,
+    required this.id,
+    required this.cornerId,
+    required this.trackNo,
+    required this.status,
+    this.operationalStatus,
+  }) : super._();
   @override
   Track rebuild(void Function(TrackBuilder) updates) =>
       (toBuilder()..update(updates)).build();
@@ -152,17 +152,27 @@ class TrackBuilder
   _$Track _build() {
     _$Track _$result;
     try {
-      _$result = _$v ??
+      _$result =
+          _$v ??
           _$Track._(
             pin: pin,
             currentVisit: _currentVisit?.build(),
             id: BuiltValueNullFieldError.checkNotNull(id, r'Track', 'id'),
             cornerId: BuiltValueNullFieldError.checkNotNull(
-                cornerId, r'Track', 'cornerId'),
+              cornerId,
+              r'Track',
+              'cornerId',
+            ),
             trackNo: BuiltValueNullFieldError.checkNotNull(
-                trackNo, r'Track', 'trackNo'),
+              trackNo,
+              r'Track',
+              'trackNo',
+            ),
             status: BuiltValueNullFieldError.checkNotNull(
-                status, r'Track', 'status'),
+              status,
+              r'Track',
+              'status',
+            ),
             operationalStatus: operationalStatus,
           );
     } catch (_) {

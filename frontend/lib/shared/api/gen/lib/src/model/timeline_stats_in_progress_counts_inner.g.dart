@@ -13,17 +13,16 @@ class _$TimelineStatsInProgressCountsInner
   @override
   final int? count;
 
-  factory _$TimelineStatsInProgressCountsInner(
-          [void Function(TimelineStatsInProgressCountsInnerBuilder)?
-              updates]) =>
-      (TimelineStatsInProgressCountsInnerBuilder()..update(updates))._build();
+  factory _$TimelineStatsInProgressCountsInner([
+    void Function(TimelineStatsInProgressCountsInnerBuilder)? updates,
+  ]) => (TimelineStatsInProgressCountsInnerBuilder()..update(updates))._build();
 
   _$TimelineStatsInProgressCountsInner._({this.bucketStart, this.count})
-      : super._();
+    : super._();
   @override
   TimelineStatsInProgressCountsInner rebuild(
-          void Function(TimelineStatsInProgressCountsInnerBuilder) updates) =>
-      (toBuilder()..update(updates)).build();
+    void Function(TimelineStatsInProgressCountsInnerBuilder) updates,
+  ) => (toBuilder()..update(updates)).build();
 
   @override
   TimelineStatsInProgressCountsInnerBuilder toBuilder() =>
@@ -57,8 +56,10 @@ class _$TimelineStatsInProgressCountsInner
 
 class TimelineStatsInProgressCountsInnerBuilder
     implements
-        Builder<TimelineStatsInProgressCountsInner,
-            TimelineStatsInProgressCountsInnerBuilder> {
+        Builder<
+          TimelineStatsInProgressCountsInner,
+          TimelineStatsInProgressCountsInnerBuilder
+        > {
   _$TimelineStatsInProgressCountsInner? _$v;
 
   DateTime? _bucketStart;
@@ -90,7 +91,8 @@ class TimelineStatsInProgressCountsInnerBuilder
 
   @override
   void update(
-      void Function(TimelineStatsInProgressCountsInnerBuilder)? updates) {
+    void Function(TimelineStatsInProgressCountsInnerBuilder)? updates,
+  ) {
     if (updates != null) updates(this);
   }
 
@@ -98,7 +100,8 @@ class TimelineStatsInProgressCountsInnerBuilder
   TimelineStatsInProgressCountsInner build() => _build();
 
   _$TimelineStatsInProgressCountsInner _build() {
-    final _$result = _$v ??
+    final _$result =
+        _$v ??
         _$TimelineStatsInProgressCountsInner._(
           bucketStart: bucketStart,
           count: count,

@@ -10,15 +10,15 @@ class _$TracksIdReplacePostRequest extends TracksIdReplacePostRequest {
   @override
   final String newCornerId;
 
-  factory _$TracksIdReplacePostRequest(
-          [void Function(TracksIdReplacePostRequestBuilder)? updates]) =>
-      (TracksIdReplacePostRequestBuilder()..update(updates))._build();
+  factory _$TracksIdReplacePostRequest([
+    void Function(TracksIdReplacePostRequestBuilder)? updates,
+  ]) => (TracksIdReplacePostRequestBuilder()..update(updates))._build();
 
   _$TracksIdReplacePostRequest._({required this.newCornerId}) : super._();
   @override
   TracksIdReplacePostRequest rebuild(
-          void Function(TracksIdReplacePostRequestBuilder) updates) =>
-      (toBuilder()..update(updates)).build();
+    void Function(TracksIdReplacePostRequestBuilder) updates,
+  ) => (toBuilder()..update(updates)).build();
 
   @override
   TracksIdReplacePostRequestBuilder toBuilder() =>
@@ -41,9 +41,9 @@ class _$TracksIdReplacePostRequest extends TracksIdReplacePostRequest {
 
   @override
   String toString() {
-    return (newBuiltValueToStringHelper(r'TracksIdReplacePostRequest')
-          ..add('newCornerId', newCornerId))
-        .toString();
+    return (newBuiltValueToStringHelper(
+      r'TracksIdReplacePostRequest',
+    )..add('newCornerId', newCornerId)).toString();
   }
 }
 
@@ -83,10 +83,14 @@ class TracksIdReplacePostRequestBuilder
   TracksIdReplacePostRequest build() => _build();
 
   _$TracksIdReplacePostRequest _build() {
-    final _$result = _$v ??
+    final _$result =
+        _$v ??
         _$TracksIdReplacePostRequest._(
           newCornerId: BuiltValueNullFieldError.checkNotNull(
-              newCornerId, r'TracksIdReplacePostRequest', 'newCornerId'),
+            newCornerId,
+            r'TracksIdReplacePostRequest',
+            'newCornerId',
+          ),
         );
     replace(_$result);
     return _$result;

@@ -7,11 +7,11 @@ part of 'tracks_track_id_visits_start_post_request.dart';
 // **************************************************************************
 
 const TracksTrackIdVisitsStartPostRequestMethodEnum
-    _$tracksTrackIdVisitsStartPostRequestMethodEnum_MANUAL =
+_$tracksTrackIdVisitsStartPostRequestMethodEnum_MANUAL =
     const TracksTrackIdVisitsStartPostRequestMethodEnum._('MANUAL');
 
 TracksTrackIdVisitsStartPostRequestMethodEnum
-    _$tracksTrackIdVisitsStartPostRequestMethodEnumValueOf(String name) {
+_$tracksTrackIdVisitsStartPostRequestMethodEnumValueOf(String name) {
   switch (name) {
     case 'MANUAL':
       return _$tracksTrackIdVisitsStartPostRequestMethodEnum_MANUAL;
@@ -21,13 +21,15 @@ TracksTrackIdVisitsStartPostRequestMethodEnum
 }
 
 final BuiltSet<TracksTrackIdVisitsStartPostRequestMethodEnum>
-    _$tracksTrackIdVisitsStartPostRequestMethodEnumValues = BuiltSet<
-        TracksTrackIdVisitsStartPostRequestMethodEnum>(const <TracksTrackIdVisitsStartPostRequestMethodEnum>[
-  _$tracksTrackIdVisitsStartPostRequestMethodEnum_MANUAL,
-]);
+_$tracksTrackIdVisitsStartPostRequestMethodEnumValues =
+    BuiltSet<TracksTrackIdVisitsStartPostRequestMethodEnum>(
+      const <TracksTrackIdVisitsStartPostRequestMethodEnum>[
+        _$tracksTrackIdVisitsStartPostRequestMethodEnum_MANUAL,
+      ],
+    );
 
 Serializer<TracksTrackIdVisitsStartPostRequestMethodEnum>
-    _$tracksTrackIdVisitsStartPostRequestMethodEnumSerializer =
+_$tracksTrackIdVisitsStartPostRequestMethodEnumSerializer =
     _$TracksTrackIdVisitsStartPostRequestMethodEnumSerializer();
 
 class _$TracksTrackIdVisitsStartPostRequestMethodEnumSerializer
@@ -42,23 +44,26 @@ class _$TracksTrackIdVisitsStartPostRequestMethodEnumSerializer
 
   @override
   final Iterable<Type> types = const <Type>[
-    TracksTrackIdVisitsStartPostRequestMethodEnum
+    TracksTrackIdVisitsStartPostRequestMethodEnum,
   ];
   @override
   final String wireName = 'TracksTrackIdVisitsStartPostRequestMethodEnum';
 
   @override
-  Object serialize(Serializers serializers,
-          TracksTrackIdVisitsStartPostRequestMethodEnum object,
-          {FullType specifiedType = FullType.unspecified}) =>
-      _toWire[object.name] ?? object.name;
+  Object serialize(
+    Serializers serializers,
+    TracksTrackIdVisitsStartPostRequestMethodEnum object, {
+    FullType specifiedType = FullType.unspecified,
+  }) => _toWire[object.name] ?? object.name;
 
   @override
   TracksTrackIdVisitsStartPostRequestMethodEnum deserialize(
-          Serializers serializers, Object serialized,
-          {FullType specifiedType = FullType.unspecified}) =>
-      TracksTrackIdVisitsStartPostRequestMethodEnum.valueOf(
-          _fromWire[serialized] ?? (serialized is String ? serialized : ''));
+    Serializers serializers,
+    Object serialized, {
+    FullType specifiedType = FullType.unspecified,
+  }) => TracksTrackIdVisitsStartPostRequestMethodEnum.valueOf(
+    _fromWire[serialized] ?? (serialized is String ? serialized : ''),
+  );
 }
 
 class _$TracksTrackIdVisitsStartPostRequest
@@ -66,16 +71,16 @@ class _$TracksTrackIdVisitsStartPostRequest
   @override
   final OneOf oneOf;
 
-  factory _$TracksTrackIdVisitsStartPostRequest(
-          [void Function(TracksTrackIdVisitsStartPostRequestBuilder)?
-              updates]) =>
+  factory _$TracksTrackIdVisitsStartPostRequest([
+    void Function(TracksTrackIdVisitsStartPostRequestBuilder)? updates,
+  ]) =>
       (TracksTrackIdVisitsStartPostRequestBuilder()..update(updates))._build();
 
   _$TracksTrackIdVisitsStartPostRequest._({required this.oneOf}) : super._();
   @override
   TracksTrackIdVisitsStartPostRequest rebuild(
-          void Function(TracksTrackIdVisitsStartPostRequestBuilder) updates) =>
-      (toBuilder()..update(updates)).build();
+    void Function(TracksTrackIdVisitsStartPostRequestBuilder) updates,
+  ) => (toBuilder()..update(updates)).build();
 
   @override
   TracksTrackIdVisitsStartPostRequestBuilder toBuilder() =>
@@ -97,16 +102,18 @@ class _$TracksTrackIdVisitsStartPostRequest
 
   @override
   String toString() {
-    return (newBuiltValueToStringHelper(r'TracksTrackIdVisitsStartPostRequest')
-          ..add('oneOf', oneOf))
-        .toString();
+    return (newBuiltValueToStringHelper(
+      r'TracksTrackIdVisitsStartPostRequest',
+    )..add('oneOf', oneOf)).toString();
   }
 }
 
 class TracksTrackIdVisitsStartPostRequestBuilder
     implements
-        Builder<TracksTrackIdVisitsStartPostRequest,
-            TracksTrackIdVisitsStartPostRequestBuilder> {
+        Builder<
+          TracksTrackIdVisitsStartPostRequest,
+          TracksTrackIdVisitsStartPostRequestBuilder
+        > {
   _$TracksTrackIdVisitsStartPostRequest? _$v;
 
   OneOf? _oneOf;
@@ -133,7 +140,8 @@ class TracksTrackIdVisitsStartPostRequestBuilder
 
   @override
   void update(
-      void Function(TracksTrackIdVisitsStartPostRequestBuilder)? updates) {
+    void Function(TracksTrackIdVisitsStartPostRequestBuilder)? updates,
+  ) {
     if (updates != null) updates(this);
   }
 
@@ -141,10 +149,14 @@ class TracksTrackIdVisitsStartPostRequestBuilder
   TracksTrackIdVisitsStartPostRequest build() => _build();
 
   _$TracksTrackIdVisitsStartPostRequest _build() {
-    final _$result = _$v ??
+    final _$result =
+        _$v ??
         _$TracksTrackIdVisitsStartPostRequest._(
           oneOf: BuiltValueNullFieldError.checkNotNull(
-              oneOf, r'TracksTrackIdVisitsStartPostRequest', 'oneOf'),
+            oneOf,
+            r'TracksTrackIdVisitsStartPostRequest',
+            'oneOf',
+          ),
         );
     replace(_$result);
     return _$result;

@@ -10,15 +10,15 @@ class _$TracksBulkDeletePostRequest extends TracksBulkDeletePostRequest {
   @override
   final BuiltList<String> trackIds;
 
-  factory _$TracksBulkDeletePostRequest(
-          [void Function(TracksBulkDeletePostRequestBuilder)? updates]) =>
-      (TracksBulkDeletePostRequestBuilder()..update(updates))._build();
+  factory _$TracksBulkDeletePostRequest([
+    void Function(TracksBulkDeletePostRequestBuilder)? updates,
+  ]) => (TracksBulkDeletePostRequestBuilder()..update(updates))._build();
 
   _$TracksBulkDeletePostRequest._({required this.trackIds}) : super._();
   @override
   TracksBulkDeletePostRequest rebuild(
-          void Function(TracksBulkDeletePostRequestBuilder) updates) =>
-      (toBuilder()..update(updates)).build();
+    void Function(TracksBulkDeletePostRequestBuilder) updates,
+  ) => (toBuilder()..update(updates)).build();
 
   @override
   TracksBulkDeletePostRequestBuilder toBuilder() =>
@@ -40,16 +40,18 @@ class _$TracksBulkDeletePostRequest extends TracksBulkDeletePostRequest {
 
   @override
   String toString() {
-    return (newBuiltValueToStringHelper(r'TracksBulkDeletePostRequest')
-          ..add('trackIds', trackIds))
-        .toString();
+    return (newBuiltValueToStringHelper(
+      r'TracksBulkDeletePostRequest',
+    )..add('trackIds', trackIds)).toString();
   }
 }
 
 class TracksBulkDeletePostRequestBuilder
     implements
-        Builder<TracksBulkDeletePostRequest,
-            TracksBulkDeletePostRequestBuilder> {
+        Builder<
+          TracksBulkDeletePostRequest,
+          TracksBulkDeletePostRequestBuilder
+        > {
   _$TracksBulkDeletePostRequest? _$v;
 
   ListBuilder<String>? _trackIds;
@@ -86,10 +88,8 @@ class TracksBulkDeletePostRequestBuilder
   _$TracksBulkDeletePostRequest _build() {
     _$TracksBulkDeletePostRequest _$result;
     try {
-      _$result = _$v ??
-          _$TracksBulkDeletePostRequest._(
-            trackIds: trackIds.build(),
-          );
+      _$result =
+          _$v ?? _$TracksBulkDeletePostRequest._(trackIds: trackIds.build());
     } catch (_) {
       late String _$failedField;
       try {
@@ -97,7 +97,10 @@ class TracksBulkDeletePostRequestBuilder
         trackIds.build();
       } catch (e) {
         throw BuiltValueNestedFieldError(
-            r'TracksBulkDeletePostRequest', _$failedField, e.toString());
+          r'TracksBulkDeletePostRequest',
+          _$failedField,
+          e.toString(),
+        );
       }
       rethrow;
     }

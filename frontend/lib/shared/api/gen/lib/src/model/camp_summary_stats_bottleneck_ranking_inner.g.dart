@@ -15,20 +15,20 @@ class _$CampSummaryStatsBottleneckRankingInner
   @override
   final num? avgDeviationSeconds;
 
-  factory _$CampSummaryStatsBottleneckRankingInner(
-          [void Function(CampSummaryStatsBottleneckRankingInnerBuilder)?
-              updates]) =>
-      (CampSummaryStatsBottleneckRankingInnerBuilder()..update(updates))
-          ._build();
+  factory _$CampSummaryStatsBottleneckRankingInner([
+    void Function(CampSummaryStatsBottleneckRankingInnerBuilder)? updates,
+  ]) => (CampSummaryStatsBottleneckRankingInnerBuilder()..update(updates))
+      ._build();
 
-  _$CampSummaryStatsBottleneckRankingInner._(
-      {this.cornerId, this.cornerName, this.avgDeviationSeconds})
-      : super._();
+  _$CampSummaryStatsBottleneckRankingInner._({
+    this.cornerId,
+    this.cornerName,
+    this.avgDeviationSeconds,
+  }) : super._();
   @override
   CampSummaryStatsBottleneckRankingInner rebuild(
-          void Function(CampSummaryStatsBottleneckRankingInnerBuilder)
-              updates) =>
-      (toBuilder()..update(updates)).build();
+    void Function(CampSummaryStatsBottleneckRankingInnerBuilder) updates,
+  ) => (toBuilder()..update(updates)).build();
 
   @override
   CampSummaryStatsBottleneckRankingInnerBuilder toBuilder() =>
@@ -56,7 +56,8 @@ class _$CampSummaryStatsBottleneckRankingInner
   @override
   String toString() {
     return (newBuiltValueToStringHelper(
-            r'CampSummaryStatsBottleneckRankingInner')
+            r'CampSummaryStatsBottleneckRankingInner',
+          )
           ..add('cornerId', cornerId)
           ..add('cornerName', cornerName)
           ..add('avgDeviationSeconds', avgDeviationSeconds))
@@ -66,8 +67,10 @@ class _$CampSummaryStatsBottleneckRankingInner
 
 class CampSummaryStatsBottleneckRankingInnerBuilder
     implements
-        Builder<CampSummaryStatsBottleneckRankingInner,
-            CampSummaryStatsBottleneckRankingInnerBuilder> {
+        Builder<
+          CampSummaryStatsBottleneckRankingInner,
+          CampSummaryStatsBottleneckRankingInnerBuilder
+        > {
   _$CampSummaryStatsBottleneckRankingInner? _$v;
 
   String? _cornerId;
@@ -105,7 +108,8 @@ class CampSummaryStatsBottleneckRankingInnerBuilder
 
   @override
   void update(
-      void Function(CampSummaryStatsBottleneckRankingInnerBuilder)? updates) {
+    void Function(CampSummaryStatsBottleneckRankingInnerBuilder)? updates,
+  ) {
     if (updates != null) updates(this);
   }
 
@@ -113,7 +117,8 @@ class CampSummaryStatsBottleneckRankingInnerBuilder
   CampSummaryStatsBottleneckRankingInner build() => _build();
 
   _$CampSummaryStatsBottleneckRankingInner _build() {
-    final _$result = _$v ??
+    final _$result =
+        _$v ??
         _$CampSummaryStatsBottleneckRankingInner._(
           cornerId: cornerId,
           cornerName: cornerName,

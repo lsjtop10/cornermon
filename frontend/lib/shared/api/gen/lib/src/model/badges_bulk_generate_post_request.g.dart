@@ -10,15 +10,15 @@ class _$BadgesBulkGeneratePostRequest extends BadgesBulkGeneratePostRequest {
   @override
   final int count;
 
-  factory _$BadgesBulkGeneratePostRequest(
-          [void Function(BadgesBulkGeneratePostRequestBuilder)? updates]) =>
-      (BadgesBulkGeneratePostRequestBuilder()..update(updates))._build();
+  factory _$BadgesBulkGeneratePostRequest([
+    void Function(BadgesBulkGeneratePostRequestBuilder)? updates,
+  ]) => (BadgesBulkGeneratePostRequestBuilder()..update(updates))._build();
 
   _$BadgesBulkGeneratePostRequest._({required this.count}) : super._();
   @override
   BadgesBulkGeneratePostRequest rebuild(
-          void Function(BadgesBulkGeneratePostRequestBuilder) updates) =>
-      (toBuilder()..update(updates)).build();
+    void Function(BadgesBulkGeneratePostRequestBuilder) updates,
+  ) => (toBuilder()..update(updates)).build();
 
   @override
   BadgesBulkGeneratePostRequestBuilder toBuilder() =>
@@ -40,16 +40,18 @@ class _$BadgesBulkGeneratePostRequest extends BadgesBulkGeneratePostRequest {
 
   @override
   String toString() {
-    return (newBuiltValueToStringHelper(r'BadgesBulkGeneratePostRequest')
-          ..add('count', count))
-        .toString();
+    return (newBuiltValueToStringHelper(
+      r'BadgesBulkGeneratePostRequest',
+    )..add('count', count)).toString();
   }
 }
 
 class BadgesBulkGeneratePostRequestBuilder
     implements
-        Builder<BadgesBulkGeneratePostRequest,
-            BadgesBulkGeneratePostRequestBuilder> {
+        Builder<
+          BadgesBulkGeneratePostRequest,
+          BadgesBulkGeneratePostRequestBuilder
+        > {
   _$BadgesBulkGeneratePostRequest? _$v;
 
   int? _count;
@@ -83,10 +85,14 @@ class BadgesBulkGeneratePostRequestBuilder
   BadgesBulkGeneratePostRequest build() => _build();
 
   _$BadgesBulkGeneratePostRequest _build() {
-    final _$result = _$v ??
+    final _$result =
+        _$v ??
         _$BadgesBulkGeneratePostRequest._(
           count: BuiltValueNullFieldError.checkNotNull(
-              count, r'BadgesBulkGeneratePostRequest', 'count'),
+            count,
+            r'BadgesBulkGeneratePostRequest',
+            'count',
+          ),
         );
     replace(_$result);
     return _$result;

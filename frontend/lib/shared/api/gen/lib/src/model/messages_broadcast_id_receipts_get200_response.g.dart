@@ -13,19 +13,17 @@ class _$MessagesBroadcastIdReceiptsGet200Response
   @override
   final double? readRate;
 
-  factory _$MessagesBroadcastIdReceiptsGet200Response(
-          [void Function(MessagesBroadcastIdReceiptsGet200ResponseBuilder)?
-              updates]) =>
-      (MessagesBroadcastIdReceiptsGet200ResponseBuilder()..update(updates))
-          ._build();
+  factory _$MessagesBroadcastIdReceiptsGet200Response([
+    void Function(MessagesBroadcastIdReceiptsGet200ResponseBuilder)? updates,
+  ]) => (MessagesBroadcastIdReceiptsGet200ResponseBuilder()..update(updates))
+      ._build();
 
   _$MessagesBroadcastIdReceiptsGet200Response._({this.receipts, this.readRate})
-      : super._();
+    : super._();
   @override
   MessagesBroadcastIdReceiptsGet200Response rebuild(
-          void Function(MessagesBroadcastIdReceiptsGet200ResponseBuilder)
-              updates) =>
-      (toBuilder()..update(updates)).build();
+    void Function(MessagesBroadcastIdReceiptsGet200ResponseBuilder) updates,
+  ) => (toBuilder()..update(updates)).build();
 
   @override
   MessagesBroadcastIdReceiptsGet200ResponseBuilder toBuilder() =>
@@ -51,7 +49,8 @@ class _$MessagesBroadcastIdReceiptsGet200Response
   @override
   String toString() {
     return (newBuiltValueToStringHelper(
-            r'MessagesBroadcastIdReceiptsGet200Response')
+            r'MessagesBroadcastIdReceiptsGet200Response',
+          )
           ..add('receipts', receipts)
           ..add('readRate', readRate))
         .toString();
@@ -60,8 +59,10 @@ class _$MessagesBroadcastIdReceiptsGet200Response
 
 class MessagesBroadcastIdReceiptsGet200ResponseBuilder
     implements
-        Builder<MessagesBroadcastIdReceiptsGet200Response,
-            MessagesBroadcastIdReceiptsGet200ResponseBuilder> {
+        Builder<
+          MessagesBroadcastIdReceiptsGet200Response,
+          MessagesBroadcastIdReceiptsGet200ResponseBuilder
+        > {
   _$MessagesBroadcastIdReceiptsGet200Response? _$v;
 
   ListBuilder<BroadcastReceipt>? _receipts;
@@ -95,8 +96,8 @@ class MessagesBroadcastIdReceiptsGet200ResponseBuilder
 
   @override
   void update(
-      void Function(MessagesBroadcastIdReceiptsGet200ResponseBuilder)?
-          updates) {
+    void Function(MessagesBroadcastIdReceiptsGet200ResponseBuilder)? updates,
+  ) {
     if (updates != null) updates(this);
   }
 
@@ -106,7 +107,8 @@ class MessagesBroadcastIdReceiptsGet200ResponseBuilder
   _$MessagesBroadcastIdReceiptsGet200Response _build() {
     _$MessagesBroadcastIdReceiptsGet200Response _$result;
     try {
-      _$result = _$v ??
+      _$result =
+          _$v ??
           _$MessagesBroadcastIdReceiptsGet200Response._(
             receipts: _receipts?.build(),
             readRate: readRate,
@@ -118,9 +120,10 @@ class MessagesBroadcastIdReceiptsGet200ResponseBuilder
         _receipts?.build();
       } catch (e) {
         throw BuiltValueNestedFieldError(
-            r'MessagesBroadcastIdReceiptsGet200Response',
-            _$failedField,
-            e.toString());
+          r'MessagesBroadcastIdReceiptsGet200Response',
+          _$failedField,
+          e.toString(),
+        );
       }
       rethrow;
     }

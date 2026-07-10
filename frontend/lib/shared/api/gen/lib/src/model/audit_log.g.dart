@@ -25,15 +25,15 @@ class _$AuditLog extends AuditLog {
   factory _$AuditLog([void Function(AuditLogBuilder)? updates]) =>
       (AuditLogBuilder()..update(updates))._build();
 
-  _$AuditLog._(
-      {required this.id,
-      required this.actor,
-      required this.action,
-      required this.target,
-      required this.success,
-      required this.occurredAt,
-      this.metadata})
-      : super._();
+  _$AuditLog._({
+    required this.id,
+    required this.actor,
+    required this.action,
+    required this.target,
+    required this.success,
+    required this.occurredAt,
+    this.metadata,
+  }) : super._();
   @override
   AuditLog rebuild(void Function(AuditLogBuilder) updates) =>
       (toBuilder()..update(updates)).build();
@@ -150,19 +150,35 @@ class AuditLogBuilder implements Builder<AuditLog, AuditLogBuilder> {
   _$AuditLog _build() {
     _$AuditLog _$result;
     try {
-      _$result = _$v ??
+      _$result =
+          _$v ??
           _$AuditLog._(
             id: BuiltValueNullFieldError.checkNotNull(id, r'AuditLog', 'id'),
             actor: BuiltValueNullFieldError.checkNotNull(
-                actor, r'AuditLog', 'actor'),
+              actor,
+              r'AuditLog',
+              'actor',
+            ),
             action: BuiltValueNullFieldError.checkNotNull(
-                action, r'AuditLog', 'action'),
+              action,
+              r'AuditLog',
+              'action',
+            ),
             target: BuiltValueNullFieldError.checkNotNull(
-                target, r'AuditLog', 'target'),
+              target,
+              r'AuditLog',
+              'target',
+            ),
             success: BuiltValueNullFieldError.checkNotNull(
-                success, r'AuditLog', 'success'),
+              success,
+              r'AuditLog',
+              'success',
+            ),
             occurredAt: BuiltValueNullFieldError.checkNotNull(
-                occurredAt, r'AuditLog', 'occurredAt'),
+              occurredAt,
+              r'AuditLog',
+              'occurredAt',
+            ),
             metadata: _metadata?.build(),
           );
     } catch (_) {
@@ -172,7 +188,10 @@ class AuditLogBuilder implements Builder<AuditLog, AuditLogBuilder> {
         _metadata?.build();
       } catch (e) {
         throw BuiltValueNestedFieldError(
-            r'AuditLog', _$failedField, e.toString());
+          r'AuditLog',
+          _$failedField,
+          e.toString(),
+        );
       }
       rethrow;
     }

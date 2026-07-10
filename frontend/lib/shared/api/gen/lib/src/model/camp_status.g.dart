@@ -38,7 +38,7 @@ class _$CampStatusMeta {
   BuiltSet<CampStatus> get values => _$values;
 }
 
-abstract class _$CampStatusMixin {
+mixin _$CampStatusMixin {
   // ignore: non_constant_identifier_names
   _$CampStatusMeta get CampStatus => const _$CampStatusMeta();
 }
@@ -63,15 +63,20 @@ class _$CampStatusSerializer implements PrimitiveSerializer<CampStatus> {
   final String wireName = 'CampStatus';
 
   @override
-  Object serialize(Serializers serializers, CampStatus object,
-          {FullType specifiedType = FullType.unspecified}) =>
-      _toWire[object.name] ?? object.name;
+  Object serialize(
+    Serializers serializers,
+    CampStatus object, {
+    FullType specifiedType = FullType.unspecified,
+  }) => _toWire[object.name] ?? object.name;
 
   @override
-  CampStatus deserialize(Serializers serializers, Object serialized,
-          {FullType specifiedType = FullType.unspecified}) =>
-      CampStatus.valueOf(
-          _fromWire[serialized] ?? (serialized is String ? serialized : ''));
+  CampStatus deserialize(
+    Serializers serializers,
+    Object serialized, {
+    FullType specifiedType = FullType.unspecified,
+  }) => CampStatus.valueOf(
+    _fromWire[serialized] ?? (serialized is String ? serialized : ''),
+  );
 }
 
 // ignore_for_file: deprecated_member_use_from_same_package,type=lint

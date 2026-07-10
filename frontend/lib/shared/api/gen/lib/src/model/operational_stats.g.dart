@@ -25,26 +25,26 @@ class _$OperationalStats extends OperationalStats {
   final BuiltList<OperationalStatsAdminActionCountsInner>? adminActionCounts;
   @override
   final BuiltList<OperationalStatsDirectMessageCountPerTrackInner>?
-      directMessageCountPerTrack;
+  directMessageCountPerTrack;
   @override
   final BuiltList<OperationalStatsBroadcastReadRatesInner>? broadcastReadRates;
 
-  factory _$OperationalStats(
-          [void Function(OperationalStatsBuilder)? updates]) =>
-      (OperationalStatsBuilder()..update(updates))._build();
+  factory _$OperationalStats([
+    void Function(OperationalStatsBuilder)? updates,
+  ]) => (OperationalStatsBuilder()..update(updates))._build();
 
-  _$OperationalStats._(
-      {this.pinLoginSuccessCount,
-      this.pinLoginFailureCount,
-      this.pinLoginFailureRate,
-      this.deviceRegistrationCount,
-      this.deviceApprovalCount,
-      this.deviceRejectionCount,
-      this.deviceRevocationCount,
-      this.adminActionCounts,
-      this.directMessageCountPerTrack,
-      this.broadcastReadRates})
-      : super._();
+  _$OperationalStats._({
+    this.pinLoginSuccessCount,
+    this.pinLoginFailureCount,
+    this.pinLoginFailureRate,
+    this.deviceRegistrationCount,
+    this.deviceApprovalCount,
+    this.deviceRejectionCount,
+    this.deviceRevocationCount,
+    this.adminActionCounts,
+    this.directMessageCountPerTrack,
+    this.broadcastReadRates,
+  }) : super._();
   @override
   OperationalStats rebuild(void Function(OperationalStatsBuilder) updates) =>
       (toBuilder()..update(updates)).build();
@@ -147,28 +147,26 @@ class OperationalStatsBuilder
       _$this._adminActionCounts ??=
           ListBuilder<OperationalStatsAdminActionCountsInner>();
   set adminActionCounts(
-          ListBuilder<OperationalStatsAdminActionCountsInner>?
-              adminActionCounts) =>
-      _$this._adminActionCounts = adminActionCounts;
+    ListBuilder<OperationalStatsAdminActionCountsInner>? adminActionCounts,
+  ) => _$this._adminActionCounts = adminActionCounts;
 
   ListBuilder<OperationalStatsDirectMessageCountPerTrackInner>?
-      _directMessageCountPerTrack;
+  _directMessageCountPerTrack;
   ListBuilder<OperationalStatsDirectMessageCountPerTrackInner>
-      get directMessageCountPerTrack => _$this._directMessageCountPerTrack ??=
-          ListBuilder<OperationalStatsDirectMessageCountPerTrackInner>();
+  get directMessageCountPerTrack => _$this._directMessageCountPerTrack ??=
+      ListBuilder<OperationalStatsDirectMessageCountPerTrackInner>();
   set directMessageCountPerTrack(
-          ListBuilder<OperationalStatsDirectMessageCountPerTrackInner>?
-              directMessageCountPerTrack) =>
-      _$this._directMessageCountPerTrack = directMessageCountPerTrack;
+    ListBuilder<OperationalStatsDirectMessageCountPerTrackInner>?
+    directMessageCountPerTrack,
+  ) => _$this._directMessageCountPerTrack = directMessageCountPerTrack;
 
   ListBuilder<OperationalStatsBroadcastReadRatesInner>? _broadcastReadRates;
   ListBuilder<OperationalStatsBroadcastReadRatesInner> get broadcastReadRates =>
       _$this._broadcastReadRates ??=
           ListBuilder<OperationalStatsBroadcastReadRatesInner>();
   set broadcastReadRates(
-          ListBuilder<OperationalStatsBroadcastReadRatesInner>?
-              broadcastReadRates) =>
-      _$this._broadcastReadRates = broadcastReadRates;
+    ListBuilder<OperationalStatsBroadcastReadRatesInner>? broadcastReadRates,
+  ) => _$this._broadcastReadRates = broadcastReadRates;
 
   OperationalStatsBuilder() {
     OperationalStats._defaults(this);
@@ -208,7 +206,8 @@ class OperationalStatsBuilder
   _$OperationalStats _build() {
     _$OperationalStats _$result;
     try {
-      _$result = _$v ??
+      _$result =
+          _$v ??
           _$OperationalStats._(
             pinLoginSuccessCount: pinLoginSuccessCount,
             pinLoginFailureCount: pinLoginFailureCount,
@@ -232,7 +231,10 @@ class OperationalStatsBuilder
         _broadcastReadRates?.build();
       } catch (e) {
         throw BuiltValueNestedFieldError(
-            r'OperationalStats', _$failedField, e.toString());
+          r'OperationalStats',
+          _$failedField,
+          e.toString(),
+        );
       }
       rethrow;
     }

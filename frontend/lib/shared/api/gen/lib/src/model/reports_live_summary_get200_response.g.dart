@@ -15,17 +15,19 @@ class _$ReportsLiveSummaryGet200Response
   @override
   final BuiltList<ReportsLiveSummaryGet200ResponseCornersInner>? corners;
 
-  factory _$ReportsLiveSummaryGet200Response(
-          [void Function(ReportsLiveSummaryGet200ResponseBuilder)? updates]) =>
-      (ReportsLiveSummaryGet200ResponseBuilder()..update(updates))._build();
+  factory _$ReportsLiveSummaryGet200Response([
+    void Function(ReportsLiveSummaryGet200ResponseBuilder)? updates,
+  ]) => (ReportsLiveSummaryGet200ResponseBuilder()..update(updates))._build();
 
-  _$ReportsLiveSummaryGet200Response._(
-      {this.totalGroups, this.finishedGroups, this.corners})
-      : super._();
+  _$ReportsLiveSummaryGet200Response._({
+    this.totalGroups,
+    this.finishedGroups,
+    this.corners,
+  }) : super._();
   @override
   ReportsLiveSummaryGet200Response rebuild(
-          void Function(ReportsLiveSummaryGet200ResponseBuilder) updates) =>
-      (toBuilder()..update(updates)).build();
+    void Function(ReportsLiveSummaryGet200ResponseBuilder) updates,
+  ) => (toBuilder()..update(updates)).build();
 
   @override
   ReportsLiveSummaryGet200ResponseBuilder toBuilder() =>
@@ -62,8 +64,10 @@ class _$ReportsLiveSummaryGet200Response
 
 class ReportsLiveSummaryGet200ResponseBuilder
     implements
-        Builder<ReportsLiveSummaryGet200Response,
-            ReportsLiveSummaryGet200ResponseBuilder> {
+        Builder<
+          ReportsLiveSummaryGet200Response,
+          ReportsLiveSummaryGet200ResponseBuilder
+        > {
   _$ReportsLiveSummaryGet200Response? _$v;
 
   int? _totalGroups;
@@ -80,8 +84,8 @@ class ReportsLiveSummaryGet200ResponseBuilder
       _$this._corners ??=
           ListBuilder<ReportsLiveSummaryGet200ResponseCornersInner>();
   set corners(
-          ListBuilder<ReportsLiveSummaryGet200ResponseCornersInner>? corners) =>
-      _$this._corners = corners;
+    ListBuilder<ReportsLiveSummaryGet200ResponseCornersInner>? corners,
+  ) => _$this._corners = corners;
 
   ReportsLiveSummaryGet200ResponseBuilder() {
     ReportsLiveSummaryGet200Response._defaults(this);
@@ -114,7 +118,8 @@ class ReportsLiveSummaryGet200ResponseBuilder
   _$ReportsLiveSummaryGet200Response _build() {
     _$ReportsLiveSummaryGet200Response _$result;
     try {
-      _$result = _$v ??
+      _$result =
+          _$v ??
           _$ReportsLiveSummaryGet200Response._(
             totalGroups: totalGroups,
             finishedGroups: finishedGroups,
@@ -127,7 +132,10 @@ class ReportsLiveSummaryGet200ResponseBuilder
         _corners?.build();
       } catch (e) {
         throw BuiltValueNestedFieldError(
-            r'ReportsLiveSummaryGet200Response', _$failedField, e.toString());
+          r'ReportsLiveSummaryGet200Response',
+          _$failedField,
+          e.toString(),
+        );
       }
       rethrow;
     }

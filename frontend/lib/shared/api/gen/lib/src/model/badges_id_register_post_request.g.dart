@@ -10,15 +10,15 @@ class _$BadgesIdRegisterPostRequest extends BadgesIdRegisterPostRequest {
   @override
   final String groupName;
 
-  factory _$BadgesIdRegisterPostRequest(
-          [void Function(BadgesIdRegisterPostRequestBuilder)? updates]) =>
-      (BadgesIdRegisterPostRequestBuilder()..update(updates))._build();
+  factory _$BadgesIdRegisterPostRequest([
+    void Function(BadgesIdRegisterPostRequestBuilder)? updates,
+  ]) => (BadgesIdRegisterPostRequestBuilder()..update(updates))._build();
 
   _$BadgesIdRegisterPostRequest._({required this.groupName}) : super._();
   @override
   BadgesIdRegisterPostRequest rebuild(
-          void Function(BadgesIdRegisterPostRequestBuilder) updates) =>
-      (toBuilder()..update(updates)).build();
+    void Function(BadgesIdRegisterPostRequestBuilder) updates,
+  ) => (toBuilder()..update(updates)).build();
 
   @override
   BadgesIdRegisterPostRequestBuilder toBuilder() =>
@@ -40,16 +40,18 @@ class _$BadgesIdRegisterPostRequest extends BadgesIdRegisterPostRequest {
 
   @override
   String toString() {
-    return (newBuiltValueToStringHelper(r'BadgesIdRegisterPostRequest')
-          ..add('groupName', groupName))
-        .toString();
+    return (newBuiltValueToStringHelper(
+      r'BadgesIdRegisterPostRequest',
+    )..add('groupName', groupName)).toString();
   }
 }
 
 class BadgesIdRegisterPostRequestBuilder
     implements
-        Builder<BadgesIdRegisterPostRequest,
-            BadgesIdRegisterPostRequestBuilder> {
+        Builder<
+          BadgesIdRegisterPostRequest,
+          BadgesIdRegisterPostRequestBuilder
+        > {
   _$BadgesIdRegisterPostRequest? _$v;
 
   String? _groupName;
@@ -83,10 +85,14 @@ class BadgesIdRegisterPostRequestBuilder
   BadgesIdRegisterPostRequest build() => _build();
 
   _$BadgesIdRegisterPostRequest _build() {
-    final _$result = _$v ??
+    final _$result =
+        _$v ??
         _$BadgesIdRegisterPostRequest._(
           groupName: BuiltValueNullFieldError.checkNotNull(
-              groupName, r'BadgesIdRegisterPostRequest', 'groupName'),
+            groupName,
+            r'BadgesIdRegisterPostRequest',
+            'groupName',
+          ),
         );
     replace(_$result);
     return _$result;

@@ -18,7 +18,7 @@ class _$ErrorResponse extends ErrorResponse {
       (ErrorResponseBuilder()..update(updates))._build();
 
   _$ErrorResponse._({required this.code, required this.message, this.details})
-      : super._();
+    : super._();
   @override
   ErrorResponse rebuild(void Function(ErrorResponseBuilder) updates) =>
       (toBuilder()..update(updates)).build();
@@ -104,12 +104,19 @@ class ErrorResponseBuilder
   _$ErrorResponse _build() {
     _$ErrorResponse _$result;
     try {
-      _$result = _$v ??
+      _$result =
+          _$v ??
           _$ErrorResponse._(
             code: BuiltValueNullFieldError.checkNotNull(
-                code, r'ErrorResponse', 'code'),
+              code,
+              r'ErrorResponse',
+              'code',
+            ),
             message: BuiltValueNullFieldError.checkNotNull(
-                message, r'ErrorResponse', 'message'),
+              message,
+              r'ErrorResponse',
+              'message',
+            ),
             details: _details?.build(),
           );
     } catch (_) {
@@ -119,7 +126,10 @@ class ErrorResponseBuilder
         _details?.build();
       } catch (e) {
         throw BuiltValueNestedFieldError(
-            r'ErrorResponse', _$failedField, e.toString());
+          r'ErrorResponse',
+          _$failedField,
+          e.toString(),
+        );
       }
       rethrow;
     }

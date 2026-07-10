@@ -13,16 +13,16 @@ class _$TimelineStats extends TimelineStats {
   final BuiltList<TimelineStatsInProgressCountsInner>? inProgressCounts;
   @override
   final BuiltList<TimelineStatsInProgressCountsInner>?
-      cumulativeCompletedCounts;
+  cumulativeCompletedCounts;
 
   factory _$TimelineStats([void Function(TimelineStatsBuilder)? updates]) =>
       (TimelineStatsBuilder()..update(updates))._build();
 
-  _$TimelineStats._(
-      {this.bucketMinutes,
-      this.inProgressCounts,
-      this.cumulativeCompletedCounts})
-      : super._();
+  _$TimelineStats._({
+    this.bucketMinutes,
+    this.inProgressCounts,
+    this.cumulativeCompletedCounts,
+  }) : super._();
   @override
   TimelineStats rebuild(void Function(TimelineStatsBuilder) updates) =>
       (toBuilder()..update(updates)).build();
@@ -73,17 +73,16 @@ class TimelineStatsBuilder
       _$this._inProgressCounts ??=
           ListBuilder<TimelineStatsInProgressCountsInner>();
   set inProgressCounts(
-          ListBuilder<TimelineStatsInProgressCountsInner>? inProgressCounts) =>
-      _$this._inProgressCounts = inProgressCounts;
+    ListBuilder<TimelineStatsInProgressCountsInner>? inProgressCounts,
+  ) => _$this._inProgressCounts = inProgressCounts;
 
   ListBuilder<TimelineStatsInProgressCountsInner>? _cumulativeCompletedCounts;
   ListBuilder<TimelineStatsInProgressCountsInner>
-      get cumulativeCompletedCounts => _$this._cumulativeCompletedCounts ??=
-          ListBuilder<TimelineStatsInProgressCountsInner>();
+  get cumulativeCompletedCounts => _$this._cumulativeCompletedCounts ??=
+      ListBuilder<TimelineStatsInProgressCountsInner>();
   set cumulativeCompletedCounts(
-          ListBuilder<TimelineStatsInProgressCountsInner>?
-              cumulativeCompletedCounts) =>
-      _$this._cumulativeCompletedCounts = cumulativeCompletedCounts;
+    ListBuilder<TimelineStatsInProgressCountsInner>? cumulativeCompletedCounts,
+  ) => _$this._cumulativeCompletedCounts = cumulativeCompletedCounts;
 
   TimelineStatsBuilder() {
     TimelineStats._defaults(this);
@@ -116,7 +115,8 @@ class TimelineStatsBuilder
   _$TimelineStats _build() {
     _$TimelineStats _$result;
     try {
-      _$result = _$v ??
+      _$result =
+          _$v ??
           _$TimelineStats._(
             bucketMinutes: bucketMinutes,
             inProgressCounts: _inProgressCounts?.build(),
@@ -131,7 +131,10 @@ class TimelineStatsBuilder
         _cumulativeCompletedCounts?.build();
       } catch (e) {
         throw BuiltValueNestedFieldError(
-            r'TimelineStats', _$failedField, e.toString());
+          r'TimelineStats',
+          _$failedField,
+          e.toString(),
+        );
       }
       rethrow;
     }

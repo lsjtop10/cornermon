@@ -25,15 +25,15 @@ class _$Camp extends Camp {
   factory _$Camp([void Function(CampBuilder)? updates]) =>
       (CampBuilder()..update(updates))._build();
 
-  _$Camp._(
-      {required this.id,
-      required this.name,
-      required this.startAt,
-      required this.endAt,
-      required this.status,
-      this.bottleneckMinSamples,
-      this.bottleneckRatioPct})
-      : super._();
+  _$Camp._({
+    required this.id,
+    required this.name,
+    required this.startAt,
+    required this.endAt,
+    required this.status,
+    this.bottleneckMinSamples,
+    this.bottleneckRatioPct,
+  }) : super._();
   @override
   Camp rebuild(void Function(CampBuilder) updates) =>
       (toBuilder()..update(updates)).build();
@@ -148,15 +148,22 @@ class CampBuilder implements Builder<Camp, CampBuilder> {
   Camp build() => _build();
 
   _$Camp _build() {
-    final _$result = _$v ??
+    final _$result =
+        _$v ??
         _$Camp._(
           id: BuiltValueNullFieldError.checkNotNull(id, r'Camp', 'id'),
           name: BuiltValueNullFieldError.checkNotNull(name, r'Camp', 'name'),
           startAt: BuiltValueNullFieldError.checkNotNull(
-              startAt, r'Camp', 'startAt'),
+            startAt,
+            r'Camp',
+            'startAt',
+          ),
           endAt: BuiltValueNullFieldError.checkNotNull(endAt, r'Camp', 'endAt'),
-          status:
-              BuiltValueNullFieldError.checkNotNull(status, r'Camp', 'status'),
+          status: BuiltValueNullFieldError.checkNotNull(
+            status,
+            r'Camp',
+            'status',
+          ),
           bottleneckMinSamples: bottleneckMinSamples,
           bottleneckRatioPct: bottleneckRatioPct,
         );

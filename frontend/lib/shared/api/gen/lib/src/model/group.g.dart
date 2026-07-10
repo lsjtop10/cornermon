@@ -23,14 +23,14 @@ class _$Group extends Group {
   factory _$Group([void Function(GroupBuilder)? updates]) =>
       (GroupBuilder()..update(updates))._build();
 
-  _$Group._(
-      {required this.id,
-      required this.name,
-      this.badgeId,
-      required this.status,
-      required this.isFinished,
-      required this.itinerary})
-      : super._();
+  _$Group._({
+    required this.id,
+    required this.name,
+    this.badgeId,
+    required this.status,
+    required this.isFinished,
+    required this.itinerary,
+  }) : super._();
   @override
   Group rebuild(void Function(GroupBuilder) updates) =>
       (toBuilder()..update(updates)).build();
@@ -139,15 +139,22 @@ class GroupBuilder implements Builder<Group, GroupBuilder> {
   _$Group _build() {
     _$Group _$result;
     try {
-      _$result = _$v ??
+      _$result =
+          _$v ??
           _$Group._(
             id: BuiltValueNullFieldError.checkNotNull(id, r'Group', 'id'),
             name: BuiltValueNullFieldError.checkNotNull(name, r'Group', 'name'),
             badgeId: badgeId,
             status: BuiltValueNullFieldError.checkNotNull(
-                status, r'Group', 'status'),
+              status,
+              r'Group',
+              'status',
+            ),
             isFinished: BuiltValueNullFieldError.checkNotNull(
-                isFinished, r'Group', 'isFinished'),
+              isFinished,
+              r'Group',
+              'isFinished',
+            ),
             itinerary: itinerary.build(),
           );
     } catch (_) {

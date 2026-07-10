@@ -13,18 +13,18 @@ class _$DeviceRegistrationsPost201Response
   @override
   final String? deviceToken;
 
-  factory _$DeviceRegistrationsPost201Response(
-          [void Function(DeviceRegistrationsPost201ResponseBuilder)?
-              updates]) =>
-      (DeviceRegistrationsPost201ResponseBuilder()..update(updates))._build();
+  factory _$DeviceRegistrationsPost201Response([
+    void Function(DeviceRegistrationsPost201ResponseBuilder)? updates,
+  ]) => (DeviceRegistrationsPost201ResponseBuilder()..update(updates))._build();
 
-  _$DeviceRegistrationsPost201Response._(
-      {this.deviceRegistration, this.deviceToken})
-      : super._();
+  _$DeviceRegistrationsPost201Response._({
+    this.deviceRegistration,
+    this.deviceToken,
+  }) : super._();
   @override
   DeviceRegistrationsPost201Response rebuild(
-          void Function(DeviceRegistrationsPost201ResponseBuilder) updates) =>
-      (toBuilder()..update(updates)).build();
+    void Function(DeviceRegistrationsPost201ResponseBuilder) updates,
+  ) => (toBuilder()..update(updates)).build();
 
   @override
   DeviceRegistrationsPost201ResponseBuilder toBuilder() =>
@@ -58,8 +58,10 @@ class _$DeviceRegistrationsPost201Response
 
 class DeviceRegistrationsPost201ResponseBuilder
     implements
-        Builder<DeviceRegistrationsPost201Response,
-            DeviceRegistrationsPost201ResponseBuilder> {
+        Builder<
+          DeviceRegistrationsPost201Response,
+          DeviceRegistrationsPost201ResponseBuilder
+        > {
   _$DeviceRegistrationsPost201Response? _$v;
 
   DeviceRegistrationBuilder? _deviceRegistration;
@@ -93,7 +95,8 @@ class DeviceRegistrationsPost201ResponseBuilder
 
   @override
   void update(
-      void Function(DeviceRegistrationsPost201ResponseBuilder)? updates) {
+    void Function(DeviceRegistrationsPost201ResponseBuilder)? updates,
+  ) {
     if (updates != null) updates(this);
   }
 
@@ -103,7 +106,8 @@ class DeviceRegistrationsPost201ResponseBuilder
   _$DeviceRegistrationsPost201Response _build() {
     _$DeviceRegistrationsPost201Response _$result;
     try {
-      _$result = _$v ??
+      _$result =
+          _$v ??
           _$DeviceRegistrationsPost201Response._(
             deviceRegistration: _deviceRegistration?.build(),
             deviceToken: deviceToken,
@@ -115,7 +119,10 @@ class DeviceRegistrationsPost201ResponseBuilder
         _deviceRegistration?.build();
       } catch (e) {
         throw BuiltValueNestedFieldError(
-            r'DeviceRegistrationsPost201Response', _$failedField, e.toString());
+          r'DeviceRegistrationsPost201Response',
+          _$failedField,
+          e.toString(),
+        );
       }
       rethrow;
     }

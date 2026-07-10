@@ -14,17 +14,19 @@ class _$CornersPostRequestCornersInner extends CornersPostRequestCornersInner {
   @override
   final int? initialTrackCount;
 
-  factory _$CornersPostRequestCornersInner(
-          [void Function(CornersPostRequestCornersInnerBuilder)? updates]) =>
-      (CornersPostRequestCornersInnerBuilder()..update(updates))._build();
+  factory _$CornersPostRequestCornersInner([
+    void Function(CornersPostRequestCornersInnerBuilder)? updates,
+  ]) => (CornersPostRequestCornersInnerBuilder()..update(updates))._build();
 
-  _$CornersPostRequestCornersInner._(
-      {required this.name, this.targetMinutes, this.initialTrackCount})
-      : super._();
+  _$CornersPostRequestCornersInner._({
+    required this.name,
+    this.targetMinutes,
+    this.initialTrackCount,
+  }) : super._();
   @override
   CornersPostRequestCornersInner rebuild(
-          void Function(CornersPostRequestCornersInnerBuilder) updates) =>
-      (toBuilder()..update(updates)).build();
+    void Function(CornersPostRequestCornersInnerBuilder) updates,
+  ) => (toBuilder()..update(updates)).build();
 
   @override
   CornersPostRequestCornersInnerBuilder toBuilder() =>
@@ -61,8 +63,10 @@ class _$CornersPostRequestCornersInner extends CornersPostRequestCornersInner {
 
 class CornersPostRequestCornersInnerBuilder
     implements
-        Builder<CornersPostRequestCornersInner,
-            CornersPostRequestCornersInnerBuilder> {
+        Builder<
+          CornersPostRequestCornersInner,
+          CornersPostRequestCornersInnerBuilder
+        > {
   _$CornersPostRequestCornersInner? _$v;
 
   String? _name;
@@ -108,10 +112,14 @@ class CornersPostRequestCornersInnerBuilder
   CornersPostRequestCornersInner build() => _build();
 
   _$CornersPostRequestCornersInner _build() {
-    final _$result = _$v ??
+    final _$result =
+        _$v ??
         _$CornersPostRequestCornersInner._(
           name: BuiltValueNullFieldError.checkNotNull(
-              name, r'CornersPostRequestCornersInner', 'name'),
+            name,
+            r'CornersPostRequestCornersInner',
+            'name',
+          ),
           targetMinutes: targetMinutes,
           initialTrackCount: initialTrackCount,
         );

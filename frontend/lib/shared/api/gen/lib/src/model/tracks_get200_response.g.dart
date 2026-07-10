@@ -10,15 +10,15 @@ class _$TracksGet200Response extends TracksGet200Response {
   @override
   final BuiltList<Track>? tracks;
 
-  factory _$TracksGet200Response(
-          [void Function(TracksGet200ResponseBuilder)? updates]) =>
-      (TracksGet200ResponseBuilder()..update(updates))._build();
+  factory _$TracksGet200Response([
+    void Function(TracksGet200ResponseBuilder)? updates,
+  ]) => (TracksGet200ResponseBuilder()..update(updates))._build();
 
   _$TracksGet200Response._({this.tracks}) : super._();
   @override
   TracksGet200Response rebuild(
-          void Function(TracksGet200ResponseBuilder) updates) =>
-      (toBuilder()..update(updates)).build();
+    void Function(TracksGet200ResponseBuilder) updates,
+  ) => (toBuilder()..update(updates)).build();
 
   @override
   TracksGet200ResponseBuilder toBuilder() =>
@@ -40,9 +40,9 @@ class _$TracksGet200Response extends TracksGet200Response {
 
   @override
   String toString() {
-    return (newBuiltValueToStringHelper(r'TracksGet200Response')
-          ..add('tracks', tracks))
-        .toString();
+    return (newBuiltValueToStringHelper(
+      r'TracksGet200Response',
+    )..add('tracks', tracks)).toString();
   }
 }
 
@@ -83,10 +83,7 @@ class TracksGet200ResponseBuilder
   _$TracksGet200Response _build() {
     _$TracksGet200Response _$result;
     try {
-      _$result = _$v ??
-          _$TracksGet200Response._(
-            tracks: _tracks?.build(),
-          );
+      _$result = _$v ?? _$TracksGet200Response._(tracks: _tracks?.build());
     } catch (_) {
       late String _$failedField;
       try {
@@ -94,7 +91,10 @@ class TracksGet200ResponseBuilder
         _tracks?.build();
       } catch (e) {
         throw BuiltValueNestedFieldError(
-            r'TracksGet200Response', _$failedField, e.toString());
+          r'TracksGet200Response',
+          _$failedField,
+          e.toString(),
+        );
       }
       rethrow;
     }

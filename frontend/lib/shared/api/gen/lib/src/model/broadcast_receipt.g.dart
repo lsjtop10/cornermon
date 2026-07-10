@@ -18,17 +18,17 @@ class _$BroadcastReceipt extends BroadcastReceipt {
   @override
   final DateTime? readAt;
 
-  factory _$BroadcastReceipt(
-          [void Function(BroadcastReceiptBuilder)? updates]) =>
-      (BroadcastReceiptBuilder()..update(updates))._build();
+  factory _$BroadcastReceipt([
+    void Function(BroadcastReceiptBuilder)? updates,
+  ]) => (BroadcastReceiptBuilder()..update(updates))._build();
 
-  _$BroadcastReceipt._(
-      {required this.trackId,
-      this.trackNo,
-      this.cornerName,
-      required this.isRead,
-      this.readAt})
-      : super._();
+  _$BroadcastReceipt._({
+    required this.trackId,
+    this.trackNo,
+    this.cornerName,
+    required this.isRead,
+    this.readAt,
+  }) : super._();
   @override
   BroadcastReceipt rebuild(void Function(BroadcastReceiptBuilder) updates) =>
       (toBuilder()..update(updates)).build();
@@ -127,14 +127,21 @@ class BroadcastReceiptBuilder
   BroadcastReceipt build() => _build();
 
   _$BroadcastReceipt _build() {
-    final _$result = _$v ??
+    final _$result =
+        _$v ??
         _$BroadcastReceipt._(
           trackId: BuiltValueNullFieldError.checkNotNull(
-              trackId, r'BroadcastReceipt', 'trackId'),
+            trackId,
+            r'BroadcastReceipt',
+            'trackId',
+          ),
           trackNo: trackNo,
           cornerName: cornerName,
           isRead: BuiltValueNullFieldError.checkNotNull(
-              isRead, r'BroadcastReceipt', 'isRead'),
+            isRead,
+            r'BroadcastReceipt',
+            'isRead',
+          ),
           readAt: readAt,
         );
     replace(_$result);

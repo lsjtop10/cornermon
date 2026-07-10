@@ -16,13 +16,16 @@ class _$TrackSseSnapshot extends TrackSseSnapshot {
   @override
   final int? unreadBroadcastCount;
 
-  factory _$TrackSseSnapshot(
-          [void Function(TrackSseSnapshotBuilder)? updates]) =>
-      (TrackSseSnapshotBuilder()..update(updates))._build();
+  factory _$TrackSseSnapshot([
+    void Function(TrackSseSnapshotBuilder)? updates,
+  ]) => (TrackSseSnapshotBuilder()..update(updates))._build();
 
-  _$TrackSseSnapshot._(
-      {this.track, this.corner, this.currentVisit, this.unreadBroadcastCount})
-      : super._();
+  _$TrackSseSnapshot._({
+    this.track,
+    this.corner,
+    this.currentVisit,
+    this.unreadBroadcastCount,
+  }) : super._();
   @override
   TrackSseSnapshot rebuild(void Function(TrackSseSnapshotBuilder) updates) =>
       (toBuilder()..update(updates)).build();
@@ -118,7 +121,8 @@ class TrackSseSnapshotBuilder
   _$TrackSseSnapshot _build() {
     _$TrackSseSnapshot _$result;
     try {
-      _$result = _$v ??
+      _$result =
+          _$v ??
           _$TrackSseSnapshot._(
             track: _track?.build(),
             corner: _corner?.build(),
@@ -136,7 +140,10 @@ class TrackSseSnapshotBuilder
         _currentVisit?.build();
       } catch (e) {
         throw BuiltValueNestedFieldError(
-            r'TrackSseSnapshot', _$failedField, e.toString());
+          r'TrackSseSnapshot',
+          _$failedField,
+          e.toString(),
+        );
       }
       rethrow;
     }

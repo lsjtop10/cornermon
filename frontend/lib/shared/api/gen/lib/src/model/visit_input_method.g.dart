@@ -20,11 +20,9 @@ VisitInputMethod _$valueOf(String name) {
   }
 }
 
-final BuiltSet<VisitInputMethod> _$values =
-    BuiltSet<VisitInputMethod>(const <VisitInputMethod>[
-  _$QR_SCAN,
-  _$MANUAL,
-]);
+final BuiltSet<VisitInputMethod> _$values = BuiltSet<VisitInputMethod>(
+  const <VisitInputMethod>[_$QR_SCAN, _$MANUAL],
+);
 
 class _$VisitInputMethodMeta {
   const _$VisitInputMethodMeta();
@@ -34,7 +32,7 @@ class _$VisitInputMethodMeta {
   BuiltSet<VisitInputMethod> get values => _$values;
 }
 
-abstract class _$VisitInputMethodMixin {
+mixin _$VisitInputMethodMixin {
   // ignore: non_constant_identifier_names
   _$VisitInputMethodMeta get VisitInputMethod => const _$VisitInputMethodMeta();
 }
@@ -59,15 +57,20 @@ class _$VisitInputMethodSerializer
   final String wireName = 'VisitInputMethod';
 
   @override
-  Object serialize(Serializers serializers, VisitInputMethod object,
-          {FullType specifiedType = FullType.unspecified}) =>
-      _toWire[object.name] ?? object.name;
+  Object serialize(
+    Serializers serializers,
+    VisitInputMethod object, {
+    FullType specifiedType = FullType.unspecified,
+  }) => _toWire[object.name] ?? object.name;
 
   @override
-  VisitInputMethod deserialize(Serializers serializers, Object serialized,
-          {FullType specifiedType = FullType.unspecified}) =>
-      VisitInputMethod.valueOf(
-          _fromWire[serialized] ?? (serialized is String ? serialized : ''));
+  VisitInputMethod deserialize(
+    Serializers serializers,
+    Object serialized, {
+    FullType specifiedType = FullType.unspecified,
+  }) => VisitInputMethod.valueOf(
+    _fromWire[serialized] ?? (serialized is String ? serialized : ''),
+  );
 }
 
 // ignore_for_file: deprecated_member_use_from_same_package,type=lint

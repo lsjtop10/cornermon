@@ -37,21 +37,21 @@ class _$CornerStats extends CornerStats {
   factory _$CornerStats([void Function(CornerStatsBuilder)? updates]) =>
       (CornerStatsBuilder()..update(updates))._build();
 
-  _$CornerStats._(
-      {this.cornerId,
-      this.cornerName,
-      this.completedVisitCount,
-      this.unvisitedGroups,
-      this.avgDurationSeconds,
-      this.medianDurationSeconds,
-      this.stddevDurationSeconds,
-      this.avgDeviationSeconds,
-      this.positiveDeviationRatio,
-      this.busyDurationSeconds,
-      this.idleDurationSeconds,
-      this.inactiveDurationSeconds,
-      this.trackThroughputs})
-      : super._();
+  _$CornerStats._({
+    this.cornerId,
+    this.cornerName,
+    this.completedVisitCount,
+    this.unvisitedGroups,
+    this.avgDurationSeconds,
+    this.medianDurationSeconds,
+    this.stddevDurationSeconds,
+    this.avgDeviationSeconds,
+    this.positiveDeviationRatio,
+    this.busyDurationSeconds,
+    this.idleDurationSeconds,
+    this.inactiveDurationSeconds,
+    this.trackThroughputs,
+  }) : super._();
   @override
   CornerStats rebuild(void Function(CornerStatsBuilder) updates) =>
       (toBuilder()..update(updates)).build();
@@ -139,8 +139,8 @@ class CornerStatsBuilder implements Builder<CornerStats, CornerStatsBuilder> {
       _$this._unvisitedGroups ??=
           ListBuilder<CornerStatsUnvisitedGroupsInner>();
   set unvisitedGroups(
-          ListBuilder<CornerStatsUnvisitedGroupsInner>? unvisitedGroups) =>
-      _$this._unvisitedGroups = unvisitedGroups;
+    ListBuilder<CornerStatsUnvisitedGroupsInner>? unvisitedGroups,
+  ) => _$this._unvisitedGroups = unvisitedGroups;
 
   num? _avgDurationSeconds;
   num? get avgDurationSeconds => _$this._avgDurationSeconds;
@@ -187,8 +187,8 @@ class CornerStatsBuilder implements Builder<CornerStats, CornerStatsBuilder> {
       _$this._trackThroughputs ??=
           ListBuilder<CornerStatsTrackThroughputsInner>();
   set trackThroughputs(
-          ListBuilder<CornerStatsTrackThroughputsInner>? trackThroughputs) =>
-      _$this._trackThroughputs = trackThroughputs;
+    ListBuilder<CornerStatsTrackThroughputsInner>? trackThroughputs,
+  ) => _$this._trackThroughputs = trackThroughputs;
 
   CornerStatsBuilder() {
     CornerStats._defaults(this);
@@ -231,7 +231,8 @@ class CornerStatsBuilder implements Builder<CornerStats, CornerStatsBuilder> {
   _$CornerStats _build() {
     _$CornerStats _$result;
     try {
-      _$result = _$v ??
+      _$result =
+          _$v ??
           _$CornerStats._(
             cornerId: cornerId,
             cornerName: cornerName,
@@ -257,7 +258,10 @@ class CornerStatsBuilder implements Builder<CornerStats, CornerStatsBuilder> {
         _trackThroughputs?.build();
       } catch (e) {
         throw BuiltValueNestedFieldError(
-            r'CornerStats', _$failedField, e.toString());
+          r'CornerStats',
+          _$failedField,
+          e.toString(),
+        );
       }
       rethrow;
     }

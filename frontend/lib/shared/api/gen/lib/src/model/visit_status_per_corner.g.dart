@@ -6,12 +6,15 @@ part of 'visit_status_per_corner.dart';
 // BuiltValueGenerator
 // **************************************************************************
 
-const VisitStatusPerCorner _$NOT_VISITED =
-    const VisitStatusPerCorner._('NOT_VISITED');
-const VisitStatusPerCorner _$IN_PROGRESS =
-    const VisitStatusPerCorner._('IN_PROGRESS');
-const VisitStatusPerCorner _$COMPLETED =
-    const VisitStatusPerCorner._('COMPLETED');
+const VisitStatusPerCorner _$NOT_VISITED = const VisitStatusPerCorner._(
+  'NOT_VISITED',
+);
+const VisitStatusPerCorner _$IN_PROGRESS = const VisitStatusPerCorner._(
+  'IN_PROGRESS',
+);
+const VisitStatusPerCorner _$COMPLETED = const VisitStatusPerCorner._(
+  'COMPLETED',
+);
 
 VisitStatusPerCorner _$valueOf(String name) {
   switch (name) {
@@ -26,12 +29,9 @@ VisitStatusPerCorner _$valueOf(String name) {
   }
 }
 
-final BuiltSet<VisitStatusPerCorner> _$values =
-    BuiltSet<VisitStatusPerCorner>(const <VisitStatusPerCorner>[
-  _$NOT_VISITED,
-  _$IN_PROGRESS,
-  _$COMPLETED,
-]);
+final BuiltSet<VisitStatusPerCorner> _$values = BuiltSet<VisitStatusPerCorner>(
+  const <VisitStatusPerCorner>[_$NOT_VISITED, _$IN_PROGRESS, _$COMPLETED],
+);
 
 class _$VisitStatusPerCornerMeta {
   const _$VisitStatusPerCornerMeta();
@@ -42,7 +42,7 @@ class _$VisitStatusPerCornerMeta {
   BuiltSet<VisitStatusPerCorner> get values => _$values;
 }
 
-abstract class _$VisitStatusPerCornerMixin {
+mixin _$VisitStatusPerCornerMixin {
   // ignore: non_constant_identifier_names
   _$VisitStatusPerCornerMeta get VisitStatusPerCorner =>
       const _$VisitStatusPerCornerMeta();
@@ -70,15 +70,20 @@ class _$VisitStatusPerCornerSerializer
   final String wireName = 'VisitStatusPerCorner';
 
   @override
-  Object serialize(Serializers serializers, VisitStatusPerCorner object,
-          {FullType specifiedType = FullType.unspecified}) =>
-      _toWire[object.name] ?? object.name;
+  Object serialize(
+    Serializers serializers,
+    VisitStatusPerCorner object, {
+    FullType specifiedType = FullType.unspecified,
+  }) => _toWire[object.name] ?? object.name;
 
   @override
-  VisitStatusPerCorner deserialize(Serializers serializers, Object serialized,
-          {FullType specifiedType = FullType.unspecified}) =>
-      VisitStatusPerCorner.valueOf(
-          _fromWire[serialized] ?? (serialized is String ? serialized : ''));
+  VisitStatusPerCorner deserialize(
+    Serializers serializers,
+    Object serialized, {
+    FullType specifiedType = FullType.unspecified,
+  }) => VisitStatusPerCorner.valueOf(
+    _fromWire[serialized] ?? (serialized is String ? serialized : ''),
+  );
 }
 
 // ignore_for_file: deprecated_member_use_from_same_package,type=lint

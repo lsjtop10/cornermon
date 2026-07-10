@@ -10,15 +10,15 @@ class _$AuthTrackLoginPostRequest extends AuthTrackLoginPostRequest {
   @override
   final String pin;
 
-  factory _$AuthTrackLoginPostRequest(
-          [void Function(AuthTrackLoginPostRequestBuilder)? updates]) =>
-      (AuthTrackLoginPostRequestBuilder()..update(updates))._build();
+  factory _$AuthTrackLoginPostRequest([
+    void Function(AuthTrackLoginPostRequestBuilder)? updates,
+  ]) => (AuthTrackLoginPostRequestBuilder()..update(updates))._build();
 
   _$AuthTrackLoginPostRequest._({required this.pin}) : super._();
   @override
   AuthTrackLoginPostRequest rebuild(
-          void Function(AuthTrackLoginPostRequestBuilder) updates) =>
-      (toBuilder()..update(updates)).build();
+    void Function(AuthTrackLoginPostRequestBuilder) updates,
+  ) => (toBuilder()..update(updates)).build();
 
   @override
   AuthTrackLoginPostRequestBuilder toBuilder() =>
@@ -40,9 +40,9 @@ class _$AuthTrackLoginPostRequest extends AuthTrackLoginPostRequest {
 
   @override
   String toString() {
-    return (newBuiltValueToStringHelper(r'AuthTrackLoginPostRequest')
-          ..add('pin', pin))
-        .toString();
+    return (newBuiltValueToStringHelper(
+      r'AuthTrackLoginPostRequest',
+    )..add('pin', pin)).toString();
   }
 }
 
@@ -82,10 +82,14 @@ class AuthTrackLoginPostRequestBuilder
   AuthTrackLoginPostRequest build() => _build();
 
   _$AuthTrackLoginPostRequest _build() {
-    final _$result = _$v ??
+    final _$result =
+        _$v ??
         _$AuthTrackLoginPostRequest._(
           pin: BuiltValueNullFieldError.checkNotNull(
-              pin, r'AuthTrackLoginPostRequest', 'pin'),
+            pin,
+            r'AuthTrackLoginPostRequest',
+            'pin',
+          ),
         );
     replace(_$result);
     return _$result;

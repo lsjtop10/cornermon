@@ -19,24 +19,22 @@ class _$OperationalStatsBroadcastReadRatesInner
   @override
   final double? readRate;
 
-  factory _$OperationalStatsBroadcastReadRatesInner(
-          [void Function(OperationalStatsBroadcastReadRatesInnerBuilder)?
-              updates]) =>
-      (OperationalStatsBroadcastReadRatesInnerBuilder()..update(updates))
-          ._build();
+  factory _$OperationalStatsBroadcastReadRatesInner([
+    void Function(OperationalStatsBroadcastReadRatesInnerBuilder)? updates,
+  ]) => (OperationalStatsBroadcastReadRatesInnerBuilder()..update(updates))
+      ._build();
 
-  _$OperationalStatsBroadcastReadRatesInner._(
-      {this.messageId,
-      this.content,
-      this.readCount,
-      this.totalTracks,
-      this.readRate})
-      : super._();
+  _$OperationalStatsBroadcastReadRatesInner._({
+    this.messageId,
+    this.content,
+    this.readCount,
+    this.totalTracks,
+    this.readRate,
+  }) : super._();
   @override
   OperationalStatsBroadcastReadRatesInner rebuild(
-          void Function(OperationalStatsBroadcastReadRatesInnerBuilder)
-              updates) =>
-      (toBuilder()..update(updates)).build();
+    void Function(OperationalStatsBroadcastReadRatesInnerBuilder) updates,
+  ) => (toBuilder()..update(updates)).build();
 
   @override
   OperationalStatsBroadcastReadRatesInnerBuilder toBuilder() =>
@@ -68,7 +66,8 @@ class _$OperationalStatsBroadcastReadRatesInner
   @override
   String toString() {
     return (newBuiltValueToStringHelper(
-            r'OperationalStatsBroadcastReadRatesInner')
+            r'OperationalStatsBroadcastReadRatesInner',
+          )
           ..add('messageId', messageId)
           ..add('content', content)
           ..add('readCount', readCount)
@@ -80,8 +79,10 @@ class _$OperationalStatsBroadcastReadRatesInner
 
 class OperationalStatsBroadcastReadRatesInnerBuilder
     implements
-        Builder<OperationalStatsBroadcastReadRatesInner,
-            OperationalStatsBroadcastReadRatesInnerBuilder> {
+        Builder<
+          OperationalStatsBroadcastReadRatesInner,
+          OperationalStatsBroadcastReadRatesInnerBuilder
+        > {
   _$OperationalStatsBroadcastReadRatesInner? _$v;
 
   String? _messageId;
@@ -128,7 +129,8 @@ class OperationalStatsBroadcastReadRatesInnerBuilder
 
   @override
   void update(
-      void Function(OperationalStatsBroadcastReadRatesInnerBuilder)? updates) {
+    void Function(OperationalStatsBroadcastReadRatesInnerBuilder)? updates,
+  ) {
     if (updates != null) updates(this);
   }
 
@@ -136,7 +138,8 @@ class OperationalStatsBroadcastReadRatesInnerBuilder
   OperationalStatsBroadcastReadRatesInner build() => _build();
 
   _$OperationalStatsBroadcastReadRatesInner _build() {
-    final _$result = _$v ??
+    final _$result =
+        _$v ??
         _$OperationalStatsBroadcastReadRatesInner._(
           messageId: messageId,
           content: content,
