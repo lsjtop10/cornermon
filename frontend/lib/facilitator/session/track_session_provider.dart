@@ -89,7 +89,8 @@ class TrackSession extends _$TrackSession {
   Future<void> loginWithPin(String pin) async {
     final api = ref.read(authDeviceTrustApiProvider);
     final response = await api.authTrackLoginPost(
-      authTrackLoginPostRequest: AuthTrackLoginPostRequest((b) => b..pin = pin),
+      authTrackLoginPostRequest:
+          AuthTrackLoginPostRequest((AuthTrackLoginPostRequestBuilder b) => b..pin = pin),
     );
 
     final trackToken = response.data?.trackToken;
@@ -109,7 +110,7 @@ class TrackSession extends _$TrackSession {
 
     final store = ref.read(secureTokenStoreProvider);
     final response = AuthTrackLoginPost200Response(
-      (b) => b
+      (AuthTrackLoginPost200ResponseBuilder b) => b
         ..trackToken = current.trackToken
         ..track = current.track.toBuilder()
         ..corner = current.corner.toBuilder(),

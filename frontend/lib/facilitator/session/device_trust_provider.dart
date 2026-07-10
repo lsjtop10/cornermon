@@ -48,7 +48,7 @@ class DeviceTrust extends _$DeviceTrust {
 
     final response = await api.deviceRegistrationsPost(
       deviceRegistrationsPostRequest: DeviceRegistrationsPostRequest(
-        (b) => b
+        (DeviceRegistrationsPostRequestBuilder b) => b
           ..registrationCode = registrationCode
           ..deviceName = _defaultDeviceName(),
       ),

@@ -128,8 +128,8 @@ Class | Method | HTTP request | Description
 [*CVisitScanFlowApi*](doc/CVisitScanFlowApi.md) | [**tracksTrackIdVisitsCurrentGet**](doc/CVisitScanFlowApi.md#trackstrackidvisitscurrentget) | **GET** /tracks/{trackId}/visits/current | 현재 진행 중인 방문 조회
 [*CVisitScanFlowApi*](doc/CVisitScanFlowApi.md) | [**tracksTrackIdVisitsStartPost**](doc/CVisitScanFlowApi.md#trackstrackidvisitsstartpost) | **POST** /tracks/{trackId}/visits/start | 방문 시작 (조 입장)
 [*CVisitScanFlowApi*](doc/CVisitScanFlowApi.md) | [**visitsExceptionApprovePost**](doc/CVisitScanFlowApi.md#visitsexceptionapprovepost) | **POST** /visits/exception-approve | 중복 방문 예외 승인
-[*DRealtimeSSEApi*](doc/DRealtimeSSEApi.md) | [**eventsAdminGet**](doc/DRealtimeSSEApi.md#eventsadminget) | **GET** /events/admin | 관리자 대시보드 SSE 스트림
-[*DRealtimeSSEApi*](doc/DRealtimeSSEApi.md) | [**eventsTrackTrackIdGet**](doc/DRealtimeSSEApi.md#eventstracktrackidget) | **GET** /events/track/{trackId} | 진행자 앱 SSE 스트림
+[*DRealtimeSSEApi*](doc/DRealtimeSSEApi.md) | [**eventsAdminGet**](doc/DRealtimeSSEApi.md#eventsadminget) | **GET** /events/admin | 관리자 대시보드 SSE 스트림 (얇은 변경 알림)
+[*DRealtimeSSEApi*](doc/DRealtimeSSEApi.md) | [**eventsTrackTrackIdGet**](doc/DRealtimeSSEApi.md#eventstracktrackidget) | **GET** /events/track/{trackId} | 진행자 앱 SSE 스트림 (얇은 변경 알림)
 [*EMessagesApi*](doc/EMessagesApi.md) | [**messagesBroadcastGet**](doc/EMessagesApi.md#messagesbroadcastget) | **GET** /messages/broadcast | 공지 이력 조회
 [*EMessagesApi*](doc/EMessagesApi.md) | [**messagesBroadcastIdReadPost**](doc/EMessagesApi.md#messagesbroadcastidreadpost) | **POST** /messages/broadcast/{id}/read | 공지 읽음 처리
 [*EMessagesApi*](doc/EMessagesApi.md) | [**messagesBroadcastIdReceiptsGet**](doc/EMessagesApi.md#messagesbroadcastidreceiptsget) | **GET** /messages/broadcast/{id}/receipts | 공지별 트랙 읽음 현황
@@ -146,7 +146,6 @@ Class | Method | HTTP request | Description
 ## Documentation For Models
 
  - [AdminSession](doc/AdminSession.md)
- - [AdminSseSnapshot](doc/AdminSseSnapshot.md)
  - [AuditLog](doc/AuditLog.md)
  - [AuditLogsGet200Response](doc/AuditLogsGet200Response.md)
  - [AuthAdminLoginPost200Response](doc/AuthAdminLoginPost200Response.md)
@@ -211,11 +210,11 @@ Class | Method | HTTP request | Description
  - [ReportsLiveSummaryGet200Response](doc/ReportsLiveSummaryGet200Response.md)
  - [ReportsLiveSummaryGet200ResponseCornersInner](doc/ReportsLiveSummaryGet200ResponseCornersInner.md)
  - [SseEvent](doc/SseEvent.md)
+ - [SseNotificationData](doc/SseNotificationData.md)
  - [TimelineStats](doc/TimelineStats.md)
  - [TimelineStatsInProgressCountsInner](doc/TimelineStatsInProgressCountsInner.md)
  - [Track](doc/Track.md)
  - [TrackOperationalStatus](doc/TrackOperationalStatus.md)
- - [TrackSseSnapshot](doc/TrackSseSnapshot.md)
  - [TrackStats](doc/TrackStats.md)
  - [TrackStatus](doc/TrackStatus.md)
  - [TrackSummary](doc/TrackSummary.md)

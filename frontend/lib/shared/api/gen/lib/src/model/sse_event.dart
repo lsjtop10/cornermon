@@ -3,28 +3,27 @@
 //
 
 // ignore_for_file: unused_element
+import 'package:cornermon_api_gen/src/model/sse_notification_data.dart';
 import 'package:built_collection/built_collection.dart';
-import 'package:built_value/json_object.dart';
 import 'package:built_value/built_value.dart';
 import 'package:built_value/serializer.dart';
 
 part 'sse_event.g.dart';
 
-/// SSE 이벤트 형식. `event` 필드로 이벤트 타입을 구분하고, `data` 필드에 JSON 페이로드를 담는다. 모든 스냅샷 이벤트(`snapshot`)는 재연결 시에도 전체 현재 상태를 포함한다. 
+/// SSE 알림 형식 (§technical-design.md 2.3, 하이브리드 알림+풀 모델). **SSE는 데이터를 나르지 않는다** — `event` 필드로 알림 타입, `data.scope` 필드로 어떤 리소스가 변경됐는지만 알린다. 실제 값은 항상 REST가 유일한 출처이며, 클라이언트는 알림을 받으면 `scope`에 대응하는 REST 엔드포인트를 재조회해야 한다 (아래 매핑 참고, §/events/admin, §/events/track/{trackId}). 연결/재연결 시 서버가 별도의 초기 스냅샷을 push하지 않는다 — 화면 진입 시 클라이언트가 REST로 최초 조회를 직접 수행한다. 
 ///
 /// Properties:
-/// * [event] - 이벤트 타입
-/// * [data] - 이벤트 타입별 JSON 페이로드
+/// * [event] - 알림 타입
+/// * [data] 
 @BuiltValue()
 abstract class SseEvent implements Built<SseEvent, SseEventBuilder> {
-  /// 이벤트 타입
+  /// 알림 타입
   @BuiltValueField(wireName: r'event')
   SseEventEventEnum? get event;
-  // enum eventEnum {  snapshot,  visit.started,  visit.ended,  track.created,  track.deleted,  track.replaced,  corner.updated,  camp.started,  camp.ended,  message.broadcast,  message.direct,  session.force_logout,  device.approved,  lockout.alert,  };
+  // enum eventEnum {  tracks_updated,  track_updated,  corners_updated,  groups_updated,  camp_updated,  messages_changed,  track_deleted,  session_revoked,  camp_ended,  device_registration_updated,  lockout_alert,  };
 
-  /// 이벤트 타입별 JSON 페이로드
   @BuiltValueField(wireName: r'data')
-  JsonObject? get data;
+  SseNotificationData? get data;
 
   SseEvent._();
 
@@ -60,7 +59,7 @@ class _$SseEventSerializer implements PrimitiveSerializer<SseEvent> {
       yield r'data';
       yield serializers.serialize(
         object.data,
-        specifiedType: const FullType(JsonObject),
+        specifiedType: const FullType(SseNotificationData),
       );
     }
   }
@@ -96,9 +95,9 @@ class _$SseEventSerializer implements PrimitiveSerializer<SseEvent> {
         case r'data':
           final valueDes = serializers.deserialize(
             value,
-            specifiedType: const FullType(JsonObject),
-          ) as JsonObject;
-          result.data = valueDes;
+            specifiedType: const FullType(SseNotificationData),
+          ) as SseNotificationData;
+          result.data.replace(valueDes);
           break;
         default:
           unhandled.add(key);
@@ -131,48 +130,39 @@ class _$SseEventSerializer implements PrimitiveSerializer<SseEvent> {
 
 class SseEventEventEnum extends EnumClass {
 
-  /// 이벤트 타입
-  @BuiltValueEnumConst(wireName: r'snapshot')
-  static const SseEventEventEnum snapshot = _$sseEventEventEnum_snapshot;
-  /// 이벤트 타입
-  @BuiltValueEnumConst(wireName: r'visit.started')
-  static const SseEventEventEnum visitPeriodStarted = _$sseEventEventEnum_visitPeriodStarted;
-  /// 이벤트 타입
-  @BuiltValueEnumConst(wireName: r'visit.ended')
-  static const SseEventEventEnum visitPeriodEnded = _$sseEventEventEnum_visitPeriodEnded;
-  /// 이벤트 타입
-  @BuiltValueEnumConst(wireName: r'track.created')
-  static const SseEventEventEnum trackPeriodCreated = _$sseEventEventEnum_trackPeriodCreated;
-  /// 이벤트 타입
-  @BuiltValueEnumConst(wireName: r'track.deleted')
-  static const SseEventEventEnum trackPeriodDeleted = _$sseEventEventEnum_trackPeriodDeleted;
-  /// 이벤트 타입
-  @BuiltValueEnumConst(wireName: r'track.replaced')
-  static const SseEventEventEnum trackPeriodReplaced = _$sseEventEventEnum_trackPeriodReplaced;
-  /// 이벤트 타입
-  @BuiltValueEnumConst(wireName: r'corner.updated')
-  static const SseEventEventEnum cornerPeriodUpdated = _$sseEventEventEnum_cornerPeriodUpdated;
-  /// 이벤트 타입
-  @BuiltValueEnumConst(wireName: r'camp.started')
-  static const SseEventEventEnum campPeriodStarted = _$sseEventEventEnum_campPeriodStarted;
-  /// 이벤트 타입
-  @BuiltValueEnumConst(wireName: r'camp.ended')
-  static const SseEventEventEnum campPeriodEnded = _$sseEventEventEnum_campPeriodEnded;
-  /// 이벤트 타입
-  @BuiltValueEnumConst(wireName: r'message.broadcast')
-  static const SseEventEventEnum messagePeriodBroadcast = _$sseEventEventEnum_messagePeriodBroadcast;
-  /// 이벤트 타입
-  @BuiltValueEnumConst(wireName: r'message.direct')
-  static const SseEventEventEnum messagePeriodDirect = _$sseEventEventEnum_messagePeriodDirect;
-  /// 이벤트 타입
-  @BuiltValueEnumConst(wireName: r'session.force_logout')
-  static const SseEventEventEnum sessionPeriodForceLogout = _$sseEventEventEnum_sessionPeriodForceLogout;
-  /// 이벤트 타입
-  @BuiltValueEnumConst(wireName: r'device.approved')
-  static const SseEventEventEnum devicePeriodApproved = _$sseEventEventEnum_devicePeriodApproved;
-  /// 이벤트 타입
-  @BuiltValueEnumConst(wireName: r'lockout.alert')
-  static const SseEventEventEnum lockoutPeriodAlert = _$sseEventEventEnum_lockoutPeriodAlert;
+  /// 알림 타입
+  @BuiltValueEnumConst(wireName: r'tracks_updated')
+  static const SseEventEventEnum tracksUpdated = _$sseEventEventEnum_tracksUpdated;
+  /// 알림 타입
+  @BuiltValueEnumConst(wireName: r'track_updated')
+  static const SseEventEventEnum trackUpdated = _$sseEventEventEnum_trackUpdated;
+  /// 알림 타입
+  @BuiltValueEnumConst(wireName: r'corners_updated')
+  static const SseEventEventEnum cornersUpdated = _$sseEventEventEnum_cornersUpdated;
+  /// 알림 타입
+  @BuiltValueEnumConst(wireName: r'groups_updated')
+  static const SseEventEventEnum groupsUpdated = _$sseEventEventEnum_groupsUpdated;
+  /// 알림 타입
+  @BuiltValueEnumConst(wireName: r'camp_updated')
+  static const SseEventEventEnum campUpdated = _$sseEventEventEnum_campUpdated;
+  /// 알림 타입
+  @BuiltValueEnumConst(wireName: r'messages_changed')
+  static const SseEventEventEnum messagesChanged = _$sseEventEventEnum_messagesChanged;
+  /// 알림 타입
+  @BuiltValueEnumConst(wireName: r'track_deleted')
+  static const SseEventEventEnum trackDeleted = _$sseEventEventEnum_trackDeleted;
+  /// 알림 타입
+  @BuiltValueEnumConst(wireName: r'session_revoked')
+  static const SseEventEventEnum sessionRevoked = _$sseEventEventEnum_sessionRevoked;
+  /// 알림 타입
+  @BuiltValueEnumConst(wireName: r'camp_ended')
+  static const SseEventEventEnum campEnded = _$sseEventEventEnum_campEnded;
+  /// 알림 타입
+  @BuiltValueEnumConst(wireName: r'device_registration_updated')
+  static const SseEventEventEnum deviceRegistrationUpdated = _$sseEventEventEnum_deviceRegistrationUpdated;
+  /// 알림 타입
+  @BuiltValueEnumConst(wireName: r'lockout_alert')
+  static const SseEventEventEnum lockoutAlert = _$sseEventEventEnum_lockoutAlert;
 
   static Serializer<SseEventEventEnum> get serializer => _$sseEventEventEnumSerializer;
 

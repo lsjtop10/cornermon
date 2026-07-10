@@ -10,7 +10,6 @@ Serializers _$serializers =
     (Serializers().toBuilder()
           ..add($TrackSummary.serializer)
           ..add(AdminSession.serializer)
-          ..add(AdminSseSnapshot.serializer)
           ..add(AuditLog.serializer)
           ..add(AuditLogsGet200Response.serializer)
           ..add(AuthAdminLoginPost200Response.serializer)
@@ -77,11 +76,11 @@ Serializers _$serializers =
           ..add(ReportsLiveSummaryGet200ResponseCornersInner.serializer)
           ..add(SseEvent.serializer)
           ..add(SseEventEventEnum.serializer)
+          ..add(SseNotificationData.serializer)
           ..add(TimelineStats.serializer)
           ..add(TimelineStatsInProgressCountsInner.serializer)
           ..add(Track.serializer)
           ..add(TrackOperationalStatus.serializer)
-          ..add(TrackSseSnapshot.serializer)
           ..add(TrackStats.serializer)
           ..add(TrackStatus.serializer)
           ..add(TracksBulkDeletePostRequest.serializer)
@@ -129,14 +128,6 @@ Serializers _$serializers =
           ..addBuilderFactory(
             const FullType(BuiltList, const [const FullType(Corner)]),
             () => ListBuilder<Corner>(),
-          )
-          ..addBuilderFactory(
-            const FullType(BuiltList, const [const FullType(Corner)]),
-            () => ListBuilder<Corner>(),
-          )
-          ..addBuilderFactory(
-            const FullType(BuiltList, const [const FullType(Group)]),
-            () => ListBuilder<Group>(),
           )
           ..addBuilderFactory(
             const FullType(BuiltList, const [const FullType(CornerProgress)]),

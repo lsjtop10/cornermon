@@ -250,7 +250,7 @@ class EMessagesApi {
   }
 
   /// 전체 공지 발송
-  /// 현재 ACTIVE 상태인 전체 트랙에 공지를 발송한다.
+  /// 현재 ACTIVE 상태인 전체 트랙에 공지를 발송한다. 발송 성공(커밋) 직후 전체 트랙의 &#x60;GET /events/track/{trackId}&#x60; 스트림과 관리자의 &#x60;GET /events/admin&#x60; 스트림에 &#x60;messages_changed&#x60;(scope: &#x60;broadcast&#x60;) 알림이 push된다 — 수신 측은 알림을 받으면 &#x60;GET /messages/broadcast&#x60;를 재조회한다. 
   ///
   /// Parameters:
   /// * [messagesBroadcastPostRequest] 
@@ -446,7 +446,7 @@ class EMessagesApi {
   }
 
   /// 트랙 다이렉트 메시지 전송 (양방향)
-  /// 관리자 → 트랙 또는 트랙 → 관리자 방향으로 다이렉트 메시지를 전송한다. - ADMIN: 어느 트랙에든 전송 가능 - TRACK: 자기 트랙 스레드에만 전송 가능 
+  /// 관리자 → 트랙 또는 트랙 → 관리자 방향으로 다이렉트 메시지를 전송한다. - ADMIN: 어느 트랙에든 전송 가능 - TRACK: 자기 트랙 스레드에만 전송 가능  전송 성공(커밋) 직후 해당 트랙의 &#x60;GET /events/track/{trackId}&#x60; 스트림에 &#x60;messages_changed&#x60;(scope: &#x60;track:{trackId}&#x60;) 알림이 push된다 — 수신 측은 알림을 받으면 &#x60;GET /tracks/{trackId}/messages&#x60;를 재조회한다. 
   ///
   /// Parameters:
   /// * [trackId] 

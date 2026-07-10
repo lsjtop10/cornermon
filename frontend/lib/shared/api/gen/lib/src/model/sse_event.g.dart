@@ -6,65 +6,53 @@ part of 'sse_event.dart';
 // BuiltValueGenerator
 // **************************************************************************
 
-const SseEventEventEnum _$sseEventEventEnum_snapshot =
-    const SseEventEventEnum._('snapshot');
-const SseEventEventEnum _$sseEventEventEnum_visitPeriodStarted =
-    const SseEventEventEnum._('visitPeriodStarted');
-const SseEventEventEnum _$sseEventEventEnum_visitPeriodEnded =
-    const SseEventEventEnum._('visitPeriodEnded');
-const SseEventEventEnum _$sseEventEventEnum_trackPeriodCreated =
-    const SseEventEventEnum._('trackPeriodCreated');
-const SseEventEventEnum _$sseEventEventEnum_trackPeriodDeleted =
-    const SseEventEventEnum._('trackPeriodDeleted');
-const SseEventEventEnum _$sseEventEventEnum_trackPeriodReplaced =
-    const SseEventEventEnum._('trackPeriodReplaced');
-const SseEventEventEnum _$sseEventEventEnum_cornerPeriodUpdated =
-    const SseEventEventEnum._('cornerPeriodUpdated');
-const SseEventEventEnum _$sseEventEventEnum_campPeriodStarted =
-    const SseEventEventEnum._('campPeriodStarted');
-const SseEventEventEnum _$sseEventEventEnum_campPeriodEnded =
-    const SseEventEventEnum._('campPeriodEnded');
-const SseEventEventEnum _$sseEventEventEnum_messagePeriodBroadcast =
-    const SseEventEventEnum._('messagePeriodBroadcast');
-const SseEventEventEnum _$sseEventEventEnum_messagePeriodDirect =
-    const SseEventEventEnum._('messagePeriodDirect');
-const SseEventEventEnum _$sseEventEventEnum_sessionPeriodForceLogout =
-    const SseEventEventEnum._('sessionPeriodForceLogout');
-const SseEventEventEnum _$sseEventEventEnum_devicePeriodApproved =
-    const SseEventEventEnum._('devicePeriodApproved');
-const SseEventEventEnum _$sseEventEventEnum_lockoutPeriodAlert =
-    const SseEventEventEnum._('lockoutPeriodAlert');
+const SseEventEventEnum _$sseEventEventEnum_tracksUpdated =
+    const SseEventEventEnum._('tracksUpdated');
+const SseEventEventEnum _$sseEventEventEnum_trackUpdated =
+    const SseEventEventEnum._('trackUpdated');
+const SseEventEventEnum _$sseEventEventEnum_cornersUpdated =
+    const SseEventEventEnum._('cornersUpdated');
+const SseEventEventEnum _$sseEventEventEnum_groupsUpdated =
+    const SseEventEventEnum._('groupsUpdated');
+const SseEventEventEnum _$sseEventEventEnum_campUpdated =
+    const SseEventEventEnum._('campUpdated');
+const SseEventEventEnum _$sseEventEventEnum_messagesChanged =
+    const SseEventEventEnum._('messagesChanged');
+const SseEventEventEnum _$sseEventEventEnum_trackDeleted =
+    const SseEventEventEnum._('trackDeleted');
+const SseEventEventEnum _$sseEventEventEnum_sessionRevoked =
+    const SseEventEventEnum._('sessionRevoked');
+const SseEventEventEnum _$sseEventEventEnum_campEnded =
+    const SseEventEventEnum._('campEnded');
+const SseEventEventEnum _$sseEventEventEnum_deviceRegistrationUpdated =
+    const SseEventEventEnum._('deviceRegistrationUpdated');
+const SseEventEventEnum _$sseEventEventEnum_lockoutAlert =
+    const SseEventEventEnum._('lockoutAlert');
 
 SseEventEventEnum _$sseEventEventEnumValueOf(String name) {
   switch (name) {
-    case 'snapshot':
-      return _$sseEventEventEnum_snapshot;
-    case 'visitPeriodStarted':
-      return _$sseEventEventEnum_visitPeriodStarted;
-    case 'visitPeriodEnded':
-      return _$sseEventEventEnum_visitPeriodEnded;
-    case 'trackPeriodCreated':
-      return _$sseEventEventEnum_trackPeriodCreated;
-    case 'trackPeriodDeleted':
-      return _$sseEventEventEnum_trackPeriodDeleted;
-    case 'trackPeriodReplaced':
-      return _$sseEventEventEnum_trackPeriodReplaced;
-    case 'cornerPeriodUpdated':
-      return _$sseEventEventEnum_cornerPeriodUpdated;
-    case 'campPeriodStarted':
-      return _$sseEventEventEnum_campPeriodStarted;
-    case 'campPeriodEnded':
-      return _$sseEventEventEnum_campPeriodEnded;
-    case 'messagePeriodBroadcast':
-      return _$sseEventEventEnum_messagePeriodBroadcast;
-    case 'messagePeriodDirect':
-      return _$sseEventEventEnum_messagePeriodDirect;
-    case 'sessionPeriodForceLogout':
-      return _$sseEventEventEnum_sessionPeriodForceLogout;
-    case 'devicePeriodApproved':
-      return _$sseEventEventEnum_devicePeriodApproved;
-    case 'lockoutPeriodAlert':
-      return _$sseEventEventEnum_lockoutPeriodAlert;
+    case 'tracksUpdated':
+      return _$sseEventEventEnum_tracksUpdated;
+    case 'trackUpdated':
+      return _$sseEventEventEnum_trackUpdated;
+    case 'cornersUpdated':
+      return _$sseEventEventEnum_cornersUpdated;
+    case 'groupsUpdated':
+      return _$sseEventEventEnum_groupsUpdated;
+    case 'campUpdated':
+      return _$sseEventEventEnum_campUpdated;
+    case 'messagesChanged':
+      return _$sseEventEventEnum_messagesChanged;
+    case 'trackDeleted':
+      return _$sseEventEventEnum_trackDeleted;
+    case 'sessionRevoked':
+      return _$sseEventEventEnum_sessionRevoked;
+    case 'campEnded':
+      return _$sseEventEventEnum_campEnded;
+    case 'deviceRegistrationUpdated':
+      return _$sseEventEventEnum_deviceRegistrationUpdated;
+    case 'lockoutAlert':
+      return _$sseEventEventEnum_lockoutAlert;
     default:
       throw ArgumentError(name);
   }
@@ -72,20 +60,17 @@ SseEventEventEnum _$sseEventEventEnumValueOf(String name) {
 
 final BuiltSet<SseEventEventEnum> _$sseEventEventEnumValues =
     BuiltSet<SseEventEventEnum>(const <SseEventEventEnum>[
-      _$sseEventEventEnum_snapshot,
-      _$sseEventEventEnum_visitPeriodStarted,
-      _$sseEventEventEnum_visitPeriodEnded,
-      _$sseEventEventEnum_trackPeriodCreated,
-      _$sseEventEventEnum_trackPeriodDeleted,
-      _$sseEventEventEnum_trackPeriodReplaced,
-      _$sseEventEventEnum_cornerPeriodUpdated,
-      _$sseEventEventEnum_campPeriodStarted,
-      _$sseEventEventEnum_campPeriodEnded,
-      _$sseEventEventEnum_messagePeriodBroadcast,
-      _$sseEventEventEnum_messagePeriodDirect,
-      _$sseEventEventEnum_sessionPeriodForceLogout,
-      _$sseEventEventEnum_devicePeriodApproved,
-      _$sseEventEventEnum_lockoutPeriodAlert,
+      _$sseEventEventEnum_tracksUpdated,
+      _$sseEventEventEnum_trackUpdated,
+      _$sseEventEventEnum_cornersUpdated,
+      _$sseEventEventEnum_groupsUpdated,
+      _$sseEventEventEnum_campUpdated,
+      _$sseEventEventEnum_messagesChanged,
+      _$sseEventEventEnum_trackDeleted,
+      _$sseEventEventEnum_sessionRevoked,
+      _$sseEventEventEnum_campEnded,
+      _$sseEventEventEnum_deviceRegistrationUpdated,
+      _$sseEventEventEnum_lockoutAlert,
     ]);
 
 Serializer<SseEventEventEnum> _$sseEventEventEnumSerializer =
@@ -94,36 +79,30 @@ Serializer<SseEventEventEnum> _$sseEventEventEnumSerializer =
 class _$SseEventEventEnumSerializer
     implements PrimitiveSerializer<SseEventEventEnum> {
   static const Map<String, Object> _toWire = const <String, Object>{
-    'snapshot': 'snapshot',
-    'visitPeriodStarted': 'visit.started',
-    'visitPeriodEnded': 'visit.ended',
-    'trackPeriodCreated': 'track.created',
-    'trackPeriodDeleted': 'track.deleted',
-    'trackPeriodReplaced': 'track.replaced',
-    'cornerPeriodUpdated': 'corner.updated',
-    'campPeriodStarted': 'camp.started',
-    'campPeriodEnded': 'camp.ended',
-    'messagePeriodBroadcast': 'message.broadcast',
-    'messagePeriodDirect': 'message.direct',
-    'sessionPeriodForceLogout': 'session.force_logout',
-    'devicePeriodApproved': 'device.approved',
-    'lockoutPeriodAlert': 'lockout.alert',
+    'tracksUpdated': 'tracks_updated',
+    'trackUpdated': 'track_updated',
+    'cornersUpdated': 'corners_updated',
+    'groupsUpdated': 'groups_updated',
+    'campUpdated': 'camp_updated',
+    'messagesChanged': 'messages_changed',
+    'trackDeleted': 'track_deleted',
+    'sessionRevoked': 'session_revoked',
+    'campEnded': 'camp_ended',
+    'deviceRegistrationUpdated': 'device_registration_updated',
+    'lockoutAlert': 'lockout_alert',
   };
   static const Map<Object, String> _fromWire = const <Object, String>{
-    'snapshot': 'snapshot',
-    'visit.started': 'visitPeriodStarted',
-    'visit.ended': 'visitPeriodEnded',
-    'track.created': 'trackPeriodCreated',
-    'track.deleted': 'trackPeriodDeleted',
-    'track.replaced': 'trackPeriodReplaced',
-    'corner.updated': 'cornerPeriodUpdated',
-    'camp.started': 'campPeriodStarted',
-    'camp.ended': 'campPeriodEnded',
-    'message.broadcast': 'messagePeriodBroadcast',
-    'message.direct': 'messagePeriodDirect',
-    'session.force_logout': 'sessionPeriodForceLogout',
-    'device.approved': 'devicePeriodApproved',
-    'lockout.alert': 'lockoutPeriodAlert',
+    'tracks_updated': 'tracksUpdated',
+    'track_updated': 'trackUpdated',
+    'corners_updated': 'cornersUpdated',
+    'groups_updated': 'groupsUpdated',
+    'camp_updated': 'campUpdated',
+    'messages_changed': 'messagesChanged',
+    'track_deleted': 'trackDeleted',
+    'session_revoked': 'sessionRevoked',
+    'camp_ended': 'campEnded',
+    'device_registration_updated': 'deviceRegistrationUpdated',
+    'lockout_alert': 'lockoutAlert',
   };
 
   @override
@@ -152,7 +131,7 @@ class _$SseEvent extends SseEvent {
   @override
   final SseEventEventEnum? event;
   @override
-  final JsonObject? data;
+  final SseNotificationData? data;
 
   factory _$SseEvent([void Function(SseEventBuilder)? updates]) =>
       (SseEventBuilder()..update(updates))._build();
@@ -196,9 +175,10 @@ class SseEventBuilder implements Builder<SseEvent, SseEventBuilder> {
   SseEventEventEnum? get event => _$this._event;
   set event(SseEventEventEnum? event) => _$this._event = event;
 
-  JsonObject? _data;
-  JsonObject? get data => _$this._data;
-  set data(JsonObject? data) => _$this._data = data;
+  SseNotificationDataBuilder? _data;
+  SseNotificationDataBuilder get data =>
+      _$this._data ??= SseNotificationDataBuilder();
+  set data(SseNotificationDataBuilder? data) => _$this._data = data;
 
   SseEventBuilder() {
     SseEvent._defaults(this);
@@ -208,7 +188,7 @@ class SseEventBuilder implements Builder<SseEvent, SseEventBuilder> {
     final $v = _$v;
     if ($v != null) {
       _event = $v.event;
-      _data = $v.data;
+      _data = $v.data?.toBuilder();
       _$v = null;
     }
     return this;
@@ -228,7 +208,23 @@ class SseEventBuilder implements Builder<SseEvent, SseEventBuilder> {
   SseEvent build() => _build();
 
   _$SseEvent _build() {
-    final _$result = _$v ?? _$SseEvent._(event: event, data: data);
+    _$SseEvent _$result;
+    try {
+      _$result = _$v ?? _$SseEvent._(event: event, data: _data?.build());
+    } catch (_) {
+      late String _$failedField;
+      try {
+        _$failedField = 'data';
+        _data?.build();
+      } catch (e) {
+        throw BuiltValueNestedFieldError(
+          r'SseEvent',
+          _$failedField,
+          e.toString(),
+        );
+      }
+      rethrow;
+    }
     replace(_$result);
     return _$result;
   }

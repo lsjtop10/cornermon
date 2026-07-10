@@ -41,7 +41,7 @@ final class TrackSessionProvider
   }
 }
 
-String _$trackSessionHash() => r'f77cbecea28bde820d9f1db1e1122c34adc788f2';
+String _$trackSessionHash() => r'e69989030626426362a87fed1e5e304f0d78ca3f';
 
 abstract class _$TrackSession extends $Notifier<TrackSessionState> {
   TrackSessionState build();
