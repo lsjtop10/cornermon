@@ -43,6 +43,18 @@ func mapFacilitatorSession(row db.FacilitatorSession) *domain.FacilitatorSession
 	return s
 }
 
+func (r *pgFacilitatorSessionRepository) Get(ctx context.Context, id domain.FacilitatorSessionID) (*domain.FacilitatorSession, error) {
+	row, err := r.queries(ctx).GetFacilitatorSession(ctx, string(id))
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return mapFacilitatorSession(row), nil
+}
+
+
 func (r *pgFacilitatorSessionRepository) GetByTokenHash(ctx context.Context, hash string) (*domain.FacilitatorSession, error) {
 	row, err := r.queries(ctx).GetFacilitatorSessionByTokenHash(ctx, hash)
 	if err != nil {

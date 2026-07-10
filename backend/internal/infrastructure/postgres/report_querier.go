@@ -44,6 +44,10 @@ func (r *pgReportQuerier) QueryCampReport(ctx context.Context, campID domain.Cam
 		return nil, err
 	}
 
+	return calculateCampReport(campID, dbGroups, dbCorners, dbVisits)
+}
+
+func calculateCampReport(campID domain.CampID, dbGroups []db.Group, dbCorners []db.Corner, dbVisits []db.ListVisitsByCampRow) (*usecase.CampReport, error) {
 	totalGroups := len(dbGroups)
 	finishedGroupsCount := 0
 

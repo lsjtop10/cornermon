@@ -24,3 +24,22 @@ func (b *BroadcasterImpl) Broadcast(ctx context.Context, campID domain.CampID, e
 	// 에러 처리가 필요하면 여기서 에러 리턴
 	return nil
 }
+
+func (b *BroadcasterImpl) SubscribeAdmin(ctx context.Context) (<-chan string, error) {
+	ch := make(chan string)
+	go func() {
+		<-ctx.Done()
+		close(ch)
+	}()
+	return ch, nil
+}
+
+func (b *BroadcasterImpl) SubscribeTrack(ctx context.Context, trackID string) (<-chan string, error) {
+	ch := make(chan string)
+	go func() {
+		<-ctx.Done()
+		close(ch)
+	}()
+	return ch, nil
+}
+

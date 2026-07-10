@@ -194,10 +194,25 @@ SELECT * FROM badges;
 
 -- name: ListDeviceRegistrationsByCampAndStatus :many
 SELECT * FROM device_registrations
-WHERE camp_id = $1 AND ($2::VARCHAR IS NULL OR status = $2);
+WHERE camp_id = sqlc.arg(camp_id) AND (sqlc.narg(status)::VARCHAR IS NULL OR status = sqlc.narg(status));
 
 -- name: ListVisitsByCamp :many
 SELECT v.*, c.target_minutes, c.name as corner_name FROM visits v
 JOIN groups g ON v.group_id = g.id
 JOIN corners c ON v.corner_id = c.id
 WHERE g.camp_id = $1;
+
+-- name: ListAuditLogs :many
+SELECT * FROM audit_logs
+ORDER BY occurred_at DESC
+LIMIT $1 OFFSET $2;
+
+-- name: ListAdminSessionsByAdmin :many
+SELECT * FROM admin_sessions
+WHERE admin_id = $1 AND revoked_at IS NULL;
+
+-- name: GetFacilitatorSession :one
+SELECT * FROM facilitator_sessions WHERE id = $1;
+
+
+

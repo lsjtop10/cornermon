@@ -255,6 +255,23 @@ func (q *Queries) GetDeviceRegistrationByTokenHash(ctx context.Context, tokenHas
 	return i, err
 }
 
+const getFacilitatorSession = `-- name: GetFacilitatorSession :one
+SELECT id, track_id, token_hash, created_at, revoked_at FROM facilitator_sessions WHERE id = $1
+`
+
+func (q *Queries) GetFacilitatorSession(ctx context.Context, id string) (FacilitatorSession, error) {
+	row := q.db.QueryRow(ctx, getFacilitatorSession, id)
+	var i FacilitatorSession
+	err := row.Scan(
+		&i.ID,
+		&i.TrackID,
+		&i.TokenHash,
+		&i.CreatedAt,
+		&i.RevokedAt,
+	)
+	return i, err
+}
+
 const getFacilitatorSessionByTokenHash = `-- name: GetFacilitatorSessionByTokenHash :one
 SELECT id, track_id, token_hash, created_at, revoked_at FROM facilitator_sessions WHERE token_hash = $1
 `
@@ -467,6 +484,40 @@ func (q *Queries) ListActiveTracksByCamp(ctx context.Context, campID string) ([]
 	return items, nil
 }
 
+const listAdminSessionsByAdmin = `-- name: ListAdminSessionsByAdmin :many
+SELECT id, admin_id, access_token_hash, refresh_token_hash, device_info, created_at, last_used_at, revoked_at FROM admin_sessions
+WHERE admin_id = $1 AND revoked_at IS NULL
+`
+
+func (q *Queries) ListAdminSessionsByAdmin(ctx context.Context, adminID string) ([]AdminSession, error) {
+	rows, err := q.db.Query(ctx, listAdminSessionsByAdmin, adminID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []AdminSession
+	for rows.Next() {
+		var i AdminSession
+		if err := rows.Scan(
+			&i.ID,
+			&i.AdminID,
+			&i.AccessTokenHash,
+			&i.RefreshTokenHash,
+			&i.DeviceInfo,
+			&i.CreatedAt,
+			&i.LastUsedAt,
+			&i.RevokedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listAllBadges = `-- name: ListAllBadges :many
 SELECT id, short_id, qr_payload, status, assigned_group_id FROM badges
 `
@@ -486,6 +537,45 @@ func (q *Queries) ListAllBadges(ctx context.Context) ([]Badge, error) {
 			&i.QrPayload,
 			&i.Status,
 			&i.AssignedGroupID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listAuditLogs = `-- name: ListAuditLogs :many
+SELECT id, actor, action, target, success, occurred_at, metadata FROM audit_logs
+ORDER BY occurred_at DESC
+LIMIT $1 OFFSET $2
+`
+
+type ListAuditLogsParams struct {
+	Limit  int32 `json:"limit"`
+	Offset int32 `json:"offset"`
+}
+
+func (q *Queries) ListAuditLogs(ctx context.Context, arg ListAuditLogsParams) ([]AuditLog, error) {
+	rows, err := q.db.Query(ctx, listAuditLogs, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []AuditLog
+	for rows.Next() {
+		var i AuditLog
+		if err := rows.Scan(
+			&i.ID,
+			&i.Actor,
+			&i.Action,
+			&i.Target,
+			&i.Success,
+			&i.OccurredAt,
+			&i.Metadata,
 		); err != nil {
 			return nil, err
 		}
@@ -622,12 +712,12 @@ WHERE camp_id = $1 AND ($2::VARCHAR IS NULL OR status = $2)
 `
 
 type ListDeviceRegistrationsByCampAndStatusParams struct {
-	CampID  string `json:"camp_id"`
-	Column2 string `json:"column_2"`
+	CampID string      `json:"camp_id"`
+	Status pgtype.Text `json:"status"`
 }
 
 func (q *Queries) ListDeviceRegistrationsByCampAndStatus(ctx context.Context, arg ListDeviceRegistrationsByCampAndStatusParams) ([]DeviceRegistration, error) {
-	rows, err := q.db.Query(ctx, listDeviceRegistrationsByCampAndStatus, arg.CampID, arg.Column2)
+	rows, err := q.db.Query(ctx, listDeviceRegistrationsByCampAndStatus, arg.CampID, arg.Status)
 	if err != nil {
 		return nil, err
 	}

@@ -41,3 +41,34 @@ func (r *pgAuditLogRepository) Save(ctx context.Context, log *domain.AuditLog) e
 		Metadata:   metaJSON,
 	})
 }
+
+func (r *pgAuditLogRepository) List(ctx context.Context, limit, offset int) ([]*domain.AuditLog, error) {
+	rows, err := r.queries(ctx).ListAuditLogs(ctx, db.ListAuditLogsParams{
+		Limit:  int32(limit),
+		Offset: int32(offset),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	logs := make([]*domain.AuditLog, len(rows))
+	for i, row := range rows {
+		var metadata map[string]any
+		if len(row.Metadata) > 0 {
+			if err := json.Unmarshal(row.Metadata, &metadata); err != nil {
+				return nil, err
+			}
+		}
+		logs[i] = &domain.AuditLog{
+			ID:         domain.AuditLogID(row.ID),
+			Actor:      row.Actor,
+			Action:     row.Action,
+			Target:     row.Target,
+			Success:    row.Success,
+			OccurredAt: row.OccurredAt.Time,
+			Metadata:   metadata,
+		}
+	}
+	return logs, nil
+}
+
