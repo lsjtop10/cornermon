@@ -7,5 +7,9 @@ targets:
           include:
             - lib/shared/api/client/*.dart
             - lib/shared/api/providers/*.dart
+            - lib/shared/api/sse/*.dart
+            - lib/shared/auth/*.dart
+            - lib/facilitator/session/*.dart
+            - lib/facilitator/features/**/*.dart
           exclude:
             - lib/shared/api/gen/**

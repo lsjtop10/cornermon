@@ -32,7 +32,7 @@ void main() {
 
     // 전체 공지 발송
     //
-    // 현재 ACTIVE 상태인 전체 트랙에 공지를 발송한다.
+    // 현재 ACTIVE 상태인 전체 트랙에 공지를 발송한다. 발송 성공(커밋) 직후 전체 트랙의 `GET /events/track/{trackId}` 스트림과 관리자의 `GET /events/admin` 스트림에 `messages_changed`(scope: `broadcast`) 알림이 push된다 — 수신 측은 알림을 받으면 `GET /messages/broadcast`를 재조회한다. 
     //
     //Future<Message> messagesBroadcastPost(MessagesBroadcastPostRequest messagesBroadcastPostRequest) async
     test('test messagesBroadcastPost', () async {
@@ -48,7 +48,7 @@ void main() {
 
     // 트랙 다이렉트 메시지 전송 (양방향)
     //
-    // 관리자 → 트랙 또는 트랙 → 관리자 방향으로 다이렉트 메시지를 전송한다. - ADMIN: 어느 트랙에든 전송 가능 - TRACK: 자기 트랙 스레드에만 전송 가능 
+    // 관리자 → 트랙 또는 트랙 → 관리자 방향으로 다이렉트 메시지를 전송한다. - ADMIN: 어느 트랙에든 전송 가능 - TRACK: 자기 트랙 스레드에만 전송 가능  전송 성공(커밋) 직후 해당 트랙의 `GET /events/track/{trackId}` 스트림에 `messages_changed`(scope: `track:{trackId}`) 알림이 push된다 — 수신 측은 알림을 받으면 `GET /tracks/{trackId}/messages`를 재조회한다. 
     //
     //Future<Message> tracksTrackIdMessagesPost(String trackId, MessagesBroadcastPostRequest messagesBroadcastPostRequest) async
     test('test tracksTrackIdMessagesPost', () async {

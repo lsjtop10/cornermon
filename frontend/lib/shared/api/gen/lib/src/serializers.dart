@@ -15,7 +15,6 @@ import 'package:cornermon_api_gen/src/date_serializer.dart';
 import 'package:cornermon_api_gen/src/model/date.dart';
 
 import 'package:cornermon_api_gen/src/model/admin_session.dart';
-import 'package:cornermon_api_gen/src/model/admin_sse_snapshot.dart';
 import 'package:cornermon_api_gen/src/model/audit_log.dart';
 import 'package:cornermon_api_gen/src/model/audit_logs_get200_response.dart';
 import 'package:cornermon_api_gen/src/model/auth_admin_login_post200_response.dart';
@@ -80,11 +79,11 @@ import 'package:cornermon_api_gen/src/model/reports_generate_post_request.dart';
 import 'package:cornermon_api_gen/src/model/reports_live_summary_get200_response.dart';
 import 'package:cornermon_api_gen/src/model/reports_live_summary_get200_response_corners_inner.dart';
 import 'package:cornermon_api_gen/src/model/sse_event.dart';
+import 'package:cornermon_api_gen/src/model/sse_notification_data.dart';
 import 'package:cornermon_api_gen/src/model/timeline_stats.dart';
 import 'package:cornermon_api_gen/src/model/timeline_stats_in_progress_counts_inner.dart';
 import 'package:cornermon_api_gen/src/model/track.dart';
 import 'package:cornermon_api_gen/src/model/track_operational_status.dart';
-import 'package:cornermon_api_gen/src/model/track_sse_snapshot.dart';
 import 'package:cornermon_api_gen/src/model/track_stats.dart';
 import 'package:cornermon_api_gen/src/model/track_status.dart';
 import 'package:cornermon_api_gen/src/model/track_summary.dart';
@@ -104,7 +103,6 @@ part 'serializers.g.dart';
 
 @SerializersFor([
   AdminSession,
-  AdminSseSnapshot,
   AuditLog,
   AuditLogsGet200Response,
   AuthAdminLoginPost200Response,
@@ -169,11 +167,11 @@ part 'serializers.g.dart';
   ReportsLiveSummaryGet200Response,
   ReportsLiveSummaryGet200ResponseCornersInner,
   SseEvent,
+  SseNotificationData,
   TimelineStats,
   TimelineStatsInProgressCountsInner,
   Track,
   TrackOperationalStatus,
-  TrackSseSnapshot,
   TrackStats,
   TrackStatus,
   TrackSummary,$TrackSummary,

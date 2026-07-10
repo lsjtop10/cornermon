@@ -1073,7 +1073,7 @@ Name | Type | Description  | Notes
 
 트랙 교체 (코너 담당 변경)
 
-기존 트랙 삭제와 신규 코너에 신규 트랙 생성을 원자적으로 수행한다. IN_PROGRESS 방문이 있으면 하드 블록. 교체 성공 시 SSE `track.replaced` 이벤트로 기기에 새 세션 정보 전달. (세부 재인증 흐름 TBD) 
+기존 트랙 삭제와 신규 코너에 신규 트랙 생성을 원자적으로 수행한다. IN_PROGRESS 방문이 있으면 하드 블록. 새 트랙 정보(신규 PIN 포함)는 이 응답으로 직접 반환한다 — SSE로는 전달하지 않는다. 기존 트랙 세션은 트랙 삭제와 동일하게 즉시 무효화되며, 기존 기기는 `GET /events/track/{trackId}`로 `track_deleted` 알림을 받아 즉시 B1(로그인) 화면으로 전환한다. 관리자 대시보드는 `tracks_updated` 알림을 받아 트랙 목록을 재조회한다. (세부 재인증 흐름 TBD) 
 
 ### Example
 ```dart

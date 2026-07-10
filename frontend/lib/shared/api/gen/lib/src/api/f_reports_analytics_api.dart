@@ -252,7 +252,7 @@ class FReportsAnalyticsApi {
   }
 
   /// 실시간 스냅샷 요약
-  /// 현재 선택된 캠프의 실시간 요약 데이터를 조회한다. 코너/트랙의 현재 상태 중심의 가벼운 집계만 포함 (전체 기간 통계 아님). SSE 스냅샷과 함께 대시보드 30초 주기 폴백 재조회에 사용된다. 
+  /// 현재 선택된 캠프의 실시간 요약 데이터를 조회한다. 코너/트랙의 현재 상태 중심의 가벼운 집계만 포함 (전체 기간 통계 아님). SSE &#x60;corners_updated&#x60;/&#x60;groups_updated&#x60; 알림 수신 시 재조회 및 대시보드 30초 주기 폴백 재조회에 사용된다. 
   ///
   /// Parameters:
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
