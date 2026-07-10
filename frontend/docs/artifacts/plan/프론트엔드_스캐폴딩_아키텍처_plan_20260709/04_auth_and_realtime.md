@@ -144,16 +144,21 @@ class SseClient {
 
 ```dart
 // lib/shared/api/sse/track_event_stream.dart
+// ⚠️ 2026-07-10 openapi.yaml 하이브리드 알림+풀 모델로 변경(main 병합, sse_policy_redesign_plan_20260710.md).
+// 더 이상 스냅샷을 push하지 않는다 — SSE는 {event, data: {scope}} 알림만 흘려보내고, 화면은
+// (1) 진입 시 REST로 최초 조회 (2) 알림 수신 시 scope에 대응하는 REST 재조회를 직접 수행해야 한다.
+// TrackSseSnapshot/AdminSseSnapshot 스키마 자체가 openapi.yaml에서 삭제됨 — 아래 시그니처는 폐기.
 @riverpod
-Stream<api.TrackSnapshot> trackEvents(Ref ref, TrackId trackId); // GET /events/track/{trackId}
-// (재)연결 첫 메시지가 곧 전체 스냅샷 — 초기 REST 조회를 별도로 하지 않는다(§2.3-b 규칙③)
-// DTO(api.TrackSnapshot)를 그대로 스트림에 흘린다 — mapper 없음(§03).
+Stream<api.SseNotificationData> trackEvents(Ref ref, TrackId trackId); // GET /events/track/{trackId}
+// track_updated/messages_changed 알림만 흘려보낸다. track_deleted/session_revoked/camp_ended는
+// TrackSession.handleTermination()으로 직접 라우팅(재조회 없이 즉시 B1 전환). 연속 알림 디바운스(100ms)는
+// 이 provider 또는 구독하는 화면 쪽에서 처리.
 ```
 
 ```dart
 // lib/shared/api/sse/admin_event_stream.dart
 @riverpod
-Stream<api.AdminSnapshot> adminEvents(Ref ref); // GET /events/admin
+Stream<api.SseNotificationData> adminEvents(Ref ref); // GET /events/admin — 위와 동일하게 알림 전용
 ```
 
 ## 3. 작업 단계
@@ -168,7 +173,7 @@ Stream<api.AdminSnapshot> adminEvents(Ref ref); // GET /events/admin
 | D-6 | `AdminSession` provider + `AdminSessionTokenSource` 구현체(로그인, silent refresh, 로그아웃, 공동관리자 세션 회수 §2.5-b) | `frontend/lib/admin/session/{admin_session_provider,admin_session_token_source}.dart` | 이번 스코프 제외(진행자 앱 우선 — 관리자는 Phase 06에서 착수) |
 | D-7 | `main_admin.dart`/`main_facilitator.dart`에서 `sessionTokenSourceProvider` override 배선 | `frontend/lib/main_{admin,facilitator}.dart` | [x] (facilitator만 — main_admin.dart는 Phase 06에서) |
 | D-8 | `SseClient`(하트비트/좀비연결 감지, §2.3-b) | `frontend/lib/shared/api/sse/sse_client.dart` | [ ] |
-| D-9 | `adminEvents`/`trackEvents` StreamProvider(DTO 그대로 반환) | `frontend/lib/shared/api/sse/{admin,track}_event_stream.dart` | [ ] (trackEvents만) |
+| D-9 | `adminEvents`/`trackEvents` StreamProvider(⚠️ 스냅샷 아님 — `SseNotificationData{scope}` 알림만, 수신 측이 REST 재조회) | `frontend/lib/shared/api/sse/{admin,track}_event_stream.dart` | [ ] (trackEvents만) |
 | D-10 | 관리자 대시보드용 30초 주기 REST 폴백 재조회(§2.3-b "최후 안전망") — provider 레벨 타이머 | `frontend/lib/shared/api/providers/camp_providers.dart` 내 보조 provider | 이번 스코프 제외(관리자 전용) |
 
 예상 소요시간: **12~16시간** (SSE 좀비연결 감지 + silent refresh 흐름이 가장 까다로운 부분 — 실제 네트워크 단절 테스트 포함).
