@@ -80,26 +80,26 @@ func (h *VisitHandler) EndCurrentVisit(c echo.Context) error {
 | ~~A-2~~ | ~~Request/Response, Error 공통 DTO 작성~~ | `internal/interfaces/http/dto/*.go` |
 | ~~A-3~~ | ~~모든 도메인별(Camp, Corner, Track 등) DTO 생성~~ | `internal/interfaces/http/dto/*.go` |
 
-### Phase B: 전체 엔드포인트 핸들러 뼈대 및 Swaggo 작성 (예상 소요: 2.5시간)
+### Phase B: 전체 엔드포인트 핸들러 뼈대 및 Swaggo 작성 (완료)
 | 순서 | 작업 | 파일 |
 | --- | --- | --- |
-| B-1 | Camp, Corner, Track 등 Resource Management 엔드포인트 | `internal/interfaces/http/handler/*.go` |
-| B-2 | Badge, Group, Visit 등 Scan Flow 엔드포인트 | `internal/interfaces/http/handler/*.go` |
-| B-3 | Report, Event, Message, Auth 엔드포인트 | `internal/interfaces/http/handler/*.go` |
+| ~~B-1~~ | ~~Camp, Corner, Track 등 Resource Management 엔드포인트~~ | `internal/interfaces/http/handler/*.go` |
+| ~~B-2~~ | ~~Badge, Group, Visit 등 Scan Flow 엔드포인트~~ | `internal/interfaces/http/handler/*.go` |
+| ~~B-3~~ | ~~Report, Event, Message, Auth 엔드포인트~~ | `internal/interfaces/http/handler/*.go` |
 
-### Phase C: 생성 및 검증 (예상 소요: 0.5시간)
+### Phase C: 생성 및 검증 (완료)
 | 순서 | 작업 | 파일 |
 | --- | --- | --- |
-| C-1 | `swag init` 명령어 수행하여 `docs/` 생성 | `cmd/server/main.go` 기준 |
-| C-2 | 누락된 엔드포인트 및 DTO 불일치 100% 검수 | `docs/swagger.yaml` ↔ 기존 `openapi.yaml` 비교 |
+| ~~C-1~~ | ~~`swag init` 명령어 수행하여 `docs/` 생성~~ | `cmd/server/main.go` 기준 |
+| ~~C-2~~ | ~~누락된 엔드포인트 및 DTO 불일치 100% 검수~~ | `docs/swagger.yaml` ↔ 기존 `openapi.yaml` 비교 |
 
 ## 5. 검증 체크리스트
 
 ### 5.1 스펙 정합성 검증
-- [ ] 기존 `openapi.yaml`에 정의된 **총 48개의 엔드포인트**가 모두 `docs/swagger.yaml`에 존재하는가?
-- [ ] 모든 엔드포인트의 HTTP 메서드, 경로 변수, Query/Body 파라미터가 기존과 100% 동일한가?
-- [ ] 반환되는 응답의 HTTP 상태 코드 및 DTO 스키마 필드가 한 치의 오차도 없이 일치하는가?
+- [x] 기존 `openapi.yaml`에 정의된 **총 48개의 엔드포인트**가 모두 `docs/swagger.yaml`에 존재하는가?
+- [x] 모든 엔드포인트의 HTTP 메서드, 경로 변수, Query/Body 파라미터가 기존과 100% 동일한가?
+- [x] 반환되는 응답의 HTTP 상태 코드 및 DTO 스키마 필드가 한 치의 오차도 없이 일치하는가?
 
 ### 5.2 구조 및 아키텍처 검증
-- [ ] 전역 Swaggo 주석이 `doc.go`에 안전하게 격리되어 있는가?
-- [ ] 핸들러에서 Usecase를 호출하고 반환된 결과를 DTO로 매핑하는 코드가 올바르게 작성되었는가?
+- [x] 전역 Swaggo 주석이 `doc.go`에 안전하게 격리되어 있는가?
+- [x] 핸들러에서 Usecase를 호출하고 반환된 결과를 DTO로 매핑하는 코드가 올바르게 작성되었는가?
