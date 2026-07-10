@@ -705,59 +705,45 @@ components:
     SseEvent:
       type: object
       description: |
-        SSE 이벤트 형식. `event` 필드로 이벤트 타입을 구분하고, `data` 필드에 JSON 페이로드를 담는다.
-        모든 스냅샷 이벤트(`snapshot`)는 재연결 시에도 전체 현재 상태를 포함한다.
+        SSE 알림 형식 (§technical-design.md 2.3, 하이브리드 알림+풀 모델).
+        **SSE는 데이터를 나르지 않는다** — `event` 필드로 알림 타입, `data.scope` 필드로 어떤 리소스가
+        변경됐는지만 알린다. 실제 값은 항상 REST가 유일한 출처이며, 클라이언트는 알림을 받으면
+        `scope`에 대응하는 REST 엔드포인트를 재조회해야 한다 (아래 매핑 참고, §/events/admin, §/events/track/{trackId}).
+        연결/재연결 시 서버가 별도의 초기 스냅샷을 push하지 않는다 — 화면 진입 시 클라이언트가
+        REST로 최초 조회를 직접 수행한다.
       properties:
         event:
           type: string
-          description: "이벤트 타입"
+          description: "알림 타입"
           enum:
-            - snapshot
-            - visit.started
-            - visit.ended
-            - track.created
-            - track.deleted
-            - track.replaced
-            - corner.updated
-            - camp.started
-            - camp.ended
-            - message.broadcast
-            - message.direct
-            - session.force_logout
-            - device.approved
-            - lockout.alert
+            - tracks_updated
+            - track_updated
+            - corners_updated
+            - groups_updated
+            - camp_updated
+            - messages_changed
+            - track_deleted
+            - session_revoked
+            - camp_ended
+            - device_registration_updated
+            - lockout_alert
         data:
-          type: object
-          description: "이벤트 타입별 JSON 페이로드"
+          $ref: '#/components/schemas/SseNotificationData'
 
-    AdminSseSnapshot:
+    SseNotificationData:
       type: object
-      description: "관리자 SSE 최초/재연결 시 전송되는 전체 스냅샷"
+      required: [scope]
+      description: "알림 페이로드. `scope` 외 다른 데이터를 담지 않는다."
       properties:
-        corners:
-          type: array
-          items:
-            $ref: '#/components/schemas/Corner'
-        groups:
-          type: array
-          items:
-            $ref: '#/components/schemas/Group'
-        unreadBroadcastCount:
-          type: integer
-
-    TrackSseSnapshot:
-      type: object
-      description: "진행자 SSE 최초/재연결 시 전송되는 트랙 스냅샷"
-      properties:
-        track:
-          $ref: '#/components/schemas/Track'
-        corner:
-          $ref: '#/components/schemas/Corner'
-        currentVisit:
-          $ref: '#/components/schemas/VisitSummary'
-          nullable: true
-        unreadBroadcastCount:
-          type: integer
+        scope:
+          type: string
+          description: |
+            변경된 리소스의 범위. 클라이언트는 이 값만 보고 재조회할 REST 엔드포인트를 결정한다.
+            - `camp` → 캠프 전역 리소스(코너/조/트랙 목록/캠프 상태/기기 등록 목록)
+            - `track:{trackId}` → 특정 트랙의 상태 또는 메시지 스레드
+            - `broadcast` → 공지 채널
+            - `device:{deviceId}` → 특정 기기 등록 건
+          example: "track:3f1e2a90-71c4-4b3a-9e33-1f6a2c9d0abc"
 
   # ── Common Parameters ──────────────────────────
   parameters:
@@ -1757,7 +1743,10 @@ paths:
       description: |
         기존 트랙 삭제와 신규 코너에 신규 트랙 생성을 원자적으로 수행한다.
         IN_PROGRESS 방문이 있으면 하드 블록.
-        교체 성공 시 SSE `track.replaced` 이벤트로 기기에 새 세션 정보 전달.
+        새 트랙 정보(신규 PIN 포함)는 이 응답으로 직접 반환한다 — SSE로는 전달하지 않는다.
+        기존 트랙 세션은 트랙 삭제와 동일하게 즉시 무효화되며, 기존 기기는 `GET /events/track/{trackId}`로
+        `track_deleted` 알림을 받아 즉시 B1(로그인) 화면으로 전환한다. 관리자 대시보드는 `tracks_updated`
+        알림을 받아 트랙 목록을 재조회한다.
         (세부 재인증 흐름 TBD)
       security:
         - AdminAuth: []
@@ -2260,24 +2249,28 @@ paths:
   /events/admin:
     get:
       tags: [D. Realtime (SSE)]
-      summary: "관리자 대시보드 SSE 스트림"
+      summary: "관리자 대시보드 SSE 스트림 (얇은 변경 알림)"
       description: |
         관리자 대시보드용 SSE(Server-Sent Events) 스트림에 연결한다.
+        §technical-design.md 2.3의 하이브리드 알림+풀 모델을 따른다 — **이 스트림은 데이터를 나르지 않는다.**
 
         **이벤트 흐름**:
-        1. (재)연결 직후: `event: snapshot` — 전체 코너/트랙/조 현재 상태 스냅샷 전송
-        2. 상태 변경마다: 해당 이벤트 타입으로 스냅샷 push
+        1. 화면 진입 시: 클라이언트가 REST로 초기 전체 조회 (`GET /corners`, `GET /groups`, `GET /tracks`,
+           `GET /camps/{id}`, `GET /device-registrations`, `GET /messages/broadcast` 등)를 직접 수행한다.
+           서버는 연결 시점에 별도 스냅샷을 push하지 않는다.
+        2. 상태 변경마다: `{event: <type>, data: {scope}}` 형태의 알림만 push — 알림을 받으면 그 `scope`에
+           대응하는 REST를 재조회한다.
         3. 15~20초 주기: SSE 하트비트 (`:` 주석 라인)
+        4. 안전망: 알림을 놓쳐도 정합이 깨지지 않도록 대시보드는 30초 주기로 REST 전체 재조회도 병행한다.
 
-        **수신 이벤트 타입**:
-        - `snapshot`: 전체 상태 스냅샷
-        - `visit.started` / `visit.ended`: 방문 시작/종료
-        - `track.created` / `track.deleted` / `track.replaced`: 트랙 생명주기
-        - `corner.updated`: 코너 규칙 변경
-        - `camp.started` / `camp.ended`: 캠프 상태 전이
-        - `message.broadcast`: 공지 발송
-        - `device.approved`: 기기 승인 완료
-        - `lockout.alert`: PIN 5회 이상 실패 경고
+        **수신 알림 타입 → 재조회 매핑**:
+        - `tracks_updated` (scope: `camp`) → `GET /tracks` — 트랙 생성/삭제/교체
+        - `corners_updated` (scope: `camp`) → `GET /corners` — 코너 규칙 변경, 방문 시작/종료로 인한 코너 운영상태·병목 변화
+        - `groups_updated` (scope: `camp`) → `GET /groups` — 조 순회표 변화(방문 시작/종료)
+        - `camp_updated` (scope: `camp`) → `GET /camps/{id}` — 캠프 시작/종료
+        - `messages_changed` (scope: `broadcast`) → `GET /messages/broadcast` — 공지 발송
+        - `device_registration_updated` (scope: `camp`) → `GET /device-registrations` — 기기 등록/승인/거절/회수
+        - `lockout_alert` (scope: `device:{deviceId}`) → `GET /device-registrations` — PIN 5회 이상 실패 경고
       security:
         - AdminAuth: []
       responses:
@@ -2288,11 +2281,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/SseEvent'
               example: |
-                event: snapshot
-                data: {"corners": [...], "groups": [...], "unreadBroadcastCount": 2}
+                event: corners_updated
+                data: {"scope": "camp"}
 
-                event: visit.started
-                data: {"visit": {...}, "corner": {...}, "group": {...}}
+                event: tracks_updated
+                data: {"scope": "camp"}
 
                 :heartbeat
         "401":
@@ -2301,22 +2294,30 @@ paths:
   /events/track/{trackId}:
     get:
       tags: [D. Realtime (SSE)]
-      summary: "진행자 앱 SSE 스트림"
+      summary: "진행자 앱 SSE 스트림 (얇은 변경 알림)"
       description: |
-        진행자 앱용 SSE 스트림. 자기 트랙 상태, 공지, 다이렉트 메시지를 수신한다.
+        진행자 앱용 SSE 스트림. 자기 트랙 상태·공지·다이렉트 메시지에 대한 변경 알림만 수신한다.
+        §technical-design.md 2.3의 하이브리드 알림+풀 모델을 따른다 — **이 스트림은 데이터를 나르지 않는다.**
 
-        **수신 이벤트 타입**:
-        - `snapshot`: 트랙/코너/현재방문 스냅샷
-        - `visit.started` / `visit.ended`: 방문 상태 변경
-        - `message.broadcast`: 공지 수신
-        - `message.direct`: 다이렉트 메시지 수신
-        - `track.replaced`: 트랙 교체 — 새 세션 정보 전달
-        - `track.deleted`: 트랙 삭제 → 즉시 B1(로그인) 화면 전환
-        - `session.force_logout`: 강제 로그아웃 → 즉시 B1 전환
-        - `camp.ended`: 캠프 종료 → 즉시 B1 전환
+        **이벤트 흐름**:
+        1. 화면 진입 시: 클라이언트가 REST로 초기 조회(`GET /corners`로 자기 코너·트랙 상태,
+           `GET /tracks/{trackId}/visits/current`로 진행 중인 방문, `GET /messages/broadcast` +
+           `GET /tracks/{trackId}/messages`로 메시지 이력)를 직접 수행한다. 서버는 연결 시점에
+           별도 스냅샷을 push하지 않는다.
+        2. 상태 변경마다: `{event: <type>, data: {scope}}` 형태의 알림만 push.
+        3. 짧은 시간에 알림이 연달아 오면(메시지 연속 수신 등) 클라이언트는 매번 재조회하지 않도록
+           짧은 디바운스(예: 100ms)를 둔다.
 
-        **세션 강제 종료 이벤트**(`track.deleted` / `session.force_logout` / `camp.ended`)가 오면
-        클라이언트는 BUSY 여부와 무관하게 즉시 B1 화면으로 전환하고 원인별 안내 문구를 표시한다.
+        **수신 알림 타입 → 재조회 매핑**:
+        - `track_updated` (scope: `track:{trackId}`) → `GET /corners` + `GET /tracks/{trackId}/visits/current` — 방문 시작/종료로 인한 자기 트랙 상태 변경
+        - `messages_changed` (scope: `broadcast`) → `GET /messages/broadcast` — 공지 수신
+        - `messages_changed` (scope: `track:{trackId}`) → `GET /tracks/{trackId}/messages` — 다이렉트 메시지 수신
+        - `track_deleted` (scope: `track:{trackId}`) → 즉시 B1(로그인) 화면 전환 (트랙 삭제 또는 트랙 교체로 인한 세션 종료)
+        - `session_revoked` (scope: `track:{trackId}`) → 즉시 B1 전환 (관리자 강제 로그아웃)
+        - `camp_ended` (scope: `camp`) → 즉시 B1 전환 (캠프 종료)
+
+        **세션 강제 종료 알림**(`track_deleted` / `session_revoked` / `camp_ended`)이 오면
+        클라이언트는 REST 재조회 없이 BUSY 여부와 무관하게 즉시 B1 화면으로 전환하고 원인별 안내 문구를 표시한다.
       security:
         - TrackAuth: []
       parameters:
@@ -2334,8 +2335,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/SseEvent'
               example: |
-                event: snapshot
-                data: {"track": {...}, "corner": {...}, "currentVisit": null, "unreadBroadcastCount": 0}
+                event: track_updated
+                data: {"scope": "track:3f1e2a90-71c4-4b3a-9e33-1f6a2c9d0abc"}
+
+                event: messages_changed
+                data: {"scope": "broadcast"}
 
                 :heartbeat
         "401":
@@ -2355,7 +2359,11 @@ paths:
     post:
       tags: [E. Messages]
       summary: "전체 공지 발송"
-      description: 현재 ACTIVE 상태인 전체 트랙에 공지를 발송한다.
+      description: |
+        현재 ACTIVE 상태인 전체 트랙에 공지를 발송한다.
+        발송 성공(커밋) 직후 전체 트랙의 `GET /events/track/{trackId}` 스트림과 관리자의
+        `GET /events/admin` 스트림에 `messages_changed`(scope: `broadcast`) 알림이 push된다 —
+        수신 측은 알림을 받으면 `GET /messages/broadcast`를 재조회한다.
       security:
         - AdminAuth: []
       requestBody:
@@ -2500,6 +2508,10 @@ paths:
         관리자 → 트랙 또는 트랙 → 관리자 방향으로 다이렉트 메시지를 전송한다.
         - ADMIN: 어느 트랙에든 전송 가능
         - TRACK: 자기 트랙 스레드에만 전송 가능
+
+        전송 성공(커밋) 직후 해당 트랙의 `GET /events/track/{trackId}` 스트림에
+        `messages_changed`(scope: `track:{trackId}`) 알림이 push된다 — 수신 측은 알림을 받으면
+        `GET /tracks/{trackId}/messages`를 재조회한다.
       security:
         - AdminAuth: []
         - TrackAuth: []
@@ -2539,7 +2551,7 @@ paths:
       description: |
         현재 선택된 캠프의 실시간 요약 데이터를 조회한다.
         코너/트랙의 현재 상태 중심의 가벼운 집계만 포함 (전체 기간 통계 아님).
-        SSE 스냅샷과 함께 대시보드 30초 주기 폴백 재조회에 사용된다.
+        SSE `corners_updated`/`groups_updated` 알림 수신 시 재조회 및 대시보드 30초 주기 폴백 재조회에 사용된다.
       security:
         - AdminAuth: []
       responses:
@@ -2740,9 +2752,9 @@ tags:
       불변식이 가장 많은 도메인 코어 파트.
   - name: D. Realtime (SSE)
     description: |
-      SSE 기반 실시간 이벤트 스트림.
-      관리자 대시보드용 및 진행자 앱용 스트림.
-      (재)연결 시 전체 스냅샷 전송 → 이후 변경마다 스냅샷 push.
+      SSE 기반 실시간 변경 알림 스트림 (하이브리드 알림+풀 모델, §technical-design.md 2.3).
+      관리자 대시보드용 및 진행자 앱용 스트림. SSE는 `{event, scope}` 형태의 얇은 알림만 나르고,
+      실제 데이터는 항상 REST로 재조회한다 — 연결/재연결 시에도 별도 스냅샷 push가 없다.
   - name: E. Messages
     description: |
       관리자-진행자 간 통신.

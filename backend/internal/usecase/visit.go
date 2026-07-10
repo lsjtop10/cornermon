@@ -1,0 +1,355 @@
+package usecase
+
+import (
+	"context"
+	"time"
+
+	"cornermon/backend/internal/domain"
+
+	"github.com/google/uuid"
+)
+
+type VisitService struct {
+	camps       CampRepository
+	corners     CornerRepository
+	tracks      TrackRepository
+	visits      VisitRepository
+	groups      GroupRepository
+	badges      BadgeRepository
+	sessions    FacilitatorSessionRepository
+	auditLogs   AuditLogRepository
+	broadcaster Broadcaster
+	tx          TxManager
+
+	// 테스트용 시간 및 UUID 주입
+	nowFn  func() time.Time
+	uuidFn func() string
+}
+
+func NewVisitService(
+	camps CampRepository,
+	corners CornerRepository,
+	tracks TrackRepository,
+	visits VisitRepository,
+	groups GroupRepository,
+	badges BadgeRepository,
+	sessions FacilitatorSessionRepository,
+	auditLogs AuditLogRepository,
+	broadcaster Broadcaster,
+	tx TxManager,
+) *VisitService {
+	return &VisitService{
+		camps:       camps,
+		corners:     corners,
+		tracks:      tracks,
+		visits:      visits,
+		groups:      groups,
+		badges:      badges,
+		sessions:    sessions,
+		auditLogs:   auditLogs,
+		broadcaster: broadcaster,
+		tx:          tx,
+		nowFn:       time.Now,
+		uuidFn:      uuid.NewString,
+	}
+}
+
+// StartVisitByQR - UC-1
+func (s *VisitService) StartVisitByQR(
+	ctx context.Context,
+	facilitatorToken string,
+	qrPayload string,
+) (*domain.Visit, error) {
+	now := s.nowFn()
+	tokenHash := hashSHA256(facilitatorToken)
+
+	session, err := s.sessions.GetByTokenHash(ctx, tokenHash)
+	if err != nil {
+		s.recordAuditLog(ctx, "anonymous", "VISIT_START", "token:"+facilitatorToken, false, map[string]any{"error": err.Error()})
+		return nil, err
+	}
+	if session == nil || !session.IsActive() {
+		s.recordAuditLog(ctx, "anonymous", "VISIT_START", "session:inactive", false, map[string]any{"error": domain.ErrSessionRevoked.Error()})
+		return nil, domain.ErrSessionRevoked
+	}
+
+	actor := string(session.TrackID)
+
+	var visit *domain.Visit
+	var groupCampID domain.CampID
+
+	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
+		track, err := s.tracks.Get(ctx, session.TrackID)
+		if err != nil {
+			return err
+		}
+		if track == nil || track.Status != domain.TrackActive {
+			return domain.ErrTrackNotActive
+		}
+		if track.CurrentVisitID.IsSet() {
+			return domain.ErrTrackBusy
+		}
+
+		badge, err := s.badges.GetByQRPayload(ctx, qrPayload)
+		if err != nil {
+			return err
+		}
+		if badge == nil {
+			return domain.ErrBadgeNotAssigned
+		}
+		groupID, ok := badge.AssignedGroupID.Value()
+		if !ok || badge.Status != domain.BadgeAssigned {
+			return domain.ErrBadgeNotAssigned
+		}
+
+		group, err := s.groups.Get(ctx, groupID)
+		if err != nil {
+			return err
+		}
+		if group == nil {
+			return domain.ErrCornerNotInItinerary
+		}
+		groupCampID = group.CampID
+
+		// 캠프가 ACTIVE 상태인지 검사
+		camp, err := s.camps.Get(ctx, groupCampID)
+		if err != nil {
+			return err
+		}
+		if camp == nil || !camp.IsActive() {
+			return domain.ErrCampInvalidTransition // 캠프가 활성화되어 있지 않음
+		}
+
+		if err := group.MarkVisitStarted(track.CornerID); err != nil {
+			return err
+		}
+
+		visitID := domain.VisitID(s.uuidFn())
+		visit = domain.NewVisit(visitID, group.ID, track.CornerID, track.ID, domain.VisitQRScan, now)
+
+		if err := track.StartVisit(visitID); err != nil {
+			return err
+		}
+
+		if err := s.visits.Save(ctx, visit); err != nil {
+			return err
+		}
+		if err := s.tracks.Save(ctx, track); err != nil {
+			return err
+		}
+		if err := s.groups.Save(ctx, group); err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		s.recordAuditLog(ctx, actor, "VISIT_START", qrPayload, false, map[string]any{"error": err.Error()})
+		return nil, err
+	}
+
+	s.recordAuditLog(ctx, actor, "VISIT_START", string(visit.ID), true, map[string]any{"method": string(domain.VisitQRScan), "groupID": string(visit.GroupID)})
+	_ = s.broadcaster.Broadcast(ctx, groupCampID, EventCornersUpdated, "camp")
+	_ = s.broadcaster.Broadcast(ctx, groupCampID, EventGroupsUpdated, "camp")
+	_ = s.broadcaster.Broadcast(ctx, groupCampID, EventTracksUpdated, "camp")
+	_ = s.broadcaster.Broadcast(ctx, groupCampID, EventTrackUpdated, "track:"+string(session.TrackID))
+
+	return visit, nil
+}
+
+// StartVisitManual - UC-2
+func (s *VisitService) StartVisitManual(
+	ctx context.Context,
+	facilitatorToken string,
+	groupID domain.GroupID,
+) (*domain.Visit, error) {
+	now := s.nowFn()
+	tokenHash := hashSHA256(facilitatorToken)
+
+	session, err := s.sessions.GetByTokenHash(ctx, tokenHash)
+	if err != nil {
+		s.recordAuditLog(ctx, "anonymous", "VISIT_START", "token:"+facilitatorToken, false, map[string]any{"error": err.Error()})
+		return nil, err
+	}
+	if session == nil || !session.IsActive() {
+		s.recordAuditLog(ctx, "anonymous", "VISIT_START", "session:inactive", false, map[string]any{"error": domain.ErrSessionRevoked.Error()})
+		return nil, domain.ErrSessionRevoked
+	}
+
+	actor := string(session.TrackID)
+	var visit *domain.Visit
+	var groupCampID domain.CampID
+
+	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
+		track, err := s.tracks.Get(ctx, session.TrackID)
+		if err != nil {
+			return err
+		}
+		if track == nil || track.Status != domain.TrackActive {
+			return domain.ErrTrackNotActive
+		}
+		if track.CurrentVisitID.IsSet() {
+			return domain.ErrTrackBusy
+		}
+
+		group, err := s.groups.Get(ctx, groupID)
+		if err != nil {
+			return err
+		}
+		if group == nil {
+			return domain.ErrCornerNotInItinerary
+		}
+		groupCampID = group.CampID
+
+		// 캠프가 ACTIVE 상태인지 검사
+		camp, err := s.camps.Get(ctx, groupCampID)
+		if err != nil {
+			return err
+		}
+		if camp == nil || !camp.IsActive() {
+			return domain.ErrCampInvalidTransition
+		}
+
+		if err := group.MarkVisitStarted(track.CornerID); err != nil {
+			return err
+		}
+
+		visitID := domain.VisitID(s.uuidFn())
+		visit = domain.NewVisit(visitID, group.ID, track.CornerID, track.ID, domain.VisitManual, now)
+
+		if err := track.StartVisit(visitID); err != nil {
+			return err
+		}
+
+		if err := s.visits.Save(ctx, visit); err != nil {
+			return err
+		}
+		if err := s.tracks.Save(ctx, track); err != nil {
+			return err
+		}
+		if err := s.groups.Save(ctx, group); err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		s.recordAuditLog(ctx, actor, "VISIT_START", string(groupID), false, map[string]any{"error": err.Error()})
+		return nil, err
+	}
+
+	s.recordAuditLog(ctx, actor, "VISIT_START", string(visit.ID), true, map[string]any{"method": string(domain.VisitManual), "groupID": string(visit.GroupID)})
+	_ = s.broadcaster.Broadcast(ctx, groupCampID, EventCornersUpdated, "camp")
+	_ = s.broadcaster.Broadcast(ctx, groupCampID, EventGroupsUpdated, "camp")
+	_ = s.broadcaster.Broadcast(ctx, groupCampID, EventTracksUpdated, "camp")
+	_ = s.broadcaster.Broadcast(ctx, groupCampID, EventTrackUpdated, "track:"+string(session.TrackID))
+
+	return visit, nil
+}
+
+// CompleteVisit - UC-3
+func (s *VisitService) CompleteVisit(
+	ctx context.Context,
+	facilitatorToken string,
+) (*domain.Visit, error) {
+	now := s.nowFn()
+	tokenHash := hashSHA256(facilitatorToken)
+
+	session, err := s.sessions.GetByTokenHash(ctx, tokenHash)
+	if err != nil {
+		s.recordAuditLog(ctx, "anonymous", "VISIT_COMPLETE", "token:"+facilitatorToken, false, map[string]any{"error": err.Error()})
+		return nil, err
+	}
+	if session == nil || !session.IsActive() {
+		s.recordAuditLog(ctx, "anonymous", "VISIT_COMPLETE", "session:inactive", false, map[string]any{"error": domain.ErrSessionRevoked.Error()})
+		return nil, domain.ErrSessionRevoked
+	}
+
+	actor := string(session.TrackID)
+	var visit *domain.Visit
+	var groupCampID domain.CampID
+
+	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
+		track, err := s.tracks.Get(ctx, session.TrackID)
+		if err != nil {
+			return err
+		}
+		if track == nil || track.Status != domain.TrackActive {
+			return domain.ErrTrackNotActive
+		}
+
+		currentVisitID, ok := track.CurrentVisitID.Value()
+		if !ok {
+			return domain.ErrTrackNotBusy
+		}
+
+		visit, err = s.visits.Get(ctx, currentVisitID)
+		if err != nil {
+			return err
+		}
+		if visit == nil {
+			return domain.ErrTrackNotBusy
+		}
+
+		group, err := s.groups.Get(ctx, visit.GroupID)
+		if err != nil {
+			return err
+		}
+		if group == nil {
+			return domain.ErrCornerNotInItinerary
+		}
+		groupCampID = group.CampID
+
+		if err := visit.Complete(now); err != nil {
+			return err
+		}
+
+		if _, err := track.CompleteVisit(now); err != nil {
+			return err
+		}
+
+		if err := group.MarkVisitCompleted(visit.CornerID); err != nil {
+			return err
+		}
+
+		if err := s.visits.Save(ctx, visit); err != nil {
+			return err
+		}
+		if err := s.tracks.Save(ctx, track); err != nil {
+			return err
+		}
+		if err := s.groups.Save(ctx, group); err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		s.recordAuditLog(ctx, actor, "VISIT_COMPLETE", "", false, map[string]any{"error": err.Error()})
+		return nil, err
+	}
+
+	s.recordAuditLog(ctx, actor, "VISIT_COMPLETE", string(visit.ID), true, map[string]any{"groupID": string(visit.GroupID)})
+	_ = s.broadcaster.Broadcast(ctx, groupCampID, EventCornersUpdated, "camp")
+	_ = s.broadcaster.Broadcast(ctx, groupCampID, EventGroupsUpdated, "camp")
+	_ = s.broadcaster.Broadcast(ctx, groupCampID, EventTracksUpdated, "camp")
+	_ = s.broadcaster.Broadcast(ctx, groupCampID, EventTrackUpdated, "track:"+string(session.TrackID))
+
+	return visit, nil
+}
+
+func (s *VisitService) recordAuditLog(ctx context.Context, actor, action, target string, success bool, metadata map[string]any) {
+	log := domain.NewAuditLog(
+		domain.AuditLogID(s.uuidFn()),
+		actor,
+		action,
+		target,
+		success,
+		s.nowFn(),
+		metadata,
+	)
+	_ = s.auditLogs.Save(ctx, log)
+}
