@@ -6,183 +6,161 @@ part of 'message_providers.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$messageApiHash() => r'bced8b39ecff3c0cc84ea1e122742b67fdaf371d';
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
 
-/// See also [messageApi].
 @ProviderFor(messageApi)
-final messageApiProvider = AutoDisposeProvider<EMessagesApi>.internal(
-  messageApi,
-  name: r'messageApiProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$messageApiHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
+final messageApiProvider = MessageApiProvider._();
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-typedef MessageApiRef = AutoDisposeProviderRef<EMessagesApi>;
-String _$broadcastMessageListHash() =>
-    r'61db58b6f8a4e9c730ab804861291ae38b001206';
-
-/// See also [broadcastMessageList].
-@ProviderFor(broadcastMessageList)
-final broadcastMessageListProvider =
-    AutoDisposeFutureProvider<List<Message>>.internal(
-      broadcastMessageList,
-      name: r'broadcastMessageListProvider',
-      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-          ? null
-          : _$broadcastMessageListHash,
-      dependencies: null,
-      allTransitiveDependencies: null,
-    );
-
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-typedef BroadcastMessageListRef = AutoDisposeFutureProviderRef<List<Message>>;
-String _$trackMessageListHash() => r'b8eef8069b107bfe9171e40fd35053ee66a53932';
-
-/// Copied from Dart SDK
-class _SystemHash {
-  _SystemHash._();
-
-  static int combine(int hash, int value) {
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + value);
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + ((0x0007ffff & hash) << 10));
-    return hash ^ (hash >> 6);
-  }
-
-  static int finish(int hash) {
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + ((0x03ffffff & hash) << 3));
-    // ignore: parameter_assignments
-    hash = hash ^ (hash >> 11);
-    return 0x1fffffff & (hash + ((0x00003fff & hash) << 15));
-  }
-}
-
-/// See also [trackMessageList].
-@ProviderFor(trackMessageList)
-const trackMessageListProvider = TrackMessageListFamily();
-
-/// See also [trackMessageList].
-class TrackMessageListFamily extends Family<AsyncValue<List<Message>>> {
-  /// See also [trackMessageList].
-  const TrackMessageListFamily();
-
-  /// See also [trackMessageList].
-  TrackMessageListProvider call(TrackId trackId) {
-    return TrackMessageListProvider(trackId);
-  }
-
-  @override
-  TrackMessageListProvider getProviderOverride(
-    covariant TrackMessageListProvider provider,
-  ) {
-    return call(provider.trackId);
-  }
-
-  static const Iterable<ProviderOrFamily>? _dependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
-
-  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
-      _allTransitiveDependencies;
-
-  @override
-  String? get name => r'trackMessageListProvider';
-}
-
-/// See also [trackMessageList].
-class TrackMessageListProvider
-    extends AutoDisposeFutureProvider<List<Message>> {
-  /// See also [trackMessageList].
-  TrackMessageListProvider(TrackId trackId)
-    : this._internal(
-        (ref) => trackMessageList(ref as TrackMessageListRef, trackId),
-        from: trackMessageListProvider,
-        name: r'trackMessageListProvider',
-        debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-            ? null
-            : _$trackMessageListHash,
-        dependencies: TrackMessageListFamily._dependencies,
-        allTransitiveDependencies:
-            TrackMessageListFamily._allTransitiveDependencies,
-        trackId: trackId,
+final class MessageApiProvider
+    extends $FunctionalProvider<EMessagesApi, EMessagesApi, EMessagesApi>
+    with $Provider<EMessagesApi> {
+  MessageApiProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'messageApiProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
       );
 
-  TrackMessageListProvider._internal(
-    super._createNotifier, {
-    required super.name,
-    required super.dependencies,
-    required super.allTransitiveDependencies,
-    required super.debugGetCreateSourceHash,
-    required super.from,
-    required this.trackId,
-  }) : super.internal();
+  @override
+  String debugGetCreateSourceHash() => _$messageApiHash();
 
-  final TrackId trackId;
+  @$internal
+  @override
+  $ProviderElement<EMessagesApi> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
 
   @override
-  Override overrideWith(
-    FutureOr<List<Message>> Function(TrackMessageListRef provider) create,
-  ) {
-    return ProviderOverride(
-      origin: this,
-      override: TrackMessageListProvider._internal(
-        (ref) => create(ref as TrackMessageListRef),
-        from: from,
-        name: null,
-        dependencies: null,
-        allTransitiveDependencies: null,
-        debugGetCreateSourceHash: null,
-        trackId: trackId,
-      ),
-    );
+  EMessagesApi create(Ref ref) {
+    return messageApi(ref);
   }
 
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(EMessagesApi value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<EMessagesApi>(value),
+    );
+  }
+}
+
+String _$messageApiHash() => r'40f5fa823b4679ab9daf049448b5bbe986df1dc3';
+
+@ProviderFor(broadcastMessageList)
+final broadcastMessageListProvider = BroadcastMessageListProvider._();
+
+final class BroadcastMessageListProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<Message>>,
+          List<Message>,
+          FutureOr<List<Message>>
+        >
+    with $FutureModifier<List<Message>>, $FutureProvider<List<Message>> {
+  BroadcastMessageListProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'broadcastMessageListProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
   @override
-  AutoDisposeFutureProviderElement<List<Message>> createElement() {
-    return _TrackMessageListProviderElement(this);
+  String debugGetCreateSourceHash() => _$broadcastMessageListHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<List<Message>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<List<Message>> create(Ref ref) {
+    return broadcastMessageList(ref);
+  }
+}
+
+String _$broadcastMessageListHash() =>
+    r'47c0528b5146e42e077ad0bf8912398002264f9b';
+
+@ProviderFor(trackMessageList)
+final trackMessageListProvider = TrackMessageListFamily._();
+
+final class TrackMessageListProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<Message>>,
+          List<Message>,
+          FutureOr<List<Message>>
+        >
+    with $FutureModifier<List<Message>>, $FutureProvider<List<Message>> {
+  TrackMessageListProvider._({
+    required TrackMessageListFamily super.from,
+    required TrackId super.argument,
+  }) : super(
+         retry: null,
+         name: r'trackMessageListProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$trackMessageListHash();
+
+  @override
+  String toString() {
+    return r'trackMessageListProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<List<Message>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<List<Message>> create(Ref ref) {
+    final argument = this.argument as TrackId;
+    return trackMessageList(ref, argument);
   }
 
   @override
   bool operator ==(Object other) {
-    return other is TrackMessageListProvider && other.trackId == trackId;
+    return other is TrackMessageListProvider && other.argument == argument;
   }
 
   @override
   int get hashCode {
-    var hash = _SystemHash.combine(0, runtimeType.hashCode);
-    hash = _SystemHash.combine(hash, trackId.hashCode);
-
-    return _SystemHash.finish(hash);
+    return argument.hashCode;
   }
 }
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-mixin TrackMessageListRef on AutoDisposeFutureProviderRef<List<Message>> {
-  /// The parameter `trackId` of this provider.
-  TrackId get trackId;
-}
+String _$trackMessageListHash() => r'25261b62c16ec1deda305ada05730e99783915f4';
 
-class _TrackMessageListProviderElement
-    extends AutoDisposeFutureProviderElement<List<Message>>
-    with TrackMessageListRef {
-  _TrackMessageListProviderElement(super.provider);
+final class TrackMessageListFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<List<Message>>, TrackId> {
+  TrackMessageListFamily._()
+    : super(
+        retry: null,
+        name: r'trackMessageListProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  TrackMessageListProvider call(TrackId trackId) =>
+      TrackMessageListProvider._(argument: trackId, from: this);
 
   @override
-  TrackId get trackId => (origin as TrackMessageListProvider).trackId;
+  String toString() => r'trackMessageListProvider';
 }
-
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

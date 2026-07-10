@@ -5,13 +5,13 @@ import '../client/api_client.dart';
 part 'report_providers.g.dart';
 
 @riverpod
-FReportsAnalyticsApi reportApi(ReportApiRef ref) {
+FReportsAnalyticsApi reportApi(Ref ref) {
   final dio = ref.watch(apiClientProvider);
   return FReportsAnalyticsApi(dio, serializers);
 }
 
 @riverpod
-Future<CampReport> currentReport(CurrentReportRef ref) async {
+Future<CampReport> currentReport(Ref ref) async {
   final apiInstance = ref.watch(reportApiProvider);
   final response = await apiInstance.reportsCurrentGet();
   final data = response.data;
@@ -22,7 +22,7 @@ Future<CampReport> currentReport(CurrentReportRef ref) async {
 }
 
 @riverpod
-Future<ReportsLiveSummaryGet200Response> liveSummary(LiveSummaryRef ref) async {
+Future<ReportsLiveSummaryGet200Response> liveSummary(Ref ref) async {
   final apiInstance = ref.watch(reportApiProvider);
   final response = await apiInstance.reportsLiveSummaryGet();
   final data = response.data;

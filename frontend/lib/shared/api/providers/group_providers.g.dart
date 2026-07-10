@@ -6,432 +6,286 @@ part of 'group_providers.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$visitScanFlowApiHash() => r'226aff0e6ebad312f9b8c2eaa3c6a08572945808';
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
 
-/// See also [visitScanFlowApi].
 @ProviderFor(visitScanFlowApi)
-final visitScanFlowApiProvider =
-    AutoDisposeProvider<CVisitScanFlowApi>.internal(
-      visitScanFlowApi,
-      name: r'visitScanFlowApiProvider',
-      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-          ? null
-          : _$visitScanFlowApiHash,
-      dependencies: null,
-      allTransitiveDependencies: null,
-    );
+final visitScanFlowApiProvider = VisitScanFlowApiProvider._();
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-typedef VisitScanFlowApiRef = AutoDisposeProviderRef<CVisitScanFlowApi>;
-String _$groupListHash() => r'a24c01f357fc547369db3a0730f007ec1148ab41';
+final class VisitScanFlowApiProvider
+    extends
+        $FunctionalProvider<
+          CVisitScanFlowApi,
+          CVisitScanFlowApi,
+          CVisitScanFlowApi
+        >
+    with $Provider<CVisitScanFlowApi> {
+  VisitScanFlowApiProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'visitScanFlowApiProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
-/// Copied from Dart SDK
-class _SystemHash {
-  _SystemHash._();
+  @override
+  String debugGetCreateSourceHash() => _$visitScanFlowApiHash();
 
-  static int combine(int hash, int value) {
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + value);
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + ((0x0007ffff & hash) << 10));
-    return hash ^ (hash >> 6);
+  @$internal
+  @override
+  $ProviderElement<CVisitScanFlowApi> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  CVisitScanFlowApi create(Ref ref) {
+    return visitScanFlowApi(ref);
   }
 
-  static int finish(int hash) {
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + ((0x03ffffff & hash) << 3));
-    // ignore: parameter_assignments
-    hash = hash ^ (hash >> 11);
-    return 0x1fffffff & (hash + ((0x00003fff & hash) << 15));
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(CVisitScanFlowApi value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<CVisitScanFlowApi>(value),
+    );
   }
 }
 
-/// See also [groupList].
+String _$visitScanFlowApiHash() => r'cd2237b4e8b458538490fc997a33af81e867aa97';
+
 @ProviderFor(groupList)
-const groupListProvider = GroupListFamily();
+final groupListProvider = GroupListFamily._();
 
-/// See also [groupList].
-class GroupListFamily extends Family<AsyncValue<List<Group>>> {
-  /// See also [groupList].
-  const GroupListFamily();
-
-  /// See also [groupList].
-  GroupListProvider call({String? filter, String? sort, String? order}) {
-    return GroupListProvider(filter: filter, sort: sort, order: order);
-  }
+final class GroupListProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<Group>>,
+          List<Group>,
+          FutureOr<List<Group>>
+        >
+    with $FutureModifier<List<Group>>, $FutureProvider<List<Group>> {
+  GroupListProvider._({
+    required GroupListFamily super.from,
+    required ({String? filter, String? sort, String? order}) super.argument,
+  }) : super(
+         retry: null,
+         name: r'groupListProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
 
   @override
-  GroupListProvider getProviderOverride(covariant GroupListProvider provider) {
-    return call(
-      filter: provider.filter,
-      sort: provider.sort,
-      order: provider.order,
+  String debugGetCreateSourceHash() => _$groupListHash();
+
+  @override
+  String toString() {
+    return r'groupListProvider'
+        ''
+        '$argument';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<List<Group>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<List<Group>> create(Ref ref) {
+    final argument =
+        this.argument as ({String? filter, String? sort, String? order});
+    return groupList(
+      ref,
+      filter: argument.filter,
+      sort: argument.sort,
+      order: argument.order,
     );
   }
 
-  static const Iterable<ProviderOrFamily>? _dependencies = null;
+  @override
+  bool operator ==(Object other) {
+    return other is GroupListProvider && other.argument == argument;
+  }
 
   @override
-  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
-
-  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
-      _allTransitiveDependencies;
-
-  @override
-  String? get name => r'groupListProvider';
+  int get hashCode {
+    return argument.hashCode;
+  }
 }
 
-/// See also [groupList].
-class GroupListProvider extends AutoDisposeFutureProvider<List<Group>> {
-  /// See also [groupList].
-  GroupListProvider({String? filter, String? sort, String? order})
-    : this._internal(
-        (ref) => groupList(
-          ref as GroupListRef,
-          filter: filter,
-          sort: sort,
-          order: order,
-        ),
-        from: groupListProvider,
+String _$groupListHash() => r'6e320f16f92708161de5605e7c96eb0bfb939e4f';
+
+final class GroupListFamily extends $Family
+    with
+        $FunctionalFamilyOverride<
+          FutureOr<List<Group>>,
+          ({String? filter, String? sort, String? order})
+        > {
+  GroupListFamily._()
+    : super(
+        retry: null,
         name: r'groupListProvider',
-        debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-            ? null
-            : _$groupListHash,
-        dependencies: GroupListFamily._dependencies,
-        allTransitiveDependencies: GroupListFamily._allTransitiveDependencies,
-        filter: filter,
-        sort: sort,
-        order: order,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
       );
 
-  GroupListProvider._internal(
-    super._createNotifier, {
-    required super.name,
-    required super.dependencies,
-    required super.allTransitiveDependencies,
-    required super.debugGetCreateSourceHash,
-    required super.from,
-    required this.filter,
-    required this.sort,
-    required this.order,
-  }) : super.internal();
-
-  final String? filter;
-  final String? sort;
-  final String? order;
+  GroupListProvider call({String? filter, String? sort, String? order}) =>
+      GroupListProvider._(
+        argument: (filter: filter, sort: sort, order: order),
+        from: this,
+      );
 
   @override
-  Override overrideWith(
-    FutureOr<List<Group>> Function(GroupListRef provider) create,
-  ) {
-    return ProviderOverride(
-      origin: this,
-      override: GroupListProvider._internal(
-        (ref) => create(ref as GroupListRef),
-        from: from,
-        name: null,
-        dependencies: null,
-        allTransitiveDependencies: null,
-        debugGetCreateSourceHash: null,
-        filter: filter,
-        sort: sort,
-        order: order,
-      ),
-    );
-  }
-
-  @override
-  AutoDisposeFutureProviderElement<List<Group>> createElement() {
-    return _GroupListProviderElement(this);
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return other is GroupListProvider &&
-        other.filter == filter &&
-        other.sort == sort &&
-        other.order == order;
-  }
-
-  @override
-  int get hashCode {
-    var hash = _SystemHash.combine(0, runtimeType.hashCode);
-    hash = _SystemHash.combine(hash, filter.hashCode);
-    hash = _SystemHash.combine(hash, sort.hashCode);
-    hash = _SystemHash.combine(hash, order.hashCode);
-
-    return _SystemHash.finish(hash);
-  }
+  String toString() => r'groupListProvider';
 }
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-mixin GroupListRef on AutoDisposeFutureProviderRef<List<Group>> {
-  /// The parameter `filter` of this provider.
-  String? get filter;
-
-  /// The parameter `sort` of this provider.
-  String? get sort;
-
-  /// The parameter `order` of this provider.
-  String? get order;
-}
-
-class _GroupListProviderElement
-    extends AutoDisposeFutureProviderElement<List<Group>>
-    with GroupListRef {
-  _GroupListProviderElement(super.provider);
-
-  @override
-  String? get filter => (origin as GroupListProvider).filter;
-  @override
-  String? get sort => (origin as GroupListProvider).sort;
-  @override
-  String? get order => (origin as GroupListProvider).order;
-}
-
-String _$groupDetailHash() => r'3f594e8678723457f64b25d54f44f59e1bc99cc7';
-
-/// See also [groupDetail].
 @ProviderFor(groupDetail)
-const groupDetailProvider = GroupDetailFamily();
+final groupDetailProvider = GroupDetailFamily._();
 
-/// See also [groupDetail].
-class GroupDetailFamily extends Family<AsyncValue<Group>> {
-  /// See also [groupDetail].
-  const GroupDetailFamily();
+final class GroupDetailProvider
+    extends $FunctionalProvider<AsyncValue<Group>, Group, FutureOr<Group>>
+    with $FutureModifier<Group>, $FutureProvider<Group> {
+  GroupDetailProvider._({
+    required GroupDetailFamily super.from,
+    required GroupId super.argument,
+  }) : super(
+         retry: null,
+         name: r'groupDetailProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
 
-  /// See also [groupDetail].
-  GroupDetailProvider call(GroupId id) {
-    return GroupDetailProvider(id);
+  @override
+  String debugGetCreateSourceHash() => _$groupDetailHash();
+
+  @override
+  String toString() {
+    return r'groupDetailProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<Group> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<Group> create(Ref ref) {
+    final argument = this.argument as GroupId;
+    return groupDetail(ref, argument);
   }
 
   @override
-  GroupDetailProvider getProviderOverride(
-    covariant GroupDetailProvider provider,
-  ) {
-    return call(provider.id);
+  bool operator ==(Object other) {
+    return other is GroupDetailProvider && other.argument == argument;
   }
 
-  static const Iterable<ProviderOrFamily>? _dependencies = null;
-
   @override
-  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
-
-  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
-      _allTransitiveDependencies;
-
-  @override
-  String? get name => r'groupDetailProvider';
+  int get hashCode {
+    return argument.hashCode;
+  }
 }
 
-/// See also [groupDetail].
-class GroupDetailProvider extends AutoDisposeFutureProvider<Group> {
-  /// See also [groupDetail].
-  GroupDetailProvider(GroupId id)
-    : this._internal(
-        (ref) => groupDetail(ref as GroupDetailRef, id),
-        from: groupDetailProvider,
+String _$groupDetailHash() => r'65a0a036ed5c7c000ded076b552213ad51e4a142';
+
+final class GroupDetailFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<Group>, GroupId> {
+  GroupDetailFamily._()
+    : super(
+        retry: null,
         name: r'groupDetailProvider',
-        debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-            ? null
-            : _$groupDetailHash,
-        dependencies: GroupDetailFamily._dependencies,
-        allTransitiveDependencies: GroupDetailFamily._allTransitiveDependencies,
-        id: id,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
       );
 
-  GroupDetailProvider._internal(
-    super._createNotifier, {
-    required super.name,
-    required super.dependencies,
-    required super.allTransitiveDependencies,
-    required super.debugGetCreateSourceHash,
-    required super.from,
-    required this.id,
-  }) : super.internal();
-
-  final GroupId id;
+  GroupDetailProvider call(GroupId id) =>
+      GroupDetailProvider._(argument: id, from: this);
 
   @override
-  Override overrideWith(
-    FutureOr<Group> Function(GroupDetailRef provider) create,
-  ) {
-    return ProviderOverride(
-      origin: this,
-      override: GroupDetailProvider._internal(
-        (ref) => create(ref as GroupDetailRef),
-        from: from,
-        name: null,
-        dependencies: null,
-        allTransitiveDependencies: null,
-        debugGetCreateSourceHash: null,
-        id: id,
-      ),
-    );
-  }
-
-  @override
-  AutoDisposeFutureProviderElement<Group> createElement() {
-    return _GroupDetailProviderElement(this);
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return other is GroupDetailProvider && other.id == id;
-  }
-
-  @override
-  int get hashCode {
-    var hash = _SystemHash.combine(0, runtimeType.hashCode);
-    hash = _SystemHash.combine(hash, id.hashCode);
-
-    return _SystemHash.finish(hash);
-  }
+  String toString() => r'groupDetailProvider';
 }
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-mixin GroupDetailRef on AutoDisposeFutureProviderRef<Group> {
-  /// The parameter `id` of this provider.
-  GroupId get id;
-}
-
-class _GroupDetailProviderElement
-    extends AutoDisposeFutureProviderElement<Group>
-    with GroupDetailRef {
-  _GroupDetailProviderElement(super.provider);
-
-  @override
-  GroupId get id => (origin as GroupDetailProvider).id;
-}
-
-String _$groupVisitsHash() => r'defe2c2abaf2c90ca7e260171895bdb65ec9a2f1';
-
-/// See also [groupVisits].
 @ProviderFor(groupVisits)
-const groupVisitsProvider = GroupVisitsFamily();
+final groupVisitsProvider = GroupVisitsFamily._();
 
-/// See also [groupVisits].
-class GroupVisitsFamily extends Family<AsyncValue<List<VisitSummary>>> {
-  /// See also [groupVisits].
-  const GroupVisitsFamily();
+final class GroupVisitsProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<VisitSummary>>,
+          List<VisitSummary>,
+          FutureOr<List<VisitSummary>>
+        >
+    with
+        $FutureModifier<List<VisitSummary>>,
+        $FutureProvider<List<VisitSummary>> {
+  GroupVisitsProvider._({
+    required GroupVisitsFamily super.from,
+    required GroupId super.argument,
+  }) : super(
+         retry: null,
+         name: r'groupVisitsProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
 
-  /// See also [groupVisits].
-  GroupVisitsProvider call(GroupId id) {
-    return GroupVisitsProvider(id);
+  @override
+  String debugGetCreateSourceHash() => _$groupVisitsHash();
+
+  @override
+  String toString() {
+    return r'groupVisitsProvider'
+        ''
+        '($argument)';
   }
 
+  @$internal
   @override
-  GroupVisitsProvider getProviderOverride(
-    covariant GroupVisitsProvider provider,
-  ) {
-    return call(provider.id);
-  }
-
-  static const Iterable<ProviderOrFamily>? _dependencies = null;
+  $FutureProviderElement<List<VisitSummary>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
 
   @override
-  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
-
-  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
-      _allTransitiveDependencies;
-
-  @override
-  String? get name => r'groupVisitsProvider';
-}
-
-/// See also [groupVisits].
-class GroupVisitsProvider
-    extends AutoDisposeFutureProvider<List<VisitSummary>> {
-  /// See also [groupVisits].
-  GroupVisitsProvider(GroupId id)
-    : this._internal(
-        (ref) => groupVisits(ref as GroupVisitsRef, id),
-        from: groupVisitsProvider,
-        name: r'groupVisitsProvider',
-        debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-            ? null
-            : _$groupVisitsHash,
-        dependencies: GroupVisitsFamily._dependencies,
-        allTransitiveDependencies: GroupVisitsFamily._allTransitiveDependencies,
-        id: id,
-      );
-
-  GroupVisitsProvider._internal(
-    super._createNotifier, {
-    required super.name,
-    required super.dependencies,
-    required super.allTransitiveDependencies,
-    required super.debugGetCreateSourceHash,
-    required super.from,
-    required this.id,
-  }) : super.internal();
-
-  final GroupId id;
-
-  @override
-  Override overrideWith(
-    FutureOr<List<VisitSummary>> Function(GroupVisitsRef provider) create,
-  ) {
-    return ProviderOverride(
-      origin: this,
-      override: GroupVisitsProvider._internal(
-        (ref) => create(ref as GroupVisitsRef),
-        from: from,
-        name: null,
-        dependencies: null,
-        allTransitiveDependencies: null,
-        debugGetCreateSourceHash: null,
-        id: id,
-      ),
-    );
-  }
-
-  @override
-  AutoDisposeFutureProviderElement<List<VisitSummary>> createElement() {
-    return _GroupVisitsProviderElement(this);
+  FutureOr<List<VisitSummary>> create(Ref ref) {
+    final argument = this.argument as GroupId;
+    return groupVisits(ref, argument);
   }
 
   @override
   bool operator ==(Object other) {
-    return other is GroupVisitsProvider && other.id == id;
+    return other is GroupVisitsProvider && other.argument == argument;
   }
 
   @override
   int get hashCode {
-    var hash = _SystemHash.combine(0, runtimeType.hashCode);
-    hash = _SystemHash.combine(hash, id.hashCode);
-
-    return _SystemHash.finish(hash);
+    return argument.hashCode;
   }
 }
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-mixin GroupVisitsRef on AutoDisposeFutureProviderRef<List<VisitSummary>> {
-  /// The parameter `id` of this provider.
-  GroupId get id;
-}
+String _$groupVisitsHash() => r'8f1761b2361352fb7aa6f137da2492af477c60e8';
 
-class _GroupVisitsProviderElement
-    extends AutoDisposeFutureProviderElement<List<VisitSummary>>
-    with GroupVisitsRef {
-  _GroupVisitsProviderElement(super.provider);
+final class GroupVisitsFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<List<VisitSummary>>, GroupId> {
+  GroupVisitsFamily._()
+    : super(
+        retry: null,
+        name: r'groupVisitsProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  GroupVisitsProvider call(GroupId id) =>
+      GroupVisitsProvider._(argument: id, from: this);
 
   @override
-  GroupId get id => (origin as GroupVisitsProvider).id;
+  String toString() => r'groupVisitsProvider';
 }
-
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

@@ -6,22 +6,45 @@ part of 'api_client.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$apiClientHash() => r'0b2c10aaf17794c67ea038045b6210ffb16f3a5a';
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
 
-/// See also [apiClient].
 @ProviderFor(apiClient)
-final apiClientProvider = AutoDisposeProvider<Dio>.internal(
-  apiClient,
-  name: r'apiClientProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$apiClientHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
+final apiClientProvider = ApiClientProvider._();
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-typedef ApiClientRef = AutoDisposeProviderRef<Dio>;
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
+final class ApiClientProvider extends $FunctionalProvider<Dio, Dio, Dio>
+    with $Provider<Dio> {
+  ApiClientProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'apiClientProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$apiClientHash();
+
+  @$internal
+  @override
+  $ProviderElement<Dio> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  Dio create(Ref ref) {
+    return apiClient(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(Dio value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<Dio>(value),
+    );
+  }
+}
+
+String _$apiClientHash() => r'60ab4694ec833a1dd3d9e5d3bd7cede8b23c926c';

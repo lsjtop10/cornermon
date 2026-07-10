@@ -6,58 +6,131 @@ part of 'report_providers.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$reportApiHash() => r'40f666cfbc3210748cd035fa9a87c507c253fbf7';
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
 
-/// See also [reportApi].
 @ProviderFor(reportApi)
-final reportApiProvider = AutoDisposeProvider<FReportsAnalyticsApi>.internal(
-  reportApi,
-  name: r'reportApiProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$reportApiHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
+final reportApiProvider = ReportApiProvider._();
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-typedef ReportApiRef = AutoDisposeProviderRef<FReportsAnalyticsApi>;
-String _$currentReportHash() => r'0e4edfb8237fa7bcf4730e49213ffdafb949ade3';
+final class ReportApiProvider
+    extends
+        $FunctionalProvider<
+          FReportsAnalyticsApi,
+          FReportsAnalyticsApi,
+          FReportsAnalyticsApi
+        >
+    with $Provider<FReportsAnalyticsApi> {
+  ReportApiProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'reportApiProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
-/// See also [currentReport].
-@ProviderFor(currentReport)
-final currentReportProvider = AutoDisposeFutureProvider<CampReport>.internal(
-  currentReport,
-  name: r'currentReportProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$currentReportHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
+  @override
+  String debugGetCreateSourceHash() => _$reportApiHash();
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-typedef CurrentReportRef = AutoDisposeFutureProviderRef<CampReport>;
-String _$liveSummaryHash() => r'4bdc3438f64da5e839f07d847dbe108d77793278';
+  @$internal
+  @override
+  $ProviderElement<FReportsAnalyticsApi> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
 
-/// See also [liveSummary].
-@ProviderFor(liveSummary)
-final liveSummaryProvider =
-    AutoDisposeFutureProvider<ReportsLiveSummaryGet200Response>.internal(
-      liveSummary,
-      name: r'liveSummaryProvider',
-      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-          ? null
-          : _$liveSummaryHash,
-      dependencies: null,
-      allTransitiveDependencies: null,
+  @override
+  FReportsAnalyticsApi create(Ref ref) {
+    return reportApi(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(FReportsAnalyticsApi value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<FReportsAnalyticsApi>(value),
     );
+  }
+}
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-typedef LiveSummaryRef =
-    AutoDisposeFutureProviderRef<ReportsLiveSummaryGet200Response>;
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
+String _$reportApiHash() => r'b17fbb50b4d085c472eea1649357b0ffa2ec2ec1';
+
+@ProviderFor(currentReport)
+final currentReportProvider = CurrentReportProvider._();
+
+final class CurrentReportProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<CampReport>,
+          CampReport,
+          FutureOr<CampReport>
+        >
+    with $FutureModifier<CampReport>, $FutureProvider<CampReport> {
+  CurrentReportProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'currentReportProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$currentReportHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<CampReport> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<CampReport> create(Ref ref) {
+    return currentReport(ref);
+  }
+}
+
+String _$currentReportHash() => r'4199b44103de722c1a0216162ecf82dd1058e435';
+
+@ProviderFor(liveSummary)
+final liveSummaryProvider = LiveSummaryProvider._();
+
+final class LiveSummaryProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<ReportsLiveSummaryGet200Response>,
+          ReportsLiveSummaryGet200Response,
+          FutureOr<ReportsLiveSummaryGet200Response>
+        >
+    with
+        $FutureModifier<ReportsLiveSummaryGet200Response>,
+        $FutureProvider<ReportsLiveSummaryGet200Response> {
+  LiveSummaryProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'liveSummaryProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$liveSummaryHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<ReportsLiveSummaryGet200Response> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<ReportsLiveSummaryGet200Response> create(Ref ref) {
+    return liveSummary(ref);
+  }
+}
+
+String _$liveSummaryHash() => r'03e4bc0630091a3d80862975c98faf784ee6204a';

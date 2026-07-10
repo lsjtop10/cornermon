@@ -6,14 +6,14 @@ import 'camp_providers.dart';
 part 'corner_track_providers.g.dart';
 
 @riverpod
-Future<List<Corner>> cornerList(CornerListRef ref) async {
+Future<List<Corner>> cornerList(Ref ref) async {
   final apiInstance = ref.watch(campApiProvider);
   final response = await apiInstance.cornersGet();
   return response.data?.corners?.toList() ?? [];
 }
 
 @riverpod
-Future<Corner> cornerDetail(CornerDetailRef ref, CornerId id) async {
+Future<Corner> cornerDetail(Ref ref, CornerId id) async {
   final list = await ref.watch(cornerListProvider.future);
   return list.firstWhere(
     (c) => c.id == id.value,
@@ -22,7 +22,7 @@ Future<Corner> cornerDetail(CornerDetailRef ref, CornerId id) async {
 }
 
 @riverpod
-Future<List<Track>> trackList(TrackListRef ref) async {
+Future<List<Track>> trackList(Ref ref) async {
   final apiInstance = ref.watch(campApiProvider);
   final response = await apiInstance.tracksGet();
   return response.data?.tracks?.toList() ?? [];

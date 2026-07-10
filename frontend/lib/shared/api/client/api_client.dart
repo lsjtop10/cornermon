@@ -4,7 +4,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 part 'api_client.g.dart';
 
 @riverpod
-Dio apiClient(ApiClientRef ref) {
+Dio apiClient(Ref ref) {
   final dio = Dio(
     BaseOptions(
       baseUrl: 'http://localhost/api/v1',

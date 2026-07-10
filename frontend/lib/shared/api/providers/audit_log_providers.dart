@@ -5,14 +5,14 @@ import '../client/api_client.dart';
 part 'audit_log_providers.g.dart';
 
 @riverpod
-GAuditLogsApi auditLogApi(AuditLogApiRef ref) {
+GAuditLogsApi auditLogApi(Ref ref) {
   final dio = ref.watch(apiClientProvider);
   return GAuditLogsApi(dio, serializers);
 }
 
 @riverpod
 Future<AuditLogsGet200Response> auditLogList(
-  AuditLogListRef ref, {
+  Ref ref, {
   int? limit,
   DateTime? before,
   String? action,

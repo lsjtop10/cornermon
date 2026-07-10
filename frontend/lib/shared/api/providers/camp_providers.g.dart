@@ -6,278 +6,195 @@ part of 'camp_providers.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$campApiHash() => r'9e43a92deba9f5cc68f47b0f993d104fc89f9cc8';
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
 
-/// See also [campApi].
 @ProviderFor(campApi)
-final campApiProvider = AutoDisposeProvider<BCampCornerTrackApi>.internal(
-  campApi,
-  name: r'campApiProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$campApiHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
+final campApiProvider = CampApiProvider._();
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-typedef CampApiRef = AutoDisposeProviderRef<BCampCornerTrackApi>;
-String _$campListHash() => r'a1080babedc675f9d526c63167502b32226ba29e';
+final class CampApiProvider
+    extends
+        $FunctionalProvider<
+          BCampCornerTrackApi,
+          BCampCornerTrackApi,
+          BCampCornerTrackApi
+        >
+    with $Provider<BCampCornerTrackApi> {
+  CampApiProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'campApiProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
-/// Copied from Dart SDK
-class _SystemHash {
-  _SystemHash._();
+  @override
+  String debugGetCreateSourceHash() => _$campApiHash();
 
-  static int combine(int hash, int value) {
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + value);
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + ((0x0007ffff & hash) << 10));
-    return hash ^ (hash >> 6);
+  @$internal
+  @override
+  $ProviderElement<BCampCornerTrackApi> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  BCampCornerTrackApi create(Ref ref) {
+    return campApi(ref);
   }
 
-  static int finish(int hash) {
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + ((0x03ffffff & hash) << 3));
-    // ignore: parameter_assignments
-    hash = hash ^ (hash >> 11);
-    return 0x1fffffff & (hash + ((0x00003fff & hash) << 15));
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(BCampCornerTrackApi value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<BCampCornerTrackApi>(value),
+    );
   }
 }
 
-/// See also [campList].
+String _$campApiHash() => r'd899e0f180d7e6c17f0073856e2e1c1baf9899b1';
+
 @ProviderFor(campList)
-const campListProvider = CampListFamily();
+final campListProvider = CampListFamily._();
 
-/// See also [campList].
-class CampListFamily extends Family<AsyncValue<List<Camp>>> {
-  /// See also [campList].
-  const CampListFamily();
+final class CampListProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<Camp>>,
+          List<Camp>,
+          FutureOr<List<Camp>>
+        >
+    with $FutureModifier<List<Camp>>, $FutureProvider<List<Camp>> {
+  CampListProvider._({
+    required CampListFamily super.from,
+    required CampStatus? super.argument,
+  }) : super(
+         retry: null,
+         name: r'campListProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
 
-  /// See also [campList].
-  CampListProvider call({CampStatus? status}) {
-    return CampListProvider(status: status);
+  @override
+  String debugGetCreateSourceHash() => _$campListHash();
+
+  @override
+  String toString() {
+    return r'campListProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<List<Camp>> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<List<Camp>> create(Ref ref) {
+    final argument = this.argument as CampStatus?;
+    return campList(ref, status: argument);
   }
 
   @override
-  CampListProvider getProviderOverride(covariant CampListProvider provider) {
-    return call(status: provider.status);
+  bool operator ==(Object other) {
+    return other is CampListProvider && other.argument == argument;
   }
 
-  static const Iterable<ProviderOrFamily>? _dependencies = null;
-
   @override
-  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
-
-  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
-      _allTransitiveDependencies;
-
-  @override
-  String? get name => r'campListProvider';
+  int get hashCode {
+    return argument.hashCode;
+  }
 }
 
-/// See also [campList].
-class CampListProvider extends AutoDisposeFutureProvider<List<Camp>> {
-  /// See also [campList].
-  CampListProvider({CampStatus? status})
-    : this._internal(
-        (ref) => campList(ref as CampListRef, status: status),
-        from: campListProvider,
+String _$campListHash() => r'0e833c572bff278e58ecec0247e9a136fca8f809';
+
+final class CampListFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<List<Camp>>, CampStatus?> {
+  CampListFamily._()
+    : super(
+        retry: null,
         name: r'campListProvider',
-        debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-            ? null
-            : _$campListHash,
-        dependencies: CampListFamily._dependencies,
-        allTransitiveDependencies: CampListFamily._allTransitiveDependencies,
-        status: status,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
       );
 
-  CampListProvider._internal(
-    super._createNotifier, {
-    required super.name,
-    required super.dependencies,
-    required super.allTransitiveDependencies,
-    required super.debugGetCreateSourceHash,
-    required super.from,
-    required this.status,
-  }) : super.internal();
-
-  final CampStatus? status;
+  CampListProvider call({CampStatus? status}) =>
+      CampListProvider._(argument: status, from: this);
 
   @override
-  Override overrideWith(
-    FutureOr<List<Camp>> Function(CampListRef provider) create,
-  ) {
-    return ProviderOverride(
-      origin: this,
-      override: CampListProvider._internal(
-        (ref) => create(ref as CampListRef),
-        from: from,
-        name: null,
-        dependencies: null,
-        allTransitiveDependencies: null,
-        debugGetCreateSourceHash: null,
-        status: status,
-      ),
-    );
-  }
-
-  @override
-  AutoDisposeFutureProviderElement<List<Camp>> createElement() {
-    return _CampListProviderElement(this);
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return other is CampListProvider && other.status == status;
-  }
-
-  @override
-  int get hashCode {
-    var hash = _SystemHash.combine(0, runtimeType.hashCode);
-    hash = _SystemHash.combine(hash, status.hashCode);
-
-    return _SystemHash.finish(hash);
-  }
+  String toString() => r'campListProvider';
 }
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-mixin CampListRef on AutoDisposeFutureProviderRef<List<Camp>> {
-  /// The parameter `status` of this provider.
-  CampStatus? get status;
-}
-
-class _CampListProviderElement
-    extends AutoDisposeFutureProviderElement<List<Camp>>
-    with CampListRef {
-  _CampListProviderElement(super.provider);
-
-  @override
-  CampStatus? get status => (origin as CampListProvider).status;
-}
-
-String _$campDetailHash() => r'1763f5748f17f28e1a17e19ca8f295e1a1598c6c';
-
-/// See also [campDetail].
 @ProviderFor(campDetail)
-const campDetailProvider = CampDetailFamily();
+final campDetailProvider = CampDetailFamily._();
 
-/// See also [campDetail].
-class CampDetailFamily extends Family<AsyncValue<Camp>> {
-  /// See also [campDetail].
-  const CampDetailFamily();
+final class CampDetailProvider
+    extends $FunctionalProvider<AsyncValue<Camp>, Camp, FutureOr<Camp>>
+    with $FutureModifier<Camp>, $FutureProvider<Camp> {
+  CampDetailProvider._({
+    required CampDetailFamily super.from,
+    required CampId super.argument,
+  }) : super(
+         retry: null,
+         name: r'campDetailProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
 
-  /// See also [campDetail].
-  CampDetailProvider call(CampId id) {
-    return CampDetailProvider(id);
+  @override
+  String debugGetCreateSourceHash() => _$campDetailHash();
+
+  @override
+  String toString() {
+    return r'campDetailProvider'
+        ''
+        '($argument)';
   }
 
+  @$internal
   @override
-  CampDetailProvider getProviderOverride(
-    covariant CampDetailProvider provider,
-  ) {
-    return call(provider.id);
-  }
-
-  static const Iterable<ProviderOrFamily>? _dependencies = null;
+  $FutureProviderElement<Camp> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
 
   @override
-  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
-
-  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
-      _allTransitiveDependencies;
-
-  @override
-  String? get name => r'campDetailProvider';
-}
-
-/// See also [campDetail].
-class CampDetailProvider extends AutoDisposeFutureProvider<Camp> {
-  /// See also [campDetail].
-  CampDetailProvider(CampId id)
-    : this._internal(
-        (ref) => campDetail(ref as CampDetailRef, id),
-        from: campDetailProvider,
-        name: r'campDetailProvider',
-        debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-            ? null
-            : _$campDetailHash,
-        dependencies: CampDetailFamily._dependencies,
-        allTransitiveDependencies: CampDetailFamily._allTransitiveDependencies,
-        id: id,
-      );
-
-  CampDetailProvider._internal(
-    super._createNotifier, {
-    required super.name,
-    required super.dependencies,
-    required super.allTransitiveDependencies,
-    required super.debugGetCreateSourceHash,
-    required super.from,
-    required this.id,
-  }) : super.internal();
-
-  final CampId id;
-
-  @override
-  Override overrideWith(
-    FutureOr<Camp> Function(CampDetailRef provider) create,
-  ) {
-    return ProviderOverride(
-      origin: this,
-      override: CampDetailProvider._internal(
-        (ref) => create(ref as CampDetailRef),
-        from: from,
-        name: null,
-        dependencies: null,
-        allTransitiveDependencies: null,
-        debugGetCreateSourceHash: null,
-        id: id,
-      ),
-    );
-  }
-
-  @override
-  AutoDisposeFutureProviderElement<Camp> createElement() {
-    return _CampDetailProviderElement(this);
+  FutureOr<Camp> create(Ref ref) {
+    final argument = this.argument as CampId;
+    return campDetail(ref, argument);
   }
 
   @override
   bool operator ==(Object other) {
-    return other is CampDetailProvider && other.id == id;
+    return other is CampDetailProvider && other.argument == argument;
   }
 
   @override
   int get hashCode {
-    var hash = _SystemHash.combine(0, runtimeType.hashCode);
-    hash = _SystemHash.combine(hash, id.hashCode);
-
-    return _SystemHash.finish(hash);
+    return argument.hashCode;
   }
 }
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-mixin CampDetailRef on AutoDisposeFutureProviderRef<Camp> {
-  /// The parameter `id` of this provider.
-  CampId get id;
-}
+String _$campDetailHash() => r'78d465f45be078b937bc48beccb2b6e9fc46c674';
 
-class _CampDetailProviderElement extends AutoDisposeFutureProviderElement<Camp>
-    with CampDetailRef {
-  _CampDetailProviderElement(super.provider);
+final class CampDetailFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<Camp>, CampId> {
+  CampDetailFamily._()
+    : super(
+        retry: null,
+        name: r'campDetailProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  CampDetailProvider call(CampId id) =>
+      CampDetailProvider._(argument: id, from: this);
 
   @override
-  CampId get id => (origin as CampDetailProvider).id;
+  String toString() => r'campDetailProvider';
 }
-
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

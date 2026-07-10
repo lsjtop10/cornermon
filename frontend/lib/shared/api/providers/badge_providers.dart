@@ -6,7 +6,7 @@ part 'badge_providers.g.dart';
 
 @riverpod
 Future<List<Badge>> badgeList(
-  BadgeListRef ref, {
+  Ref ref, {
   BadgeStatus? status,
   String? search,
 }) async {

@@ -7,14 +7,14 @@ import 'camp_providers.dart';
 part 'group_providers.g.dart';
 
 @riverpod
-CVisitScanFlowApi visitScanFlowApi(VisitScanFlowApiRef ref) {
+CVisitScanFlowApi visitScanFlowApi(Ref ref) {
   final dio = ref.watch(apiClientProvider);
   return CVisitScanFlowApi(dio, serializers);
 }
 
 @riverpod
 Future<List<Group>> groupList(
-  GroupListRef ref, {
+  Ref ref, {
   String? filter,
   String? sort,
   String? order,
@@ -29,7 +29,7 @@ Future<List<Group>> groupList(
 }
 
 @riverpod
-Future<Group> groupDetail(GroupDetailRef ref, GroupId id) async {
+Future<Group> groupDetail(Ref ref, GroupId id) async {
   final apiInstance = ref.watch(campApiProvider);
   final response = await apiInstance.groupsIdGet(id: id.value);
   final data = response.data;
@@ -40,7 +40,7 @@ Future<Group> groupDetail(GroupDetailRef ref, GroupId id) async {
 }
 
 @riverpod
-Future<List<VisitSummary>> groupVisits(GroupVisitsRef ref, GroupId id) async {
+Future<List<VisitSummary>> groupVisits(Ref ref, GroupId id) async {
   final apiInstance = ref.watch(visitScanFlowApiProvider);
   final response = await apiInstance.groupsIdVisitsGet(id: id.value);
   return response.data?.visits?.toList() ?? [];

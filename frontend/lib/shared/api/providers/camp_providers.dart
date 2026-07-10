@@ -6,20 +6,20 @@ import '../ids.dart';
 part 'camp_providers.g.dart';
 
 @riverpod
-BCampCornerTrackApi campApi(CampApiRef ref) {
+BCampCornerTrackApi campApi(Ref ref) {
   final dio = ref.watch(apiClientProvider);
   return BCampCornerTrackApi(dio, serializers);
 }
 
 @riverpod
-Future<List<Camp>> campList(CampListRef ref, {CampStatus? status}) async {
+Future<List<Camp>> campList(Ref ref, {CampStatus? status}) async {
   final apiInstance = ref.watch(campApiProvider);
   final response = await apiInstance.campsGet(status: status);
   return response.data?.camps?.toList() ?? [];
 }
 
 @riverpod
-Future<Camp> campDetail(CampDetailRef ref, CampId id) async {
+Future<Camp> campDetail(Ref ref, CampId id) async {
   final apiInstance = ref.watch(campApiProvider);
   final response = await apiInstance.campsIdGet(id: id.value);
   final data = response.data;
