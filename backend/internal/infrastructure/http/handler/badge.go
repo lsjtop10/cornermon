@@ -3,15 +3,32 @@ package handler
 import (
 	"net/http"
 
+	"cornermon/backend/internal/domain"
 	"cornermon/backend/internal/infrastructure/http/dto"
+	"cornermon/backend/internal/usecase"
 	"github.com/labstack/echo/v4"
 )
 
 type BadgeHandler struct {
+	badgeUC *usecase.BadgeService
 }
 
-func NewBadgeHandler() *BadgeHandler {
-	return &BadgeHandler{}
+func NewBadgeHandler(badgeUC *usecase.BadgeService) *BadgeHandler {
+	return &BadgeHandler{badgeUC: badgeUC}
+}
+
+func mapBadgeToDTO(b *domain.Badge) dto.Badge {
+	res := dto.Badge{
+		ID:        string(b.ID),
+		ShortID:   b.ShortID,
+		QRPayload: b.QRPayload,
+		Status:    string(b.Status),
+	}
+	if gid, ok := b.AssignedGroupID.Value(); ok {
+		s := string(gid)
+		res.AssignedGroupID = &s
+	}
+	return res
 }
 
 // @Summary      전체 배지 목록 조회
@@ -22,7 +39,15 @@ func NewBadgeHandler() *BadgeHandler {
 // @Success      200 {array} dto.Badge
 // @Router       /badges [get]
 func (h *BadgeHandler) ListBadges(c echo.Context) error {
-	return c.JSON(http.StatusOK, []dto.Badge{})
+	badges, err := h.badgeUC.ListBadges(c.Request().Context())
+	if err != nil {
+		return err
+	}
+	res := make([]dto.Badge, len(badges))
+	for i, b := range badges {
+		res[i] = mapBadgeToDTO(b)
+	}
+	return c.JSON(http.StatusOK, res)
 }
 
 type BulkGenerateBadgesRequest struct {
@@ -39,7 +64,19 @@ type BulkGenerateBadgesRequest struct {
 // @Success      201 {array} dto.Badge
 // @Router       /badges/bulk-generate [post]
 func (h *BadgeHandler) BulkGenerateBadges(c echo.Context) error {
-	return c.JSON(http.StatusCreated, []dto.Badge{})
+	var req BulkGenerateBadgesRequest
+	if err := c.Bind(&req); err != nil {
+		return err
+	}
+	badges, err := h.badgeUC.IssueInitialBadges(c.Request().Context(), req.Count)
+	if err != nil {
+		return err
+	}
+	res := make([]dto.Badge, len(badges))
+	for i, b := range badges {
+		res[i] = mapBadgeToDTO(b)
+	}
+	return c.JSON(http.StatusCreated, res)
 }
 
 // @Summary      QR 배지 인쇄용 목록 내보내기
@@ -50,7 +87,11 @@ func (h *BadgeHandler) BulkGenerateBadges(c echo.Context) error {
 // @Success      200 "CSV 데이터"
 // @Router       /badges/export [get]
 func (h *BadgeHandler) ExportBadges(c echo.Context) error {
-	return c.String(http.StatusOK, "csv")
+	csvData, err := h.badgeUC.ExportBadges(c.Request().Context())
+	if err != nil {
+		return err
+	}
+	return c.Blob(http.StatusOK, "text/csv", csvData)
 }
 
 type AssignBadgeRequest struct {
@@ -68,7 +109,7 @@ type AssignBadgeRequest struct {
 // @Success      200 {object} dto.Badge
 // @Router       /badges/{id}/register [post]
 func (h *BadgeHandler) AssignBadge(c echo.Context) error {
-	return c.JSON(http.StatusOK, dto.Badge{})
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not implemented yet")
 }
 
 type ScanAssignBadgeRequest struct {
@@ -86,5 +127,5 @@ type ScanAssignBadgeRequest struct {
 // @Success      200 {object} dto.Badge
 // @Router       /badges/scan-register [post]
 func (h *BadgeHandler) ScanAssignBadge(c echo.Context) error {
-	return c.JSON(http.StatusOK, dto.Badge{})
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not implemented yet")
 }

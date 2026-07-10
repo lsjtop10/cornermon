@@ -1,21 +1,36 @@
 package handler
 
 import (
+	"context"
 	"net/http"
+	"time"
 
+	"cornermon/backend/internal/domain"
 	"cornermon/backend/internal/infrastructure/http/dto"
+
 	"github.com/labstack/echo/v4"
 )
 
-type DeviceHandler struct {
+type DeviceTrustUsecase interface {
+	RequestRegistration(ctx context.Context, campID domain.CampID, deviceName string) (string, *domain.DeviceRegistration, error)
+	ApproveDevice(ctx context.Context, regID domain.DeviceRegistrationID, actorAdminID domain.AdminID) error
+	RejectDevice(ctx context.Context, regID domain.DeviceRegistrationID, actorAdminID domain.AdminID) error
+	RevokeDevice(ctx context.Context, regID domain.DeviceRegistrationID, actorAdminID domain.AdminID) error
+	ReviewDeviceTrustRequests(ctx context.Context, campID domain.CampID, status *domain.DeviceRegistrationStatus) ([]*domain.DeviceRegistration, error)
 }
 
-func NewDeviceHandler() *DeviceHandler {
-	return &DeviceHandler{}
+type DeviceHandler struct {
+	deviceTrust DeviceTrustUsecase
+}
+
+func NewDeviceHandler(deviceTrust DeviceTrustUsecase) *DeviceHandler {
+	return &DeviceHandler{
+		deviceTrust: deviceTrust,
+	}
 }
 
 type DeviceRegistrationRequest struct {
-	DeviceID   string `json:"deviceId"`
+	CampID     string `json:"campId"` // Using campId because RequestRegistration expects a campID
 	DeviceName string `json:"deviceName"`
 	Role       string `json:"role" enums:"ADMIN,FACILITATOR"`
 }
@@ -29,7 +44,31 @@ type DeviceRegistrationRequest struct {
 // @Success      201 {object} dto.DeviceRegistration
 // @Router       /device-registrations [post]
 func (h *DeviceHandler) RequestRegistration(c echo.Context) error {
-	return c.JSON(http.StatusCreated, dto.DeviceRegistration{})
+	var req DeviceRegistrationRequest
+	if err := c.Bind(&req); err != nil {
+		return c.JSON(http.StatusBadRequest, dto.ErrorResponse{Code: "BAD_REQUEST", Message: "invalid request"})
+	}
+
+	token, reg, err := h.deviceTrust.RequestRegistration(c.Request().Context(), domain.CampID(req.CampID), req.DeviceName)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()})
+	}
+
+	c.Response().Header().Set("X-Device-Token", token)
+
+	var approvedAt *time.Time
+	if reg.ApprovedAt.IsSet() {
+		t, _ := reg.ApprovedAt.Value()
+		approvedAt = &t
+	}
+
+	return c.JSON(http.StatusCreated, dto.DeviceRegistration{
+		ID:         string(reg.ID),
+		DeviceName: reg.DeviceName,
+		Status:     string(reg.Status),
+		CreatedAt:  time.Now(),
+		ApprovedAt: approvedAt,
+	})
 }
 
 // @Summary      기기 등록 목록 조회
@@ -40,7 +79,40 @@ func (h *DeviceHandler) RequestRegistration(c echo.Context) error {
 // @Success      200 {array} dto.DeviceRegistration
 // @Router       /device-registrations [get]
 func (h *DeviceHandler) ListRegistrations(c echo.Context) error {
-	return c.JSON(http.StatusOK, []dto.DeviceRegistration{})
+	campID := c.QueryParam("campId")
+	if campID == "" {
+		return c.JSON(http.StatusBadRequest, dto.ErrorResponse{Code: "BAD_REQUEST", Message: "missing campId"})
+	}
+
+	statusStr := c.QueryParam("status")
+	var statusPtr *domain.DeviceRegistrationStatus
+	if statusStr != "" {
+		st := domain.DeviceRegistrationStatus(statusStr)
+		statusPtr = &st
+	}
+
+	devices, err := h.deviceTrust.ReviewDeviceTrustRequests(c.Request().Context(), domain.CampID(campID), statusPtr)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()})
+	}
+
+	res := make([]dto.DeviceRegistration, len(devices))
+	for i, d := range devices {
+		var approvedAt *time.Time
+		if d.ApprovedAt.IsSet() {
+			t, _ := d.ApprovedAt.Value()
+			approvedAt = &t
+		}
+		res[i] = dto.DeviceRegistration{
+			ID:         string(d.ID),
+			DeviceName: d.DeviceName,
+			Status:     string(d.Status),
+			CreatedAt:  time.Now(),
+			ApprovedAt: approvedAt,
+		}
+	}
+
+	return c.JSON(http.StatusOK, res)
 }
 
 // @Summary      기기 승인
@@ -52,7 +124,18 @@ func (h *DeviceHandler) ListRegistrations(c echo.Context) error {
 // @Success      200 {object} dto.DeviceRegistration
 // @Router       /device-registrations/{id}/approve [post]
 func (h *DeviceHandler) ApproveDevice(c echo.Context) error {
-	return c.JSON(http.StatusOK, dto.DeviceRegistration{})
+	session, ok := c.Get("adminSession").(*domain.AdminSession)
+	if !ok {
+		return c.JSON(http.StatusUnauthorized, dto.ErrorResponse{Code: "UNAUTHORIZED", Message: "unauthorized"})
+	}
+	regID := domain.DeviceRegistrationID(c.Param("id"))
+
+	err := h.deviceTrust.ApproveDevice(c.Request().Context(), regID, session.AdminID)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()})
+	}
+
+	return c.NoContent(http.StatusOK)
 }
 
 // @Summary      기기 거절
@@ -64,7 +147,18 @@ func (h *DeviceHandler) ApproveDevice(c echo.Context) error {
 // @Success      200 {object} dto.DeviceRegistration
 // @Router       /device-registrations/{id}/reject [post]
 func (h *DeviceHandler) RejectDevice(c echo.Context) error {
-	return c.JSON(http.StatusOK, dto.DeviceRegistration{})
+	session, ok := c.Get("adminSession").(*domain.AdminSession)
+	if !ok {
+		return c.JSON(http.StatusUnauthorized, dto.ErrorResponse{Code: "UNAUTHORIZED", Message: "unauthorized"})
+	}
+	regID := domain.DeviceRegistrationID(c.Param("id"))
+
+	err := h.deviceTrust.RejectDevice(c.Request().Context(), regID, session.AdminID)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()})
+	}
+
+	return c.NoContent(http.StatusOK)
 }
 
 // @Summary      기기 신뢰 취소 (폐기/분실)
@@ -76,5 +170,16 @@ func (h *DeviceHandler) RejectDevice(c echo.Context) error {
 // @Success      200 {object} dto.DeviceRegistration
 // @Router       /device-registrations/{id}/revoke [post]
 func (h *DeviceHandler) RevokeDevice(c echo.Context) error {
-	return c.JSON(http.StatusOK, dto.DeviceRegistration{})
+	session, ok := c.Get("adminSession").(*domain.AdminSession)
+	if !ok {
+		return c.JSON(http.StatusUnauthorized, dto.ErrorResponse{Code: "UNAUTHORIZED", Message: "unauthorized"})
+	}
+	regID := domain.DeviceRegistrationID(c.Param("id"))
+
+	err := h.deviceTrust.RevokeDevice(c.Request().Context(), regID, session.AdminID)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()})
+	}
+
+	return c.NoContent(http.StatusOK)
 }

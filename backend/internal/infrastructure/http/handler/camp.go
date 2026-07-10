@@ -3,15 +3,44 @@ package handler
 import (
 	"net/http"
 
+	"cornermon/backend/internal/domain"
 	"cornermon/backend/internal/infrastructure/http/dto"
+	"cornermon/backend/internal/usecase"
+
 	"github.com/labstack/echo/v4"
 )
 
 type CampHandler struct {
+	svc *usecase.CampService
 }
 
-func NewCampHandler() *CampHandler {
-	return &CampHandler{}
+func NewCampHandler(svc *usecase.CampService) *CampHandler {
+	return &CampHandler{svc: svc}
+}
+
+func getAdminID(c echo.Context) domain.AdminID {
+	val := c.Get("adminId")
+	if val != nil {
+		if s, ok := val.(string); ok {
+			return domain.AdminID(s)
+		}
+	}
+	return domain.AdminID("admin")
+}
+
+func mapDomainCampToDTO(camp *domain.Camp) dto.Camp {
+	if camp == nil {
+		return dto.Camp{}
+	}
+	return dto.Camp{
+		ID:                   string(camp.ID),
+		Name:                 camp.Name,
+		StartAt:              camp.StartAt,
+		EndAt:                camp.EndAt,
+		Status:               string(camp.Status),
+		BottleneckMinSamples: camp.BottleneckMinSamples,
+		BottleneckRatioPct:   camp.BottleneckRatioPct,
+	}
 }
 
 // @Summary      캠프 목록 조회
@@ -23,7 +52,15 @@ func NewCampHandler() *CampHandler {
 // @Failure      401 {object} dto.ErrorResponse
 // @Router       /camps [get]
 func (h *CampHandler) ListCamps(c echo.Context) error {
-	return c.JSON(http.StatusOK, []dto.Camp{})
+	camps, err := h.svc.ListCamps(c.Request().Context())
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Code: "INTERNAL_ERROR", Message: err.Error()})
+	}
+	res := make([]dto.Camp, len(camps))
+	for i, cp := range camps {
+		res[i] = mapDomainCampToDTO(cp)
+	}
+	return c.JSON(http.StatusOK, res)
 }
 
 type CreateCampRequest struct {
@@ -42,7 +79,15 @@ type CreateCampRequest struct {
 // @Failure      401 {object} dto.ErrorResponse
 // @Router       /camps [post]
 func (h *CampHandler) CreateCamp(c echo.Context) error {
-	return c.JSON(http.StatusCreated, dto.Camp{})
+	var req CreateCampRequest
+	if err := c.Bind(&req); err != nil {
+		return c.JSON(http.StatusBadRequest, dto.ErrorResponse{Code: "BAD_REQUEST", Message: "Invalid request body"})
+	}
+	camp, err := h.svc.OpenNewCamp(c.Request().Context(), req.Name)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Code: "INTERNAL_ERROR", Message: err.Error()})
+	}
+	return c.JSON(http.StatusCreated, mapDomainCampToDTO(camp))
 }
 
 // @Summary      캠프 상세 조회
@@ -55,7 +100,15 @@ func (h *CampHandler) CreateCamp(c echo.Context) error {
 // @Failure      404 {object} dto.ErrorResponse
 // @Router       /camps/{id} [get]
 func (h *CampHandler) GetCamp(c echo.Context) error {
-	return c.JSON(http.StatusOK, dto.Camp{})
+	id := domain.CampID(c.Param("id"))
+	camp, err := h.svc.GetCamp(c.Request().Context(), id)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Code: "INTERNAL_ERROR", Message: err.Error()})
+	}
+	if camp == nil {
+		return c.JSON(http.StatusNotFound, dto.ErrorResponse{Code: "NOT_FOUND", Message: "Camp not found"})
+	}
+	return c.JSON(http.StatusOK, mapDomainCampToDTO(camp))
 }
 
 // @Summary      캠프 시작
@@ -69,7 +122,17 @@ func (h *CampHandler) GetCamp(c echo.Context) error {
 // @Failure      409 {object} dto.ErrorResponse "이미 활성화됨 또는 필수 조건 미충족"
 // @Router       /camps/{id}/start [post]
 func (h *CampHandler) StartCamp(c echo.Context) error {
-	return c.JSON(http.StatusOK, dto.Camp{})
+	id := domain.CampID(c.Param("id"))
+	adminID := getAdminID(c)
+	err := h.svc.ActivateCamp(c.Request().Context(), id, adminID)
+	if err != nil {
+		if err == domain.ErrCampInvalidTransition {
+			return c.JSON(http.StatusConflict, dto.ErrorResponse{Code: "CONFLICT", Message: err.Error()})
+		}
+		return c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Code: "INTERNAL_ERROR", Message: err.Error()})
+	}
+	camp, _ := h.svc.GetCamp(c.Request().Context(), id)
+	return c.JSON(http.StatusOK, mapDomainCampToDTO(camp))
 }
 
 // @Summary      캠프 종료
@@ -83,5 +146,15 @@ func (h *CampHandler) StartCamp(c echo.Context) error {
 // @Failure      409 {object} dto.ErrorResponse
 // @Router       /camps/{id}/end [post]
 func (h *CampHandler) EndCamp(c echo.Context) error {
-	return c.JSON(http.StatusOK, dto.Camp{})
+	id := domain.CampID(c.Param("id"))
+	adminID := getAdminID(c)
+	err := h.svc.EndCamp(c.Request().Context(), id, adminID)
+	if err != nil {
+		if err == domain.ErrCampInvalidTransition {
+			return c.JSON(http.StatusConflict, dto.ErrorResponse{Code: "CONFLICT", Message: err.Error()})
+		}
+		return c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Code: "INTERNAL_ERROR", Message: err.Error()})
+	}
+	camp, _ := h.svc.GetCamp(c.Request().Context(), id)
+	return c.JSON(http.StatusOK, mapDomainCampToDTO(camp))
 }
