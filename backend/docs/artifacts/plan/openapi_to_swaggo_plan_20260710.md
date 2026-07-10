@@ -73,12 +73,12 @@ func (h *VisitHandler) EndCurrentVisit(c echo.Context) error {
 
 ## 4. 구현 단계 (Implementation Phases)
 
-### Phase A: 전역 스펙 및 DTO 생성 (예상 소요: 1시간)
+### Phase A: 전역 스펙 및 DTO 생성 (완료)
 | 순서 | 작업 | 파일 |
 | --- | --- | --- |
-| A-1 | 전역 API Swaggo 주석 분리 작성 | `internal/interfaces/http/doc.go` |
-| A-2 | Request/Response, Error 공통 DTO 작성 | `internal/interfaces/http/dto/*.go` |
-| A-3 | 모든 도메인별(Camp, Corner, Track 등) DTO 생성 | `internal/interfaces/http/dto/*.go` |
+| ~~A-1~~ | ~~전역 API Swaggo 주석 분리 작성~~ | `internal/interfaces/http/doc.go` |
+| ~~A-2~~ | ~~Request/Response, Error 공통 DTO 작성~~ | `internal/interfaces/http/dto/*.go` |
+| ~~A-3~~ | ~~모든 도메인별(Camp, Corner, Track 등) DTO 생성~~ | `internal/interfaces/http/dto/*.go` |
 
 ### Phase B: 전체 엔드포인트 핸들러 뼈대 및 Swaggo 작성 (예상 소요: 2.5시간)
 | 순서 | 작업 | 파일 |
