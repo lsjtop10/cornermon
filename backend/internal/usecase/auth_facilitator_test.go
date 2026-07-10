@@ -47,7 +47,7 @@ func TestFacilitatorAuthService_Login(t *testing.T) {
 		s.uuidFn = func() string { return "session-uuid" }
 
 		// Act
-		plainToken, session, err := s.Login(context.Background(), "camp-1", "track-1", deviceToken, "123456")
+		plainToken, session, err := s.Login(context.Background(), deviceToken, "123456")
 
 		// Assert
 		if err != nil {
@@ -104,7 +104,7 @@ func TestFacilitatorAuthService_Login(t *testing.T) {
 		s.nowFn = func() time.Time { return now }
 
 		// Act
-		_, _, err := s.Login(context.Background(), "camp-1", "track-1", deviceToken, "123456")
+		_, _, err := s.Login(context.Background(), deviceToken, "123456")
 
 		// Assert
 		if err != domain.ErrDeviceNotApproved {
@@ -150,7 +150,7 @@ func TestFacilitatorAuthService_Login(t *testing.T) {
 		s.nowFn = func() time.Time { return now }
 
 		// Act
-		_, _, err := s.Login(context.Background(), "camp-1", "track-1", deviceToken, "123456")
+		_, _, err := s.Login(context.Background(), deviceToken, "123456")
 
 		// Assert
 		if err != domain.ErrDeviceLocked {
@@ -196,7 +196,7 @@ func TestFacilitatorAuthService_Login(t *testing.T) {
 		s.nowFn = func() time.Time { return now }
 
 		// Act
-		_, _, err := s.Login(context.Background(), "camp-1", "track-1", deviceToken, "wrong-pin")
+		_, _, err := s.Login(context.Background(), deviceToken, "wrong-pin")
 
 		// Assert
 		if err == nil || err.Error() != "invalid pin" {

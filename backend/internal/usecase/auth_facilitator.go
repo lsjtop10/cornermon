@@ -48,8 +48,6 @@ func NewFacilitatorAuthService(
 // Login - UC-9
 func (s *FacilitatorAuthService) Login(
 	ctx context.Context,
-	campID domain.CampID,
-	trackID domain.TrackID,
 	deviceToken string,
 	pin string,
 ) (string, *domain.FacilitatorSession, error) {
@@ -62,37 +60,42 @@ func (s *FacilitatorAuthService) Login(
 		return "", nil, err
 	}
 	if device == nil || device.Status != domain.DeviceApproved {
-		s.recordAuditLog(ctx, "anonymous", "FACILITATOR_LOGIN", string(trackID), false, map[string]any{"error": domain.ErrDeviceNotApproved.Error()})
+		s.recordAuditLog(ctx, "anonymous", "FACILITATOR_LOGIN", "", false, map[string]any{"error": domain.ErrDeviceNotApproved.Error()})
 		return "", nil, domain.ErrDeviceNotApproved
 	}
 
 	if device.IsLocked(now) {
-		s.recordAuditLog(ctx, "anonymous", "FACILITATOR_LOGIN", string(trackID), false, map[string]any{"error": domain.ErrDeviceLocked.Error()})
+		s.recordAuditLog(ctx, "anonymous", "FACILITATOR_LOGIN", "", false, map[string]any{"error": domain.ErrDeviceLocked.Error()})
 		return "", nil, domain.ErrDeviceLocked
 	}
 
-	// 2. 트랙 정보 조회 및 검증
-	track, err := s.tracks.Get(ctx, trackID)
-	if err != nil {
-		return "", nil, err
-	}
-	if track == nil || track.Status != domain.TrackActive {
-		s.recordAuditLog(ctx, "anonymous", "FACILITATOR_LOGIN", string(trackID), false, map[string]any{"error": domain.ErrTrackNotActive.Error()})
-		return "", nil, domain.ErrTrackNotActive
-	}
+	campID := device.CampID
 
-	// 3. 캠프 정보 조회 및 검증
+	// 2. 캠프 정보 조회 및 검증
 	camp, err := s.camps.Get(ctx, campID)
 	if err != nil {
 		return "", nil, err
 	}
 	if camp == nil || !camp.IsActive() {
-		s.recordAuditLog(ctx, "anonymous", "FACILITATOR_LOGIN", string(trackID), false, map[string]any{"error": domain.ErrCampInvalidTransition.Error()})
+		s.recordAuditLog(ctx, "anonymous", "FACILITATOR_LOGIN", "", false, map[string]any{"error": domain.ErrCampInvalidTransition.Error()})
 		return "", nil, domain.ErrCampInvalidTransition
 	}
 
-	// 4. PIN 검증
-	if err := verifyPassword(track.PINHash, pin); err != nil {
+	// 3. 트랙 찾기 및 PIN 검증
+	activeTracks, err := s.tracks.ListActiveByCamp(ctx, campID)
+	if err != nil {
+		return "", nil, err
+	}
+
+	var track *domain.Track
+	for _, t := range activeTracks {
+		if err := verifyPassword(t.PINHash, pin); err == nil {
+			track = t
+			break
+		}
+	}
+
+	if track == nil {
 		// PIN 검증 실패 시
 		_, needsAdminAlert := device.RecordPinFailure(now)
 		_ = s.devices.Save(ctx, device)
@@ -101,14 +104,16 @@ func (s *FacilitatorAuthService) Login(
 			_ = s.broadcaster.Broadcast(ctx, device.CampID, EventLockoutAlert, "device:"+string(device.ID))
 		}
 
-		s.recordAuditLog(ctx, "anonymous", "FACILITATOR_LOGIN", string(trackID), false, map[string]any{"error": "invalid pin", "device_failures": device.FailedPinAttempts})
+		s.recordAuditLog(ctx, "anonymous", "FACILITATOR_LOGIN", "", false, map[string]any{"error": "invalid pin", "device_failures": device.FailedPinAttempts})
 		return "", nil, errors.New("invalid pin")
 	}
+
+	trackID := track.ID
 
 	// PIN 검증 성공 시 실패 횟수 리셋
 	device.ResetPinFailures()
 
-	// 5. 신규 세션 토큰 및 세션 정보 생성
+	// 4. 신규 세션 토큰 및 세션 정보 생성
 	plainToken, sessionTokenHash, err := generateOpaqueToken()
 	if err != nil {
 		return "", nil, err
@@ -123,7 +128,7 @@ func (s *FacilitatorAuthService) Login(
 		RevokedAt: domain.None[time.Time](),
 	}
 
-	// 6. DB 트랜잭션 내에서 기기 상태 및 세션 정보 저장
+	// 5. DB 트랜잭션 내에서 기기 상태 및 세션 정보 저장
 	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
 		if err := s.devices.Save(ctx, device); err != nil {
 			return err
