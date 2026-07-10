@@ -2,9 +2,11 @@ package usecase
 
 import (
 	"context"
+	"time"
 
 	"cornermon/backend/internal/domain"
 )
+
 
 // TxManager는 트랜잭션 경계를 정의하기 위한 유스케이스 포트입니다.
 type TxManager interface {
@@ -71,11 +73,13 @@ type DeviceRegistrationRepository interface {
 
 // FacilitatorSessionRepository는 진행자 세션 엔티티의 지속성을 담당하는 포트입니다.
 type FacilitatorSessionRepository interface {
+	Get(ctx context.Context, id domain.FacilitatorSessionID) (*domain.FacilitatorSession, error)
 	GetByTokenHash(ctx context.Context, hash string) (*domain.FacilitatorSession, error)
 	ListActiveByTrack(ctx context.Context, trackID domain.TrackID) ([]*domain.FacilitatorSession, error)
 	ListActiveByCamp(ctx context.Context, campID domain.CampID) ([]*domain.FacilitatorSession, error)
 	Save(ctx context.Context, session *domain.FacilitatorSession) error
 }
+
 
 // AdminRepository는 관리자 엔티티의 지속성을 담당하는 포트입니다.
 type AdminRepository interface {
@@ -89,7 +93,9 @@ type AdminSessionRepository interface {
 	GetByAccessTokenHash(ctx context.Context, hash string) (*domain.AdminSession, error)
 	GetByRefreshTokenHash(ctx context.Context, hash string) (*domain.AdminSession, error)
 	Save(ctx context.Context, session *domain.AdminSession) error
+	ListByAdmin(ctx context.Context, adminID domain.AdminID) ([]*domain.AdminSession, error)
 }
+
 
 // MessageRepository는 메시지 엔티티의 지속성을 담당하는 포트입니다.
 type MessageRepository interface {
@@ -175,3 +181,13 @@ type VisitDetail struct {
 	DurationSec  int
 	DeviationSec int
 }
+
+type BroadcastReceiptDTO struct {
+	TrackID    domain.TrackID
+	TrackNo    int
+	CornerName string
+	IsRead     bool
+	ReadAt     domain.Optional[time.Time]
+}
+
+

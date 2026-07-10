@@ -185,7 +185,39 @@ func (s *FacilitatorAuthService) ValidateSession(
 	return session, nil
 }
 
+func (s *FacilitatorAuthService) Logout(
+	ctx context.Context,
+	sessionID domain.FacilitatorSessionID,
+) error {
+	now := s.nowFn()
+
+	session, err := s.sessions.Get(ctx, sessionID)
+	if err != nil {
+		return err
+	}
+	if session == nil {
+		return errors.New("session not found")
+	}
+
+	if err := session.Revoke(now); err != nil {
+		return err
+	}
+
+	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
+		return s.sessions.Save(ctx, session)
+	})
+
+	if err != nil {
+		s.recordAuditLog(ctx, string(session.TrackID), "FACILITATOR_LOGOUT", string(sessionID), false, map[string]any{"error": err.Error()})
+		return err
+	}
+
+	s.recordAuditLog(ctx, string(session.TrackID), "FACILITATOR_LOGOUT", string(sessionID), true, nil)
+	return nil
+}
+
 func (s *FacilitatorAuthService) recordAuditLog(ctx context.Context, actor, action, target string, success bool, metadata map[string]any) {
+
 	log := domain.NewAuditLog(
 		domain.AuditLogID(s.uuidFn()),
 		actor,

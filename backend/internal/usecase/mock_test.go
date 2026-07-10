@@ -320,6 +320,15 @@ func NewMockFacilitatorSessionRepository() *MockFacilitatorSessionRepository {
 	return &MockFacilitatorSessionRepository{Sessions: make(map[string]*domain.FacilitatorSession)}
 }
 
+func (r *MockFacilitatorSessionRepository) Get(ctx context.Context, id domain.FacilitatorSessionID) (*domain.FacilitatorSession, error) {
+	for _, s := range r.Sessions {
+		if s.ID == id {
+			return s, nil
+		}
+	}
+	return nil, nil
+}
+
 func (r *MockFacilitatorSessionRepository) GetByTokenHash(ctx context.Context, hash string) (*domain.FacilitatorSession, error) {
 	s, ok := r.Sessions[hash]
 	if !ok {
@@ -327,6 +336,7 @@ func (r *MockFacilitatorSessionRepository) GetByTokenHash(ctx context.Context, h
 	}
 	return s, nil
 }
+
 
 func (r *MockFacilitatorSessionRepository) ListActiveByTrack(ctx context.Context, trackID domain.TrackID) ([]*domain.FacilitatorSession, error) {
 	var list []*domain.FacilitatorSession
@@ -420,6 +430,17 @@ func (r *MockAdminSessionRepository) Save(ctx context.Context, session *domain.A
 	r.Sessions[session.ID] = session
 	return nil
 }
+
+func (r *MockAdminSessionRepository) ListByAdmin(ctx context.Context, adminID domain.AdminID) ([]*domain.AdminSession, error) {
+	var list []*domain.AdminSession
+	for _, s := range r.Sessions {
+		if s.AdminID == adminID && !s.RevokedAt.IsSet() {
+			list = append(list, s)
+		}
+	}
+	return list, nil
+}
+
 
 // MockMessageRepository
 type MockMessageRepository struct {

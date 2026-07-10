@@ -56,7 +56,8 @@ func main() {
 	broadcaster := sse.NewBroadcaster()
 
 	// Initialize Usecases
-	authAdminService := usecase.NewAdminAuthService(adminRepo, adminSessionRepo, auditLogRepo, txManager)
+	authAdminService := usecase.NewAdminAuthService(adminRepo, adminSessionRepo, facilitatorSessionRepo, trackRepo, cornerRepo, broadcaster, auditLogRepo, txManager)
+
 	deviceTrustService := usecase.NewDeviceTrustService(campRepo, deviceRepo, auditLogRepo, broadcaster, txManager)
 	cornerService := usecase.NewCornerService(campRepo, cornerRepo, auditLogRepo, broadcaster, txManager)
 	groupService := usecase.NewGroupService(campRepo, cornerRepo, groupRepo, badgeRepo, auditLogRepo, txManager)
