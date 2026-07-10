@@ -158,20 +158,24 @@ Stream<api.AdminSnapshot> adminEvents(Ref ref); // GET /events/admin
 
 ## 3. 작업 단계
 
-| 순서 | 작업 | 파일 |
-|---|---|---|
-| D-1 | `SecureTokenStore` 구현체(`flutter_secure_storage`) | `frontend/lib/shared/auth/secure_token_store.dart` |
-| D-2 | `SessionTokenSource` 인터페이스 + 미구현 provider | `frontend/lib/shared/auth/session_token_source.dart` |
-| D-3 | `AuthInterceptor` — `SessionTokenSource`만 참조, `api_client.dart`의 Dio에 부착 | `frontend/lib/shared/api/client/auth_interceptor.dart` |
-| D-4 | `DeviceTrust` provider(PENDING/APPROVED/REJECTED/REVOKED 폴링 또는 SSE 감지) | `frontend/lib/facilitator/session/device_trust_provider.dart` |
-| D-5 | `TrackSession` provider + `TrackSessionTokenSource` 구현체(PIN 로그인, B1-b 확인/거부, 강제종료 3종) | `frontend/lib/facilitator/session/{track_session_provider,track_session_token_source}.dart` |
-| D-6 | `AdminSession` provider + `AdminSessionTokenSource` 구현체(로그인, silent refresh, 로그아웃, 공동관리자 세션 회수 §2.5-b) | `frontend/lib/admin/session/{admin_session_provider,admin_session_token_source}.dart` |
-| D-7 | `main_admin.dart`/`main_facilitator.dart`에서 `sessionTokenSourceProvider` override 배선 | `frontend/lib/main_{admin,facilitator}.dart` |
-| D-8 | `SseClient`(하트비트/좀비연결 감지, §2.3-b) | `frontend/lib/shared/api/sse/sse_client.dart` |
-| D-9 | `adminEvents`/`trackEvents` StreamProvider(DTO 그대로 반환) | `frontend/lib/shared/api/sse/{admin,track}_event_stream.dart` |
-| D-10 | 관리자 대시보드용 30초 주기 REST 폴백 재조회(§2.3-b "최후 안전망") — provider 레벨 타이머 | `frontend/lib/shared/api/providers/camp_providers.dart` 내 보조 provider |
+| 순서 | 작업 | 파일 | 상태 |
+|---|---|---|---|
+| D-1 | `SecureTokenStore` 구현체(`flutter_secure_storage`) | `frontend/lib/shared/auth/secure_token_store.dart` | [x] |
+| D-2 | `SessionTokenSource` 인터페이스 + 미구현 provider | `frontend/lib/shared/auth/session_token_source.dart` | [x] |
+| D-3 | `AuthInterceptor` — `SessionTokenSource`만 참조, `api_client.dart`의 Dio에 부착 | `frontend/lib/shared/api/client/auth_interceptor.dart` | [x] |
+| D-4 | `DeviceTrust` provider(PENDING/APPROVED/REJECTED/REVOKED 폴링 또는 SSE 감지) | `frontend/lib/facilitator/session/device_trust_provider.dart` | [x] (PENDING→APPROVED 자동 감지는 미해결 — 아래 참고) |
+| D-5 | `TrackSession` provider + `TrackSessionTokenSource` 구현체(PIN 로그인, B1-b 확인/거부, 강제종료 3종) | `frontend/lib/facilitator/session/{track_session_provider,track_session_token_source}.dart` | [ ] |
+| D-6 | `AdminSession` provider + `AdminSessionTokenSource` 구현체(로그인, silent refresh, 로그아웃, 공동관리자 세션 회수 §2.5-b) | `frontend/lib/admin/session/{admin_session_provider,admin_session_token_source}.dart` | 이번 스코프 제외(진행자 앱 우선 — 관리자는 Phase 06에서 착수) |
+| D-7 | `main_admin.dart`/`main_facilitator.dart`에서 `sessionTokenSourceProvider` override 배선 | `frontend/lib/main_{admin,facilitator}.dart` | [ ] (facilitator만) |
+| D-8 | `SseClient`(하트비트/좀비연결 감지, §2.3-b) | `frontend/lib/shared/api/sse/sse_client.dart` | [ ] |
+| D-9 | `adminEvents`/`trackEvents` StreamProvider(DTO 그대로 반환) | `frontend/lib/shared/api/sse/{admin,track}_event_stream.dart` | [ ] (trackEvents만) |
+| D-10 | 관리자 대시보드용 30초 주기 REST 폴백 재조회(§2.3-b "최후 안전망") — provider 레벨 타이머 | `frontend/lib/shared/api/providers/camp_providers.dart` 내 보조 provider | 이번 스코프 제외(관리자 전용) |
 
 예상 소요시간: **12~16시간** (SSE 좀비연결 감지 + silent refresh 흐름이 가장 까다로운 부분 — 실제 네트워크 단절 테스트 포함).
+
+### 3-a. 미해결 과제
+
+- **D-4 PENDING→APPROVED 자동 감지 불가**: `api/openapi.yaml`에 기기가 자신의 등록 상태를 스스로 조회하는 GET 엔드포인트가 없다(`GET /device-registrations`는 `AdminAuth` 전용). `/events/track/{trackId}` SSE도 트랙 세션 확보(=PIN 로그인 성공) 이후에만 구독 가능해 등록 대기 중인 기기는 구독할 수 없다. 현재는 `DeviceTrust.build()`가 로컬에 저장된 마지막 상태만 반환한다 — 실제 승인 여부는 Phase 05의 B1 PIN 로그인 시도가 성공/실패하는 것으로 간접 확인해야 한다. 백엔드에 상태조회 엔드포인트를 추가하거나, B0 화면에 "다시 로그인 시도" 수동 재시도 버튼을 두는 방식 중 상위 로드맵에서 결정 필요.
 
 ## 4. 검증
 - [ ] 트랙 삭제/강제로그아웃/캠프종료 SSE 이벤트 수신 시 BUSY 여부와 무관하게 `TrackSession`이 즉시 미인증 상태로 전환된다(scenarios.md Feature 3 "유예 없이 즉시")
