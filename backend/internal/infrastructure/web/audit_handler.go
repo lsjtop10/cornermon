@@ -1,4 +1,4 @@
-package handler
+package web
 
 import (
 	"context"
@@ -6,7 +6,7 @@ import (
 	"strconv"
 
 	"cornermon/backend/internal/domain"
-	"cornermon/backend/internal/infrastructure/http/dto"
+
 	"github.com/labstack/echo/v4"
 )
 
@@ -31,11 +31,11 @@ func NewAuditHandler(querier AuditLogQuerier) *AuditHandler {
 // @Produce      json
 // @Param        limit query int false "조회 개수" default(50)
 // @Param        offset query int false "오프셋" default(0)
-// @Success      200 {array} dto.AuditLog
+// @Success      200 {array} AuditLog
 // @Router       /audit-logs [get]
 func (h *AuditHandler) ListAuditLogs(c echo.Context) error {
 	ctx := c.Request().Context()
-	
+
 	limitStr := c.QueryParam("limit")
 	limit := 50
 	if limitStr != "" {
@@ -61,9 +61,9 @@ func (h *AuditHandler) ListAuditLogs(c echo.Context) error {
 		}
 	}
 
-	dtos := make([]dto.AuditLog, len(logs))
+	dtos := make([]AuditLog, len(logs))
 	for i, log := range logs {
-		dtos[i] = dto.AuditLog{
+		dtos[i] = AuditLog{
 			ID:         string(log.ID),
 			Actor:      log.Actor,
 			Action:     log.Action,

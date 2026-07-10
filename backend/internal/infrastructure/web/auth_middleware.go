@@ -1,4 +1,4 @@
-package middleware
+package web
 
 import (
 	"context"
@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"cornermon/backend/internal/domain"
-	"cornermon/backend/internal/infrastructure/http/dto"
 
 	"github.com/labstack/echo/v4"
 )
@@ -24,14 +23,14 @@ func AdminAuthMiddleware(adminAuth AuthAdminUsecase) echo.MiddlewareFunc {
 		return func(c echo.Context) error {
 			token := extractToken(c.Request().Header.Get("Authorization"))
 			if token == "" {
-				return c.JSON(http.StatusUnauthorized, dto.ErrorResponse{Code: "UNAUTHORIZED", Message: "missing token"})
+				return c.JSON(http.StatusUnauthorized, ErrorResponse{Code: "UNAUTHORIZED", Message: "missing token"})
 			}
-			
+
 			session, err := adminAuth.ValidateAccessToken(c.Request().Context(), token)
 			if err != nil {
-				return c.JSON(http.StatusUnauthorized, dto.ErrorResponse{Code: "UNAUTHORIZED", Message: err.Error()})
+				return c.JSON(http.StatusUnauthorized, ErrorResponse{Code: "UNAUTHORIZED", Message: err.Error()})
 			}
-			
+
 			c.Set("adminSession", session)
 			return next(c)
 		}
@@ -43,14 +42,14 @@ func TrackAuthMiddleware(trackAuth AuthFacilitatorUsecase) echo.MiddlewareFunc {
 		return func(c echo.Context) error {
 			token := extractToken(c.Request().Header.Get("Authorization"))
 			if token == "" {
-				return c.JSON(http.StatusUnauthorized, dto.ErrorResponse{Code: "UNAUTHORIZED", Message: "missing token"})
+				return c.JSON(http.StatusUnauthorized, ErrorResponse{Code: "UNAUTHORIZED", Message: "missing token"})
 			}
-			
+
 			session, err := trackAuth.ValidateSession(c.Request().Context(), token)
 			if err != nil {
-				return c.JSON(http.StatusUnauthorized, dto.ErrorResponse{Code: "UNAUTHORIZED", Message: err.Error()})
+				return c.JSON(http.StatusUnauthorized, ErrorResponse{Code: "UNAUTHORIZED", Message: err.Error()})
 			}
-			
+
 			c.Set("facilitatorSession", session)
 			return next(c)
 		}

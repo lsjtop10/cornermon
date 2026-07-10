@@ -1,4 +1,4 @@
-package dto
+package web
 
 type AdminLoginRequest struct {
 	ID       string `json:"id"`

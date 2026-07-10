@@ -1,11 +1,11 @@
-package handler
+package web
 
 import (
 	"net/http"
 
 	"cornermon/backend/internal/domain"
-	"cornermon/backend/internal/infrastructure/http/dto"
 	"cornermon/backend/internal/usecase"
+
 	"github.com/labstack/echo/v4"
 )
 
@@ -17,11 +17,11 @@ func NewCornerHandler(svc *usecase.CornerService) *CornerHandler {
 	return &CornerHandler{svc: svc}
 }
 
-func mapDomainCornerToDTO(corner *domain.Corner) dto.Corner {
+func mapDomainCornerToDTO(corner *domain.Corner) Corner {
 	if corner == nil {
-		return dto.Corner{}
+		return Corner{}
 	}
-	return dto.Corner{
+	return Corner{
 		ID:            string(corner.ID),
 		Name:          corner.Name,
 		TargetMinutes: corner.TargetMinutes,
@@ -34,20 +34,20 @@ func mapDomainCornerToDTO(corner *domain.Corner) dto.Corner {
 // @Security     AdminAuth
 // @Produce      json
 // @Param        campId query string true "필터링할 캠프 ID"
-// @Success      200 {array} dto.Corner
-// @Failure      400 {object} dto.ErrorResponse
-// @Failure      401 {object} dto.ErrorResponse
+// @Success      200 {array} Corner
+// @Failure      400 {object} ErrorResponse
+// @Failure      401 {object} ErrorResponse
 // @Router       /corners [get]
 func (h *CornerHandler) ListCorners(c echo.Context) error {
 	campID := domain.CampID(c.QueryParam("campId"))
 	if campID == "" {
-		return c.JSON(http.StatusBadRequest, dto.ErrorResponse{Code: "BAD_REQUEST", Message: "campId is required"})
+		return c.JSON(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: "campId is required"})
 	}
 	corners, err := h.svc.ListCorners(c.Request().Context(), campID)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Code: "INTERNAL_ERROR", Message: err.Error()})
+		return c.JSON(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_ERROR", Message: err.Error()})
 	}
-	res := make([]dto.Corner, len(corners))
+	res := make([]Corner, len(corners))
 	for i, cr := range corners {
 		res[i] = mapDomainCornerToDTO(cr)
 	}
@@ -67,18 +67,18 @@ type CreateCornerRequest struct {
 // @Accept       json
 // @Produce      json
 // @Param        request body CreateCornerRequest true "코너 생성 정보"
-// @Success      201 {object} dto.Corner
-// @Failure      400 {object} dto.ErrorResponse
-// @Failure      401 {object} dto.ErrorResponse
+// @Success      201 {object} Corner
+// @Failure      400 {object} ErrorResponse
+// @Failure      401 {object} ErrorResponse
 // @Router       /corners [post]
 func (h *CornerHandler) CreateCorner(c echo.Context) error {
 	var req CreateCornerRequest
 	if err := c.Bind(&req); err != nil {
-		return c.JSON(http.StatusBadRequest, dto.ErrorResponse{Code: "BAD_REQUEST", Message: "Invalid request body"})
+		return c.JSON(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: "Invalid request body"})
 	}
 	corner, err := h.svc.AddLearningCorner(c.Request().Context(), domain.CampID(req.CampID), req.Name)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Code: "INTERNAL_ERROR", Message: err.Error()})
+		return c.JSON(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_ERROR", Message: err.Error()})
 	}
 	return c.JSON(http.StatusCreated, mapDomainCornerToDTO(corner))
 }
@@ -89,11 +89,11 @@ func (h *CornerHandler) CreateCorner(c echo.Context) error {
 // @Security     AdminAuth
 // @Produce      json
 // @Param        id path string true "코너 ID"
-// @Success      200 {object} dto.Corner
-// @Failure      404 {object} dto.ErrorResponse
+// @Success      200 {object} Corner
+// @Failure      404 {object} ErrorResponse
 // @Router       /corners/{id} [get]
 func (h *CornerHandler) GetCorner(c echo.Context) error {
-	return c.JSON(http.StatusNotImplemented, dto.ErrorResponse{Code: "NOT_IMPLEMENTED", Message: "Not implemented"})
+	return c.JSON(http.StatusNotImplemented, ErrorResponse{Code: "NOT_IMPLEMENTED", Message: "Not implemented"})
 }
 
 // @Summary      코너 삭제
@@ -103,14 +103,14 @@ func (h *CornerHandler) GetCorner(c echo.Context) error {
 // @Produce      json
 // @Param        id path string true "코너 ID"
 // @Success      204 "성공적으로 삭제됨"
-// @Failure      400 {object} dto.ErrorResponse
-// @Failure      409 {object} dto.ErrorResponse "활성화된 캠프이거나 종속 데이터가 존재함"
+// @Failure      400 {object} ErrorResponse
+// @Failure      409 {object} ErrorResponse "활성화된 캠프이거나 종속 데이터가 존재함"
 // @Router       /corners/{id} [delete]
 func (h *CornerHandler) DeleteCorner(c echo.Context) error {
 	id := domain.CornerID(c.Param("id"))
 	err := h.svc.RemoveCornerFromCamp(c.Request().Context(), id)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Code: "INTERNAL_ERROR", Message: err.Error()})
+		return c.JSON(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_ERROR", Message: err.Error()})
 	}
 	return c.NoContent(http.StatusNoContent)
 }
@@ -130,20 +130,20 @@ type BulkUpdateCornersRequest struct {
 // @Accept       json
 // @Produce      json
 // @Param        request body BulkUpdateCornersRequest true "수정할 코너 목록"
-// @Success      200 {array} dto.Corner
-// @Failure      400 {object} dto.ErrorResponse
-// @Failure      409 {object} dto.ErrorResponse
+// @Success      200 {array} Corner
+// @Failure      400 {object} ErrorResponse
+// @Failure      409 {object} ErrorResponse
 // @Router       /corners/bulk-update [put]
 func (h *CornerHandler) BulkUpdateCorners(c echo.Context) error {
 	var req BulkUpdateCornersRequest
 	if err := c.Bind(&req); err != nil {
-		return c.JSON(http.StatusBadRequest, dto.ErrorResponse{Code: "BAD_REQUEST", Message: "Invalid request body"})
+		return c.JSON(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: "Invalid request body"})
 	}
-	res := make([]dto.Corner, len(req.Corners))
+	res := make([]Corner, len(req.Corners))
 	for i, cr := range req.Corners {
 		updated, err := h.svc.ModifyCornerSpecification(c.Request().Context(), domain.CornerID(cr.ID), cr.Name)
 		if err != nil {
-			return c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Code: "INTERNAL_ERROR", Message: err.Error()})
+			return c.JSON(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_ERROR", Message: err.Error()})
 		}
 		res[i] = mapDomainCornerToDTO(updated)
 	}

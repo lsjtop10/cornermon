@@ -1,4 +1,4 @@
-package http
+package web
 
 // @title           Cornermon API
 // @version         1.0.0

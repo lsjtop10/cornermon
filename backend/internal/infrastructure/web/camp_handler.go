@@ -1,10 +1,9 @@
-package handler
+package web
 
 import (
 	"net/http"
 
 	"cornermon/backend/internal/domain"
-	"cornermon/backend/internal/infrastructure/http/dto"
 	"cornermon/backend/internal/usecase"
 
 	"github.com/labstack/echo/v4"
@@ -28,11 +27,11 @@ func getAdminID(c echo.Context) domain.AdminID {
 	return domain.AdminID("admin")
 }
 
-func mapDomainCampToDTO(camp *domain.Camp) dto.Camp {
+func mapDomainCampToDTO(camp *domain.Camp) Camp {
 	if camp == nil {
-		return dto.Camp{}
+		return Camp{}
 	}
-	return dto.Camp{
+	return Camp{
 		ID:                   string(camp.ID),
 		Name:                 camp.Name,
 		StartAt:              camp.StartAt,
@@ -48,15 +47,15 @@ func mapDomainCampToDTO(camp *domain.Camp) dto.Camp {
 // @Tags         B. Resource Management (Admin)
 // @Security     AdminAuth
 // @Produce      json
-// @Success      200 {array} dto.Camp
-// @Failure      401 {object} dto.ErrorResponse
+// @Success      200 {array} Camp
+// @Failure      401 {object} ErrorResponse
 // @Router       /camps [get]
 func (h *CampHandler) ListCamps(c echo.Context) error {
 	camps, err := h.svc.ListCamps(c.Request().Context())
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Code: "INTERNAL_ERROR", Message: err.Error()})
+		return c.JSON(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_ERROR", Message: err.Error()})
 	}
-	res := make([]dto.Camp, len(camps))
+	res := make([]Camp, len(camps))
 	for i, cp := range camps {
 		res[i] = mapDomainCampToDTO(cp)
 	}
@@ -74,18 +73,18 @@ type CreateCampRequest struct {
 // @Accept       json
 // @Produce      json
 // @Param        request body CreateCampRequest true "캠프 생성 정보"
-// @Success      201 {object} dto.Camp
-// @Failure      400 {object} dto.ErrorResponse
-// @Failure      401 {object} dto.ErrorResponse
+// @Success      201 {object} Camp
+// @Failure      400 {object} ErrorResponse
+// @Failure      401 {object} ErrorResponse
 // @Router       /camps [post]
 func (h *CampHandler) CreateCamp(c echo.Context) error {
 	var req CreateCampRequest
 	if err := c.Bind(&req); err != nil {
-		return c.JSON(http.StatusBadRequest, dto.ErrorResponse{Code: "BAD_REQUEST", Message: "Invalid request body"})
+		return c.JSON(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: "Invalid request body"})
 	}
 	camp, err := h.svc.OpenNewCamp(c.Request().Context(), req.Name)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Code: "INTERNAL_ERROR", Message: err.Error()})
+		return c.JSON(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_ERROR", Message: err.Error()})
 	}
 	return c.JSON(http.StatusCreated, mapDomainCampToDTO(camp))
 }
@@ -96,17 +95,17 @@ func (h *CampHandler) CreateCamp(c echo.Context) error {
 // @Security     AdminAuth
 // @Produce      json
 // @Param        id path string true "캠프 ID"
-// @Success      200 {object} dto.Camp
-// @Failure      404 {object} dto.ErrorResponse
+// @Success      200 {object} Camp
+// @Failure      404 {object} ErrorResponse
 // @Router       /camps/{id} [get]
 func (h *CampHandler) GetCamp(c echo.Context) error {
 	id := domain.CampID(c.Param("id"))
 	camp, err := h.svc.GetCamp(c.Request().Context(), id)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Code: "INTERNAL_ERROR", Message: err.Error()})
+		return c.JSON(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_ERROR", Message: err.Error()})
 	}
 	if camp == nil {
-		return c.JSON(http.StatusNotFound, dto.ErrorResponse{Code: "NOT_FOUND", Message: "Camp not found"})
+		return c.JSON(http.StatusNotFound, ErrorResponse{Code: "NOT_FOUND", Message: "Camp not found"})
 	}
 	return c.JSON(http.StatusOK, mapDomainCampToDTO(camp))
 }
@@ -117,9 +116,9 @@ func (h *CampHandler) GetCamp(c echo.Context) error {
 // @Security     AdminAuth
 // @Produce      json
 // @Param        id path string true "캠프 ID"
-// @Success      200 {object} dto.Camp
-// @Failure      400 {object} dto.ErrorResponse
-// @Failure      409 {object} dto.ErrorResponse "이미 활성화됨 또는 필수 조건 미충족"
+// @Success      200 {object} Camp
+// @Failure      400 {object} ErrorResponse
+// @Failure      409 {object} ErrorResponse "이미 활성화됨 또는 필수 조건 미충족"
 // @Router       /camps/{id}/start [post]
 func (h *CampHandler) StartCamp(c echo.Context) error {
 	id := domain.CampID(c.Param("id"))
@@ -127,9 +126,9 @@ func (h *CampHandler) StartCamp(c echo.Context) error {
 	err := h.svc.ActivateCamp(c.Request().Context(), id, adminID)
 	if err != nil {
 		if err == domain.ErrCampInvalidTransition {
-			return c.JSON(http.StatusConflict, dto.ErrorResponse{Code: "CONFLICT", Message: err.Error()})
+			return c.JSON(http.StatusConflict, ErrorResponse{Code: "CONFLICT", Message: err.Error()})
 		}
-		return c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Code: "INTERNAL_ERROR", Message: err.Error()})
+		return c.JSON(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_ERROR", Message: err.Error()})
 	}
 	camp, _ := h.svc.GetCamp(c.Request().Context(), id)
 	return c.JSON(http.StatusOK, mapDomainCampToDTO(camp))
@@ -141,9 +140,9 @@ func (h *CampHandler) StartCamp(c echo.Context) error {
 // @Security     AdminAuth
 // @Produce      json
 // @Param        id path string true "캠프 ID"
-// @Success      200 {object} dto.Camp
-// @Failure      400 {object} dto.ErrorResponse
-// @Failure      409 {object} dto.ErrorResponse
+// @Success      200 {object} Camp
+// @Failure      400 {object} ErrorResponse
+// @Failure      409 {object} ErrorResponse
 // @Router       /camps/{id}/end [post]
 func (h *CampHandler) EndCamp(c echo.Context) error {
 	id := domain.CampID(c.Param("id"))
@@ -151,9 +150,9 @@ func (h *CampHandler) EndCamp(c echo.Context) error {
 	err := h.svc.EndCamp(c.Request().Context(), id, adminID)
 	if err != nil {
 		if err == domain.ErrCampInvalidTransition {
-			return c.JSON(http.StatusConflict, dto.ErrorResponse{Code: "CONFLICT", Message: err.Error()})
+			return c.JSON(http.StatusConflict, ErrorResponse{Code: "CONFLICT", Message: err.Error()})
 		}
-		return c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Code: "INTERNAL_ERROR", Message: err.Error()})
+		return c.JSON(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_ERROR", Message: err.Error()})
 	}
 	camp, _ := h.svc.GetCamp(c.Request().Context(), id)
 	return c.JSON(http.StatusOK, mapDomainCampToDTO(camp))

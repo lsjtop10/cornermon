@@ -1,12 +1,12 @@
-package handler
+package web
 
 import (
 	"net/http"
 	"strings"
 
 	"cornermon/backend/internal/domain"
-	"cornermon/backend/internal/infrastructure/http/dto"
 	"cornermon/backend/internal/usecase"
+
 	"github.com/labstack/echo/v4"
 )
 
@@ -24,8 +24,8 @@ type VisitStartRequest struct {
 	GroupID string `json:"groupId"`
 }
 
-func mapVisitToDTO(v *domain.Visit) dto.VisitSummary {
-	res := dto.VisitSummary{
+func mapVisitToDTO(v *domain.Visit) VisitSummary {
+	res := VisitSummary{
 		ID:          string(v.ID),
 		GroupID:     string(v.GroupID),
 		CornerID:    string(v.CornerID),
@@ -51,8 +51,8 @@ func mapVisitToDTO(v *domain.Visit) dto.VisitSummary {
 // @Produce      json
 // @Param        trackId path string true "트랙 ID"
 // @Param        request body VisitStartRequest true "입장 방식 및 페이로드"
-// @Success      201 {object} dto.VisitSummary
-// @Failure      409 {object} dto.ErrorResponse "TRACK_BUSY, DUPLICATE_VISIT 등"
+// @Success      201 {object} VisitSummary
+// @Failure      409 {object} ErrorResponse "TRACK_BUSY, DUPLICATE_VISIT 등"
 // @Router       /tracks/{trackId}/visits/start [post]
 func (h *VisitHandler) StartVisit(c echo.Context) error {
 	authHeader := c.Request().Header.Get("Authorization")
@@ -85,8 +85,8 @@ func (h *VisitHandler) StartVisit(c echo.Context) error {
 // @Security     TrackAuth
 // @Produce      json
 // @Param        trackId path string true "트랙 ID"
-// @Success      200 {object} dto.VisitSummary
-// @Failure      409 {object} dto.ErrorResponse "TRACK_NOT_BUSY 등"
+// @Success      200 {object} VisitSummary
+// @Failure      409 {object} ErrorResponse "TRACK_NOT_BUSY 등"
 // @Router       /tracks/{trackId}/visits/current/end [post]
 func (h *VisitHandler) EndCurrentVisit(c echo.Context) error {
 	authHeader := c.Request().Header.Get("Authorization")
@@ -106,7 +106,7 @@ func (h *VisitHandler) EndCurrentVisit(c echo.Context) error {
 // @Security     TrackAuth
 // @Produce      json
 // @Param        trackId path string true "트랙 ID"
-// @Success      200 {object} dto.VisitSummary
+// @Success      200 {object} VisitSummary
 // @Failure      404 "진행 중인 방문 없음"
 // @Router       /tracks/{trackId}/visits/current [get]
 func (h *VisitHandler) GetCurrentVisit(c echo.Context) error {
@@ -125,7 +125,7 @@ type ExceptionApproveRequest struct {
 // @Accept       json
 // @Produce      json
 // @Param        request body ExceptionApproveRequest true "예외 승인 정보"
-// @Success      200 {object} dto.VisitSummary
+// @Success      200 {object} VisitSummary
 // @Router       /visits/exception-approve [post]
 func (h *VisitHandler) ExceptionApprove(c echo.Context) error {
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not implemented yet")

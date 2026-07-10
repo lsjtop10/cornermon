@@ -100,7 +100,7 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/dto.AuditLog"
+                                "$ref": "#/definitions/internal_infrastructure_web.AuditLog"
                             }
                         }
                     }
@@ -127,7 +127,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dto.AdminLoginRequest"
+                            "$ref": "#/definitions/internal_infrastructure_web.AdminLoginRequest"
                         }
                     }
                 ],
@@ -135,13 +135,13 @@
                     "200": {
                         "description": "로그인 성공",
                         "schema": {
-                            "$ref": "#/definitions/dto.AdminLoginResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.AdminLoginResponse"
                         }
                     },
                     "401": {
                         "description": "잘못된 ID 또는 비밀번호",
                         "schema": {
-                            "$ref": "#/definitions/dto.ErrorResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
                         }
                     }
                 }
@@ -169,7 +169,7 @@
                     "401": {
                         "description": "권한 없음",
                         "schema": {
-                            "$ref": "#/definitions/dto.ErrorResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
                         }
                     }
                 }
@@ -194,13 +194,13 @@
                     "200": {
                         "description": "새 액세스 토큰 발급",
                         "schema": {
-                            "$ref": "#/definitions/dto.AdminRefreshResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.AdminRefreshResponse"
                         }
                     },
                     "401": {
                         "description": "권한 없음",
                         "schema": {
-                            "$ref": "#/definitions/dto.ErrorResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
                         }
                     }
                 }
@@ -227,7 +227,7 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/dto.AdminSession"
+                                "$ref": "#/definitions/internal_infrastructure_web.AdminSession"
                             }
                         }
                     }
@@ -321,7 +321,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dto.TrackLoginRequest"
+                            "$ref": "#/definitions/internal_infrastructure_web.TrackLoginRequest"
                         }
                     }
                 ],
@@ -329,19 +329,19 @@
                     "200": {
                         "description": "로그인 성공 — 트랙 세션 토큰 발급",
                         "schema": {
-                            "$ref": "#/definitions/dto.TrackLoginResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.TrackLoginResponse"
                         }
                     },
                     "400": {
                         "description": "잘못된 PIN",
                         "schema": {
-                            "$ref": "#/definitions/dto.ErrorResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "거부됨",
                         "schema": {
-                            "$ref": "#/definitions/dto.ErrorResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
                         }
                     }
                 }
@@ -421,7 +421,7 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/dto.Badge"
+                                "$ref": "#/definitions/internal_infrastructure_web.Badge"
                             }
                         }
                     }
@@ -453,7 +453,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.BulkGenerateBadgesRequest"
+                            "$ref": "#/definitions/internal_infrastructure_web.BulkGenerateBadgesRequest"
                         }
                     }
                 ],
@@ -463,7 +463,7 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/dto.Badge"
+                                "$ref": "#/definitions/internal_infrastructure_web.Badge"
                             }
                         }
                     }
@@ -517,7 +517,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.ScanAssignBadgeRequest"
+                            "$ref": "#/definitions/internal_infrastructure_web.ScanAssignBadgeRequest"
                         }
                     }
                 ],
@@ -525,7 +525,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/dto.Badge"
+                            "$ref": "#/definitions/internal_infrastructure_web.Badge"
                         }
                     }
                 }
@@ -563,7 +563,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.AssignBadgeRequest"
+                            "$ref": "#/definitions/internal_infrastructure_web.AssignBadgeRequest"
                         }
                     }
                 ],
@@ -571,7 +571,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/dto.Badge"
+                            "$ref": "#/definitions/internal_infrastructure_web.Badge"
                         }
                     }
                 }
@@ -598,14 +598,14 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/dto.Camp"
+                                "$ref": "#/definitions/internal_infrastructure_web.Camp"
                             }
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/dto.ErrorResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
                         }
                     }
                 }
@@ -634,7 +634,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.CreateCampRequest"
+                            "$ref": "#/definitions/internal_infrastructure_web.CreateCampRequest"
                         }
                     }
                 ],
@@ -642,19 +642,19 @@
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/dto.Camp"
+                            "$ref": "#/definitions/internal_infrastructure_web.Camp"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/dto.ErrorResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/dto.ErrorResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
                         }
                     }
                 }
@@ -688,13 +688,13 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/dto.Camp"
+                            "$ref": "#/definitions/internal_infrastructure_web.Camp"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/dto.ErrorResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
                         }
                     }
                 }
@@ -728,19 +728,19 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/dto.Camp"
+                            "$ref": "#/definitions/internal_infrastructure_web.Camp"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/dto.ErrorResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
                         }
                     },
                     "409": {
                         "description": "Conflict",
                         "schema": {
-                            "$ref": "#/definitions/dto.ErrorResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
                         }
                     }
                 }
@@ -774,19 +774,19 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/dto.Camp"
+                            "$ref": "#/definitions/internal_infrastructure_web.Camp"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/dto.ErrorResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
                         }
                     },
                     "409": {
                         "description": "이미 활성화됨 또는 필수 조건 미충족",
                         "schema": {
-                            "$ref": "#/definitions/dto.ErrorResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
                         }
                     }
                 }
@@ -822,20 +822,20 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/dto.Corner"
+                                "$ref": "#/definitions/internal_infrastructure_web.Corner"
                             }
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/dto.ErrorResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/dto.ErrorResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
                         }
                     }
                 }
@@ -864,7 +864,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.CreateCornerRequest"
+                            "$ref": "#/definitions/internal_infrastructure_web.CreateCornerRequest"
                         }
                     }
                 ],
@@ -872,19 +872,19 @@
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/dto.Corner"
+                            "$ref": "#/definitions/internal_infrastructure_web.Corner"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/dto.ErrorResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/dto.ErrorResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
                         }
                     }
                 }
@@ -915,7 +915,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.BulkUpdateCornersRequest"
+                            "$ref": "#/definitions/internal_infrastructure_web.BulkUpdateCornersRequest"
                         }
                     }
                 ],
@@ -925,20 +925,20 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/dto.Corner"
+                                "$ref": "#/definitions/internal_infrastructure_web.Corner"
                             }
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/dto.ErrorResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
                         }
                     },
                     "409": {
                         "description": "Conflict",
                         "schema": {
-                            "$ref": "#/definitions/dto.ErrorResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
                         }
                     }
                 }
@@ -974,7 +974,7 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/dto.Track"
+                                "$ref": "#/definitions/internal_infrastructure_web.Track"
                             }
                         }
                     }
@@ -1009,13 +1009,13 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/dto.Corner"
+                            "$ref": "#/definitions/internal_infrastructure_web.Corner"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/dto.ErrorResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
                         }
                     }
                 }
@@ -1050,13 +1050,13 @@
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/dto.ErrorResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
                         }
                     },
                     "409": {
                         "description": "활성화된 캠프이거나 종속 데이터가 존재함",
                         "schema": {
-                            "$ref": "#/definitions/dto.ErrorResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
                         }
                     }
                 }
@@ -1083,7 +1083,7 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/dto.DeviceRegistration"
+                                "$ref": "#/definitions/internal_infrastructure_web.DeviceRegistration"
                             }
                         }
                     }
@@ -1108,7 +1108,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.DeviceRegistrationRequest"
+                            "$ref": "#/definitions/internal_infrastructure_web.DeviceRegistrationRequest"
                         }
                     }
                 ],
@@ -1116,7 +1116,7 @@
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/dto.DeviceRegistration"
+                            "$ref": "#/definitions/internal_infrastructure_web.DeviceRegistration"
                         }
                     }
                 }
@@ -1150,7 +1150,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/dto.DeviceRegistration"
+                            "$ref": "#/definitions/internal_infrastructure_web.DeviceRegistration"
                         }
                     }
                 }
@@ -1184,7 +1184,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/dto.DeviceRegistration"
+                            "$ref": "#/definitions/internal_infrastructure_web.DeviceRegistration"
                         }
                     }
                 }
@@ -1218,7 +1218,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/dto.DeviceRegistration"
+                            "$ref": "#/definitions/internal_infrastructure_web.DeviceRegistration"
                         }
                     }
                 }
@@ -1253,7 +1253,7 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/dto.Group"
+                                "$ref": "#/definitions/internal_infrastructure_web.Group"
                             }
                         }
                     }
@@ -1288,7 +1288,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/dto.Group"
+                            "$ref": "#/definitions/internal_infrastructure_web.Group"
                         }
                     }
                 }
@@ -1324,7 +1324,7 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/dto.VisitSummary"
+                                "$ref": "#/definitions/internal_infrastructure_web.VisitSummary"
                             }
                         }
                     }
@@ -1352,7 +1352,7 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/dto.Message"
+                                "$ref": "#/definitions/internal_infrastructure_web.Message"
                             }
                         }
                     }
@@ -1382,7 +1382,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.BroadcastMessageRequest"
+                            "$ref": "#/definitions/internal_infrastructure_web.BroadcastMessageRequest"
                         }
                     }
                 ],
@@ -1390,7 +1390,7 @@
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/dto.Message"
+                            "$ref": "#/definitions/internal_infrastructure_web.Message"
                         }
                     }
                 }
@@ -1457,7 +1457,7 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/dto.BroadcastReceipt"
+                                "$ref": "#/definitions/internal_infrastructure_web.BroadcastReceipt"
                             }
                         }
                     }
@@ -1483,7 +1483,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/dto.CampReport"
+                            "$ref": "#/definitions/internal_infrastructure_web.CampReport"
                         }
                     }
                 }
@@ -1530,7 +1530,7 @@
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/dto.CampReport"
+                            "$ref": "#/definitions/internal_infrastructure_web.CampReport"
                         }
                     }
                 }
@@ -1555,7 +1555,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/dto.CampSummaryStats"
+                            "$ref": "#/definitions/internal_infrastructure_web.CampSummaryStats"
                         }
                     }
                 }
@@ -1590,7 +1590,7 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/dto.Track"
+                                "$ref": "#/definitions/internal_infrastructure_web.Track"
                             }
                         }
                     }
@@ -1620,7 +1620,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.CreateTracksRequest"
+                            "$ref": "#/definitions/internal_infrastructure_web.CreateTracksRequest"
                         }
                     }
                 ],
@@ -1630,7 +1630,7 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/dto.Track"
+                                "$ref": "#/definitions/internal_infrastructure_web.Track"
                             }
                         }
                     }
@@ -1662,7 +1662,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.BulkDeleteTracksRequest"
+                            "$ref": "#/definitions/internal_infrastructure_web.BulkDeleteTracksRequest"
                         }
                     }
                 ],
@@ -1723,7 +1723,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/dto.Track"
+                            "$ref": "#/definitions/internal_infrastructure_web.Track"
                         }
                     }
                 }
@@ -1788,7 +1788,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/dto.Track"
+                            "$ref": "#/definitions/internal_infrastructure_web.Track"
                         }
                     }
                 }
@@ -1822,7 +1822,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/dto.Track"
+                            "$ref": "#/definitions/internal_infrastructure_web.Track"
                         }
                     }
                 }
@@ -1858,7 +1858,7 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/dto.Message"
+                                "$ref": "#/definitions/internal_infrastructure_web.Message"
                             }
                         }
                     }
@@ -1895,7 +1895,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.DirectMessageRequest"
+                            "$ref": "#/definitions/internal_infrastructure_web.DirectMessageRequest"
                         }
                     }
                 ],
@@ -1903,7 +1903,7 @@
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/dto.Message"
+                            "$ref": "#/definitions/internal_infrastructure_web.Message"
                         }
                     }
                 }
@@ -1937,7 +1937,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/dto.VisitSummary"
+                            "$ref": "#/definitions/internal_infrastructure_web.VisitSummary"
                         }
                     },
                     "404": {
@@ -1974,13 +1974,13 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/dto.VisitSummary"
+                            "$ref": "#/definitions/internal_infrastructure_web.VisitSummary"
                         }
                     },
                     "409": {
                         "description": "TRACK_NOT_BUSY 등",
                         "schema": {
-                            "$ref": "#/definitions/dto.ErrorResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
                         }
                     }
                 }
@@ -2018,7 +2018,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.VisitStartRequest"
+                            "$ref": "#/definitions/internal_infrastructure_web.VisitStartRequest"
                         }
                     }
                 ],
@@ -2026,13 +2026,13 @@
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/dto.VisitSummary"
+                            "$ref": "#/definitions/internal_infrastructure_web.VisitSummary"
                         }
                     },
                     "409": {
                         "description": "TRACK_BUSY, DUPLICATE_VISIT 등",
                         "schema": {
-                            "$ref": "#/definitions/dto.ErrorResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
                         }
                     }
                 }
@@ -2063,7 +2063,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.ExceptionApproveRequest"
+                            "$ref": "#/definitions/internal_infrastructure_web.ExceptionApproveRequest"
                         }
                     }
                 ],
@@ -2071,7 +2071,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/dto.VisitSummary"
+                            "$ref": "#/definitions/internal_infrastructure_web.VisitSummary"
                         }
                     }
                 }
@@ -2079,7 +2079,7 @@
         }
     },
     "definitions": {
-        "dto.AdminLoginRequest": {
+        "internal_infrastructure_web.AdminLoginRequest": {
             "type": "object",
             "properties": {
                 "id": {
@@ -2090,7 +2090,7 @@
                 }
             }
         },
-        "dto.AdminLoginResponse": {
+        "internal_infrastructure_web.AdminLoginResponse": {
             "type": "object",
             "properties": {
                 "accessToken": {
@@ -2104,7 +2104,7 @@
                 }
             }
         },
-        "dto.AdminRefreshResponse": {
+        "internal_infrastructure_web.AdminRefreshResponse": {
             "type": "object",
             "properties": {
                 "accessToken": {
@@ -2115,7 +2115,7 @@
                 }
             }
         },
-        "dto.AdminSession": {
+        "internal_infrastructure_web.AdminSession": {
             "type": "object",
             "properties": {
                 "adminId": {
@@ -2138,7 +2138,15 @@
                 }
             }
         },
-        "dto.AuditLog": {
+        "internal_infrastructure_web.AssignBadgeRequest": {
+            "type": "object",
+            "properties": {
+                "groupId": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_infrastructure_web.AuditLog": {
             "type": "object",
             "properties": {
                 "action": {
@@ -2167,7 +2175,7 @@
                 }
             }
         },
-        "dto.Badge": {
+        "internal_infrastructure_web.Badge": {
             "type": "object",
             "properties": {
                 "assignedGroupId": {
@@ -2194,7 +2202,7 @@
                 }
             }
         },
-        "dto.BottleneckRanking": {
+        "internal_infrastructure_web.BottleneckRanking": {
             "type": "object",
             "properties": {
                 "avgDeviationSeconds": {
@@ -2209,7 +2217,18 @@
                 }
             }
         },
-        "dto.BroadcastReceipt": {
+        "internal_infrastructure_web.BroadcastMessageRequest": {
+            "type": "object",
+            "properties": {
+                "campId": {
+                    "type": "string"
+                },
+                "content": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_infrastructure_web.BroadcastReceipt": {
             "type": "object",
             "properties": {
                 "cornerName": {
@@ -2231,7 +2250,48 @@
                 }
             }
         },
-        "dto.Camp": {
+        "internal_infrastructure_web.BulkDeleteTracksRequest": {
+            "type": "object",
+            "properties": {
+                "trackIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "internal_infrastructure_web.BulkGenerateBadgesRequest": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "integer"
+                }
+            }
+        },
+        "internal_infrastructure_web.BulkUpdateCornersRequest": {
+            "type": "object",
+            "properties": {
+                "corners": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "type": "string"
+                            },
+                            "name": {
+                                "type": "string"
+                            },
+                            "targetMinutes": {
+                                "type": "integer"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "internal_infrastructure_web.Camp": {
             "type": "object",
             "properties": {
                 "bottleneckMinSamples": {
@@ -2268,7 +2328,7 @@
                 }
             }
         },
-        "dto.CampReport": {
+        "internal_infrastructure_web.CampReport": {
             "type": "object",
             "properties": {
                 "campId": {
@@ -2278,7 +2338,7 @@
                 "cornerStats": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/dto.CornerStats"
+                        "$ref": "#/definitions/internal_infrastructure_web.CornerStats"
                     }
                 },
                 "generatedAt": {
@@ -2288,27 +2348,27 @@
                 "groupStats": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/dto.GroupStats"
+                        "$ref": "#/definitions/internal_infrastructure_web.GroupStats"
                     }
                 },
                 "operationalStats": {
-                    "$ref": "#/definitions/dto.OperationalStats"
+                    "$ref": "#/definitions/internal_infrastructure_web.OperationalStats"
                 },
                 "summary": {
-                    "$ref": "#/definitions/dto.CampSummaryStats"
+                    "$ref": "#/definitions/internal_infrastructure_web.CampSummaryStats"
                 },
                 "timeline": {
-                    "$ref": "#/definitions/dto.TimelineStats"
+                    "$ref": "#/definitions/internal_infrastructure_web.TimelineStats"
                 },
                 "trackStats": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/dto.TrackStats"
+                        "$ref": "#/definitions/internal_infrastructure_web.TrackStats"
                     }
                 }
             }
         },
-        "dto.CampSummaryStats": {
+        "internal_infrastructure_web.CampSummaryStats": {
             "type": "object",
             "properties": {
                 "avgDeviationSeconds": {
@@ -2317,7 +2377,7 @@
                 "bottleneckRanking": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/dto.BottleneckRanking"
+                        "$ref": "#/definitions/internal_infrastructure_web.BottleneckRanking"
                     }
                 },
                 "completionRate": {
@@ -2352,13 +2412,13 @@
                 }
             }
         },
-        "dto.Corner": {
+        "internal_infrastructure_web.Corner": {
             "type": "object",
             "properties": {
                 "activeTracks": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/dto.TrackSummary"
+                        "$ref": "#/definitions/internal_infrastructure_web.TrackSummary"
                     }
                 },
                 "id": {
@@ -2386,7 +2446,7 @@
                 }
             }
         },
-        "dto.CornerProgress": {
+        "internal_infrastructure_web.CornerProgress": {
             "type": "object",
             "properties": {
                 "cornerId": {
@@ -2406,7 +2466,7 @@
                 }
             }
         },
-        "dto.CornerStats": {
+        "internal_infrastructure_web.CornerStats": {
             "type": "object",
             "properties": {
                 "completedVisitCount": {
@@ -2422,12 +2482,48 @@
                 "unvisitedGroups": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/dto.UnvisitedGroup"
+                        "$ref": "#/definitions/internal_infrastructure_web.UnvisitedGroup"
                     }
                 }
             }
         },
-        "dto.DeviceRegistration": {
+        "internal_infrastructure_web.CreateCampRequest": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_infrastructure_web.CreateCornerRequest": {
+            "type": "object",
+            "properties": {
+                "campId": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "targetMinutes": {
+                    "type": "integer"
+                }
+            }
+        },
+        "internal_infrastructure_web.CreateTracksRequest": {
+            "type": "object",
+            "properties": {
+                "campId": {
+                    "type": "string"
+                },
+                "cornerId": {
+                    "type": "string"
+                },
+                "count": {
+                    "type": "integer"
+                }
+            }
+        },
+        "internal_infrastructure_web.DeviceRegistration": {
             "type": "object",
             "properties": {
                 "approvedAt": {
@@ -2457,7 +2553,34 @@
                 }
             }
         },
-        "dto.ErrorResponse": {
+        "internal_infrastructure_web.DeviceRegistrationRequest": {
+            "type": "object",
+            "properties": {
+                "campId": {
+                    "description": "Using campId because RequestRegistration expects a campID",
+                    "type": "string"
+                },
+                "deviceName": {
+                    "type": "string"
+                },
+                "role": {
+                    "type": "string",
+                    "enum": [
+                        "ADMIN",
+                        "FACILITATOR"
+                    ]
+                }
+            }
+        },
+        "internal_infrastructure_web.DirectMessageRequest": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_infrastructure_web.ErrorResponse": {
             "type": "object",
             "properties": {
                 "code": {
@@ -2474,7 +2597,18 @@
                 }
             }
         },
-        "dto.Group": {
+        "internal_infrastructure_web.ExceptionApproveRequest": {
+            "type": "object",
+            "properties": {
+                "reason": {
+                    "type": "string"
+                },
+                "visitId": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_infrastructure_web.Group": {
             "type": "object",
             "properties": {
                 "badgeId": {
@@ -2491,7 +2625,7 @@
                 "itinerary": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/dto.CornerProgress"
+                        "$ref": "#/definitions/internal_infrastructure_web.CornerProgress"
                     }
                 },
                 "name": {
@@ -2508,7 +2642,7 @@
                 }
             }
         },
-        "dto.GroupStats": {
+        "internal_infrastructure_web.GroupStats": {
             "type": "object",
             "properties": {
                 "completedCount": {
@@ -2526,7 +2660,7 @@
                 }
             }
         },
-        "dto.Message": {
+        "internal_infrastructure_web.Message": {
             "type": "object",
             "properties": {
                 "channelType": {
@@ -2567,13 +2701,24 @@
                 }
             }
         },
-        "dto.OperationalStats": {
+        "internal_infrastructure_web.OperationalStats": {
             "type": "object"
         },
-        "dto.TimelineStats": {
+        "internal_infrastructure_web.ScanAssignBadgeRequest": {
+            "type": "object",
+            "properties": {
+                "groupId": {
+                    "type": "string"
+                },
+                "qrPayload": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_infrastructure_web.TimelineStats": {
             "type": "object"
         },
-        "dto.Track": {
+        "internal_infrastructure_web.Track": {
             "type": "object",
             "properties": {
                 "cornerId": {
@@ -2581,7 +2726,7 @@
                     "format": "uuid"
                 },
                 "currentVisit": {
-                    "$ref": "#/definitions/dto.VisitSummary"
+                    "$ref": "#/definitions/internal_infrastructure_web.VisitSummary"
                 },
                 "id": {
                     "type": "string",
@@ -2610,7 +2755,7 @@
                 }
             }
         },
-        "dto.TrackLoginRequest": {
+        "internal_infrastructure_web.TrackLoginRequest": {
             "type": "object",
             "properties": {
                 "pin": {
@@ -2618,21 +2763,21 @@
                 }
             }
         },
-        "dto.TrackLoginResponse": {
+        "internal_infrastructure_web.TrackLoginResponse": {
             "type": "object",
             "properties": {
                 "corner": {
-                    "$ref": "#/definitions/dto.Corner"
+                    "$ref": "#/definitions/internal_infrastructure_web.Corner"
                 },
                 "track": {
-                    "$ref": "#/definitions/dto.Track"
+                    "$ref": "#/definitions/internal_infrastructure_web.Track"
                 },
                 "trackToken": {
                     "type": "string"
                 }
             }
         },
-        "dto.TrackStats": {
+        "internal_infrastructure_web.TrackStats": {
             "type": "object",
             "properties": {
                 "avgDeviationSeconds": {
@@ -2653,7 +2798,7 @@
                 }
             }
         },
-        "dto.TrackSummary": {
+        "internal_infrastructure_web.TrackSummary": {
             "type": "object",
             "properties": {
                 "cornerId": {
@@ -2683,7 +2828,7 @@
                 }
             }
         },
-        "dto.UnvisitedGroup": {
+        "internal_infrastructure_web.UnvisitedGroup": {
             "type": "object",
             "properties": {
                 "groupId": {
@@ -2695,7 +2840,24 @@
                 }
             }
         },
-        "dto.VisitSummary": {
+        "internal_infrastructure_web.VisitStartRequest": {
+            "type": "object",
+            "properties": {
+                "groupId": {
+                    "type": "string"
+                },
+                "method": {
+                    "type": "string",
+                    "enum": [
+                        "MANUAL"
+                    ]
+                },
+                "qrToken": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_infrastructure_web.VisitSummary": {
             "type": "object",
             "properties": {
                 "cornerId": {
@@ -2741,161 +2903,6 @@
                 "trackId": {
                     "type": "string",
                     "format": "uuid"
-                }
-            }
-        },
-        "handler.AssignBadgeRequest": {
-            "type": "object",
-            "properties": {
-                "groupId": {
-                    "type": "string"
-                }
-            }
-        },
-        "handler.BroadcastMessageRequest": {
-            "type": "object",
-            "properties": {
-                "content": {
-                    "type": "string"
-                }
-            }
-        },
-        "handler.BulkDeleteTracksRequest": {
-            "type": "object",
-            "properties": {
-                "trackIds": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                }
-            }
-        },
-        "handler.BulkGenerateBadgesRequest": {
-            "type": "object",
-            "properties": {
-                "count": {
-                    "type": "integer"
-                }
-            }
-        },
-        "handler.BulkUpdateCornersRequest": {
-            "type": "object",
-            "properties": {
-                "corners": {
-                    "type": "array",
-                    "items": {
-                        "type": "object",
-                        "properties": {
-                            "id": {
-                                "type": "string"
-                            },
-                            "name": {
-                                "type": "string"
-                            },
-                            "targetMinutes": {
-                                "type": "integer"
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "handler.CreateCampRequest": {
-            "type": "object",
-            "properties": {
-                "name": {
-                    "type": "string"
-                }
-            }
-        },
-        "handler.CreateCornerRequest": {
-            "type": "object",
-            "properties": {
-                "campId": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "targetMinutes": {
-                    "type": "integer"
-                }
-            }
-        },
-        "handler.CreateTracksRequest": {
-            "type": "object",
-            "properties": {
-                "cornerId": {
-                    "type": "string"
-                },
-                "count": {
-                    "type": "integer"
-                }
-            }
-        },
-        "handler.DeviceRegistrationRequest": {
-            "type": "object",
-            "properties": {
-                "deviceId": {
-                    "type": "string"
-                },
-                "deviceName": {
-                    "type": "string"
-                },
-                "role": {
-                    "type": "string",
-                    "enum": [
-                        "ADMIN",
-                        "FACILITATOR"
-                    ]
-                }
-            }
-        },
-        "handler.DirectMessageRequest": {
-            "type": "object",
-            "properties": {
-                "content": {
-                    "type": "string"
-                }
-            }
-        },
-        "handler.ExceptionApproveRequest": {
-            "type": "object",
-            "properties": {
-                "reason": {
-                    "type": "string"
-                },
-                "visitId": {
-                    "type": "string"
-                }
-            }
-        },
-        "handler.ScanAssignBadgeRequest": {
-            "type": "object",
-            "properties": {
-                "groupId": {
-                    "type": "string"
-                },
-                "qrPayload": {
-                    "type": "string"
-                }
-            }
-        },
-        "handler.VisitStartRequest": {
-            "type": "object",
-            "properties": {
-                "groupId": {
-                    "type": "string"
-                },
-                "method": {
-                    "type": "string",
-                    "enum": [
-                        "MANUAL"
-                    ]
-                },
-                "qrToken": {
-                    "type": "string"
                 }
             }
         }

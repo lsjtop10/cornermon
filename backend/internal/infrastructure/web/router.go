@@ -1,30 +1,27 @@
-package http
+package web
 
 import (
-	"cornermon/backend/internal/infrastructure/http/handler"
-	"cornermon/backend/internal/infrastructure/http/middleware"
-
 	"github.com/labstack/echo/v4"
 )
 
 type Handlers struct {
-	Auth    *handler.AuthHandler
-	Device  *handler.DeviceHandler
-	Camp    *handler.CampHandler
-	Corner  *handler.CornerHandler
-	Track   *handler.TrackHandler
-	Group   *handler.GroupHandler
-	Badge   *handler.BadgeHandler
-	Visit   *handler.VisitHandler
-	Event   *handler.EventHandler
-	Message *handler.MessageHandler
-	Report  *handler.ReportHandler
-	Audit   *handler.AuditHandler
+	Auth    *AuthHandler
+	Device  *DeviceHandler
+	Camp    *CampHandler
+	Corner  *CornerHandler
+	Track   *TrackHandler
+	Group   *GroupHandler
+	Badge   *BadgeHandler
+	Visit   *VisitHandler
+	Event   *EventHandler
+	Message *MessageHandler
+	Report  *ReportHandler
+	Audit   *AuditHandler
 }
 
-func RegisterRoutes(e *echo.Echo, h *Handlers, adminAuth middleware.AuthAdminUsecase, trackAuth middleware.AuthFacilitatorUsecase) {
-	e.Use(middleware.Logger())
-	e.HTTPErrorHandler = middleware.ErrorHandler()
+func RegisterRoutes(e *echo.Echo, h *Handlers, adminAuth AuthAdminUsecase, trackAuth AuthFacilitatorUsecase) {
+	e.Use(Logger())
+	e.HTTPErrorHandler = ErrorHandler()
 
 	v1 := e.Group("/api/v1")
 
@@ -36,8 +33,8 @@ func RegisterRoutes(e *echo.Echo, h *Handlers, adminAuth middleware.AuthAdminUse
 	v1.POST("/device-registrations", h.Device.RequestRegistration)
 
 	admin := v1.Group("")
-	admin.Use(middleware.AdminAuthMiddleware(adminAuth))
-	
+	admin.Use(AdminAuthMiddleware(adminAuth))
+
 	admin.POST("/auth/admin/refresh", h.Auth.AdminRefresh)
 	admin.POST("/auth/admin/logout", h.Auth.AdminLogout)
 	admin.GET("/auth/admin/sessions", h.Auth.ListAdminSessions)
@@ -121,7 +118,7 @@ func RegisterRoutes(e *echo.Echo, h *Handlers, adminAuth middleware.AuthAdminUse
 
 	// ── Track Auth Required Routes ──
 	track := v1.Group("")
-	track.Use(middleware.TrackAuthMiddleware(trackAuth))
+	track.Use(TrackAuthMiddleware(trackAuth))
 
 	track.POST("/auth/track/logout", h.Auth.TrackLogout)
 
