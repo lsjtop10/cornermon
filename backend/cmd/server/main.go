@@ -13,6 +13,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
+	"net/url"
 )
 
 func main() {
@@ -23,9 +24,28 @@ func main() {
 
 	ctx := context.Background()
 	dbURL := os.Getenv("DATABASE_URL")
+	dbPass := os.Getenv("DATABASE_PASSWORD")
+
 	if dbURL == "" {
 		// Fallback for development if not provided
-		dbURL = "postgres://postgres:postgres@localhost:5432/cornermon?sslmode=disable"
+		dbURL = "postgres://postgres:postgres@localhost:5432/cornermon?sslmode=disable&timezone=UTC"
+	} else {
+		u, err := url.Parse(dbURL)
+		if err == nil {
+			// Set separate password if provided
+			if dbPass != "" {
+				username := "postgres"
+				if u.User != nil {
+					username = u.User.Username()
+				}
+				u.User = url.UserPassword(username, dbPass)
+			}
+			// Force session timezone to UTC
+			q := u.Query()
+			q.Set("timezone", "UTC")
+			u.RawQuery = q.Encode()
+			dbURL = u.String()
+		}
 	}
 
 	// Initialize Database Pool
@@ -34,6 +54,7 @@ func main() {
 		log.Fatalf("Unable to connect to database: %v\n", err)
 	}
 	defer pool.Close()
+
 
 	// Initialize Repositories
 	adminRepo := postgres.NewAdminRepository(pool)

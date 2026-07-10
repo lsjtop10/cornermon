@@ -2,7 +2,7 @@ package web
 
 // @title           Cornermon API
 // @version         1.0.0
-// @description     코너학습 운영 시스템(Cornermon) REST API 명세서.
+// @description     코너학습 운영 시스템(Cornermon) REST API 명세서. 모든 날짜/시간(date-time) 필드는 항상 UTC 기준 ISO 8601 형식(YYYY-MM-DDTHH:mm:ssZ)으로 송수신됩니다.
 // @contact.name    Cornermon API Team
 // @BasePath        /api/v1
 
