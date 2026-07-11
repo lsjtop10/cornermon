@@ -1990,17 +1990,21 @@ paths:
       tags: [B. Camp / Corner / Track]
       summary: "미배정 배지 목록 내보내기 (인쇄용)"
       description: |
-        미배정(UNASSIGNED) 배지 전체를 인쇄용 CSV 파일로 내보낸다.
+        미배정(UNASSIGNED) 배지 전체를 클라이언트 인쇄용 JSON 목록으로 반환한다.
       security:
         - AdminAuth: []
       responses:
         "200":
-          description: "CSV 파일"
+          description: "미배정 배지 목록"
           content:
-            text/csv:
+            application/json:
               schema:
-                type: string
-                format: binary
+                type: object
+                properties:
+                  badges:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Badge'
 
   /badges:
     get:
