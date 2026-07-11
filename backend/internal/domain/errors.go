@@ -24,6 +24,7 @@ var (
 	ErrTrackNotBusy            = errors.New("track: no visit in progress")
 	ErrVisitEndBeforeStart     = errors.New("visit: endedAt cannot be before startedAt")
 	ErrDeviceInvalidTransition = errors.New("device: invalid status transition")
+	ErrCornerNotFound          = errors.New("corner: not found")
 )
 
 type DeviceLockedError struct {
