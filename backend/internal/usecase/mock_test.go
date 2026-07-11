@@ -172,6 +172,16 @@ func (r *MockVisitRepository) Save(ctx context.Context, visit *domain.Visit) err
 	return nil
 }
 
+func (r *MockVisitRepository) ListByGroup(ctx context.Context, groupID domain.GroupID) ([]*domain.Visit, error) {
+	var list []*domain.Visit
+	for _, v := range r.Visits {
+		if v.GroupID == groupID {
+			list = append(list, v)
+		}
+	}
+	return list, nil
+}
+
 // MockGroupRepository
 type MockGroupRepository struct {
 	Groups map[domain.GroupID]*domain.Group

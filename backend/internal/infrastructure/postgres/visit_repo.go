@@ -99,3 +99,15 @@ func (r *pgVisitRepository) Save(ctx context.Context, visit *domain.Visit) error
 
 	return r.queries(ctx).SaveVisit(ctx, params)
 }
+
+func (r *pgVisitRepository) ListByGroup(ctx context.Context, groupID domain.GroupID) ([]*domain.Visit, error) {
+	rows, err := r.queries(ctx).ListVisitsByGroup(ctx, string(groupID))
+	if err != nil {
+		return nil, err
+	}
+	res := make([]*domain.Visit, len(rows))
+	for i, row := range rows {
+		res[i] = mapVisit(row)
+	}
+	return res, nil
+}

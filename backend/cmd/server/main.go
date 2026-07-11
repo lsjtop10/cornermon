@@ -81,8 +81,8 @@ func main() {
 
 	deviceTrustService := usecase.NewDeviceTrustService(campRepo, deviceRepo, auditLogRepo, broadcaster, txManager)
 	cornerService := usecase.NewCornerService(campRepo, cornerRepo, auditLogRepo, broadcaster, txManager)
-	groupService := usecase.NewGroupService(campRepo, cornerRepo, groupRepo, badgeRepo, auditLogRepo, txManager)
-	badgeService := usecase.NewBadgeService(badgeRepo, auditLogRepo, txManager)
+	groupService := usecase.NewGroupService(campRepo, cornerRepo, groupRepo, badgeRepo, visitRepo, auditLogRepo, txManager)
+	badgeService := usecase.NewBadgeService(badgeRepo, groupRepo, auditLogRepo, txManager)
 	visitService := usecase.NewVisitService(campRepo, cornerRepo, trackRepo, visitRepo, groupRepo, badgeRepo, facilitatorSessionRepo, auditLogRepo, broadcaster, txManager)
 	trackService := usecase.NewTrackService(campRepo, cornerRepo, trackRepo, facilitatorSessionRepo, auditLogRepo, broadcaster, txManager)
 	reportService := usecase.NewReportService(campRepo, reportQuerier)
@@ -97,7 +97,7 @@ func main() {
 	cornerHandler := web.NewCornerHandler(cornerService)
 	trackHandler := web.NewTrackHandler(trackService)
 	groupHandler := web.NewGroupHandler(groupService)
-	badgeHandler := web.NewBadgeHandler(badgeService)
+	badgeHandler := web.NewBadgeHandler(badgeService, groupService, campRepo)
 	visitHandler := web.NewVisitHandler(visitService)
 
 	// Assuming EventHandler expects a subscriber (Broadcaster could implement it)

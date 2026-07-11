@@ -14,6 +14,7 @@ type GroupService struct {
 	corners   CornerRepository
 	groups    GroupRepository
 	badges    BadgeRepository
+	visits    VisitRepository
 	auditLogs AuditLogRepository
 	tx        TxManager
 
@@ -26,6 +27,7 @@ func NewGroupService(
 	corners CornerRepository,
 	groups GroupRepository,
 	badges BadgeRepository,
+	visits VisitRepository,
 	auditLogs AuditLogRepository,
 	tx TxManager,
 ) *GroupService {
@@ -34,6 +36,7 @@ func NewGroupService(
 		corners:   corners,
 		groups:    groups,
 		badges:    badges,
+		visits:    visits,
 		auditLogs: auditLogs,
 		tx:        tx,
 		nowFn:     func() time.Time { return time.Now().UTC() },
@@ -120,6 +123,50 @@ func (s *GroupService) ListGroups(
 // RetrieveGroupRotationSchedule
 func (s *GroupService) RetrieveGroupRotationSchedule(ctx context.Context, groupID domain.GroupID) (*domain.Group, error) {
 	return s.groups.Get(ctx, groupID)
+}
+
+type GroupVisitDetail struct {
+	Visit  *domain.Visit
+	Corner *domain.Corner
+}
+
+// ListGroupVisitDetails
+func (s *GroupService) ListGroupVisitDetails(ctx context.Context, groupID domain.GroupID) ([]GroupVisitDetail, error) {
+	group, err := s.groups.Get(ctx, groupID)
+	if err != nil {
+		return nil, err
+	}
+	if group == nil {
+		return nil, domain.ErrCornerNotInItinerary // map to not found
+	}
+
+	visits, err := s.visits.ListByGroup(ctx, groupID)
+	if err != nil {
+		return nil, err
+	}
+
+	corners, err := s.corners.ListByCamp(ctx, group.CampID)
+	if err != nil {
+		return nil, err
+	}
+
+	cornerMap := make(map[domain.CornerID]*domain.Corner)
+	for _, c := range corners {
+		cornerMap[c.ID] = c
+	}
+
+	var details []GroupVisitDetail
+	for _, v := range visits {
+		c, ok := cornerMap[v.CornerID]
+		if ok {
+			details = append(details, GroupVisitDetail{
+				Visit:  v,
+				Corner: c,
+			})
+		}
+	}
+
+	return details, nil
 }
 
 func (s *GroupService) recordAuditLog(ctx context.Context, actor, action, target string, success bool, metadata map[string]any) {

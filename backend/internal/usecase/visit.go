@@ -341,6 +341,24 @@ func (s *VisitService) CompleteVisit(
 	return visit, nil
 }
 
+// GetCurrentVisit - UC-4
+func (s *VisitService) GetCurrentVisit(
+	ctx context.Context,
+	facilitatorToken string,
+) (*domain.Visit, error) {
+	tokenHash := hashSHA256(facilitatorToken)
+
+	session, err := s.sessions.GetByTokenHash(ctx, tokenHash)
+	if err != nil {
+		return nil, err
+	}
+	if session == nil || !session.IsActive() {
+		return nil, domain.ErrSessionRevoked
+	}
+
+	return s.visits.GetInProgressByTrack(ctx, session.TrackID)
+}
+
 func (s *VisitService) recordAuditLog(ctx context.Context, actor, action, target string, success bool, metadata map[string]any) {
 	log := domain.NewAuditLog(
 		domain.AuditLogID(s.uuidFn()),

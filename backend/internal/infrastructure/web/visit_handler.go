@@ -110,23 +110,16 @@ func (h *VisitHandler) EndCurrentVisit(c echo.Context) error {
 // @Failure      404 "진행 중인 방문 없음"
 // @Router       /tracks/{trackId}/visits/current [get]
 func (h *VisitHandler) GetCurrentVisit(c echo.Context) error {
-	return echo.NewHTTPError(http.StatusNotImplemented, "Not implemented yet")
-}
+	authHeader := c.Request().Header.Get("Authorization")
+	token := strings.TrimPrefix(authHeader, "Bearer ")
 
-type ExceptionApproveRequest struct {
-	VisitID string `json:"visitId"`
-	Reason  string `json:"reason"`
-}
+	visit, err := h.visitUC.GetCurrentVisit(c.Request().Context(), token)
+	if err != nil {
+		return err
+	}
+	if visit == nil {
+		return echo.ErrNotFound
+	}
 
-// @Summary      예외 상황 강제 승인 (슈퍼어드민)
-// @Description  진행자가 처리 불가능한 예외(예: 앱 오류로 스캔 누락, 이미 스캔된 것으로 처리된 경우) 발생 시, 관리자가 강제로 방문을 인정.
-// @Tags         C. Visit (Scan Flow)
-// @Security     AdminAuth
-// @Accept       json
-// @Produce      json
-// @Param        request body ExceptionApproveRequest true "예외 승인 정보"
-// @Success      200 {object} VisitSummary
-// @Router       /visits/exception-approve [post]
-func (h *VisitHandler) ExceptionApprove(c echo.Context) error {
-	return echo.NewHTTPError(http.StatusNotImplemented, "Not implemented yet")
+	return c.JSON(http.StatusOK, mapVisitToDTO(visit))
 }

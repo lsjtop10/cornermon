@@ -106,6 +106,8 @@ func mapDomainError(err error) (int, string) {
 		return http.StatusBadRequest, "VISIT_END_BEFORE_START"
 	case errors.Is(err, domain.ErrDeviceInvalidTransition):
 		return http.StatusBadRequest, "INVALID_TRANSITION"
+	case errors.Is(err, domain.ErrCornerNotFound):
+		return http.StatusNotFound, "CORNER_NOT_FOUND"
 	default:
 		return http.StatusInternalServerError, "INTERNAL_ERROR"
 	}
