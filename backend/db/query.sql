@@ -214,5 +214,5 @@ WHERE admin_id = $1 AND revoked_at IS NULL;
 -- name: GetFacilitatorSession :one
 SELECT * FROM facilitator_sessions WHERE id = $1;
 
-
-
+-- name: ListVisitsByGroup :many
+SELECT * FROM visits WHERE group_id = $1 ORDER BY started_at ASC;
