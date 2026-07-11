@@ -2,42 +2,95 @@ package sse
 
 import (
 	"context"
-	"log"
+	"fmt"
+	"strings"
+	"sync"
 
 	"cornermon/backend/internal/domain"
 	"cornermon/backend/internal/usecase"
 )
 
 type BroadcasterImpl struct {
-	// 실제 구현은 Redis Pub/Sub이나 로컬 채널 등을 활용할 수 있지만,
-	// 현재는 임시로 로그만 남기거나 간단한 구조만 갖춥니다.
+	mu        sync.RWMutex
+	adminSubs map[chan string]struct{}
+	trackSubs map[string]map[chan string]struct{}
 }
 
 func NewBroadcaster() *BroadcasterImpl {
-	return &BroadcasterImpl{}
+	return &BroadcasterImpl{
+		adminSubs: make(map[chan string]struct{}),
+		trackSubs: make(map[string]map[chan string]struct{}),
+	}
 }
 
 func (b *BroadcasterImpl) Broadcast(ctx context.Context, campID domain.CampID, event usecase.NotificationEvent, scope string) error {
-	// TODO: 실제 SSE 채널이나 Redis Pub/Sub으로 이벤트 전송
-	log.Printf("[SSE Broadcaster] camp_id: %s, event: %s, scope: %s\n", campID, event, scope)
+	b.mu.RLock()
+	defer b.mu.RUnlock()
 
-	// 에러 처리가 필요하면 여기서 에러 리턴
+	msg := fmt.Sprintf("event: %s\ndata: {\"scope\": \"%s\"}", event, scope)
+
+	for ch := range b.adminSubs {
+		select {
+		case ch <- msg:
+		default:
+		}
+	}
+
+	isBroadcast := scope == "broadcast"
+	var targetTrackID string
+	if strings.HasPrefix(scope, "track:") {
+		targetTrackID = strings.TrimPrefix(scope, "track:")
+	}
+
+	for trackID, subs := range b.trackSubs {
+		if isBroadcast || scope == "camp" || targetTrackID == trackID {
+			for ch := range subs {
+				select {
+				case ch <- msg:
+				default:
+				}
+			}
+		}
+	}
+
 	return nil
 }
 
 func (b *BroadcasterImpl) SubscribeAdmin(ctx context.Context) (<-chan string, error) {
-	ch := make(chan string)
+	ch := make(chan string, 100)
+	b.mu.Lock()
+	b.adminSubs[ch] = struct{}{}
+	b.mu.Unlock()
+
 	go func() {
 		<-ctx.Done()
+		b.mu.Lock()
+		delete(b.adminSubs, ch)
+		b.mu.Unlock()
 		close(ch)
 	}()
 	return ch, nil
 }
 
 func (b *BroadcasterImpl) SubscribeTrack(ctx context.Context, trackID string) (<-chan string, error) {
-	ch := make(chan string)
+	ch := make(chan string, 100)
+	b.mu.Lock()
+	if b.trackSubs[trackID] == nil {
+		b.trackSubs[trackID] = make(map[chan string]struct{})
+	}
+	b.trackSubs[trackID][ch] = struct{}{}
+	b.mu.Unlock()
+
 	go func() {
 		<-ctx.Done()
+		b.mu.Lock()
+		if subs, ok := b.trackSubs[trackID]; ok {
+			delete(subs, ch)
+			if len(subs) == 0 {
+				delete(b.trackSubs, trackID)
+			}
+		}
+		b.mu.Unlock()
 		close(ch)
 	}()
 	return ch, nil
