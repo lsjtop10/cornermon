@@ -8,14 +8,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
-import '../../../shared/api/ids.dart';
-import '../../../shared/api/providers/visit_providers.dart';
-import '../../../shared/design_system/tokens/colors.dart';
-import '../../../shared/design_system/tokens/spacing.dart';
-import '../../../shared/design_system/tokens/typography.dart';
-import '../../../shared/design_system/widgets/app_button.dart';
-import '../../session/track_session_provider.dart';
-import '../../widgets/qr_scan_frame.dart';
+import 'package:cornermon/shared/api/ids.dart';
+import 'package:cornermon/shared/api/providers/visit_providers.dart';
+import 'package:cornermon/shared/design_system/tokens/colors.dart';
+import 'package:cornermon/shared/design_system/tokens/spacing.dart';
+import 'package:cornermon/shared/design_system/tokens/typography.dart';
+import 'package:cornermon/shared/design_system/widgets/app_button.dart';
+
+import 'package:cornermon/facilitator/session/track_session_provider.dart';
+import 'package:cornermon/facilitator/widgets/qr_scan_frame.dart';
 
 /// B3 — QR 스캔(입장 전용). 퇴장은 트랙당 진행중 방문이 1개뿐이라 B2에서 바로 처리하고
 /// 이 화면을 거치지 않는다(§domain-model 2.6-d).
@@ -105,7 +106,9 @@ class _QrScanScreenState extends ConsumerState<QrScanScreen> {
                 const SizedBox(height: AppSpacing.space4),
                 Text(
                   message,
-                  style: AppTypography.title3.copyWith(color: colors.textPrimary),
+                  style: AppTypography.title3.copyWith(
+                    color: colors.textPrimary,
+                  ),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: AppSpacing.space6),
@@ -144,7 +147,9 @@ class _QrScanScreenState extends ConsumerState<QrScanScreen> {
                   onPressed: () => context.pop(),
                   child: Text(
                     '취소',
-                    style: AppTypography.bodyEmphasis.copyWith(color: Colors.white),
+                    style: AppTypography.bodyEmphasis.copyWith(
+                      color: Colors.white,
+                    ),
                   ),
                 ),
               ),

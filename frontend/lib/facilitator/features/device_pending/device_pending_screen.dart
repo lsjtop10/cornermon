@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../shared/design_system/tokens/colors.dart';
-import '../../../shared/design_system/tokens/spacing.dart';
-import '../../../shared/design_system/tokens/typography.dart';
-import '../../../shared/design_system/widgets/app_button.dart';
+import 'package:cornermon/shared/design_system/tokens/colors.dart';
+import 'package:cornermon/shared/design_system/tokens/spacing.dart';
+import 'package:cornermon/shared/design_system/tokens/typography.dart';
+import 'package:cornermon/shared/design_system/widgets/app_button.dart';
 import '../../session/device_trust_provider.dart';
 
 /// B0. 신뢰되지 않은 기기는 이 화면만 볼 수 있고 PIN 화면(B1)에 도달하지 못한다.
@@ -28,10 +28,12 @@ class DevicePendingScreen extends ConsumerWidget {
               data: (status) => switch (status) {
                 DeviceTrustStatus.none => const _RegistrationForm(),
                 DeviceTrustStatus.pending => const _PendingView(),
-                DeviceTrustStatus.rejected =>
-                  const _RegistrationForm(noticeMessage: '등록이 거절되었습니다'),
-                DeviceTrustStatus.revoked =>
-                  const _RegistrationForm(noticeMessage: '신뢰가 철회되었습니다'),
+                DeviceTrustStatus.rejected => const _RegistrationForm(
+                  noticeMessage: '등록이 거절되었습니다',
+                ),
+                DeviceTrustStatus.revoked => const _RegistrationForm(
+                  noticeMessage: '신뢰가 철회되었습니다',
+                ),
                 // approved는 라우터가 곧바로 /pin-login으로 이동시키므로 실질적으로 잠깐만 보임.
                 DeviceTrustStatus.approved => const _PendingView(),
               },
@@ -139,7 +141,11 @@ class _RegistrationFormState extends ConsumerState<_RegistrationForm> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(Icons.phonelink_lock_outlined, size: 64.0, color: colors.textDisabled),
+        Icon(
+          Icons.phonelink_lock_outlined,
+          size: 64.0,
+          color: colors.textDisabled,
+        ),
         const SizedBox(height: AppSpacing.space6),
         Text(
           '기기 등록 대기',
@@ -167,7 +173,9 @@ class _RegistrationFormState extends ConsumerState<_RegistrationForm> {
           textAlign: TextAlign.center,
           decoration: InputDecoration(
             labelText: '등록 코드',
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12.0)),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12.0),
+            ),
           ),
         ),
         if (_errorText != null) ...[

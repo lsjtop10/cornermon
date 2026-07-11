@@ -3,13 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:cornermon_api_gen/cornermon_api_gen.dart';
 
-import '../../../shared/api/ids.dart';
-import '../../../shared/api/providers/corner_track_providers.dart';
-import '../../../shared/api/providers/visit_providers.dart';
-import '../../../shared/design_system/tokens/colors.dart';
-import '../../../shared/design_system/tokens/spacing.dart';
-import '../../../shared/design_system/widgets/app_button.dart';
-import '../../session/track_session_provider.dart';
+import 'package:cornermon/shared/api/ids.dart';
+import 'package:cornermon/shared/api/providers/corner_track_providers.dart';
+import 'package:cornermon/shared/api/providers/visit_providers.dart';
+import 'package:cornermon/shared/design_system/tokens/colors.dart';
+import 'package:cornermon/shared/design_system/tokens/spacing.dart';
+import 'package:cornermon/shared/design_system/widgets/app_button.dart';
+import 'package:cornermon/facilitator/session/track_session_provider.dart';
 import '../visit_summary/visit_summary_overlay.dart';
 import '_main_track_body.dart';
 import '_main_track_header.dart';
@@ -42,16 +42,20 @@ class _MainTrackScreenState extends ConsumerState<MainTrackScreen> {
     // 함께 dispose된다(§04 plan). 반환값(void)은 쓰지 않는다.
     ref.watch(trackEventCoordinatorProvider(trackId));
 
-    final currentVisit =
-        ref.watch(currentVisitProvider(trackId)).maybeWhen(data: (v) => v, orElse: () => null);
+    final currentVisit = ref
+        .watch(currentVisitProvider(trackId))
+        .maybeWhen(data: (v) => v, orElse: () => null);
 
     // 목표시간(분)은 Track/로그인 응답이 아니라 Corner 엔티티에만 있어 별도 조회가 필요하다.
     final cornerId = session.corner.id;
     final targetMinutes = cornerId == null
         ? null
         : ref
-            .watch(cornerDetailProvider(CornerId(cornerId)))
-            .maybeWhen(data: (corner) => corner.targetMinutes, orElse: () => null);
+              .watch(cornerDetailProvider(CornerId(cornerId)))
+              .maybeWhen(
+                data: (corner) => corner.targetMinutes,
+                orElse: () => null,
+              );
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final colors = isDark ? AppColors.dark : AppColors.light;
@@ -72,7 +76,8 @@ class _MainTrackScreenState extends ConsumerState<MainTrackScreen> {
                     cornerName: session.corner.name ?? '',
                     trackNo: session.track.trackNo,
                     targetMinutes: targetMinutes,
-                    onVisitEnded: (summary) => setState(() => _visitJustCompleted = summary),
+                    onVisitEnded: (summary) =>
+                        setState(() => _visitJustCompleted = summary),
                   ),
                 ),
                 if (isIdle)

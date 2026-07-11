@@ -4,19 +4,20 @@ import 'package:cornermon_api_gen/cornermon_api_gen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../shared/api/providers/message_providers.dart';
-import '../../../shared/design_system/tokens/colors.dart';
-import '../../../shared/design_system/tokens/spacing.dart';
-import '../../../shared/design_system/tokens/typography.dart';
-import '../../../shared/design_system/widgets/empty_state.dart';
-import '../../widgets/local_time_label.dart';
+import 'package:cornermon/shared/api/providers/message_providers.dart';
+import 'package:cornermon/shared/design_system/tokens/colors.dart';
+import 'package:cornermon/shared/design_system/tokens/spacing.dart';
+import 'package:cornermon/shared/design_system/tokens/typography.dart';
+import 'package:cornermon/shared/design_system/widgets/empty_state.dart';
+import 'package:cornermon/facilitator/widgets/local_time_label.dart';
 
 /// B6 공지함 — 진입 시 안읽은 공지를 자동 읽음 처리한다(screen-spec-facilitator.md B6).
 class BroadcastInboxScreen extends ConsumerStatefulWidget {
   const BroadcastInboxScreen({super.key});
 
   @override
-  ConsumerState<BroadcastInboxScreen> createState() => _BroadcastInboxScreenState();
+  ConsumerState<BroadcastInboxScreen> createState() =>
+      _BroadcastInboxScreenState();
 }
 
 class _BroadcastInboxScreenState extends ConsumerState<BroadcastInboxScreen> {
@@ -52,12 +53,14 @@ class _BroadcastInboxScreenState extends ConsumerState<BroadcastInboxScreen> {
           }
 
           // API가 순서를 보장하지 않으므로 화면에서 최신순으로 정렬한다.
-          final sorted = [...messages]..sort((a, b) => b.sentAt.compareTo(a.sentAt));
+          final sorted = [...messages]
+            ..sort((a, b) => b.sentAt.compareTo(a.sentAt));
 
           return ListView.separated(
             padding: const EdgeInsets.all(AppSpacing.space4),
             itemCount: sorted.length,
-            separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.space3),
+            separatorBuilder: (_, _) =>
+                const SizedBox(height: AppSpacing.space3),
             itemBuilder: (context, index) {
               final message = sorted[index];
               final unread = message.readAt == null;
@@ -91,14 +94,17 @@ class _BroadcastInboxScreenState extends ConsumerState<BroadcastInboxScreen> {
   }
 
   Future<void> _markUnreadAsRead(List<Message> messages) async {
-    final targets =
-        messages.where((m) => m.readAt == null && !_readRequestedIds.contains(m.id)).toList();
+    final targets = messages
+        .where((m) => m.readAt == null && !_readRequestedIds.contains(m.id))
+        .toList();
     if (targets.isEmpty) return;
 
     _readRequestedIds.addAll(targets.map((m) => m.id));
 
     final api = ref.read(messageApiProvider);
-    await Future.wait(targets.map((m) => api.messagesBroadcastIdReadPost(id: m.id)));
+    await Future.wait(
+      targets.map((m) => api.messagesBroadcastIdReadPost(id: m.id)),
+    );
 
     if (!mounted) return;
     // 개별 호출마다가 아니라 전부 끝난 뒤 한 번만 invalidate한다.
@@ -124,7 +130,9 @@ class _BroadcastMessageTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final contentStyle =
-        (unread ? AppTypography.bodyEmphasis : AppTypography.body).copyWith(color: colors.textPrimary);
+        (unread ? AppTypography.bodyEmphasis : AppTypography.body).copyWith(
+          color: colors.textPrimary,
+        );
 
     return InkWell(
       onTap: onTap,
@@ -134,7 +142,10 @@ class _BroadcastMessageTile extends StatelessWidget {
           color: colors.bgSurface,
           borderRadius: BorderRadius.circular(8.0),
           border: Border(
-            left: BorderSide(color: unread ? colors.info : Colors.transparent, width: 3.0),
+            left: BorderSide(
+              color: unread ? colors.info : Colors.transparent,
+              width: 3.0,
+            ),
           ),
         ),
         padding: const EdgeInsets.symmetric(
@@ -152,7 +163,9 @@ class _BroadcastMessageTile extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.space1),
             DefaultTextStyle.merge(
-              style: AppTypography.caption.copyWith(color: colors.textSecondary),
+              style: AppTypography.caption.copyWith(
+                color: colors.textSecondary,
+              ),
               child: LocalTimeLabel(dateTime: message.sentAt),
             ),
           ],

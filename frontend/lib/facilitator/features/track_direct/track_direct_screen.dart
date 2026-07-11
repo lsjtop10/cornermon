@@ -2,15 +2,15 @@ import 'package:cornermon_api_gen/cornermon_api_gen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../shared/api/ids.dart';
-import '../../../shared/api/providers/message_providers.dart';
-import '../../../shared/design_system/tokens/colors.dart';
-import '../../../shared/design_system/tokens/spacing.dart';
-import '../../../shared/design_system/tokens/typography.dart';
-import '../../../shared/design_system/widgets/app_button.dart';
-import '../../../shared/design_system/widgets/empty_state.dart';
-import '../../session/track_session_provider.dart';
-import '../../widgets/local_time_label.dart';
+import 'package:cornermon/shared/api/ids.dart';
+import 'package:cornermon/shared/api/providers/message_providers.dart';
+import 'package:cornermon/shared/design_system/tokens/colors.dart';
+import 'package:cornermon/shared/design_system/tokens/spacing.dart';
+import 'package:cornermon/shared/design_system/tokens/typography.dart';
+import 'package:cornermon/shared/design_system/widgets/app_button.dart';
+import 'package:cornermon/shared/design_system/widgets/empty_state.dart';
+import 'package:cornermon/facilitator/session/track_session_provider.dart';
+import 'package:cornermon/facilitator/widgets/local_time_label.dart';
 import 'track_direct_actions_provider.dart';
 
 const _quickReplies = ['인원부족', '자재부족', '긴급도움요청'];
@@ -62,7 +62,8 @@ class _TrackDirectScreenState extends ConsumerState<TrackDirectScreen> {
                   }
 
                   // 채팅 스레드는 오래된 메시지가 위, 최신 메시지가 아래로 오도록 정렬한다.
-                  final sorted = [...messages]..sort((a, b) => a.sentAt.compareTo(b.sentAt));
+                  final sorted = [...messages]
+                    ..sort((a, b) => a.sentAt.compareTo(b.sentAt));
 
                   return ListView.builder(
                     padding: const EdgeInsets.all(AppSpacing.space4),
@@ -82,7 +83,11 @@ class _TrackDirectScreenState extends ConsumerState<TrackDirectScreen> {
             ),
             // 빈 스레드여도 입력창은 항상 노출 — 진행자가 먼저 말을 걸 수 있어야 한다.
             _QuickReplyRow(trackId: trackId, colors: colors),
-            _MessageInputRow(trackId: trackId, controller: _inputController, colors: colors),
+            _MessageInputRow(
+              trackId: trackId,
+              controller: _inputController,
+              colors: colors,
+            ),
           ],
         ),
       ),
@@ -110,7 +115,9 @@ class _MessageBubble extends StatelessWidget {
           horizontal: AppSpacing.space4,
           vertical: AppSpacing.space3,
         ),
-        constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
+        constraints: BoxConstraints(
+          maxWidth: MediaQuery.of(context).size.width * 0.75,
+        ),
         decoration: BoxDecoration(
           color: bgColor,
           borderRadius: BorderRadius.circular(16.0),
@@ -119,7 +126,10 @@ class _MessageBubble extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(message.content, style: AppTypography.body.copyWith(color: textColor)),
+            Text(
+              message.content,
+              style: AppTypography.body.copyWith(color: textColor),
+            ),
             const SizedBox(height: AppSpacing.space1),
             DefaultTextStyle.merge(
               style: AppTypography.caption.copyWith(color: textColor),
@@ -153,7 +163,12 @@ class _QuickReplyRow extends ConsumerWidget {
         children: _quickReplies
             .map(
               (label) => ActionChip(
-                label: Text(label, style: AppTypography.caption.copyWith(color: colors.textPrimary)),
+                label: Text(
+                  label,
+                  style: AppTypography.caption.copyWith(
+                    color: colors.textPrimary,
+                  ),
+                ),
                 backgroundColor: colors.bgSurfaceRaised,
                 side: BorderSide(color: colors.border),
                 onPressed: () => _send(context, ref, trackId, label),
@@ -166,7 +181,11 @@ class _QuickReplyRow extends ConsumerWidget {
 }
 
 class _MessageInputRow extends ConsumerWidget {
-  const _MessageInputRow({required this.trackId, required this.controller, required this.colors});
+  const _MessageInputRow({
+    required this.trackId,
+    required this.controller,
+    required this.colors,
+  });
 
   final TrackId trackId;
   final TextEditingController controller;
@@ -217,11 +236,18 @@ class _MessageInputRow extends ConsumerWidget {
   }
 }
 
-Future<void> _send(BuildContext context, WidgetRef ref, TrackId trackId, String content) async {
+Future<void> _send(
+  BuildContext context,
+  WidgetRef ref,
+  TrackId trackId,
+  String content,
+) async {
   try {
     await ref.read(trackDirectActionsProvider(trackId).notifier).send(content);
   } catch (_) {
     if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('메시지 전송에 실패했습니다')));
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('메시지 전송에 실패했습니다')));
   }
 }
