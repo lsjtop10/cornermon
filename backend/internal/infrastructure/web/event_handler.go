@@ -64,7 +64,7 @@ func (h *EventHandler) AdminEvents(c echo.Context) error {
 				if !ok {
 					return nil
 				}
-				if _, err := c.Response().Write([]byte(fmt.Sprintf("data: %s\n\n", msg))); err != nil {
+				if _, err := c.Response().Write([]byte(fmt.Sprintf("%s\n\n", msg))); err != nil {
 					return err
 				}
 				c.Response().Flush()
@@ -133,7 +133,7 @@ func (h *EventHandler) TrackEvents(c echo.Context) error {
 				if !ok {
 					return nil
 				}
-				if _, err := c.Response().Write([]byte(fmt.Sprintf("data: %s\n\n", msg))); err != nil {
+				if _, err := c.Response().Write([]byte(fmt.Sprintf("%s\n\n", msg))); err != nil {
 					return err
 				}
 				c.Response().Flush()
