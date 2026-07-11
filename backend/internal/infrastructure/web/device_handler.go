@@ -11,6 +11,7 @@ import (
 )
 
 type DeviceTrustUsecase interface {
+	GetMyRegistrationStatus(ctx context.Context, deviceToken string) (*domain.DeviceRegistrationStatus, error)
 	RequestRegistration(ctx context.Context, campID domain.CampID, deviceName string) (string, *domain.DeviceRegistration, error)
 	ApproveDevice(ctx context.Context, regID domain.DeviceRegistrationID, actorAdminID domain.AdminID) error
 	RejectDevice(ctx context.Context, regID domain.DeviceRegistrationID, actorAdminID domain.AdminID) error
@@ -32,6 +33,32 @@ type DeviceRegistrationRequest struct {
 	CampID     string `json:"campId"` // Using campId because RequestRegistration expects a campID
 	DeviceName string `json:"deviceName"`
 	Role       string `json:"role" enums:"ADMIN,FACILITATOR"`
+}
+
+// @Summary      내 기기 등록 상태 자체 조회
+// @Description  미승인(PENDING) 기기가 자신의 승인 상태를 확인하기 위해 호출한다.
+// @Tags         A. Auth & Device Trust
+// @Accept       json
+// @Produce      json
+// @Success      200 {object} map[string]interface{}
+// @Router       /device-registrations/me [get]
+func (h *DeviceHandler) GetMyRegistrationStatus(c echo.Context) error {
+	token := extractToken(c.Request().Header.Get("Authorization"))
+	if token == "" {
+		return c.JSON(http.StatusUnauthorized, ErrorResponse{Code: "UNAUTHORIZED", Message: "missing token"})
+	}
+
+	status, err := h.deviceTrust.GetMyRegistrationStatus(c.Request().Context(), token)
+	if err != nil {
+		if err == domain.ErrDeviceNotApproved {
+			return c.JSON(http.StatusUnauthorized, ErrorResponse{Code: "UNAUTHORIZED", Message: err.Error()})
+		}
+		return c.JSON(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_ERROR", Message: err.Error()})
+	}
+
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		"status": status,
+	})
 }
 
 // @Summary      기기 등록 요청 (최초 앱 실행 시)

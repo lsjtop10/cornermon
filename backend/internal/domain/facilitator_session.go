@@ -5,11 +5,17 @@ import (
 )
 
 type FacilitatorSession struct {
-	ID        FacilitatorSessionID
-	TrackID   TrackID
-	TokenHash string
-	CreatedAt time.Time
-	RevokedAt Optional[time.Time]
+	ID                     FacilitatorSessionID
+	TrackID                TrackID
+	TokenHash              string
+	CreatedAt              time.Time
+	RevokedAt              Optional[time.Time]
+	MigrationTargetTrackID Optional[TrackID]
+}
+
+// SetMigrationTarget은 트랙 교체 시 마이그레이션할 대상 트랙 ID를 기록합니다.
+func (s *FacilitatorSession) SetMigrationTarget(newTrackID TrackID) {
+	s.MigrationTargetTrackID = Some(newTrackID)
 }
 
 // Revoke는 세션을 즉시 무효화 처리합니다.

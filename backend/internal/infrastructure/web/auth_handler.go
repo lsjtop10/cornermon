@@ -22,6 +22,7 @@ type AdminAuthUsecase interface {
 type FacilitatorAuthUsecase interface {
 	Login(ctx context.Context, deviceToken, pin string) (*usecase.TrackLoginResult, error)
 	Logout(ctx context.Context, sessionID domain.FacilitatorSessionID) error
+	MigrateSession(ctx context.Context, oldSessionToken string) (*usecase.TrackLoginResult, error)
 }
 
 type AuthDeviceTrustUsecase interface {
@@ -291,4 +292,44 @@ func (h *AuthHandler) ReleaseLockout(c echo.Context) error {
 	}
 
 	return c.NoContent(http.StatusNoContent)
+}
+
+// @Summary      교체된 트랙의 세션 마이그레이션
+// @Description  트랙이 교체되어 `track_replaced` 알림을 받은 기기가 호출한다. 기존 세션 토큰을 Authorization 헤더에 담아 새 세션을 발급받는다.
+// @Tags         B. Camp / Corner / Track
+// @Security     TrackAuth
+// @Produce      json
+// @Param        id path string true "기존 트랙 ID"
+// @Success      200 {object} TrackLoginResponse
+// @Failure      401 {object} ErrorResponse "권한 없음 또는 세션 만료"
+// @Router       /tracks/{id}/migrate-session [post]
+func (h *AuthHandler) MigrateSession(c echo.Context) error {
+	sessionToken := extractToken(c.Request().Header.Get("Authorization"))
+	if sessionToken == "" {
+		return c.JSON(http.StatusUnauthorized, ErrorResponse{Code: "UNAUTHORIZED", Message: "missing token"})
+	}
+
+	res, err := h.facilitatorAuth.MigrateSession(c.Request().Context(), sessionToken)
+	if err != nil {
+		if err == domain.ErrSessionRevoked {
+			return c.JSON(http.StatusUnauthorized, ErrorResponse{Code: "UNAUTHORIZED", Message: err.Error()})
+		}
+		return c.JSON(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()})
+	}
+
+	return c.JSON(http.StatusOK, TrackLoginResponse{
+		TrackToken: res.TrackToken,
+		Track: Track{
+			TrackSummary: TrackSummary{
+				ID:       string(res.Track.ID),
+				CornerID: string(res.Track.CornerID),
+				TrackNo:  res.Track.TrackNo,
+				Status:   string(res.Track.Status),
+			},
+		},
+		Corner: Corner{
+			ID:   string(res.Corner.ID),
+			Name: res.Corner.Name,
+		},
+	})
 }

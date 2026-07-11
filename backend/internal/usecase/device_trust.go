@@ -83,6 +83,22 @@ func (s *DeviceTrustService) RequestRegistration(
 	return plainToken, reg, nil
 }
 
+// GetMyRegistrationStatus - UC-1 (이슈 #32)
+func (s *DeviceTrustService) GetMyRegistrationStatus(
+	ctx context.Context,
+	deviceToken string,
+) (*domain.DeviceRegistrationStatus, error) {
+	deviceTokenHash := hashSHA256(deviceToken)
+	device, err := s.devices.GetByTokenHash(ctx, deviceTokenHash)
+	if err != nil {
+		return nil, err
+	}
+	if device == nil {
+		return nil, domain.ErrDeviceNotApproved // 혹은 NotFound 처리
+	}
+	return &device.Status, nil
+}
+
 // ApproveDevice - UC-14 (승인)
 func (s *DeviceTrustService) ApproveDevice(
 	ctx context.Context,
