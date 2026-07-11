@@ -141,7 +141,7 @@ final class TrackConnectionProvider
   }
 }
 
-String _$trackConnectionHash() => r'9ddb9294beca557cb5d5a6dd5414b597d6daa1f4';
+String _$trackConnectionHash() => r'bb963db1ffa15aa55c62f209668eaa5b3b2da57f';
 
 final class TrackConnectionFamily extends $Family
     with

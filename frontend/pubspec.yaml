@@ -38,6 +38,8 @@ dependencies:
   flutter_secure_storage: ^10.3.1
   dio: ^5.5.0
   mobile_scanner: ^7.2.0
+  collection: ^1.19.0 # B3 QR 스캔 onDetect에서 barcodes.firstOrNull 직접 사용 — 기존엔 전이 의존성이었음
+  one_of: '>=1.5.0 <2.0.0' # cornermon_api_gen이 이미 이 버전으로 고정 — oneOf 요청 바디(방문 시작) 구성에 직접 필요
   cornermon_api_gen:
     path: lib/shared/api/gen
 
@@ -48,6 +50,7 @@ dev_dependencies:
   build_runner: ^2.4.9
   riverpod_generator: ^4.0.4
   import_lint: any
+  built_collection: ^5.1.1 # main_track_test에서 CornerProgress 리스트 픽스처 구성에 직접 사용 — 기존엔 전이 의존성이었음
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
