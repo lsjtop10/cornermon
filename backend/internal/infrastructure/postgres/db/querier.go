@@ -49,6 +49,7 @@ type Querier interface {
 	ListTracksByCamp(ctx context.Context, campID string) ([]Track, error)
 	ListTracksByCorner(ctx context.Context, cornerID string) ([]Track, error)
 	ListVisitsByCamp(ctx context.Context, campID string) ([]ListVisitsByCampRow, error)
+	ListVisitsByGroup(ctx context.Context, groupID string) ([]Visit, error)
 	SaveAdminSession(ctx context.Context, arg SaveAdminSessionParams) error
 	SaveAuditLog(ctx context.Context, arg SaveAuditLogParams) error
 	SaveBadge(ctx context.Context, arg SaveBadgeParams) error

@@ -956,6 +956,39 @@ func (q *Queries) ListVisitsByCamp(ctx context.Context, campID string) ([]ListVi
 	return items, nil
 }
 
+const listVisitsByGroup = `-- name: ListVisitsByGroup :many
+SELECT id, group_id, corner_id, track_id, status, input_method, started_at, ended_at FROM visits WHERE group_id = $1 ORDER BY started_at ASC
+`
+
+func (q *Queries) ListVisitsByGroup(ctx context.Context, groupID string) ([]Visit, error) {
+	rows, err := q.db.Query(ctx, listVisitsByGroup, groupID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Visit
+	for rows.Next() {
+		var i Visit
+		if err := rows.Scan(
+			&i.ID,
+			&i.GroupID,
+			&i.CornerID,
+			&i.TrackID,
+			&i.Status,
+			&i.InputMethod,
+			&i.StartedAt,
+			&i.EndedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const saveAdminSession = `-- name: SaveAdminSession :exec
 INSERT INTO admin_sessions (id, admin_id, access_token_hash, refresh_token_hash, device_info, created_at, last_used_at, revoked_at)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)

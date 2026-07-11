@@ -93,7 +93,12 @@ func (h *CornerHandler) CreateCorner(c echo.Context) error {
 // @Failure      404 {object} ErrorResponse
 // @Router       /corners/{id} [get]
 func (h *CornerHandler) GetCorner(c echo.Context) error {
-	return c.JSON(http.StatusNotImplemented, ErrorResponse{Code: "NOT_IMPLEMENTED", Message: "Not implemented"})
+	id := domain.CornerID(c.Param("id"))
+	corner, err := h.svc.GetCorner(c.Request().Context(), id)
+	if err != nil {
+		return err
+	}
+	return c.JSON(http.StatusOK, mapDomainCornerToDTO(corner))
 }
 
 // @Summary      코너 삭제

@@ -174,11 +174,11 @@ func (h *ReportHandler) GenerateReport(c echo.Context) error {
 }
 
 // @Summary      현재 리포트 데이터 내보내기
-// @Description  현재 캠프 리포트를 CSV(또는 지정된 포맷)로 다운로드한다.
+// @Description  현재 캠프 리포트를 다운로드한다.
 // @Tags         D. Report
 // @Security     AdminAuth
-// @Produce      text/csv
-// @Success      200 "CSV 데이터"
+// @Produce      json
+// @Success      200 {object} CampReport
 // @Router       /reports/current/export [get]
 func (h *ReportHandler) ExportCurrentReport(c echo.Context) error {
 	camp, err := h.getActiveCamp(c)
@@ -194,11 +194,6 @@ func (h *ReportHandler) ExportCurrentReport(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
-	csvData := "CampID,TotalGroups,FinishedGroups\n" +
-		string(report.CampID) + "," +
-		// simple mock CSV structure based on report
-		"1,1\n"
-
-	c.Response().Header().Set(echo.HeaderContentType, "text/csv")
-	return c.String(http.StatusOK, csvData)
+	// Just return JSON as per the updated spec
+	return c.JSON(http.StatusOK, mapReport(report))
 }
