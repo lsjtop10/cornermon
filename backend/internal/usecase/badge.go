@@ -1,9 +1,7 @@
 package usecase
 
 import (
-	"bytes"
 	"context"
-	"encoding/csv"
 	"time"
 
 	"cornermon/backend/internal/domain"
@@ -67,35 +65,23 @@ func (s *BadgeService) ListBadges(ctx context.Context) ([]*domain.Badge, error) 
 	return s.badges.ListAll(ctx)
 }
 
-// ExportBadges returns CSV content
-func (s *BadgeService) ExportBadges(ctx context.Context) ([]byte, error) {
+// ExportBadges returns unassigned badges for client printing
+func (s *BadgeService) ExportBadges(ctx context.Context) ([]*domain.Badge, error) {
 	badges, err := s.badges.ListAll(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	var buf bytes.Buffer
-	writer := csv.NewWriter(&buf)
-
-	_ = writer.Write([]string{"BadgeID", "ShortID", "QRPayload", "Status", "AssignedGroupID"})
+	var unassigned []*domain.Badge
 	for _, b := range badges {
-		var groupIDStr string
-		if groupID, ok := b.AssignedGroupID.Value(); ok {
-			groupIDStr = string(groupID)
+		if b.Status == domain.BadgeUnassigned {
+			unassigned = append(unassigned, b)
 		}
-		_ = writer.Write([]string{
-			string(b.ID),
-			b.ShortID,
-			b.QRPayload,
-			string(b.Status),
-			groupIDStr,
-		})
 	}
-	writer.Flush()
 
 	s.recordAuditLog(ctx, "admin", "BADGE_EXPORT", "", true, nil)
 
-	return buf.Bytes(), nil
+	return unassigned, nil
 }
 
 func (s *BadgeService) recordAuditLog(ctx context.Context, actor, action, target string, success bool, metadata map[string]any) {

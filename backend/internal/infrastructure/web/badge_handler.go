@@ -79,19 +79,27 @@ func (h *BadgeHandler) BulkGenerateBadges(c echo.Context) error {
 	return c.JSON(http.StatusCreated, res)
 }
 
-// @Summary      QR 배지 인쇄용 목록 내보내기
-// @Description  인쇄소에 넘길 수 있도록 배지의 payload와 숏 코드를 CSV 형식으로 다운로드한다.
+type ExportBadgesResponse struct {
+	Badges []Badge `json:"badges"`
+}
+
+// @Summary      QR 배지 인쇄용 목록 내보내기 (JSON)
+// @Description  클라이언트가 직접 PDF 인쇄 및 레이아웃 구성을 할 수 있도록 미배정(UNASSIGNED) 배지 전체 목록을 JSON으로 다운로드한다.
 // @Tags         B. Resource Management (Admin)
 // @Security     AdminAuth
-// @Produce      text/csv
-// @Success      200 "CSV 데이터"
+// @Produce      json
+// @Success      200 {object} ExportBadgesResponse "미배정 배지 목록"
 // @Router       /badges/export [get]
 func (h *BadgeHandler) ExportBadges(c echo.Context) error {
-	csvData, err := h.badgeUC.ExportBadges(c.Request().Context())
+	badges, err := h.badgeUC.ExportBadges(c.Request().Context())
 	if err != nil {
 		return err
 	}
-	return c.Blob(http.StatusOK, "text/csv", csvData)
+	res := make([]Badge, len(badges))
+	for i, b := range badges {
+		res[i] = mapBadgeToDTO(b)
+	}
+	return c.JSON(http.StatusOK, ExportBadgesResponse{Badges: res})
 }
 
 type AssignBadgeRequest struct {
