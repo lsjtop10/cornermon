@@ -9,9 +9,7 @@ const docTemplate = `{
     "info": {
         "description": "{{escape .Description}}",
         "title": "{{.Title}}",
-        "contact": {
-            "name": "Cornermon API Team"
-        },
+        "contact": {},
         "version": "{{.Version}}"
     },
     "host": "{{.Host}}",
@@ -490,17 +488,20 @@ const docTemplate = `{
                         "AdminAuth": []
                     }
                 ],
-                "description": "인쇄소에 넘길 수 있도록 배지의 payload와 숏 코드를 CSV 형식으로 다운로드한다.",
+                "description": "클라이언트가 직접 PDF 인쇄 및 레이아웃 구성을 할 수 있도록 미배정(UNASSIGNED) 배지 전체 목록을 JSON으로 다운로드한다.",
                 "produces": [
-                    "text/csv"
+                    "application/json"
                 ],
                 "tags": [
                     "B. Resource Management (Admin)"
                 ],
-                "summary": "QR 배지 인쇄용 목록 내보내기",
+                "summary": "QR 배지 인쇄용 목록 내보내기 (JSON)",
                 "responses": {
                     "200": {
-                        "description": "CSV 데이터"
+                        "description": "미배정 배지 목록",
+                        "schema": {
+                            "$ref": "#/definitions/internal_infrastructure_web.ExportBadgesResponse"
+                        }
                     }
                 }
             }
@@ -1130,6 +1131,30 @@ const docTemplate = `{
                         "description": "Created",
                         "schema": {
                             "$ref": "#/definitions/internal_infrastructure_web.DeviceRegistration"
+                        }
+                    }
+                }
+            }
+        },
+        "/device-registrations/me": {
+            "get": {
+                "description": "미승인(PENDING) 기기가 자신의 승인 상태를 확인하기 위해 호출한다.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "A. Auth \u0026 Device Trust"
+                ],
+                "summary": "내 기기 등록 상태 자체 조회",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
                         }
                     }
                 }
@@ -1773,6 +1798,46 @@ const docTemplate = `{
                 }
             }
         },
+        "/tracks/{id}/migrate-session": {
+            "post": {
+                "security": [
+                    {
+                        "TrackAuth": []
+                    }
+                ],
+                "description": "트랙이 교체되어 ` + "`" + `track_replaced` + "`" + ` 알림을 받은 기기가 호출한다. 기존 세션 토큰을 Authorization 헤더에 담아 새 세션을 발급받는다.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "B. Camp / Corner / Track"
+                ],
+                "summary": "교체된 트랙의 세션 마이그레이션",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "기존 트랙 ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_infrastructure_web.TrackLoginResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "권한 없음 또는 세션 만료",
+                        "schema": {
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/tracks/{id}/regenerate-pin": {
             "post": {
                 "security": [
@@ -2046,45 +2111,6 @@ const docTemplate = `{
                         "description": "TRACK_BUSY, DUPLICATE_VISIT 등",
                         "schema": {
                             "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/visits/exception-approve": {
-            "post": {
-                "security": [
-                    {
-                        "AdminAuth": []
-                    }
-                ],
-                "description": "진행자가 처리 불가능한 예외(예: 앱 오류로 스캔 누락, 이미 스캔된 것으로 처리된 경우) 발생 시, 관리자가 강제로 방문을 인정.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "C. Visit (Scan Flow)"
-                ],
-                "summary": "예외 상황 강제 승인 (슈퍼어드민)",
-                "parameters": [
-                    {
-                        "description": "예외 승인 정보",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/internal_infrastructure_web.ExceptionApproveRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/internal_infrastructure_web.VisitSummary"
                         }
                     }
                 }
@@ -2610,14 +2636,14 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_infrastructure_web.ExceptionApproveRequest": {
+        "internal_infrastructure_web.ExportBadgesResponse": {
             "type": "object",
             "properties": {
-                "reason": {
-                    "type": "string"
-                },
-                "visitId": {
-                    "type": "string"
+                "badges": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/internal_infrastructure_web.Badge"
+                    }
                 }
             }
         },
@@ -2919,43 +2945,17 @@ const docTemplate = `{
                 }
             }
         }
-    },
-    "securityDefinitions": {
-        "AdminAuth": {
-            "description": "관리자 액세스 토큰 (ADMIN)",
-            "type": "apiKey",
-            "name": "Authorization",
-            "in": "header"
-        },
-        "AdminRefreshAuth": {
-            "description": "관리자 리프레시 토큰 (ADMIN_REFRESH) — 액세스 토큰 재발급 전용",
-            "type": "apiKey",
-            "name": "Authorization",
-            "in": "header"
-        },
-        "TrackAuth": {
-            "description": "트랙 세션 토큰 (TRACK) — 진행자가 PIN 로그인 후 발급",
-            "type": "apiKey",
-            "name": "Authorization",
-            "in": "header"
-        },
-        "TrustedDeviceAuth": {
-            "description": "관리자 승인된 기기 신뢰 토큰 (TRUSTED_DEVICE)",
-            "type": "apiKey",
-            "name": "Authorization",
-            "in": "header"
-        }
     }
 }`
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
-	Version:          "1.0.0",
+	Version:          "",
 	Host:             "",
-	BasePath:         "/api/v1",
+	BasePath:         "",
 	Schemes:          []string{},
-	Title:            "Cornermon API",
-	Description:      "코너학습 운영 시스템(Cornermon) REST API 명세서. 모든 날짜/시간(date-time) 필드는 항상 UTC 기준 ISO 8601 형식(YYYY-MM-DDTHH:mm:ssZ)으로 송수신됩니다.",
+	Title:            "",
+	Description:      "",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",
