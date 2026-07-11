@@ -41,7 +41,6 @@ type VisitRepository interface {
 	Get(ctx context.Context, id domain.VisitID) (*domain.Visit, error)
 	GetInProgressByTrack(ctx context.Context, trackID domain.TrackID) (*domain.Visit, error)
 	GetCompletedByGroupAndCorner(ctx context.Context, groupID domain.GroupID, cornerID domain.CornerID) (*domain.Visit, error)
-	ListByGroup(ctx context.Context, groupID domain.GroupID) ([]*domain.Visit, error)
 	Save(ctx context.Context, visit *domain.Visit) error
 }
 
