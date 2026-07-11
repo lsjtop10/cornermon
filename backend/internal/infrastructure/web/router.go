@@ -130,7 +130,6 @@ func RegisterRoutes(e *echo.Echo, h *Handlers, adminAuth AuthAdminUsecase, track
 		track.POST("/tracks/:trackId/visits/current/end", h.Visit.EndCurrentVisit)
 		track.GET("/tracks/:trackId/visits/current", h.Visit.GetCurrentVisit)
 	}
-	admin.POST("/visits/exception-approve", h.Visit.ExceptionApprove)
 
 	if h.Message != nil {
 		track.POST("/messages/broadcast/:id/read", h.Message.ReadBroadcast)
