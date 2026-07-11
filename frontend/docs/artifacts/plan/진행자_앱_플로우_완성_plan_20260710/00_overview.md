@@ -84,8 +84,10 @@
 
 ## 4. 전체 검증 체크리스트 (Phase별 상세는 각 파일 §4, 종합은 09번 파일)
 
-- [ ] `flutter analyze`가 전체 그린 (facilitator 신규 코드 기준)
-- [ ] `flutter test`가 전체 그린
-- [ ] `admin/**`, `facilitator/**` 상호 참조 없음 (`import_lint` 통과)
-- [ ] scenarios.md Feature 1/3/3-b/5의 각 시나리오가 §09 매핑표의 자동화 테스트로 1건 이상 커버됨
-- [ ] B8 관련 스펙 이탈 사항이 문서(`screen-spec-facilitator.md`, `scenarios.md`)에 갱신되고 이슈 #30 링크가 남음
+- [x] `flutter analyze`가 전체 그린 (facilitator 신규 코드 기준) — "No issues found!"
+- [x] `flutter test`가 전체 그린 — 60개 전체 통과
+- [x] `admin/**`, `facilitator/**` 상호 참조 없음 — `dart run import_lint`는 `lib/shared/api/gen/.dart_tool`을 오인해 실행 자체가 실패하는 기존 도구 버그가 있어(이번 Plan 범위 밖), 09번 파일 §6의 grep 3건으로 대체 확인함(모두 결과 없음)
+- [x] scenarios.md Feature 1/3/3-b/5의 각 시나리오가 §09 매핑표의 자동화 테스트로 1건 이상 커버됨
+- [x] B8 관련 스펙 이탈 사항이 문서(`screen-spec-facilitator.md`, `scenarios.md`)에 갱신되고 이슈 #30 링크가 남음
+
+**2026-07-11: 전체 완료.** 워크플로우 세션 제한으로 중단됐던 Phase 08(테스트 4종: 라우터, QR스캔, 수동처리, 다이렉트메시지)과 Phase 09(문서 각주 2건 + 정적점검)를 직접 마무리했다.

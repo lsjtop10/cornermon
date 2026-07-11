@@ -70,18 +70,22 @@
 
 ## 6. 정적 점검 (런타임 테스트가 아닌 항목)
 
-- [ ] `grep -rl "shared_preferences" frontend/lib/{shared/auth,facilitator/session}` 결과 없음 — 토큰이 `SecureTokenStore` 경유로만 저장됨
-- [ ] `grep -rl "package:cornermon/admin" frontend/lib/facilitator` 결과 없음
-- [ ] `grep -rl "package:cornermon/facilitator" frontend/lib/shared` 결과 없음
+- [x] `grep -rl "shared_preferences" frontend/lib/{shared/auth,facilitator/session}` 결과 없음 — 토큰이 `SecureTokenStore` 경유로만 저장됨
+- [x] `grep -rl "package:cornermon/admin" frontend/lib/facilitator` 결과 없음
+- [x] `grep -rl "package:cornermon/facilitator" frontend/lib/shared` 결과 없음
+
+(2026-07-11 확인: 3건 모두 결과 없음 — 경계 위반 없음. `dart run import_lint`는 `lib/shared/api/gen/.dart_tool`을 파일로 오인해 실행 자체가 실패하는 기존 도구 버그가 있어 위 grep 3건으로 대체 확인했다.)
 
 ## 7. 작업 단계 (문서 갱신)
 
-| 순서 | 작업 | 파일 |
-|---|---|---|
-| I-1 | 위 매핑표 기준으로 Phase 08의 테스트 파일들이 실제로 존재·통과하는지 최종 확인 | `frontend/test/**` |
-| I-2 | §6 정적 점검 3건 실행 및 결과 기록 | — |
-| I-3 | `scenarios.md` Feature 2-c, `screen-spec-facilitator.md` B8에 "현재는 트랙 삭제와 동일 처리 — 이슈 #30" 각주 추가 | `docs/front/scenarios.md`, `docs/front/screen-spec-facilitator.md` |
+| 순서 | 작업 | 파일 | 상태 |
+|---|---|---|---|
+| I-1 | 위 매핑표 기준으로 Phase 08의 테스트 파일들이 실제로 존재·통과하는지 최종 확인 | `frontend/test/**` | [x] 완료 — 60개 전체 통과 |
+| I-2 | §6 정적 점검 3건 실행 및 결과 기록 | — | [x] 완료 |
+| I-3 | `scenarios.md` Feature 2-c, `screen-spec-facilitator.md` B8에 "현재는 트랙 삭제와 동일 처리 — 이슈 #30" 각주 추가 | `docs/front/scenarios.md`, `docs/front/screen-spec-facilitator.md` | [x] 완료 |
 
 ## 8. 최종 완료 기준
 
 `00_overview.md` §4와 이 문서 §1~§6을 모두 통과하면 이번 Plan(진행자 앱 전체 플로우, B8 제외)이 완료된 것으로 간주한다.
+
+**2026-07-11: 위 기준 전체 충족 확인. 이번 Plan 완료.**

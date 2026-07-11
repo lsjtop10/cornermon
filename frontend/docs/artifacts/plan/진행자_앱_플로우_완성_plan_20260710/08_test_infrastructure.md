@@ -43,6 +43,16 @@ Dio buildFakeDio(Map<String, dynamic> Function(RequestOptions) responder);
 
 ## 4. 검증
 
-- [ ] `flutter test`가 `frontend/test/` 전체에서 그린
-- [ ] `flutter analyze`가 그린(신규 facilitator 코드 기준 warning 0)
-- [ ] 모든 테스트가 실제 네트워크 호출 없이(fake Dio) 통과함 — `apiClientProvider`를 override하지 않은 테스트가 없는지 확인
+- [x] `flutter test`가 `frontend/test/` 전체에서 그린 — 60개 전체 통과(2026-07-11)
+- [x] `flutter analyze`가 그린(신규 facilitator 코드 기준 warning 0) — "No issues found!"
+- [x] 모든 테스트가 실제 네트워크 호출 없이(fake Dio/fake API 클래스/fake MobileScannerPlatform) 통과함 — `apiClientProvider`를 override하지 않은 테스트 없음(모두 개별 API concrete class를 override)
+
+### 2026-07-11 재개 시점 보완 사항
+
+중단됐던 워크플로우 재개 후 누락 확인된 항목(H-3, H-6, H-8 일부)을 직접 작성해 채웠다:
+- `test/facilitator/router/facilitator_router_test.dart` (H-3) — redirect 우선순위 4가지 분기 + 강제종료 시 스택 깊이 무관 즉시 전환
+- `test/facilitator/features/qr_scan_test.dart` (H-6) — `MobileScannerPlatform`을 직접 fake 구현해 실제 카메라 플랫폼 채널 없이 busy 가드/에러 매핑/dispose 검증
+- `test/facilitator/features/manual_checkin_test.dart` (H-6) — 검색 필터, 완료된 조 비활성화, 확인 모달 확정 흐름
+- `test/facilitator/features/track_direct_test.dart` (H-8) — 빈 스레드 안내, 선전송, 빠른답장, 정렬, 전송 실패 스낵바
+
+기존에 있었으나 `flutter analyze` 기준 문제가 있던 부분도 함께 수정: `flutter_riverpod` 3.3.2에서 `Override` 타입이 `package:flutter_riverpod/misc.dart`로만 노출되는 점(`test_utils/widget_test_helpers.dart`), `extension type` ID들이 const 생성자가 아닌 점(`visit_providers_test.dart`), 미사용 import 4건.
