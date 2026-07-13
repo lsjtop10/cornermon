@@ -82,9 +82,9 @@ func mapReport(r *usecase.CampReport) CampReport {
 // @Router       /camps/{campId}/reports/live-summary [get]
 func (h *ReportHandler) LiveSummary(c echo.Context) error {
 	campID := domain.CampID(c.Param("campId"))
-	report, err := h.querier.QueryCampReport(c.Request().Context(), campID)
+	report, err := h.reportService.GetCampReport(c.Request().Context(), campID)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		return err
 	}
 
 	return c.JSON(http.StatusOK, mapSummary(report))
@@ -100,9 +100,9 @@ func (h *ReportHandler) LiveSummary(c echo.Context) error {
 // @Router       /camps/{campId}/reports/current [get]
 func (h *ReportHandler) GetCurrentReport(c echo.Context) error {
 	campID := domain.CampID(c.Param("campId"))
-	report, err := h.querier.QueryCampReport(c.Request().Context(), campID)
+	report, err := h.reportService.GetCampReport(c.Request().Context(), campID)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		return err
 	}
 
 	return c.JSON(http.StatusOK, mapReport(report))
@@ -120,7 +120,7 @@ func (h *ReportHandler) GenerateReport(c echo.Context) error {
 	campID := domain.CampID(c.Param("campId"))
 	report, err := h.reportService.GenerateCampReport(c.Request().Context(), campID)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		return err
 	}
 
 	return c.JSON(http.StatusCreated, mapReport(report))
@@ -136,9 +136,9 @@ func (h *ReportHandler) GenerateReport(c echo.Context) error {
 // @Router       /camps/{campId}/reports/current/export [get]
 func (h *ReportHandler) ExportCurrentReport(c echo.Context) error {
 	campID := domain.CampID(c.Param("campId"))
-	report, err := h.querier.QueryCampReport(c.Request().Context(), campID)
+	report, err := h.reportService.GetCampReport(c.Request().Context(), campID)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		return err
 	}
 
 	// Just return JSON as per the updated spec

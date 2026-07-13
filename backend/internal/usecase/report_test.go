@@ -55,3 +55,40 @@ func TestReportService_GenerateCampReport(t *testing.T) {
 		}
 	})
 }
+
+func TestGetCampReportShoudQueryExplicitCampWhenAnyState(t *testing.T) {
+	states := []domain.CampStatus{domain.CampPending, domain.CampActive, domain.CampEnded}
+	for _, state := range states {
+		t.Run(string(state), func(t *testing.T) {
+			// Arrange
+			camps := NewMockCampRepository()
+			camps.Camps["camp-selected"] = &domain.Camp{ID: "camp-selected", Status: state}
+			querier := &MockReportQuerier{ReportToReturn: &CampReport{CampID: "camp-selected"}}
+			service := NewReportService(camps, querier)
+
+			// Act
+			report, err := service.GetCampReport(context.Background(), "camp-selected")
+
+			// Assert
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if report.CampID != "camp-selected" {
+				t.Fatalf("unexpected camp report: %s", report.CampID)
+			}
+		})
+	}
+}
+
+func TestGetCampReportShoudReturnNotFoundWhenCampDoesNotExist(t *testing.T) {
+	// Arrange
+	service := NewReportService(NewMockCampRepository(), &MockReportQuerier{})
+
+	// Act
+	_, err := service.GetCampReport(context.Background(), "missing")
+
+	// Assert
+	if err != domain.ErrCampNotFound {
+		t.Fatalf("expected ErrCampNotFound, got %v", err)
+	}
+}

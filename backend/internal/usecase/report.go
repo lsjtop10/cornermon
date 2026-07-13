@@ -11,6 +11,23 @@ type ReportService struct {
 	querier ReportQuerier
 }
 
+// GetCampReport returns the aggregate for the explicitly selected camp.
+// Report reads are available for every camp state; only final report generation
+// is restricted to ended camps.
+func (s *ReportService) GetCampReport(
+	ctx context.Context,
+	campID domain.CampID,
+) (*CampReport, error) {
+	camp, err := s.camps.Get(ctx, campID)
+	if err != nil {
+		return nil, err
+	}
+	if camp == nil {
+		return nil, domain.ErrCampNotFound
+	}
+	return s.querier.QueryCampReport(ctx, campID)
+}
+
 func NewReportService(
 	camps CampRepository,
 	querier ReportQuerier,
@@ -31,7 +48,7 @@ func (s *ReportService) GenerateCampReport(
 		return nil, err
 	}
 	if camp == nil {
-		return nil, domain.ErrCampInvalidTransition
+		return nil, domain.ErrCampNotFound
 	}
 
 	if camp.Status != domain.CampEnded {
