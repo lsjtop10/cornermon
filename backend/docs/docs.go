@@ -488,17 +488,20 @@ const docTemplate = `{
                         "AdminAuth": []
                     }
                 ],
-                "description": "인쇄소에 넘길 수 있도록 배지의 payload와 숏 코드를 CSV 형식으로 다운로드한다.",
+                "description": "클라이언트가 직접 PDF 인쇄 및 레이아웃 구성을 할 수 있도록 미배정(UNASSIGNED) 배지 전체 목록을 JSON으로 다운로드한다.",
                 "produces": [
-                    "text/csv"
+                    "application/json"
                 ],
                 "tags": [
                     "B. Resource Management (Admin)"
                 ],
-                "summary": "QR 배지 인쇄용 목록 내보내기",
+                "summary": "QR 배지 인쇄용 목록 내보내기 (JSON)",
                 "responses": {
                     "200": {
-                        "description": "CSV 데이터"
+                        "description": "미배정 배지 목록",
+                        "schema": {
+                            "$ref": "#/definitions/web.ExportBadgesResponse"
+                        }
                     }
                 }
             }
@@ -533,10 +536,10 @@ const docTemplate = `{
                     }
                 ],
                 "responses": {
-                    "200": {
-                        "description": "OK",
+                    "201": {
+                        "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/web.Badge"
+                            "$ref": "#/definitions/web.Group"
                         }
                     }
                 }
@@ -1531,9 +1534,9 @@ const docTemplate = `{
                         "AdminAuth": []
                     }
                 ],
-                "description": "현재 캠프 리포트를 CSV(또는 지정된 포맷)로 다운로드한다.",
+                "description": "현재 캠프 리포트를 다운로드한다.",
                 "produces": [
-                    "text/csv"
+                    "application/json"
                 ],
                 "tags": [
                     "D. Report"
@@ -1541,7 +1544,10 @@ const docTemplate = `{
                 "summary": "현재 리포트 데이터 내보내기",
                 "responses": {
                     "200": {
-                        "description": "CSV 데이터"
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/web.CampReport"
+                        }
                     }
                 }
             }
@@ -2633,6 +2639,17 @@ const docTemplate = `{
                 }
             }
         },
+        "web.ExportBadgesResponse": {
+            "type": "object",
+            "properties": {
+                "badges": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/web.Badge"
+                    }
+                }
+            }
+        },
         "web.Group": {
             "type": "object",
             "properties": {
@@ -2732,7 +2749,7 @@ const docTemplate = `{
         "web.ScanAssignBadgeRequest": {
             "type": "object",
             "properties": {
-                "groupId": {
+                "groupName": {
                     "type": "string"
                 },
                 "qrPayload": {

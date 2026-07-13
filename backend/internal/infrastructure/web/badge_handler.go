@@ -1,6 +1,7 @@
 package web
 
 import (
+	"context"
 	"net/http"
 
 	"cornermon/backend/internal/domain"
@@ -11,10 +12,34 @@ import (
 
 type BadgeHandler struct {
 	badgeUC *usecase.BadgeService
+	groupUC *usecase.GroupService
+	camps   usecase.CampRepository
 }
 
-func NewBadgeHandler(badgeUC *usecase.BadgeService) *BadgeHandler {
-	return &BadgeHandler{badgeUC: badgeUC}
+func NewBadgeHandler(
+	badgeUC *usecase.BadgeService,
+	groupUC *usecase.GroupService,
+	camps usecase.CampRepository,
+) *BadgeHandler {
+	return &BadgeHandler{
+		badgeUC: badgeUC,
+		groupUC: groupUC,
+		camps:   camps,
+	}
+}
+
+// getActiveCamp is a helper to find the currently active camp
+func (h *BadgeHandler) getActiveCamp(ctx context.Context) (*domain.Camp, error) {
+	camps, err := h.camps.List(ctx)
+	if err != nil {
+		return nil, err
+	}
+	for _, camp := range camps {
+		if camp.Status == domain.CampActive {
+			return camp, nil
+		}
+	}
+	return nil, nil
 }
 
 func mapBadgeToDTO(b *domain.Badge) Badge {
@@ -79,19 +104,27 @@ func (h *BadgeHandler) BulkGenerateBadges(c echo.Context) error {
 	return c.JSON(http.StatusCreated, res)
 }
 
-// @Summary      QR 배지 인쇄용 목록 내보내기
-// @Description  인쇄소에 넘길 수 있도록 배지의 payload와 숏 코드를 CSV 형식으로 다운로드한다.
+type ExportBadgesResponse struct {
+	Badges []Badge `json:"badges"`
+}
+
+// @Summary      QR 배지 인쇄용 목록 내보내기 (JSON)
+// @Description  클라이언트가 직접 PDF 인쇄 및 레이아웃 구성을 할 수 있도록 미배정(UNASSIGNED) 배지 전체 목록을 JSON으로 다운로드한다.
 // @Tags         B. Resource Management (Admin)
 // @Security     AdminAuth
-// @Produce      text/csv
-// @Success      200 "CSV 데이터"
+// @Produce      json
+// @Success      200 {object} ExportBadgesResponse "미배정 배지 목록"
 // @Router       /badges/export [get]
 func (h *BadgeHandler) ExportBadges(c echo.Context) error {
-	csvData, err := h.badgeUC.ExportBadges(c.Request().Context())
+	badges, err := h.badgeUC.ExportBadges(c.Request().Context())
 	if err != nil {
 		return err
 	}
-	return c.Blob(http.StatusOK, "text/csv", csvData)
+	res := make([]Badge, len(badges))
+	for i, b := range badges {
+		res[i] = mapBadgeToDTO(b)
+	}
+	return c.JSON(http.StatusOK, ExportBadgesResponse{Badges: res})
 }
 
 type AssignBadgeRequest struct {
@@ -109,12 +142,50 @@ type AssignBadgeRequest struct {
 // @Success      200 {object} Badge
 // @Router       /badges/{id}/register [post]
 func (h *BadgeHandler) AssignBadge(c echo.Context) error {
-	return echo.NewHTTPError(http.StatusNotImplemented, "Not implemented yet")
+	id := domain.BadgeID(c.Param("id"))
+	var req struct {
+		GroupName string `json:"groupName"`
+	}
+	if err := c.Bind(&req); err != nil {
+		return err
+	}
+
+	camp, err := h.getActiveCamp(c.Request().Context())
+	if err != nil {
+		return err
+	}
+	if camp == nil {
+		return echo.NewHTTPError(http.StatusNotFound, "active camp not found")
+	}
+
+	// We need a badge's QRPayload to use GroupService.RegisterBadge, or we add RegisterBadgeByID to GroupService.
+	// Since GroupService.RegisterBadge uses qrPayload, let's get the badge first.
+	badges, err := h.badgeUC.ListBadges(c.Request().Context())
+	if err != nil {
+		return err
+	}
+	var qrPayload string
+	for _, b := range badges {
+		if b.ID == id {
+			qrPayload = b.QRPayload
+			break
+		}
+	}
+	if qrPayload == "" {
+		return echo.ErrNotFound
+	}
+
+	group, err := h.groupUC.RegisterBadge(c.Request().Context(), camp.ID, qrPayload, req.GroupName)
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(http.StatusCreated, mapGroupToDTO(group))
 }
 
 type ScanAssignBadgeRequest struct {
 	QRPayload string `json:"qrPayload"`
-	GroupID   string `json:"groupId"`
+	GroupName string `json:"groupName"`
 }
 
 // @Summary      배지를 특정 조에 배정 (스캔 기반)
@@ -124,8 +195,26 @@ type ScanAssignBadgeRequest struct {
 // @Accept       json
 // @Produce      json
 // @Param        request body ScanAssignBadgeRequest true "매핑 정보"
-// @Success      200 {object} Badge
+// @Success      201 {object} Group
 // @Router       /badges/scan-register [post]
 func (h *BadgeHandler) ScanAssignBadge(c echo.Context) error {
-	return echo.NewHTTPError(http.StatusNotImplemented, "Not implemented yet")
+	var req ScanAssignBadgeRequest
+	if err := c.Bind(&req); err != nil {
+		return err
+	}
+
+	camp, err := h.getActiveCamp(c.Request().Context())
+	if err != nil {
+		return err
+	}
+	if camp == nil {
+		return echo.NewHTTPError(http.StatusNotFound, "active camp not found")
+	}
+
+	group, err := h.groupUC.RegisterBadge(c.Request().Context(), camp.ID, req.QRPayload, req.GroupName)
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(http.StatusCreated, mapGroupToDTO(group))
 }
