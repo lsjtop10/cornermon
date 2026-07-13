@@ -23,4 +23,4 @@ docker-build:
 	docker build -t cornermon-backend -f Dockerfile .
 
 swag:
-	swag init -g internal/infrastructure/web/doc.go -d . -o ../api --parseDependency --parseInternal
+	swag init -g internal/infrastructure/web/doc.go -d . -o ../api --parseDependency --parseInternal --st
