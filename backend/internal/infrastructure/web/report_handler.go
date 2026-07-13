@@ -15,13 +15,9 @@ type ReportHandler struct {
 	querier       usecase.ReportQuerier
 }
 
-type TimelineStatsResponse struct{}
+type TimelineStatsResponse struct{} // @name TimelineStatsResponse
 
-// @name TimelineStatsResponse
-
-type OperationalStatsResponse struct{}
-
-// @name OperationalStatsResponse
+type OperationalStatsResponse struct{} // @name OperationalStatsResponse
 
 type TrackStatsResponse struct {
 	TrackID             string  `json:"trackId" format:"uuid"`
@@ -29,34 +25,26 @@ type TrackStatsResponse struct {
 	HandledVisitCount   int     `json:"handledVisitCount"`
 	AvgDeviationSeconds int     `json:"avgDeviationSeconds"`
 	ManualVisitRatio    float32 `json:"manualVisitRatio"`
-}
-
-// @name TrackStatsResponse
+} // @name TrackStatsResponse
 
 type CornerStatsResponse struct {
 	CornerID            string                   `json:"cornerId" format:"uuid"`
 	CornerName          string                   `json:"cornerName"`
 	CompletedVisitCount int                      `json:"completedVisitCount"`
 	UnvisitedGroups     []UnvisitedGroupResponse `json:"unvisitedGroups"`
-}
-
-// @name CornerStatsResponse
+} // @name CornerStatsResponse
 
 type UnvisitedGroupResponse struct {
 	GroupID   string `json:"groupId" format:"uuid"`
 	GroupName string `json:"groupName"`
-}
-
-// @name UnvisitedGroupResponse
+} // @name UnvisitedGroupResponse
 
 type GroupStatsResponse struct {
 	GroupID              string `json:"groupId" format:"uuid"`
 	GroupName            string `json:"groupName"`
 	CompletedCount       int    `json:"completedCount"`
 	TotalDurationSeconds int    `json:"totalDurationSeconds"`
-}
-
-// @name GroupStatsResponse
+} // @name GroupStatsResponse
 
 type CampSummaryStatsResponse struct {
 	TotalGroups            int                         `json:"totalGroups"`
@@ -71,17 +59,13 @@ type CampSummaryStatsResponse struct {
 	TrackOperationCount    int                         `json:"trackOperationCount"`
 	ExceptionApprovalCount int                         `json:"exceptionApprovalCount"`
 	BottleneckRanking      []BottleneckRankingResponse `json:"bottleneckRanking"`
-}
-
-// @name CampSummaryStatsResponse
+} // @name CampSummaryStatsResponse
 
 type BottleneckRankingResponse struct {
 	CornerID            string  `json:"cornerId" format:"uuid"`
 	CornerName          string  `json:"cornerName"`
 	AvgDeviationSeconds float32 `json:"avgDeviationSeconds"`
-}
-
-// @name BottleneckRankingResponse
+} // @name BottleneckRankingResponse
 
 type CampReportResponse struct {
 	CampID           string                   `json:"campId" format:"uuid"`
@@ -92,9 +76,7 @@ type CampReportResponse struct {
 	GroupStats       []GroupStatsResponse     `json:"groupStats"`
 	Timeline         TimelineStatsResponse    `json:"timeline"`
 	OperationalStats OperationalStatsResponse `json:"operationalStats"`
-}
-
-// @name CampReportResponse
+} // @name CampReportResponse
 
 func NewReportHandler(
 	reportService *usecase.ReportService,

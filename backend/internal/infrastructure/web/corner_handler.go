@@ -20,9 +20,7 @@ type CornerResponse struct {
 	Status        string                 `json:"status" enums:"INACTIVE,IDLE,BUSY"`
 	IsBottleneck  bool                   `json:"isBottleneck"`
 	ActiveTracks  []TrackSummaryResponse `json:"activeTracks"`
-}
-
-// @name CornerResponse
+} // @name CornerResponse
 
 func NewCornerHandler(svc *usecase.CornerService) *CornerHandler {
 	return &CornerHandler{svc: svc}
@@ -69,9 +67,7 @@ type CreateCornerRequest struct {
 	CampID        string `json:"campId"`
 	Name          string `json:"name"`
 	TargetMinutes int    `json:"targetMinutes"`
-}
-
-// @name CreateCornerRequest
+} // @name CreateCornerRequest
 
 // @Summary      새 코너 추가
 // @Description  캠프에 새로운 코너를 생성한다.
@@ -139,9 +135,7 @@ type BulkUpdateCornersRequest struct {
 		Name          string `json:"name"`
 		TargetMinutes int    `json:"targetMinutes"`
 	} `json:"corners"`
-}
-
-// @name BulkUpdateCornersRequest
+} // @name BulkUpdateCornersRequest
 
 // @Summary      코너 대량 수정
 // @Description  여러 코너의 이름이나 목표 시간을 일괄 수정한다.

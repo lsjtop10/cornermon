@@ -30,9 +30,7 @@ type AuditLogResponse struct {
 	Success    bool                   `json:"success"`
 	OccurredAt time.Time              `json:"occurredAt" format:"date-time"`
 	Metadata   map[string]interface{} `json:"metadata,omitempty"`
-}
-
-// @name AuditLogResponse
+} // @name AuditLogResponse
 
 func NewAuditHandler(querier AuditLogQuerier) *AuditHandler {
 	return &AuditHandler{
@@ -117,9 +115,7 @@ func (h *AuditHandler) ListAuditLogs(c echo.Context) error {
 type AuditLogPageResponse struct {
 	Logs       []AuditLogResponse `json:"logs"`
 	NextCursor string             `json:"nextCursor,omitempty"`
-}
-
-// @name AuditLogPageResponse
+} // @name AuditLogPageResponse
 
 type auditLogCursorPayload struct {
 	OccurredAt time.Time `json:"occurredAt"`

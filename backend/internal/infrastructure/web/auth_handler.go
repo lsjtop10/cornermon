@@ -42,45 +42,33 @@ type AdminSessionResponse struct {
 	DeviceInfo *string   `json:"deviceInfo,omitempty"`
 	CreatedAt  time.Time `json:"createdAt" format:"date-time"`
 	LastUsedAt time.Time `json:"lastUsedAt" format:"date-time"`
-}
-
-// @name AdminSessionResponse
+} // @name AdminSessionResponse
 
 type AdminLoginRequest struct {
 	ID       string `json:"id"`
 	Password string `json:"password"`
-}
-
-// @name AdminLoginRequest
+} // @name AdminLoginRequest
 
 type AdminLoginResponse struct {
 	AccessToken      string `json:"accessToken"`
 	RefreshToken     string `json:"refreshToken"`
 	ExpiresInSeconds int    `json:"expiresInSeconds"`
-}
-
-// @name AdminLoginResponse
+} // @name AdminLoginResponse
 
 type AdminRefreshResponse struct {
 	AccessToken      string `json:"accessToken"`
 	ExpiresInSeconds int    `json:"expiresInSeconds"`
-}
-
-// @name AdminRefreshResponse
+} // @name AdminRefreshResponse
 
 type TrackLoginRequest struct {
 	PIN string `json:"pin"`
-}
-
-// @name TrackLoginRequest
+} // @name TrackLoginRequest
 
 type TrackLoginResponse struct {
 	TrackToken string         `json:"trackToken"`
 	Track      TrackResponse  `json:"track"`
 	Corner     CornerResponse `json:"corner"`
-}
-
-// @name TrackLoginResponse
+} // @name TrackLoginResponse
 
 func NewAuthHandler(
 	adminAuth AdminAuthUsecase,

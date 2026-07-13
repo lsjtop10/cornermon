@@ -22,9 +22,7 @@ type CampResponse struct {
 	Status               string    `json:"status" enums:"PENDING,ACTIVE,ENDED"`
 	BottleneckMinSamples int       `json:"bottleneckMinSamples" example:"3"`
 	BottleneckRatioPct   int       `json:"bottleneckRatioPct" example:"20"`
-}
-
-// @name CampResponse
+} // @name CampResponse
 
 type UpdateCampRequest struct {
 	Name                 *string    `json:"name,omitempty"`
@@ -32,9 +30,7 @@ type UpdateCampRequest struct {
 	EndAt                *time.Time `json:"endAt,omitempty" format:"date-time"`
 	BottleneckMinSamples *int       `json:"bottleneckMinSamples,omitempty"`
 	BottleneckRatioPct   *int       `json:"bottleneckRatioPct,omitempty"`
-}
-
-// @name UpdateCampRequest
+} // @name UpdateCampRequest
 
 // @Summary      캠프 정보 및 병목 기준 수정
 // @Description  캠프 이름, 예정 기간, 병목 판정 기준 중 요청에 포함된 필드만 수정한다. 종료된 캠프는 수정할 수 없다.
@@ -130,9 +126,7 @@ func (h *CampHandler) ListCamps(c echo.Context) error {
 
 type CreateCampRequest struct {
 	Name string `json:"name"`
-}
-
-// @name CreateCampRequest
+} // @name CreateCampRequest
 
 // @Summary      새 캠프 생성
 // @Description  새로운 코너학습 캠프를 생성한다.

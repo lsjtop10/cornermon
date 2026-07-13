@@ -22,9 +22,7 @@ type BadgeResponse struct {
 	QRPayload       string  `json:"qrPayload"`
 	Status          string  `json:"status" enums:"UNASSIGNED,ASSIGNED"`
 	AssignedGroupID *string `json:"assignedGroupId,omitempty" format:"uuid"`
-}
-
-// @name BadgeResponse
+} // @name BadgeResponse
 
 func NewBadgeHandler(
 	badgeUC *usecase.BadgeService,
@@ -87,9 +85,7 @@ func (h *BadgeHandler) ListBadges(c echo.Context) error {
 
 type BulkGenerateBadgesRequest struct {
 	Count int `json:"count"`
-}
-
-// @name BulkGenerateBadgesRequest
+} // @name BulkGenerateBadgesRequest
 
 // @Summary      초기 배지 일괄 생성
 // @Description  특정 개수만큼 QR 배지를 대량으로 일괄 발급한다.
@@ -118,9 +114,7 @@ func (h *BadgeHandler) BulkGenerateBadges(c echo.Context) error {
 
 type ExportBadgesResponse struct {
 	Badges []BadgeResponse `json:"badges"`
-}
-
-// @name ExportBadgesResponse
+} // @name ExportBadgesResponse
 
 // @Summary      QR 배지 인쇄용 목록 내보내기 (JSON)
 // @Description  클라이언트가 직접 PDF 인쇄 및 레이아웃 구성을 할 수 있도록 미배정(UNASSIGNED) 배지 전체 목록을 JSON으로 다운로드한다.
@@ -143,9 +137,7 @@ func (h *BadgeHandler) ExportBadges(c echo.Context) error {
 
 type AssignBadgeRequest struct {
 	GroupID string `json:"groupId"`
-}
-
-// @name AssignBadgeRequest
+} // @name AssignBadgeRequest
 
 // @Summary      배지를 특정 조에 배정 (수동)
 // @Description  수동으로 특정 배지를 조회하여 조에 할당한다.
@@ -202,9 +194,7 @@ func (h *BadgeHandler) AssignBadge(c echo.Context) error {
 type ScanAssignBadgeRequest struct {
 	QRPayload string `json:"qrPayload"`
 	GroupName string `json:"groupName"`
-}
-
-// @name ScanAssignBadgeRequest
+} // @name ScanAssignBadgeRequest
 
 // @Summary      배지를 특정 조에 배정 (스캔 기반)
 // @Description  QR 코드를 스캔하여 배지를 특정 조에 등록(매핑)한다.

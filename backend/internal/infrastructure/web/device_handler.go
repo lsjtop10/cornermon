@@ -29,9 +29,7 @@ type DeviceRegistrationResponse struct {
 	Status     string     `json:"status" enums:"PENDING,APPROVED,REJECTED,REVOKED"`
 	CreatedAt  time.Time  `json:"createdAt" format:"date-time"`
 	ApprovedAt *time.Time `json:"approvedAt,omitempty" format:"date-time"`
-}
-
-// @name DeviceRegistrationResponse
+} // @name DeviceRegistrationResponse
 
 func NewDeviceHandler(deviceTrust DeviceTrustUsecase) *DeviceHandler {
 	return &DeviceHandler{
@@ -43,9 +41,7 @@ type DeviceRegistrationRequest struct {
 	CampID     string `json:"campId"` // Using campId because RequestRegistration expects a campID
 	DeviceName string `json:"deviceName"`
 	Role       string `json:"role" enums:"ADMIN,FACILITATOR"`
-}
-
-// @name DeviceRegistrationRequest
+} // @name DeviceRegistrationRequest
 
 // @Summary      내 기기 등록 상태 자체 조회
 // @Description  미승인(PENDING) 기기가 자신의 승인 상태를 확인하기 위해 호출한다.

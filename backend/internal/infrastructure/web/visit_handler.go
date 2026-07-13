@@ -26,9 +26,7 @@ type VisitSummaryResponse struct {
 	EndedAt          *time.Time `json:"endedAt,omitempty" format:"date-time"`
 	DurationSeconds  *int       `json:"durationSeconds,omitempty"`
 	DeviationSeconds *int       `json:"deviationSeconds,omitempty"`
-}
-
-// @name VisitSummaryResponse
+} // @name VisitSummaryResponse
 
 func NewVisitHandler(visitUC *usecase.VisitService) *VisitHandler {
 	return &VisitHandler{visitUC: visitUC}
@@ -38,9 +36,7 @@ type VisitStartRequest struct {
 	QRToken string `json:"qrToken"`
 	Method  string `json:"method" enums:"MANUAL"`
 	GroupID string `json:"groupId"`
-}
-
-// @name VisitStartRequest
+} // @name VisitStartRequest
 
 func mapVisitToDTO(v *domain.Visit) VisitSummaryResponse {
 	res := VisitSummaryResponse{

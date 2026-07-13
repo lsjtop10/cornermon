@@ -18,9 +18,7 @@ type CornerProgressResponse struct {
 	CornerID   string `json:"cornerId" format:"uuid"`
 	CornerName string `json:"cornerName"`
 	Status     string `json:"status" enums:"NOT_VISITED,IN_PROGRESS,COMPLETED"`
-}
-
-// @name CornerProgressResponse
+} // @name CornerProgressResponse
 
 type GroupResponse struct {
 	ID         string                   `json:"id" format:"uuid"`
@@ -29,9 +27,7 @@ type GroupResponse struct {
 	Status     string                   `json:"status" enums:"IDLE_MOVING,AT_CORNER,FINISHED"`
 	IsFinished bool                     `json:"isFinished"`
 	Itinerary  []CornerProgressResponse `json:"itinerary"`
-}
-
-// @name GroupResponse
+} // @name GroupResponse
 
 func NewGroupHandler(groupUC *usecase.GroupService) *GroupHandler {
 	return &GroupHandler{groupUC: groupUC}

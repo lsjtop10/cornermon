@@ -33,9 +33,7 @@ type MessageResponse struct {
 	SentAt      time.Time  `json:"sentAt" format:"date-time"`
 	IsRead      bool       `json:"isRead"`
 	ReadAt      *time.Time `json:"readAt,omitempty" format:"date-time"`
-}
-
-// @name MessageResponse
+} // @name MessageResponse
 
 type BroadcastReceiptResponse struct {
 	TrackID    string     `json:"trackId" format:"uuid"`
@@ -43,9 +41,7 @@ type BroadcastReceiptResponse struct {
 	CornerName string     `json:"cornerName"`
 	IsRead     bool       `json:"isRead"`
 	ReadAt     *time.Time `json:"readAt,omitempty" format:"date-time"`
-}
-
-// @name BroadcastReceiptResponse
+} // @name BroadcastReceiptResponse
 
 func NewMessageHandler(message MessageUsecase) *MessageHandler {
 	return &MessageHandler{
@@ -56,9 +52,7 @@ func NewMessageHandler(message MessageUsecase) *MessageHandler {
 type BroadcastMessageRequest struct {
 	CampID  string `json:"campId"`
 	Content string `json:"content"`
-}
-
-// @name BroadcastMessageRequest
+} // @name BroadcastMessageRequest
 
 // @Summary      전체 공지 발송
 // @Description  모든 활성 트랙에 BROADCAST 메시지를 보낸다.
@@ -190,9 +184,7 @@ func (h *MessageHandler) ReadBroadcast(c echo.Context) error {
 
 type DirectMessageRequest struct {
 	Content string `json:"content"`
-}
-
-// @name DirectMessageRequest
+} // @name DirectMessageRequest
 
 // @Summary      다이렉트 메시지 발송
 // @Description  관리자가 특정 트랙에, 또는 특정 트랙이 관리자에게 DIRECT 메시지를 발송한다.

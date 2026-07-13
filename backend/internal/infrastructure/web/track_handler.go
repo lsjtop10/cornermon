@@ -19,17 +19,13 @@ type TrackSummaryResponse struct {
 	TrackNo           int    `json:"trackNo"`
 	Status            string `json:"status" enums:"ACTIVE,DELETED"`
 	OperationalStatus string `json:"operationalStatus" enums:"IDLE,BUSY"`
-}
-
-// @name TrackSummaryResponse
+} // @name TrackSummaryResponse
 
 type TrackResponse struct {
 	TrackSummaryResponse
 	PIN          string                `json:"pin" example:"482910"`
 	CurrentVisit *VisitSummaryResponse `json:"currentVisit,omitempty"`
-}
-
-// @name TrackResponse
+} // @name TrackResponse
 
 func NewTrackHandler(svc *usecase.TrackService) *TrackHandler {
 	return &TrackHandler{svc: svc}
@@ -78,9 +74,7 @@ type CreateTracksRequest struct {
 	CampID   string `json:"campId"`
 	CornerID string `json:"cornerId"`
 	Count    int    `json:"count"`
-}
-
-// @name CreateTracksRequest
+} // @name CreateTracksRequest
 
 // @Summary      트랙 일괄 생성
 // @Description  특정 코너에 여러 트랙을 추가 생성한다.
@@ -135,9 +129,7 @@ func (h *TrackHandler) GetTrack(c echo.Context) error {
 
 type BulkDeleteTracksRequest struct {
 	TrackIDs []string `json:"trackIds"`
-}
-
-// @name BulkDeleteTracksRequest
+} // @name BulkDeleteTracksRequest
 
 // @Summary      트랙 일괄 삭제
 // @Description  선택한 트랙들을 일괄 삭제한다.
@@ -164,16 +156,12 @@ func (h *TrackHandler) BulkDeleteTracks(c echo.Context) error {
 
 type ReplaceTrackRequest struct {
 	NewCornerID string `json:"newCornerId"`
-}
-
-// @name ReplaceTrackRequest
+} // @name ReplaceTrackRequest
 
 type ReplaceTrackResponse struct {
 	Track TrackResponse `json:"track"`
 	PIN   string        `json:"pin"`
-}
-
-// @name ReplaceTrackResponse
+} // @name ReplaceTrackResponse
 
 // @Summary      트랙 교체 (비상용)
 // @Description  기존 트랙을 삭제하고 지정한 대상 코너에 새 트랙을 생성하며 기존 진행자 세션의 마이그레이션 대상을 설정한다.
