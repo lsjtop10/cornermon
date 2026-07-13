@@ -1,13 +1,13 @@
 basePath: /api/v1
 definitions:
-  internal_infrastructure_web.AdminLoginRequest:
+  AdminLoginRequest:
     properties:
       id:
         type: string
       password:
         type: string
     type: object
-  internal_infrastructure_web.AdminLoginResponse:
+  AdminLoginResponse:
     properties:
       accessToken:
         type: string
@@ -16,14 +16,14 @@ definitions:
       refreshToken:
         type: string
     type: object
-  internal_infrastructure_web.AdminRefreshResponse:
+  AdminRefreshResponse:
     properties:
       accessToken:
         type: string
       expiresInSeconds:
         type: integer
     type: object
-  internal_infrastructure_web.AdminSession:
+  AdminSession:
     properties:
       adminId:
         type: string
@@ -39,12 +39,12 @@ definitions:
         format: date-time
         type: string
     type: object
-  internal_infrastructure_web.AssignBadgeRequest:
+  AssignBadgeRequest:
     properties:
       groupId:
         type: string
     type: object
-  internal_infrastructure_web.AuditLog:
+  AuditLog:
     properties:
       action:
         type: string
@@ -64,16 +64,16 @@ definitions:
       target:
         type: string
     type: object
-  internal_infrastructure_web.AuditLogPageResponse:
+  AuditLogPageResponse:
     properties:
       logs:
         items:
-          $ref: '#/definitions/internal_infrastructure_web.AuditLog'
+          $ref: '#/definitions/AuditLog'
         type: array
       nextCursor:
         type: string
     type: object
-  internal_infrastructure_web.Badge:
+  Badge:
     properties:
       assignedGroupId:
         format: uuid
@@ -92,7 +92,7 @@ definitions:
         - ASSIGNED
         type: string
     type: object
-  internal_infrastructure_web.BottleneckRanking:
+  BottleneckRanking:
     properties:
       avgDeviationSeconds:
         type: number
@@ -102,14 +102,14 @@ definitions:
       cornerName:
         type: string
     type: object
-  internal_infrastructure_web.BroadcastMessageRequest:
+  BroadcastMessageRequest:
     properties:
       campId:
         type: string
       content:
         type: string
     type: object
-  internal_infrastructure_web.BroadcastReceipt:
+  BroadcastReceipt:
     properties:
       cornerName:
         type: string
@@ -124,19 +124,19 @@ definitions:
       trackNo:
         type: integer
     type: object
-  internal_infrastructure_web.BulkDeleteTracksRequest:
+  BulkDeleteTracksRequest:
     properties:
       trackIds:
         items:
           type: string
         type: array
     type: object
-  internal_infrastructure_web.BulkGenerateBadgesRequest:
+  BulkGenerateBadgesRequest:
     properties:
       count:
         type: integer
     type: object
-  internal_infrastructure_web.BulkUpdateCornersRequest:
+  BulkUpdateCornersRequest:
     properties:
       corners:
         items:
@@ -150,7 +150,7 @@ definitions:
           type: object
         type: array
     type: object
-  internal_infrastructure_web.Camp:
+  Camp:
     properties:
       bottleneckMinSamples:
         example: 3
@@ -177,40 +177,40 @@ definitions:
         - ENDED
         type: string
     type: object
-  internal_infrastructure_web.CampReport:
+  CampReport:
     properties:
       campId:
         format: uuid
         type: string
       cornerStats:
         items:
-          $ref: '#/definitions/internal_infrastructure_web.CornerStats'
+          $ref: '#/definitions/CornerStats'
         type: array
       generatedAt:
         format: date-time
         type: string
       groupStats:
         items:
-          $ref: '#/definitions/internal_infrastructure_web.GroupStats'
+          $ref: '#/definitions/GroupStats'
         type: array
       operationalStats:
-        $ref: '#/definitions/internal_infrastructure_web.OperationalStats'
+        $ref: '#/definitions/OperationalStats'
       summary:
-        $ref: '#/definitions/internal_infrastructure_web.CampSummaryStats'
+        $ref: '#/definitions/CampSummaryStats'
       timeline:
-        $ref: '#/definitions/internal_infrastructure_web.TimelineStats'
+        $ref: '#/definitions/TimelineStats'
       trackStats:
         items:
-          $ref: '#/definitions/internal_infrastructure_web.TrackStats'
+          $ref: '#/definitions/TrackStats'
         type: array
     type: object
-  internal_infrastructure_web.CampSummaryStats:
+  CampSummaryStats:
     properties:
       avgDeviationSeconds:
         type: number
       bottleneckRanking:
         items:
-          $ref: '#/definitions/internal_infrastructure_web.BottleneckRanking'
+          $ref: '#/definitions/BottleneckRanking'
         type: array
       completionRate:
         type: number
@@ -233,11 +233,11 @@ definitions:
       visitCompletionRate:
         type: number
     type: object
-  internal_infrastructure_web.Corner:
+  Corner:
     properties:
       activeTracks:
         items:
-          $ref: '#/definitions/internal_infrastructure_web.TrackSummary'
+          $ref: '#/definitions/TrackSummary'
         type: array
       id:
         format: uuid
@@ -257,7 +257,7 @@ definitions:
         example: 10
         type: integer
     type: object
-  internal_infrastructure_web.CornerProgress:
+  CornerProgress:
     properties:
       cornerId:
         format: uuid
@@ -271,7 +271,7 @@ definitions:
         - COMPLETED
         type: string
     type: object
-  internal_infrastructure_web.CornerStats:
+  CornerStats:
     properties:
       completedVisitCount:
         type: integer
@@ -282,15 +282,15 @@ definitions:
         type: string
       unvisitedGroups:
         items:
-          $ref: '#/definitions/internal_infrastructure_web.UnvisitedGroup'
+          $ref: '#/definitions/UnvisitedGroup'
         type: array
     type: object
-  internal_infrastructure_web.CreateCampRequest:
+  CreateCampRequest:
     properties:
       name:
         type: string
     type: object
-  internal_infrastructure_web.CreateCornerRequest:
+  CreateCornerRequest:
     properties:
       campId:
         type: string
@@ -299,7 +299,7 @@ definitions:
       targetMinutes:
         type: integer
     type: object
-  internal_infrastructure_web.CreateTracksRequest:
+  CreateTracksRequest:
     properties:
       campId:
         type: string
@@ -308,7 +308,7 @@ definitions:
       count:
         type: integer
     type: object
-  internal_infrastructure_web.DeviceRegistration:
+  DeviceRegistration:
     properties:
       approvedAt:
         format: date-time
@@ -330,7 +330,7 @@ definitions:
         - REVOKED
         type: string
     type: object
-  internal_infrastructure_web.DeviceRegistrationRequest:
+  DeviceRegistrationRequest:
     properties:
       campId:
         description: Using campId because RequestRegistration expects a campID
@@ -343,12 +343,12 @@ definitions:
         - FACILITATOR
         type: string
     type: object
-  internal_infrastructure_web.DirectMessageRequest:
+  DirectMessageRequest:
     properties:
       content:
         type: string
     type: object
-  internal_infrastructure_web.ErrorResponse:
+  ErrorResponse:
     properties:
       code:
         example: INVALID_REQUEST
@@ -360,14 +360,14 @@ definitions:
         example: 잘못된 요청입니다.
         type: string
     type: object
-  internal_infrastructure_web.ExportBadgesResponse:
+  ExportBadgesResponse:
     properties:
       badges:
         items:
-          $ref: '#/definitions/internal_infrastructure_web.Badge'
+          $ref: '#/definitions/Badge'
         type: array
     type: object
-  internal_infrastructure_web.Group:
+  Group:
     properties:
       badgeId:
         format: uuid
@@ -379,7 +379,7 @@ definitions:
         type: boolean
       itinerary:
         items:
-          $ref: '#/definitions/internal_infrastructure_web.CornerProgress'
+          $ref: '#/definitions/CornerProgress'
         type: array
       name:
         example: 1조
@@ -391,7 +391,7 @@ definitions:
         - FINISHED
         type: string
     type: object
-  internal_infrastructure_web.GroupStats:
+  GroupStats:
     properties:
       completedCount:
         type: integer
@@ -403,7 +403,7 @@ definitions:
       totalDurationSeconds:
         type: integer
     type: object
-  internal_infrastructure_web.Message:
+  Message:
     properties:
       channelType:
         enum:
@@ -432,36 +432,36 @@ definitions:
         format: uuid
         type: string
     type: object
-  internal_infrastructure_web.OperationalStats:
+  OperationalStats:
     type: object
-  internal_infrastructure_web.ReplaceTrackRequest:
+  ReplaceTrackRequest:
     properties:
       newCornerId:
         type: string
     type: object
-  internal_infrastructure_web.ReplaceTrackResponse:
+  ReplaceTrackResponse:
     properties:
       pin:
         type: string
       track:
-        $ref: '#/definitions/internal_infrastructure_web.Track'
+        $ref: '#/definitions/Track'
     type: object
-  internal_infrastructure_web.ScanAssignBadgeRequest:
+  ScanAssignBadgeRequest:
     properties:
       groupName:
         type: string
       qrPayload:
         type: string
     type: object
-  internal_infrastructure_web.TimelineStats:
+  TimelineStats:
     type: object
-  internal_infrastructure_web.Track:
+  Track:
     properties:
       cornerId:
         format: uuid
         type: string
       currentVisit:
-        $ref: '#/definitions/internal_infrastructure_web.VisitSummary'
+        $ref: '#/definitions/VisitSummary'
       id:
         format: uuid
         type: string
@@ -481,21 +481,21 @@ definitions:
       trackNo:
         type: integer
     type: object
-  internal_infrastructure_web.TrackLoginRequest:
+  TrackLoginRequest:
     properties:
       pin:
         type: string
     type: object
-  internal_infrastructure_web.TrackLoginResponse:
+  TrackLoginResponse:
     properties:
       corner:
-        $ref: '#/definitions/internal_infrastructure_web.Corner'
+        $ref: '#/definitions/Corner'
       track:
-        $ref: '#/definitions/internal_infrastructure_web.Track'
+        $ref: '#/definitions/Track'
       trackToken:
         type: string
     type: object
-  internal_infrastructure_web.TrackStats:
+  TrackStats:
     properties:
       avgDeviationSeconds:
         type: integer
@@ -509,7 +509,7 @@ definitions:
       trackNo:
         type: integer
     type: object
-  internal_infrastructure_web.TrackSummary:
+  TrackSummary:
     properties:
       cornerId:
         format: uuid
@@ -530,7 +530,7 @@ definitions:
       trackNo:
         type: integer
     type: object
-  internal_infrastructure_web.UnvisitedGroup:
+  UnvisitedGroup:
     properties:
       groupId:
         format: uuid
@@ -538,7 +538,7 @@ definitions:
       groupName:
         type: string
     type: object
-  internal_infrastructure_web.UpdateCampRequest:
+  UpdateCampRequest:
     properties:
       bottleneckMinSamples:
         type: integer
@@ -553,7 +553,7 @@ definitions:
         format: date-time
         type: string
     type: object
-  internal_infrastructure_web.VisitStartRequest:
+  VisitStartRequest:
     properties:
       groupId:
         type: string
@@ -564,7 +564,7 @@ definitions:
       qrToken:
         type: string
     type: object
-  internal_infrastructure_web.VisitSummary:
+  VisitSummary:
     properties:
       cornerId:
         format: uuid
@@ -673,11 +673,11 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_infrastructure_web.AuditLogPageResponse'
+            $ref: '#/definitions/AuditLogPageResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/internal_infrastructure_web.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
       security:
       - AdminAuth: []
       summary: 감사 로그 조회
@@ -694,18 +694,18 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/internal_infrastructure_web.AdminLoginRequest'
+          $ref: '#/definitions/AdminLoginRequest'
       produces:
       - application/json
       responses:
         "200":
           description: 로그인 성공
           schema:
-            $ref: '#/definitions/internal_infrastructure_web.AdminLoginResponse'
+            $ref: '#/definitions/AdminLoginResponse'
         "401":
           description: 잘못된 ID 또는 비밀번호
           schema:
-            $ref: '#/definitions/internal_infrastructure_web.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
       summary: 관리자 로그인
       tags:
       - A. Auth & Device Trust
@@ -720,7 +720,7 @@ paths:
         "401":
           description: 권한 없음
           schema:
-            $ref: '#/definitions/internal_infrastructure_web.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
       security:
       - AdminAuth: []
       summary: 관리자 로그아웃
@@ -735,11 +735,11 @@ paths:
         "200":
           description: 새 액세스 토큰 발급
           schema:
-            $ref: '#/definitions/internal_infrastructure_web.AdminRefreshResponse'
+            $ref: '#/definitions/AdminRefreshResponse'
         "401":
           description: 권한 없음
           schema:
-            $ref: '#/definitions/internal_infrastructure_web.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
       security:
       - AdminRefreshAuth: []
       summary: 관리자 액세스 토큰 재발급
@@ -755,7 +755,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/internal_infrastructure_web.AdminSession'
+              $ref: '#/definitions/AdminSession'
             type: array
       security:
       - AdminAuth: []
@@ -830,26 +830,26 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/internal_infrastructure_web.TrackLoginRequest'
+          $ref: '#/definitions/TrackLoginRequest'
       produces:
       - application/json
       responses:
         "200":
           description: 로그인 성공 — 트랙 세션 토큰 발급
           schema:
-            $ref: '#/definitions/internal_infrastructure_web.TrackLoginResponse'
+            $ref: '#/definitions/TrackLoginResponse'
         "400":
           description: 잘못된 PIN (지연 가능)
           schema:
-            $ref: '#/definitions/internal_infrastructure_web.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "403":
           description: 신뢰 기기 아님 또는 캠프 미시작
           schema:
-            $ref: '#/definitions/internal_infrastructure_web.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "429":
           description: PIN 잠금(지연) 중
           schema:
-            $ref: '#/definitions/internal_infrastructure_web.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
       security:
       - TrustedDeviceAuth: []
       summary: 진행자 트랙 PIN 로그인
@@ -878,7 +878,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/internal_infrastructure_web.Badge'
+              $ref: '#/definitions/Badge'
             type: array
       security:
       - AdminAuth: []
@@ -901,14 +901,14 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/internal_infrastructure_web.AssignBadgeRequest'
+          $ref: '#/definitions/AssignBadgeRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_infrastructure_web.Badge'
+            $ref: '#/definitions/Badge'
       security:
       - AdminAuth: []
       summary: 배지를 특정 조에 배정 (수동)
@@ -925,7 +925,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/internal_infrastructure_web.BulkGenerateBadgesRequest'
+          $ref: '#/definitions/BulkGenerateBadgesRequest'
       produces:
       - application/json
       responses:
@@ -933,7 +933,7 @@ paths:
           description: Created
           schema:
             items:
-              $ref: '#/definitions/internal_infrastructure_web.Badge'
+              $ref: '#/definitions/Badge'
             type: array
       security:
       - AdminAuth: []
@@ -950,7 +950,7 @@ paths:
         "200":
           description: 미배정 배지 목록
           schema:
-            $ref: '#/definitions/internal_infrastructure_web.ExportBadgesResponse'
+            $ref: '#/definitions/ExportBadgesResponse'
       security:
       - AdminAuth: []
       summary: QR 배지 인쇄용 목록 내보내기 (JSON)
@@ -967,14 +967,14 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/internal_infrastructure_web.ScanAssignBadgeRequest'
+          $ref: '#/definitions/ScanAssignBadgeRequest'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/internal_infrastructure_web.Group'
+            $ref: '#/definitions/Group'
       security:
       - AdminAuth: []
       summary: 배지를 특정 조에 배정 (스캔 기반)
@@ -990,12 +990,12 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/internal_infrastructure_web.Camp'
+              $ref: '#/definitions/Camp'
             type: array
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/internal_infrastructure_web.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
       security:
       - AdminAuth: []
       summary: 캠프 목록 조회
@@ -1011,22 +1011,22 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/internal_infrastructure_web.CreateCampRequest'
+          $ref: '#/definitions/CreateCampRequest'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/internal_infrastructure_web.Camp'
+            $ref: '#/definitions/Camp'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/internal_infrastructure_web.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/internal_infrastructure_web.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
       security:
       - AdminAuth: []
       summary: 새 캠프 생성
@@ -1048,16 +1048,16 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/internal_infrastructure_web.Corner'
+              $ref: '#/definitions/Corner'
             type: array
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/internal_infrastructure_web.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/internal_infrastructure_web.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
       security:
       - AdminAuth: []
       summary: 코너 목록 조회
@@ -1079,7 +1079,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/internal_infrastructure_web.Group'
+              $ref: '#/definitions/Group'
             type: array
       security:
       - AdminAuth: []
@@ -1101,7 +1101,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_infrastructure_web.CampReport'
+            $ref: '#/definitions/CampReport'
       security:
       - AdminAuth: []
       summary: 현재 리포트 전체 조회
@@ -1122,7 +1122,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_infrastructure_web.CampReport'
+            $ref: '#/definitions/CampReport'
       security:
       - AdminAuth: []
       summary: 현재 리포트 데이터 내보내기
@@ -1143,7 +1143,7 @@ paths:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/internal_infrastructure_web.CampReport'
+            $ref: '#/definitions/CampReport'
       security:
       - AdminAuth: []
       summary: 과거 리포트 생성 및 저장
@@ -1164,7 +1164,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_infrastructure_web.CampSummaryStats'
+            $ref: '#/definitions/CampSummaryStats'
       security:
       - AdminAuth: []
       summary: 라이브 서머리 (대시보드 상단)
@@ -1186,7 +1186,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/internal_infrastructure_web.Track'
+              $ref: '#/definitions/Track'
             type: array
       security:
       - AdminAuth: []
@@ -1208,11 +1208,11 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_infrastructure_web.Camp'
+            $ref: '#/definitions/Camp'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/internal_infrastructure_web.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
       security:
       - AdminAuth: []
       summary: 캠프 상세 조회
@@ -1233,26 +1233,26 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/internal_infrastructure_web.UpdateCampRequest'
+          $ref: '#/definitions/UpdateCampRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_infrastructure_web.Camp'
+            $ref: '#/definitions/Camp'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/internal_infrastructure_web.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/internal_infrastructure_web.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "409":
           description: Conflict
           schema:
-            $ref: '#/definitions/internal_infrastructure_web.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
       security:
       - AdminAuth: []
       summary: 캠프 정보 및 병목 기준 수정
@@ -1273,15 +1273,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_infrastructure_web.Camp'
+            $ref: '#/definitions/Camp'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/internal_infrastructure_web.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "409":
           description: Conflict
           schema:
-            $ref: '#/definitions/internal_infrastructure_web.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
       security:
       - AdminAuth: []
       summary: 캠프 종료
@@ -1302,15 +1302,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_infrastructure_web.Camp'
+            $ref: '#/definitions/Camp'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/internal_infrastructure_web.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "409":
           description: 이미 활성화됨 또는 필수 조건 미충족
           schema:
-            $ref: '#/definitions/internal_infrastructure_web.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
       security:
       - AdminAuth: []
       summary: 캠프 시작
@@ -1327,22 +1327,22 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/internal_infrastructure_web.CreateCornerRequest'
+          $ref: '#/definitions/CreateCornerRequest'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/internal_infrastructure_web.Corner'
+            $ref: '#/definitions/Corner'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/internal_infrastructure_web.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/internal_infrastructure_web.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
       security:
       - AdminAuth: []
       summary: 새 코너 추가
@@ -1364,7 +1364,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/internal_infrastructure_web.Track'
+              $ref: '#/definitions/Track'
             type: array
       security:
       - AdminAuth: []
@@ -1388,11 +1388,11 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/internal_infrastructure_web.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "409":
           description: 활성화된 캠프이거나 종속 데이터가 존재함
           schema:
-            $ref: '#/definitions/internal_infrastructure_web.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
       security:
       - AdminAuth: []
       summary: 코너 삭제
@@ -1412,11 +1412,11 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_infrastructure_web.Corner'
+            $ref: '#/definitions/Corner'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/internal_infrastructure_web.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
       security:
       - AdminAuth: []
       summary: 코너 상세 조회
@@ -1433,7 +1433,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/internal_infrastructure_web.BulkUpdateCornersRequest'
+          $ref: '#/definitions/BulkUpdateCornersRequest'
       produces:
       - application/json
       responses:
@@ -1441,16 +1441,16 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/internal_infrastructure_web.Corner'
+              $ref: '#/definitions/Corner'
             type: array
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/internal_infrastructure_web.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "409":
           description: Conflict
           schema:
-            $ref: '#/definitions/internal_infrastructure_web.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
       security:
       - AdminAuth: []
       summary: 코너 대량 수정
@@ -1466,7 +1466,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/internal_infrastructure_web.DeviceRegistration'
+              $ref: '#/definitions/DeviceRegistration'
             type: array
       security:
       - AdminAuth: []
@@ -1483,14 +1483,14 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/internal_infrastructure_web.DeviceRegistrationRequest'
+          $ref: '#/definitions/DeviceRegistrationRequest'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/internal_infrastructure_web.DeviceRegistration'
+            $ref: '#/definitions/DeviceRegistration'
       summary: 기기 등록 요청 (최초 앱 실행 시)
       tags:
       - A. Auth & Device Trust
@@ -1509,7 +1509,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_infrastructure_web.DeviceRegistration'
+            $ref: '#/definitions/DeviceRegistration'
       security:
       - AdminAuth: []
       summary: 기기 승인
@@ -1530,7 +1530,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_infrastructure_web.DeviceRegistration'
+            $ref: '#/definitions/DeviceRegistration'
       security:
       - AdminAuth: []
       summary: 기기 거절
@@ -1551,7 +1551,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_infrastructure_web.DeviceRegistration'
+            $ref: '#/definitions/DeviceRegistration'
       security:
       - AdminAuth: []
       summary: 기기 신뢰 취소 (폐기/분실)
@@ -1588,7 +1588,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_infrastructure_web.Group'
+            $ref: '#/definitions/Group'
       security:
       - AdminAuth: []
       summary: 특정 조 상세 조회
@@ -1610,7 +1610,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/internal_infrastructure_web.VisitSummary'
+              $ref: '#/definitions/VisitSummary'
             type: array
       security:
       - AdminAuth: []
@@ -1627,7 +1627,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/internal_infrastructure_web.Message'
+              $ref: '#/definitions/Message'
             type: array
       security:
       - AdminAuth: []
@@ -1644,14 +1644,14 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/internal_infrastructure_web.BroadcastMessageRequest'
+          $ref: '#/definitions/BroadcastMessageRequest'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/internal_infrastructure_web.Message'
+            $ref: '#/definitions/Message'
       security:
       - AdminAuth: []
       summary: 전체 공지 발송
@@ -1692,7 +1692,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/internal_infrastructure_web.BroadcastReceipt'
+              $ref: '#/definitions/BroadcastReceipt'
             type: array
       security:
       - AdminAuth: []
@@ -1710,7 +1710,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/internal_infrastructure_web.CreateTracksRequest'
+          $ref: '#/definitions/CreateTracksRequest'
       produces:
       - application/json
       responses:
@@ -1718,7 +1718,7 @@ paths:
           description: Created
           schema:
             items:
-              $ref: '#/definitions/internal_infrastructure_web.Track'
+              $ref: '#/definitions/Track'
             type: array
       security:
       - AdminAuth: []
@@ -1740,7 +1740,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_infrastructure_web.Track'
+            $ref: '#/definitions/Track'
       security:
       - AdminAuth: []
       summary: 트랙 상세 조회
@@ -1781,11 +1781,11 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_infrastructure_web.TrackLoginResponse'
+            $ref: '#/definitions/TrackLoginResponse'
         "401":
           description: 권한 없음 또는 세션 만료
           schema:
-            $ref: '#/definitions/internal_infrastructure_web.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
       security:
       - TrackAuth: []
       summary: 교체된 트랙의 세션 마이그레이션
@@ -1806,7 +1806,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_infrastructure_web.Track'
+            $ref: '#/definitions/Track'
       security:
       - AdminAuth: []
       summary: PIN 재발급
@@ -1828,31 +1828,66 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/internal_infrastructure_web.ReplaceTrackRequest'
+          $ref: '#/definitions/ReplaceTrackRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_infrastructure_web.ReplaceTrackResponse'
+            $ref: '#/definitions/ReplaceTrackResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/internal_infrastructure_web.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/internal_infrastructure_web.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
         "409":
           description: Conflict
           schema:
-            $ref: '#/definitions/internal_infrastructure_web.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
       security:
       - AdminAuth: []
       summary: 트랙 교체 (비상용)
       tags:
       - B. Resource Management (Admin)
+  /tracks/{trackId}/groups:
+    get:
+      description: 인증된 진행자의 트랙이 속한 캠프의 조 목록을 반환한다. 세션의 트랙과 path trackId가 일치해야 한다.
+      parameters:
+      - description: 트랙 ID
+        in: path
+        name: trackId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/Group'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "403":
+          description: 세션 트랙과 요청 트랙 불일치
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "404":
+          description: 트랙 또는 코너 없음
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+      - TrackAuth: []
+      summary: 진행자 수동 체크인용 조 목록 조회
+      tags:
+      - C. Visit (Scan Flow)
   /tracks/{trackId}/messages:
     get:
       description: 관리자 또는 트랙 진행자가 해당 트랙과 관련된 DIRECT 메시지 내역을 조회한다.
@@ -1869,7 +1904,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/internal_infrastructure_web.Message'
+              $ref: '#/definitions/Message'
             type: array
       security:
       - AdminAuth: []
@@ -1891,14 +1926,14 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/internal_infrastructure_web.DirectMessageRequest'
+          $ref: '#/definitions/DirectMessageRequest'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/internal_infrastructure_web.Message'
+            $ref: '#/definitions/Message'
       security:
       - AdminAuth: []
       summary: 다이렉트 메시지 발송
@@ -1919,7 +1954,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_infrastructure_web.VisitSummary'
+            $ref: '#/definitions/VisitSummary'
         "404":
           description: 진행 중인 방문 없음
       security:
@@ -1942,11 +1977,11 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_infrastructure_web.VisitSummary'
+            $ref: '#/definitions/VisitSummary'
         "409":
           description: TRACK_NOT_BUSY 등
           schema:
-            $ref: '#/definitions/internal_infrastructure_web.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
       security:
       - TrackAuth: []
       summary: 현재 방문 종료 (조 퇴장)
@@ -1968,18 +2003,18 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/internal_infrastructure_web.VisitStartRequest'
+          $ref: '#/definitions/VisitStartRequest'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/internal_infrastructure_web.VisitSummary'
+            $ref: '#/definitions/VisitSummary'
         "409":
           description: TRACK_BUSY, DUPLICATE_VISIT 등
           schema:
-            $ref: '#/definitions/internal_infrastructure_web.ErrorResponse'
+            $ref: '#/definitions/ErrorResponse'
       security:
       - TrackAuth: []
       summary: 방문 시작 (조 입장)
@@ -1996,7 +2031,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/internal_infrastructure_web.BulkDeleteTracksRequest'
+          $ref: '#/definitions/BulkDeleteTracksRequest'
       produces:
       - application/json
       responses:
