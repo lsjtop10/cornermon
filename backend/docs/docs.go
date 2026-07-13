@@ -9,9 +9,7 @@ const docTemplate = `{
     "info": {
         "description": "{{escape .Description}}",
         "title": "{{.Title}}",
-        "contact": {
-            "name": "Cornermon API Team"
-        },
+        "contact": {},
         "version": "{{.Version}}"
     },
     "host": "{{.Host}}",
@@ -87,6 +85,28 @@ const docTemplate = `{
                 "summary": "감사 로그 조회",
                 "parameters": [
                     {
+                        "type": "string",
+                        "description": "행위자 부분 일치",
+                        "name": "actor",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "행위 종류 정확히 일치",
+                        "name": "action",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "success",
+                            "failure"
+                        ],
+                        "type": "string",
+                        "description": "처리 결과",
+                        "name": "result",
+                        "in": "query"
+                    },
+                    {
                         "type": "integer",
                         "default": 50,
                         "description": "조회 개수",
@@ -94,10 +114,9 @@ const docTemplate = `{
                         "in": "query"
                     },
                     {
-                        "type": "integer",
-                        "default": 0,
-                        "description": "오프셋",
-                        "name": "offset",
+                        "type": "string",
+                        "description": "이전 응답의 불투명 nextCursor",
+                        "name": "before",
                         "in": "query"
                     }
                 ],
@@ -105,10 +124,13 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/internal_infrastructure_web.AuditLog"
-                            }
+                            "$ref": "#/definitions/internal_infrastructure_web.AuditLogPageResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
                         }
                     }
                 }
@@ -676,6 +698,265 @@ const docTemplate = `{
                 }
             }
         },
+        "/camps/{campId}/corners": {
+            "get": {
+                "security": [
+                    {
+                        "AdminAuth": []
+                    }
+                ],
+                "description": "특정 캠프의 모든 코너 목록을 조회한다.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "B. Resource Management (Admin)"
+                ],
+                "summary": "코너 목록 조회",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "캠프 ID",
+                        "name": "campId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/internal_infrastructure_web.Corner"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/camps/{campId}/groups": {
+            "get": {
+                "security": [
+                    {
+                        "AdminAuth": []
+                    }
+                ],
+                "description": "특정 캠프에 속한 모든 조의 목록과 상태를 조회한다.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "B. Resource Management (Admin)"
+                ],
+                "summary": "전체 조 목록 조회",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "캠프 ID",
+                        "name": "campId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/internal_infrastructure_web.Group"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/camps/{campId}/reports/current": {
+            "get": {
+                "security": [
+                    {
+                        "AdminAuth": []
+                    }
+                ],
+                "description": "현재 활성화된 캠프의 상세 통계(CampReport)를 반환한다.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "D. Report"
+                ],
+                "summary": "현재 리포트 전체 조회",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "캠프 ID",
+                        "name": "campId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_infrastructure_web.CampReport"
+                        }
+                    }
+                }
+            }
+        },
+        "/camps/{campId}/reports/current/export": {
+            "get": {
+                "security": [
+                    {
+                        "AdminAuth": []
+                    }
+                ],
+                "description": "현재 캠프 리포트를 다운로드한다.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "D. Report"
+                ],
+                "summary": "현재 리포트 데이터 내보내기",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "캠프 ID",
+                        "name": "campId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_infrastructure_web.CampReport"
+                        }
+                    }
+                }
+            }
+        },
+        "/camps/{campId}/reports/generate": {
+            "post": {
+                "security": [
+                    {
+                        "AdminAuth": []
+                    }
+                ],
+                "description": "캠프가 종료될 때 최종 리포트를 생성하여 저장소에 보관한다.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "D. Report"
+                ],
+                "summary": "과거 리포트 생성 및 저장",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "캠프 ID",
+                        "name": "campId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/internal_infrastructure_web.CampReport"
+                        }
+                    }
+                }
+            }
+        },
+        "/camps/{campId}/reports/live-summary": {
+            "get": {
+                "security": [
+                    {
+                        "AdminAuth": []
+                    }
+                ],
+                "description": "전체 진행 상황(완주율 등)의 핵심 요약 정보를 반환한다.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "D. Report"
+                ],
+                "summary": "라이브 서머리 (대시보드 상단)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "캠프 ID",
+                        "name": "campId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_infrastructure_web.CampSummaryStats"
+                        }
+                    }
+                }
+            }
+        },
+        "/camps/{campId}/tracks": {
+            "get": {
+                "security": [
+                    {
+                        "AdminAuth": []
+                    }
+                ],
+                "description": "전체 트랙 목록을 조회한다.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "B. Resource Management (Admin)"
+                ],
+                "summary": "트랙 목록 조회",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "캠프 ID",
+                        "name": "campId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/internal_infrastructure_web.Track"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/camps/{id}": {
             "get": {
                 "security": [
@@ -709,6 +990,68 @@ const docTemplate = `{
                     },
                     "404": {
                         "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "security": [
+                    {
+                        "AdminAuth": []
+                    }
+                ],
+                "description": "캠프 이름, 예정 기간, 병목 판정 기준 중 요청에 포함된 필드만 수정한다. 종료된 캠프는 수정할 수 없다.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "B. Resource Management (Admin)"
+                ],
+                "summary": "캠프 정보 및 병목 기준 수정",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "캠프 ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "부분 수정할 캠프 설정",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_infrastructure_web.UpdateCampRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_infrastructure_web.Camp"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
                         "schema": {
                             "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
                         }
@@ -809,53 +1152,6 @@ const docTemplate = `{
             }
         },
         "/corners": {
-            "get": {
-                "security": [
-                    {
-                        "AdminAuth": []
-                    }
-                ],
-                "description": "특정 캠프의 모든 코너 목록을 조회한다.",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "B. Resource Management (Admin)"
-                ],
-                "summary": "코너 목록 조회",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "필터링할 캠프 ID",
-                        "name": "campId",
-                        "in": "query",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/internal_infrastructure_web.Corner"
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
-                        }
-                    }
-                }
-            },
             "post": {
                 "security": [
                     {
@@ -1264,42 +1560,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/groups": {
-            "get": {
-                "security": [
-                    {
-                        "AdminAuth": []
-                    }
-                ],
-                "description": "특정 캠프에 속한 모든 조의 목록과 상태를 조회한다.",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "B. Resource Management (Admin)"
-                ],
-                "summary": "전체 조 목록 조회",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "캠프 ID 필터",
-                        "name": "campId",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/internal_infrastructure_web.Group"
-                            }
-                        }
-                    }
-                }
-            }
-        },
         "/groups/{id}": {
             "get": {
                 "security": [
@@ -1504,141 +1764,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/reports/current": {
-            "get": {
-                "security": [
-                    {
-                        "AdminAuth": []
-                    }
-                ],
-                "description": "현재 활성화된 캠프의 상세 통계(CampReport)를 반환한다.",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "D. Report"
-                ],
-                "summary": "현재 리포트 전체 조회",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/internal_infrastructure_web.CampReport"
-                        }
-                    }
-                }
-            }
-        },
-        "/reports/current/export": {
-            "get": {
-                "security": [
-                    {
-                        "AdminAuth": []
-                    }
-                ],
-                "description": "현재 캠프 리포트를 다운로드한다.",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "D. Report"
-                ],
-                "summary": "현재 리포트 데이터 내보내기",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/internal_infrastructure_web.CampReport"
-                        }
-                    }
-                }
-            }
-        },
-        "/reports/generate": {
-            "post": {
-                "security": [
-                    {
-                        "AdminAuth": []
-                    }
-                ],
-                "description": "캠프가 종료될 때 최종 리포트를 생성하여 저장소에 보관한다.",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "D. Report"
-                ],
-                "summary": "과거 리포트 생성 및 저장",
-                "responses": {
-                    "201": {
-                        "description": "Created",
-                        "schema": {
-                            "$ref": "#/definitions/internal_infrastructure_web.CampReport"
-                        }
-                    }
-                }
-            }
-        },
-        "/reports/live-summary": {
-            "get": {
-                "security": [
-                    {
-                        "AdminAuth": []
-                    }
-                ],
-                "description": "전체 진행 상황(완주율 등)의 핵심 요약 정보를 반환한다.",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "D. Report"
-                ],
-                "summary": "라이브 서머리 (대시보드 상단)",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/internal_infrastructure_web.CampSummaryStats"
-                        }
-                    }
-                }
-            }
-        },
         "/tracks": {
-            "get": {
-                "security": [
-                    {
-                        "AdminAuth": []
-                    }
-                ],
-                "description": "전체 트랙 목록을 조회한다.",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "B. Resource Management (Admin)"
-                ],
-                "summary": "트랙 목록 조회",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "캠프 ID 필터",
-                        "name": "campId",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/internal_infrastructure_web.Track"
-                            }
-                        }
-                    }
-                }
-            },
             "post": {
                 "security": [
                     {
@@ -1884,7 +2010,10 @@ const docTemplate = `{
                         "AdminAuth": []
                     }
                 ],
-                "description": "기기 고장 등으로 트랙 세션을 초기화하거나 새 기기로 교체할 수 있도록 처리한다.",
+                "description": "기존 트랙을 삭제하고 지정한 대상 코너에 새 트랙을 생성하며 기존 진행자 세션의 마이그레이션 대상을 설정한다.",
+                "consumes": [
+                    "application/json"
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -1899,13 +2028,40 @@ const docTemplate = `{
                         "name": "id",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "description": "대상 코너",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_infrastructure_web.ReplaceTrackRequest"
+                        }
                     }
                 ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/internal_infrastructure_web.Track"
+                            "$ref": "#/definitions/internal_infrastructure_web.ReplaceTrackResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
                         }
                     }
                 }
@@ -2215,6 +2371,20 @@ const docTemplate = `{
                     "type": "boolean"
                 },
                 "target": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_infrastructure_web.AuditLogPageResponse": {
+            "type": "object",
+            "properties": {
+                "logs": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/internal_infrastructure_web.AuditLog"
+                    }
+                },
+                "nextCursor": {
                     "type": "string"
                 }
             }
@@ -2748,6 +2918,25 @@ const docTemplate = `{
         "internal_infrastructure_web.OperationalStats": {
             "type": "object"
         },
+        "internal_infrastructure_web.ReplaceTrackRequest": {
+            "type": "object",
+            "properties": {
+                "newCornerId": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_infrastructure_web.ReplaceTrackResponse": {
+            "type": "object",
+            "properties": {
+                "pin": {
+                    "type": "string"
+                },
+                "track": {
+                    "$ref": "#/definitions/internal_infrastructure_web.Track"
+                }
+            }
+        },
         "internal_infrastructure_web.ScanAssignBadgeRequest": {
             "type": "object",
             "properties": {
@@ -2884,6 +3073,28 @@ const docTemplate = `{
                 }
             }
         },
+        "internal_infrastructure_web.UpdateCampRequest": {
+            "type": "object",
+            "properties": {
+                "bottleneckMinSamples": {
+                    "type": "integer"
+                },
+                "bottleneckRatioPct": {
+                    "type": "integer"
+                },
+                "endAt": {
+                    "type": "string",
+                    "format": "date-time"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "startAt": {
+                    "type": "string",
+                    "format": "date-time"
+                }
+            }
+        },
         "internal_infrastructure_web.VisitStartRequest": {
             "type": "object",
             "properties": {
@@ -2950,43 +3161,17 @@ const docTemplate = `{
                 }
             }
         }
-    },
-    "securityDefinitions": {
-        "AdminAuth": {
-            "description": "관리자 액세스 토큰 (ADMIN)",
-            "type": "apiKey",
-            "name": "Authorization",
-            "in": "header"
-        },
-        "AdminRefreshAuth": {
-            "description": "관리자 리프레시 토큰 (ADMIN_REFRESH) — 액세스 토큰 재발급 전용",
-            "type": "apiKey",
-            "name": "Authorization",
-            "in": "header"
-        },
-        "TrackAuth": {
-            "description": "트랙 세션 토큰 (TRACK) — 진행자가 PIN 로그인 후 발급",
-            "type": "apiKey",
-            "name": "Authorization",
-            "in": "header"
-        },
-        "TrustedDeviceAuth": {
-            "description": "관리자 승인된 기기 신뢰 토큰 (TRUSTED_DEVICE)",
-            "type": "apiKey",
-            "name": "Authorization",
-            "in": "header"
-        }
     }
 }`
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
-	Version:          "1.0.0",
+	Version:          "",
 	Host:             "",
-	BasePath:         "/api/v1",
+	BasePath:         "",
 	Schemes:          []string{},
-	Title:            "Cornermon API",
-	Description:      "코너학습 운영 시스템(Cornermon) REST API 명세서. 모든 날짜/시간(date-time) 필드는 항상 UTC 기준 ISO 8601 형식(YYYY-MM-DDTHH:mm:ssZ)으로 송수신됩니다.",
+	Title:            "",
+	Description:      "",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",

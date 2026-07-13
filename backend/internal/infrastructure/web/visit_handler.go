@@ -10,6 +10,7 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+// @name VisitHandler
 type VisitHandler struct {
 	visitUC *usecase.VisitService
 }
@@ -18,6 +19,7 @@ func NewVisitHandler(visitUC *usecase.VisitService) *VisitHandler {
 	return &VisitHandler{visitUC: visitUC}
 }
 
+// @name VisitStartRequest
 type VisitStartRequest struct {
 	QRToken string `json:"qrToken"`
 	Method  string `json:"method" enums:"MANUAL"`

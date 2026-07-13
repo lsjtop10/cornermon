@@ -14,6 +14,7 @@ type EventSubscriber interface {
 	SubscribeTrack(ctx context.Context, trackID string) (<-chan string, error)
 }
 
+// @name EventHandler
 type EventHandler struct {
 	subscriber EventSubscriber
 }

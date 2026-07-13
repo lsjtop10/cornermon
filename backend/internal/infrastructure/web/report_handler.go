@@ -9,6 +9,7 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+// @name ReportHandler
 type ReportHandler struct {
 	reportService *usecase.ReportService
 	querier       usecase.ReportQuerier

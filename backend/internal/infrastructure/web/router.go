@@ -4,6 +4,7 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+// @name Handlers
 type Handlers struct {
 	Auth    *AuthHandler
 	Device  *DeviceHandler

@@ -19,6 +19,7 @@ type MessageUsecase interface {
 	ListDirectMessages(ctx context.Context, trackID domain.TrackID) ([]*domain.Message, error)
 }
 
+// @name MessageHandler
 type MessageHandler struct {
 	message MessageUsecase
 }
@@ -29,6 +30,7 @@ func NewMessageHandler(message MessageUsecase) *MessageHandler {
 	}
 }
 
+// @name BroadcastMessageRequest
 type BroadcastMessageRequest struct {
 	CampID  string `json:"campId"`
 	Content string `json:"content"`
@@ -162,6 +164,7 @@ func (h *MessageHandler) ReadBroadcast(c echo.Context) error {
 	return c.NoContent(http.StatusNoContent)
 }
 
+// @name DirectMessageRequest
 type DirectMessageRequest struct {
 	Content string `json:"content"`
 }

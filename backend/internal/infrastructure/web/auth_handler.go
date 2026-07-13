@@ -29,6 +29,7 @@ type AuthDeviceTrustUsecase interface {
 	ResetPinFailures(ctx context.Context, regID domain.DeviceRegistrationID, actorAdminID domain.AdminID) error
 }
 
+// @name AuthHandler
 type AuthHandler struct {
 	adminAuth       AdminAuthUsecase
 	facilitatorAuth FacilitatorAuthUsecase

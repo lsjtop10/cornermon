@@ -10,10 +10,12 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+// @name CampHandler
 type CampHandler struct {
 	svc *usecase.CampService
 }
 
+// @name UpdateCampRequest
 type UpdateCampRequest struct {
 	Name                 *string    `json:"name,omitempty"`
 	StartAt              *time.Time `json:"startAt,omitempty" format:"date-time"`
@@ -114,6 +116,7 @@ func (h *CampHandler) ListCamps(c echo.Context) error {
 	return c.JSON(http.StatusOK, res)
 }
 
+// @name CreateCampRequest
 type CreateCampRequest struct {
 	Name string `json:"name"`
 }

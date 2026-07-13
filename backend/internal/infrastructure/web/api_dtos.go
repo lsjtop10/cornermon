@@ -4,12 +4,14 @@ import (
 	"time"
 )
 
+// @name ErrorResponse
 type ErrorResponse struct {
 	Code    string                 `json:"code" example:"INVALID_REQUEST"`
 	Message string                 `json:"message" example:"잘못된 요청입니다."`
 	Details map[string]interface{} `json:"details,omitempty"`
 }
 
+// @name Camp
 type Camp struct {
 	ID                   string    `json:"id" format:"uuid"`
 	Name                 string    `json:"name" example:"2026 여름 코너학습"`
@@ -20,6 +22,7 @@ type Camp struct {
 	BottleneckRatioPct   int       `json:"bottleneckRatioPct" example:"20"`
 }
 
+// @name Corner
 type Corner struct {
 	ID            string         `json:"id" format:"uuid"`
 	Name          string         `json:"name" example:"코너 1"`
@@ -29,6 +32,7 @@ type Corner struct {
 	ActiveTracks  []TrackSummary `json:"activeTracks"`
 }
 
+// @name TrackSummary
 type TrackSummary struct {
 	ID                string `json:"id" format:"uuid"`
 	CornerID          string `json:"cornerId" format:"uuid"`
@@ -37,18 +41,21 @@ type TrackSummary struct {
 	OperationalStatus string `json:"operationalStatus" enums:"IDLE,BUSY"`
 }
 
+// @name Track
 type Track struct {
 	TrackSummary
 	PIN          string        `json:"pin" example:"482910"`
 	CurrentVisit *VisitSummary `json:"currentVisit,omitempty"`
 }
 
+// @name CornerProgress
 type CornerProgress struct {
 	CornerID   string `json:"cornerId" format:"uuid"`
 	CornerName string `json:"cornerName"`
 	Status     string `json:"status" enums:"NOT_VISITED,IN_PROGRESS,COMPLETED"`
 }
 
+// @name Group
 type Group struct {
 	ID         string           `json:"id" format:"uuid"`
 	Name       string           `json:"name" example:"1조"`
@@ -58,6 +65,7 @@ type Group struct {
 	Itinerary  []CornerProgress `json:"itinerary"`
 }
 
+// @name VisitSummary
 type VisitSummary struct {
 	ID               string     `json:"id" format:"uuid"`
 	GroupID          string     `json:"groupId" format:"uuid"`
@@ -71,6 +79,7 @@ type VisitSummary struct {
 	DeviationSeconds *int       `json:"deviationSeconds,omitempty"`
 }
 
+// @name Badge
 type Badge struct {
 	ID              string  `json:"id" format:"uuid"`
 	ShortID         string  `json:"shortId" example:"B-0042"`
@@ -79,6 +88,7 @@ type Badge struct {
 	AssignedGroupID *string `json:"assignedGroupId,omitempty" format:"uuid"`
 }
 
+// @name DeviceRegistration
 type DeviceRegistration struct {
 	ID         string     `json:"id" format:"uuid"`
 	DeviceName string     `json:"deviceName" example:"iPad Pro #3"`
@@ -87,6 +97,7 @@ type DeviceRegistration struct {
 	ApprovedAt *time.Time `json:"approvedAt,omitempty" format:"date-time"`
 }
 
+// @name Message
 type Message struct {
 	ID          string     `json:"id" format:"uuid"`
 	ChannelType string     `json:"channelType" enums:"BROADCAST,DIRECT"`
@@ -98,6 +109,7 @@ type Message struct {
 	ReadAt      *time.Time `json:"readAt,omitempty" format:"date-time"`
 }
 
+// @name BroadcastReceipt
 type BroadcastReceipt struct {
 	TrackID    string     `json:"trackId" format:"uuid"`
 	TrackNo    int        `json:"trackNo"`
@@ -106,6 +118,7 @@ type BroadcastReceipt struct {
 	ReadAt     *time.Time `json:"readAt,omitempty" format:"date-time"`
 }
 
+// @name AuditLog
 type AuditLog struct {
 	ID         string                 `json:"id" format:"uuid"`
 	Actor      string                 `json:"actor"`
@@ -116,6 +129,7 @@ type AuditLog struct {
 	Metadata   map[string]interface{} `json:"metadata,omitempty"`
 }
 
+// @name AdminSession
 type AdminSession struct {
 	ID         string    `json:"id" format:"uuid"`
 	AdminID    string    `json:"adminId"`
