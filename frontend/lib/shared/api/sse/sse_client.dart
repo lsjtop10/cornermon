@@ -6,6 +6,7 @@ import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:cornermon_api_gen/cornermon_api_gen.dart';
 
+import '../../config/app_env.dart';
 import '../client/api_client.dart';
 
 part 'sse_client.g.dart';
@@ -14,7 +15,10 @@ part 'sse_client.g.dart';
 /// text/event-stream 바이트를 파싱해 [SseEvent]로 변환하고, 하트비트 침묵을 감지한다.
 /// 자동 재연결은 하지 않는다 — 그건 이 클래스를 감싸는 호출측(track_event_stream.dart) 책임.
 class SseClient {
-  SseClient(this._dio, {this.heartbeatTimeout = const Duration(seconds: 40)});
+  SseClient(
+    this._dio, {
+    this.heartbeatTimeout = const Duration(seconds: AppEnv.sseHeartbeatTimeoutSeconds),
+  });
 
   final Dio _dio;
   final Duration heartbeatTimeout;
