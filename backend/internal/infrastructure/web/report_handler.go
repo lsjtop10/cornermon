@@ -12,7 +12,6 @@ import (
 type ReportHandler struct {
 	reportService *usecase.ReportService
 	querier       usecase.ReportQuerier
-	camps         usecase.CampRepository
 }
 
 func NewReportHandler(
@@ -23,22 +22,7 @@ func NewReportHandler(
 	return &ReportHandler{
 		reportService: reportService,
 		querier:       querier,
-		camps:         camps,
 	}
-}
-
-// getActiveCamp is a helper to find the currently active camp
-func (h *ReportHandler) getActiveCamp(c echo.Context) (*domain.Camp, error) {
-	camps, err := h.camps.List(c.Request().Context())
-	if err != nil {
-		return nil, err
-	}
-	for _, camp := range camps {
-		if camp.Status == domain.CampActive {
-			return camp, nil
-		}
-	}
-	return nil, nil
 }
 
 // mapSummary maps usecase.CampReport to CampSummaryStats
@@ -93,18 +77,12 @@ func mapReport(r *usecase.CampReport) CampReport {
 // @Tags         D. Report
 // @Security     AdminAuth
 // @Produce      json
+// @Param        campId path string true "캠프 ID"
 // @Success      200 {object} CampSummaryStats
-// @Router       /reports/live-summary [get]
+// @Router       /camps/{campId}/reports/live-summary [get]
 func (h *ReportHandler) LiveSummary(c echo.Context) error {
-	camp, err := h.getActiveCamp(c)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-	}
-	if camp == nil {
-		return c.JSON(http.StatusOK, CampSummaryStats{})
-	}
-
-	report, err := h.querier.QueryCampReport(c.Request().Context(), camp.ID)
+	campID := domain.CampID(c.Param("campId"))
+	report, err := h.querier.QueryCampReport(c.Request().Context(), campID)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
@@ -117,18 +95,12 @@ func (h *ReportHandler) LiveSummary(c echo.Context) error {
 // @Tags         D. Report
 // @Security     AdminAuth
 // @Produce      json
+// @Param        campId path string true "캠프 ID"
 // @Success      200 {object} CampReport
-// @Router       /reports/current [get]
+// @Router       /camps/{campId}/reports/current [get]
 func (h *ReportHandler) GetCurrentReport(c echo.Context) error {
-	camp, err := h.getActiveCamp(c)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-	}
-	if camp == nil {
-		return c.JSON(http.StatusOK, CampReport{})
-	}
-
-	report, err := h.querier.QueryCampReport(c.Request().Context(), camp.ID)
+	campID := domain.CampID(c.Param("campId"))
+	report, err := h.querier.QueryCampReport(c.Request().Context(), campID)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
@@ -141,31 +113,12 @@ func (h *ReportHandler) GetCurrentReport(c echo.Context) error {
 // @Tags         D. Report
 // @Security     AdminAuth
 // @Produce      json
+// @Param        campId path string true "캠프 ID"
 // @Success      201 {object} CampReport
-// @Router       /reports/generate [post]
+// @Router       /camps/{campId}/reports/generate [post]
 func (h *ReportHandler) GenerateReport(c echo.Context) error {
-	// For generate, we find the most recently ended camp or just the active camp
-	// For now we'll just try to get the active camp and generate report.
-	camp, err := h.getActiveCamp(c)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-	}
-	if camp == nil {
-		// Try to find the latest ended camp if there's no active one
-		camps, _ := h.camps.List(c.Request().Context())
-		for _, c := range camps {
-			if c.Status == domain.CampEnded {
-				camp = c
-				break
-			}
-		}
-	}
-
-	if camp == nil {
-		return echo.NewHTTPError(http.StatusNotFound, "No camp found to generate report")
-	}
-
-	report, err := h.reportService.GenerateCampReport(c.Request().Context(), camp.ID)
+	campID := domain.CampID(c.Param("campId"))
+	report, err := h.reportService.GenerateCampReport(c.Request().Context(), campID)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
@@ -178,18 +131,12 @@ func (h *ReportHandler) GenerateReport(c echo.Context) error {
 // @Tags         D. Report
 // @Security     AdminAuth
 // @Produce      json
+// @Param        campId path string true "캠프 ID"
 // @Success      200 {object} CampReport
-// @Router       /reports/current/export [get]
+// @Router       /camps/{campId}/reports/current/export [get]
 func (h *ReportHandler) ExportCurrentReport(c echo.Context) error {
-	camp, err := h.getActiveCamp(c)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-	}
-	if camp == nil {
-		return c.String(http.StatusNotFound, "No active camp")
-	}
-
-	report, err := h.querier.QueryCampReport(c.Request().Context(), camp.ID)
+	campID := domain.CampID(c.Param("campId"))
+	report, err := h.querier.QueryCampReport(c.Request().Context(), campID)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}

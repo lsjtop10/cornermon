@@ -71,6 +71,36 @@ func (s *CampService) GetCamp(ctx context.Context, id domain.CampID) (*domain.Ca
 	return s.camps.Get(ctx, id)
 }
 
+func (s *CampService) UpdateCampSettings(
+	ctx context.Context,
+	campID domain.CampID,
+	actorAdminID domain.AdminID,
+	patch domain.CampSettingsPatch,
+) (*domain.Camp, error) {
+	camp, err := s.camps.Get(ctx, campID)
+	if err != nil {
+		return nil, err
+	}
+	if camp == nil {
+		return nil, domain.ErrCampNotFound
+	}
+	if err := camp.UpdateSettings(patch); err != nil {
+		return nil, err
+	}
+
+	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
+		return s.camps.Save(ctx, camp)
+	})
+	if err != nil {
+		s.recordAuditLog(ctx, string(actorAdminID), "CAMP_SETTINGS_UPDATE", string(campID), false, map[string]any{"error": err.Error()})
+		return nil, err
+	}
+
+	s.recordAuditLog(ctx, string(actorAdminID), "CAMP_SETTINGS_UPDATE", string(campID), true, nil)
+	_ = s.broadcaster.Broadcast(ctx, campID, EventCampUpdated, "camp")
+	return camp, nil
+}
+
 // ActivateCamp - UC-18
 func (s *CampService) ActivateCamp(
 	ctx context.Context,

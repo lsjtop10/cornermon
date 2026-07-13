@@ -25,6 +25,9 @@ var (
 	ErrVisitEndBeforeStart     = errors.New("visit: endedAt cannot be before startedAt")
 	ErrDeviceInvalidTransition = errors.New("device: invalid status transition")
 	ErrCornerNotFound          = errors.New("corner: not found")
+	ErrCampNotFound            = errors.New("camp: not found")
+	ErrCampInvalidSettings     = errors.New("camp: invalid settings")
+	ErrTrackCampMismatch       = errors.New("track: target corner belongs to another camp")
 )
 
 type DeviceLockedError struct {

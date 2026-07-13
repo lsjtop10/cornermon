@@ -41,11 +41,11 @@ func mapGroupToDTO(g *domain.Group) Group {
 // @Tags         B. Resource Management (Admin)
 // @Security     AdminAuth
 // @Produce      json
-// @Param        campId query string false "캠프 ID 필터"
+// @Param        campId path string true "캠프 ID"
 // @Success      200 {array} Group
-// @Router       /groups [get]
+// @Router       /camps/{campId}/groups [get]
 func (h *GroupHandler) ListGroups(c echo.Context) error {
-	campID := c.QueryParam("campId")
+	campID := c.Param("campId")
 	groups, err := h.groupUC.ListGroups(c.Request().Context(), domain.CampID(campID))
 	if err != nil {
 		return err

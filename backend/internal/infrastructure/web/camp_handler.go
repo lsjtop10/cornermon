@@ -2,6 +2,7 @@ package web
 
 import (
 	"net/http"
+	"time"
 
 	"cornermon/backend/internal/domain"
 	"cornermon/backend/internal/usecase"
@@ -11,6 +12,57 @@ import (
 
 type CampHandler struct {
 	svc *usecase.CampService
+}
+
+type UpdateCampRequest struct {
+	Name                 *string    `json:"name,omitempty"`
+	StartAt              *time.Time `json:"startAt,omitempty" format:"date-time"`
+	EndAt                *time.Time `json:"endAt,omitempty" format:"date-time"`
+	BottleneckMinSamples *int       `json:"bottleneckMinSamples,omitempty"`
+	BottleneckRatioPct   *int       `json:"bottleneckRatioPct,omitempty"`
+}
+
+// @Summary      캠프 정보 및 병목 기준 수정
+// @Description  캠프 이름, 예정 기간, 병목 판정 기준 중 요청에 포함된 필드만 수정한다. 종료된 캠프는 수정할 수 없다.
+// @Tags         B. Resource Management (Admin)
+// @Security     AdminAuth
+// @Accept       json
+// @Produce      json
+// @Param        id path string true "캠프 ID"
+// @Param        request body UpdateCampRequest true "부분 수정할 캠프 설정"
+// @Success      200 {object} Camp
+// @Failure      400 {object} ErrorResponse
+// @Failure      404 {object} ErrorResponse
+// @Failure      409 {object} ErrorResponse
+// @Router       /camps/{id} [patch]
+func (h *CampHandler) UpdateCamp(c echo.Context) error {
+	var req UpdateCampRequest
+	if err := c.Bind(&req); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid request body")
+	}
+
+	patch := domain.CampSettingsPatch{}
+	if req.Name != nil {
+		patch.Name = domain.Some(*req.Name)
+	}
+	if req.StartAt != nil {
+		patch.StartAt = domain.Some(*req.StartAt)
+	}
+	if req.EndAt != nil {
+		patch.EndAt = domain.Some(*req.EndAt)
+	}
+	if req.BottleneckMinSamples != nil {
+		patch.BottleneckMinSamples = domain.Some(*req.BottleneckMinSamples)
+	}
+	if req.BottleneckRatioPct != nil {
+		patch.BottleneckRatioPct = domain.Some(*req.BottleneckRatioPct)
+	}
+
+	camp, err := h.svc.UpdateCampSettings(c.Request().Context(), domain.CampID(c.Param("id")), getAdminID(c), patch)
+	if err != nil {
+		return err
+	}
+	return c.JSON(http.StatusOK, mapDomainCampToDTO(camp))
 }
 
 func NewCampHandler(svc *usecase.CampService) *CampHandler {

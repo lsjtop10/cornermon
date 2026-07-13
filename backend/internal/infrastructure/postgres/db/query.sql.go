@@ -550,17 +550,35 @@ func (q *Queries) ListAllBadges(ctx context.Context) ([]Badge, error) {
 
 const listAuditLogs = `-- name: ListAuditLogs :many
 SELECT id, actor, action, target, success, occurred_at, metadata FROM audit_logs
-ORDER BY occurred_at DESC
-LIMIT $1 OFFSET $2
+WHERE ($1::VARCHAR IS NULL OR actor ILIKE '%' || $1::VARCHAR || '%')
+  AND ($2::VARCHAR IS NULL OR action = $2::VARCHAR)
+  AND ($3::BOOLEAN IS NULL OR success = $3::BOOLEAN)
+  AND (
+    $4::TIMESTAMPTZ IS NULL
+    OR (occurred_at, id) < ($4::TIMESTAMPTZ, $5::VARCHAR)
+  )
+ORDER BY occurred_at DESC, id DESC
+LIMIT $6
 `
 
 type ListAuditLogsParams struct {
-	Limit  int32 `json:"limit"`
-	Offset int32 `json:"offset"`
+	Actor            pgtype.Text        `json:"actor"`
+	Action           pgtype.Text        `json:"action"`
+	Success          pgtype.Bool        `json:"success"`
+	BeforeOccurredAt pgtype.Timestamptz `json:"before_occurred_at"`
+	BeforeID         pgtype.Text        `json:"before_id"`
+	PageLimit        int32              `json:"page_limit"`
 }
 
 func (q *Queries) ListAuditLogs(ctx context.Context, arg ListAuditLogsParams) ([]AuditLog, error) {
-	rows, err := q.db.Query(ctx, listAuditLogs, arg.Limit, arg.Offset)
+	rows, err := q.db.Query(ctx, listAuditLogs,
+		arg.Actor,
+		arg.Action,
+		arg.Success,
+		arg.BeforeOccurredAt,
+		arg.BeforeID,
+		arg.PageLimit,
+	)
 	if err != nil {
 		return nil, err
 	}

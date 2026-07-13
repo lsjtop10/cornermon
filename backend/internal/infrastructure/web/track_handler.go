@@ -37,11 +37,11 @@ func mapDomainTrackToDTO(track *domain.Track) Track {
 // @Tags         B. Resource Management (Admin)
 // @Security     AdminAuth
 // @Produce      json
-// @Param        campId query string false "캠프 ID 필터"
+// @Param        campId path string true "캠프 ID"
 // @Success      200 {array} Track
-// @Router       /tracks [get]
+// @Router       /camps/{campId}/tracks [get]
 func (h *TrackHandler) ListTracks(c echo.Context) error {
-	campID := domain.CampID(c.QueryParam("campId"))
+	campID := domain.CampID(c.Param("campId"))
 	if campID == "" {
 		return c.JSON(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: "campId is required"})
 	}
@@ -140,16 +140,43 @@ func (h *TrackHandler) BulkDeleteTracks(c echo.Context) error {
 	return c.NoContent(http.StatusNoContent)
 }
 
+type ReplaceTrackRequest struct {
+	NewCornerID string `json:"newCornerId"`
+}
+
+type ReplaceTrackResponse struct {
+	Track Track  `json:"track"`
+	PIN   string `json:"pin"`
+}
+
 // @Summary      트랙 교체 (비상용)
-// @Description  기기 고장 등으로 트랙 세션을 초기화하거나 새 기기로 교체할 수 있도록 처리한다.
+// @Description  기존 트랙을 삭제하고 지정한 대상 코너에 새 트랙을 생성하며 기존 진행자 세션의 마이그레이션 대상을 설정한다.
 // @Tags         B. Resource Management (Admin)
 // @Security     AdminAuth
+// @Accept       json
 // @Produce      json
 // @Param        id path string true "트랙 ID"
-// @Success      200 {object} Track
+// @Param        request body ReplaceTrackRequest true "대상 코너"
+// @Success      200 {object} ReplaceTrackResponse
+// @Failure      400 {object} ErrorResponse
+// @Failure      404 {object} ErrorResponse
+// @Failure      409 {object} ErrorResponse
 // @Router       /tracks/{id}/replace [put]
 func (h *TrackHandler) ReplaceTrack(c echo.Context) error {
-	return c.JSON(http.StatusOK, Track{})
+	var req ReplaceTrackRequest
+	if err := c.Bind(&req); err != nil || req.NewCornerID == "" {
+		return echo.NewHTTPError(http.StatusBadRequest, "newCornerId is required")
+	}
+
+	track, pin, err := h.svc.ReplaceTrack(
+		c.Request().Context(),
+		domain.TrackID(c.Param("id")),
+		domain.CornerID(req.NewCornerID),
+	)
+	if err != nil {
+		return err
+	}
+	return c.JSON(http.StatusOK, ReplaceTrackResponse{Track: mapDomainTrackToDTO(track), PIN: pin})
 }
 
 // @Summary      PIN 재발급

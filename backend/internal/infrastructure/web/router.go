@@ -53,12 +53,13 @@ func RegisterRoutes(e *echo.Echo, h *Handlers, adminAuth AuthAdminUsecase, track
 		admin.GET("/camps", h.Camp.ListCamps)
 		admin.POST("/camps", h.Camp.CreateCamp)
 		admin.GET("/camps/:id", h.Camp.GetCamp)
+		admin.PATCH("/camps/:id", h.Camp.UpdateCamp)
 		admin.POST("/camps/:id/start", h.Camp.StartCamp)
 		admin.POST("/camps/:id/end", h.Camp.EndCamp)
 	}
 
 	if h.Corner != nil {
-		admin.GET("/corners", h.Corner.ListCorners)
+		admin.GET("/camps/:campId/corners", h.Corner.ListCorners)
 		admin.POST("/corners", h.Corner.CreateCorner)
 		admin.PUT("/corners/bulk-update", h.Corner.BulkUpdateCorners)
 		admin.GET("/corners/:id", h.Corner.GetCorner)
@@ -66,7 +67,7 @@ func RegisterRoutes(e *echo.Echo, h *Handlers, adminAuth AuthAdminUsecase, track
 	}
 
 	if h.Track != nil {
-		admin.GET("/tracks", h.Track.ListTracks)
+		admin.GET("/camps/:campId/tracks", h.Track.ListTracks)
 		admin.POST("/tracks", h.Track.CreateTracks)
 		admin.GET("/corners/:cornerId/tracks", h.Track.ListTracksByCorner)
 		admin.GET("/tracks/:id", h.Track.GetTrack)
@@ -86,17 +87,17 @@ func RegisterRoutes(e *echo.Echo, h *Handlers, adminAuth AuthAdminUsecase, track
 	}
 
 	if h.Group != nil {
-		admin.GET("/groups", h.Group.ListGroups)
+		admin.GET("/camps/:campId/groups", h.Group.ListGroups)
 		admin.GET("/groups/:id", h.Group.GetGroup)
 		admin.GET("/groups/:id/visits", h.Group.ListGroupVisits)
 	}
 
 	// ── D. Report & G. Audit ──
 	if h.Report != nil {
-		admin.GET("/reports/live-summary", h.Report.LiveSummary)
-		admin.GET("/reports/current", h.Report.GetCurrentReport)
-		admin.POST("/reports/generate", h.Report.GenerateReport)
-		admin.GET("/reports/current/export", h.Report.ExportCurrentReport)
+		admin.GET("/camps/:campId/reports/live-summary", h.Report.LiveSummary)
+		admin.GET("/camps/:campId/reports/current", h.Report.GetCurrentReport)
+		admin.POST("/camps/:campId/reports/generate", h.Report.GenerateReport)
+		admin.GET("/camps/:campId/reports/current/export", h.Report.ExportCurrentReport)
 	}
 
 	if h.Audit != nil {

@@ -33,13 +33,13 @@ func mapDomainCornerToDTO(corner *domain.Corner) Corner {
 // @Tags         B. Resource Management (Admin)
 // @Security     AdminAuth
 // @Produce      json
-// @Param        campId query string true "필터링할 캠프 ID"
+// @Param        campId path string true "캠프 ID"
 // @Success      200 {array} Corner
 // @Failure      400 {object} ErrorResponse
 // @Failure      401 {object} ErrorResponse
-// @Router       /corners [get]
+// @Router       /camps/{campId}/corners [get]
 func (h *CornerHandler) ListCorners(c echo.Context) error {
-	campID := domain.CampID(c.QueryParam("campId"))
+	campID := domain.CampID(c.Param("campId"))
 	if campID == "" {
 		return c.JSON(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: "campId is required"})
 	}
