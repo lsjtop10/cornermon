@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../config/app_env.dart';
 import 'auth_interceptor.dart';
 
 part 'api_client.g.dart';
@@ -9,9 +10,9 @@ part 'api_client.g.dart';
 Dio apiClient(Ref ref) {
   final dio = Dio(
     BaseOptions(
-      baseUrl: 'http://localhost/api/v1',
-      connectTimeout: const Duration(seconds: 5),
-      receiveTimeout: const Duration(seconds: 5),
+      baseUrl: AppEnv.apiBaseUrl,
+      connectTimeout: const Duration(milliseconds: AppEnv.apiConnectTimeoutMs),
+      receiveTimeout: const Duration(milliseconds: AppEnv.apiReceiveTimeoutMs),
     ),
   );
   dio.interceptors.add(AuthInterceptor(ref));

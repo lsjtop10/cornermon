@@ -1,0 +1,6 @@
+{
+  "API_BASE_URL": "http://localhost/api/v1",
+  "API_CONNECT_TIMEOUT_MS": "5000",
+  "API_RECEIVE_TIMEOUT_MS": "5000",
+  "SSE_HEARTBEAT_TIMEOUT_SECONDS": "40"
+}
