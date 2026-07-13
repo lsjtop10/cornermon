@@ -134,3 +134,74 @@ func TestCamp_End(t *testing.T) {
 		})
 	}
 }
+
+func TestUpdateSettingsShoudPatchOnlySpecifiedFieldsWhenValid(t *testing.T) {
+	// Arrange
+	start := time.Date(2026, 7, 13, 9, 0, 0, 0, time.UTC)
+	end := start.Add(8 * time.Hour)
+	activated := start.Add(time.Hour)
+	camp := &domain.Camp{
+		Name: "Original", StartAt: start, EndAt: end, Status: domain.CampActive,
+		ActivatedAt: domain.Some(activated), BottleneckMinSamples: 3, BottleneckRatioPct: 20,
+	}
+
+	// Act
+	err := camp.UpdateSettings(domain.CampSettingsPatch{Name: domain.Some("  Updated  "), BottleneckRatioPct: domain.Some(35)})
+
+	// Assert
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if camp.Name != "Updated" || camp.BottleneckRatioPct != 35 || camp.StartAt != start || camp.EndAt != end || camp.BottleneckMinSamples != 3 {
+		t.Fatalf("unexpected patched camp: %+v", camp)
+	}
+	gotActivated, ok := camp.ActivatedAt.Value()
+	if !ok || gotActivated != activated || camp.EndedAt.IsSet() {
+		t.Fatalf("actual lifecycle timestamps changed: %+v", camp)
+	}
+}
+
+func TestUpdateSettingsShoudRejectInvalidPatchWithoutMutation(t *testing.T) {
+	start := time.Date(2026, 7, 13, 9, 0, 0, 0, time.UTC)
+	tests := []struct {
+		name  string
+		patch domain.CampSettingsPatch
+	}{
+		{name: "blank name", patch: domain.CampSettingsPatch{Name: domain.Some("  ")}},
+		{name: "invalid period", patch: domain.CampSettingsPatch{StartAt: domain.Some(start.Add(2 * time.Hour)), EndAt: domain.Some(start)}},
+		{name: "non-positive samples", patch: domain.CampSettingsPatch{BottleneckMinSamples: domain.Some(0)}},
+		{name: "ratio below range", patch: domain.CampSettingsPatch{BottleneckRatioPct: domain.Some(-1)}},
+		{name: "ratio above range", patch: domain.CampSettingsPatch{BottleneckRatioPct: domain.Some(101)}},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			// Arrange
+			camp := &domain.Camp{Name: "Original", StartAt: start, EndAt: start.Add(time.Hour), Status: domain.CampPending, BottleneckMinSamples: 3, BottleneckRatioPct: 20}
+			before := *camp
+
+			// Act
+			err := camp.UpdateSettings(tc.patch)
+
+			// Assert
+			if err != domain.ErrCampInvalidSettings {
+				t.Fatalf("expected ErrCampInvalidSettings, got %v", err)
+			}
+			if *camp != before {
+				t.Fatalf("invalid patch mutated camp: before=%+v after=%+v", before, *camp)
+			}
+		})
+	}
+}
+
+func TestUpdateSettingsShoudReturnConflictErrorWhenCampEnded(t *testing.T) {
+	// Arrange
+	camp := &domain.Camp{Status: domain.CampEnded}
+
+	// Act
+	err := camp.UpdateSettings(domain.CampSettingsPatch{Name: domain.Some("Updated")})
+
+	// Assert
+	if err != domain.ErrCampSettingsLocked {
+		t.Fatalf("expected ErrCampSettingsLocked, got %v", err)
+	}
+}

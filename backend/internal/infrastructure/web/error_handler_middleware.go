@@ -131,6 +131,8 @@ func mapDomainError(err error) (int, string) {
 		return http.StatusNotFound, "CAMP_NOT_FOUND"
 	case errors.Is(err, domain.ErrCampInvalidSettings):
 		return http.StatusBadRequest, "INVALID_CAMP_SETTINGS"
+	case errors.Is(err, domain.ErrCampSettingsLocked):
+		return http.StatusConflict, "CAMP_SETTINGS_LOCKED"
 	case errors.Is(err, domain.ErrTrackCampMismatch):
 		return http.StatusConflict, "TRACK_CAMP_MISMATCH"
 	default:
