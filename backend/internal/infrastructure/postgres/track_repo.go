@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"cornermon/backend/internal/domain"
+	"cornermon/backend/internal/errs"
 	"cornermon/backend/internal/infrastructure/postgres/db"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -56,7 +57,7 @@ func (r *pgTrackRepository) Get(ctx context.Context, id domain.TrackID) (*domain
 		if err == pgx.ErrNoRows {
 			return nil, nil
 		}
-		return nil, err
+		return nil, errs.Wrap(ctx, err)
 	}
 	return mapTrack(row), nil
 }
@@ -64,7 +65,7 @@ func (r *pgTrackRepository) Get(ctx context.Context, id domain.TrackID) (*domain
 func (r *pgTrackRepository) ListByCorner(ctx context.Context, cornerID domain.CornerID) ([]*domain.Track, error) {
 	rows, err := r.queries(ctx).ListTracksByCorner(ctx, string(cornerID))
 	if err != nil {
-		return nil, err
+		return nil, errs.Wrap(ctx, err)
 	}
 
 	tracks := make([]*domain.Track, len(rows))
@@ -77,7 +78,7 @@ func (r *pgTrackRepository) ListByCorner(ctx context.Context, cornerID domain.Co
 func (r *pgTrackRepository) ListActiveByCamp(ctx context.Context, campID domain.CampID) ([]*domain.Track, error) {
 	rows, err := r.queries(ctx).ListActiveTracksByCamp(ctx, string(campID))
 	if err != nil {
-		return nil, err
+		return nil, errs.Wrap(ctx, err)
 	}
 
 	tracks := make([]*domain.Track, len(rows))
@@ -104,13 +105,17 @@ func (r *pgTrackRepository) Save(ctx context.Context, track *domain.Track) error
 		params.DeletedAt = pgtype.Timestamptz{Time: val, Valid: true}
 	}
 
-	return r.queries(ctx).SaveTrack(ctx, params)
+	err := r.queries(ctx).SaveTrack(ctx, params)
+	if err != nil {
+		return errs.Wrap(ctx, err)
+	}
+	return nil
 }
 
 func (r *pgTrackRepository) ListByCamp(ctx context.Context, campID domain.CampID) ([]*domain.Track, error) {
 	rows, err := r.queries(ctx).ListTracksByCamp(ctx, string(campID))
 	if err != nil {
-		return nil, err
+		return nil, errs.Wrap(ctx, err)
 	}
 
 	tracks := make([]*domain.Track, len(rows))

@@ -228,3 +228,7 @@ gofmt -w . && go vet ./...                       # 커밋 전
 7. `internal/infrastructure/web/`에 핸들러 + DTO 추가, `router.go`에 라우트 등록.
 8. `api/openapi.yaml` 갱신 (`workflow/Collaborate.md` 프로토콜).
 9. domain 단위 테스트 + usecase 테스트 작성, `go test ./...` 통과 확인.
+
+## 8. 객체 캡슐화 원칙
+
+특별한 이유가 없으면 객체의 필드는 private로 합니다.

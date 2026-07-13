@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"cornermon/backend/internal/domain"
+	"cornermon/backend/internal/errs"
 	"cornermon/backend/internal/infrastructure/postgres/db"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -51,7 +52,11 @@ func (r *pgBroadcastReceiptRepository) Save(ctx context.Context, receipt *domain
 		params.ReadAt = pgtype.Timestamptz{Time: val, Valid: true}
 	}
 
-	return r.queries(ctx).SaveBroadcastReceipt(ctx, params)
+	err := r.queries(ctx).SaveBroadcastReceipt(ctx, params)
+	if err != nil {
+		return errs.Wrap(ctx, err)
+	}
+	return nil
 }
 
 func (r *pgBroadcastReceiptRepository) GetByMessageAndTrack(ctx context.Context, msgID domain.MessageID, trackID domain.TrackID) (*domain.BroadcastReceipt, error) {
@@ -63,7 +68,7 @@ func (r *pgBroadcastReceiptRepository) GetByMessageAndTrack(ctx context.Context,
 		if err == pgx.ErrNoRows {
 			return nil, nil
 		}
-		return nil, err
+		return nil, errs.Wrap(ctx, err)
 	}
 	return mapBroadcastReceipt(row), nil
 }
@@ -71,7 +76,7 @@ func (r *pgBroadcastReceiptRepository) GetByMessageAndTrack(ctx context.Context,
 func (r *pgBroadcastReceiptRepository) ListByMessage(ctx context.Context, msgID domain.MessageID) ([]*domain.BroadcastReceipt, error) {
 	rows, err := r.queries(ctx).ListBroadcastReceiptsByMessage(ctx, string(msgID))
 	if err != nil {
-		return nil, err
+		return nil, errs.Wrap(ctx, err)
 	}
 
 	receipts := make([]*domain.BroadcastReceipt, len(rows))

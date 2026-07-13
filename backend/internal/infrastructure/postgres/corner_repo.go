@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"cornermon/backend/internal/domain"
+	"cornermon/backend/internal/errs"
 	"cornermon/backend/internal/infrastructure/postgres/db"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -40,7 +41,7 @@ func (r *pgCornerRepository) Get(ctx context.Context, id domain.CornerID) (*doma
 		if err == pgx.ErrNoRows {
 			return nil, nil
 		}
-		return nil, err
+		return nil, errs.Wrap(ctx, err)
 	}
 	return mapCorner(row), nil
 }
@@ -48,7 +49,7 @@ func (r *pgCornerRepository) Get(ctx context.Context, id domain.CornerID) (*doma
 func (r *pgCornerRepository) ListByCamp(ctx context.Context, campID domain.CampID) ([]*domain.Corner, error) {
 	rows, err := r.queries(ctx).ListCornersByCamp(ctx, string(campID))
 	if err != nil {
-		return nil, err
+		return nil, errs.Wrap(ctx, err)
 	}
 
 	corners := make([]*domain.Corner, len(rows))
@@ -59,15 +60,23 @@ func (r *pgCornerRepository) ListByCamp(ctx context.Context, campID domain.CampI
 }
 
 func (r *pgCornerRepository) Save(ctx context.Context, corner *domain.Corner) error {
-	return r.queries(ctx).SaveCorner(ctx, db.SaveCornerParams{
+	err := r.queries(ctx).SaveCorner(ctx, db.SaveCornerParams{
 		ID:            string(corner.ID),
 		CampID:        string(corner.CampID),
 		Name:          corner.Name,
 		TargetMinutes: int32(corner.TargetMinutes),
 		IsMandatory:   corner.IsMandatory,
 	})
+	if err != nil {
+		return errs.Wrap(ctx, err)
+	}
+	return nil
 }
 
 func (r *pgCornerRepository) Delete(ctx context.Context, id domain.CornerID) error {
-	return r.queries(ctx).DeleteCorner(ctx, string(id))
+	err := r.queries(ctx).DeleteCorner(ctx, string(id))
+	if err != nil {
+		return errs.Wrap(ctx, err)
+	}
+	return nil
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"cornermon/backend/internal/domain"
+	"cornermon/backend/internal/errs"
 	"cornermon/backend/internal/infrastructure/postgres/db"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -38,7 +39,7 @@ func (r *pgAdminRepository) Get(ctx context.Context, id domain.AdminID) (*domain
 		if err == pgx.ErrNoRows {
 			return nil, nil
 		}
-		return nil, err
+		return nil, errs.Wrap(ctx, err)
 	}
 	return mapAdmin(row), nil
 }
@@ -49,7 +50,7 @@ func (r *pgAdminRepository) GetByUsername(ctx context.Context, username string) 
 		if err == pgx.ErrNoRows {
 			return nil, nil
 		}
-		return nil, err
+		return nil, errs.Wrap(ctx, err)
 	}
 	return mapAdmin(row), nil
 }

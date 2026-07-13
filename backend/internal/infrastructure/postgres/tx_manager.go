@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 
+	"cornermon/backend/internal/errs"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -18,7 +19,7 @@ func NewTxManager(pool *pgxpool.Pool) *pgTxManager {
 func (t *pgTxManager) RunInTx(ctx context.Context, fn func(ctx context.Context) error) error {
 	tx, err := t.pool.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
-		return err
+		return errs.Wrap(ctx, err)
 	}
 	defer tx.Rollback(ctx)
 
@@ -30,7 +31,11 @@ func (t *pgTxManager) RunInTx(ctx context.Context, fn func(ctx context.Context) 
 		return err
 	}
 
-	return tx.Commit(ctx)
+	err = tx.Commit(ctx)
+	if err != nil {
+		return errs.Wrap(ctx, err)
+	}
+	return nil
 }
 
 type contextKey string

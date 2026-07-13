@@ -2,6 +2,7 @@ package web
 
 import (
 	"errors"
+	"log/slog"
 	"math"
 	"net/http"
 	"time"
@@ -17,50 +18,68 @@ func ErrorHandler() echo.HTTPErrorHandler {
 			return
 		}
 
+		ctx := c.Request().Context()
+
+		var code int
+		var errCode string
+		var details map[string]interface{}
+		var message string = err.Error()
+
 		var he *echo.HTTPError
 		if errors.As(err, &he) {
-			code := he.Code
-			var msg string
+			code = he.Code
+			errCode = "HTTP_ERROR"
 			if m, ok := he.Message.(string); ok {
-				msg = m
-			} else {
-				msg = err.Error()
+				message = m
 			}
-			_ = c.JSON(code, ErrorResponse{Code: "HTTP_ERROR", Message: msg})
-			return
-		}
+		} else {
+			code, errCode = mapDomainError(err)
 
-		code, errCode := mapDomainError(err)
+			var lockedErr *domain.DeviceLockedError
+			var invalidPinErr *domain.InvalidPinError
 
-		var details map[string]interface{}
-		var lockedErr *domain.DeviceLockedError
-		var invalidPinErr *domain.InvalidPinError
-
-		if errors.As(err, &lockedErr) {
-			now := time.Now()
-			sec := int(math.Ceil(lockedErr.LockedUntil.Sub(now).Seconds()))
-			if sec < 1 {
-				sec = 1
-			}
-			details = map[string]interface{}{
-				"retryAfterSeconds": sec,
-			}
-		} else if errors.As(err, &invalidPinErr) {
-			if lockedUntil, ok := invalidPinErr.LockedUntil.Value(); ok {
+			if errors.As(err, &lockedErr) {
 				now := time.Now()
-				sec := int(math.Ceil(lockedUntil.Sub(now).Seconds()))
+				sec := int(math.Ceil(lockedErr.LockedUntil.Sub(now).Seconds()))
 				if sec < 1 {
 					sec = 1
 				}
 				details = map[string]interface{}{
 					"retryAfterSeconds": sec,
 				}
+			} else if errors.As(err, &invalidPinErr) {
+				if lockedUntil, ok := invalidPinErr.LockedUntil.Value(); ok {
+					now := time.Now()
+					sec := int(math.Ceil(lockedUntil.Sub(now).Seconds()))
+					if sec < 1 {
+						sec = 1
+					}
+					details = map[string]interface{}{
+						"retryAfterSeconds": sec,
+					}
+				}
 			}
+		}
+
+		if code >= 500 {
+			slog.ErrorContext(ctx, "System error occurred",
+				slog.String("method", c.Request().Method),
+				slog.String("path", c.Request().URL.Path),
+				slog.Int("status", code),
+				slog.Any("error", err),
+			)
+		} else {
+			slog.WarnContext(ctx, "Request warning",
+				slog.String("method", c.Request().Method),
+				slog.String("path", c.Request().URL.Path),
+				slog.Int("status", code),
+				slog.Any("error", err),
+			)
 		}
 
 		_ = c.JSON(code, ErrorResponse{
 			Code:    errCode,
-			Message: err.Error(),
+			Message: message,
 			Details: details,
 		})
 	}
