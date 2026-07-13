@@ -204,8 +204,15 @@ WHERE g.camp_id = $1;
 
 -- name: ListAuditLogs :many
 SELECT * FROM audit_logs
-ORDER BY occurred_at DESC
-LIMIT $1 OFFSET $2;
+WHERE (sqlc.narg(actor)::VARCHAR IS NULL OR actor ILIKE '%' || sqlc.narg(actor)::VARCHAR || '%')
+  AND (sqlc.narg(action)::VARCHAR IS NULL OR action = sqlc.narg(action)::VARCHAR)
+  AND (sqlc.narg(success)::BOOLEAN IS NULL OR success = sqlc.narg(success)::BOOLEAN)
+  AND (
+    sqlc.narg(before_occurred_at)::TIMESTAMPTZ IS NULL
+    OR (occurred_at, id) < (sqlc.narg(before_occurred_at)::TIMESTAMPTZ, sqlc.narg(before_id)::VARCHAR)
+  )
+ORDER BY occurred_at DESC, id DESC
+LIMIT sqlc.arg(page_limit);
 
 -- name: ListAdminSessionsByAdmin :many
 SELECT * FROM admin_sessions
