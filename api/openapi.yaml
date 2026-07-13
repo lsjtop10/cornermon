@@ -1363,7 +1363,8 @@ paths:
       tags: [B. Camp / Corner / Track]
       summary: "캠프 수정 (이름/기간/병목 파라미터)"
       description: |
-        현재 선택된 캠프의 이름·기간 및 병목 판정 파라미터를 수정한다.
+        URL에 지정된 캠프의 이름·예정 기간 및 병목 판정 파라미터 중 전달된 필드만 수정한다.
+        누락된 필드와 실제 상태 전이 시각(activatedAt/endedAt)은 보존한다.
         ENDED 캠프는 수정 불가.
       security:
         - AdminAuth: []
@@ -1388,7 +1389,7 @@ paths:
                   minimum: 1
                 bottleneckRatioPct:
                   type: integer
-                  minimum: 1
+                  minimum: 0
                   maximum: 100
       responses:
         "200":
@@ -1397,6 +1398,14 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Camp'
+        "400":
+          description: "공백 이름, 잘못된 기간 또는 병목 기준 범위"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "404":
+          $ref: '#/components/responses/NotFound'
         "409":
           description: "ENDED 캠프는 수정 불가"
           content:

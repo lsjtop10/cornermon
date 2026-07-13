@@ -27,6 +27,7 @@ var (
 	ErrCornerNotFound          = errors.New("corner: not found")
 	ErrCampNotFound            = errors.New("camp: not found")
 	ErrCampInvalidSettings     = errors.New("camp: invalid settings")
+	ErrCampSettingsLocked      = errors.New("camp: settings are locked after ending")
 	ErrTrackCampMismatch       = errors.New("track: target corner belongs to another camp")
 )
 

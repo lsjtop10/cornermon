@@ -35,7 +35,7 @@ type CampSettingsPatch struct {
 
 func (c *Camp) UpdateSettings(patch CampSettingsPatch) error {
 	if c.Status == CampEnded {
-		return ErrCampInvalidTransition
+		return ErrCampSettingsLocked
 	}
 
 	name := c.Name
