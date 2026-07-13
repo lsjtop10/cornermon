@@ -2,13 +2,13 @@
 
 ## 파일 형식
 
-1. 파일명은 `[작업 요약]_plan_[날짜].md`입니다.
+1. 파일명은 `[날짜]_[작업 요약]_plan_.md`입니다.
 2. 파일 디렉토리는 상황에 따라 다음과 같이 구분합니다.
     1. 백엔드 분야 작업이면 `backend/docs/artifacts/plan`
     2. 프론트 분야 작업이면 `frontend/docs/artifacts/plan`
     3. 공통 작업이면 `./docs/artifacts/plan`
 3. 한 작업이 여러 단계로 구분되는 경우 디렉토리를 만들고 분할해 주세요.
-    1. 디렉토리 이름은 단일 파일과 마찬가지로 `[작업 요약]_plan_[날짜]`입니다.
+    1. 디렉토리 이름은 단일 파일과 마찬가지로 `[날짜]_[작업 요약]_plan_`입니다.
     2. 파일 이름은 각 단계의 작업 내용을 요약합니다.
 
 ## 행동 지시
@@ -54,6 +54,7 @@ type PipelineService struct {
 }
 
 // 책임: 3-Phase 파이프라인 실행 + 로그 기록
+// 간단한 의사 코드 허용.
 func (s *PipelineService) ExecutePipeline(
     ctx context.Context,
     persona string,
@@ -138,30 +139,7 @@ func (r *PostgresGenerationHistoryRepository) CreateHistory(...) error {
 }
 ```
 
-### 5. 재시도 전략 (Dual-Layer Retry)
-
-재시도 로직은 **발생 계층**에 따라 분리합니다.
-
-| 계층        | 대상 에러                 | 전략                | 최대 횟수 |
-| ----------- | ------------------------- | ------------------- | --------- |
-| **Infra**   | HTTP 5xx, 429, Timeout    | Exponential Backoff | 3회       |
-| **Service** | JSON 파싱 실패, 필드 누락 | Immediate Retry     | 2회       |
-
-### 6. 로깅 전략 (Dual Logging)
-
-#### 6.1 DB 서비스 이력 (History, 영속성)
-
-- **목적**: 비즈니스 분석, 디버깅, 프롬프트 튜닝
-- **저장 대상**: Job 시작/완료, Phase 결과, `<thinking>` 내용
-- **저장소**: `generation_history` 테이블
-
-#### 6.2 시스템 로그 (Log, 휘발성)
-
-- **목적**: 실시간 모니터링, 에러 추적
-- **저장 대상**: INFO, WARN, ERROR 레벨 로그
-- **저장소**: Stdout (JSON 구조화)
-
-### 7. 구현 단계 (Implementation Phases)
+### 5. 구현 단계 (Implementation Phases)
 
 각 Phase는 **독립적으로 완료 가능**하도록 구성합니다.
 
