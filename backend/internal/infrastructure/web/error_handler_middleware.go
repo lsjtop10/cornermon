@@ -95,6 +95,10 @@ func mapDomainError(err error) (int, string) {
 		return http.StatusConflict, "DUPLICATE_VISIT"
 	case errors.Is(err, domain.ErrTrackNotActive):
 		return http.StatusForbidden, "TRACK_NOT_ACTIVE"
+	case errors.Is(err, domain.ErrTrackScopeForbidden):
+		return http.StatusForbidden, "TRACK_SCOPE_FORBIDDEN"
+	case errors.Is(err, domain.ErrTrackNotFound):
+		return http.StatusNotFound, "TRACK_NOT_FOUND"
 	case errors.Is(err, domain.ErrTrackBusy):
 		return http.StatusConflict, "TRACK_BUSY"
 	case errors.Is(err, domain.ErrTrackDeleteBlocked):

@@ -38,7 +38,7 @@ func TestErrorHandler_AppError(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/test", nil)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
-	
+
 	// trace_id context 에뮬레이트
 	traceID := "test-trace-id-abc"
 	c.Set("trace_id", traceID)
@@ -55,5 +55,21 @@ func TestErrorHandler_AppError(t *testing.T) {
 	// assert
 	if rec.Code != http.StatusInternalServerError {
 		t.Errorf("expected status code %d, got %d", http.StatusInternalServerError, rec.Code)
+	}
+}
+
+func TestErrorHandlerShoudReturnForbiddenWhenTrackScopeDiffers(t *testing.T) {
+	// Arrange
+	e := echo.New()
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/tracks/track-2/groups", nil)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+
+	// Act
+	web.ErrorHandler()(domain.ErrTrackScopeForbidden, c)
+
+	// Assert
+	if rec.Code != http.StatusForbidden {
+		t.Fatalf("expected status %d, got %d", http.StatusForbidden, rec.Code)
 	}
 }
