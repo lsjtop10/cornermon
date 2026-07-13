@@ -114,6 +114,28 @@ type AuditLogRepository interface {
 	Save(ctx context.Context, log *domain.AuditLog) error
 }
 
+type AuditLogQuerier interface {
+	List(ctx context.Context, query AuditLogQuery) (*AuditLogPage, error)
+}
+
+type AuditLogCursor struct {
+	OccurredAt time.Time
+	ID         domain.AuditLogID
+}
+
+type AuditLogQuery struct {
+	Actor   string
+	Action  string
+	Success *bool
+	Before  domain.Optional[AuditLogCursor]
+	Limit   int
+}
+
+type AuditLogPage struct {
+	Logs       []*domain.AuditLog
+	NextCursor domain.Optional[AuditLogCursor]
+}
+
 type NotificationEvent string
 
 const (

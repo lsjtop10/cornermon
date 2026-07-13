@@ -218,6 +218,8 @@ COMMENT ON COLUMN audit_logs.id IS '감사 로그 고유 식별자';
 COMMENT ON COLUMN audit_logs.actor IS '행위자 (관리자 ID, 진행자 ID 등)';
 COMMENT ON COLUMN audit_logs.action IS '수행한 동작 (예: APPROVED_DEVICE, FAILED_PIN 등)';
 COMMENT ON COLUMN audit_logs.target IS '동작의 대상 (기기 ID, 트랙 ID 등)';
+CREATE INDEX idx_audit_logs_occurred_at_id ON audit_logs (occurred_at DESC, id DESC);
+CREATE INDEX idx_audit_logs_action_success_occurred_at_id ON audit_logs (action, success, occurred_at DESC, id DESC);
 COMMENT ON COLUMN audit_logs.success IS '동작 성공 여부';
 COMMENT ON COLUMN audit_logs.occurred_at IS '이벤트 발생 시간';
 COMMENT ON COLUMN audit_logs.metadata IS '이벤트와 관련된 추가 정보 (JSON)';
