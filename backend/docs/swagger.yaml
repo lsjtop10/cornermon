@@ -352,10 +352,10 @@ definitions:
     type: object
   web.ExceptionApproveRequest:
     properties:
-      reason:
-        type: string
-      visitId:
-        type: string
+      badges:
+        items:
+          $ref: '#/definitions/internal_infrastructure_web.Badge'
+        type: array
     type: object
   web.ExportBadgesResponse:
     properties:
@@ -1879,29 +1879,4 @@ paths:
       summary: 트랙 인증 정보 전체 내보내기
       tags:
       - B. Resource Management (Admin)
-  /visits/exception-approve:
-    post:
-      consumes:
-      - application/json
-      description: '진행자가 처리 불가능한 예외(예: 앱 오류로 스캔 누락, 이미 스캔된 것으로 처리된 경우) 발생 시, 관리자가
-        강제로 방문을 인정.'
-      parameters:
-      - description: 예외 승인 정보
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/web.ExceptionApproveRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/web.VisitSummary'
-      security:
-      - AdminAuth: []
-      summary: 예외 상황 강제 승인 (슈퍼어드민)
-      tags:
-      - C. Visit (Scan Flow)
 swagger: "2.0"

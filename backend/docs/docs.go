@@ -1160,6 +1160,30 @@ const docTemplate = `{
                 }
             }
         },
+        "/device-registrations/me": {
+            "get": {
+                "description": "미승인(PENDING) 기기가 자신의 승인 상태를 확인하기 위해 호출한다.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "A. Auth \u0026 Device Trust"
+                ],
+                "summary": "내 기기 등록 상태 자체 조회",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
         "/device-registrations/{id}/approve": {
             "post": {
                 "security": [
@@ -2115,45 +2139,6 @@ const docTemplate = `{
                     }
                 }
             }
-        },
-        "/visits/exception-approve": {
-            "post": {
-                "security": [
-                    {
-                        "AdminAuth": []
-                    }
-                ],
-                "description": "진행자가 처리 불가능한 예외(예: 앱 오류로 스캔 누락, 이미 스캔된 것으로 처리된 경우) 발생 시, 관리자가 강제로 방문을 인정.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "C. Visit (Scan Flow)"
-                ],
-                "summary": "예외 상황 강제 승인 (슈퍼어드민)",
-                "parameters": [
-                    {
-                        "description": "예외 승인 정보",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/web.ExceptionApproveRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/web.VisitSummary"
-                        }
-                    }
-                }
-            }
         }
     },
     "definitions": {
@@ -2675,14 +2660,14 @@ const docTemplate = `{
                 }
             }
         },
-        "web.ExceptionApproveRequest": {
+        "internal_infrastructure_web.ExportBadgesResponse": {
             "type": "object",
             "properties": {
-                "reason": {
-                    "type": "string"
-                },
-                "visitId": {
-                    "type": "string"
+                "badges": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/internal_infrastructure_web.Badge"
+                    }
                 }
             }
         },

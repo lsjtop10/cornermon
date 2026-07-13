@@ -2249,30 +2249,6 @@ paths:
                   - $ref: '#/components/schemas/VisitSummary'
                   - type: "null"
 
-  /visits/exception-approve:
-    post:
-      tags: [C. Visit (Scan Flow)]
-      summary: "중복 방문 예외 승인"
-      description: |
-        중복 방문 금지 규칙의 예외를 관리자가 명시적으로 승인한다.
-        이후 해당 조의 해당 코너에서 재방문이 허용된다.
-      security:
-        - AdminAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [groupId, cornerId]
-              properties:
-                groupId:
-                  type: string
-                  format: uuid
-                cornerId:
-                  type: string
-                  format: uuid
-      responses:
         "200":
           description: "예외 승인 완료"
         "404":

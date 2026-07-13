@@ -4,8 +4,8 @@ import 'dart:convert';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:cornermon_api_gen/cornermon_api_gen.dart';
 
-import '../../shared/api/providers/auth_device_trust_providers.dart';
-import '../../shared/auth/secure_token_store.dart';
+import 'package:cornermon/shared/api/providers/auth_device_trust_providers.dart';
+import 'package:cornermon/shared/auth/secure_token_store.dart';
 
 part 'track_session_provider.g.dart';
 
@@ -82,15 +82,20 @@ class TrackSession extends _$TrackSession {
     if (trackToken == null || track == null || corner == null) return;
 
     // 이미 B1-b 확인을 거쳐 저장된 세션이므로 복원 시 곧바로 Authenticated로 취급한다.
-    state = TrackSessionAuthenticated(trackToken: trackToken, track: track, corner: corner);
+    state = TrackSessionAuthenticated(
+      trackToken: trackToken,
+      track: track,
+      corner: corner,
+    );
   }
 
   /// POST /auth/track/login — 세션 무만료(유휴 타임아웃 없음, §2.4).
   Future<void> loginWithPin(String pin) async {
     final api = ref.read(authDeviceTrustApiProvider);
     final response = await api.authTrackLoginPost(
-      authTrackLoginPostRequest:
-          AuthTrackLoginPostRequest((AuthTrackLoginPostRequestBuilder b) => b..pin = pin),
+      authTrackLoginPostRequest: AuthTrackLoginPostRequest(
+        (AuthTrackLoginPostRequestBuilder b) => b..pin = pin,
+      ),
     );
 
     final trackToken = response.data?.trackToken;
@@ -100,7 +105,11 @@ class TrackSession extends _$TrackSession {
       throw Exception('로그인 응답이 올바르지 않습니다.');
     }
 
-    state = TrackSessionPendingConfirmation(trackToken: trackToken, track: track, corner: corner);
+    state = TrackSessionPendingConfirmation(
+      trackToken: trackToken,
+      track: track,
+      corner: corner,
+    );
   }
 
   /// B1-b "예, 맞습니다" — 별도 API 호출 없이 세션을 확정하고 영구 저장한다.
@@ -117,7 +126,12 @@ class TrackSession extends _$TrackSession {
     );
     await store.write(
       _trackSessionStorageKey,
-      jsonEncode(standardSerializers.serializeWith(AuthTrackLoginPost200Response.serializer, response)),
+      jsonEncode(
+        standardSerializers.serializeWith(
+          AuthTrackLoginPost200Response.serializer,
+          response,
+        ),
+      ),
     );
 
     state = TrackSessionAuthenticated(
@@ -139,7 +153,9 @@ class TrackSession extends _$TrackSession {
 
   /// SSE 감지 또는 401 응답 시 BUSY 여부와 무관하게 즉시 세션을 종료한다(§2.4 "유예 없이").
   void handleTermination(TrackSessionTerminationReason reason) {
-    unawaited(ref.read(secureTokenStoreProvider).delete(_trackSessionStorageKey));
+    unawaited(
+      ref.read(secureTokenStoreProvider).delete(_trackSessionStorageKey),
+    );
     state = TrackSessionUnauthenticated(lastTerminationReason: reason);
   }
 }
