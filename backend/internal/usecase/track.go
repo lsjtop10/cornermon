@@ -204,7 +204,17 @@ func (s *TrackService) ReplaceTrack(
 		return nil, "", err
 	}
 	if newCorner == nil {
-		return nil, "", domain.ErrCornerNotInItinerary
+		return nil, "", domain.ErrCornerNotFound
+	}
+	oldCorner, err := s.corners.Get(ctx, oldTrack.CornerID)
+	if err != nil {
+		return nil, "", err
+	}
+	if oldCorner == nil {
+		return nil, "", domain.ErrCornerNotFound
+	}
+	if oldCorner.CampID != newCorner.CampID {
+		return nil, "", domain.ErrTrackCampMismatch
 	}
 
 	plainPIN, hashPIN, err := generateTrackPIN()
