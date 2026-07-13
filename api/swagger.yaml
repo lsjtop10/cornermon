@@ -23,7 +23,7 @@ definitions:
       expiresInSeconds:
         type: integer
     type: object
-  AdminSession:
+  AdminSessionResponse:
     properties:
       adminId:
         type: string
@@ -44,7 +44,16 @@ definitions:
       groupId:
         type: string
     type: object
-  AuditLog:
+  AuditLogPageResponse:
+    properties:
+      logs:
+        items:
+          $ref: '#/definitions/AuditLogResponse'
+        type: array
+      nextCursor:
+        type: string
+    type: object
+  AuditLogResponse:
     properties:
       action:
         type: string
@@ -64,16 +73,7 @@ definitions:
       target:
         type: string
     type: object
-  AuditLogPageResponse:
-    properties:
-      logs:
-        items:
-          $ref: '#/definitions/AuditLog'
-        type: array
-      nextCursor:
-        type: string
-    type: object
-  Badge:
+  BadgeResponse:
     properties:
       assignedGroupId:
         format: uuid
@@ -92,7 +92,7 @@ definitions:
         - ASSIGNED
         type: string
     type: object
-  BottleneckRanking:
+  BottleneckRankingResponse:
     properties:
       avgDeviationSeconds:
         type: number
@@ -109,7 +109,7 @@ definitions:
       content:
         type: string
     type: object
-  BroadcastReceipt:
+  BroadcastReceiptResponse:
     properties:
       cornerName:
         type: string
@@ -150,7 +150,34 @@ definitions:
           type: object
         type: array
     type: object
-  Camp:
+  CampReportResponse:
+    properties:
+      campId:
+        format: uuid
+        type: string
+      cornerStats:
+        items:
+          $ref: '#/definitions/CornerStatsResponse'
+        type: array
+      generatedAt:
+        format: date-time
+        type: string
+      groupStats:
+        items:
+          $ref: '#/definitions/GroupStatsResponse'
+        type: array
+      operationalStats:
+        $ref: '#/definitions/OperationalStatsResponse'
+      summary:
+        $ref: '#/definitions/CampSummaryStatsResponse'
+      timeline:
+        $ref: '#/definitions/TimelineStatsResponse'
+      trackStats:
+        items:
+          $ref: '#/definitions/TrackStatsResponse'
+        type: array
+    type: object
+  CampResponse:
     properties:
       bottleneckMinSamples:
         example: 3
@@ -177,40 +204,13 @@ definitions:
         - ENDED
         type: string
     type: object
-  CampReport:
-    properties:
-      campId:
-        format: uuid
-        type: string
-      cornerStats:
-        items:
-          $ref: '#/definitions/CornerStats'
-        type: array
-      generatedAt:
-        format: date-time
-        type: string
-      groupStats:
-        items:
-          $ref: '#/definitions/GroupStats'
-        type: array
-      operationalStats:
-        $ref: '#/definitions/OperationalStats'
-      summary:
-        $ref: '#/definitions/CampSummaryStats'
-      timeline:
-        $ref: '#/definitions/TimelineStats'
-      trackStats:
-        items:
-          $ref: '#/definitions/TrackStats'
-        type: array
-    type: object
-  CampSummaryStats:
+  CampSummaryStatsResponse:
     properties:
       avgDeviationSeconds:
         type: number
       bottleneckRanking:
         items:
-          $ref: '#/definitions/BottleneckRanking'
+          $ref: '#/definitions/BottleneckRankingResponse'
         type: array
       completionRate:
         type: number
@@ -233,11 +233,25 @@ definitions:
       visitCompletionRate:
         type: number
     type: object
-  Corner:
+  CornerProgressResponse:
+    properties:
+      cornerId:
+        format: uuid
+        type: string
+      cornerName:
+        type: string
+      status:
+        enum:
+        - NOT_VISITED
+        - IN_PROGRESS
+        - COMPLETED
+        type: string
+    type: object
+  CornerResponse:
     properties:
       activeTracks:
         items:
-          $ref: '#/definitions/TrackSummary'
+          $ref: '#/definitions/TrackSummaryResponse'
         type: array
       id:
         format: uuid
@@ -257,21 +271,7 @@ definitions:
         example: 10
         type: integer
     type: object
-  CornerProgress:
-    properties:
-      cornerId:
-        format: uuid
-        type: string
-      cornerName:
-        type: string
-      status:
-        enum:
-        - NOT_VISITED
-        - IN_PROGRESS
-        - COMPLETED
-        type: string
-    type: object
-  CornerStats:
+  CornerStatsResponse:
     properties:
       completedVisitCount:
         type: integer
@@ -282,7 +282,7 @@ definitions:
         type: string
       unvisitedGroups:
         items:
-          $ref: '#/definitions/UnvisitedGroup'
+          $ref: '#/definitions/UnvisitedGroupResponse'
         type: array
     type: object
   CreateCampRequest:
@@ -308,7 +308,20 @@ definitions:
       count:
         type: integer
     type: object
-  DeviceRegistration:
+  DeviceRegistrationRequest:
+    properties:
+      campId:
+        description: Using campId because RequestRegistration expects a campID
+        type: string
+      deviceName:
+        type: string
+      role:
+        enum:
+        - ADMIN
+        - FACILITATOR
+        type: string
+    type: object
+  DeviceRegistrationResponse:
     properties:
       approvedAt:
         format: date-time
@@ -328,19 +341,6 @@ definitions:
         - APPROVED
         - REJECTED
         - REVOKED
-        type: string
-    type: object
-  DeviceRegistrationRequest:
-    properties:
-      campId:
-        description: Using campId because RequestRegistration expects a campID
-        type: string
-      deviceName:
-        type: string
-      role:
-        enum:
-        - ADMIN
-        - FACILITATOR
         type: string
     type: object
   DirectMessageRequest:
@@ -364,10 +364,10 @@ definitions:
     properties:
       badges:
         items:
-          $ref: '#/definitions/Badge'
+          $ref: '#/definitions/BadgeResponse'
         type: array
     type: object
-  Group:
+  GroupResponse:
     properties:
       badgeId:
         format: uuid
@@ -379,7 +379,7 @@ definitions:
         type: boolean
       itinerary:
         items:
-          $ref: '#/definitions/CornerProgress'
+          $ref: '#/definitions/CornerProgressResponse'
         type: array
       name:
         example: 1조
@@ -391,7 +391,7 @@ definitions:
         - FINISHED
         type: string
     type: object
-  GroupStats:
+  GroupStatsResponse:
     properties:
       completedCount:
         type: integer
@@ -403,7 +403,7 @@ definitions:
       totalDurationSeconds:
         type: integer
     type: object
-  Message:
+  MessageResponse:
     properties:
       channelType:
         enum:
@@ -432,7 +432,7 @@ definitions:
         format: uuid
         type: string
     type: object
-  OperationalStats:
+  OperationalStatsResponse:
     type: object
   ReplaceTrackRequest:
     properties:
@@ -444,7 +444,7 @@ definitions:
       pin:
         type: string
       track:
-        $ref: '#/definitions/Track'
+        $ref: '#/definitions/TrackResponse'
     type: object
   ScanAssignBadgeRequest:
     properties:
@@ -453,15 +453,29 @@ definitions:
       qrPayload:
         type: string
     type: object
-  TimelineStats:
+  TimelineStatsResponse:
     type: object
-  Track:
+  TrackLoginRequest:
+    properties:
+      pin:
+        type: string
+    type: object
+  TrackLoginResponse:
+    properties:
+      corner:
+        $ref: '#/definitions/CornerResponse'
+      track:
+        $ref: '#/definitions/TrackResponse'
+      trackToken:
+        type: string
+    type: object
+  TrackResponse:
     properties:
       cornerId:
         format: uuid
         type: string
       currentVisit:
-        $ref: '#/definitions/VisitSummary'
+        $ref: '#/definitions/VisitSummaryResponse'
       id:
         format: uuid
         type: string
@@ -481,21 +495,7 @@ definitions:
       trackNo:
         type: integer
     type: object
-  TrackLoginRequest:
-    properties:
-      pin:
-        type: string
-    type: object
-  TrackLoginResponse:
-    properties:
-      corner:
-        $ref: '#/definitions/Corner'
-      track:
-        $ref: '#/definitions/Track'
-      trackToken:
-        type: string
-    type: object
-  TrackStats:
+  TrackStatsResponse:
     properties:
       avgDeviationSeconds:
         type: integer
@@ -509,7 +509,7 @@ definitions:
       trackNo:
         type: integer
     type: object
-  TrackSummary:
+  TrackSummaryResponse:
     properties:
       cornerId:
         format: uuid
@@ -530,7 +530,7 @@ definitions:
       trackNo:
         type: integer
     type: object
-  UnvisitedGroup:
+  UnvisitedGroupResponse:
     properties:
       groupId:
         format: uuid
@@ -564,7 +564,7 @@ definitions:
       qrToken:
         type: string
     type: object
-  VisitSummary:
+  VisitSummaryResponse:
     properties:
       cornerId:
         format: uuid
@@ -755,7 +755,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/AdminSession'
+              $ref: '#/definitions/AdminSessionResponse'
             type: array
       security:
       - AdminAuth: []
@@ -878,7 +878,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/Badge'
+              $ref: '#/definitions/BadgeResponse'
             type: array
       security:
       - AdminAuth: []
@@ -908,7 +908,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/Badge'
+            $ref: '#/definitions/BadgeResponse'
       security:
       - AdminAuth: []
       summary: 배지를 특정 조에 배정 (수동)
@@ -933,7 +933,7 @@ paths:
           description: Created
           schema:
             items:
-              $ref: '#/definitions/Badge'
+              $ref: '#/definitions/BadgeResponse'
             type: array
       security:
       - AdminAuth: []
@@ -974,7 +974,7 @@ paths:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/Group'
+            $ref: '#/definitions/GroupResponse'
       security:
       - AdminAuth: []
       summary: 배지를 특정 조에 배정 (스캔 기반)
@@ -990,7 +990,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/Camp'
+              $ref: '#/definitions/CampResponse'
             type: array
         "401":
           description: Unauthorized
@@ -1018,7 +1018,7 @@ paths:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/Camp'
+            $ref: '#/definitions/CampResponse'
         "400":
           description: Bad Request
           schema:
@@ -1048,7 +1048,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/Corner'
+              $ref: '#/definitions/CornerResponse'
             type: array
         "400":
           description: Bad Request
@@ -1079,7 +1079,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/Group'
+              $ref: '#/definitions/GroupResponse'
             type: array
       security:
       - AdminAuth: []
@@ -1101,7 +1101,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/CampReport'
+            $ref: '#/definitions/CampReportResponse'
       security:
       - AdminAuth: []
       summary: 현재 리포트 전체 조회
@@ -1122,7 +1122,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/CampReport'
+            $ref: '#/definitions/CampReportResponse'
       security:
       - AdminAuth: []
       summary: 현재 리포트 데이터 내보내기
@@ -1143,7 +1143,7 @@ paths:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/CampReport'
+            $ref: '#/definitions/CampReportResponse'
       security:
       - AdminAuth: []
       summary: 과거 리포트 생성 및 저장
@@ -1164,7 +1164,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/CampSummaryStats'
+            $ref: '#/definitions/CampSummaryStatsResponse'
       security:
       - AdminAuth: []
       summary: 라이브 서머리 (대시보드 상단)
@@ -1186,7 +1186,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/Track'
+              $ref: '#/definitions/TrackResponse'
             type: array
       security:
       - AdminAuth: []
@@ -1208,7 +1208,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/Camp'
+            $ref: '#/definitions/CampResponse'
         "404":
           description: Not Found
           schema:
@@ -1240,7 +1240,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/Camp'
+            $ref: '#/definitions/CampResponse'
         "400":
           description: Bad Request
           schema:
@@ -1273,7 +1273,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/Camp'
+            $ref: '#/definitions/CampResponse'
         "400":
           description: Bad Request
           schema:
@@ -1302,7 +1302,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/Camp'
+            $ref: '#/definitions/CampResponse'
         "400":
           description: Bad Request
           schema:
@@ -1334,7 +1334,7 @@ paths:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/Corner'
+            $ref: '#/definitions/CornerResponse'
         "400":
           description: Bad Request
           schema:
@@ -1364,7 +1364,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/Track'
+              $ref: '#/definitions/TrackResponse'
             type: array
       security:
       - AdminAuth: []
@@ -1412,7 +1412,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/Corner'
+            $ref: '#/definitions/CornerResponse'
         "404":
           description: Not Found
           schema:
@@ -1441,7 +1441,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/Corner'
+              $ref: '#/definitions/CornerResponse'
             type: array
         "400":
           description: Bad Request
@@ -1466,7 +1466,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/DeviceRegistration'
+              $ref: '#/definitions/DeviceRegistrationResponse'
             type: array
       security:
       - AdminAuth: []
@@ -1490,7 +1490,7 @@ paths:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/DeviceRegistration'
+            $ref: '#/definitions/DeviceRegistrationResponse'
       summary: 기기 등록 요청 (최초 앱 실행 시)
       tags:
       - A. Auth & Device Trust
@@ -1509,7 +1509,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/DeviceRegistration'
+            $ref: '#/definitions/DeviceRegistrationResponse'
       security:
       - AdminAuth: []
       summary: 기기 승인
@@ -1530,7 +1530,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/DeviceRegistration'
+            $ref: '#/definitions/DeviceRegistrationResponse'
       security:
       - AdminAuth: []
       summary: 기기 거절
@@ -1551,7 +1551,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/DeviceRegistration'
+            $ref: '#/definitions/DeviceRegistrationResponse'
       security:
       - AdminAuth: []
       summary: 기기 신뢰 취소 (폐기/분실)
@@ -1588,7 +1588,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/Group'
+            $ref: '#/definitions/GroupResponse'
       security:
       - AdminAuth: []
       summary: 특정 조 상세 조회
@@ -1610,7 +1610,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/VisitSummary'
+              $ref: '#/definitions/VisitSummaryResponse'
             type: array
       security:
       - AdminAuth: []
@@ -1627,7 +1627,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/Message'
+              $ref: '#/definitions/MessageResponse'
             type: array
       security:
       - AdminAuth: []
@@ -1651,7 +1651,7 @@ paths:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/Message'
+            $ref: '#/definitions/MessageResponse'
       security:
       - AdminAuth: []
       summary: 전체 공지 발송
@@ -1692,7 +1692,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/BroadcastReceipt'
+              $ref: '#/definitions/BroadcastReceiptResponse'
             type: array
       security:
       - AdminAuth: []
@@ -1718,7 +1718,7 @@ paths:
           description: Created
           schema:
             items:
-              $ref: '#/definitions/Track'
+              $ref: '#/definitions/TrackResponse'
             type: array
       security:
       - AdminAuth: []
@@ -1740,7 +1740,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/Track'
+            $ref: '#/definitions/TrackResponse'
       security:
       - AdminAuth: []
       summary: 트랙 상세 조회
@@ -1806,7 +1806,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/Track'
+            $ref: '#/definitions/TrackResponse'
       security:
       - AdminAuth: []
       summary: PIN 재발급
@@ -1869,7 +1869,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/Group'
+              $ref: '#/definitions/GroupResponse'
             type: array
         "401":
           description: Unauthorized
@@ -1904,7 +1904,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/Message'
+              $ref: '#/definitions/MessageResponse'
             type: array
       security:
       - AdminAuth: []
@@ -1933,7 +1933,7 @@ paths:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/Message'
+            $ref: '#/definitions/MessageResponse'
       security:
       - AdminAuth: []
       summary: 다이렉트 메시지 발송
@@ -1954,7 +1954,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/VisitSummary'
+            $ref: '#/definitions/VisitSummaryResponse'
         "404":
           description: 진행 중인 방문 없음
       security:
@@ -1977,7 +1977,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/VisitSummary'
+            $ref: '#/definitions/VisitSummaryResponse'
         "409":
           description: TRACK_NOT_BUSY 등
           schema:
@@ -2010,7 +2010,7 @@ paths:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/VisitSummary'
+            $ref: '#/definitions/VisitSummaryResponse'
         "409":
           description: TRACK_BUSY, DUPLICATE_VISIT 등
           schema:

@@ -181,8 +181,9 @@ func (r *pgBadgeRepository) queries(ctx context.Context) *db.Queries {
   중앙에서 담당합니다. 핸들러는 usecase 에러를 그대로 리턴하면 됩니다 — 직접 `c.JSON`으로
   에러 응답을 만들지 마세요. `echo.HTTPError`(바인딩/검증 실패)와 domain sentinel error를
   구분해서 처리합니다.
-- 응답 DTO는 `api_dtos.go`, `auth_dtos.go`, `report_dtos.go` 등 기능별 파일에 모읍니다.
-  API 계약(`api/openapi.yaml`)과 필드명이 1:1로 대응해야 합니다 — 이름이 어긋나면
+- 엔드포인트 전용 요청·응답 DTO는 해당 `*_handler.go`에 두고, 여러 핸들러가 공유하는
+  DTO만 공통 파일에 둡니다. 공개 DTO 이름은 `Request`/`Response` 접미사와 `@name`
+  어노테이션을 일치시킵니다. API 계약과 필드명이 1:1로 대응해야 합니다 — 이름이 어긋나면
   `workflow/Collaborate.md` 프로토콜 위반입니다.
 
 ### 4.3 SSE Broadcaster
@@ -267,4 +268,3 @@ gofmt -w . && go vet ./...                       # 커밋 전
 - **외부 API 재시도 원칙**:
   - 데이터베이스 트랜잭션과 무관한 외부 API 호출 지점(예: 외부 인증, 결제 통신 등)은 일시적인 네트워크 오류에 대응하기 위해 2~3회 가벼운 루프 기반의 재시도를 자체 구현하여 넣습니다.
   - 단, 비즈니스 유즈케이스 계층에서는 복잡성과 사이드 이펙트를 방지하기 위해 자체 재시도를 전면 배제하고 즉시 에러를 상위로 전파하십시오.
-

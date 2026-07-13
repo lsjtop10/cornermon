@@ -3,6 +3,7 @@ package web
 import (
 	"net/http"
 	"strings"
+	"time"
 
 	"cornermon/backend/internal/domain"
 	"cornermon/backend/internal/usecase"
@@ -14,6 +15,21 @@ type VisitHandler struct {
 	visitUC *usecase.VisitService
 }
 
+type VisitSummaryResponse struct {
+	ID               string     `json:"id" format:"uuid"`
+	GroupID          string     `json:"groupId" format:"uuid"`
+	CornerID         string     `json:"cornerId" format:"uuid"`
+	TrackID          string     `json:"trackId" format:"uuid"`
+	Status           string     `json:"status" enums:"IN_PROGRESS,COMPLETED"`
+	InputMethod      string     `json:"inputMethod" enums:"QR_SCAN,MANUAL"`
+	StartedAt        time.Time  `json:"startedAt" format:"date-time"`
+	EndedAt          *time.Time `json:"endedAt,omitempty" format:"date-time"`
+	DurationSeconds  *int       `json:"durationSeconds,omitempty"`
+	DeviationSeconds *int       `json:"deviationSeconds,omitempty"`
+}
+
+// @name VisitSummaryResponse
+
 func NewVisitHandler(visitUC *usecase.VisitService) *VisitHandler {
 	return &VisitHandler{visitUC: visitUC}
 }
@@ -24,8 +40,10 @@ type VisitStartRequest struct {
 	GroupID string `json:"groupId"`
 }
 
-func mapVisitToDTO(v *domain.Visit) VisitSummary {
-	res := VisitSummary{
+// @name VisitStartRequest
+
+func mapVisitToDTO(v *domain.Visit) VisitSummaryResponse {
+	res := VisitSummaryResponse{
 		ID:          string(v.ID),
 		GroupID:     string(v.GroupID),
 		CornerID:    string(v.CornerID),
@@ -51,7 +69,7 @@ func mapVisitToDTO(v *domain.Visit) VisitSummary {
 // @Produce      json
 // @Param        trackId path string true "트랙 ID"
 // @Param        request body VisitStartRequest true "입장 방식 및 페이로드"
-// @Success      201 {object} VisitSummary
+// @Success      201 {object} VisitSummaryResponse
 // @Failure      409 {object} ErrorResponse "TRACK_BUSY, DUPLICATE_VISIT 등"
 // @Router       /tracks/{trackId}/visits/start [post]
 func (h *VisitHandler) StartVisit(c echo.Context) error {
@@ -85,7 +103,7 @@ func (h *VisitHandler) StartVisit(c echo.Context) error {
 // @Security     TrackAuth
 // @Produce      json
 // @Param        trackId path string true "트랙 ID"
-// @Success      200 {object} VisitSummary
+// @Success      200 {object} VisitSummaryResponse
 // @Failure      409 {object} ErrorResponse "TRACK_NOT_BUSY 등"
 // @Router       /tracks/{trackId}/visits/current/end [post]
 func (h *VisitHandler) EndCurrentVisit(c echo.Context) error {
@@ -106,7 +124,7 @@ func (h *VisitHandler) EndCurrentVisit(c echo.Context) error {
 // @Security     TrackAuth
 // @Produce      json
 // @Param        trackId path string true "트랙 ID"
-// @Success      200 {object} VisitSummary
+// @Success      200 {object} VisitSummaryResponse
 // @Failure      404 "진행 중인 방문 없음"
 // @Router       /tracks/{trackId}/visits/current [get]
 func (h *VisitHandler) GetCurrentVisit(c echo.Context) error {

@@ -16,6 +16,16 @@ type BadgeHandler struct {
 	camps   usecase.CampRepository
 }
 
+type BadgeResponse struct {
+	ID              string  `json:"id" format:"uuid"`
+	ShortID         string  `json:"shortId" example:"B-0042"`
+	QRPayload       string  `json:"qrPayload"`
+	Status          string  `json:"status" enums:"UNASSIGNED,ASSIGNED"`
+	AssignedGroupID *string `json:"assignedGroupId,omitempty" format:"uuid"`
+}
+
+// @name BadgeResponse
+
 func NewBadgeHandler(
 	badgeUC *usecase.BadgeService,
 	groupUC *usecase.GroupService,
@@ -42,8 +52,8 @@ func (h *BadgeHandler) getActiveCamp(ctx context.Context) (*domain.Camp, error) 
 	return nil, nil
 }
 
-func mapBadgeToDTO(b *domain.Badge) Badge {
-	res := Badge{
+func mapBadgeToDTO(b *domain.Badge) BadgeResponse {
+	res := BadgeResponse{
 		ID:        string(b.ID),
 		ShortID:   b.ShortID,
 		QRPayload: b.QRPayload,
@@ -61,14 +71,14 @@ func mapBadgeToDTO(b *domain.Badge) Badge {
 // @Tags         B. Resource Management (Admin)
 // @Security     AdminAuth
 // @Produce      json
-// @Success      200 {array} Badge
+// @Success      200 {array} BadgeResponse
 // @Router       /badges [get]
 func (h *BadgeHandler) ListBadges(c echo.Context) error {
 	badges, err := h.badgeUC.ListBadges(c.Request().Context())
 	if err != nil {
 		return err
 	}
-	res := make([]Badge, len(badges))
+	res := make([]BadgeResponse, len(badges))
 	for i, b := range badges {
 		res[i] = mapBadgeToDTO(b)
 	}
@@ -79,6 +89,8 @@ type BulkGenerateBadgesRequest struct {
 	Count int `json:"count"`
 }
 
+// @name BulkGenerateBadgesRequest
+
 // @Summary      초기 배지 일괄 생성
 // @Description  특정 개수만큼 QR 배지를 대량으로 일괄 발급한다.
 // @Tags         B. Resource Management (Admin)
@@ -86,7 +98,7 @@ type BulkGenerateBadgesRequest struct {
 // @Accept       json
 // @Produce      json
 // @Param        request body BulkGenerateBadgesRequest true "생성할 개수"
-// @Success      201 {array} Badge
+// @Success      201 {array} BadgeResponse
 // @Router       /badges/bulk-generate [post]
 func (h *BadgeHandler) BulkGenerateBadges(c echo.Context) error {
 	var req BulkGenerateBadgesRequest
@@ -97,7 +109,7 @@ func (h *BadgeHandler) BulkGenerateBadges(c echo.Context) error {
 	if err != nil {
 		return err
 	}
-	res := make([]Badge, len(badges))
+	res := make([]BadgeResponse, len(badges))
 	for i, b := range badges {
 		res[i] = mapBadgeToDTO(b)
 	}
@@ -105,8 +117,10 @@ func (h *BadgeHandler) BulkGenerateBadges(c echo.Context) error {
 }
 
 type ExportBadgesResponse struct {
-	Badges []Badge `json:"badges"`
+	Badges []BadgeResponse `json:"badges"`
 }
+
+// @name ExportBadgesResponse
 
 // @Summary      QR 배지 인쇄용 목록 내보내기 (JSON)
 // @Description  클라이언트가 직접 PDF 인쇄 및 레이아웃 구성을 할 수 있도록 미배정(UNASSIGNED) 배지 전체 목록을 JSON으로 다운로드한다.
@@ -120,7 +134,7 @@ func (h *BadgeHandler) ExportBadges(c echo.Context) error {
 	if err != nil {
 		return err
 	}
-	res := make([]Badge, len(badges))
+	res := make([]BadgeResponse, len(badges))
 	for i, b := range badges {
 		res[i] = mapBadgeToDTO(b)
 	}
@@ -131,6 +145,8 @@ type AssignBadgeRequest struct {
 	GroupID string `json:"groupId"`
 }
 
+// @name AssignBadgeRequest
+
 // @Summary      배지를 특정 조에 배정 (수동)
 // @Description  수동으로 특정 배지를 조회하여 조에 할당한다.
 // @Tags         B. Resource Management (Admin)
@@ -139,7 +155,7 @@ type AssignBadgeRequest struct {
 // @Produce      json
 // @Param        id path string true "배지 ID"
 // @Param        request body AssignBadgeRequest true "배정할 조 ID"
-// @Success      200 {object} Badge
+// @Success      200 {object} BadgeResponse
 // @Router       /badges/{id}/register [post]
 func (h *BadgeHandler) AssignBadge(c echo.Context) error {
 	id := domain.BadgeID(c.Param("id"))
@@ -188,6 +204,8 @@ type ScanAssignBadgeRequest struct {
 	GroupName string `json:"groupName"`
 }
 
+// @name ScanAssignBadgeRequest
+
 // @Summary      배지를 특정 조에 배정 (스캔 기반)
 // @Description  QR 코드를 스캔하여 배지를 특정 조에 등록(매핑)한다.
 // @Tags         B. Resource Management (Admin)
@@ -195,7 +213,7 @@ type ScanAssignBadgeRequest struct {
 // @Accept       json
 // @Produce      json
 // @Param        request body ScanAssignBadgeRequest true "매핑 정보"
-// @Success      201 {object} Group
+// @Success      201 {object} GroupResponse
 // @Router       /badges/scan-register [post]
 func (h *BadgeHandler) ScanAssignBadge(c echo.Context) error {
 	var req ScanAssignBadgeRequest

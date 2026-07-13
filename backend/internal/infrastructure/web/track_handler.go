@@ -13,16 +13,34 @@ type TrackHandler struct {
 	svc *usecase.TrackService
 }
 
+type TrackSummaryResponse struct {
+	ID                string `json:"id" format:"uuid"`
+	CornerID          string `json:"cornerId" format:"uuid"`
+	TrackNo           int    `json:"trackNo"`
+	Status            string `json:"status" enums:"ACTIVE,DELETED"`
+	OperationalStatus string `json:"operationalStatus" enums:"IDLE,BUSY"`
+}
+
+// @name TrackSummaryResponse
+
+type TrackResponse struct {
+	TrackSummaryResponse
+	PIN          string                `json:"pin" example:"482910"`
+	CurrentVisit *VisitSummaryResponse `json:"currentVisit,omitempty"`
+}
+
+// @name TrackResponse
+
 func NewTrackHandler(svc *usecase.TrackService) *TrackHandler {
 	return &TrackHandler{svc: svc}
 }
 
-func mapDomainTrackToDTO(track *domain.Track) Track {
+func mapDomainTrackToDTO(track *domain.Track) TrackResponse {
 	if track == nil {
-		return Track{}
+		return TrackResponse{}
 	}
-	return Track{
-		TrackSummary: TrackSummary{
+	return TrackResponse{
+		TrackSummaryResponse: TrackSummaryResponse{
 			ID:                string(track.ID),
 			CornerID:          string(track.CornerID),
 			TrackNo:           track.TrackNo,
@@ -38,7 +56,7 @@ func mapDomainTrackToDTO(track *domain.Track) Track {
 // @Security     AdminAuth
 // @Produce      json
 // @Param        campId path string true "캠프 ID"
-// @Success      200 {array} Track
+// @Success      200 {array} TrackResponse
 // @Router       /camps/{campId}/tracks [get]
 func (h *TrackHandler) ListTracks(c echo.Context) error {
 	campID := domain.CampID(c.Param("campId"))
@@ -49,7 +67,7 @@ func (h *TrackHandler) ListTracks(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_ERROR", Message: err.Error()})
 	}
-	res := make([]Track, len(tracks))
+	res := make([]TrackResponse, len(tracks))
 	for i, tr := range tracks {
 		res[i] = mapDomainTrackToDTO(tr)
 	}
@@ -62,6 +80,8 @@ type CreateTracksRequest struct {
 	Count    int    `json:"count"`
 }
 
+// @name CreateTracksRequest
+
 // @Summary      트랙 일괄 생성
 // @Description  특정 코너에 여러 트랙을 추가 생성한다.
 // @Tags         B. Resource Management (Admin)
@@ -69,14 +89,14 @@ type CreateTracksRequest struct {
 // @Accept       json
 // @Produce      json
 // @Param        request body CreateTracksRequest true "생성 정보"
-// @Success      201 {array} Track
+// @Success      201 {array} TrackResponse
 // @Router       /tracks [post]
 func (h *TrackHandler) CreateTracks(c echo.Context) error {
 	var req CreateTracksRequest
 	if err := c.Bind(&req); err != nil {
 		return c.JSON(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: "Invalid request body"})
 	}
-	var res []Track
+	var res []TrackResponse
 	for i := 0; i < req.Count; i++ {
 		track, pin, err := h.svc.CreateTrack(c.Request().Context(), domain.CampID(req.CampID), domain.CornerID(req.CornerID))
 		if err != nil {
@@ -95,10 +115,10 @@ func (h *TrackHandler) CreateTracks(c echo.Context) error {
 // @Security     AdminAuth
 // @Produce      json
 // @Param        cornerId path string true "코너 ID"
-// @Success      200 {array} Track
+// @Success      200 {array} TrackResponse
 // @Router       /corners/{cornerId}/tracks [get]
 func (h *TrackHandler) ListTracksByCorner(c echo.Context) error {
-	return c.JSON(http.StatusOK, []Track{})
+	return c.JSON(http.StatusOK, []TrackResponse{})
 }
 
 // @Summary      트랙 상세 조회
@@ -107,15 +127,17 @@ func (h *TrackHandler) ListTracksByCorner(c echo.Context) error {
 // @Security     AdminAuth
 // @Produce      json
 // @Param        id path string true "트랙 ID"
-// @Success      200 {object} Track
+// @Success      200 {object} TrackResponse
 // @Router       /tracks/{id} [get]
 func (h *TrackHandler) GetTrack(c echo.Context) error {
-	return c.JSON(http.StatusOK, Track{})
+	return c.JSON(http.StatusOK, TrackResponse{})
 }
 
 type BulkDeleteTracksRequest struct {
 	TrackIDs []string `json:"trackIds"`
 }
+
+// @name BulkDeleteTracksRequest
 
 // @Summary      트랙 일괄 삭제
 // @Description  선택한 트랙들을 일괄 삭제한다.
@@ -144,10 +166,14 @@ type ReplaceTrackRequest struct {
 	NewCornerID string `json:"newCornerId"`
 }
 
+// @name ReplaceTrackRequest
+
 type ReplaceTrackResponse struct {
-	Track Track  `json:"track"`
-	PIN   string `json:"pin"`
+	Track TrackResponse `json:"track"`
+	PIN   string        `json:"pin"`
 }
+
+// @name ReplaceTrackResponse
 
 // @Summary      트랙 교체 (비상용)
 // @Description  기존 트랙을 삭제하고 지정한 대상 코너에 새 트랙을 생성하며 기존 진행자 세션의 마이그레이션 대상을 설정한다.
@@ -185,7 +211,7 @@ func (h *TrackHandler) ReplaceTrack(c echo.Context) error {
 // @Security     AdminAuth
 // @Produce      json
 // @Param        id path string true "트랙 ID"
-// @Success      200 {object} Track
+// @Success      200 {object} TrackResponse
 // @Router       /tracks/{id}/regenerate-pin [post]
 func (h *TrackHandler) RegeneratePin(c echo.Context) error {
 	id := domain.TrackID(c.Param("id"))

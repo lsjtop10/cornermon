@@ -3,6 +3,7 @@ package web
 import (
 	"context"
 	"net/http"
+	"time"
 
 	"cornermon/backend/internal/domain"
 	"cornermon/backend/internal/usecase"
@@ -23,6 +24,29 @@ type MessageHandler struct {
 	message MessageUsecase
 }
 
+type MessageResponse struct {
+	ID          string     `json:"id" format:"uuid"`
+	ChannelType string     `json:"channelType" enums:"BROADCAST,DIRECT"`
+	TrackID     *string    `json:"trackId,omitempty" format:"uuid"`
+	SenderRole  string     `json:"senderRole" enums:"ADMIN,TRACK"`
+	Content     string     `json:"content"`
+	SentAt      time.Time  `json:"sentAt" format:"date-time"`
+	IsRead      bool       `json:"isRead"`
+	ReadAt      *time.Time `json:"readAt,omitempty" format:"date-time"`
+}
+
+// @name MessageResponse
+
+type BroadcastReceiptResponse struct {
+	TrackID    string     `json:"trackId" format:"uuid"`
+	TrackNo    int        `json:"trackNo"`
+	CornerName string     `json:"cornerName"`
+	IsRead     bool       `json:"isRead"`
+	ReadAt     *time.Time `json:"readAt,omitempty" format:"date-time"`
+}
+
+// @name BroadcastReceiptResponse
+
 func NewMessageHandler(message MessageUsecase) *MessageHandler {
 	return &MessageHandler{
 		message: message,
@@ -34,6 +58,8 @@ type BroadcastMessageRequest struct {
 	Content string `json:"content"`
 }
 
+// @name BroadcastMessageRequest
+
 // @Summary      전체 공지 발송
 // @Description  모든 활성 트랙에 BROADCAST 메시지를 보낸다.
 // @Tags         E. Message
@@ -41,7 +67,7 @@ type BroadcastMessageRequest struct {
 // @Accept       json
 // @Produce      json
 // @Param        request body BroadcastMessageRequest true "메시지 내용"
-// @Success      201 {object} Message
+// @Success      201 {object} MessageResponse
 // @Router       /messages/broadcast [post]
 func (h *MessageHandler) SendBroadcast(c echo.Context) error {
 	session, ok := c.Get("adminSession").(*domain.AdminSession)
@@ -59,7 +85,7 @@ func (h *MessageHandler) SendBroadcast(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()})
 	}
 
-	return c.JSON(http.StatusCreated, Message{
+	return c.JSON(http.StatusCreated, MessageResponse{
 		ID:          string(msg.ID),
 		ChannelType: string(msg.ChannelType),
 		SenderRole:  string(msg.SenderRole),
@@ -73,7 +99,7 @@ func (h *MessageHandler) SendBroadcast(c echo.Context) error {
 // @Tags         E. Message
 // @Security     AdminAuth
 // @Produce      json
-// @Success      200 {array} Message
+// @Success      200 {array} MessageResponse
 // @Router       /messages/broadcast [get]
 func (h *MessageHandler) ListBroadcasts(c echo.Context) error {
 	campID := c.QueryParam("campId")
@@ -86,9 +112,9 @@ func (h *MessageHandler) ListBroadcasts(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()})
 	}
 
-	res := make([]Message, len(msgs))
+	res := make([]MessageResponse, len(msgs))
 	for i, msg := range msgs {
-		res[i] = Message{
+		res[i] = MessageResponse{
 			ID:          string(msg.ID),
 			ChannelType: string(msg.ChannelType),
 			SenderRole:  string(msg.SenderRole),
@@ -106,7 +132,7 @@ func (h *MessageHandler) ListBroadcasts(c echo.Context) error {
 // @Security     AdminAuth
 // @Produce      json
 // @Param        id path string true "메시지 ID"
-// @Success      200 {array} BroadcastReceipt
+// @Success      200 {array} BroadcastReceiptResponse
 // @Router       /messages/broadcast/{id}/receipts [get]
 func (h *MessageHandler) GetBroadcastReceipts(c echo.Context) error {
 	msgID := domain.MessageID(c.Param("id"))
@@ -116,9 +142,9 @@ func (h *MessageHandler) GetBroadcastReceipts(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()})
 	}
 
-	receipts := make([]BroadcastReceipt, len(dtos))
+	receipts := make([]BroadcastReceiptResponse, len(dtos))
 	for i, dto := range dtos {
-		br := BroadcastReceipt{
+		br := BroadcastReceiptResponse{
 			TrackID:    string(dto.TrackID),
 			TrackNo:    dto.TrackNo,
 			CornerName: dto.CornerName,
@@ -166,6 +192,8 @@ type DirectMessageRequest struct {
 	Content string `json:"content"`
 }
 
+// @name DirectMessageRequest
+
 // @Summary      다이렉트 메시지 발송
 // @Description  관리자가 특정 트랙에, 또는 특정 트랙이 관리자에게 DIRECT 메시지를 발송한다.
 // @Tags         E. Message
@@ -174,7 +202,7 @@ type DirectMessageRequest struct {
 // @Produce      json
 // @Param        trackId path string true "트랙 ID"
 // @Param        request body DirectMessageRequest true "메시지 내용"
-// @Success      201 {object} Message
+// @Success      201 {object} MessageResponse
 // @Router       /tracks/{trackId}/messages [post]
 func (h *MessageHandler) SendDirect(c echo.Context) error {
 	trackID := domain.TrackID(c.Param("trackId"))
@@ -205,7 +233,7 @@ func (h *MessageHandler) SendDirect(c echo.Context) error {
 		tID = &valStr
 	}
 
-	return c.JSON(http.StatusCreated, Message{
+	return c.JSON(http.StatusCreated, MessageResponse{
 		ID:          string(msg.ID),
 		ChannelType: string(msg.ChannelType),
 		TrackID:     tID,
@@ -221,7 +249,7 @@ func (h *MessageHandler) SendDirect(c echo.Context) error {
 // @Security     AdminAuth
 // @Produce      json
 // @Param        trackId path string true "트랙 ID"
-// @Success      200 {array} Message
+// @Success      200 {array} MessageResponse
 // @Router       /tracks/{trackId}/messages [get]
 func (h *MessageHandler) ListDirectMessages(c echo.Context) error {
 	trackID := domain.TrackID(c.Param("trackId"))
@@ -231,7 +259,7 @@ func (h *MessageHandler) ListDirectMessages(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()})
 	}
 
-	res := make([]Message, len(msgs))
+	res := make([]MessageResponse, len(msgs))
 	for i, msg := range msgs {
 		var tID *string
 		if msg.TrackID.IsSet() {
@@ -239,7 +267,7 @@ func (h *MessageHandler) ListDirectMessages(c echo.Context) error {
 			valStr := string(val)
 			tID = &valStr
 		}
-		res[i] = Message{
+		res[i] = MessageResponse{
 			ID:          string(msg.ID),
 			ChannelType: string(msg.ChannelType),
 			TrackID:     tID,

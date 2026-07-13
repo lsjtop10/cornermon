@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"strings"
+	"time"
 
 	"cornermon/backend/internal/domain"
 	"cornermon/backend/internal/usecase"
@@ -34,6 +35,52 @@ type AuthHandler struct {
 	facilitatorAuth FacilitatorAuthUsecase
 	deviceTrust     AuthDeviceTrustUsecase
 }
+
+type AdminSessionResponse struct {
+	ID         string    `json:"id" format:"uuid"`
+	AdminID    string    `json:"adminId"`
+	DeviceInfo *string   `json:"deviceInfo,omitempty"`
+	CreatedAt  time.Time `json:"createdAt" format:"date-time"`
+	LastUsedAt time.Time `json:"lastUsedAt" format:"date-time"`
+}
+
+// @name AdminSessionResponse
+
+type AdminLoginRequest struct {
+	ID       string `json:"id"`
+	Password string `json:"password"`
+}
+
+// @name AdminLoginRequest
+
+type AdminLoginResponse struct {
+	AccessToken      string `json:"accessToken"`
+	RefreshToken     string `json:"refreshToken"`
+	ExpiresInSeconds int    `json:"expiresInSeconds"`
+}
+
+// @name AdminLoginResponse
+
+type AdminRefreshResponse struct {
+	AccessToken      string `json:"accessToken"`
+	ExpiresInSeconds int    `json:"expiresInSeconds"`
+}
+
+// @name AdminRefreshResponse
+
+type TrackLoginRequest struct {
+	PIN string `json:"pin"`
+}
+
+// @name TrackLoginRequest
+
+type TrackLoginResponse struct {
+	TrackToken string         `json:"trackToken"`
+	Track      TrackResponse  `json:"track"`
+	Corner     CornerResponse `json:"corner"`
+}
+
+// @name TrackLoginResponse
 
 func NewAuthHandler(
 	adminAuth AdminAuthUsecase,
@@ -128,7 +175,7 @@ func (h *AuthHandler) AdminLogout(c echo.Context) error {
 // @Tags         A. Auth & Device Trust
 // @Security     AdminAuth
 // @Produce      json
-// @Success      200 {array} AdminSession
+// @Success      200 {array} AdminSessionResponse
 // @Router       /auth/admin/sessions [get]
 func (h *AuthHandler) ListAdminSessions(c echo.Context) error {
 	session, ok := c.Get("adminSession").(*domain.AdminSession)
@@ -141,13 +188,13 @@ func (h *AuthHandler) ListAdminSessions(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()})
 	}
 
-	var res []AdminSession
+	var res []AdminSessionResponse
 	for _, s := range sessions {
 		devInfo := ""
 		if s.DeviceInfo != "" {
 			devInfo = s.DeviceInfo
 		}
-		res = append(res, AdminSession{
+		res = append(res, AdminSessionResponse{
 			ID:         string(s.ID),
 			AdminID:    string(s.AdminID),
 			DeviceInfo: &devInfo,
@@ -212,15 +259,15 @@ func (h *AuthHandler) TrackLogin(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, TrackLoginResponse{
 		TrackToken: res.TrackToken,
-		Track: Track{
-			TrackSummary: TrackSummary{
+		Track: TrackResponse{
+			TrackSummaryResponse: TrackSummaryResponse{
 				ID:       string(res.Track.ID),
 				CornerID: string(res.Track.CornerID),
 				TrackNo:  res.Track.TrackNo,
 				Status:   string(res.Track.Status),
 			},
 		},
-		Corner: Corner{
+		Corner: CornerResponse{
 			ID:   string(res.Corner.ID),
 			Name: res.Corner.Name,
 		},
@@ -319,15 +366,15 @@ func (h *AuthHandler) MigrateSession(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, TrackLoginResponse{
 		TrackToken: res.TrackToken,
-		Track: Track{
-			TrackSummary: TrackSummary{
+		Track: TrackResponse{
+			TrackSummaryResponse: TrackSummaryResponse{
 				ID:       string(res.Track.ID),
 				CornerID: string(res.Track.CornerID),
 				TrackNo:  res.Track.TrackNo,
 				Status:   string(res.Track.Status),
 			},
 		},
-		Corner: Corner{
+		Corner: CornerResponse{
 			ID:   string(res.Corner.ID),
 			Name: res.Corner.Name,
 		},

@@ -13,15 +13,26 @@ type CornerHandler struct {
 	svc *usecase.CornerService
 }
 
+type CornerResponse struct {
+	ID            string                 `json:"id" format:"uuid"`
+	Name          string                 `json:"name" example:"코너 1"`
+	TargetMinutes int                    `json:"targetMinutes" example:"10"`
+	Status        string                 `json:"status" enums:"INACTIVE,IDLE,BUSY"`
+	IsBottleneck  bool                   `json:"isBottleneck"`
+	ActiveTracks  []TrackSummaryResponse `json:"activeTracks"`
+}
+
+// @name CornerResponse
+
 func NewCornerHandler(svc *usecase.CornerService) *CornerHandler {
 	return &CornerHandler{svc: svc}
 }
 
-func mapDomainCornerToDTO(corner *domain.Corner) Corner {
+func mapDomainCornerToDTO(corner *domain.Corner) CornerResponse {
 	if corner == nil {
-		return Corner{}
+		return CornerResponse{}
 	}
-	return Corner{
+	return CornerResponse{
 		ID:            string(corner.ID),
 		Name:          corner.Name,
 		TargetMinutes: corner.TargetMinutes,
@@ -34,7 +45,7 @@ func mapDomainCornerToDTO(corner *domain.Corner) Corner {
 // @Security     AdminAuth
 // @Produce      json
 // @Param        campId path string true "캠프 ID"
-// @Success      200 {array} Corner
+// @Success      200 {array} CornerResponse
 // @Failure      400 {object} ErrorResponse
 // @Failure      401 {object} ErrorResponse
 // @Router       /camps/{campId}/corners [get]
@@ -47,7 +58,7 @@ func (h *CornerHandler) ListCorners(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_ERROR", Message: err.Error()})
 	}
-	res := make([]Corner, len(corners))
+	res := make([]CornerResponse, len(corners))
 	for i, cr := range corners {
 		res[i] = mapDomainCornerToDTO(cr)
 	}
@@ -60,6 +71,8 @@ type CreateCornerRequest struct {
 	TargetMinutes int    `json:"targetMinutes"`
 }
 
+// @name CreateCornerRequest
+
 // @Summary      새 코너 추가
 // @Description  캠프에 새로운 코너를 생성한다.
 // @Tags         B. Resource Management (Admin)
@@ -67,7 +80,7 @@ type CreateCornerRequest struct {
 // @Accept       json
 // @Produce      json
 // @Param        request body CreateCornerRequest true "코너 생성 정보"
-// @Success      201 {object} Corner
+// @Success      201 {object} CornerResponse
 // @Failure      400 {object} ErrorResponse
 // @Failure      401 {object} ErrorResponse
 // @Router       /corners [post]
@@ -89,7 +102,7 @@ func (h *CornerHandler) CreateCorner(c echo.Context) error {
 // @Security     AdminAuth
 // @Produce      json
 // @Param        id path string true "코너 ID"
-// @Success      200 {object} Corner
+// @Success      200 {object} CornerResponse
 // @Failure      404 {object} ErrorResponse
 // @Router       /corners/{id} [get]
 func (h *CornerHandler) GetCorner(c echo.Context) error {
@@ -128,6 +141,8 @@ type BulkUpdateCornersRequest struct {
 	} `json:"corners"`
 }
 
+// @name BulkUpdateCornersRequest
+
 // @Summary      코너 대량 수정
 // @Description  여러 코너의 이름이나 목표 시간을 일괄 수정한다.
 // @Tags         B. Resource Management (Admin)
@@ -135,7 +150,7 @@ type BulkUpdateCornersRequest struct {
 // @Accept       json
 // @Produce      json
 // @Param        request body BulkUpdateCornersRequest true "수정할 코너 목록"
-// @Success      200 {array} Corner
+// @Success      200 {array} CornerResponse
 // @Failure      400 {object} ErrorResponse
 // @Failure      409 {object} ErrorResponse
 // @Router       /corners/bulk-update [put]
@@ -144,7 +159,7 @@ func (h *CornerHandler) BulkUpdateCorners(c echo.Context) error {
 	if err := c.Bind(&req); err != nil {
 		return c.JSON(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: "Invalid request body"})
 	}
-	res := make([]Corner, len(req.Corners))
+	res := make([]CornerResponse, len(req.Corners))
 	for i, cr := range req.Corners {
 		updated, err := h.svc.ModifyCornerSpecification(c.Request().Context(), domain.CornerID(cr.ID), cr.Name)
 		if err != nil {
