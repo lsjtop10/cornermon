@@ -26,7 +26,9 @@ API base URL, HTTP 타임아웃, SSE 하트비트 워치독 타임아웃은 `lib
 # 기본값 그대로 실행
 flutter run
 
-# 파일 기반으로 여러 값을 한 번에 주입
+# 파일 기반으로 여러 값을 한 번에 주입 (env/dev.json.example을 복사해 env/dev.json으로 사용,
+# 실제 값이 담긴 env/*.json은 .gitignore 대상이라 커밋되지 않음)
+cp env/dev.json.example env/dev.json
 flutter run --dart-define-from-file=env/dev.json
 
 # 개별 값만 오버라이드

@@ -43,3 +43,7 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# --dart-define-from-file 환경 설정 (예시 파일만 커밋 대상)
+/env/*.json
+!/env/*.json.example
