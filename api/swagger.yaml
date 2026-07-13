@@ -1,3 +1,4 @@
+basePath: /api/v1
 definitions:
   internal_infrastructure_web.AdminLoginRequest:
     properties:
@@ -599,7 +600,12 @@ definitions:
         type: string
     type: object
 info:
-  contact: {}
+  contact:
+    name: Cornermon API Team
+  description: 코너학습 운영 시스템(Cornermon) REST API 명세서. 모든 날짜/시간(date-time) 필드는 항상 UTC
+    기준 ISO 8601 형식(YYYY-MM-DDTHH:mm:ssZ)으로 송수신됩니다.
+  title: Cornermon API
+  version: 1.0.0
 paths:
   /api/v1/events/admin:
     get:
@@ -2014,4 +2020,25 @@ paths:
       summary: 트랙 인증 정보 전체 내보내기
       tags:
       - B. Resource Management (Admin)
+securityDefinitions:
+  AdminAuth:
+    description: 관리자 액세스 토큰 (ADMIN)
+    in: header
+    name: Authorization
+    type: apiKey
+  AdminRefreshAuth:
+    description: 관리자 리프레시 토큰 (ADMIN_REFRESH) — 액세스 토큰 재발급 전용
+    in: header
+    name: Authorization
+    type: apiKey
+  TrackAuth:
+    description: 트랙 세션 토큰 (TRACK) — 진행자가 PIN 로그인 후 발급
+    in: header
+    name: Authorization
+    type: apiKey
+  TrustedDeviceAuth:
+    description: 관리자 승인된 기기 신뢰 토큰 (TRUSTED_DEVICE)
+    in: header
+    name: Authorization
+    type: apiKey
 swagger: "2.0"
