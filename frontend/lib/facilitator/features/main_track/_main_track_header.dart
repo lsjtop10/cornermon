@@ -2,16 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../shared/api/ids.dart';
-import '../../../shared/api/providers/message_providers.dart';
-import '../../../shared/api/providers/visit_providers.dart';
-import '../../../shared/api/sse/track_event_stream.dart';
-import '../../../shared/design_system/tokens/colors.dart';
-import '../../../shared/design_system/tokens/spacing.dart';
-import '../../../shared/design_system/tokens/typography.dart';
-import '../../../shared/design_system/widgets/app_button.dart';
-import '../../../shared/design_system/widgets/connection_banner.dart';
-import '../../../shared/design_system/widgets/status_badge.dart';
+import 'package:cornermon/shared/api/ids.dart';
+import 'package:cornermon/shared/api/providers/message_providers.dart';
+import 'package:cornermon/shared/api/providers/visit_providers.dart';
+import 'package:cornermon/shared/api/sse/track_event_stream.dart';
+import 'package:cornermon/shared/design_system/tokens/colors.dart';
+import 'package:cornermon/shared/design_system/tokens/spacing.dart';
+import 'package:cornermon/shared/design_system/tokens/typography.dart';
+import 'package:cornermon/shared/design_system/widgets/app_button.dart';
+import 'package:cornermon/shared/design_system/widgets/connection_banner.dart';
+import 'package:cornermon/shared/design_system/widgets/status_badge.dart';
 
 /// B2 헤더 — 상태뱃지 + 공지/다이렉트 아이콘(안읽음 뱃지 포함) + 연결배너.
 class MainTrackHeader extends ConsumerWidget {
@@ -25,14 +25,18 @@ class MainTrackHeader extends ConsumerWidget {
         .watch(currentVisitProvider(trackId))
         .maybeWhen(data: (visit) => visit != null, orElse: () => false);
 
-    final unreadBroadcastCount = ref.watch(broadcastMessageListProvider).maybeWhen(
+    final unreadBroadcastCount = ref
+        .watch(broadcastMessageListProvider)
+        .maybeWhen(
           data: (messages) => messages.where((m) => m.readAt == null).length,
           orElse: () => 0,
         );
 
     // trackEvents 연결상태 매핑은 Phase 01의 TrackConnection이 이미 구현해뒀다(같은 파일,
     // trackEventsProvider를 build() 안 ref.listen으로 감싼 동일한 패턴) — 여기서 다시 만들지 않는다.
-    final connectionBannerState = switch (ref.watch(trackConnectionProvider(trackId))) {
+    final connectionBannerState = switch (ref.watch(
+      trackConnectionProvider(trackId),
+    )) {
       TrackConnectionState.connected => ConnectionBannerState.hidden,
       TrackConnectionState.reconnecting => ConnectionBannerState.reconnecting,
       TrackConnectionState.disconnected => ConnectionBannerState.disconnected,
@@ -48,7 +52,11 @@ class MainTrackHeader extends ConsumerWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              StatusBadge(status: isBusy ? TrackVisualStatus.busy : TrackVisualStatus.idle),
+              StatusBadge(
+                status: isBusy
+                    ? TrackVisualStatus.busy
+                    : TrackVisualStatus.idle,
+              ),
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -75,7 +83,11 @@ class MainTrackHeader extends ConsumerWidget {
 }
 
 class _IconWithBadge extends StatelessWidget {
-  const _IconWithBadge({required this.icon, required this.count, required this.onPressed});
+  const _IconWithBadge({
+    required this.icon,
+    required this.count,
+    required this.onPressed,
+  });
 
   final IconData icon;
   final int count;
@@ -100,7 +112,10 @@ class _IconWithBadge extends StatelessWidget {
             right: 2.0,
             top: 2.0,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 5.0, vertical: 1.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 5.0,
+                vertical: 1.0,
+              ),
               constraints: const BoxConstraints(minWidth: 16.0),
               decoration: BoxDecoration(
                 color: colors.danger,
@@ -108,7 +123,10 @@ class _IconWithBadge extends StatelessWidget {
               ),
               child: Text(
                 count > 99 ? '99+' : '$count',
-                style: AppTypography.label.copyWith(color: colors.bgSurface, fontSize: 10.0),
+                style: AppTypography.label.copyWith(
+                  color: colors.bgSurface,
+                  fontSize: 10.0,
+                ),
                 textAlign: TextAlign.center,
               ),
             ),

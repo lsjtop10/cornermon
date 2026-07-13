@@ -2,9 +2,9 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
-import '../../shared/design_system/tokens/colors.dart';
-import '../../shared/design_system/tokens/typography.dart';
-import '../../shared/design_system/widgets/app_button.dart';
+import 'package:cornermon/shared/design_system/tokens/colors.dart';
+import 'package:cornermon/shared/design_system/tokens/typography.dart';
+import 'package:cornermon/shared/design_system/widgets/app_button.dart';
 
 /// B2 종료확인 — 첫 탭은 무장(armed)만, armDuration 안에 재탭해야 onConfirmed 호출.
 class DoubleTapConfirmButton extends StatefulWidget {

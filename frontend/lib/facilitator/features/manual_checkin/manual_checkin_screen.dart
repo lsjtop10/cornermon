@@ -4,15 +4,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:cornermon_api_gen/cornermon_api_gen.dart';
 
-import '../../../shared/api/ids.dart';
-import '../../../shared/api/providers/group_providers.dart';
-import '../../../shared/api/providers/visit_providers.dart';
-import '../../../shared/design_system/tokens/colors.dart';
-import '../../../shared/design_system/tokens/spacing.dart';
-import '../../../shared/design_system/tokens/typography.dart';
-import '../../../shared/design_system/widgets/confirm_modal.dart';
-import '../../../shared/design_system/widgets/empty_state.dart';
-import '../../session/track_session_provider.dart';
+import 'package:cornermon/shared/api/ids.dart';
+import 'package:cornermon/shared/api/providers/group_providers.dart';
+import 'package:cornermon/shared/api/providers/visit_providers.dart';
+import 'package:cornermon/shared/design_system/tokens/colors.dart';
+import 'package:cornermon/shared/design_system/tokens/spacing.dart';
+import 'package:cornermon/shared/design_system/tokens/typography.dart';
+import 'package:cornermon/shared/design_system/widgets/confirm_modal.dart';
+import 'package:cornermon/shared/design_system/widgets/empty_state.dart';
+import 'package:cornermon/facilitator/session/track_session_provider.dart';
 
 /// B4 — 수동 처리(조 선택, 입장 전용). QR 배지 훼손 등 예외 상황에서만 쓰는 저빈도 화면
 /// (§domain-model 2.6-b, 퇴장은 배지 상태와 무관하게 항상 B2에서 처리하므로 이 화면의 대상이 아니다).
@@ -20,7 +20,8 @@ class ManualCheckinScreen extends ConsumerStatefulWidget {
   const ManualCheckinScreen({super.key});
 
   @override
-  ConsumerState<ManualCheckinScreen> createState() => _ManualCheckinScreenState();
+  ConsumerState<ManualCheckinScreen> createState() =>
+      _ManualCheckinScreenState();
 }
 
 class _ManualCheckinScreenState extends ConsumerState<ManualCheckinScreen> {
@@ -31,7 +32,9 @@ class _ManualCheckinScreenState extends ConsumerState<ManualCheckinScreen> {
   @override
   void initState() {
     super.initState();
-    _searchController.addListener(() => setState(() => _query = _searchController.text.trim()));
+    _searchController.addListener(
+      () => setState(() => _query = _searchController.text.trim()),
+    );
   }
 
   @override
@@ -54,7 +57,9 @@ class _ManualCheckinScreenState extends ConsumerState<ManualCheckinScreen> {
     final colors = isDark ? AppColors.dark : AppColors.light;
 
     final session = ref.watch(trackSessionProvider);
-    final cornerId = session is TrackSessionAuthenticated ? session.corner.id : null;
+    final cornerId = session is TrackSessionAuthenticated
+        ? session.corner.id
+        : null;
     final groupsAsync = ref.watch(groupListProvider());
 
     return Scaffold(
@@ -90,10 +95,15 @@ class _ManualCheckinScreenState extends ConsumerState<ManualCheckinScreen> {
                 final query = _query.toLowerCase();
                 final filtered = query.isEmpty
                     ? groups
-                    : groups.where((g) => g.name.toLowerCase().contains(query)).toList();
+                    : groups
+                          .where((g) => g.name.toLowerCase().contains(query))
+                          .toList();
 
                 if (filtered.isEmpty) {
-                  return const EmptyState(message: '검색 결과가 없습니다', icon: Icons.search_off);
+                  return const EmptyState(
+                    message: '검색 결과가 없습니다',
+                    icon: Icons.search_off,
+                  );
                 }
 
                 return ListView.separated(
@@ -102,13 +112,17 @@ class _ManualCheckinScreenState extends ConsumerState<ManualCheckinScreen> {
                     vertical: AppSpacing.space2,
                   ),
                   itemCount: filtered.length,
-                  separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.space3),
+                  separatorBuilder: (_, _) =>
+                      const SizedBox(height: AppSpacing.space3),
                   itemBuilder: (context, index) {
                     final group = filtered[index];
                     // 자기 코너(=현재 로그인한 트랙의 코너)가 이미 COMPLETED면 재시작 자체를 막는다.
-                    final completed = cornerId != null &&
+                    final completed =
+                        cornerId != null &&
                         group.itinerary.any(
-                          (p) => p.cornerId == cornerId && p.status == VisitStatusPerCorner.COMPLETED,
+                          (p) =>
+                              p.cornerId == cornerId &&
+                              p.status == VisitStatusPerCorner.COMPLETED,
                         );
                     return _GroupCard(
                       group: group,
@@ -119,8 +133,10 @@ class _ManualCheckinScreenState extends ConsumerState<ManualCheckinScreen> {
                 );
               },
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (error, stackTrace) =>
-                  const EmptyState(message: '조 목록을 불러오지 못했습니다', icon: Icons.error_outline),
+              error: (error, stackTrace) => const EmptyState(
+                message: '조 목록을 불러오지 못했습니다',
+                icon: Icons.error_outline,
+              ),
             ),
           ),
         ],
@@ -140,12 +156,16 @@ class _ManualCheckinScreenState extends ConsumerState<ManualCheckinScreen> {
 
     setState(() => _submitting = true);
     try {
-      await ref.read(visitActionsProvider(_trackId).notifier).startManual(GroupId(group.id));
+      await ref
+          .read(visitActionsProvider(_trackId).notifier)
+          .startManual(GroupId(group.id));
       if (!mounted) return;
       context.pop(); // 성공 → B2로 복귀
     } on DioException catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(_messageFor(e))));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(_messageFor(e))));
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
@@ -181,7 +201,10 @@ class _WarningBanner extends StatelessWidget {
       width: double.infinity,
       // ignore: deprecated_member_use
       color: colors.warning.withOpacity(isDark ? 0.25 : 0.15),
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.space4, vertical: AppSpacing.space3),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.space4,
+        vertical: AppSpacing.space3,
+      ),
       child: Row(
         children: [
           Icon(Icons.warning_amber_rounded, color: colors.warning, size: 20.0),
@@ -202,7 +225,11 @@ class _WarningBanner extends StatelessWidget {
 }
 
 class _GroupCard extends StatelessWidget {
-  const _GroupCard({required this.group, required this.completed, required this.onTap});
+  const _GroupCard({
+    required this.group,
+    required this.completed,
+    required this.onTap,
+  });
 
   final Group group;
   final bool completed;
@@ -221,7 +248,10 @@ class _GroupCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16.0),
         child: Container(
           constraints: const BoxConstraints(minHeight: 64.0),
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.space4, vertical: AppSpacing.space3),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.space4,
+            vertical: AppSpacing.space3,
+          ),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16.0),
             border: Border.all(color: colors.border),
@@ -240,14 +270,19 @@ class _GroupCard extends StatelessWidget {
               if (completed) ...[
                 const SizedBox(width: AppSpacing.space3),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 4.0),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10.0,
+                    vertical: 4.0,
+                  ),
                   decoration: BoxDecoration(
                     border: Border.all(color: colors.textDisabled),
                     borderRadius: BorderRadius.circular(100.0),
                   ),
                   child: Text(
                     '완료됨',
-                    style: AppTypography.label.copyWith(color: colors.textDisabled),
+                    style: AppTypography.label.copyWith(
+                      color: colors.textDisabled,
+                    ),
                   ),
                 ),
               ],

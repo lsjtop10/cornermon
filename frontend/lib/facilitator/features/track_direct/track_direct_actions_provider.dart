@@ -1,8 +1,8 @@
 import 'package:cornermon_api_gen/cornermon_api_gen.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../../shared/api/ids.dart';
-import '../../../shared/api/providers/message_providers.dart';
+import 'package:cornermon/shared/api/ids.dart';
+import 'package:cornermon/shared/api/providers/message_providers.dart';
 
 part 'track_direct_actions_provider.g.dart';
 
@@ -16,7 +16,9 @@ class TrackDirectActions extends _$TrackDirectActions {
     final api = ref.read(messageApiProvider);
     await api.tracksTrackIdMessagesPost(
       trackId: trackId.value,
-      messagesBroadcastPostRequest: MessagesBroadcastPostRequest((b) => b..content = content),
+      messagesBroadcastPostRequest: MessagesBroadcastPostRequest(
+        (b) => b..content = content,
+      ),
     );
     ref.invalidate(trackMessageListProvider(trackId));
   }

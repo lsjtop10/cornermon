@@ -3,16 +3,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../features/broadcast_inbox/broadcast_inbox_screen.dart';
-import '../features/device_pending/device_pending_screen.dart';
-import '../features/main_track/main_track_screen.dart';
-import '../features/manual_checkin/manual_checkin_screen.dart';
-import '../features/pin_login/pin_login_screen.dart';
-import '../features/qr_scan/qr_scan_screen.dart';
-import '../features/track_confirm/track_confirm_screen.dart';
-import '../features/track_direct/track_direct_screen.dart';
-import '../session/device_trust_provider.dart';
-import '../session/track_session_provider.dart';
+import 'package:cornermon/facilitator/features/broadcast_inbox/broadcast_inbox_screen.dart';
+import 'package:cornermon/facilitator/features/device_pending/device_pending_screen.dart';
+import 'package:cornermon/facilitator/features/main_track/main_track_screen.dart';
+import 'package:cornermon/facilitator/features/manual_checkin/manual_checkin_screen.dart';
+import 'package:cornermon/facilitator/features/pin_login/pin_login_screen.dart';
+import 'package:cornermon/facilitator/features/qr_scan/qr_scan_screen.dart';
+import 'package:cornermon/facilitator/features/track_confirm/track_confirm_screen.dart';
+import 'package:cornermon/facilitator/features/track_direct/track_direct_screen.dart';
+import 'package:cornermon/facilitator/session/device_trust_provider.dart';
+import 'package:cornermon/facilitator/session/track_session_provider.dart';
 
 part 'facilitator_router.g.dart';
 
@@ -28,19 +28,33 @@ GoRouter facilitatorRouter(Ref ref) {
     refreshListenable: refresh,
     redirect: (context, state) => _redirect(ref, state),
     routes: [
-      GoRoute(path: '/device-pending', builder: (_, _) => const DevicePendingScreen()),
+      GoRoute(
+        path: '/device-pending',
+        builder: (_, _) => const DevicePendingScreen(),
+      ),
       GoRoute(
         path: '/pin-login',
         builder: (_, _) => const PinLoginScreen(),
-        routes: [GoRoute(path: 'confirm', builder: (_, _) => const TrackConfirmScreen())],
+        routes: [
+          GoRoute(
+            path: 'confirm',
+            builder: (_, _) => const TrackConfirmScreen(),
+          ),
+        ],
       ),
       GoRoute(
         path: '/main',
         builder: (_, _) => const MainTrackScreen(),
         routes: [
           GoRoute(path: 'scan', builder: (_, _) => const QrScanScreen()),
-          GoRoute(path: 'manual', builder: (_, _) => const ManualCheckinScreen()),
-          GoRoute(path: 'broadcast', builder: (_, _) => const BroadcastInboxScreen()),
+          GoRoute(
+            path: 'manual',
+            builder: (_, _) => const ManualCheckinScreen(),
+          ),
+          GoRoute(
+            path: 'broadcast',
+            builder: (_, _) => const BroadcastInboxScreen(),
+          ),
           GoRoute(path: 'direct', builder: (_, _) => const TrackDirectScreen()),
         ],
       ),

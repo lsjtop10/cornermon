@@ -1,11 +1,11 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:cornermon_api_gen/cornermon_api_gen.dart';
 
-import '../../../shared/api/ids.dart';
-import '../../../shared/api/providers/message_providers.dart';
-import '../../../shared/api/providers/visit_providers.dart';
-import '../../../shared/api/sse/track_event_stream.dart';
-import '../../session/track_session_provider.dart';
+import 'package:cornermon/shared/api/ids.dart';
+import 'package:cornermon/shared/api/providers/message_providers.dart';
+import 'package:cornermon/shared/api/providers/visit_providers.dart';
+import 'package:cornermon/shared/api/sse/track_event_stream.dart';
+import 'package:cornermon/facilitator/session/track_session_provider.dart';
 
 part 'track_event_coordinator.g.dart';
 

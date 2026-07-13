@@ -4,11 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../shared/design_system/tokens/colors.dart';
-import '../../../shared/design_system/tokens/spacing.dart';
-import '../../../shared/design_system/tokens/typography.dart';
-import '../../../shared/design_system/widgets/app_button.dart';
-import '../../widgets/pin_otp_input.dart';
+import 'package:cornermon/shared/design_system/tokens/colors.dart';
+import 'package:cornermon/shared/design_system/tokens/spacing.dart';
+import 'package:cornermon/shared/design_system/tokens/typography.dart';
+import 'package:cornermon/shared/design_system/widgets/app_button.dart';
+import 'package:cornermon/facilitator/widgets/pin_otp_input.dart';
 import 'pin_login_error_provider.dart';
 
 /// B1. 트랙 PIN 6자리로 트랙 세션 인증.
@@ -32,13 +32,16 @@ class PinLoginScreen extends ConsumerWidget {
               children: [
                 Text(
                   '트랙 PIN을 입력하세요',
-                  style: AppTypography.title2.copyWith(color: colors.textPrimary),
+                  style: AppTypography.title2.copyWith(
+                    color: colors.textPrimary,
+                  ),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: AppSpacing.space8),
                 _PinLoginBody(
                   error: error,
-                  onSubmitted: (pin) => ref.read(pinLoginErrorProvider.notifier).submit(pin),
+                  onSubmitted: (pin) =>
+                      ref.read(pinLoginErrorProvider.notifier).submit(pin),
                 ),
               ],
             ),
@@ -148,7 +151,9 @@ class _PinLoginBodyState extends State<_PinLoginBody> {
               const SizedBox(height: AppSpacing.space2),
               Text(
                 '$retryAfterSeconds초 후 다시 시도할 수 있습니다',
-                style: AppTypography.caption.copyWith(color: colors.textSecondary),
+                style: AppTypography.caption.copyWith(
+                  color: colors.textSecondary,
+                ),
                 textAlign: TextAlign.center,
               ),
             ],

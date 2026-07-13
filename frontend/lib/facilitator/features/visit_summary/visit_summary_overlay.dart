@@ -4,21 +4,26 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cornermon_api_gen/cornermon_api_gen.dart';
 
-import '../../../shared/api/ids.dart';
-import '../../../shared/api/providers/group_providers.dart';
-import '../../../shared/design_system/tokens/colors.dart';
-import '../../../shared/design_system/tokens/spacing.dart';
-import '../../../shared/design_system/tokens/typography.dart';
+import 'package:cornermon/shared/api/ids.dart';
+import 'package:cornermon/shared/api/providers/group_providers.dart';
+import 'package:cornermon/shared/design_system/tokens/colors.dart';
+import 'package:cornermon/shared/design_system/tokens/spacing.dart';
+import 'package:cornermon/shared/design_system/tokens/typography.dart';
 
 /// B5 — 방문 종료 확인 직후 소요시간/편차를 짧게 보여주고 자동으로 사라지는 오버레이.
 class VisitSummaryOverlay extends ConsumerStatefulWidget {
-  const VisitSummaryOverlay({required this.visit, required this.onDismiss, super.key});
+  const VisitSummaryOverlay({
+    required this.visit,
+    required this.onDismiss,
+    super.key,
+  });
 
   final VisitSummary visit;
   final VoidCallback onDismiss;
 
   @override
-  ConsumerState<VisitSummaryOverlay> createState() => _VisitSummaryOverlayState();
+  ConsumerState<VisitSummaryOverlay> createState() =>
+      _VisitSummaryOverlayState();
 }
 
 class _VisitSummaryOverlayState extends ConsumerState<VisitSummaryOverlay> {
@@ -64,10 +69,14 @@ class _VisitSummaryOverlayState extends ConsumerState<VisitSummaryOverlay> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final colors = isDark ? AppColors.dark : AppColors.light;
 
-    final groupAsync = ref.watch(groupDetailProvider(GroupId(widget.visit.groupId)));
+    final groupAsync = ref.watch(
+      groupDetailProvider(GroupId(widget.visit.groupId)),
+    );
     final duration = widget.visit.durationSeconds ?? 0;
     final deviation = widget.visit.deviationSeconds ?? 0;
-    final deviationColor = deviation > 0 ? colors.statusAlert : colors.statusIdle;
+    final deviationColor = deviation > 0
+        ? colors.statusAlert
+        : colors.statusIdle;
 
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
@@ -91,7 +100,11 @@ class _VisitSummaryOverlayState extends ConsumerState<VisitSummaryOverlay> {
                   alignment: Alignment.topRight,
                   child: GestureDetector(
                     onTap: _dismiss,
-                    child: Icon(Icons.close, color: colors.textSecondary, size: 20.0),
+                    child: Icon(
+                      Icons.close,
+                      color: colors.textSecondary,
+                      size: 20.0,
+                    ),
                   ),
                 ),
                 Icon(Icons.check_circle, color: colors.statusIdle, size: 64.0),
@@ -99,25 +112,33 @@ class _VisitSummaryOverlayState extends ConsumerState<VisitSummaryOverlay> {
                 groupAsync.when(
                   data: (group) => Text(
                     '${group.name} 처리 완료',
-                    style: AppTypography.title3.copyWith(color: colors.textPrimary),
+                    style: AppTypography.title3.copyWith(
+                      color: colors.textPrimary,
+                    ),
                     textAlign: TextAlign.center,
                   ),
                   loading: () => const SizedBox(height: 24.0),
                   error: (_, _) => Text(
                     '처리 완료',
-                    style: AppTypography.title3.copyWith(color: colors.textPrimary),
+                    style: AppTypography.title3.copyWith(
+                      color: colors.textPrimary,
+                    ),
                     textAlign: TextAlign.center,
                   ),
                 ),
                 const SizedBox(height: AppSpacing.space4),
                 Text(
                   _formatDuration(duration),
-                  style: AppTypography.title1.copyWith(color: colors.textPrimary),
+                  style: AppTypography.title1.copyWith(
+                    color: colors.textPrimary,
+                  ),
                 ),
                 const SizedBox(height: AppSpacing.space1),
                 Text(
                   _formatSignedDuration(deviation),
-                  style: AppTypography.bodyEmphasis.copyWith(color: deviationColor),
+                  style: AppTypography.bodyEmphasis.copyWith(
+                    color: deviationColor,
+                  ),
                 ),
               ],
             ),

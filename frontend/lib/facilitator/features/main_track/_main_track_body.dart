@@ -5,13 +5,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:cornermon_api_gen/cornermon_api_gen.dart';
 
-import '../../../shared/api/ids.dart';
-import '../../../shared/api/providers/group_providers.dart';
-import '../../../shared/api/providers/visit_providers.dart';
-import '../../../shared/design_system/tokens/colors.dart';
-import '../../../shared/design_system/tokens/spacing.dart';
-import '../../../shared/design_system/tokens/typography.dart';
-import '../../../shared/design_system/widgets/app_button.dart';
+import 'package:cornermon/shared/api/ids.dart';
+import 'package:cornermon/shared/api/providers/group_providers.dart';
+import 'package:cornermon/shared/api/providers/visit_providers.dart';
+import 'package:cornermon/shared/design_system/tokens/colors.dart';
+import 'package:cornermon/shared/design_system/tokens/spacing.dart';
+import 'package:cornermon/shared/design_system/tokens/typography.dart';
+import 'package:cornermon/shared/design_system/widgets/app_button.dart';
 import '../../widgets/double_tap_confirm_button.dart';
 
 /// B2 바디 — IDLE(코너명 + 스캔시작) / BUSY(조번호 + 타이머 + 진행률바 + 종료확인).
@@ -75,7 +75,9 @@ class _IdleBody extends StatelessWidget {
             const SizedBox(height: AppSpacing.space2),
             Text(
               '$trackNo번 트랙',
-              style: AppTypography.caption.copyWith(color: colors.textSecondary),
+              style: AppTypography.caption.copyWith(
+                color: colors.textSecondary,
+              ),
             ),
             const SizedBox(height: AppSpacing.space10),
             SizedBox(
@@ -120,7 +122,10 @@ class _BusyBodyState extends ConsumerState<_BusyBody> {
     _updateElapsed();
     // 서버 폴링이 아니라 시작시각 기준 로컬 계산 — startedAt/now 모두 같은 절대 순간을
     // 정확히 표현하는 UTC라 타임존 변환 없이도 경과시간은 정확하다(§00 §0-e).
-    _ticker = Timer.periodic(const Duration(seconds: 1), (_) => _updateElapsed());
+    _ticker = Timer.periodic(
+      const Duration(seconds: 1),
+      (_) => _updateElapsed(),
+    );
   }
 
   @override
@@ -139,13 +144,16 @@ class _BusyBodyState extends ConsumerState<_BusyBody> {
 
   void _updateElapsed() {
     if (!mounted) return;
-    setState(() => _elapsed = DateTime.now().difference(widget.visit.startedAt));
+    setState(
+      () => _elapsed = DateTime.now().difference(widget.visit.startedAt),
+    );
   }
 
   Future<void> _endCurrent() async {
     try {
-      final summary =
-          await ref.read(visitActionsProvider(widget.trackId).notifier).endCurrent();
+      final summary = await ref
+          .read(visitActionsProvider(widget.trackId).notifier)
+          .endCurrent();
       widget.onVisitEnded(summary);
     } catch (_) {
       if (!mounted) return;
@@ -166,13 +174,18 @@ class _BusyBodyState extends ConsumerState<_BusyBody> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final colors = isDark ? AppColors.dark : AppColors.light;
-    final groupAsync = ref.watch(groupDetailProvider(GroupId(widget.visit.groupId)));
+    final groupAsync = ref.watch(
+      groupDetailProvider(GroupId(widget.visit.groupId)),
+    );
 
-    final targetSeconds = widget.targetMinutes != null ? widget.targetMinutes! * 60 : null;
+    final targetSeconds = widget.targetMinutes != null
+        ? widget.targetMinutes! * 60
+        : null;
     final elapsedSeconds = _elapsed.inSeconds < 0 ? 0 : _elapsed.inSeconds;
     // 트랙 상태 자체는 여전히 BUSY — 이 색은 진행률 바만의 초과 여부 보조 신호다
     // (design-system.md §1.2 "BUSY와 ALERT를 혼동하지 말 것").
-    final isOverTarget = targetSeconds != null && elapsedSeconds > targetSeconds;
+    final isOverTarget =
+        targetSeconds != null && elapsedSeconds > targetSeconds;
     final progress = targetSeconds != null && targetSeconds > 0
         ? (elapsedSeconds / targetSeconds).clamp(0.0, 1.0).toDouble()
         : null;

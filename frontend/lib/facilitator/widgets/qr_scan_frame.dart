@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../shared/design_system/tokens/colors.dart';
+import 'package:cornermon/shared/design_system/tokens/colors.dart';
 
 /// B3 카메라 프리뷰 위 스캔 가이드 프레임 — 상태(대기/성공/실패)에 따라 테두리색만 바뀜.
 enum QrScanFrameState { scanning, success, failure }
