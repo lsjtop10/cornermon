@@ -3,8 +3,8 @@ import 'dart:io';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:cornermon_api_gen/cornermon_api_gen.dart';
 
-import '../../shared/api/providers/auth_device_trust_providers.dart';
-import '../../shared/auth/secure_token_store.dart';
+import 'package:cornermon/shared/api/providers/auth_device_trust_providers.dart';
+import 'package:cornermon/shared/auth/secure_token_store.dart';
 
 part 'device_trust_provider.g.dart';
 
@@ -16,7 +16,8 @@ const _deviceTokenKey = 'device_trust_token';
 const _deviceRegistrationIdKey = 'device_trust_registration_id';
 const _deviceStatusKey = 'device_trust_status';
 
-DeviceTrustStatus _fromApiStatus(DeviceRegistrationStatus status) => switch (status) {
+DeviceTrustStatus _fromApiStatus(DeviceRegistrationStatus status) =>
+    switch (status) {
       DeviceRegistrationStatus.PENDING => DeviceTrustStatus.pending,
       DeviceRegistrationStatus.APPROVED => DeviceTrustStatus.approved,
       DeviceRegistrationStatus.REJECTED => DeviceTrustStatus.rejected,
