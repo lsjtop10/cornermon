@@ -22,6 +22,16 @@ type AuditHandler struct {
 	querier AuditLogQuerier
 }
 
+type AuditLogResponse struct {
+	ID         string                 `json:"id" format:"uuid"`
+	Actor      string                 `json:"actor"`
+	Action     string                 `json:"action"`
+	Target     string                 `json:"target"`
+	Success    bool                   `json:"success"`
+	OccurredAt time.Time              `json:"occurredAt" format:"date-time"`
+	Metadata   map[string]interface{} `json:"metadata,omitempty"`
+} // @name AuditLogResponse
+
 func NewAuditHandler(querier AuditLogQuerier) *AuditHandler {
 	return &AuditHandler{
 		querier: querier,
@@ -82,9 +92,9 @@ func (h *AuditHandler) ListAuditLogs(c echo.Context) error {
 		}
 	}
 
-	dtos := make([]AuditLog, len(page.Logs))
+	dtos := make([]AuditLogResponse, len(page.Logs))
 	for i, log := range page.Logs {
-		dtos[i] = AuditLog{
+		dtos[i] = AuditLogResponse{
 			ID:         string(log.ID),
 			Actor:      log.Actor,
 			Action:     log.Action,
@@ -103,9 +113,9 @@ func (h *AuditHandler) ListAuditLogs(c echo.Context) error {
 }
 
 type AuditLogPageResponse struct {
-	Logs       []AuditLog `json:"logs"`
-	NextCursor string     `json:"nextCursor,omitempty"`
-}
+	Logs       []AuditLogResponse `json:"logs"`
+	NextCursor string             `json:"nextCursor,omitempty"`
+} // @name AuditLogPageResponse
 
 type auditLogCursorPayload struct {
 	OccurredAt time.Time `json:"occurredAt"`

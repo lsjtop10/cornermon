@@ -14,21 +14,36 @@ type GroupHandler struct {
 	groupUC *usecase.GroupService
 }
 
+type CornerProgressResponse struct {
+	CornerID   string `json:"cornerId" format:"uuid"`
+	CornerName string `json:"cornerName"`
+	Status     string `json:"status" enums:"NOT_VISITED,IN_PROGRESS,COMPLETED"`
+} // @name CornerProgressResponse
+
+type GroupResponse struct {
+	ID         string                   `json:"id" format:"uuid"`
+	Name       string                   `json:"name" example:"1조"`
+	BadgeID    string                   `json:"badgeId" format:"uuid"`
+	Status     string                   `json:"status" enums:"IDLE_MOVING,AT_CORNER,FINISHED"`
+	IsFinished bool                     `json:"isFinished"`
+	Itinerary  []CornerProgressResponse `json:"itinerary"`
+} // @name GroupResponse
+
 func NewGroupHandler(groupUC *usecase.GroupService) *GroupHandler {
 	return &GroupHandler{groupUC: groupUC}
 }
 
-func mapGroupToDTO(g *domain.Group) Group {
-	res := Group{
+func mapGroupToDTO(g *domain.Group) GroupResponse {
+	res := GroupResponse{
 		ID:         string(g.ID),
 		Name:       g.Name,
 		BadgeID:    string(g.BadgeID),
 		Status:     string(g.Status()),
 		IsFinished: g.IsFinished(),
-		Itinerary:  make([]CornerProgress, 0, len(g.Itinerary)),
+		Itinerary:  make([]CornerProgressResponse, 0, len(g.Itinerary)),
 	}
 	for _, c := range g.Itinerary {
-		res.Itinerary = append(res.Itinerary, CornerProgress{
+		res.Itinerary = append(res.Itinerary, CornerProgressResponse{
 			CornerID: string(c.CornerID),
 			Status:   string(c.Status),
 		})
@@ -42,7 +57,7 @@ func mapGroupToDTO(g *domain.Group) Group {
 // @Security     AdminAuth
 // @Produce      json
 // @Param        campId path string true "캠프 ID"
-// @Success      200 {array} Group
+// @Success      200 {array} GroupResponse
 // @Router       /camps/{campId}/groups [get]
 func (h *GroupHandler) ListGroups(c echo.Context) error {
 	campID := c.Param("campId")
@@ -50,7 +65,7 @@ func (h *GroupHandler) ListGroups(c echo.Context) error {
 	if err != nil {
 		return err
 	}
-	res := make([]Group, len(groups))
+	res := make([]GroupResponse, len(groups))
 	for i, g := range groups {
 		res[i] = mapGroupToDTO(g)
 	}
@@ -63,7 +78,7 @@ func (h *GroupHandler) ListGroups(c echo.Context) error {
 // @Security     TrackAuth
 // @Produce      json
 // @Param        trackId path string true "트랙 ID"
-// @Success      200 {array} Group
+// @Success      200 {array} GroupResponse
 // @Failure      401 {object} ErrorResponse
 // @Failure      403 {object} ErrorResponse "세션 트랙과 요청 트랙 불일치"
 // @Failure      404 {object} ErrorResponse "트랙 또는 코너 없음"
@@ -83,7 +98,7 @@ func (h *GroupHandler) ListGroupsByTrack(c echo.Context) error {
 	if err != nil {
 		return err
 	}
-	res := make([]Group, len(groups))
+	res := make([]GroupResponse, len(groups))
 	for i, group := range groups {
 		res[i] = mapGroupToDTO(group)
 	}
@@ -96,7 +111,7 @@ func (h *GroupHandler) ListGroupsByTrack(c echo.Context) error {
 // @Security     AdminAuth
 // @Produce      json
 // @Param        id path string true "조 ID"
-// @Success      200 {object} Group
+// @Success      200 {object} GroupResponse
 // @Router       /groups/{id} [get]
 func (h *GroupHandler) GetGroup(c echo.Context) error {
 	id := c.Param("id")
@@ -116,7 +131,7 @@ func (h *GroupHandler) GetGroup(c echo.Context) error {
 // @Security     AdminAuth
 // @Produce      json
 // @Param        id path string true "조 ID"
-// @Success      200 {array} VisitSummary
+// @Success      200 {array} VisitSummaryResponse
 // @Router       /groups/{id}/visits [get]
 func (h *GroupHandler) ListGroupVisits(c echo.Context) error {
 	id := domain.GroupID(c.Param("id"))
@@ -125,7 +140,7 @@ func (h *GroupHandler) ListGroupVisits(c echo.Context) error {
 		return err
 	}
 
-	res := make([]VisitSummary, len(details))
+	res := make([]VisitSummaryResponse, len(details))
 	for i, d := range details {
 		v := d.Visit
 		c := d.Corner
@@ -146,7 +161,7 @@ func (h *GroupHandler) ListGroupVisits(c echo.Context) error {
 			deviation = &val
 		}
 
-		res[i] = VisitSummary{
+		res[i] = VisitSummaryResponse{
 			ID:               string(v.ID),
 			GroupID:          string(v.GroupID),
 			CornerID:         string(v.CornerID),

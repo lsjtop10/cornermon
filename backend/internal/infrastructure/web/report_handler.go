@@ -2,6 +2,7 @@ package web
 
 import (
 	"net/http"
+	"time"
 
 	"cornermon/backend/internal/domain"
 	"cornermon/backend/internal/usecase"
@@ -14,6 +15,69 @@ type ReportHandler struct {
 	querier       usecase.ReportQuerier
 }
 
+type TimelineStatsResponse struct{} // @name TimelineStatsResponse
+
+type OperationalStatsResponse struct{} // @name OperationalStatsResponse
+
+type TrackStatsResponse struct {
+	TrackID             string  `json:"trackId" format:"uuid"`
+	TrackNo             int     `json:"trackNo"`
+	HandledVisitCount   int     `json:"handledVisitCount"`
+	AvgDeviationSeconds int     `json:"avgDeviationSeconds"`
+	ManualVisitRatio    float32 `json:"manualVisitRatio"`
+} // @name TrackStatsResponse
+
+type CornerStatsResponse struct {
+	CornerID            string                   `json:"cornerId" format:"uuid"`
+	CornerName          string                   `json:"cornerName"`
+	CompletedVisitCount int                      `json:"completedVisitCount"`
+	UnvisitedGroups     []UnvisitedGroupResponse `json:"unvisitedGroups"`
+} // @name CornerStatsResponse
+
+type UnvisitedGroupResponse struct {
+	GroupID   string `json:"groupId" format:"uuid"`
+	GroupName string `json:"groupName"`
+} // @name UnvisitedGroupResponse
+
+type GroupStatsResponse struct {
+	GroupID              string `json:"groupId" format:"uuid"`
+	GroupName            string `json:"groupName"`
+	CompletedCount       int    `json:"completedCount"`
+	TotalDurationSeconds int    `json:"totalDurationSeconds"`
+} // @name GroupStatsResponse
+
+type CampSummaryStatsResponse struct {
+	TotalGroups            int                         `json:"totalGroups"`
+	FinishedGroupCount     int                         `json:"finishedGroupCount"`
+	CompletionRate         float32                     `json:"completionRate"`
+	TotalVisits            int                         `json:"totalVisits"`
+	VisitCompletionRate    float32                     `json:"visitCompletionRate"`
+	ProgramDurationSeconds int                         `json:"programDurationSeconds"`
+	AvgDeviationSeconds    float32                     `json:"avgDeviationSeconds"`
+	ManualVisitRatio       float32                     `json:"manualVisitRatio"`
+	RuleOverrideCount      int                         `json:"ruleOverrideCount"`
+	TrackOperationCount    int                         `json:"trackOperationCount"`
+	ExceptionApprovalCount int                         `json:"exceptionApprovalCount"`
+	BottleneckRanking      []BottleneckRankingResponse `json:"bottleneckRanking"`
+} // @name CampSummaryStatsResponse
+
+type BottleneckRankingResponse struct {
+	CornerID            string  `json:"cornerId" format:"uuid"`
+	CornerName          string  `json:"cornerName"`
+	AvgDeviationSeconds float32 `json:"avgDeviationSeconds"`
+} // @name BottleneckRankingResponse
+
+type CampReportResponse struct {
+	CampID           string                   `json:"campId" format:"uuid"`
+	GeneratedAt      time.Time                `json:"generatedAt" format:"date-time"`
+	Summary          CampSummaryStatsResponse `json:"summary"`
+	CornerStats      []CornerStatsResponse    `json:"cornerStats"`
+	TrackStats       []TrackStatsResponse     `json:"trackStats"`
+	GroupStats       []GroupStatsResponse     `json:"groupStats"`
+	Timeline         TimelineStatsResponse    `json:"timeline"`
+	OperationalStats OperationalStatsResponse `json:"operationalStats"`
+} // @name CampReportResponse
+
 func NewReportHandler(
 	reportService *usecase.ReportService,
 	querier usecase.ReportQuerier,
@@ -25,8 +89,8 @@ func NewReportHandler(
 	}
 }
 
-// mapSummary maps usecase.CampReport to CampSummaryStats
-func mapSummary(r *usecase.CampReport) CampSummaryStats {
+// mapSummary maps usecase.CampReport to CampSummaryStatsResponse.
+func mapSummary(r *usecase.CampReport) CampSummaryStatsResponse {
 	completionRate := float32(0)
 	if r.TotalGroups > 0 {
 		completionRate = float32(r.FinishedGroups) / float32(r.TotalGroups) * 100
@@ -38,7 +102,7 @@ func mapSummary(r *usecase.CampReport) CampSummaryStats {
 		manualVisitRatio = float32(r.ManualVisits) / float32(r.TotalVisits) * 100
 	}
 
-	return CampSummaryStats{
+	return CampSummaryStatsResponse{
 		TotalGroups:         r.TotalGroups,
 		FinishedGroupCount:  r.FinishedGroups,
 		CompletionRate:      completionRate,
@@ -48,22 +112,22 @@ func mapSummary(r *usecase.CampReport) CampSummaryStats {
 	}
 }
 
-// mapReport maps usecase.CampReport to CampReport
-func mapReport(r *usecase.CampReport) CampReport {
-	res := CampReport{
+// mapReport maps usecase.CampReport to CampReportResponse.
+func mapReport(r *usecase.CampReport) CampReportResponse {
+	res := CampReportResponse{
 		CampID:  string(r.CampID),
 		Summary: mapSummary(r),
 	}
 
 	for _, cr := range r.CornerReports {
-		res.CornerStats = append(res.CornerStats, CornerStats{
+		res.CornerStats = append(res.CornerStats, CornerStatsResponse{
 			CornerID:            string(cr.CornerID),
 			CornerName:          cr.CornerName,
 			CompletedVisitCount: cr.CompletedCount,
 		})
 	}
 	for _, gr := range r.GroupReports {
-		res.GroupStats = append(res.GroupStats, GroupStats{
+		res.GroupStats = append(res.GroupStats, GroupStatsResponse{
 			GroupID:        string(gr.GroupID),
 			GroupName:      gr.GroupName,
 			CompletedCount: gr.CompletedCount,
@@ -78,7 +142,7 @@ func mapReport(r *usecase.CampReport) CampReport {
 // @Security     AdminAuth
 // @Produce      json
 // @Param        campId path string true "캠프 ID"
-// @Success      200 {object} CampSummaryStats
+// @Success      200 {object} CampSummaryStatsResponse
 // @Router       /camps/{campId}/reports/live-summary [get]
 func (h *ReportHandler) LiveSummary(c echo.Context) error {
 	campID := domain.CampID(c.Param("campId"))
@@ -96,7 +160,7 @@ func (h *ReportHandler) LiveSummary(c echo.Context) error {
 // @Security     AdminAuth
 // @Produce      json
 // @Param        campId path string true "캠프 ID"
-// @Success      200 {object} CampReport
+// @Success      200 {object} CampReportResponse
 // @Router       /camps/{campId}/reports/current [get]
 func (h *ReportHandler) GetCurrentReport(c echo.Context) error {
 	campID := domain.CampID(c.Param("campId"))
@@ -114,7 +178,7 @@ func (h *ReportHandler) GetCurrentReport(c echo.Context) error {
 // @Security     AdminAuth
 // @Produce      json
 // @Param        campId path string true "캠프 ID"
-// @Success      201 {object} CampReport
+// @Success      201 {object} CampReportResponse
 // @Router       /camps/{campId}/reports/generate [post]
 func (h *ReportHandler) GenerateReport(c echo.Context) error {
 	campID := domain.CampID(c.Param("campId"))
@@ -132,7 +196,7 @@ func (h *ReportHandler) GenerateReport(c echo.Context) error {
 // @Security     AdminAuth
 // @Produce      json
 // @Param        campId path string true "캠프 ID"
-// @Success      200 {object} CampReport
+// @Success      200 {object} CampReportResponse
 // @Router       /camps/{campId}/reports/current/export [get]
 func (h *ReportHandler) ExportCurrentReport(c echo.Context) error {
 	campID := domain.CampID(c.Param("campId"))

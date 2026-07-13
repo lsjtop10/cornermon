@@ -258,7 +258,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/AdminSession"
+                                "$ref": "#/definitions/AdminSessionResponse"
                             }
                         }
                     }
@@ -458,7 +458,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/Badge"
+                                "$ref": "#/definitions/BadgeResponse"
                             }
                         }
                     }
@@ -500,7 +500,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/Badge"
+                                "$ref": "#/definitions/BadgeResponse"
                             }
                         }
                     }
@@ -565,7 +565,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/Group"
+                            "$ref": "#/definitions/GroupResponse"
                         }
                     }
                 }
@@ -611,7 +611,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/Badge"
+                            "$ref": "#/definitions/BadgeResponse"
                         }
                     }
                 }
@@ -638,7 +638,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/Camp"
+                                "$ref": "#/definitions/CampResponse"
                             }
                         }
                     },
@@ -682,7 +682,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/Camp"
+                            "$ref": "#/definitions/CampResponse"
                         }
                     },
                     "400": {
@@ -730,7 +730,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/Corner"
+                                "$ref": "#/definitions/CornerResponse"
                             }
                         }
                     },
@@ -779,7 +779,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/Group"
+                                "$ref": "#/definitions/GroupResponse"
                             }
                         }
                     }
@@ -814,7 +814,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/CampReport"
+                            "$ref": "#/definitions/CampReportResponse"
                         }
                     }
                 }
@@ -848,7 +848,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/CampReport"
+                            "$ref": "#/definitions/CampReportResponse"
                         }
                     }
                 }
@@ -882,7 +882,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/CampReport"
+                            "$ref": "#/definitions/CampReportResponse"
                         }
                     }
                 }
@@ -916,7 +916,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/CampSummaryStats"
+                            "$ref": "#/definitions/CampSummaryStatsResponse"
                         }
                     }
                 }
@@ -952,7 +952,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/Track"
+                                "$ref": "#/definitions/TrackResponse"
                             }
                         }
                     }
@@ -987,7 +987,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/Camp"
+                            "$ref": "#/definitions/CampResponse"
                         }
                     },
                     "404": {
@@ -1037,7 +1037,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/Camp"
+                            "$ref": "#/definitions/CampResponse"
                         }
                     },
                     "400": {
@@ -1089,7 +1089,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/Camp"
+                            "$ref": "#/definitions/CampResponse"
                         }
                     },
                     "400": {
@@ -1135,7 +1135,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/Camp"
+                            "$ref": "#/definitions/CampResponse"
                         }
                     },
                     "400": {
@@ -1186,7 +1186,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/Corner"
+                            "$ref": "#/definitions/CornerResponse"
                         }
                     },
                     "400": {
@@ -1239,7 +1239,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/Corner"
+                                "$ref": "#/definitions/CornerResponse"
                             }
                         }
                     },
@@ -1288,7 +1288,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/Track"
+                                "$ref": "#/definitions/TrackResponse"
                             }
                         }
                     }
@@ -1323,7 +1323,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/Corner"
+                            "$ref": "#/definitions/CornerResponse"
                         }
                     },
                     "404": {
@@ -1397,7 +1397,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/DeviceRegistration"
+                                "$ref": "#/definitions/DeviceRegistrationResponse"
                             }
                         }
                     }
@@ -1430,7 +1430,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/DeviceRegistration"
+                            "$ref": "#/definitions/DeviceRegistrationResponse"
                         }
                     }
                 }
@@ -1488,7 +1488,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/DeviceRegistration"
+                            "$ref": "#/definitions/DeviceRegistrationResponse"
                         }
                     }
                 }
@@ -1522,7 +1522,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/DeviceRegistration"
+                            "$ref": "#/definitions/DeviceRegistrationResponse"
                         }
                     }
                 }
@@ -1556,7 +1556,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/DeviceRegistration"
+                            "$ref": "#/definitions/DeviceRegistrationResponse"
                         }
                     }
                 }
@@ -1590,7 +1590,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/Group"
+                            "$ref": "#/definitions/GroupResponse"
                         }
                     }
                 }
@@ -1626,7 +1626,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/VisitSummary"
+                                "$ref": "#/definitions/VisitSummaryResponse"
                             }
                         }
                     }
@@ -1654,7 +1654,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/Message"
+                                "$ref": "#/definitions/MessageResponse"
                             }
                         }
                     }
@@ -1692,7 +1692,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/Message"
+                            "$ref": "#/definitions/MessageResponse"
                         }
                     }
                 }
@@ -1759,7 +1759,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/BroadcastReceipt"
+                                "$ref": "#/definitions/BroadcastReceiptResponse"
                             }
                         }
                     }
@@ -1801,7 +1801,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/Track"
+                                "$ref": "#/definitions/TrackResponse"
                             }
                         }
                     }
@@ -1894,7 +1894,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/Track"
+                            "$ref": "#/definitions/TrackResponse"
                         }
                     }
                 }
@@ -1999,7 +1999,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/Track"
+                            "$ref": "#/definitions/TrackResponse"
                         }
                     }
                 }
@@ -2099,7 +2099,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/Group"
+                                "$ref": "#/definitions/GroupResponse"
                             }
                         }
                     },
@@ -2154,7 +2154,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/Message"
+                                "$ref": "#/definitions/MessageResponse"
                             }
                         }
                     }
@@ -2199,7 +2199,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/Message"
+                            "$ref": "#/definitions/MessageResponse"
                         }
                     }
                 }
@@ -2233,7 +2233,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/VisitSummary"
+                            "$ref": "#/definitions/VisitSummaryResponse"
                         }
                     },
                     "404": {
@@ -2270,7 +2270,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/VisitSummary"
+                            "$ref": "#/definitions/VisitSummaryResponse"
                         }
                     },
                     "409": {
@@ -2322,7 +2322,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/VisitSummary"
+                            "$ref": "#/definitions/VisitSummaryResponse"
                         }
                     },
                     "409": {
@@ -2372,7 +2372,7 @@ const docTemplate = `{
                 }
             }
         },
-        "AdminSession": {
+        "AdminSessionResponse": {
             "type": "object",
             "properties": {
                 "adminId": {
@@ -2403,7 +2403,21 @@ const docTemplate = `{
                 }
             }
         },
-        "AuditLog": {
+        "AuditLogPageResponse": {
+            "type": "object",
+            "properties": {
+                "logs": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/AuditLogResponse"
+                    }
+                },
+                "nextCursor": {
+                    "type": "string"
+                }
+            }
+        },
+        "AuditLogResponse": {
             "type": "object",
             "properties": {
                 "action": {
@@ -2432,21 +2446,7 @@ const docTemplate = `{
                 }
             }
         },
-        "AuditLogPageResponse": {
-            "type": "object",
-            "properties": {
-                "logs": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/AuditLog"
-                    }
-                },
-                "nextCursor": {
-                    "type": "string"
-                }
-            }
-        },
-        "Badge": {
+        "BadgeResponse": {
             "type": "object",
             "properties": {
                 "assignedGroupId": {
@@ -2473,7 +2473,7 @@ const docTemplate = `{
                 }
             }
         },
-        "BottleneckRanking": {
+        "BottleneckRankingResponse": {
             "type": "object",
             "properties": {
                 "avgDeviationSeconds": {
@@ -2499,7 +2499,7 @@ const docTemplate = `{
                 }
             }
         },
-        "BroadcastReceipt": {
+        "BroadcastReceiptResponse": {
             "type": "object",
             "properties": {
                 "cornerName": {
@@ -2562,7 +2562,47 @@ const docTemplate = `{
                 }
             }
         },
-        "Camp": {
+        "CampReportResponse": {
+            "type": "object",
+            "properties": {
+                "campId": {
+                    "type": "string",
+                    "format": "uuid"
+                },
+                "cornerStats": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/CornerStatsResponse"
+                    }
+                },
+                "generatedAt": {
+                    "type": "string",
+                    "format": "date-time"
+                },
+                "groupStats": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/GroupStatsResponse"
+                    }
+                },
+                "operationalStats": {
+                    "$ref": "#/definitions/OperationalStatsResponse"
+                },
+                "summary": {
+                    "$ref": "#/definitions/CampSummaryStatsResponse"
+                },
+                "timeline": {
+                    "$ref": "#/definitions/TimelineStatsResponse"
+                },
+                "trackStats": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/TrackStatsResponse"
+                    }
+                }
+            }
+        },
+        "CampResponse": {
             "type": "object",
             "properties": {
                 "bottleneckMinSamples": {
@@ -2599,47 +2639,7 @@ const docTemplate = `{
                 }
             }
         },
-        "CampReport": {
-            "type": "object",
-            "properties": {
-                "campId": {
-                    "type": "string",
-                    "format": "uuid"
-                },
-                "cornerStats": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/CornerStats"
-                    }
-                },
-                "generatedAt": {
-                    "type": "string",
-                    "format": "date-time"
-                },
-                "groupStats": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/GroupStats"
-                    }
-                },
-                "operationalStats": {
-                    "$ref": "#/definitions/OperationalStats"
-                },
-                "summary": {
-                    "$ref": "#/definitions/CampSummaryStats"
-                },
-                "timeline": {
-                    "$ref": "#/definitions/TimelineStats"
-                },
-                "trackStats": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/TrackStats"
-                    }
-                }
-            }
-        },
-        "CampSummaryStats": {
+        "CampSummaryStatsResponse": {
             "type": "object",
             "properties": {
                 "avgDeviationSeconds": {
@@ -2648,7 +2648,7 @@ const docTemplate = `{
                 "bottleneckRanking": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/BottleneckRanking"
+                        "$ref": "#/definitions/BottleneckRankingResponse"
                     }
                 },
                 "completionRate": {
@@ -2683,13 +2683,33 @@ const docTemplate = `{
                 }
             }
         },
-        "Corner": {
+        "CornerProgressResponse": {
+            "type": "object",
+            "properties": {
+                "cornerId": {
+                    "type": "string",
+                    "format": "uuid"
+                },
+                "cornerName": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string",
+                    "enum": [
+                        "NOT_VISITED",
+                        "IN_PROGRESS",
+                        "COMPLETED"
+                    ]
+                }
+            }
+        },
+        "CornerResponse": {
             "type": "object",
             "properties": {
                 "activeTracks": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/TrackSummary"
+                        "$ref": "#/definitions/TrackSummaryResponse"
                     }
                 },
                 "id": {
@@ -2717,27 +2737,7 @@ const docTemplate = `{
                 }
             }
         },
-        "CornerProgress": {
-            "type": "object",
-            "properties": {
-                "cornerId": {
-                    "type": "string",
-                    "format": "uuid"
-                },
-                "cornerName": {
-                    "type": "string"
-                },
-                "status": {
-                    "type": "string",
-                    "enum": [
-                        "NOT_VISITED",
-                        "IN_PROGRESS",
-                        "COMPLETED"
-                    ]
-                }
-            }
-        },
-        "CornerStats": {
+        "CornerStatsResponse": {
             "type": "object",
             "properties": {
                 "completedVisitCount": {
@@ -2753,7 +2753,7 @@ const docTemplate = `{
                 "unvisitedGroups": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/UnvisitedGroup"
+                        "$ref": "#/definitions/UnvisitedGroupResponse"
                     }
                 }
             }
@@ -2794,7 +2794,26 @@ const docTemplate = `{
                 }
             }
         },
-        "DeviceRegistration": {
+        "DeviceRegistrationRequest": {
+            "type": "object",
+            "properties": {
+                "campId": {
+                    "description": "Using campId because RequestRegistration expects a campID",
+                    "type": "string"
+                },
+                "deviceName": {
+                    "type": "string"
+                },
+                "role": {
+                    "type": "string",
+                    "enum": [
+                        "ADMIN",
+                        "FACILITATOR"
+                    ]
+                }
+            }
+        },
+        "DeviceRegistrationResponse": {
             "type": "object",
             "properties": {
                 "approvedAt": {
@@ -2820,25 +2839,6 @@ const docTemplate = `{
                         "APPROVED",
                         "REJECTED",
                         "REVOKED"
-                    ]
-                }
-            }
-        },
-        "DeviceRegistrationRequest": {
-            "type": "object",
-            "properties": {
-                "campId": {
-                    "description": "Using campId because RequestRegistration expects a campID",
-                    "type": "string"
-                },
-                "deviceName": {
-                    "type": "string"
-                },
-                "role": {
-                    "type": "string",
-                    "enum": [
-                        "ADMIN",
-                        "FACILITATOR"
                     ]
                 }
             }
@@ -2874,12 +2874,12 @@ const docTemplate = `{
                 "badges": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/Badge"
+                        "$ref": "#/definitions/BadgeResponse"
                     }
                 }
             }
         },
-        "Group": {
+        "GroupResponse": {
             "type": "object",
             "properties": {
                 "badgeId": {
@@ -2896,7 +2896,7 @@ const docTemplate = `{
                 "itinerary": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/CornerProgress"
+                        "$ref": "#/definitions/CornerProgressResponse"
                     }
                 },
                 "name": {
@@ -2913,7 +2913,7 @@ const docTemplate = `{
                 }
             }
         },
-        "GroupStats": {
+        "GroupStatsResponse": {
             "type": "object",
             "properties": {
                 "completedCount": {
@@ -2931,7 +2931,7 @@ const docTemplate = `{
                 }
             }
         },
-        "Message": {
+        "MessageResponse": {
             "type": "object",
             "properties": {
                 "channelType": {
@@ -2972,7 +2972,7 @@ const docTemplate = `{
                 }
             }
         },
-        "OperationalStats": {
+        "OperationalStatsResponse": {
             "type": "object"
         },
         "ReplaceTrackRequest": {
@@ -2990,7 +2990,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "track": {
-                    "$ref": "#/definitions/Track"
+                    "$ref": "#/definitions/TrackResponse"
                 }
             }
         },
@@ -3005,10 +3005,32 @@ const docTemplate = `{
                 }
             }
         },
-        "TimelineStats": {
+        "TimelineStatsResponse": {
             "type": "object"
         },
-        "Track": {
+        "TrackLoginRequest": {
+            "type": "object",
+            "properties": {
+                "pin": {
+                    "type": "string"
+                }
+            }
+        },
+        "TrackLoginResponse": {
+            "type": "object",
+            "properties": {
+                "corner": {
+                    "$ref": "#/definitions/CornerResponse"
+                },
+                "track": {
+                    "$ref": "#/definitions/TrackResponse"
+                },
+                "trackToken": {
+                    "type": "string"
+                }
+            }
+        },
+        "TrackResponse": {
             "type": "object",
             "properties": {
                 "cornerId": {
@@ -3016,7 +3038,7 @@ const docTemplate = `{
                     "format": "uuid"
                 },
                 "currentVisit": {
-                    "$ref": "#/definitions/VisitSummary"
+                    "$ref": "#/definitions/VisitSummaryResponse"
                 },
                 "id": {
                     "type": "string",
@@ -3045,29 +3067,7 @@ const docTemplate = `{
                 }
             }
         },
-        "TrackLoginRequest": {
-            "type": "object",
-            "properties": {
-                "pin": {
-                    "type": "string"
-                }
-            }
-        },
-        "TrackLoginResponse": {
-            "type": "object",
-            "properties": {
-                "corner": {
-                    "$ref": "#/definitions/Corner"
-                },
-                "track": {
-                    "$ref": "#/definitions/Track"
-                },
-                "trackToken": {
-                    "type": "string"
-                }
-            }
-        },
-        "TrackStats": {
+        "TrackStatsResponse": {
             "type": "object",
             "properties": {
                 "avgDeviationSeconds": {
@@ -3088,7 +3088,7 @@ const docTemplate = `{
                 }
             }
         },
-        "TrackSummary": {
+        "TrackSummaryResponse": {
             "type": "object",
             "properties": {
                 "cornerId": {
@@ -3118,7 +3118,7 @@ const docTemplate = `{
                 }
             }
         },
-        "UnvisitedGroup": {
+        "UnvisitedGroupResponse": {
             "type": "object",
             "properties": {
                 "groupId": {
@@ -3169,7 +3169,7 @@ const docTemplate = `{
                 }
             }
         },
-        "VisitSummary": {
+        "VisitSummaryResponse": {
             "type": "object",
             "properties": {
                 "cornerId": {

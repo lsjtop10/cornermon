@@ -251,7 +251,7 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/AdminSession"
+                                "$ref": "#/definitions/AdminSessionResponse"
                             }
                         }
                     }
@@ -451,7 +451,7 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/Badge"
+                                "$ref": "#/definitions/BadgeResponse"
                             }
                         }
                     }
@@ -493,7 +493,7 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/Badge"
+                                "$ref": "#/definitions/BadgeResponse"
                             }
                         }
                     }
@@ -558,7 +558,7 @@
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/Group"
+                            "$ref": "#/definitions/GroupResponse"
                         }
                     }
                 }
@@ -604,7 +604,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/Badge"
+                            "$ref": "#/definitions/BadgeResponse"
                         }
                     }
                 }
@@ -631,7 +631,7 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/Camp"
+                                "$ref": "#/definitions/CampResponse"
                             }
                         }
                     },
@@ -675,7 +675,7 @@
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/Camp"
+                            "$ref": "#/definitions/CampResponse"
                         }
                     },
                     "400": {
@@ -723,7 +723,7 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/Corner"
+                                "$ref": "#/definitions/CornerResponse"
                             }
                         }
                     },
@@ -772,7 +772,7 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/Group"
+                                "$ref": "#/definitions/GroupResponse"
                             }
                         }
                     }
@@ -807,7 +807,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/CampReport"
+                            "$ref": "#/definitions/CampReportResponse"
                         }
                     }
                 }
@@ -841,7 +841,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/CampReport"
+                            "$ref": "#/definitions/CampReportResponse"
                         }
                     }
                 }
@@ -875,7 +875,7 @@
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/CampReport"
+                            "$ref": "#/definitions/CampReportResponse"
                         }
                     }
                 }
@@ -909,7 +909,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/CampSummaryStats"
+                            "$ref": "#/definitions/CampSummaryStatsResponse"
                         }
                     }
                 }
@@ -945,7 +945,7 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/Track"
+                                "$ref": "#/definitions/TrackResponse"
                             }
                         }
                     }
@@ -980,7 +980,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/Camp"
+                            "$ref": "#/definitions/CampResponse"
                         }
                     },
                     "404": {
@@ -1030,7 +1030,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/Camp"
+                            "$ref": "#/definitions/CampResponse"
                         }
                     },
                     "400": {
@@ -1082,7 +1082,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/Camp"
+                            "$ref": "#/definitions/CampResponse"
                         }
                     },
                     "400": {
@@ -1128,7 +1128,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/Camp"
+                            "$ref": "#/definitions/CampResponse"
                         }
                     },
                     "400": {
@@ -1179,7 +1179,7 @@
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/Corner"
+                            "$ref": "#/definitions/CornerResponse"
                         }
                     },
                     "400": {
@@ -1232,7 +1232,7 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/Corner"
+                                "$ref": "#/definitions/CornerResponse"
                             }
                         }
                     },
@@ -1281,7 +1281,7 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/Track"
+                                "$ref": "#/definitions/TrackResponse"
                             }
                         }
                     }
@@ -1316,7 +1316,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/Corner"
+                            "$ref": "#/definitions/CornerResponse"
                         }
                     },
                     "404": {
@@ -1390,7 +1390,7 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/DeviceRegistration"
+                                "$ref": "#/definitions/DeviceRegistrationResponse"
                             }
                         }
                     }
@@ -1423,7 +1423,7 @@
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/DeviceRegistration"
+                            "$ref": "#/definitions/DeviceRegistrationResponse"
                         }
                     }
                 }
@@ -1481,7 +1481,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/DeviceRegistration"
+                            "$ref": "#/definitions/DeviceRegistrationResponse"
                         }
                     }
                 }
@@ -1515,7 +1515,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/DeviceRegistration"
+                            "$ref": "#/definitions/DeviceRegistrationResponse"
                         }
                     }
                 }
@@ -1549,7 +1549,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/DeviceRegistration"
+                            "$ref": "#/definitions/DeviceRegistrationResponse"
                         }
                     }
                 }
@@ -1583,7 +1583,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/Group"
+                            "$ref": "#/definitions/GroupResponse"
                         }
                     }
                 }
@@ -1619,7 +1619,7 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/VisitSummary"
+                                "$ref": "#/definitions/VisitSummaryResponse"
                             }
                         }
                     }
@@ -1647,7 +1647,7 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/Message"
+                                "$ref": "#/definitions/MessageResponse"
                             }
                         }
                     }
@@ -1685,7 +1685,7 @@
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/Message"
+                            "$ref": "#/definitions/MessageResponse"
                         }
                     }
                 }
@@ -1752,7 +1752,7 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/BroadcastReceipt"
+                                "$ref": "#/definitions/BroadcastReceiptResponse"
                             }
                         }
                     }
@@ -1794,7 +1794,7 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/Track"
+                                "$ref": "#/definitions/TrackResponse"
                             }
                         }
                     }
@@ -1887,7 +1887,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/Track"
+                            "$ref": "#/definitions/TrackResponse"
                         }
                     }
                 }
@@ -1992,7 +1992,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/Track"
+                            "$ref": "#/definitions/TrackResponse"
                         }
                     }
                 }
@@ -2092,7 +2092,7 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/Group"
+                                "$ref": "#/definitions/GroupResponse"
                             }
                         }
                     },
@@ -2147,7 +2147,7 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/Message"
+                                "$ref": "#/definitions/MessageResponse"
                             }
                         }
                     }
@@ -2192,7 +2192,7 @@
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/Message"
+                            "$ref": "#/definitions/MessageResponse"
                         }
                     }
                 }
@@ -2226,7 +2226,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/VisitSummary"
+                            "$ref": "#/definitions/VisitSummaryResponse"
                         }
                     },
                     "404": {
@@ -2263,7 +2263,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/VisitSummary"
+                            "$ref": "#/definitions/VisitSummaryResponse"
                         }
                     },
                     "409": {
@@ -2315,7 +2315,7 @@
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/VisitSummary"
+                            "$ref": "#/definitions/VisitSummaryResponse"
                         }
                     },
                     "409": {
@@ -2365,7 +2365,7 @@
                 }
             }
         },
-        "AdminSession": {
+        "AdminSessionResponse": {
             "type": "object",
             "properties": {
                 "adminId": {
@@ -2396,7 +2396,21 @@
                 }
             }
         },
-        "AuditLog": {
+        "AuditLogPageResponse": {
+            "type": "object",
+            "properties": {
+                "logs": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/AuditLogResponse"
+                    }
+                },
+                "nextCursor": {
+                    "type": "string"
+                }
+            }
+        },
+        "AuditLogResponse": {
             "type": "object",
             "properties": {
                 "action": {
@@ -2425,21 +2439,7 @@
                 }
             }
         },
-        "AuditLogPageResponse": {
-            "type": "object",
-            "properties": {
-                "logs": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/AuditLog"
-                    }
-                },
-                "nextCursor": {
-                    "type": "string"
-                }
-            }
-        },
-        "Badge": {
+        "BadgeResponse": {
             "type": "object",
             "properties": {
                 "assignedGroupId": {
@@ -2466,7 +2466,7 @@
                 }
             }
         },
-        "BottleneckRanking": {
+        "BottleneckRankingResponse": {
             "type": "object",
             "properties": {
                 "avgDeviationSeconds": {
@@ -2492,7 +2492,7 @@
                 }
             }
         },
-        "BroadcastReceipt": {
+        "BroadcastReceiptResponse": {
             "type": "object",
             "properties": {
                 "cornerName": {
@@ -2555,7 +2555,47 @@
                 }
             }
         },
-        "Camp": {
+        "CampReportResponse": {
+            "type": "object",
+            "properties": {
+                "campId": {
+                    "type": "string",
+                    "format": "uuid"
+                },
+                "cornerStats": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/CornerStatsResponse"
+                    }
+                },
+                "generatedAt": {
+                    "type": "string",
+                    "format": "date-time"
+                },
+                "groupStats": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/GroupStatsResponse"
+                    }
+                },
+                "operationalStats": {
+                    "$ref": "#/definitions/OperationalStatsResponse"
+                },
+                "summary": {
+                    "$ref": "#/definitions/CampSummaryStatsResponse"
+                },
+                "timeline": {
+                    "$ref": "#/definitions/TimelineStatsResponse"
+                },
+                "trackStats": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/TrackStatsResponse"
+                    }
+                }
+            }
+        },
+        "CampResponse": {
             "type": "object",
             "properties": {
                 "bottleneckMinSamples": {
@@ -2592,47 +2632,7 @@
                 }
             }
         },
-        "CampReport": {
-            "type": "object",
-            "properties": {
-                "campId": {
-                    "type": "string",
-                    "format": "uuid"
-                },
-                "cornerStats": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/CornerStats"
-                    }
-                },
-                "generatedAt": {
-                    "type": "string",
-                    "format": "date-time"
-                },
-                "groupStats": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/GroupStats"
-                    }
-                },
-                "operationalStats": {
-                    "$ref": "#/definitions/OperationalStats"
-                },
-                "summary": {
-                    "$ref": "#/definitions/CampSummaryStats"
-                },
-                "timeline": {
-                    "$ref": "#/definitions/TimelineStats"
-                },
-                "trackStats": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/TrackStats"
-                    }
-                }
-            }
-        },
-        "CampSummaryStats": {
+        "CampSummaryStatsResponse": {
             "type": "object",
             "properties": {
                 "avgDeviationSeconds": {
@@ -2641,7 +2641,7 @@
                 "bottleneckRanking": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/BottleneckRanking"
+                        "$ref": "#/definitions/BottleneckRankingResponse"
                     }
                 },
                 "completionRate": {
@@ -2676,13 +2676,33 @@
                 }
             }
         },
-        "Corner": {
+        "CornerProgressResponse": {
+            "type": "object",
+            "properties": {
+                "cornerId": {
+                    "type": "string",
+                    "format": "uuid"
+                },
+                "cornerName": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string",
+                    "enum": [
+                        "NOT_VISITED",
+                        "IN_PROGRESS",
+                        "COMPLETED"
+                    ]
+                }
+            }
+        },
+        "CornerResponse": {
             "type": "object",
             "properties": {
                 "activeTracks": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/TrackSummary"
+                        "$ref": "#/definitions/TrackSummaryResponse"
                     }
                 },
                 "id": {
@@ -2710,27 +2730,7 @@
                 }
             }
         },
-        "CornerProgress": {
-            "type": "object",
-            "properties": {
-                "cornerId": {
-                    "type": "string",
-                    "format": "uuid"
-                },
-                "cornerName": {
-                    "type": "string"
-                },
-                "status": {
-                    "type": "string",
-                    "enum": [
-                        "NOT_VISITED",
-                        "IN_PROGRESS",
-                        "COMPLETED"
-                    ]
-                }
-            }
-        },
-        "CornerStats": {
+        "CornerStatsResponse": {
             "type": "object",
             "properties": {
                 "completedVisitCount": {
@@ -2746,7 +2746,7 @@
                 "unvisitedGroups": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/UnvisitedGroup"
+                        "$ref": "#/definitions/UnvisitedGroupResponse"
                     }
                 }
             }
@@ -2787,7 +2787,26 @@
                 }
             }
         },
-        "DeviceRegistration": {
+        "DeviceRegistrationRequest": {
+            "type": "object",
+            "properties": {
+                "campId": {
+                    "description": "Using campId because RequestRegistration expects a campID",
+                    "type": "string"
+                },
+                "deviceName": {
+                    "type": "string"
+                },
+                "role": {
+                    "type": "string",
+                    "enum": [
+                        "ADMIN",
+                        "FACILITATOR"
+                    ]
+                }
+            }
+        },
+        "DeviceRegistrationResponse": {
             "type": "object",
             "properties": {
                 "approvedAt": {
@@ -2813,25 +2832,6 @@
                         "APPROVED",
                         "REJECTED",
                         "REVOKED"
-                    ]
-                }
-            }
-        },
-        "DeviceRegistrationRequest": {
-            "type": "object",
-            "properties": {
-                "campId": {
-                    "description": "Using campId because RequestRegistration expects a campID",
-                    "type": "string"
-                },
-                "deviceName": {
-                    "type": "string"
-                },
-                "role": {
-                    "type": "string",
-                    "enum": [
-                        "ADMIN",
-                        "FACILITATOR"
                     ]
                 }
             }
@@ -2867,12 +2867,12 @@
                 "badges": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/Badge"
+                        "$ref": "#/definitions/BadgeResponse"
                     }
                 }
             }
         },
-        "Group": {
+        "GroupResponse": {
             "type": "object",
             "properties": {
                 "badgeId": {
@@ -2889,7 +2889,7 @@
                 "itinerary": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/CornerProgress"
+                        "$ref": "#/definitions/CornerProgressResponse"
                     }
                 },
                 "name": {
@@ -2906,7 +2906,7 @@
                 }
             }
         },
-        "GroupStats": {
+        "GroupStatsResponse": {
             "type": "object",
             "properties": {
                 "completedCount": {
@@ -2924,7 +2924,7 @@
                 }
             }
         },
-        "Message": {
+        "MessageResponse": {
             "type": "object",
             "properties": {
                 "channelType": {
@@ -2965,7 +2965,7 @@
                 }
             }
         },
-        "OperationalStats": {
+        "OperationalStatsResponse": {
             "type": "object"
         },
         "ReplaceTrackRequest": {
@@ -2983,7 +2983,7 @@
                     "type": "string"
                 },
                 "track": {
-                    "$ref": "#/definitions/Track"
+                    "$ref": "#/definitions/TrackResponse"
                 }
             }
         },
@@ -2998,10 +2998,32 @@
                 }
             }
         },
-        "TimelineStats": {
+        "TimelineStatsResponse": {
             "type": "object"
         },
-        "Track": {
+        "TrackLoginRequest": {
+            "type": "object",
+            "properties": {
+                "pin": {
+                    "type": "string"
+                }
+            }
+        },
+        "TrackLoginResponse": {
+            "type": "object",
+            "properties": {
+                "corner": {
+                    "$ref": "#/definitions/CornerResponse"
+                },
+                "track": {
+                    "$ref": "#/definitions/TrackResponse"
+                },
+                "trackToken": {
+                    "type": "string"
+                }
+            }
+        },
+        "TrackResponse": {
             "type": "object",
             "properties": {
                 "cornerId": {
@@ -3009,7 +3031,7 @@
                     "format": "uuid"
                 },
                 "currentVisit": {
-                    "$ref": "#/definitions/VisitSummary"
+                    "$ref": "#/definitions/VisitSummaryResponse"
                 },
                 "id": {
                     "type": "string",
@@ -3038,29 +3060,7 @@
                 }
             }
         },
-        "TrackLoginRequest": {
-            "type": "object",
-            "properties": {
-                "pin": {
-                    "type": "string"
-                }
-            }
-        },
-        "TrackLoginResponse": {
-            "type": "object",
-            "properties": {
-                "corner": {
-                    "$ref": "#/definitions/Corner"
-                },
-                "track": {
-                    "$ref": "#/definitions/Track"
-                },
-                "trackToken": {
-                    "type": "string"
-                }
-            }
-        },
-        "TrackStats": {
+        "TrackStatsResponse": {
             "type": "object",
             "properties": {
                 "avgDeviationSeconds": {
@@ -3081,7 +3081,7 @@
                 }
             }
         },
-        "TrackSummary": {
+        "TrackSummaryResponse": {
             "type": "object",
             "properties": {
                 "cornerId": {
@@ -3111,7 +3111,7 @@
                 }
             }
         },
-        "UnvisitedGroup": {
+        "UnvisitedGroupResponse": {
             "type": "object",
             "properties": {
                 "groupId": {
@@ -3162,7 +3162,7 @@
                 }
             }
         },
-        "VisitSummary": {
+        "VisitSummaryResponse": {
             "type": "object",
             "properties": {
                 "cornerId": {

@@ -23,6 +23,14 @@ type DeviceHandler struct {
 	deviceTrust DeviceTrustUsecase
 }
 
+type DeviceRegistrationResponse struct {
+	ID         string     `json:"id" format:"uuid"`
+	DeviceName string     `json:"deviceName" example:"iPad Pro #3"`
+	Status     string     `json:"status" enums:"PENDING,APPROVED,REJECTED,REVOKED"`
+	CreatedAt  time.Time  `json:"createdAt" format:"date-time"`
+	ApprovedAt *time.Time `json:"approvedAt,omitempty" format:"date-time"`
+} // @name DeviceRegistrationResponse
+
 func NewDeviceHandler(deviceTrust DeviceTrustUsecase) *DeviceHandler {
 	return &DeviceHandler{
 		deviceTrust: deviceTrust,
@@ -33,7 +41,7 @@ type DeviceRegistrationRequest struct {
 	CampID     string `json:"campId"` // Using campId because RequestRegistration expects a campID
 	DeviceName string `json:"deviceName"`
 	Role       string `json:"role" enums:"ADMIN,FACILITATOR"`
-}
+} // @name DeviceRegistrationRequest
 
 // @Summary      내 기기 등록 상태 자체 조회
 // @Description  미승인(PENDING) 기기가 자신의 승인 상태를 확인하기 위해 호출한다.
@@ -67,7 +75,7 @@ func (h *DeviceHandler) GetMyRegistrationStatus(c echo.Context) error {
 // @Accept       json
 // @Produce      json
 // @Param        request body DeviceRegistrationRequest true "등록 정보"
-// @Success      201 {object} DeviceRegistration
+// @Success      201 {object} DeviceRegistrationResponse
 // @Router       /device-registrations [post]
 func (h *DeviceHandler) RequestRegistration(c echo.Context) error {
 	var req DeviceRegistrationRequest
@@ -88,7 +96,7 @@ func (h *DeviceHandler) RequestRegistration(c echo.Context) error {
 		approvedAt = &t
 	}
 
-	return c.JSON(http.StatusCreated, DeviceRegistration{
+	return c.JSON(http.StatusCreated, DeviceRegistrationResponse{
 		ID:         string(reg.ID),
 		DeviceName: reg.DeviceName,
 		Status:     string(reg.Status),
@@ -102,7 +110,7 @@ func (h *DeviceHandler) RequestRegistration(c echo.Context) error {
 // @Tags         A. Auth & Device Trust
 // @Security     AdminAuth
 // @Produce      json
-// @Success      200 {array} DeviceRegistration
+// @Success      200 {array} DeviceRegistrationResponse
 // @Router       /device-registrations [get]
 func (h *DeviceHandler) ListRegistrations(c echo.Context) error {
 	campID := c.QueryParam("campId")
@@ -122,14 +130,14 @@ func (h *DeviceHandler) ListRegistrations(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()})
 	}
 
-	res := make([]DeviceRegistration, len(devices))
+	res := make([]DeviceRegistrationResponse, len(devices))
 	for i, d := range devices {
 		var approvedAt *time.Time
 		if d.ApprovedAt.IsSet() {
 			t, _ := d.ApprovedAt.Value()
 			approvedAt = &t
 		}
-		res[i] = DeviceRegistration{
+		res[i] = DeviceRegistrationResponse{
 			ID:         string(d.ID),
 			DeviceName: d.DeviceName,
 			Status:     string(d.Status),
@@ -147,7 +155,7 @@ func (h *DeviceHandler) ListRegistrations(c echo.Context) error {
 // @Security     AdminAuth
 // @Produce      json
 // @Param        id path string true "기기 등록 ID"
-// @Success      200 {object} DeviceRegistration
+// @Success      200 {object} DeviceRegistrationResponse
 // @Router       /device-registrations/{id}/approve [post]
 func (h *DeviceHandler) ApproveDevice(c echo.Context) error {
 	session, ok := c.Get("adminSession").(*domain.AdminSession)
@@ -170,7 +178,7 @@ func (h *DeviceHandler) ApproveDevice(c echo.Context) error {
 // @Security     AdminAuth
 // @Produce      json
 // @Param        id path string true "기기 등록 ID"
-// @Success      200 {object} DeviceRegistration
+// @Success      200 {object} DeviceRegistrationResponse
 // @Router       /device-registrations/{id}/reject [post]
 func (h *DeviceHandler) RejectDevice(c echo.Context) error {
 	session, ok := c.Get("adminSession").(*domain.AdminSession)
@@ -193,7 +201,7 @@ func (h *DeviceHandler) RejectDevice(c echo.Context) error {
 // @Security     AdminAuth
 // @Produce      json
 // @Param        id path string true "기기 등록 ID"
-// @Success      200 {object} DeviceRegistration
+// @Success      200 {object} DeviceRegistrationResponse
 // @Router       /device-registrations/{id}/revoke [post]
 func (h *DeviceHandler) RevokeDevice(c echo.Context) error {
 	session, ok := c.Get("adminSession").(*domain.AdminSession)

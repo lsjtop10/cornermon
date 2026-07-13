@@ -14,13 +14,23 @@ type CampHandler struct {
 	svc *usecase.CampService
 }
 
+type CampResponse struct {
+	ID                   string    `json:"id" format:"uuid"`
+	Name                 string    `json:"name" example:"2026 여름 코너학습"`
+	StartAt              time.Time `json:"startAt" format:"date-time"`
+	EndAt                time.Time `json:"endAt" format:"date-time"`
+	Status               string    `json:"status" enums:"PENDING,ACTIVE,ENDED"`
+	BottleneckMinSamples int       `json:"bottleneckMinSamples" example:"3"`
+	BottleneckRatioPct   int       `json:"bottleneckRatioPct" example:"20"`
+} // @name CampResponse
+
 type UpdateCampRequest struct {
 	Name                 *string    `json:"name,omitempty"`
 	StartAt              *time.Time `json:"startAt,omitempty" format:"date-time"`
 	EndAt                *time.Time `json:"endAt,omitempty" format:"date-time"`
 	BottleneckMinSamples *int       `json:"bottleneckMinSamples,omitempty"`
 	BottleneckRatioPct   *int       `json:"bottleneckRatioPct,omitempty"`
-}
+} // @name UpdateCampRequest
 
 // @Summary      캠프 정보 및 병목 기준 수정
 // @Description  캠프 이름, 예정 기간, 병목 판정 기준 중 요청에 포함된 필드만 수정한다. 종료된 캠프는 수정할 수 없다.
@@ -30,7 +40,7 @@ type UpdateCampRequest struct {
 // @Produce      json
 // @Param        id path string true "캠프 ID"
 // @Param        request body UpdateCampRequest true "부분 수정할 캠프 설정"
-// @Success      200 {object} Camp
+// @Success      200 {object} CampResponse
 // @Failure      400 {object} ErrorResponse
 // @Failure      404 {object} ErrorResponse
 // @Failure      409 {object} ErrorResponse
@@ -79,11 +89,11 @@ func getAdminID(c echo.Context) domain.AdminID {
 	return domain.AdminID("admin")
 }
 
-func mapDomainCampToDTO(camp *domain.Camp) Camp {
+func mapDomainCampToDTO(camp *domain.Camp) CampResponse {
 	if camp == nil {
-		return Camp{}
+		return CampResponse{}
 	}
-	return Camp{
+	return CampResponse{
 		ID:                   string(camp.ID),
 		Name:                 camp.Name,
 		StartAt:              camp.StartAt,
@@ -99,7 +109,7 @@ func mapDomainCampToDTO(camp *domain.Camp) Camp {
 // @Tags         B. Resource Management (Admin)
 // @Security     AdminAuth
 // @Produce      json
-// @Success      200 {array} Camp
+// @Success      200 {array} CampResponse
 // @Failure      401 {object} ErrorResponse
 // @Router       /camps [get]
 func (h *CampHandler) ListCamps(c echo.Context) error {
@@ -107,7 +117,7 @@ func (h *CampHandler) ListCamps(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_ERROR", Message: err.Error()})
 	}
-	res := make([]Camp, len(camps))
+	res := make([]CampResponse, len(camps))
 	for i, cp := range camps {
 		res[i] = mapDomainCampToDTO(cp)
 	}
@@ -116,7 +126,7 @@ func (h *CampHandler) ListCamps(c echo.Context) error {
 
 type CreateCampRequest struct {
 	Name string `json:"name"`
-}
+} // @name CreateCampRequest
 
 // @Summary      새 캠프 생성
 // @Description  새로운 코너학습 캠프를 생성한다.
@@ -125,7 +135,7 @@ type CreateCampRequest struct {
 // @Accept       json
 // @Produce      json
 // @Param        request body CreateCampRequest true "캠프 생성 정보"
-// @Success      201 {object} Camp
+// @Success      201 {object} CampResponse
 // @Failure      400 {object} ErrorResponse
 // @Failure      401 {object} ErrorResponse
 // @Router       /camps [post]
@@ -147,7 +157,7 @@ func (h *CampHandler) CreateCamp(c echo.Context) error {
 // @Security     AdminAuth
 // @Produce      json
 // @Param        id path string true "캠프 ID"
-// @Success      200 {object} Camp
+// @Success      200 {object} CampResponse
 // @Failure      404 {object} ErrorResponse
 // @Router       /camps/{id} [get]
 func (h *CampHandler) GetCamp(c echo.Context) error {
@@ -168,7 +178,7 @@ func (h *CampHandler) GetCamp(c echo.Context) error {
 // @Security     AdminAuth
 // @Produce      json
 // @Param        id path string true "캠프 ID"
-// @Success      200 {object} Camp
+// @Success      200 {object} CampResponse
 // @Failure      400 {object} ErrorResponse
 // @Failure      409 {object} ErrorResponse "이미 활성화됨 또는 필수 조건 미충족"
 // @Router       /camps/{id}/start [post]
@@ -192,7 +202,7 @@ func (h *CampHandler) StartCamp(c echo.Context) error {
 // @Security     AdminAuth
 // @Produce      json
 // @Param        id path string true "캠프 ID"
-// @Success      200 {object} Camp
+// @Success      200 {object} CampResponse
 // @Failure      400 {object} ErrorResponse
 // @Failure      409 {object} ErrorResponse
 // @Router       /camps/{id}/end [post]
