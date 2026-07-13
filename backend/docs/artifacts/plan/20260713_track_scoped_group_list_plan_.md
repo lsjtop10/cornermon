@@ -74,5 +74,5 @@ func (h *GroupHandler) ListGroupsByTrack(c echo.Context) error
 - handler는 middleware가 주입한 facilitator session의 `TrackID`와 path를 먼저 비교하므로 다른 트랙으로의 수평 권한 상승을 repository 조회 전에 차단한다.
 - 기존 관리자 `ListGroups`와 `/camps/:campId/groups` 라우트는 수정하지 않았다.
 - 읽기 요청에는 감사 로그와 SSE를 추가하지 않았으며 repository 장애는 기존 adapter의 `errs.Wrap` 정책을 그대로 사용한다.
-- 로컬 `main`의 선행 커밋이 생성 Swagger 산출물을 삭제한 상태이므로 생성 파일은 커밋 대상으로 복원하지 않고 annotation 생성 검증만 수행한다.
+- 새 endpoint의 Swag operation annotation을 추가한다. 전체 Swagger 산출물 재생성은 기존 DTO `@name` 정책 변경과 결합되어 있으므로 사용자 지시에 따라 이 작업에서는 포함하지 않는다.
 - 검증: `go test ./...`, `go test -race ./internal/usecase ./internal/infrastructure/web`, `git diff --check`.
