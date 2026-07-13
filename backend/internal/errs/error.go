@@ -9,6 +9,12 @@ import (
 	"strings"
 )
 
+type contextKey string
+
+// TraceIDKey는 context에 trace_id를 저장/조회할 때 사용하는 키입니다.
+// 문자열 리터럴이 아닌 전용 타입을 사용해 다른 패키지의 context 값과 충돌하지 않도록 합니다.
+const TraceIDKey contextKey = "trace_id"
+
 // AppError는 발생 시점의 콜 스택 정보와 Trace ID를 보존하는 커스텀 에러 타입입니다.
 type AppError struct {
 	Err     error
@@ -36,7 +42,9 @@ func (e *AppError) FormatStack() []string {
 	for {
 		frame, more := frames.Next()
 		// 프로젝트 소스코드 위치만 필터링하여 스택 트레이스 크기를 조절하고 불필요한 런타임/Echo 내부 추적을 제외합니다.
-		if strings.Contains(frame.File, "cornermon/backend") {
+		// frame.Function은 소스 체크아웃 디렉토리명과 무관하게 항상 Go 모듈 경로(cornermon/backend/...)로 시작하므로
+		// 배포 환경에서 체크아웃 경로가 달라져도 안정적으로 매칭된다.
+		if strings.HasPrefix(frame.Function, "cornermon/backend") {
 			lines = append(lines, fmt.Sprintf("%s:%d %s", frame.File, frame.Line, frame.Function))
 		}
 		if !more {
@@ -58,7 +66,7 @@ func Wrap(ctx context.Context, err error) error {
 	if errors.As(err, &appErr) {
 		// Context에 trace_id가 세팅되어 있으나 에러 객체에 비어있는 경우 보완
 		if appErr.TraceID == "" && ctx != nil {
-			if traceID, ok := ctx.Value("trace_id").(string); ok {
+			if traceID, ok := ctx.Value(TraceIDKey).(string); ok {
 				appErr.TraceID = traceID
 			}
 		}
@@ -67,7 +75,7 @@ func Wrap(ctx context.Context, err error) error {
 
 	var traceID string
 	if ctx != nil {
-		if tid, ok := ctx.Value("trace_id").(string); ok {
+		if tid, ok := ctx.Value(TraceIDKey).(string); ok {
 			traceID = tid
 		}
 	}
@@ -82,7 +90,7 @@ func Wrap(ctx context.Context, err error) error {
 	}
 }
 
-// SlogWrappedHandler는 slog.Handler의 데코레이터로, 로그에 AppError가 포함되어 있을 경우 
+// SlogWrappedHandler는 slog.Handler의 데코레이터로, 로그에 AppError가 포함되어 있을 경우
 // 자동으로 stack_trace와 trace_id를 JSON 필드로 변환해 삽입해 줍니다.
 type SlogWrappedHandler struct {
 	slog.Handler
@@ -96,7 +104,7 @@ func NewSlogWrappedHandler(h slog.Handler) *SlogWrappedHandler {
 // Handle은 로그를 가로채 AppError 및 Context 정보 전처리를 수행한 뒤 원본 핸들러에 위임합니다.
 func (h *SlogWrappedHandler) Handle(ctx context.Context, r slog.Record) error {
 	var appErr *AppError
-	
+
 	// 레코드 내의 어트리뷰트들 중에서 AppError 추출 시도
 	r.Attrs(func(attr slog.Attr) bool {
 		// Any 타입이면서 에러인 경우
@@ -122,7 +130,7 @@ func (h *SlogWrappedHandler) Handle(ctx context.Context, r slog.Record) error {
 	} else {
 		// AppError는 없지만 context에 trace_id가 주입되어 있는 경우 백업 로깅
 		if ctx != nil {
-			if traceID, ok := ctx.Value("trace_id").(string); ok {
+			if traceID, ok := ctx.Value(TraceIDKey).(string); ok {
 				r.AddAttrs(slog.String("trace_id", traceID))
 			}
 		}

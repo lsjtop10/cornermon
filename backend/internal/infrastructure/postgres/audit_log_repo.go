@@ -29,7 +29,7 @@ func (r *pgAuditLogRepository) queries(ctx context.Context) *db.Queries {
 func (r *pgAuditLogRepository) Save(ctx context.Context, log *domain.AuditLog) error {
 	metaJSON, err := json.Marshal(log.Metadata)
 	if err != nil {
-		return err
+		return errs.Wrap(ctx, err)
 	}
 
 	err = r.queries(ctx).SaveAuditLog(ctx, db.SaveAuditLogParams{
@@ -61,7 +61,7 @@ func (r *pgAuditLogRepository) List(ctx context.Context, limit, offset int) ([]*
 		var metadata map[string]any
 		if len(row.Metadata) > 0 {
 			if err := json.Unmarshal(row.Metadata, &metadata); err != nil {
-				return nil, err
+				return nil, errs.Wrap(ctx, err)
 			}
 		}
 		logs[i] = &domain.AuditLog{

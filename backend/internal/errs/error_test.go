@@ -12,7 +12,7 @@ import (
 func TestWrap(t *testing.T) {
 	// arrange
 	originalErr := errors.New("something went wrong")
-	ctx := context.WithValue(context.Background(), "trace_id", "test-trace-id-123")
+	ctx := context.WithValue(context.Background(), errs.TraceIDKey, "test-trace-id-123")
 
 	// act
 	wrappedErr := errs.Wrap(ctx, originalErr)

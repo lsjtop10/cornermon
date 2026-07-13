@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"time"
 
+	"cornermon/backend/internal/errs"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 )
@@ -22,7 +23,7 @@ func Logger() echo.MiddlewareFunc {
 			}
 
 			// Context에 trace_id 바인딩
-			ctx := context.WithValue(c.Request().Context(), "trace_id", traceID)
+			ctx := context.WithValue(c.Request().Context(), errs.TraceIDKey, traceID)
 			c.SetRequest(c.Request().WithContext(ctx))
 			c.Set("trace_id", traceID)
 
@@ -54,4 +55,3 @@ func Logger() echo.MiddlewareFunc {
 		}
 	}
 }
-
