@@ -125,6 +125,9 @@ func RegisterRoutes(e *echo.Echo, h *Handlers, adminAuth AuthAdminUsecase, track
 
 	track.POST("/auth/track/logout", h.Auth.TrackLogout)
 	track.POST("/tracks/:id/migrate-session", h.Auth.MigrateSession)
+	if h.Group != nil {
+		track.GET("/tracks/:trackId/groups", h.Group.ListGroupsByTrack)
+	}
 
 	// ── C. Visit ──
 	if h.Visit != nil {

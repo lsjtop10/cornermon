@@ -64,7 +64,6 @@ func main() {
 	}
 	defer pool.Close()
 
-
 	// Initialize Repositories
 	adminRepo := postgres.NewAdminRepository(pool)
 	adminSessionRepo := postgres.NewAdminSessionRepository(pool)
@@ -90,7 +89,7 @@ func main() {
 
 	deviceTrustService := usecase.NewDeviceTrustService(campRepo, deviceRepo, auditLogRepo, broadcaster, txManager)
 	cornerService := usecase.NewCornerService(campRepo, cornerRepo, auditLogRepo, broadcaster, txManager)
-	groupService := usecase.NewGroupService(campRepo, cornerRepo, groupRepo, badgeRepo, visitRepo, auditLogRepo, txManager)
+	groupService := usecase.NewGroupService(campRepo, cornerRepo, trackRepo, groupRepo, badgeRepo, visitRepo, auditLogRepo, txManager)
 	badgeService := usecase.NewBadgeService(badgeRepo, groupRepo, auditLogRepo, txManager)
 	visitService := usecase.NewVisitService(campRepo, cornerRepo, trackRepo, visitRepo, groupRepo, badgeRepo, facilitatorSessionRepo, auditLogRepo, broadcaster, txManager)
 	trackService := usecase.NewTrackService(campRepo, cornerRepo, trackRepo, facilitatorSessionRepo, auditLogRepo, broadcaster, txManager)

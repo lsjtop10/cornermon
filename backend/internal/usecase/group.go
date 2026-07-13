@@ -12,6 +12,7 @@ import (
 type GroupService struct {
 	camps     CampRepository
 	corners   CornerRepository
+	tracks    TrackRepository
 	groups    GroupRepository
 	badges    BadgeRepository
 	visits    VisitRepository
@@ -25,6 +26,7 @@ type GroupService struct {
 func NewGroupService(
 	camps CampRepository,
 	corners CornerRepository,
+	tracks TrackRepository,
 	groups GroupRepository,
 	badges BadgeRepository,
 	visits VisitRepository,
@@ -34,6 +36,7 @@ func NewGroupService(
 	return &GroupService{
 		camps:     camps,
 		corners:   corners,
+		tracks:    tracks,
 		groups:    groups,
 		badges:    badges,
 		visits:    visits,
@@ -118,6 +121,31 @@ func (s *GroupService) ListGroups(
 	campID domain.CampID,
 ) ([]*domain.Group, error) {
 	return s.groups.ListByCamp(ctx, campID)
+}
+
+// ListGroupsByTrack derives the camp scope from the track's immutable corner
+// assignment and returns only groups belonging to that camp.
+func (s *GroupService) ListGroupsByTrack(
+	ctx context.Context,
+	trackID domain.TrackID,
+) ([]*domain.Group, error) {
+	track, err := s.tracks.Get(ctx, trackID)
+	if err != nil {
+		return nil, err
+	}
+	if track == nil {
+		return nil, domain.ErrTrackNotFound
+	}
+
+	corner, err := s.corners.Get(ctx, track.CornerID)
+	if err != nil {
+		return nil, err
+	}
+	if corner == nil {
+		return nil, domain.ErrCornerNotFound
+	}
+
+	return s.groups.ListByCamp(ctx, corner.CampID)
 }
 
 // RetrieveGroupRotationSchedule
