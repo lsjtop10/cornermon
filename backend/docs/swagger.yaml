@@ -350,13 +350,6 @@ definitions:
         example: 잘못된 요청입니다.
         type: string
     type: object
-  web.ExceptionApproveRequest:
-    properties:
-      badges:
-        items:
-          $ref: '#/definitions/internal_infrastructure_web.Badge'
-        type: array
-    type: object
   web.ExportBadgesResponse:
     properties:
       badges:
@@ -923,7 +916,7 @@ paths:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/web.Badge'
+            $ref: '#/definitions/web.Group'
       security:
       - AdminAuth: []
       summary: 배지를 특정 조에 배정 (스캔 기반)

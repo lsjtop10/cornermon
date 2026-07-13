@@ -539,7 +539,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/web.Badge"
+                            "$ref": "#/definitions/web.Group"
                         }
                     }
                 }
@@ -2636,17 +2636,6 @@ const docTemplate = `{
                 "message": {
                     "type": "string",
                     "example": "잘못된 요청입니다."
-                }
-            }
-        },
-        "internal_infrastructure_web.ExportBadgesResponse": {
-            "type": "object",
-            "properties": {
-                "badges": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/internal_infrastructure_web.Badge"
-                    }
                 }
             }
         },

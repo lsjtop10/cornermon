@@ -2,6 +2,7 @@ package web
 
 import (
 	"net/http"
+	"time"
 
 	"cornermon/backend/internal/domain"
 	"cornermon/backend/internal/usecase"
@@ -85,5 +86,45 @@ func (h *GroupHandler) GetGroup(c echo.Context) error {
 // @Success      200 {array} VisitSummary
 // @Router       /groups/{id}/visits [get]
 func (h *GroupHandler) ListGroupVisits(c echo.Context) error {
-	return echo.NewHTTPError(http.StatusNotImplemented, "Not implemented yet")
+	id := domain.GroupID(c.Param("id"))
+	details, err := h.groupUC.ListGroupVisitDetails(c.Request().Context(), id)
+	if err != nil {
+		return err
+	}
+
+	res := make([]VisitSummary, len(details))
+	for i, d := range details {
+		v := d.Visit
+		c := d.Corner
+
+		durationOpt := v.DurationSeconds()
+		deviationOpt := v.DeviationSeconds(c.TargetMinutes)
+
+		var endedAt *time.Time
+		if val, ok := v.EndedAt.Value(); ok {
+			endedAt = &val
+		}
+
+		var duration, deviation *int
+		if val, ok := durationOpt.Value(); ok {
+			duration = &val
+		}
+		if val, ok := deviationOpt.Value(); ok {
+			deviation = &val
+		}
+
+		res[i] = VisitSummary{
+			ID:               string(v.ID),
+			GroupID:          string(v.GroupID),
+			CornerID:         string(v.CornerID),
+			TrackID:          string(v.TrackID),
+			Status:           string(v.Status),
+			InputMethod:      string(v.InputMethod),
+			StartedAt:        v.StartedAt,
+			EndedAt:          endedAt,
+			DurationSeconds:  duration,
+			DeviationSeconds: deviation,
+		}
+	}
+	return c.JSON(http.StatusOK, res)
 }

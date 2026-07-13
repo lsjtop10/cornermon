@@ -110,5 +110,16 @@ func (h *VisitHandler) EndCurrentVisit(c echo.Context) error {
 // @Failure      404 "진행 중인 방문 없음"
 // @Router       /tracks/{trackId}/visits/current [get]
 func (h *VisitHandler) GetCurrentVisit(c echo.Context) error {
-	return echo.NewHTTPError(http.StatusNotImplemented, "Not implemented yet")
+	authHeader := c.Request().Header.Get("Authorization")
+	token := strings.TrimPrefix(authHeader, "Bearer ")
+
+	visit, err := h.visitUC.GetCurrentVisit(c.Request().Context(), token)
+	if err != nil {
+		return err
+	}
+	if visit == nil {
+		return echo.ErrNotFound
+	}
+
+	return c.JSON(http.StatusOK, mapVisitToDTO(visit))
 }

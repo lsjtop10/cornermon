@@ -33,10 +33,11 @@ func TestGroupService_RegisterBadge(t *testing.T) {
 		badges.Save(context.Background(), badge)
 
 		groups := NewMockGroupRepository()
+		visits := NewMockVisitRepository()
 		auditLogs := &MockAuditLogRepository{}
 		tx := &MockTxManager{}
 
-		s := NewGroupService(camps, corners, groups, badges, auditLogs, tx)
+		s := NewGroupService(camps, corners, groups, badges, visits, auditLogs, tx)
 		s.nowFn = func() time.Time { return now }
 		s.uuidFn = func() string { return "group-uuid" }
 
@@ -78,10 +79,11 @@ func TestGroupService_RegisterBadge(t *testing.T) {
 		badges.Save(context.Background(), badge)
 
 		groups := NewMockGroupRepository()
+		visits := NewMockVisitRepository()
 		auditLogs := &MockAuditLogRepository{}
 		tx := &MockTxManager{}
 
-		s := NewGroupService(camps, nil, groups, badges, auditLogs, tx)
+		s := NewGroupService(camps, nil, groups, badges, visits, auditLogs, tx)
 
 		// Act
 		_, err := s.RegisterBadge(context.Background(), "camp-1", "qr-1", "1조")
