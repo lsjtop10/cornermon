@@ -2702,7 +2702,8 @@ paths:
       description: |
         인증 성공/실패, 스캔, 규칙 변경, 기기 승인/철회, 트랙 관리 등의 감사 로그를 조회한다.
         메시지 통신 내역은 감사 대상에서 제외.
-        필터링·정렬을 쿼리 파라미터로 지정해 서버에서 처리한다.
+        필터링을 쿼리 파라미터로 지정해 서버에서 처리하며,
+        응답은 최신순 `(occurredAt, id)` 복합 커서로 페이지네이션한다.
       security:
         - AdminAuth: []
       parameters:
@@ -2722,18 +2723,6 @@ paths:
             type: string
             enum: [success, failure]
           description: "성공/실패 필터"
-        - name: sort
-          in: query
-          schema:
-            type: string
-            enum: [occurredAt, actor, action]
-          description: "정렬 기준"
-        - name: order
-          in: query
-          schema:
-            type: string
-            enum: [asc, desc]
-          default: desc
         - name: limit
           in: query
           schema:
@@ -2744,8 +2733,7 @@ paths:
           in: query
           schema:
             type: string
-            format: date-time
-          description: "커서 기반 페이지네이션: 이 시각 이전 항목 조회"
+          description: "이전 응답의 불투명 nextCursor"
       responses:
         "200":
           description: "감사 로그 목록"
@@ -2758,8 +2746,16 @@ paths:
                     type: array
                     items:
                       $ref: '#/components/schemas/AuditLog'
-                  hasMore:
-                    type: boolean
+                  nextCursor:
+                    type: string
+                    description: "다음 페이지가 있을 때만 반환되는 불투명 커서"
+                required: [logs]
+        "400":
+          description: "잘못된 result, limit 또는 before"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         "401":
           $ref: '#/components/responses/Unauthorized'
         "403":
