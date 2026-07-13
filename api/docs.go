@@ -126,13 +126,13 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/AuditLogPageResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.AuditLogPageResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/ErrorResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
                         }
                     }
                 }
@@ -158,7 +158,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/AdminLoginRequest"
+                            "$ref": "#/definitions/internal_infrastructure_web.AdminLoginRequest"
                         }
                     }
                 ],
@@ -166,13 +166,13 @@ const docTemplate = `{
                     "200": {
                         "description": "로그인 성공",
                         "schema": {
-                            "$ref": "#/definitions/AdminLoginResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.AdminLoginResponse"
                         }
                     },
                     "401": {
                         "description": "잘못된 ID 또는 비밀번호",
                         "schema": {
-                            "$ref": "#/definitions/ErrorResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
                         }
                     }
                 }
@@ -200,7 +200,7 @@ const docTemplate = `{
                     "401": {
                         "description": "권한 없음",
                         "schema": {
-                            "$ref": "#/definitions/ErrorResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
                         }
                     }
                 }
@@ -225,13 +225,13 @@ const docTemplate = `{
                     "200": {
                         "description": "새 액세스 토큰 발급",
                         "schema": {
-                            "$ref": "#/definitions/AdminRefreshResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.AdminRefreshResponse"
                         }
                     },
                     "401": {
                         "description": "권한 없음",
                         "schema": {
-                            "$ref": "#/definitions/ErrorResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
                         }
                     }
                 }
@@ -258,7 +258,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/AdminSession"
+                                "$ref": "#/definitions/internal_infrastructure_web.AdminSession"
                             }
                         }
                     }
@@ -352,7 +352,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/TrackLoginRequest"
+                            "$ref": "#/definitions/internal_infrastructure_web.TrackLoginRequest"
                         }
                     }
                 ],
@@ -360,25 +360,25 @@ const docTemplate = `{
                     "200": {
                         "description": "로그인 성공 — 트랙 세션 토큰 발급",
                         "schema": {
-                            "$ref": "#/definitions/TrackLoginResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.TrackLoginResponse"
                         }
                     },
                     "400": {
                         "description": "잘못된 PIN (지연 가능)",
                         "schema": {
-                            "$ref": "#/definitions/ErrorResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "신뢰 기기 아님 또는 캠프 미시작",
                         "schema": {
-                            "$ref": "#/definitions/ErrorResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
                         }
                     },
                     "429": {
                         "description": "PIN 잠금(지연) 중",
                         "schema": {
-                            "$ref": "#/definitions/ErrorResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
                         }
                     }
                 }
@@ -458,7 +458,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/Badge"
+                                "$ref": "#/definitions/internal_infrastructure_web.Badge"
                             }
                         }
                     }
@@ -490,7 +490,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/BulkGenerateBadgesRequest"
+                            "$ref": "#/definitions/internal_infrastructure_web.BulkGenerateBadgesRequest"
                         }
                     }
                 ],
@@ -500,7 +500,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/Badge"
+                                "$ref": "#/definitions/internal_infrastructure_web.Badge"
                             }
                         }
                     }
@@ -526,7 +526,7 @@ const docTemplate = `{
                     "200": {
                         "description": "미배정 배지 목록",
                         "schema": {
-                            "$ref": "#/definitions/ExportBadgesResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.ExportBadgesResponse"
                         }
                     }
                 }
@@ -557,7 +557,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/ScanAssignBadgeRequest"
+                            "$ref": "#/definitions/internal_infrastructure_web.ScanAssignBadgeRequest"
                         }
                     }
                 ],
@@ -565,7 +565,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/Group"
+                            "$ref": "#/definitions/internal_infrastructure_web.Group"
                         }
                     }
                 }
@@ -603,7 +603,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/AssignBadgeRequest"
+                            "$ref": "#/definitions/internal_infrastructure_web.AssignBadgeRequest"
                         }
                     }
                 ],
@@ -611,7 +611,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/Badge"
+                            "$ref": "#/definitions/internal_infrastructure_web.Badge"
                         }
                     }
                 }
@@ -638,14 +638,14 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/Camp"
+                                "$ref": "#/definitions/internal_infrastructure_web.Camp"
                             }
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/ErrorResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
                         }
                     }
                 }
@@ -674,7 +674,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/CreateCampRequest"
+                            "$ref": "#/definitions/internal_infrastructure_web.CreateCampRequest"
                         }
                     }
                 ],
@@ -682,19 +682,19 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/Camp"
+                            "$ref": "#/definitions/internal_infrastructure_web.Camp"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/ErrorResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/ErrorResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
                         }
                     }
                 }
@@ -730,20 +730,20 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/Corner"
+                                "$ref": "#/definitions/internal_infrastructure_web.Corner"
                             }
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/ErrorResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/ErrorResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
                         }
                     }
                 }
@@ -779,7 +779,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/Group"
+                                "$ref": "#/definitions/internal_infrastructure_web.Group"
                             }
                         }
                     }
@@ -814,7 +814,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/CampReport"
+                            "$ref": "#/definitions/internal_infrastructure_web.CampReport"
                         }
                     }
                 }
@@ -848,7 +848,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/CampReport"
+                            "$ref": "#/definitions/internal_infrastructure_web.CampReport"
                         }
                     }
                 }
@@ -882,7 +882,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/CampReport"
+                            "$ref": "#/definitions/internal_infrastructure_web.CampReport"
                         }
                     }
                 }
@@ -916,7 +916,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/CampSummaryStats"
+                            "$ref": "#/definitions/internal_infrastructure_web.CampSummaryStats"
                         }
                     }
                 }
@@ -952,7 +952,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/Track"
+                                "$ref": "#/definitions/internal_infrastructure_web.Track"
                             }
                         }
                     }
@@ -987,13 +987,13 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/Camp"
+                            "$ref": "#/definitions/internal_infrastructure_web.Camp"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/ErrorResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
                         }
                     }
                 }
@@ -1029,7 +1029,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/UpdateCampRequest"
+                            "$ref": "#/definitions/internal_infrastructure_web.UpdateCampRequest"
                         }
                     }
                 ],
@@ -1037,25 +1037,25 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/Camp"
+                            "$ref": "#/definitions/internal_infrastructure_web.Camp"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/ErrorResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/ErrorResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
                         }
                     },
                     "409": {
                         "description": "Conflict",
                         "schema": {
-                            "$ref": "#/definitions/ErrorResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
                         }
                     }
                 }
@@ -1089,19 +1089,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/Camp"
+                            "$ref": "#/definitions/internal_infrastructure_web.Camp"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/ErrorResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
                         }
                     },
                     "409": {
                         "description": "Conflict",
                         "schema": {
-                            "$ref": "#/definitions/ErrorResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
                         }
                     }
                 }
@@ -1135,19 +1135,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/Camp"
+                            "$ref": "#/definitions/internal_infrastructure_web.Camp"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/ErrorResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
                         }
                     },
                     "409": {
                         "description": "이미 활성화됨 또는 필수 조건 미충족",
                         "schema": {
-                            "$ref": "#/definitions/ErrorResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
                         }
                     }
                 }
@@ -1178,7 +1178,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/CreateCornerRequest"
+                            "$ref": "#/definitions/internal_infrastructure_web.CreateCornerRequest"
                         }
                     }
                 ],
@@ -1186,19 +1186,19 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/Corner"
+                            "$ref": "#/definitions/internal_infrastructure_web.Corner"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/ErrorResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/ErrorResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
                         }
                     }
                 }
@@ -1229,7 +1229,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/BulkUpdateCornersRequest"
+                            "$ref": "#/definitions/internal_infrastructure_web.BulkUpdateCornersRequest"
                         }
                     }
                 ],
@@ -1239,20 +1239,20 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/Corner"
+                                "$ref": "#/definitions/internal_infrastructure_web.Corner"
                             }
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/ErrorResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
                         }
                     },
                     "409": {
                         "description": "Conflict",
                         "schema": {
-                            "$ref": "#/definitions/ErrorResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
                         }
                     }
                 }
@@ -1288,7 +1288,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/Track"
+                                "$ref": "#/definitions/internal_infrastructure_web.Track"
                             }
                         }
                     }
@@ -1323,13 +1323,13 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/Corner"
+                            "$ref": "#/definitions/internal_infrastructure_web.Corner"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/ErrorResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
                         }
                     }
                 }
@@ -1364,13 +1364,13 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/ErrorResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
                         }
                     },
                     "409": {
                         "description": "활성화된 캠프이거나 종속 데이터가 존재함",
                         "schema": {
-                            "$ref": "#/definitions/ErrorResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
                         }
                     }
                 }
@@ -1397,7 +1397,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/DeviceRegistration"
+                                "$ref": "#/definitions/internal_infrastructure_web.DeviceRegistration"
                             }
                         }
                     }
@@ -1422,7 +1422,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/DeviceRegistrationRequest"
+                            "$ref": "#/definitions/internal_infrastructure_web.DeviceRegistrationRequest"
                         }
                     }
                 ],
@@ -1430,7 +1430,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/DeviceRegistration"
+                            "$ref": "#/definitions/internal_infrastructure_web.DeviceRegistration"
                         }
                     }
                 }
@@ -1488,7 +1488,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/DeviceRegistration"
+                            "$ref": "#/definitions/internal_infrastructure_web.DeviceRegistration"
                         }
                     }
                 }
@@ -1522,7 +1522,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/DeviceRegistration"
+                            "$ref": "#/definitions/internal_infrastructure_web.DeviceRegistration"
                         }
                     }
                 }
@@ -1556,7 +1556,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/DeviceRegistration"
+                            "$ref": "#/definitions/internal_infrastructure_web.DeviceRegistration"
                         }
                     }
                 }
@@ -1590,7 +1590,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/Group"
+                            "$ref": "#/definitions/internal_infrastructure_web.Group"
                         }
                     }
                 }
@@ -1626,7 +1626,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/VisitSummary"
+                                "$ref": "#/definitions/internal_infrastructure_web.VisitSummary"
                             }
                         }
                     }
@@ -1654,7 +1654,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/Message"
+                                "$ref": "#/definitions/internal_infrastructure_web.Message"
                             }
                         }
                     }
@@ -1684,7 +1684,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/BroadcastMessageRequest"
+                            "$ref": "#/definitions/internal_infrastructure_web.BroadcastMessageRequest"
                         }
                     }
                 ],
@@ -1692,7 +1692,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/Message"
+                            "$ref": "#/definitions/internal_infrastructure_web.Message"
                         }
                     }
                 }
@@ -1759,7 +1759,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/BroadcastReceipt"
+                                "$ref": "#/definitions/internal_infrastructure_web.BroadcastReceipt"
                             }
                         }
                     }
@@ -1791,7 +1791,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/CreateTracksRequest"
+                            "$ref": "#/definitions/internal_infrastructure_web.CreateTracksRequest"
                         }
                     }
                 ],
@@ -1801,7 +1801,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/Track"
+                                "$ref": "#/definitions/internal_infrastructure_web.Track"
                             }
                         }
                     }
@@ -1833,7 +1833,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/BulkDeleteTracksRequest"
+                            "$ref": "#/definitions/internal_infrastructure_web.BulkDeleteTracksRequest"
                         }
                     }
                 ],
@@ -1894,7 +1894,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/Track"
+                            "$ref": "#/definitions/internal_infrastructure_web.Track"
                         }
                     }
                 }
@@ -1959,13 +1959,13 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/TrackLoginResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.TrackLoginResponse"
                         }
                     },
                     "401": {
                         "description": "권한 없음 또는 세션 만료",
                         "schema": {
-                            "$ref": "#/definitions/ErrorResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
                         }
                     }
                 }
@@ -1999,7 +1999,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/Track"
+                            "$ref": "#/definitions/internal_infrastructure_web.Track"
                         }
                     }
                 }
@@ -2037,7 +2037,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/ReplaceTrackRequest"
+                            "$ref": "#/definitions/internal_infrastructure_web.ReplaceTrackRequest"
                         }
                     }
                 ],
@@ -2045,80 +2045,25 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/ReplaceTrackResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.ReplaceTrackResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/ErrorResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/ErrorResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
                         }
                     },
                     "409": {
                         "description": "Conflict",
                         "schema": {
-                            "$ref": "#/definitions/ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/tracks/{trackId}/groups": {
-            "get": {
-                "security": [
-                    {
-                        "TrackAuth": []
-                    }
-                ],
-                "description": "인증된 진행자의 트랙이 속한 캠프의 조 목록을 반환한다. 세션의 트랙과 path trackId가 일치해야 한다.",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "C. Visit (Scan Flow)"
-                ],
-                "summary": "진행자 수동 체크인용 조 목록 조회",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "트랙 ID",
-                        "name": "trackId",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/Group"
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/ErrorResponse"
-                        }
-                    },
-                    "403": {
-                        "description": "세션 트랙과 요청 트랙 불일치",
-                        "schema": {
-                            "$ref": "#/definitions/ErrorResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "트랙 또는 코너 없음",
-                        "schema": {
-                            "$ref": "#/definitions/ErrorResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
                         }
                     }
                 }
@@ -2154,7 +2099,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/Message"
+                                "$ref": "#/definitions/internal_infrastructure_web.Message"
                             }
                         }
                     }
@@ -2191,7 +2136,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/DirectMessageRequest"
+                            "$ref": "#/definitions/internal_infrastructure_web.DirectMessageRequest"
                         }
                     }
                 ],
@@ -2199,7 +2144,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/Message"
+                            "$ref": "#/definitions/internal_infrastructure_web.Message"
                         }
                     }
                 }
@@ -2233,7 +2178,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/VisitSummary"
+                            "$ref": "#/definitions/internal_infrastructure_web.VisitSummary"
                         }
                     },
                     "404": {
@@ -2270,13 +2215,13 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/VisitSummary"
+                            "$ref": "#/definitions/internal_infrastructure_web.VisitSummary"
                         }
                     },
                     "409": {
                         "description": "TRACK_NOT_BUSY 등",
                         "schema": {
-                            "$ref": "#/definitions/ErrorResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
                         }
                     }
                 }
@@ -2314,7 +2259,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/VisitStartRequest"
+                            "$ref": "#/definitions/internal_infrastructure_web.VisitStartRequest"
                         }
                     }
                 ],
@@ -2322,13 +2267,13 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/VisitSummary"
+                            "$ref": "#/definitions/internal_infrastructure_web.VisitSummary"
                         }
                     },
                     "409": {
                         "description": "TRACK_BUSY, DUPLICATE_VISIT 등",
                         "schema": {
-                            "$ref": "#/definitions/ErrorResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
                         }
                     }
                 }
@@ -2336,7 +2281,7 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "AdminLoginRequest": {
+        "internal_infrastructure_web.AdminLoginRequest": {
             "type": "object",
             "properties": {
                 "id": {
@@ -2347,7 +2292,7 @@ const docTemplate = `{
                 }
             }
         },
-        "AdminLoginResponse": {
+        "internal_infrastructure_web.AdminLoginResponse": {
             "type": "object",
             "properties": {
                 "accessToken": {
@@ -2361,7 +2306,7 @@ const docTemplate = `{
                 }
             }
         },
-        "AdminRefreshResponse": {
+        "internal_infrastructure_web.AdminRefreshResponse": {
             "type": "object",
             "properties": {
                 "accessToken": {
@@ -2372,7 +2317,7 @@ const docTemplate = `{
                 }
             }
         },
-        "AdminSession": {
+        "internal_infrastructure_web.AdminSession": {
             "type": "object",
             "properties": {
                 "adminId": {
@@ -2395,7 +2340,7 @@ const docTemplate = `{
                 }
             }
         },
-        "AssignBadgeRequest": {
+        "internal_infrastructure_web.AssignBadgeRequest": {
             "type": "object",
             "properties": {
                 "groupId": {
@@ -2403,7 +2348,7 @@ const docTemplate = `{
                 }
             }
         },
-        "AuditLog": {
+        "internal_infrastructure_web.AuditLog": {
             "type": "object",
             "properties": {
                 "action": {
@@ -2432,13 +2377,13 @@ const docTemplate = `{
                 }
             }
         },
-        "AuditLogPageResponse": {
+        "internal_infrastructure_web.AuditLogPageResponse": {
             "type": "object",
             "properties": {
                 "logs": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/AuditLog"
+                        "$ref": "#/definitions/internal_infrastructure_web.AuditLog"
                     }
                 },
                 "nextCursor": {
@@ -2446,7 +2391,7 @@ const docTemplate = `{
                 }
             }
         },
-        "Badge": {
+        "internal_infrastructure_web.Badge": {
             "type": "object",
             "properties": {
                 "assignedGroupId": {
@@ -2473,7 +2418,7 @@ const docTemplate = `{
                 }
             }
         },
-        "BottleneckRanking": {
+        "internal_infrastructure_web.BottleneckRanking": {
             "type": "object",
             "properties": {
                 "avgDeviationSeconds": {
@@ -2488,7 +2433,7 @@ const docTemplate = `{
                 }
             }
         },
-        "BroadcastMessageRequest": {
+        "internal_infrastructure_web.BroadcastMessageRequest": {
             "type": "object",
             "properties": {
                 "campId": {
@@ -2499,7 +2444,7 @@ const docTemplate = `{
                 }
             }
         },
-        "BroadcastReceipt": {
+        "internal_infrastructure_web.BroadcastReceipt": {
             "type": "object",
             "properties": {
                 "cornerName": {
@@ -2521,7 +2466,7 @@ const docTemplate = `{
                 }
             }
         },
-        "BulkDeleteTracksRequest": {
+        "internal_infrastructure_web.BulkDeleteTracksRequest": {
             "type": "object",
             "properties": {
                 "trackIds": {
@@ -2532,7 +2477,7 @@ const docTemplate = `{
                 }
             }
         },
-        "BulkGenerateBadgesRequest": {
+        "internal_infrastructure_web.BulkGenerateBadgesRequest": {
             "type": "object",
             "properties": {
                 "count": {
@@ -2540,7 +2485,7 @@ const docTemplate = `{
                 }
             }
         },
-        "BulkUpdateCornersRequest": {
+        "internal_infrastructure_web.BulkUpdateCornersRequest": {
             "type": "object",
             "properties": {
                 "corners": {
@@ -2562,7 +2507,7 @@ const docTemplate = `{
                 }
             }
         },
-        "Camp": {
+        "internal_infrastructure_web.Camp": {
             "type": "object",
             "properties": {
                 "bottleneckMinSamples": {
@@ -2599,7 +2544,7 @@ const docTemplate = `{
                 }
             }
         },
-        "CampReport": {
+        "internal_infrastructure_web.CampReport": {
             "type": "object",
             "properties": {
                 "campId": {
@@ -2609,7 +2554,7 @@ const docTemplate = `{
                 "cornerStats": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/CornerStats"
+                        "$ref": "#/definitions/internal_infrastructure_web.CornerStats"
                     }
                 },
                 "generatedAt": {
@@ -2619,27 +2564,27 @@ const docTemplate = `{
                 "groupStats": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/GroupStats"
+                        "$ref": "#/definitions/internal_infrastructure_web.GroupStats"
                     }
                 },
                 "operationalStats": {
-                    "$ref": "#/definitions/OperationalStats"
+                    "$ref": "#/definitions/internal_infrastructure_web.OperationalStats"
                 },
                 "summary": {
-                    "$ref": "#/definitions/CampSummaryStats"
+                    "$ref": "#/definitions/internal_infrastructure_web.CampSummaryStats"
                 },
                 "timeline": {
-                    "$ref": "#/definitions/TimelineStats"
+                    "$ref": "#/definitions/internal_infrastructure_web.TimelineStats"
                 },
                 "trackStats": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/TrackStats"
+                        "$ref": "#/definitions/internal_infrastructure_web.TrackStats"
                     }
                 }
             }
         },
-        "CampSummaryStats": {
+        "internal_infrastructure_web.CampSummaryStats": {
             "type": "object",
             "properties": {
                 "avgDeviationSeconds": {
@@ -2648,7 +2593,7 @@ const docTemplate = `{
                 "bottleneckRanking": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/BottleneckRanking"
+                        "$ref": "#/definitions/internal_infrastructure_web.BottleneckRanking"
                     }
                 },
                 "completionRate": {
@@ -2683,13 +2628,13 @@ const docTemplate = `{
                 }
             }
         },
-        "Corner": {
+        "internal_infrastructure_web.Corner": {
             "type": "object",
             "properties": {
                 "activeTracks": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/TrackSummary"
+                        "$ref": "#/definitions/internal_infrastructure_web.TrackSummary"
                     }
                 },
                 "id": {
@@ -2717,7 +2662,7 @@ const docTemplate = `{
                 }
             }
         },
-        "CornerProgress": {
+        "internal_infrastructure_web.CornerProgress": {
             "type": "object",
             "properties": {
                 "cornerId": {
@@ -2737,7 +2682,7 @@ const docTemplate = `{
                 }
             }
         },
-        "CornerStats": {
+        "internal_infrastructure_web.CornerStats": {
             "type": "object",
             "properties": {
                 "completedVisitCount": {
@@ -2753,12 +2698,12 @@ const docTemplate = `{
                 "unvisitedGroups": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/UnvisitedGroup"
+                        "$ref": "#/definitions/internal_infrastructure_web.UnvisitedGroup"
                     }
                 }
             }
         },
-        "CreateCampRequest": {
+        "internal_infrastructure_web.CreateCampRequest": {
             "type": "object",
             "properties": {
                 "name": {
@@ -2766,7 +2711,7 @@ const docTemplate = `{
                 }
             }
         },
-        "CreateCornerRequest": {
+        "internal_infrastructure_web.CreateCornerRequest": {
             "type": "object",
             "properties": {
                 "campId": {
@@ -2780,7 +2725,7 @@ const docTemplate = `{
                 }
             }
         },
-        "CreateTracksRequest": {
+        "internal_infrastructure_web.CreateTracksRequest": {
             "type": "object",
             "properties": {
                 "campId": {
@@ -2794,7 +2739,7 @@ const docTemplate = `{
                 }
             }
         },
-        "DeviceRegistration": {
+        "internal_infrastructure_web.DeviceRegistration": {
             "type": "object",
             "properties": {
                 "approvedAt": {
@@ -2824,7 +2769,7 @@ const docTemplate = `{
                 }
             }
         },
-        "DeviceRegistrationRequest": {
+        "internal_infrastructure_web.DeviceRegistrationRequest": {
             "type": "object",
             "properties": {
                 "campId": {
@@ -2843,7 +2788,7 @@ const docTemplate = `{
                 }
             }
         },
-        "DirectMessageRequest": {
+        "internal_infrastructure_web.DirectMessageRequest": {
             "type": "object",
             "properties": {
                 "content": {
@@ -2851,7 +2796,7 @@ const docTemplate = `{
                 }
             }
         },
-        "ErrorResponse": {
+        "internal_infrastructure_web.ErrorResponse": {
             "type": "object",
             "properties": {
                 "code": {
@@ -2868,18 +2813,18 @@ const docTemplate = `{
                 }
             }
         },
-        "ExportBadgesResponse": {
+        "internal_infrastructure_web.ExportBadgesResponse": {
             "type": "object",
             "properties": {
                 "badges": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/Badge"
+                        "$ref": "#/definitions/internal_infrastructure_web.Badge"
                     }
                 }
             }
         },
-        "Group": {
+        "internal_infrastructure_web.Group": {
             "type": "object",
             "properties": {
                 "badgeId": {
@@ -2896,7 +2841,7 @@ const docTemplate = `{
                 "itinerary": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/CornerProgress"
+                        "$ref": "#/definitions/internal_infrastructure_web.CornerProgress"
                     }
                 },
                 "name": {
@@ -2913,7 +2858,7 @@ const docTemplate = `{
                 }
             }
         },
-        "GroupStats": {
+        "internal_infrastructure_web.GroupStats": {
             "type": "object",
             "properties": {
                 "completedCount": {
@@ -2931,7 +2876,7 @@ const docTemplate = `{
                 }
             }
         },
-        "Message": {
+        "internal_infrastructure_web.Message": {
             "type": "object",
             "properties": {
                 "channelType": {
@@ -2972,10 +2917,10 @@ const docTemplate = `{
                 }
             }
         },
-        "OperationalStats": {
+        "internal_infrastructure_web.OperationalStats": {
             "type": "object"
         },
-        "ReplaceTrackRequest": {
+        "internal_infrastructure_web.ReplaceTrackRequest": {
             "type": "object",
             "properties": {
                 "newCornerId": {
@@ -2983,18 +2928,18 @@ const docTemplate = `{
                 }
             }
         },
-        "ReplaceTrackResponse": {
+        "internal_infrastructure_web.ReplaceTrackResponse": {
             "type": "object",
             "properties": {
                 "pin": {
                     "type": "string"
                 },
                 "track": {
-                    "$ref": "#/definitions/Track"
+                    "$ref": "#/definitions/internal_infrastructure_web.Track"
                 }
             }
         },
-        "ScanAssignBadgeRequest": {
+        "internal_infrastructure_web.ScanAssignBadgeRequest": {
             "type": "object",
             "properties": {
                 "groupName": {
@@ -3005,10 +2950,10 @@ const docTemplate = `{
                 }
             }
         },
-        "TimelineStats": {
+        "internal_infrastructure_web.TimelineStats": {
             "type": "object"
         },
-        "Track": {
+        "internal_infrastructure_web.Track": {
             "type": "object",
             "properties": {
                 "cornerId": {
@@ -3016,7 +2961,7 @@ const docTemplate = `{
                     "format": "uuid"
                 },
                 "currentVisit": {
-                    "$ref": "#/definitions/VisitSummary"
+                    "$ref": "#/definitions/internal_infrastructure_web.VisitSummary"
                 },
                 "id": {
                     "type": "string",
@@ -3045,7 +2990,7 @@ const docTemplate = `{
                 }
             }
         },
-        "TrackLoginRequest": {
+        "internal_infrastructure_web.TrackLoginRequest": {
             "type": "object",
             "properties": {
                 "pin": {
@@ -3053,21 +2998,21 @@ const docTemplate = `{
                 }
             }
         },
-        "TrackLoginResponse": {
+        "internal_infrastructure_web.TrackLoginResponse": {
             "type": "object",
             "properties": {
                 "corner": {
-                    "$ref": "#/definitions/Corner"
+                    "$ref": "#/definitions/internal_infrastructure_web.Corner"
                 },
                 "track": {
-                    "$ref": "#/definitions/Track"
+                    "$ref": "#/definitions/internal_infrastructure_web.Track"
                 },
                 "trackToken": {
                     "type": "string"
                 }
             }
         },
-        "TrackStats": {
+        "internal_infrastructure_web.TrackStats": {
             "type": "object",
             "properties": {
                 "avgDeviationSeconds": {
@@ -3088,7 +3033,7 @@ const docTemplate = `{
                 }
             }
         },
-        "TrackSummary": {
+        "internal_infrastructure_web.TrackSummary": {
             "type": "object",
             "properties": {
                 "cornerId": {
@@ -3118,7 +3063,7 @@ const docTemplate = `{
                 }
             }
         },
-        "UnvisitedGroup": {
+        "internal_infrastructure_web.UnvisitedGroup": {
             "type": "object",
             "properties": {
                 "groupId": {
@@ -3130,7 +3075,7 @@ const docTemplate = `{
                 }
             }
         },
-        "UpdateCampRequest": {
+        "internal_infrastructure_web.UpdateCampRequest": {
             "type": "object",
             "properties": {
                 "bottleneckMinSamples": {
@@ -3152,7 +3097,7 @@ const docTemplate = `{
                 }
             }
         },
-        "VisitStartRequest": {
+        "internal_infrastructure_web.VisitStartRequest": {
             "type": "object",
             "properties": {
                 "groupId": {
@@ -3169,7 +3114,7 @@ const docTemplate = `{
                 }
             }
         },
-        "VisitSummary": {
+        "internal_infrastructure_web.VisitSummary": {
             "type": "object",
             "properties": {
                 "cornerId": {

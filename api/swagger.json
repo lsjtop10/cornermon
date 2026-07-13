@@ -119,13 +119,13 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/AuditLogPageResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.AuditLogPageResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/ErrorResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
                         }
                     }
                 }
@@ -151,7 +151,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/AdminLoginRequest"
+                            "$ref": "#/definitions/internal_infrastructure_web.AdminLoginRequest"
                         }
                     }
                 ],
@@ -159,13 +159,13 @@
                     "200": {
                         "description": "로그인 성공",
                         "schema": {
-                            "$ref": "#/definitions/AdminLoginResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.AdminLoginResponse"
                         }
                     },
                     "401": {
                         "description": "잘못된 ID 또는 비밀번호",
                         "schema": {
-                            "$ref": "#/definitions/ErrorResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
                         }
                     }
                 }
@@ -193,7 +193,7 @@
                     "401": {
                         "description": "권한 없음",
                         "schema": {
-                            "$ref": "#/definitions/ErrorResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
                         }
                     }
                 }
@@ -218,13 +218,13 @@
                     "200": {
                         "description": "새 액세스 토큰 발급",
                         "schema": {
-                            "$ref": "#/definitions/AdminRefreshResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.AdminRefreshResponse"
                         }
                     },
                     "401": {
                         "description": "권한 없음",
                         "schema": {
-                            "$ref": "#/definitions/ErrorResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
                         }
                     }
                 }
@@ -251,7 +251,7 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/AdminSession"
+                                "$ref": "#/definitions/internal_infrastructure_web.AdminSession"
                             }
                         }
                     }
@@ -345,7 +345,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/TrackLoginRequest"
+                            "$ref": "#/definitions/internal_infrastructure_web.TrackLoginRequest"
                         }
                     }
                 ],
@@ -353,25 +353,25 @@
                     "200": {
                         "description": "로그인 성공 — 트랙 세션 토큰 발급",
                         "schema": {
-                            "$ref": "#/definitions/TrackLoginResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.TrackLoginResponse"
                         }
                     },
                     "400": {
                         "description": "잘못된 PIN (지연 가능)",
                         "schema": {
-                            "$ref": "#/definitions/ErrorResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "신뢰 기기 아님 또는 캠프 미시작",
                         "schema": {
-                            "$ref": "#/definitions/ErrorResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
                         }
                     },
                     "429": {
                         "description": "PIN 잠금(지연) 중",
                         "schema": {
-                            "$ref": "#/definitions/ErrorResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
                         }
                     }
                 }
@@ -451,7 +451,7 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/Badge"
+                                "$ref": "#/definitions/internal_infrastructure_web.Badge"
                             }
                         }
                     }
@@ -483,7 +483,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/BulkGenerateBadgesRequest"
+                            "$ref": "#/definitions/internal_infrastructure_web.BulkGenerateBadgesRequest"
                         }
                     }
                 ],
@@ -493,7 +493,7 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/Badge"
+                                "$ref": "#/definitions/internal_infrastructure_web.Badge"
                             }
                         }
                     }
@@ -519,7 +519,7 @@
                     "200": {
                         "description": "미배정 배지 목록",
                         "schema": {
-                            "$ref": "#/definitions/ExportBadgesResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.ExportBadgesResponse"
                         }
                     }
                 }
@@ -550,7 +550,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/ScanAssignBadgeRequest"
+                            "$ref": "#/definitions/internal_infrastructure_web.ScanAssignBadgeRequest"
                         }
                     }
                 ],
@@ -558,7 +558,7 @@
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/Group"
+                            "$ref": "#/definitions/internal_infrastructure_web.Group"
                         }
                     }
                 }
@@ -596,7 +596,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/AssignBadgeRequest"
+                            "$ref": "#/definitions/internal_infrastructure_web.AssignBadgeRequest"
                         }
                     }
                 ],
@@ -604,7 +604,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/Badge"
+                            "$ref": "#/definitions/internal_infrastructure_web.Badge"
                         }
                     }
                 }
@@ -631,14 +631,14 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/Camp"
+                                "$ref": "#/definitions/internal_infrastructure_web.Camp"
                             }
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/ErrorResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
                         }
                     }
                 }
@@ -667,7 +667,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/CreateCampRequest"
+                            "$ref": "#/definitions/internal_infrastructure_web.CreateCampRequest"
                         }
                     }
                 ],
@@ -675,19 +675,19 @@
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/Camp"
+                            "$ref": "#/definitions/internal_infrastructure_web.Camp"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/ErrorResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/ErrorResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
                         }
                     }
                 }
@@ -723,20 +723,20 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/Corner"
+                                "$ref": "#/definitions/internal_infrastructure_web.Corner"
                             }
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/ErrorResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/ErrorResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
                         }
                     }
                 }
@@ -772,7 +772,7 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/Group"
+                                "$ref": "#/definitions/internal_infrastructure_web.Group"
                             }
                         }
                     }
@@ -807,7 +807,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/CampReport"
+                            "$ref": "#/definitions/internal_infrastructure_web.CampReport"
                         }
                     }
                 }
@@ -841,7 +841,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/CampReport"
+                            "$ref": "#/definitions/internal_infrastructure_web.CampReport"
                         }
                     }
                 }
@@ -875,7 +875,7 @@
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/CampReport"
+                            "$ref": "#/definitions/internal_infrastructure_web.CampReport"
                         }
                     }
                 }
@@ -909,7 +909,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/CampSummaryStats"
+                            "$ref": "#/definitions/internal_infrastructure_web.CampSummaryStats"
                         }
                     }
                 }
@@ -945,7 +945,7 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/Track"
+                                "$ref": "#/definitions/internal_infrastructure_web.Track"
                             }
                         }
                     }
@@ -980,13 +980,13 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/Camp"
+                            "$ref": "#/definitions/internal_infrastructure_web.Camp"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/ErrorResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
                         }
                     }
                 }
@@ -1022,7 +1022,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/UpdateCampRequest"
+                            "$ref": "#/definitions/internal_infrastructure_web.UpdateCampRequest"
                         }
                     }
                 ],
@@ -1030,25 +1030,25 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/Camp"
+                            "$ref": "#/definitions/internal_infrastructure_web.Camp"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/ErrorResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/ErrorResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
                         }
                     },
                     "409": {
                         "description": "Conflict",
                         "schema": {
-                            "$ref": "#/definitions/ErrorResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
                         }
                     }
                 }
@@ -1082,19 +1082,19 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/Camp"
+                            "$ref": "#/definitions/internal_infrastructure_web.Camp"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/ErrorResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
                         }
                     },
                     "409": {
                         "description": "Conflict",
                         "schema": {
-                            "$ref": "#/definitions/ErrorResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
                         }
                     }
                 }
@@ -1128,19 +1128,19 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/Camp"
+                            "$ref": "#/definitions/internal_infrastructure_web.Camp"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/ErrorResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
                         }
                     },
                     "409": {
                         "description": "이미 활성화됨 또는 필수 조건 미충족",
                         "schema": {
-                            "$ref": "#/definitions/ErrorResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
                         }
                     }
                 }
@@ -1171,7 +1171,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/CreateCornerRequest"
+                            "$ref": "#/definitions/internal_infrastructure_web.CreateCornerRequest"
                         }
                     }
                 ],
@@ -1179,19 +1179,19 @@
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/Corner"
+                            "$ref": "#/definitions/internal_infrastructure_web.Corner"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/ErrorResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/ErrorResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
                         }
                     }
                 }
@@ -1222,7 +1222,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/BulkUpdateCornersRequest"
+                            "$ref": "#/definitions/internal_infrastructure_web.BulkUpdateCornersRequest"
                         }
                     }
                 ],
@@ -1232,20 +1232,20 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/Corner"
+                                "$ref": "#/definitions/internal_infrastructure_web.Corner"
                             }
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/ErrorResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
                         }
                     },
                     "409": {
                         "description": "Conflict",
                         "schema": {
-                            "$ref": "#/definitions/ErrorResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
                         }
                     }
                 }
@@ -1281,7 +1281,7 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/Track"
+                                "$ref": "#/definitions/internal_infrastructure_web.Track"
                             }
                         }
                     }
@@ -1316,13 +1316,13 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/Corner"
+                            "$ref": "#/definitions/internal_infrastructure_web.Corner"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/ErrorResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
                         }
                     }
                 }
@@ -1357,13 +1357,13 @@
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/ErrorResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
                         }
                     },
                     "409": {
                         "description": "활성화된 캠프이거나 종속 데이터가 존재함",
                         "schema": {
-                            "$ref": "#/definitions/ErrorResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
                         }
                     }
                 }
@@ -1390,7 +1390,7 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/DeviceRegistration"
+                                "$ref": "#/definitions/internal_infrastructure_web.DeviceRegistration"
                             }
                         }
                     }
@@ -1415,7 +1415,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/DeviceRegistrationRequest"
+                            "$ref": "#/definitions/internal_infrastructure_web.DeviceRegistrationRequest"
                         }
                     }
                 ],
@@ -1423,7 +1423,7 @@
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/DeviceRegistration"
+                            "$ref": "#/definitions/internal_infrastructure_web.DeviceRegistration"
                         }
                     }
                 }
@@ -1481,7 +1481,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/DeviceRegistration"
+                            "$ref": "#/definitions/internal_infrastructure_web.DeviceRegistration"
                         }
                     }
                 }
@@ -1515,7 +1515,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/DeviceRegistration"
+                            "$ref": "#/definitions/internal_infrastructure_web.DeviceRegistration"
                         }
                     }
                 }
@@ -1549,7 +1549,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/DeviceRegistration"
+                            "$ref": "#/definitions/internal_infrastructure_web.DeviceRegistration"
                         }
                     }
                 }
@@ -1583,7 +1583,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/Group"
+                            "$ref": "#/definitions/internal_infrastructure_web.Group"
                         }
                     }
                 }
@@ -1619,7 +1619,7 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/VisitSummary"
+                                "$ref": "#/definitions/internal_infrastructure_web.VisitSummary"
                             }
                         }
                     }
@@ -1647,7 +1647,7 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/Message"
+                                "$ref": "#/definitions/internal_infrastructure_web.Message"
                             }
                         }
                     }
@@ -1677,7 +1677,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/BroadcastMessageRequest"
+                            "$ref": "#/definitions/internal_infrastructure_web.BroadcastMessageRequest"
                         }
                     }
                 ],
@@ -1685,7 +1685,7 @@
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/Message"
+                            "$ref": "#/definitions/internal_infrastructure_web.Message"
                         }
                     }
                 }
@@ -1752,7 +1752,7 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/BroadcastReceipt"
+                                "$ref": "#/definitions/internal_infrastructure_web.BroadcastReceipt"
                             }
                         }
                     }
@@ -1784,7 +1784,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/CreateTracksRequest"
+                            "$ref": "#/definitions/internal_infrastructure_web.CreateTracksRequest"
                         }
                     }
                 ],
@@ -1794,7 +1794,7 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/Track"
+                                "$ref": "#/definitions/internal_infrastructure_web.Track"
                             }
                         }
                     }
@@ -1826,7 +1826,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/BulkDeleteTracksRequest"
+                            "$ref": "#/definitions/internal_infrastructure_web.BulkDeleteTracksRequest"
                         }
                     }
                 ],
@@ -1887,7 +1887,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/Track"
+                            "$ref": "#/definitions/internal_infrastructure_web.Track"
                         }
                     }
                 }
@@ -1952,13 +1952,13 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/TrackLoginResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.TrackLoginResponse"
                         }
                     },
                     "401": {
                         "description": "권한 없음 또는 세션 만료",
                         "schema": {
-                            "$ref": "#/definitions/ErrorResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
                         }
                     }
                 }
@@ -1992,7 +1992,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/Track"
+                            "$ref": "#/definitions/internal_infrastructure_web.Track"
                         }
                     }
                 }
@@ -2030,7 +2030,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/ReplaceTrackRequest"
+                            "$ref": "#/definitions/internal_infrastructure_web.ReplaceTrackRequest"
                         }
                     }
                 ],
@@ -2038,80 +2038,25 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/ReplaceTrackResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.ReplaceTrackResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/ErrorResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/ErrorResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
                         }
                     },
                     "409": {
                         "description": "Conflict",
                         "schema": {
-                            "$ref": "#/definitions/ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/tracks/{trackId}/groups": {
-            "get": {
-                "security": [
-                    {
-                        "TrackAuth": []
-                    }
-                ],
-                "description": "인증된 진행자의 트랙이 속한 캠프의 조 목록을 반환한다. 세션의 트랙과 path trackId가 일치해야 한다.",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "C. Visit (Scan Flow)"
-                ],
-                "summary": "진행자 수동 체크인용 조 목록 조회",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "트랙 ID",
-                        "name": "trackId",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/Group"
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/ErrorResponse"
-                        }
-                    },
-                    "403": {
-                        "description": "세션 트랙과 요청 트랙 불일치",
-                        "schema": {
-                            "$ref": "#/definitions/ErrorResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "트랙 또는 코너 없음",
-                        "schema": {
-                            "$ref": "#/definitions/ErrorResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
                         }
                     }
                 }
@@ -2147,7 +2092,7 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/Message"
+                                "$ref": "#/definitions/internal_infrastructure_web.Message"
                             }
                         }
                     }
@@ -2184,7 +2129,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/DirectMessageRequest"
+                            "$ref": "#/definitions/internal_infrastructure_web.DirectMessageRequest"
                         }
                     }
                 ],
@@ -2192,7 +2137,7 @@
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/Message"
+                            "$ref": "#/definitions/internal_infrastructure_web.Message"
                         }
                     }
                 }
@@ -2226,7 +2171,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/VisitSummary"
+                            "$ref": "#/definitions/internal_infrastructure_web.VisitSummary"
                         }
                     },
                     "404": {
@@ -2263,13 +2208,13 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/VisitSummary"
+                            "$ref": "#/definitions/internal_infrastructure_web.VisitSummary"
                         }
                     },
                     "409": {
                         "description": "TRACK_NOT_BUSY 등",
                         "schema": {
-                            "$ref": "#/definitions/ErrorResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
                         }
                     }
                 }
@@ -2307,7 +2252,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/VisitStartRequest"
+                            "$ref": "#/definitions/internal_infrastructure_web.VisitStartRequest"
                         }
                     }
                 ],
@@ -2315,13 +2260,13 @@
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/VisitSummary"
+                            "$ref": "#/definitions/internal_infrastructure_web.VisitSummary"
                         }
                     },
                     "409": {
                         "description": "TRACK_BUSY, DUPLICATE_VISIT 등",
                         "schema": {
-                            "$ref": "#/definitions/ErrorResponse"
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorResponse"
                         }
                     }
                 }
@@ -2329,7 +2274,7 @@
         }
     },
     "definitions": {
-        "AdminLoginRequest": {
+        "internal_infrastructure_web.AdminLoginRequest": {
             "type": "object",
             "properties": {
                 "id": {
@@ -2340,7 +2285,7 @@
                 }
             }
         },
-        "AdminLoginResponse": {
+        "internal_infrastructure_web.AdminLoginResponse": {
             "type": "object",
             "properties": {
                 "accessToken": {
@@ -2354,7 +2299,7 @@
                 }
             }
         },
-        "AdminRefreshResponse": {
+        "internal_infrastructure_web.AdminRefreshResponse": {
             "type": "object",
             "properties": {
                 "accessToken": {
@@ -2365,7 +2310,7 @@
                 }
             }
         },
-        "AdminSession": {
+        "internal_infrastructure_web.AdminSession": {
             "type": "object",
             "properties": {
                 "adminId": {
@@ -2388,7 +2333,7 @@
                 }
             }
         },
-        "AssignBadgeRequest": {
+        "internal_infrastructure_web.AssignBadgeRequest": {
             "type": "object",
             "properties": {
                 "groupId": {
@@ -2396,7 +2341,7 @@
                 }
             }
         },
-        "AuditLog": {
+        "internal_infrastructure_web.AuditLog": {
             "type": "object",
             "properties": {
                 "action": {
@@ -2425,13 +2370,13 @@
                 }
             }
         },
-        "AuditLogPageResponse": {
+        "internal_infrastructure_web.AuditLogPageResponse": {
             "type": "object",
             "properties": {
                 "logs": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/AuditLog"
+                        "$ref": "#/definitions/internal_infrastructure_web.AuditLog"
                     }
                 },
                 "nextCursor": {
@@ -2439,7 +2384,7 @@
                 }
             }
         },
-        "Badge": {
+        "internal_infrastructure_web.Badge": {
             "type": "object",
             "properties": {
                 "assignedGroupId": {
@@ -2466,7 +2411,7 @@
                 }
             }
         },
-        "BottleneckRanking": {
+        "internal_infrastructure_web.BottleneckRanking": {
             "type": "object",
             "properties": {
                 "avgDeviationSeconds": {
@@ -2481,7 +2426,7 @@
                 }
             }
         },
-        "BroadcastMessageRequest": {
+        "internal_infrastructure_web.BroadcastMessageRequest": {
             "type": "object",
             "properties": {
                 "campId": {
@@ -2492,7 +2437,7 @@
                 }
             }
         },
-        "BroadcastReceipt": {
+        "internal_infrastructure_web.BroadcastReceipt": {
             "type": "object",
             "properties": {
                 "cornerName": {
@@ -2514,7 +2459,7 @@
                 }
             }
         },
-        "BulkDeleteTracksRequest": {
+        "internal_infrastructure_web.BulkDeleteTracksRequest": {
             "type": "object",
             "properties": {
                 "trackIds": {
@@ -2525,7 +2470,7 @@
                 }
             }
         },
-        "BulkGenerateBadgesRequest": {
+        "internal_infrastructure_web.BulkGenerateBadgesRequest": {
             "type": "object",
             "properties": {
                 "count": {
@@ -2533,7 +2478,7 @@
                 }
             }
         },
-        "BulkUpdateCornersRequest": {
+        "internal_infrastructure_web.BulkUpdateCornersRequest": {
             "type": "object",
             "properties": {
                 "corners": {
@@ -2555,7 +2500,7 @@
                 }
             }
         },
-        "Camp": {
+        "internal_infrastructure_web.Camp": {
             "type": "object",
             "properties": {
                 "bottleneckMinSamples": {
@@ -2592,7 +2537,7 @@
                 }
             }
         },
-        "CampReport": {
+        "internal_infrastructure_web.CampReport": {
             "type": "object",
             "properties": {
                 "campId": {
@@ -2602,7 +2547,7 @@
                 "cornerStats": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/CornerStats"
+                        "$ref": "#/definitions/internal_infrastructure_web.CornerStats"
                     }
                 },
                 "generatedAt": {
@@ -2612,27 +2557,27 @@
                 "groupStats": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/GroupStats"
+                        "$ref": "#/definitions/internal_infrastructure_web.GroupStats"
                     }
                 },
                 "operationalStats": {
-                    "$ref": "#/definitions/OperationalStats"
+                    "$ref": "#/definitions/internal_infrastructure_web.OperationalStats"
                 },
                 "summary": {
-                    "$ref": "#/definitions/CampSummaryStats"
+                    "$ref": "#/definitions/internal_infrastructure_web.CampSummaryStats"
                 },
                 "timeline": {
-                    "$ref": "#/definitions/TimelineStats"
+                    "$ref": "#/definitions/internal_infrastructure_web.TimelineStats"
                 },
                 "trackStats": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/TrackStats"
+                        "$ref": "#/definitions/internal_infrastructure_web.TrackStats"
                     }
                 }
             }
         },
-        "CampSummaryStats": {
+        "internal_infrastructure_web.CampSummaryStats": {
             "type": "object",
             "properties": {
                 "avgDeviationSeconds": {
@@ -2641,7 +2586,7 @@
                 "bottleneckRanking": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/BottleneckRanking"
+                        "$ref": "#/definitions/internal_infrastructure_web.BottleneckRanking"
                     }
                 },
                 "completionRate": {
@@ -2676,13 +2621,13 @@
                 }
             }
         },
-        "Corner": {
+        "internal_infrastructure_web.Corner": {
             "type": "object",
             "properties": {
                 "activeTracks": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/TrackSummary"
+                        "$ref": "#/definitions/internal_infrastructure_web.TrackSummary"
                     }
                 },
                 "id": {
@@ -2710,7 +2655,7 @@
                 }
             }
         },
-        "CornerProgress": {
+        "internal_infrastructure_web.CornerProgress": {
             "type": "object",
             "properties": {
                 "cornerId": {
@@ -2730,7 +2675,7 @@
                 }
             }
         },
-        "CornerStats": {
+        "internal_infrastructure_web.CornerStats": {
             "type": "object",
             "properties": {
                 "completedVisitCount": {
@@ -2746,12 +2691,12 @@
                 "unvisitedGroups": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/UnvisitedGroup"
+                        "$ref": "#/definitions/internal_infrastructure_web.UnvisitedGroup"
                     }
                 }
             }
         },
-        "CreateCampRequest": {
+        "internal_infrastructure_web.CreateCampRequest": {
             "type": "object",
             "properties": {
                 "name": {
@@ -2759,7 +2704,7 @@
                 }
             }
         },
-        "CreateCornerRequest": {
+        "internal_infrastructure_web.CreateCornerRequest": {
             "type": "object",
             "properties": {
                 "campId": {
@@ -2773,7 +2718,7 @@
                 }
             }
         },
-        "CreateTracksRequest": {
+        "internal_infrastructure_web.CreateTracksRequest": {
             "type": "object",
             "properties": {
                 "campId": {
@@ -2787,7 +2732,7 @@
                 }
             }
         },
-        "DeviceRegistration": {
+        "internal_infrastructure_web.DeviceRegistration": {
             "type": "object",
             "properties": {
                 "approvedAt": {
@@ -2817,7 +2762,7 @@
                 }
             }
         },
-        "DeviceRegistrationRequest": {
+        "internal_infrastructure_web.DeviceRegistrationRequest": {
             "type": "object",
             "properties": {
                 "campId": {
@@ -2836,7 +2781,7 @@
                 }
             }
         },
-        "DirectMessageRequest": {
+        "internal_infrastructure_web.DirectMessageRequest": {
             "type": "object",
             "properties": {
                 "content": {
@@ -2844,7 +2789,7 @@
                 }
             }
         },
-        "ErrorResponse": {
+        "internal_infrastructure_web.ErrorResponse": {
             "type": "object",
             "properties": {
                 "code": {
@@ -2861,18 +2806,18 @@
                 }
             }
         },
-        "ExportBadgesResponse": {
+        "internal_infrastructure_web.ExportBadgesResponse": {
             "type": "object",
             "properties": {
                 "badges": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/Badge"
+                        "$ref": "#/definitions/internal_infrastructure_web.Badge"
                     }
                 }
             }
         },
-        "Group": {
+        "internal_infrastructure_web.Group": {
             "type": "object",
             "properties": {
                 "badgeId": {
@@ -2889,7 +2834,7 @@
                 "itinerary": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/CornerProgress"
+                        "$ref": "#/definitions/internal_infrastructure_web.CornerProgress"
                     }
                 },
                 "name": {
@@ -2906,7 +2851,7 @@
                 }
             }
         },
-        "GroupStats": {
+        "internal_infrastructure_web.GroupStats": {
             "type": "object",
             "properties": {
                 "completedCount": {
@@ -2924,7 +2869,7 @@
                 }
             }
         },
-        "Message": {
+        "internal_infrastructure_web.Message": {
             "type": "object",
             "properties": {
                 "channelType": {
@@ -2965,10 +2910,10 @@
                 }
             }
         },
-        "OperationalStats": {
+        "internal_infrastructure_web.OperationalStats": {
             "type": "object"
         },
-        "ReplaceTrackRequest": {
+        "internal_infrastructure_web.ReplaceTrackRequest": {
             "type": "object",
             "properties": {
                 "newCornerId": {
@@ -2976,18 +2921,18 @@
                 }
             }
         },
-        "ReplaceTrackResponse": {
+        "internal_infrastructure_web.ReplaceTrackResponse": {
             "type": "object",
             "properties": {
                 "pin": {
                     "type": "string"
                 },
                 "track": {
-                    "$ref": "#/definitions/Track"
+                    "$ref": "#/definitions/internal_infrastructure_web.Track"
                 }
             }
         },
-        "ScanAssignBadgeRequest": {
+        "internal_infrastructure_web.ScanAssignBadgeRequest": {
             "type": "object",
             "properties": {
                 "groupName": {
@@ -2998,10 +2943,10 @@
                 }
             }
         },
-        "TimelineStats": {
+        "internal_infrastructure_web.TimelineStats": {
             "type": "object"
         },
-        "Track": {
+        "internal_infrastructure_web.Track": {
             "type": "object",
             "properties": {
                 "cornerId": {
@@ -3009,7 +2954,7 @@
                     "format": "uuid"
                 },
                 "currentVisit": {
-                    "$ref": "#/definitions/VisitSummary"
+                    "$ref": "#/definitions/internal_infrastructure_web.VisitSummary"
                 },
                 "id": {
                     "type": "string",
@@ -3038,7 +2983,7 @@
                 }
             }
         },
-        "TrackLoginRequest": {
+        "internal_infrastructure_web.TrackLoginRequest": {
             "type": "object",
             "properties": {
                 "pin": {
@@ -3046,21 +2991,21 @@
                 }
             }
         },
-        "TrackLoginResponse": {
+        "internal_infrastructure_web.TrackLoginResponse": {
             "type": "object",
             "properties": {
                 "corner": {
-                    "$ref": "#/definitions/Corner"
+                    "$ref": "#/definitions/internal_infrastructure_web.Corner"
                 },
                 "track": {
-                    "$ref": "#/definitions/Track"
+                    "$ref": "#/definitions/internal_infrastructure_web.Track"
                 },
                 "trackToken": {
                     "type": "string"
                 }
             }
         },
-        "TrackStats": {
+        "internal_infrastructure_web.TrackStats": {
             "type": "object",
             "properties": {
                 "avgDeviationSeconds": {
@@ -3081,7 +3026,7 @@
                 }
             }
         },
-        "TrackSummary": {
+        "internal_infrastructure_web.TrackSummary": {
             "type": "object",
             "properties": {
                 "cornerId": {
@@ -3111,7 +3056,7 @@
                 }
             }
         },
-        "UnvisitedGroup": {
+        "internal_infrastructure_web.UnvisitedGroup": {
             "type": "object",
             "properties": {
                 "groupId": {
@@ -3123,7 +3068,7 @@
                 }
             }
         },
-        "UpdateCampRequest": {
+        "internal_infrastructure_web.UpdateCampRequest": {
             "type": "object",
             "properties": {
                 "bottleneckMinSamples": {
@@ -3145,7 +3090,7 @@
                 }
             }
         },
-        "VisitStartRequest": {
+        "internal_infrastructure_web.VisitStartRequest": {
             "type": "object",
             "properties": {
                 "groupId": {
@@ -3162,7 +3107,7 @@
                 }
             }
         },
-        "VisitSummary": {
+        "internal_infrastructure_web.VisitSummary": {
             "type": "object",
             "properties": {
                 "cornerId": {
