@@ -58,6 +58,39 @@ func (h *GroupHandler) ListGroups(c echo.Context) error {
 	return c.JSON(http.StatusOK, res)
 }
 
+// @Summary      진행자 수동 체크인용 조 목록 조회
+// @Description  인증된 진행자의 트랙이 속한 캠프의 조 목록을 반환한다. 세션의 트랙과 path trackId가 일치해야 한다.
+// @Tags         C. Visit (Scan Flow)
+// @Security     TrackAuth
+// @Produce      json
+// @Param        trackId path string true "트랙 ID"
+// @Success      200 {array} Group
+// @Failure      401 {object} ErrorResponse
+// @Failure      403 {object} ErrorResponse "세션 트랙과 요청 트랙 불일치"
+// @Failure      404 {object} ErrorResponse "트랙 또는 코너 없음"
+// @Router       /tracks/{trackId}/groups [get]
+func (h *GroupHandler) ListGroupsByTrack(c echo.Context) error {
+	session, ok := c.Get("facilitatorSession").(*domain.FacilitatorSession)
+	if !ok {
+		return echo.NewHTTPError(http.StatusUnauthorized, "unauthorized")
+	}
+
+	trackID := domain.TrackID(c.Param("trackId"))
+	if session.TrackID != trackID {
+		return domain.ErrTrackScopeForbidden
+	}
+
+	groups, err := h.groupUC.ListGroupsByTrack(c.Request().Context(), trackID)
+	if err != nil {
+		return err
+	}
+	res := make([]Group, len(groups))
+	for i, group := range groups {
+		res[i] = mapGroupToDTO(group)
+	}
+	return c.JSON(http.StatusOK, res)
+}
+
 // @Summary      특정 조 상세 조회
 // @Description  특정 조의 현재 위치 및 순회표(Itinerary) 진행 상태를 조회한다.
 // @Tags         B. Resource Management (Admin)

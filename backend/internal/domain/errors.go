@@ -10,6 +10,8 @@ var (
 	ErrGroupBusy               = errors.New("group: already in progress at another corner")
 	ErrDuplicateVisit          = errors.New("group: corner already completed")
 	ErrTrackNotActive          = errors.New("track: not active")
+	ErrTrackNotFound           = errors.New("track: not found")
+	ErrTrackScopeForbidden     = errors.New("track: session scope does not match requested track")
 	ErrTrackBusy               = errors.New("track: visit already in progress")
 	ErrTrackDeleteBlocked      = errors.New("track: cannot delete while visit in progress")
 	ErrVisitAlreadyCompleted   = errors.New("visit: already completed")
