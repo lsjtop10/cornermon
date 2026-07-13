@@ -1,26 +1,19 @@
-.PHONY: build run test clean docker-build
-	
-# Local Environment Setup
-# Load .env file if it exists
-ifneq (,$(wildcard ./.env))
-    include .env
-    export
-endif
+.PHONY: build run test clean docker-build swag
 
 build:
-	cd backend && go build -o bin/server cmd/server/main.go
+	$(MAKE) -C backend build
 
-run: build
-	./backend/bin/server
+run:
+	$(MAKE) -C backend run
 
 test:
-	cd backend && go test -v ./...
+	$(MAKE) -C backend test
 
 clean:
-	rm -rf backend/bin
+	$(MAKE) -C backend clean
 
 docker-build:
-	docker build -t cornermon-backend -f backend/Dockerfile backend/
+	$(MAKE) -C backend docker-build
 
 swag:
-	cd backend && swag init -g internal/infrastructure/web/doc.go -d . --parseDependency --parseInternal
+	$(MAKE) -C backend swag
