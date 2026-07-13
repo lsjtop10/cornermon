@@ -74,6 +74,18 @@ func (s *CornerService) ListCorners(ctx context.Context, campID domain.CampID) (
 	return s.corners.ListByCamp(ctx, campID)
 }
 
+// GetCorner
+func (s *CornerService) GetCorner(ctx context.Context, id domain.CornerID) (*domain.Corner, error) {
+	corner, err := s.corners.Get(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if corner == nil {
+		return nil, domain.ErrCornerNotFound
+	}
+	return corner, nil
+}
+
 // ModifyCornerSpecification
 func (s *CornerService) ModifyCornerSpecification(ctx context.Context, id domain.CornerID, name string) (*domain.Corner, error) {
 	corner, err := s.corners.Get(ctx, id)

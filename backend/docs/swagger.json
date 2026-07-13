@@ -528,7 +528,7 @@
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/web.Group"
+                            "$ref": "#/definitions/web.Badge"
                         }
                     }
                 }
@@ -1547,9 +1547,9 @@
                         "AdminAuth": []
                     }
                 ],
-                "description": "현재 캠프 리포트를 CSV(또는 지정된 포맷)로 다운로드한다.",
+                "description": "현재 캠프 리포트를 다운로드한다.",
                 "produces": [
-                    "text/csv"
+                    "application/json"
                 ],
                 "tags": [
                     "D. Report"
@@ -1557,7 +1557,10 @@
                 "summary": "현재 리포트 데이터 내보내기",
                 "responses": {
                     "200": {
-                        "description": "CSV 데이터"
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/web.CampReport"
+                        }
                     }
                 }
             }

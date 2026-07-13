@@ -539,7 +539,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/web.Group"
+                            "$ref": "#/definitions/web.Badge"
                         }
                     }
                 }
@@ -1160,30 +1160,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/device-registrations/me": {
-            "get": {
-                "description": "미승인(PENDING) 기기가 자신의 승인 상태를 확인하기 위해 호출한다.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "A. Auth \u0026 Device Trust"
-                ],
-                "summary": "내 기기 등록 상태 자체 조회",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    }
-                }
-            }
-        },
         "/device-registrations/{id}/approve": {
             "post": {
                 "security": [
@@ -1558,9 +1534,9 @@ const docTemplate = `{
                         "AdminAuth": []
                     }
                 ],
-                "description": "현재 캠프 리포트를 CSV(또는 지정된 포맷)로 다운로드한다.",
+                "description": "현재 캠프 리포트를 다운로드한다.",
                 "produces": [
-                    "text/csv"
+                    "application/json"
                 ],
                 "tags": [
                     "D. Report"
@@ -1568,7 +1544,10 @@ const docTemplate = `{
                 "summary": "현재 리포트 데이터 내보내기",
                 "responses": {
                     "200": {
-                        "description": "CSV 데이터"
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/web.CampReport"
+                        }
                     }
                 }
             }
