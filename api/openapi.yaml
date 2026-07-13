@@ -1988,20 +1988,23 @@ paths:
   /badges/export:
     get:
       tags: [B. Camp / Corner / Track]
-      summary: "미배정 배지 PDF 내보내기 (스티커 인쇄용)"
+      summary: "미배정 배지 목록 내보내기 (인쇄용)"
       description: |
-        미배정(UNASSIGNED) 배지 전체를 스티커 인쇄용 PDF로 내보낸다.
-        iPad에서 AirPrint 없이 PDF만 내보내며, 인쇄는 별도 컴퓨터에서 수행.
+        미배정(UNASSIGNED) 배지 전체를 클라이언트 인쇄용 JSON 목록으로 반환한다.
       security:
         - AdminAuth: []
       responses:
         "200":
-          description: "PDF 파일"
+          description: "미배정 배지 목록"
           content:
-            application/pdf:
+            application/json:
               schema:
-                type: string
-                format: binary
+                type: object
+                properties:
+                  badges:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Badge'
 
   /badges:
     get:
@@ -2246,30 +2249,6 @@ paths:
                   - $ref: '#/components/schemas/VisitSummary'
                   - type: "null"
 
-  /visits/exception-approve:
-    post:
-      tags: [C. Visit (Scan Flow)]
-      summary: "중복 방문 예외 승인"
-      description: |
-        중복 방문 금지 규칙의 예외를 관리자가 명시적으로 승인한다.
-        이후 해당 조의 해당 코너에서 재방문이 허용된다.
-      security:
-        - AdminAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [groupId, cornerId]
-              properties:
-                groupId:
-                  type: string
-                  format: uuid
-                cornerId:
-                  type: string
-                  format: uuid
-      responses:
         "200":
           description: "예외 승인 완료"
         "404":

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/labstack/echo/v4"
 )
@@ -35,6 +36,7 @@ func (h *EventHandler) AdminEvents(c echo.Context) error {
 	c.Response().Header().Set(echo.HeaderContentType, "text/event-stream")
 	c.Response().Header().Set("Cache-Control", "no-cache")
 	c.Response().Header().Set("Connection", "keep-alive")
+	c.Response().Header().Set("X-Accel-Buffering", "no")
 
 	var ch <-chan string
 	if h.subscriber != nil {
@@ -50,6 +52,9 @@ func (h *EventHandler) AdminEvents(c echo.Context) error {
 	}
 	c.Response().Flush()
 
+	ticker := time.NewTicker(15 * time.Second)
+	defer ticker.Stop()
+
 	if ch != nil {
 		for {
 			select {
@@ -59,15 +64,29 @@ func (h *EventHandler) AdminEvents(c echo.Context) error {
 				if !ok {
 					return nil
 				}
-				if _, err := c.Response().Write([]byte(fmt.Sprintf("data: %s\n\n", msg))); err != nil {
+				if _, err := c.Response().Write([]byte(fmt.Sprintf("%s\n\n", msg))); err != nil {
+					return err
+				}
+				c.Response().Flush()
+			case <-ticker.C:
+				if _, err := c.Response().Write([]byte(":heartbeat\n\n")); err != nil {
 					return err
 				}
 				c.Response().Flush()
 			}
 		}
 	} else {
-		<-ctx.Done()
-		return nil
+		for {
+			select {
+			case <-ctx.Done():
+				return nil
+			case <-ticker.C:
+				if _, err := c.Response().Write([]byte(":heartbeat\n\n")); err != nil {
+					return err
+				}
+				c.Response().Flush()
+			}
+		}
 	}
 }
 
@@ -86,6 +105,7 @@ func (h *EventHandler) TrackEvents(c echo.Context) error {
 	c.Response().Header().Set(echo.HeaderContentType, "text/event-stream")
 	c.Response().Header().Set("Cache-Control", "no-cache")
 	c.Response().Header().Set("Connection", "keep-alive")
+	c.Response().Header().Set("X-Accel-Buffering", "no")
 
 	var ch <-chan string
 	if h.subscriber != nil {
@@ -101,6 +121,9 @@ func (h *EventHandler) TrackEvents(c echo.Context) error {
 	}
 	c.Response().Flush()
 
+	ticker := time.NewTicker(15 * time.Second)
+	defer ticker.Stop()
+
 	if ch != nil {
 		for {
 			select {
@@ -110,14 +133,28 @@ func (h *EventHandler) TrackEvents(c echo.Context) error {
 				if !ok {
 					return nil
 				}
-				if _, err := c.Response().Write([]byte(fmt.Sprintf("data: %s\n\n", msg))); err != nil {
+				if _, err := c.Response().Write([]byte(fmt.Sprintf("%s\n\n", msg))); err != nil {
+					return err
+				}
+				c.Response().Flush()
+			case <-ticker.C:
+				if _, err := c.Response().Write([]byte(":heartbeat\n\n")); err != nil {
 					return err
 				}
 				c.Response().Flush()
 			}
 		}
 	} else {
-		<-ctx.Done()
-		return nil
+		for {
+			select {
+			case <-ctx.Done():
+				return nil
+			case <-ticker.C:
+				if _, err := c.Response().Write([]byte(":heartbeat\n\n")); err != nil {
+					return err
+				}
+				c.Response().Flush()
+			}
+		}
 	}
 }

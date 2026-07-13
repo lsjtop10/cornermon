@@ -1,9 +1,7 @@
 package usecase
 
 import (
-	"bytes"
 	"context"
-	"encoding/csv"
 	"time"
 
 	"cornermon/backend/internal/domain"
@@ -13,6 +11,7 @@ import (
 
 type BadgeService struct {
 	badges    BadgeRepository
+	groups    GroupRepository
 	auditLogs AuditLogRepository
 	tx        TxManager
 
@@ -22,11 +21,13 @@ type BadgeService struct {
 
 func NewBadgeService(
 	badges BadgeRepository,
+	groups GroupRepository,
 	auditLogs AuditLogRepository,
 	tx TxManager,
 ) *BadgeService {
 	return &BadgeService{
 		badges:    badges,
+		groups:    groups,
 		auditLogs: auditLogs,
 		tx:        tx,
 		nowFn:     func() time.Time { return time.Now().UTC() },
@@ -67,35 +68,104 @@ func (s *BadgeService) ListBadges(ctx context.Context) ([]*domain.Badge, error) 
 	return s.badges.ListAll(ctx)
 }
 
-// ExportBadges returns CSV content
-func (s *BadgeService) ExportBadges(ctx context.Context) ([]byte, error) {
+// ExportBadges returns unassigned badges for client printing
+func (s *BadgeService) ExportBadges(ctx context.Context) ([]*domain.Badge, error) {
 	badges, err := s.badges.ListAll(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	var buf bytes.Buffer
-	writer := csv.NewWriter(&buf)
-
-	_ = writer.Write([]string{"BadgeID", "ShortID", "QRPayload", "Status", "AssignedGroupID"})
+	var unassigned []*domain.Badge
 	for _, b := range badges {
-		var groupIDStr string
-		if groupID, ok := b.AssignedGroupID.Value(); ok {
-			groupIDStr = string(groupID)
+		if b.Status == domain.BadgeUnassigned {
+			unassigned = append(unassigned, b)
 		}
-		_ = writer.Write([]string{
-			string(b.ID),
-			b.ShortID,
-			b.QRPayload,
-			string(b.Status),
-			groupIDStr,
-		})
 	}
-	writer.Flush()
 
 	s.recordAuditLog(ctx, "admin", "BADGE_EXPORT", "", true, nil)
 
-	return buf.Bytes(), nil
+	return unassigned, nil
+}
+
+// AssignBadge
+func (s *BadgeService) AssignBadge(ctx context.Context, badgeID domain.BadgeID, groupID domain.GroupID) (*domain.Badge, error) {
+	return s.assignBadgeInternal(ctx, groupID, func(ctx context.Context) (*domain.Badge, error) {
+		return s.badges.Get(ctx, badgeID)
+	})
+}
+
+// ScanAssignBadge
+func (s *BadgeService) ScanAssignBadge(ctx context.Context, qrPayload string, groupID domain.GroupID) (*domain.Badge, error) {
+	return s.assignBadgeInternal(ctx, groupID, func(ctx context.Context) (*domain.Badge, error) {
+		return s.badges.GetByQRPayload(ctx, qrPayload)
+	})
+}
+
+func (s *BadgeService) assignBadgeInternal(
+	ctx context.Context,
+	groupID domain.GroupID,
+	getBadgeFn func(ctx context.Context) (*domain.Badge, error),
+) (*domain.Badge, error) {
+	var targetBadge *domain.Badge
+
+	err := s.tx.RunInTx(ctx, func(ctx context.Context) error {
+		group, err := s.groups.Get(ctx, groupID)
+		if err != nil {
+			return err
+		}
+		if group == nil {
+			return domain.ErrCornerNotInItinerary // map to not found group
+		}
+
+		targetBadge, err = getBadgeFn(ctx)
+		if err != nil {
+			return err
+		}
+		if targetBadge == nil {
+			return domain.ErrBadgeNotAssigned // map to not found
+		}
+
+		if targetBadge.Status == domain.BadgeAssigned {
+			return domain.ErrBadgeAlreadyAssigned
+		}
+
+		// Release old badge if group already has one
+		if string(group.BadgeID) != "" && string(group.BadgeID) != string(targetBadge.ID) {
+			oldBadge, err := s.badges.Get(ctx, group.BadgeID)
+			if err != nil {
+				return err
+			}
+			if oldBadge != nil {
+				_ = oldBadge.Release()
+				if err := s.badges.Save(ctx, oldBadge); err != nil {
+					return err
+				}
+			}
+		}
+
+		if err := targetBadge.AssignTo(groupID); err != nil {
+			return err
+		}
+		group.BadgeID = targetBadge.ID
+
+		if err := s.badges.Save(ctx, targetBadge); err != nil {
+			return err
+		}
+		if err := s.groups.Save(ctx, group); err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		s.recordAuditLog(ctx, "admin", "BADGE_ASSIGN", string(groupID), false, map[string]any{"error": err.Error()})
+		return nil, err
+	}
+
+	s.recordAuditLog(ctx, "admin", "BADGE_ASSIGN", string(targetBadge.ID), true, map[string]any{"groupID": string(groupID)})
+
+	return targetBadge, nil
 }
 
 func (s *BadgeService) recordAuditLog(ctx context.Context, actor, action, target string, success bool, metadata map[string]any) {
