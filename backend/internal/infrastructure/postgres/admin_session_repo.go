@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"cornermon/backend/internal/domain"
+	"cornermon/backend/internal/errs"
 	"cornermon/backend/internal/infrastructure/postgres/db"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -52,7 +53,7 @@ func (r *pgAdminSessionRepository) Get(ctx context.Context, id domain.AdminSessi
 		if err == pgx.ErrNoRows {
 			return nil, nil
 		}
-		return nil, err
+		return nil, errs.Wrap(ctx, err)
 	}
 	return mapAdminSession(row), nil
 }
@@ -63,7 +64,7 @@ func (r *pgAdminSessionRepository) GetByAccessTokenHash(ctx context.Context, has
 		if err == pgx.ErrNoRows {
 			return nil, nil
 		}
-		return nil, err
+		return nil, errs.Wrap(ctx, err)
 	}
 	return mapAdminSession(row), nil
 }
@@ -74,7 +75,7 @@ func (r *pgAdminSessionRepository) GetByRefreshTokenHash(ctx context.Context, ha
 		if err == pgx.ErrNoRows {
 			return nil, nil
 		}
-		return nil, err
+		return nil, errs.Wrap(ctx, err)
 	}
 	return mapAdminSession(row), nil
 }
@@ -94,13 +95,17 @@ func (r *pgAdminSessionRepository) Save(ctx context.Context, session *domain.Adm
 		params.RevokedAt = pgtype.Timestamptz{Time: val, Valid: true}
 	}
 
-	return r.queries(ctx).SaveAdminSession(ctx, params)
+	err := r.queries(ctx).SaveAdminSession(ctx, params)
+	if err != nil {
+		return errs.Wrap(ctx, err)
+	}
+	return nil
 }
 
 func (r *pgAdminSessionRepository) ListByAdmin(ctx context.Context, adminID domain.AdminID) ([]*domain.AdminSession, error) {
 	rows, err := r.queries(ctx).ListAdminSessionsByAdmin(ctx, string(adminID))
 	if err != nil {
-		return nil, err
+		return nil, errs.Wrap(ctx, err)
 	}
 
 	sessions := make([]*domain.AdminSession, len(rows))

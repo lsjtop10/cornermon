@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"cornermon/backend/internal/domain"
+	"cornermon/backend/internal/errs"
 	"cornermon/backend/internal/infrastructure/postgres/db"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -55,13 +56,17 @@ func (r *pgMessageRepository) Save(ctx context.Context, msg *domain.Message) err
 		params.TrackID = pgtype.Text{String: string(val), Valid: true}
 	}
 
-	return r.queries(ctx).SaveMessage(ctx, params)
+	err := r.queries(ctx).SaveMessage(ctx, params)
+	if err != nil {
+		return errs.Wrap(ctx, err)
+	}
+	return nil
 }
 
 func (r *pgMessageRepository) ListBroadcastsByCamp(ctx context.Context, campID domain.CampID) ([]*domain.Message, error) {
 	rows, err := r.queries(ctx).ListBroadcastMessagesByCamp(ctx)
 	if err != nil {
-		return nil, err
+		return nil, errs.Wrap(ctx, err)
 	}
 
 	messages := make([]*domain.Message, len(rows))
@@ -74,7 +79,7 @@ func (r *pgMessageRepository) ListBroadcastsByCamp(ctx context.Context, campID d
 func (r *pgMessageRepository) ListDirectByTrack(ctx context.Context, trackID domain.TrackID) ([]*domain.Message, error) {
 	rows, err := r.queries(ctx).ListDirectMessagesByTrack(ctx, pgtype.Text{String: string(trackID), Valid: true})
 	if err != nil {
-		return nil, err
+		return nil, errs.Wrap(ctx, err)
 	}
 
 	messages := make([]*domain.Message, len(rows))

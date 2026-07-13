@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"cornermon/backend/internal/domain"
+	"cornermon/backend/internal/errs"
 	"cornermon/backend/internal/infrastructure/postgres/db"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -48,7 +49,7 @@ func (r *pgBadgeRepository) Get(ctx context.Context, id domain.BadgeID) (*domain
 		if err == pgx.ErrNoRows {
 			return nil, nil
 		}
-		return nil, err
+		return nil, errs.Wrap(ctx, err)
 	}
 	return mapBadge(row), nil
 }
@@ -59,7 +60,7 @@ func (r *pgBadgeRepository) GetByQRPayload(ctx context.Context, payload string) 
 		if err == pgx.ErrNoRows {
 			return nil, nil
 		}
-		return nil, err
+		return nil, errs.Wrap(ctx, err)
 	}
 	return mapBadge(row), nil
 }
@@ -76,13 +77,17 @@ func (r *pgBadgeRepository) Save(ctx context.Context, badge *domain.Badge) error
 		params.AssignedGroupID = pgtype.Text{String: string(val), Valid: true}
 	}
 
-	return r.queries(ctx).SaveBadge(ctx, params)
+	err := r.queries(ctx).SaveBadge(ctx, params)
+	if err != nil {
+		return errs.Wrap(ctx, err)
+	}
+	return nil
 }
 
 func (r *pgBadgeRepository) ListAll(ctx context.Context) ([]*domain.Badge, error) {
 	rows, err := r.queries(ctx).ListAllBadges(ctx)
 	if err != nil {
-		return nil, err
+		return nil, errs.Wrap(ctx, err)
 	}
 
 	badges := make([]*domain.Badge, len(rows))
@@ -104,7 +109,7 @@ func (r *pgBadgeRepository) SaveBulk(ctx context.Context, badges []*domain.Badge
 
 	tx, err := r.pool.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
-		return err
+		return errs.Wrap(ctx, err)
 	}
 	defer tx.Rollback(ctx)
 
@@ -115,5 +120,9 @@ func (r *pgBadgeRepository) SaveBulk(ctx context.Context, badges []*domain.Badge
 		}
 	}
 
-	return tx.Commit(ctx)
+	err = tx.Commit(ctx)
+	if err != nil {
+		return errs.Wrap(ctx, err)
+	}
+	return nil
 }

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 
 	"cornermon/backend/internal/domain"
+	"cornermon/backend/internal/errs"
 	"cornermon/backend/internal/infrastructure/postgres/db"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -31,7 +32,7 @@ func (r *pgAuditLogRepository) Save(ctx context.Context, log *domain.AuditLog) e
 		return err
 	}
 
-	return r.queries(ctx).SaveAuditLog(ctx, db.SaveAuditLogParams{
+	err = r.queries(ctx).SaveAuditLog(ctx, db.SaveAuditLogParams{
 		ID:         string(log.ID),
 		Actor:      log.Actor,
 		Action:     log.Action,
@@ -40,6 +41,10 @@ func (r *pgAuditLogRepository) Save(ctx context.Context, log *domain.AuditLog) e
 		OccurredAt: pgtype.Timestamptz{Time: log.OccurredAt, Valid: !log.OccurredAt.IsZero()},
 		Metadata:   metaJSON,
 	})
+	if err != nil {
+		return errs.Wrap(ctx, err)
+	}
+	return nil
 }
 
 func (r *pgAuditLogRepository) List(ctx context.Context, limit, offset int) ([]*domain.AuditLog, error) {
@@ -48,7 +53,7 @@ func (r *pgAuditLogRepository) List(ctx context.Context, limit, offset int) ([]*
 		Offset: int32(offset),
 	})
 	if err != nil {
-		return nil, err
+		return nil, errs.Wrap(ctx, err)
 	}
 
 	logs := make([]*domain.AuditLog, len(rows))

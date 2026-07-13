@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"cornermon/backend/internal/domain"
+	"cornermon/backend/internal/errs"
 	"cornermon/backend/internal/infrastructure/postgres/db"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -52,7 +53,7 @@ func (r *pgVisitRepository) Get(ctx context.Context, id domain.VisitID) (*domain
 		if err == pgx.ErrNoRows {
 			return nil, nil
 		}
-		return nil, err
+		return nil, errs.Wrap(ctx, err)
 	}
 	return mapVisit(row), nil
 }
@@ -63,7 +64,7 @@ func (r *pgVisitRepository) GetInProgressByTrack(ctx context.Context, trackID do
 		if err == pgx.ErrNoRows {
 			return nil, nil
 		}
-		return nil, err
+		return nil, errs.Wrap(ctx, err)
 	}
 	return mapVisit(row), nil
 }
@@ -77,7 +78,7 @@ func (r *pgVisitRepository) GetCompletedByGroupAndCorner(ctx context.Context, gr
 		if err == pgx.ErrNoRows {
 			return nil, nil
 		}
-		return nil, err
+		return nil, errs.Wrap(ctx, err)
 	}
 	return mapVisit(row), nil
 }
@@ -97,13 +98,17 @@ func (r *pgVisitRepository) Save(ctx context.Context, visit *domain.Visit) error
 		params.EndedAt = pgtype.Timestamptz{Time: val, Valid: true}
 	}
 
-	return r.queries(ctx).SaveVisit(ctx, params)
+	err := r.queries(ctx).SaveVisit(ctx, params)
+	if err != nil {
+		return errs.Wrap(ctx, err)
+	}
+	return nil
 }
 
 func (r *pgVisitRepository) ListByGroup(ctx context.Context, groupID domain.GroupID) ([]*domain.Visit, error) {
 	rows, err := r.queries(ctx).ListVisitsByGroup(ctx, string(groupID))
 	if err != nil {
-		return nil, err
+		return nil, errs.Wrap(ctx, err)
 	}
 	res := make([]*domain.Visit, len(rows))
 	for i, row := range rows {

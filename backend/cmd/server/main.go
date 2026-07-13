@@ -3,8 +3,10 @@ package main
 import (
 	"context"
 	"log"
+	"log/slog"
 	"os"
 
+	"cornermon/backend/internal/errs"
 	"cornermon/backend/internal/infrastructure/postgres"
 	"cornermon/backend/internal/infrastructure/sse"
 	"cornermon/backend/internal/infrastructure/web"
@@ -17,7 +19,14 @@ import (
 )
 
 func main() {
-	log.Println("Cornermon Backend Starting...")
+	// Initialize structured logging (slog JSON format + AppError handler)
+	jsonHandler := slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	})
+	logger := slog.New(errs.NewSlogWrappedHandler(jsonHandler))
+	slog.SetDefault(logger)
+
+	slog.Info("Cornermon Backend Starting...")
 
 	// Load .env if exists
 	_ = godotenv.Load()

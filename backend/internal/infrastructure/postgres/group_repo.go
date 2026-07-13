@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 
 	"cornermon/backend/internal/domain"
+	"cornermon/backend/internal/errs"
 	"cornermon/backend/internal/infrastructure/postgres/db"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -48,7 +49,7 @@ func (r *pgGroupRepository) Get(ctx context.Context, id domain.GroupID) (*domain
 		if err == pgx.ErrNoRows {
 			return nil, nil
 		}
-		return nil, err
+		return nil, errs.Wrap(ctx, err)
 	}
 	return mapGroup(row)
 }
@@ -62,7 +63,7 @@ func (r *pgGroupRepository) GetByBadge(ctx context.Context, campID domain.CampID
 		if err == pgx.ErrNoRows {
 			return nil, nil
 		}
-		return nil, err
+		return nil, errs.Wrap(ctx, err)
 	}
 	return mapGroup(row)
 }
@@ -70,7 +71,7 @@ func (r *pgGroupRepository) GetByBadge(ctx context.Context, campID domain.CampID
 func (r *pgGroupRepository) ListByCamp(ctx context.Context, campID domain.CampID) ([]*domain.Group, error) {
 	rows, err := r.queries(ctx).ListGroupsByCamp(ctx, string(campID))
 	if err != nil {
-		return nil, err
+		return nil, errs.Wrap(ctx, err)
 	}
 
 	groups := make([]*domain.Group, len(rows))
@@ -90,11 +91,15 @@ func (r *pgGroupRepository) Save(ctx context.Context, group *domain.Group) error
 		return err
 	}
 
-	return r.queries(ctx).SaveGroup(ctx, db.SaveGroupParams{
+	err = r.queries(ctx).SaveGroup(ctx, db.SaveGroupParams{
 		ID:        string(group.ID),
 		CampID:    string(group.CampID),
 		Name:      group.Name,
 		BadgeID:   string(group.BadgeID),
 		Itinerary: itineraryJSON,
 	})
+	if err != nil {
+		return errs.Wrap(ctx, err)
+	}
+	return nil
 }

@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"cornermon/backend/internal/domain"
+	"cornermon/backend/internal/errs"
 	"cornermon/backend/internal/infrastructure/postgres/db"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -57,7 +58,7 @@ func (r *pgDeviceRegistrationRepository) Get(ctx context.Context, id domain.Devi
 		if err == pgx.ErrNoRows {
 			return nil, nil
 		}
-		return nil, err
+		return nil, errs.Wrap(ctx, err)
 	}
 	return mapDeviceRegistration(row), nil
 }
@@ -68,7 +69,7 @@ func (r *pgDeviceRegistrationRepository) GetByTokenHash(ctx context.Context, has
 		if err == pgx.ErrNoRows {
 			return nil, nil
 		}
-		return nil, err
+		return nil, errs.Wrap(ctx, err)
 	}
 	return mapDeviceRegistration(row), nil
 }
@@ -76,7 +77,7 @@ func (r *pgDeviceRegistrationRepository) GetByTokenHash(ctx context.Context, has
 func (r *pgDeviceRegistrationRepository) ListPendingByCamp(ctx context.Context, campID domain.CampID) ([]*domain.DeviceRegistration, error) {
 	rows, err := r.queries(ctx).ListPendingDeviceRegistrationsByCamp(ctx, string(campID))
 	if err != nil {
-		return nil, err
+		return nil, errs.Wrap(ctx, err)
 	}
 
 	regs := make([]*domain.DeviceRegistration, len(rows))
@@ -104,7 +105,11 @@ func (r *pgDeviceRegistrationRepository) Save(ctx context.Context, reg *domain.D
 		params.ApprovedAt = pgtype.Timestamptz{Time: val, Valid: true}
 	}
 
-	return r.queries(ctx).SaveDeviceRegistration(ctx, params)
+	err := r.queries(ctx).SaveDeviceRegistration(ctx, params)
+	if err != nil {
+		return errs.Wrap(ctx, err)
+	}
+	return nil
 }
 
 func (r *pgDeviceRegistrationRepository) ListByCampAndStatus(ctx context.Context, campID domain.CampID, status *domain.DeviceRegistrationStatus) ([]*domain.DeviceRegistration, error) {
@@ -120,7 +125,7 @@ func (r *pgDeviceRegistrationRepository) ListByCampAndStatus(ctx context.Context
 		Status: statusStr,
 	})
 	if err != nil {
-		return nil, err
+		return nil, errs.Wrap(ctx, err)
 	}
 
 	regs := make([]*domain.DeviceRegistration, len(rows))

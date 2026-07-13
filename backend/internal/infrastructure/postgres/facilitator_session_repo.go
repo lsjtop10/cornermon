@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"cornermon/backend/internal/domain"
+	"cornermon/backend/internal/errs"
 	"cornermon/backend/internal/infrastructure/postgres/db"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -49,7 +50,7 @@ func (r *pgFacilitatorSessionRepository) Get(ctx context.Context, id domain.Faci
 		if err == pgx.ErrNoRows {
 			return nil, nil
 		}
-		return nil, err
+		return nil, errs.Wrap(ctx, err)
 	}
 	return mapFacilitatorSession(row), nil
 }
@@ -60,7 +61,7 @@ func (r *pgFacilitatorSessionRepository) GetByTokenHash(ctx context.Context, has
 		if err == pgx.ErrNoRows {
 			return nil, nil
 		}
-		return nil, err
+		return nil, errs.Wrap(ctx, err)
 	}
 	return mapFacilitatorSession(row), nil
 }
@@ -68,7 +69,7 @@ func (r *pgFacilitatorSessionRepository) GetByTokenHash(ctx context.Context, has
 func (r *pgFacilitatorSessionRepository) ListActiveByTrack(ctx context.Context, trackID domain.TrackID) ([]*domain.FacilitatorSession, error) {
 	rows, err := r.queries(ctx).ListActiveFacilitatorSessionsByTrack(ctx, string(trackID))
 	if err != nil {
-		return nil, err
+		return nil, errs.Wrap(ctx, err)
 	}
 
 	sessions := make([]*domain.FacilitatorSession, len(rows))
@@ -81,7 +82,7 @@ func (r *pgFacilitatorSessionRepository) ListActiveByTrack(ctx context.Context, 
 func (r *pgFacilitatorSessionRepository) ListActiveByCamp(ctx context.Context, campID domain.CampID) ([]*domain.FacilitatorSession, error) {
 	rows, err := r.queries(ctx).ListActiveFacilitatorSessionsByCamp(ctx, string(campID))
 	if err != nil {
-		return nil, err
+		return nil, errs.Wrap(ctx, err)
 	}
 
 	sessions := make([]*domain.FacilitatorSession, len(rows))
@@ -103,5 +104,9 @@ func (r *pgFacilitatorSessionRepository) Save(ctx context.Context, session *doma
 		params.RevokedAt = pgtype.Timestamptz{Time: val, Valid: true}
 	}
 
-	return r.queries(ctx).SaveFacilitatorSession(ctx, params)
+	err := r.queries(ctx).SaveFacilitatorSession(ctx, params)
+	if err != nil {
+		return errs.Wrap(ctx, err)
+	}
+	return nil
 }

@@ -6,6 +6,7 @@ import (
 	"sort"
 
 	"cornermon/backend/internal/domain"
+	"cornermon/backend/internal/errs"
 	"cornermon/backend/internal/infrastructure/postgres/db"
 	"cornermon/backend/internal/usecase"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -31,17 +32,17 @@ func (r *pgReportQuerier) QueryCampReport(ctx context.Context, campID domain.Cam
 
 	dbGroups, err := q.ListGroupsByCamp(ctx, string(campID))
 	if err != nil {
-		return nil, err
+		return nil, errs.Wrap(ctx, err)
 	}
 
 	dbCorners, err := q.ListCornersByCamp(ctx, string(campID))
 	if err != nil {
-		return nil, err
+		return nil, errs.Wrap(ctx, err)
 	}
 
 	dbVisits, err := q.ListVisitsByCamp(ctx, string(campID))
 	if err != nil {
-		return nil, err
+		return nil, errs.Wrap(ctx, err)
 	}
 
 	return calculateCampReport(campID, dbGroups, dbCorners, dbVisits)
