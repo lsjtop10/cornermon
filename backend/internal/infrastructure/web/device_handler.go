@@ -19,7 +19,6 @@ type DeviceTrustUsecase interface {
 	ReviewDeviceTrustRequests(ctx context.Context, campID domain.CampID, status *domain.DeviceRegistrationStatus) ([]*domain.DeviceRegistration, error)
 }
 
-// @name DeviceHandler
 type DeviceHandler struct {
 	deviceTrust DeviceTrustUsecase
 }
@@ -30,7 +29,6 @@ func NewDeviceHandler(deviceTrust DeviceTrustUsecase) *DeviceHandler {
 	}
 }
 
-// @name DeviceRegistrationRequest
 type DeviceRegistrationRequest struct {
 	CampID     string `json:"campId"` // Using campId because RequestRegistration expects a campID
 	DeviceName string `json:"deviceName"`

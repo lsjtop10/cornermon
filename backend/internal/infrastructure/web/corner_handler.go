@@ -9,7 +9,6 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-// @name CornerHandler
 type CornerHandler struct {
 	svc *usecase.CornerService
 }
@@ -55,7 +54,6 @@ func (h *CornerHandler) ListCorners(c echo.Context) error {
 	return c.JSON(http.StatusOK, res)
 }
 
-// @name CreateCornerRequest
 type CreateCornerRequest struct {
 	CampID        string `json:"campId"`
 	Name          string `json:"name"`
@@ -122,7 +120,6 @@ func (h *CornerHandler) DeleteCorner(c echo.Context) error {
 	return c.NoContent(http.StatusNoContent)
 }
 
-// @name BulkUpdateCornersRequest
 type BulkUpdateCornersRequest struct {
 	Corners []struct {
 		ID            string `json:"id"`

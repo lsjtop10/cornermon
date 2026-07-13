@@ -2,17 +2,14 @@ package web
 
 import "time"
 
-// @name TimelineStats
 type TimelineStats struct {
 	// Add required fields later if needed based on openapi.yaml
 }
 
-// @name OperationalStats
 type OperationalStats struct {
 	// Add required fields later if needed based on openapi.yaml
 }
 
-// @name TrackStats
 type TrackStats struct {
 	TrackID             string  `json:"trackId" format:"uuid"`
 	TrackNo             int     `json:"trackNo"`
@@ -21,7 +18,6 @@ type TrackStats struct {
 	ManualVisitRatio    float32 `json:"manualVisitRatio"`
 }
 
-// @name CornerStats
 type CornerStats struct {
 	CornerID            string           `json:"cornerId" format:"uuid"`
 	CornerName          string           `json:"cornerName"`
@@ -29,13 +25,11 @@ type CornerStats struct {
 	UnvisitedGroups     []UnvisitedGroup `json:"unvisitedGroups"`
 }
 
-// @name UnvisitedGroup
 type UnvisitedGroup struct {
 	GroupID   string `json:"groupId" format:"uuid"`
 	GroupName string `json:"groupName"`
 }
 
-// @name GroupStats
 type GroupStats struct {
 	GroupID              string `json:"groupId" format:"uuid"`
 	GroupName            string `json:"groupName"`
@@ -43,7 +37,6 @@ type GroupStats struct {
 	TotalDurationSeconds int    `json:"totalDurationSeconds"`
 }
 
-// @name CampSummaryStats
 type CampSummaryStats struct {
 	TotalGroups            int                 `json:"totalGroups"`
 	FinishedGroupCount     int                 `json:"finishedGroupCount"`
@@ -59,14 +52,12 @@ type CampSummaryStats struct {
 	BottleneckRanking      []BottleneckRanking `json:"bottleneckRanking"`
 }
 
-// @name BottleneckRanking
 type BottleneckRanking struct {
 	CornerID            string  `json:"cornerId" format:"uuid"`
 	CornerName          string  `json:"cornerName"`
 	AvgDeviationSeconds float32 `json:"avgDeviationSeconds"`
 }
 
-// @name CampReport
 type CampReport struct {
 	CampID           string           `json:"campId" format:"uuid"`
 	GeneratedAt      time.Time        `json:"generatedAt" format:"date-time"`

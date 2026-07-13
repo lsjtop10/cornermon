@@ -10,7 +10,6 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-// @name BadgeHandler
 type BadgeHandler struct {
 	badgeUC *usecase.BadgeService
 	groupUC *usecase.GroupService
@@ -76,7 +75,6 @@ func (h *BadgeHandler) ListBadges(c echo.Context) error {
 	return c.JSON(http.StatusOK, res)
 }
 
-// @name BulkGenerateBadgesRequest
 type BulkGenerateBadgesRequest struct {
 	Count int `json:"count"`
 }
@@ -106,7 +104,6 @@ func (h *BadgeHandler) BulkGenerateBadges(c echo.Context) error {
 	return c.JSON(http.StatusCreated, res)
 }
 
-// @name ExportBadgesResponse
 type ExportBadgesResponse struct {
 	Badges []Badge `json:"badges"`
 }
@@ -130,7 +127,6 @@ func (h *BadgeHandler) ExportBadges(c echo.Context) error {
 	return c.JSON(http.StatusOK, ExportBadgesResponse{Badges: res})
 }
 
-// @name AssignBadgeRequest
 type AssignBadgeRequest struct {
 	GroupID string `json:"groupId"`
 }
@@ -187,7 +183,6 @@ func (h *BadgeHandler) AssignBadge(c echo.Context) error {
 	return c.JSON(http.StatusCreated, mapGroupToDTO(group))
 }
 
-// @name ScanAssignBadgeRequest
 type ScanAssignBadgeRequest struct {
 	QRPayload string `json:"qrPayload"`
 	GroupName string `json:"groupName"`

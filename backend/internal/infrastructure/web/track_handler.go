@@ -9,7 +9,6 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-// @name TrackHandler
 type TrackHandler struct {
 	svc *usecase.TrackService
 }
@@ -57,7 +56,6 @@ func (h *TrackHandler) ListTracks(c echo.Context) error {
 	return c.JSON(http.StatusOK, res)
 }
 
-// @name CreateTracksRequest
 type CreateTracksRequest struct {
 	CampID   string `json:"campId"`
 	CornerID string `json:"cornerId"`
@@ -115,7 +113,6 @@ func (h *TrackHandler) GetTrack(c echo.Context) error {
 	return c.JSON(http.StatusOK, Track{})
 }
 
-// @name BulkDeleteTracksRequest
 type BulkDeleteTracksRequest struct {
 	TrackIDs []string `json:"trackIds"`
 }
@@ -143,12 +140,10 @@ func (h *TrackHandler) BulkDeleteTracks(c echo.Context) error {
 	return c.NoContent(http.StatusNoContent)
 }
 
-// @name ReplaceTrackRequest
 type ReplaceTrackRequest struct {
 	NewCornerID string `json:"newCornerId"`
 }
 
-// @name ReplaceTrackResponse
 type ReplaceTrackResponse struct {
 	Track Track  `json:"track"`
 	PIN   string `json:"pin"`

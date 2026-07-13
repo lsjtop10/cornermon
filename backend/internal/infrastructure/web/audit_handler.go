@@ -18,7 +18,6 @@ type AuditLogQuerier interface {
 	List(ctx context.Context, query usecase.AuditLogQuery) (*usecase.AuditLogPage, error)
 }
 
-// @name AuditHandler
 type AuditHandler struct {
 	querier AuditLogQuerier
 }
@@ -103,7 +102,6 @@ func (h *AuditHandler) ListAuditLogs(c echo.Context) error {
 	return c.JSON(http.StatusOK, response)
 }
 
-// @name AuditLogPageResponse
 type AuditLogPageResponse struct {
 	Logs       []AuditLog `json:"logs"`
 	NextCursor string     `json:"nextCursor,omitempty"`
