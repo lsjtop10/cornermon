@@ -1748,7 +1748,7 @@ paths:
                   busyTrackIds: ["uuid-1", "uuid-2"]
 
   /tracks/{id}/replace:
-    post:
+    put:
       tags: [B. Camp / Corner / Track]
       summary: "트랙 교체 (코너 담당 변경)"
       description: |
@@ -1781,9 +1781,29 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Track'
+                type: object
+                required: [track, pin]
+                properties:
+                  track:
+                    $ref: '#/components/schemas/Track'
+                  pin:
+                    type: string
+                    pattern: '^\\d{6}$'
+                    description: "이 응답에서 한 번만 반환되는 신규 평문 PIN"
+        "400":
+          description: "newCornerId 누락 또는 잘못된 요청"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "404":
+          description: "대상 코너가 존재하지 않음"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         "409":
-          description: "진행 중인 방문이 있어 교체 불가"
+          description: "진행 중인 방문 또는 다른 캠프의 대상 코너로 교체 불가"
           content:
             application/json:
               schema:
