@@ -179,33 +179,33 @@ COMMENT ON COLUMN admin_sessions.revoked_at IS '세션이 무효화된 시간';
 -- 메시지(공지 및 개별 전송) 테이블
 CREATE TABLE messages (
     id VARCHAR(50) PRIMARY KEY,
-    channel_type VARCHAR(50) NOT NULL,
-    camp_id VARCHAR(50) REFERENCES camps(id) ON DELETE CASCADE,
-    track_id VARCHAR(50),
+    track_id VARCHAR(50) NOT NULL REFERENCES tracks(id) ON DELETE CASCADE,
     sender_role VARCHAR(50) NOT NULL,
     content TEXT NOT NULL,
     sent_at TIMESTAMP WITH TIME ZONE NOT NULL
 );
-COMMENT ON TABLE messages IS '전체 공지사항 및 트랙별 메시지 발송 내역을 저장하는 테이블';
+COMMENT ON TABLE messages IS '트랙별 운영자/진행자 스레드 메시지를 저장하는 테이블';
 COMMENT ON COLUMN messages.id IS '메시지 고유 식별자';
-COMMENT ON COLUMN messages.channel_type IS '전송 채널 (BROADCAST, DIRECT 등)';
-COMMENT ON COLUMN messages.camp_id IS 'BROADCAST 채널인 경우 소속 캠프 식별자 (DIRECT면 NULL)';
-COMMENT ON COLUMN messages.track_id IS 'DIRECT 채널인 경우 대상 트랙 식별자 (BROADCAST면 NULL)';
+COMMENT ON COLUMN messages.track_id IS '메시지 스레드의 트랙 식별자';
 COMMENT ON COLUMN messages.sender_role IS '발신자 역할 (ADMIN 등)';
 COMMENT ON COLUMN messages.content IS '메시지 본문';
 COMMENT ON COLUMN messages.sent_at IS '발송 시간';
 
--- 방송(공지) 메시지 수신 확인 테이블
-CREATE TABLE broadcast_receipts (
-    message_id VARCHAR(50) NOT NULL REFERENCES messages(id) ON DELETE CASCADE,
+CREATE TABLE announcements (
+    id VARCHAR(50) PRIMARY KEY,
+    camp_id VARCHAR(50) NOT NULL REFERENCES camps(id) ON DELETE CASCADE,
+    sender_role VARCHAR(50) NOT NULL,
+    content TEXT NOT NULL,
+    sent_at TIMESTAMP WITH TIME ZONE NOT NULL
+);
+
+CREATE TABLE announcement_receipts (
+    announcement_id VARCHAR(50) NOT NULL REFERENCES announcements(id) ON DELETE CASCADE,
     track_id VARCHAR(50) NOT NULL REFERENCES tracks(id) ON DELETE CASCADE,
     read_at TIMESTAMP WITH TIME ZONE,
-    PRIMARY KEY (message_id, track_id)
+    PRIMARY KEY (announcement_id, track_id)
 );
-COMMENT ON TABLE broadcast_receipts IS '각 트랙이 전체 공지 메시지를 열람했는지 확인(수신확인)하는 테이블';
-COMMENT ON COLUMN broadcast_receipts.message_id IS '공지 메시지 식별자';
-COMMENT ON COLUMN broadcast_receipts.track_id IS '수신 트랙 식별자';
-COMMENT ON COLUMN broadcast_receipts.read_at IS '트랙(진행자)이 메시지를 읽은 시간';
+COMMENT ON TABLE announcement_receipts IS '각 트랙의 공지 읽음 상태를 저장하는 테이블';
 
 -- 감사 로그(Audit) 테이블
 CREATE TABLE audit_logs (

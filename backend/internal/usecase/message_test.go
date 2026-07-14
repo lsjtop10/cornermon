@@ -112,10 +112,6 @@ func TestMessageService_SendDirect(t *testing.T) {
 	t.Run("ShouldSendDirectSuccessfullyAndNotify", func(t *testing.T) {
 		// Arrange
 		now := time.Now()
-		camps := NewMockCampRepository()
-		camp := &domain.Camp{ID: "camp-1", Status: domain.CampActive}
-		camps.Save(context.Background(), camp)
-
 		corners := NewMockCornerRepository()
 		corner := &domain.Corner{ID: "corner-1", CampID: "camp-1"}
 		corners.Save(context.Background(), corner)
@@ -125,13 +121,11 @@ func TestMessageService_SendDirect(t *testing.T) {
 		tracks.Save(context.Background(), track)
 
 		messages := NewMockMessageRepository()
-		receipts := NewMockBroadcastReceiptRepository()
-		sessions := NewMockFacilitatorSessionRepository()
 		auditLogs := &MockAuditLogRepository{}
 		broadcaster := &MockBroadcaster{}
 		tx := &MockTxManager{}
 
-		s := NewMessageService(camps, corners, tracks, messages, receipts, sessions, auditLogs, broadcaster, tx)
+		s := NewMessageService(corners, tracks, messages, auditLogs, broadcaster, tx)
 		s.nowFn = func() time.Time { return now }
 		s.uuidFn = func() string { return "msg-uuid" }
 

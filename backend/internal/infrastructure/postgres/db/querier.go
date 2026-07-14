@@ -6,8 +6,6 @@ package db
 
 import (
 	"context"
-
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type Querier interface {
@@ -17,9 +15,9 @@ type Querier interface {
 	GetAdminSession(ctx context.Context, id string) (AdminSession, error)
 	GetAdminSessionByAccessTokenHash(ctx context.Context, accessTokenHash string) (AdminSession, error)
 	GetAdminSessionByRefreshTokenHash(ctx context.Context, refreshTokenHash string) (AdminSession, error)
+	GetAnnouncementReceiptByAnnouncementAndTrack(ctx context.Context, arg GetAnnouncementReceiptByAnnouncementAndTrackParams) (AnnouncementReceipt, error)
 	GetBadge(ctx context.Context, id string) (Badge, error)
 	GetBadgeByQRPayload(ctx context.Context, qrPayload string) (Badge, error)
-	GetBroadcastReceiptByMessageAndTrack(ctx context.Context, arg GetBroadcastReceiptByMessageAndTrackParams) (BroadcastReceipt, error)
 	GetCamp(ctx context.Context, id string) (Camp, error)
 	GetCompletedVisitByGroupAndCorner(ctx context.Context, arg GetCompletedVisitByGroupAndCornerParams) (Visit, error)
 	GetCorner(ctx context.Context, id string) (Corner, error)
@@ -39,12 +37,9 @@ type Querier interface {
 	ListAllBadges(ctx context.Context) ([]Badge, error)
 	ListAnnouncementsByCamp(ctx context.Context, campID pgtype.Text) ([]Message, error)
 	ListAuditLogs(ctx context.Context, arg ListAuditLogsParams) ([]AuditLog, error)
-	ListBroadcastMessagesByCamp(ctx context.Context, campID pgtype.Text) ([]Message, error)
-	ListBroadcastReceiptsByMessage(ctx context.Context, messageID string) ([]BroadcastReceipt, error)
 	ListCamps(ctx context.Context) ([]Camp, error)
 	ListCornersByCamp(ctx context.Context, campID string) ([]Corner, error)
 	ListDeviceRegistrationsByCampAndStatus(ctx context.Context, arg ListDeviceRegistrationsByCampAndStatusParams) ([]DeviceRegistration, error)
-	ListDirectMessagesByTrack(ctx context.Context, trackID pgtype.Text) ([]Message, error)
 	ListGroupsByCamp(ctx context.Context, campID string) ([]Group, error)
 	ListMessagesByTrack(ctx context.Context, trackID pgtype.Text) ([]Message, error)
 	ListPendingDeviceRegistrationsByCamp(ctx context.Context, campID string) ([]DeviceRegistration, error)
@@ -58,7 +53,6 @@ type Querier interface {
 	SaveAnnouncement(ctx context.Context, arg SaveAnnouncementParams) error
 	SaveAuditLog(ctx context.Context, arg SaveAuditLogParams) error
 	SaveBadge(ctx context.Context, arg SaveBadgeParams) error
-	SaveBroadcastReceipt(ctx context.Context, arg SaveBroadcastReceiptParams) error
 	SaveCamp(ctx context.Context, arg SaveCampParams) error
 	SaveCorner(ctx context.Context, arg SaveCornerParams) error
 	SaveDeviceRegistration(ctx context.Context, arg SaveDeviceRegistrationParams) error
