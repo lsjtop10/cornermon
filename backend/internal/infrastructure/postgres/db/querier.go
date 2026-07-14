@@ -35,22 +35,22 @@ type Querier interface {
 	ListActiveTracksByCamp(ctx context.Context, campID string) ([]Track, error)
 	ListAdminSessionsByAdmin(ctx context.Context, adminID string) ([]AdminSession, error)
 	ListAllBadges(ctx context.Context) ([]Badge, error)
-	ListAnnouncementReceiptsByAnnouncement(ctx context.Context, announcementID string) ([]AnnouncementReceipt, error)
-	ListAnnouncementsByCamp(ctx context.Context, campID string) ([]Announcement, error)
+	ListAnnouncementsByCamp(ctx context.Context, campID pgtype.Text) ([]Message, error)
 	ListAuditLogs(ctx context.Context, arg ListAuditLogsParams) ([]AuditLog, error)
 	ListCamps(ctx context.Context) ([]Camp, error)
 	ListCornersByCamp(ctx context.Context, campID string) ([]Corner, error)
 	ListDeviceRegistrationsByCampAndStatus(ctx context.Context, arg ListDeviceRegistrationsByCampAndStatusParams) ([]DeviceRegistration, error)
 	ListGroupsByCamp(ctx context.Context, campID string) ([]Group, error)
-	ListMessagesByTrack(ctx context.Context, trackID string) ([]Message, error)
+	ListMessagesByTrack(ctx context.Context, trackID pgtype.Text) ([]Message, error)
 	ListPendingDeviceRegistrationsByCamp(ctx context.Context, campID string) ([]DeviceRegistration, error)
 	ListTracksByCamp(ctx context.Context, campID string) ([]Track, error)
 	ListTracksByCorner(ctx context.Context, cornerID string) ([]Track, error)
 	ListVisitsByCamp(ctx context.Context, campID string) ([]ListVisitsByCampRow, error)
 	ListVisitsByGroup(ctx context.Context, groupID string) ([]Visit, error)
 	SaveAdminSession(ctx context.Context, arg SaveAdminSessionParams) error
+	// Announcements use a dedicated repository contract while retaining the existing
+	// messages storage table for backwards-compatible migrations.
 	SaveAnnouncement(ctx context.Context, arg SaveAnnouncementParams) error
-	SaveAnnouncementReceipt(ctx context.Context, arg SaveAnnouncementReceiptParams) error
 	SaveAuditLog(ctx context.Context, arg SaveAuditLogParams) error
 	SaveBadge(ctx context.Context, arg SaveBadgeParams) error
 	SaveCamp(ctx context.Context, arg SaveCampParams) error

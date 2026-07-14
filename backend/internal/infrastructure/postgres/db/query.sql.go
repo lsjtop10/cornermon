@@ -550,8 +550,49 @@ func (q *Queries) ListAllBadges(ctx context.Context) ([]Badge, error) {
 	return items, nil
 }
 
-const listAnnouncementReceiptsByAnnouncement = `-- name: ListAnnouncementReceiptsByAnnouncement :many
-SELECT announcement_id, track_id, read_at FROM announcement_receipts WHERE announcement_id = $1
+const listAnnouncementsByCamp = `-- name: ListAnnouncementsByCamp :many
+SELECT id, channel_type, camp_id, track_id, sender_role, content, sent_at FROM messages WHERE channel_type = 'BROADCAST' AND camp_id = $1 ORDER BY sent_at
+`
+
+func (q *Queries) ListAnnouncementsByCamp(ctx context.Context, campID pgtype.Text) ([]Message, error) {
+	rows, err := q.db.Query(ctx, listAnnouncementsByCamp, campID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Message
+	for rows.Next() {
+		var i Message
+		if err := rows.Scan(
+			&i.ID,
+			&i.ChannelType,
+			&i.CampID,
+			&i.TrackID,
+			&i.SenderRole,
+			&i.Content,
+			&i.SentAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listAuditLogs = `-- name: ListAuditLogs :many
+SELECT id, actor, action, target, success, occurred_at, metadata FROM audit_logs
+WHERE ($1::VARCHAR IS NULL OR actor ILIKE '%' || $1::VARCHAR || '%')
+  AND ($2::VARCHAR IS NULL OR action = $2::VARCHAR)
+  AND ($3::BOOLEAN IS NULL OR success = $3::BOOLEAN)
+  AND (
+    $4::TIMESTAMPTZ IS NULL
+    OR (occurred_at, id) < ($4::TIMESTAMPTZ, $5::VARCHAR)
+  )
+ORDER BY occurred_at DESC, id DESC
+LIMIT $6
 `
 
 func (q *Queries) ListAnnouncementReceiptsByAnnouncement(ctx context.Context, announcementID string) ([]AnnouncementReceipt, error) {
@@ -824,6 +865,38 @@ func (q *Queries) ListMessagesByTrack(ctx context.Context, trackID string) ([]Me
 	return items, nil
 }
 
+const listMessagesByTrack = `-- name: ListMessagesByTrack :many
+SELECT id, channel_type, camp_id, track_id, sender_role, content, sent_at FROM messages WHERE track_id = $1 ORDER BY sent_at
+`
+
+func (q *Queries) ListMessagesByTrack(ctx context.Context, trackID pgtype.Text) ([]Message, error) {
+	rows, err := q.db.Query(ctx, listMessagesByTrack, trackID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Message
+	for rows.Next() {
+		var i Message
+		if err := rows.Scan(
+			&i.ID,
+			&i.ChannelType,
+			&i.CampID,
+			&i.TrackID,
+			&i.SenderRole,
+			&i.Content,
+			&i.SentAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listPendingDeviceRegistrationsByCamp = `-- name: ListPendingDeviceRegistrationsByCamp :many
 SELECT id, camp_id, device_name, status, token_hash, failed_pin_attempts, locked_until, approved_at FROM device_registrations WHERE camp_id = $1 AND status = 'PENDING'
 `
@@ -1043,18 +1116,20 @@ func (q *Queries) SaveAdminSession(ctx context.Context, arg SaveAdminSessionPara
 }
 
 const saveAnnouncement = `-- name: SaveAnnouncement :exec
-INSERT INTO announcements (id, camp_id, sender_role, content, sent_at)
-VALUES ($1, $2, $3, $4, $5)
+INSERT INTO messages (id, channel_type, camp_id, sender_role, content, sent_at)
+VALUES ($1, 'BROADCAST', $2, $3, $4, $5)
 `
 
 type SaveAnnouncementParams struct {
 	ID         string             `json:"id"`
-	CampID     string             `json:"camp_id"`
+	CampID     pgtype.Text        `json:"camp_id"`
 	SenderRole string             `json:"sender_role"`
 	Content    string             `json:"content"`
 	SentAt     pgtype.Timestamptz `json:"sent_at"`
 }
 
+// Announcements use a dedicated repository contract while retaining the existing
+// messages storage table for backwards-compatible migrations.
 func (q *Queries) SaveAnnouncement(ctx context.Context, arg SaveAnnouncementParams) error {
 	_, err := q.db.Exec(ctx, saveAnnouncement,
 		arg.ID,
@@ -1063,24 +1138,6 @@ func (q *Queries) SaveAnnouncement(ctx context.Context, arg SaveAnnouncementPara
 		arg.Content,
 		arg.SentAt,
 	)
-	return err
-}
-
-const saveAnnouncementReceipt = `-- name: SaveAnnouncementReceipt :exec
-INSERT INTO announcement_receipts (announcement_id, track_id, read_at)
-VALUES ($1, $2, $3)
-ON CONFLICT (announcement_id, track_id) DO UPDATE SET
-    read_at = EXCLUDED.read_at
-`
-
-type SaveAnnouncementReceiptParams struct {
-	AnnouncementID string             `json:"announcement_id"`
-	TrackID        string             `json:"track_id"`
-	ReadAt         pgtype.Timestamptz `json:"read_at"`
-}
-
-func (q *Queries) SaveAnnouncementReceipt(ctx context.Context, arg SaveAnnouncementReceiptParams) error {
-	_, err := q.db.Exec(ctx, saveAnnouncementReceipt, arg.AnnouncementID, arg.TrackID, arg.ReadAt)
 	return err
 }
 
