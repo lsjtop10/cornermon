@@ -38,7 +38,7 @@ type Querier interface {
 	ListAdminSessionsByAdmin(ctx context.Context, adminID string) ([]AdminSession, error)
 	ListAllBadges(ctx context.Context) ([]Badge, error)
 	ListAuditLogs(ctx context.Context, arg ListAuditLogsParams) ([]AuditLog, error)
-	ListBroadcastMessagesByCamp(ctx context.Context) ([]Message, error)
+	ListBroadcastMessagesByCamp(ctx context.Context, campID pgtype.Text) ([]Message, error)
 	ListBroadcastReceiptsByMessage(ctx context.Context, messageID string) ([]BroadcastReceipt, error)
 	ListCamps(ctx context.Context) ([]Camp, error)
 	ListCornersByCamp(ctx context.Context, campID string) ([]Corner, error)

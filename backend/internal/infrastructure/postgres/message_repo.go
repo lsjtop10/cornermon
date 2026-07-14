@@ -39,6 +39,11 @@ func mapMessage(row db.Message) *domain.Message {
 	} else {
 		m.TrackID = domain.None[domain.TrackID]()
 	}
+	if row.CampID.Valid {
+		m.CampID = domain.Some(domain.CampID(row.CampID.String))
+	} else {
+		m.CampID = domain.None[domain.CampID]()
+	}
 
 	return m
 }
@@ -55,6 +60,9 @@ func (r *pgMessageRepository) Save(ctx context.Context, msg *domain.Message) err
 	if val, ok := msg.TrackID.Value(); ok {
 		params.TrackID = pgtype.Text{String: string(val), Valid: true}
 	}
+	if val, ok := msg.CampID.Value(); ok {
+		params.CampID = pgtype.Text{String: string(val), Valid: true}
+	}
 
 	err := r.queries(ctx).SaveMessage(ctx, params)
 	if err != nil {
@@ -64,7 +72,7 @@ func (r *pgMessageRepository) Save(ctx context.Context, msg *domain.Message) err
 }
 
 func (r *pgMessageRepository) ListBroadcastsByCamp(ctx context.Context, campID domain.CampID) ([]*domain.Message, error) {
-	rows, err := r.queries(ctx).ListBroadcastMessagesByCamp(ctx)
+	rows, err := r.queries(ctx).ListBroadcastMessagesByCamp(ctx, pgtype.Text{String: string(campID), Valid: true})
 	if err != nil {
 		return nil, errs.Wrap(ctx, err)
 	}

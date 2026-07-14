@@ -153,14 +153,14 @@ ON CONFLICT (id) DO UPDATE SET
     revoked_at = EXCLUDED.revoked_at;
 
 -- name: SaveMessage :exec
-INSERT INTO messages (id, channel_type, track_id, sender_role, content, sent_at)
-VALUES ($1, $2, $3, $4, $5, $6);
+INSERT INTO messages (id, channel_type, camp_id, track_id, sender_role, content, sent_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7);
 
 -- name: ListBroadcastMessagesByCamp :many
-SELECT * FROM messages WHERE channel_type = 'BROADCAST';
+SELECT * FROM messages WHERE channel_type = 'BROADCAST' AND camp_id = $1 ORDER BY sent_at;
 
 -- name: ListDirectMessagesByTrack :many
-SELECT * FROM messages WHERE track_id = $1 AND channel_type = 'DIRECT';
+SELECT * FROM messages WHERE track_id = $1 AND channel_type = 'DIRECT' ORDER BY sent_at;
 
 -- name: SaveBroadcastReceipt :exec
 INSERT INTO broadcast_receipts (message_id, track_id, read_at)

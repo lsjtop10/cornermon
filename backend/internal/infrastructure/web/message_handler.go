@@ -50,7 +50,6 @@ func NewMessageHandler(message MessageUsecase) *MessageHandler {
 }
 
 type BroadcastMessageRequest struct {
-	CampID  string `json:"campId"`
 	Content string `json:"content"`
 } // @name BroadcastMessageRequest
 
@@ -60,13 +59,19 @@ type BroadcastMessageRequest struct {
 // @Security     AdminAuth
 // @Accept       json
 // @Produce      json
+// @Param        campId path string true "캠프 ID"
 // @Param        request body BroadcastMessageRequest true "메시지 내용"
 // @Success      201 {object} MessageResponse
-// @Router       /messages/broadcast [post]
+// @Failure      400 {object} ErrorResponse
+// @Router       /camps/{campId}/messages/broadcast [post]
 func (h *MessageHandler) SendBroadcast(c echo.Context) error {
 	session, ok := c.Get("adminSession").(*domain.AdminSession)
 	if !ok {
 		return c.JSON(http.StatusUnauthorized, ErrorResponse{Code: "UNAUTHORIZED", Message: "unauthorized"})
+	}
+	campID := domain.CampID(c.Param("campId"))
+	if campID == "" {
+		return c.JSON(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: "campId is required"})
 	}
 
 	var req BroadcastMessageRequest
@@ -74,7 +79,7 @@ func (h *MessageHandler) SendBroadcast(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: "invalid request"})
 	}
 
-	msg, err := h.message.SendBroadcast(c.Request().Context(), domain.CampID(req.CampID), req.Content, session.AdminID)
+	msg, err := h.message.SendBroadcast(c.Request().Context(), campID, req.Content, session.AdminID)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()})
 	}
@@ -93,15 +98,17 @@ func (h *MessageHandler) SendBroadcast(c echo.Context) error {
 // @Tags         E. Message
 // @Security     AdminAuth
 // @Produce      json
+// @Param        campId path string true "캠프 ID"
 // @Success      200 {array} MessageResponse
-// @Router       /messages/broadcast [get]
+// @Failure      400 {object} ErrorResponse
+// @Router       /camps/{campId}/messages/broadcast [get]
 func (h *MessageHandler) ListBroadcasts(c echo.Context) error {
-	campID := c.QueryParam("campId")
+	campID := domain.CampID(c.Param("campId"))
 	if campID == "" {
-		return c.JSON(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: "missing campId"})
+		return c.JSON(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: "campId is required"})
 	}
 
-	msgs, err := h.message.ListBroadcastsByCamp(c.Request().Context(), domain.CampID(campID))
+	msgs, err := h.message.ListBroadcastsByCamp(c.Request().Context(), campID)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()})
 	}

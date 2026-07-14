@@ -70,6 +70,7 @@ func (s *MessageService) SendBroadcast(
 	msg := &domain.Message{
 		ID:          msgID,
 		ChannelType: domain.MessageBroadcast,
+		CampID:      domain.Some(campID),
 		TrackID:     domain.None[domain.TrackID](),
 		SenderRole:  domain.RoleAdmin,
 		Content:     content,
@@ -131,6 +132,7 @@ func (s *MessageService) SendDirect(
 	msg := &domain.Message{
 		ID:          msgID,
 		ChannelType: domain.MessageDirect,
+		CampID:      domain.None[domain.CampID](),
 		TrackID:     domain.Some(trackID),
 		SenderRole:  senderRole,
 		Content:     content,

@@ -606,11 +606,11 @@ func (q *Queries) ListAuditLogs(ctx context.Context, arg ListAuditLogsParams) ([
 }
 
 const listBroadcastMessagesByCamp = `-- name: ListBroadcastMessagesByCamp :many
-SELECT id, channel_type, track_id, sender_role, content, sent_at FROM messages WHERE channel_type = 'BROADCAST'
+SELECT id, channel_type, camp_id, track_id, sender_role, content, sent_at FROM messages WHERE channel_type = 'BROADCAST' AND camp_id = $1 ORDER BY sent_at
 `
 
-func (q *Queries) ListBroadcastMessagesByCamp(ctx context.Context) ([]Message, error) {
-	rows, err := q.db.Query(ctx, listBroadcastMessagesByCamp)
+func (q *Queries) ListBroadcastMessagesByCamp(ctx context.Context, campID pgtype.Text) ([]Message, error) {
+	rows, err := q.db.Query(ctx, listBroadcastMessagesByCamp, campID)
 	if err != nil {
 		return nil, err
 	}
@@ -621,6 +621,7 @@ func (q *Queries) ListBroadcastMessagesByCamp(ctx context.Context) ([]Message, e
 		if err := rows.Scan(
 			&i.ID,
 			&i.ChannelType,
+			&i.CampID,
 			&i.TrackID,
 			&i.SenderRole,
 			&i.Content,
@@ -764,7 +765,7 @@ func (q *Queries) ListDeviceRegistrationsByCampAndStatus(ctx context.Context, ar
 }
 
 const listDirectMessagesByTrack = `-- name: ListDirectMessagesByTrack :many
-SELECT id, channel_type, track_id, sender_role, content, sent_at FROM messages WHERE track_id = $1 AND channel_type = 'DIRECT'
+SELECT id, channel_type, camp_id, track_id, sender_role, content, sent_at FROM messages WHERE track_id = $1 AND channel_type = 'DIRECT' ORDER BY sent_at
 `
 
 func (q *Queries) ListDirectMessagesByTrack(ctx context.Context, trackID pgtype.Text) ([]Message, error) {
@@ -779,6 +780,7 @@ func (q *Queries) ListDirectMessagesByTrack(ctx context.Context, trackID pgtype.
 		if err := rows.Scan(
 			&i.ID,
 			&i.ChannelType,
+			&i.CampID,
 			&i.TrackID,
 			&i.SenderRole,
 			&i.Content,
@@ -1272,13 +1274,14 @@ func (q *Queries) SaveGroup(ctx context.Context, arg SaveGroupParams) error {
 }
 
 const saveMessage = `-- name: SaveMessage :exec
-INSERT INTO messages (id, channel_type, track_id, sender_role, content, sent_at)
-VALUES ($1, $2, $3, $4, $5, $6)
+INSERT INTO messages (id, channel_type, camp_id, track_id, sender_role, content, sent_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7)
 `
 
 type SaveMessageParams struct {
 	ID          string             `json:"id"`
 	ChannelType string             `json:"channel_type"`
+	CampID      pgtype.Text        `json:"camp_id"`
 	TrackID     pgtype.Text        `json:"track_id"`
 	SenderRole  string             `json:"sender_role"`
 	Content     string             `json:"content"`
@@ -1289,6 +1292,7 @@ func (q *Queries) SaveMessage(ctx context.Context, arg SaveMessageParams) error 
 	_, err := q.db.Exec(ctx, saveMessage,
 		arg.ID,
 		arg.ChannelType,
+		arg.CampID,
 		arg.TrackID,
 		arg.SenderRole,
 		arg.Content,

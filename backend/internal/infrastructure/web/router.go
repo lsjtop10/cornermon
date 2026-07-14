@@ -106,8 +106,8 @@ func RegisterRoutes(e *echo.Echo, h *Handlers, adminAuth AuthAdminUsecase, track
 
 	// ── E. Message (Admin) ──
 	if h.Message != nil {
-		admin.POST("/messages/broadcast", h.Message.SendBroadcast)
-		admin.GET("/messages/broadcast", h.Message.ListBroadcasts)
+		admin.POST("/camps/:campId/messages/broadcast", h.Message.SendBroadcast)
+		admin.GET("/camps/:campId/messages/broadcast", h.Message.ListBroadcasts)
 		admin.GET("/messages/broadcast/:id/receipts", h.Message.GetBroadcastReceipts)
 		admin.POST("/tracks/:trackId/messages", h.Message.SendDirect)
 		admin.GET("/tracks/:trackId/messages", h.Message.ListDirectMessages)

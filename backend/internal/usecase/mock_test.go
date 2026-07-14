@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"errors"
+	"sort"
 
 	"cornermon/backend/internal/domain"
 )
@@ -467,10 +468,14 @@ func (r *MockMessageRepository) Save(ctx context.Context, msg *domain.Message) e
 func (r *MockMessageRepository) ListBroadcastsByCamp(ctx context.Context, campID domain.CampID) ([]*domain.Message, error) {
 	var list []*domain.Message
 	for _, m := range r.Messages {
-		if m.ChannelType == domain.MessageBroadcast {
+		messageCampID, ok := m.CampID.Value()
+		if m.ChannelType == domain.MessageBroadcast && ok && messageCampID == campID {
 			list = append(list, m)
 		}
 	}
+	sort.Slice(list, func(i, j int) bool {
+		return list[i].SentAt.Before(list[j].SentAt)
+	})
 	return list, nil
 }
 
