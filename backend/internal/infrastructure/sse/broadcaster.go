@@ -28,6 +28,10 @@ func NewBroadcaster() *BroadcasterImpl {
 	}
 }
 
+// Broadcast는 커밋된 변경을 알리는 best-effort fan-out이다. 요청 context 취소는 이미
+// 커밋된 알림을 취소해서는 안 되므로 여기서 사용하지 않고, 연결 수명은 구독 context가 관리한다.
+// 버퍼가 찬 구독자에게 서버가 메시지를 재시도·저장하지 않는 이유는 SSE 알림이 최신 상태를
+// REST로 다시 조회하라는 신호이기 때문이다. 해당 연결을 닫아 클라이언트가 재연결·resync하도록 한다.
 func (b *BroadcasterImpl) Broadcast(_ context.Context, campID domain.CampID, event usecase.NotificationEvent, scope usecase.Scope) error {
 	message := usecase.SSEMessage{Event: event, Scope: scope}
 	var fullAdminSubs []chan usecase.SSEMessage
