@@ -47,7 +47,7 @@ func NewEventHandler(subscriber EventSubscriber, tracks EventTrackRepository, co
 }
 
 // @Summary      Admin SSE Stream
-// @Description  관리자용 실시간 이벤트 스트림. 각 event의 data는 SSENotification JSON이며 예시는 {"event":"tracks_updated","scope":{"kind":"camp"}} 입니다.
+// @Description  관리자용 실시간 이벤트 스트림. 각 event의 data는 SSENotification JSON이며 예시는 {"event":"tracks_updated","scope":{"kind":"camp"}} 입니다. 이벤트는 best-effort 알림이므로 서버는 유실된 메시지를 저장·재전송하지 않습니다. 버퍼가 찬 연결은 종료되며, 클라이언트는 재연결 후 REST API로 최신 상태를 다시 조회해야 합니다.
 // @Tags         F. Events (SSE)
 // @Security     AdminAuth
 // @Produce      text/event-stream
@@ -72,7 +72,7 @@ func (h *EventHandler) AdminEvents(c echo.Context) error {
 }
 
 // @Summary      Track SSE Stream
-// @Description  트랙 진행자용 실시간 이벤트 스트림. 각 event의 data는 SSENotification JSON이며 예시는 {"event":"track_updated","scope":{"kind":"track","trackId":"track-id"}} 입니다.
+// @Description  트랙 진행자용 실시간 이벤트 스트림. 각 event의 data는 SSENotification JSON이며 예시는 {"event":"track_updated","scope":{"kind":"track","trackId":"track-id"}} 입니다. 이벤트는 best-effort 알림이므로 서버는 유실된 메시지를 저장·재전송하지 않습니다. 버퍼가 찬 연결은 종료되며, 클라이언트는 재연결 후 REST API로 최신 상태를 다시 조회해야 합니다.
 // @Tags         F. Events (SSE)
 // @Security     TrackAuth
 // @Produce      text/event-stream
