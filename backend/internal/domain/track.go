@@ -24,6 +24,7 @@ type Track struct {
 	TrackNo        int
 	Status         TrackStatus
 	PINHash        string
+	PINCiphertext  string
 	CurrentVisitID Optional[VisitID]
 	DeletedAt      Optional[time.Time]
 }

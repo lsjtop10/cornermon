@@ -40,11 +40,12 @@ JOIN corners c ON t.corner_id = c.id
 WHERE c.camp_id = $1 AND t.status = 'ACTIVE';
 
 -- name: SaveTrack :exec
-INSERT INTO tracks (id, corner_id, track_no, status, pin_hash, current_visit_id, deleted_at)
-VALUES ($1, $2, $3, $4, $5, $6, $7)
+INSERT INTO tracks (id, corner_id, track_no, status, pin_hash, pin_ciphertext, current_visit_id, deleted_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 ON CONFLICT (id) DO UPDATE SET
     status = EXCLUDED.status,
     pin_hash = EXCLUDED.pin_hash,
+    pin_ciphertext = EXCLUDED.pin_ciphertext,
     current_visit_id = EXCLUDED.current_visit_id,
     deleted_at = EXCLUDED.deleted_at;
 

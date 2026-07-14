@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"cornermon/backend/internal/domain"
@@ -10,13 +11,14 @@ import (
 )
 
 type TrackService struct {
-	camps       CampRepository
-	corners     CornerRepository
-	tracks      TrackRepository
-	sessions    FacilitatorSessionRepository
-	auditLogs   AuditLogRepository
-	broadcaster Broadcaster
-	tx          TxManager
+	camps        CampRepository
+	corners      CornerRepository
+	tracks       TrackRepository
+	sessions     FacilitatorSessionRepository
+	auditLogs    AuditLogRepository
+	broadcaster  Broadcaster
+	tx           TxManager
+	pinProtector TrackPINProtector
 
 	nowFn  func() time.Time
 	uuidFn func() string
@@ -30,17 +32,23 @@ func NewTrackService(
 	auditLogs AuditLogRepository,
 	broadcaster Broadcaster,
 	tx TxManager,
+	pinProtectors ...TrackPINProtector,
 ) *TrackService {
+	var pinProtector TrackPINProtector
+	if len(pinProtectors) > 0 {
+		pinProtector = pinProtectors[0]
+	}
 	return &TrackService{
-		camps:       camps,
-		corners:     corners,
-		tracks:      tracks,
-		sessions:    sessions,
-		auditLogs:   auditLogs,
-		broadcaster: broadcaster,
-		tx:          tx,
-		nowFn:       func() time.Time { return time.Now().UTC() },
-		uuidFn:      uuid.NewString,
+		camps:        camps,
+		corners:      corners,
+		tracks:       tracks,
+		sessions:     sessions,
+		auditLogs:    auditLogs,
+		broadcaster:  broadcaster,
+		tx:           tx,
+		pinProtector: pinProtector,
+		nowFn:        func() time.Time { return time.Now().UTC() },
+		uuidFn:       uuid.NewString,
 	}
 }
 
@@ -70,6 +78,10 @@ func (s *TrackService) CreateTrack(
 	if err != nil {
 		return nil, "", err
 	}
+	pinCiphertext, err := s.encryptPIN(ctx, plainPIN)
+	if err != nil {
+		return nil, "", err
+	}
 
 	var track *domain.Track
 	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
@@ -91,6 +103,7 @@ func (s *TrackService) CreateTrack(
 			TrackNo:        nextTrackNo,
 			Status:         domain.TrackActive,
 			PINHash:        hashPIN,
+			PINCiphertext:  pinCiphertext,
 			CurrentVisitID: domain.None[domain.VisitID](),
 		}
 
@@ -221,6 +234,10 @@ func (s *TrackService) ReplaceTrack(
 	if err != nil {
 		return nil, "", err
 	}
+	pinCiphertext, err := s.encryptPIN(ctx, plainPIN)
+	if err != nil {
+		return nil, "", err
+	}
 
 	var newTrack *domain.Track
 
@@ -254,6 +271,7 @@ func (s *TrackService) ReplaceTrack(
 			TrackNo:        nextTrackNo,
 			Status:         domain.TrackActive,
 			PINHash:        hashPIN,
+			PINCiphertext:  pinCiphertext,
 			CurrentVisitID: domain.None[domain.VisitID](),
 		}
 
@@ -292,19 +310,23 @@ func (s *TrackService) ReplaceTrack(
 func (s *TrackService) RegeneratePIN(
 	ctx context.Context,
 	trackID domain.TrackID,
-) (string, error) {
+) (*domain.Track, string, error) {
 	now := s.nowFn()
 	track, err := s.tracks.Get(ctx, trackID)
 	if err != nil {
-		return "", err
+		return nil, "", err
 	}
 	if track == nil || track.Status != domain.TrackActive {
-		return "", domain.ErrTrackNotActive
+		return nil, "", domain.ErrTrackNotActive
 	}
 
 	plainPIN, hashPIN, err := generateTrackPIN()
 	if err != nil {
-		return "", err
+		return nil, "", err
+	}
+	pinCiphertext, err := s.encryptPIN(ctx, plainPIN)
+	if err != nil {
+		return nil, "", err
 	}
 
 	var cornerCampID domain.CampID
@@ -313,6 +335,7 @@ func (s *TrackService) RegeneratePIN(
 		if _, err := track.RegeneratePIN(hashPIN, now); err != nil {
 			return err
 		}
+		track.PINCiphertext = pinCiphertext
 
 		// 코너 정보 조회를 통해 캠프 ID 획득
 		corner, err := s.corners.Get(ctx, track.CornerID)
@@ -341,7 +364,7 @@ func (s *TrackService) RegeneratePIN(
 
 	if err != nil {
 		s.recordAuditLog(ctx, "admin", "PIN_REGENERATE", string(trackID), false, map[string]any{"error": err.Error()})
-		return "", err
+		return nil, "", err
 	}
 
 	s.recordAuditLog(ctx, "admin", "PIN_REGENERATE", string(trackID), true, nil)
@@ -350,12 +373,49 @@ func (s *TrackService) RegeneratePIN(
 		_ = s.broadcaster.Broadcast(ctx, cornerCampID, EventSessionRevoked, TrackScope(trackID))
 	}
 
-	return plainPIN, nil
+	return track, plainPIN, nil
+}
+
+func (s *TrackService) encryptPIN(ctx context.Context, pin string) (string, error) {
+	if s.pinProtector == nil {
+		return "", nil
+	}
+	return s.pinProtector.Encrypt(ctx, pin)
 }
 
 // ListTracksByCamp
 func (s *TrackService) ListTracksByCamp(ctx context.Context, campID domain.CampID) ([]*domain.Track, error) {
 	return s.tracks.ListByCamp(ctx, campID)
+}
+
+func (s *TrackService) ExportTrackPIN(ctx context.Context, trackID domain.TrackID) (*domain.Track, string, error) {
+	track, err := s.tracks.Get(ctx, trackID)
+	if err != nil || track == nil || track.Status != domain.TrackActive {
+		return nil, "", err
+	}
+	if track.PINCiphertext == "" || s.pinProtector == nil {
+		return nil, "", fmt.Errorf("track PIN must be regenerated before export")
+	}
+	pin, err := s.pinProtector.Decrypt(ctx, track.PINCiphertext)
+	return track, pin, err
+}
+
+func (s *TrackService) ExportTrackPINs(ctx context.Context, campID domain.CampID) ([]*domain.Track, []string, error) {
+	tracks, err := s.tracks.ListActiveByCamp(ctx, campID)
+	if err != nil || s.pinProtector == nil {
+		return nil, nil, fmt.Errorf("track PIN export unavailable: %w", err)
+	}
+	pins := make([]string, len(tracks))
+	for i, track := range tracks {
+		if track.PINCiphertext == "" {
+			return nil, nil, fmt.Errorf("track PIN must be regenerated before export")
+		}
+		if pins[i], err = s.pinProtector.Decrypt(ctx, track.PINCiphertext); err != nil {
+			return nil, nil, err
+		}
+	}
+	s.recordAuditLog(ctx, "admin", "TRACK_PIN_EXPORT", string(campID), true, map[string]any{"count": len(tracks)})
+	return tracks, pins, nil
 }
 
 func (s *TrackService) recordAuditLog(ctx context.Context, actor, action, target string, success bool, metadata map[string]any) {

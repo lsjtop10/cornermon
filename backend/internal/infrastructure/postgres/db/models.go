@@ -194,6 +194,8 @@ type Track struct {
 	Status string `json:"status"`
 	// 기기 등록을 위한 PIN 해시값
 	PinHash string `json:"pin_hash"`
+	// PIN 재인쇄 전용 AES-256-GCM 암호문
+	PinCiphertext pgtype.Text `json:"pin_ciphertext"`
 	// 현재 진행 중인 방문(Visit)의 식별자
 	CurrentVisitID pgtype.Text `json:"current_visit_id"`
 	// 논리적 삭제 시간

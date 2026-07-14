@@ -2,11 +2,14 @@ package main
 
 import (
 	"context"
+	"encoding/base64"
+	"fmt"
 	"log"
 	"log/slog"
 	"os"
 
 	"cornermon/backend/internal/errs"
+	trackcrypto "cornermon/backend/internal/infrastructure/crypto"
 	"cornermon/backend/internal/infrastructure/postgres"
 	"cornermon/backend/internal/infrastructure/sse"
 	"cornermon/backend/internal/infrastructure/web"
@@ -30,6 +33,14 @@ func main() {
 
 	// Load .env if exists
 	_ = godotenv.Load()
+	trackPINEncryptionKey, err := loadTrackPINEncryptionKey()
+	if err != nil {
+		log.Fatalf("Invalid TRACK_PIN_ENCRYPTION_KEY: %v\n", err)
+	}
+	trackPINProtector, err := trackcrypto.NewTrackPINProtector(trackPINEncryptionKey)
+	if err != nil {
+		log.Fatalf("Unable to initialize track PIN encryption: %v\n", err)
+	}
 
 	ctx := context.Background()
 	dbURL := os.Getenv("DATABASE_URL")
@@ -92,7 +103,7 @@ func main() {
 	groupService := usecase.NewGroupService(campRepo, cornerRepo, trackRepo, groupRepo, badgeRepo, visitRepo, auditLogRepo, txManager)
 	badgeService := usecase.NewBadgeService(badgeRepo, groupRepo, auditLogRepo, txManager)
 	visitService := usecase.NewVisitService(campRepo, cornerRepo, trackRepo, visitRepo, groupRepo, badgeRepo, facilitatorSessionRepo, auditLogRepo, broadcaster, txManager)
-	trackService := usecase.NewTrackService(campRepo, cornerRepo, trackRepo, facilitatorSessionRepo, auditLogRepo, broadcaster, txManager)
+	trackService := usecase.NewTrackService(campRepo, cornerRepo, trackRepo, facilitatorSessionRepo, auditLogRepo, broadcaster, txManager, trackPINProtector)
 	reportService := usecase.NewReportService(campRepo, reportQuerier)
 	authFacilitatorService := usecase.NewFacilitatorAuthService(campRepo, cornerRepo, trackRepo, deviceRepo, facilitatorSessionRepo, auditLogRepo, broadcaster, txManager)
 	messageService := usecase.NewMessageService(campRepo, cornerRepo, trackRepo, messageRepo, broadcastReceiptRepo, facilitatorSessionRepo, auditLogRepo, broadcaster, txManager)
@@ -143,4 +154,20 @@ func main() {
 		port = "8080"
 	}
 	log.Fatal(e.Start(":" + port))
+}
+
+func loadTrackPINEncryptionKey() ([]byte, error) {
+	encodedKey := os.Getenv("TRACK_PIN_ENCRYPTION_KEY")
+	if encodedKey == "" {
+		return nil, fmt.Errorf("must be set")
+	}
+
+	key, err := base64.StdEncoding.DecodeString(encodedKey)
+	if err != nil {
+		return nil, fmt.Errorf("must be valid base64: %w", err)
+	}
+	if len(key) != 32 {
+		return nil, fmt.Errorf("must decode to 32 bytes, got %d", len(key))
+	}
+	return key, nil
 }

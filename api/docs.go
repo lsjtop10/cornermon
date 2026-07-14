@@ -1844,7 +1844,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/TrackResponse"
+                                "$ref": "#/definitions/TrackPinResponse"
                             }
                         }
                     }
@@ -1894,17 +1894,29 @@ const docTemplate = `{
                         "AdminAuth": []
                     }
                 ],
-                "description": "인쇄를 위해 전체 트랙의 PIN 번호 등을 CSV로 다운로드한다.",
+                "description": "인쇄를 위해 지정 캠프의 ACTIVE 트랙 PIN을 JSON으로 내려준다.",
                 "produces": [
-                    "text/csv"
+                    "application/json"
                 ],
                 "tags": [
                     "B. Resource Management (Admin)"
                 ],
                 "summary": "트랙 인증 정보 전체 내보내기",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "캠프 ID",
+                        "name": "campId",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
                 "responses": {
                     "200": {
-                        "description": "CSV 데이터"
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/ExportTracksResponse"
+                        }
                     }
                 }
             }
@@ -1950,9 +1962,9 @@ const docTemplate = `{
                         "AdminAuth": []
                     }
                 ],
-                "description": "특정 트랙의 PIN 번호를 PDF 형태로 다운로드한다.",
+                "description": "특정 트랙의 PIN을 JSON으로 내려준다.",
                 "produces": [
-                    "application/pdf"
+                    "application/json"
                 ],
                 "tags": [
                     "B. Resource Management (Admin)"
@@ -1969,7 +1981,10 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "PDF 데이터"
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/TrackPinResponse"
+                        }
                     }
                 }
             }
@@ -2042,7 +2057,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/TrackResponse"
+                            "$ref": "#/definitions/TrackPinResponse"
                         }
                     }
                 }
@@ -2088,7 +2103,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/ReplaceTrackResponse"
+                            "$ref": "#/definitions/TrackPinResponse"
                         }
                     },
                     "400": {
@@ -2919,6 +2934,17 @@ const docTemplate = `{
                 }
             }
         },
+        "ExportTracksResponse": {
+            "type": "object",
+            "properties": {
+                "tracks": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/TrackPinResponse"
+                    }
+                }
+            }
+        },
         "GroupResponse": {
             "type": "object",
             "properties": {
@@ -3023,17 +3049,6 @@ const docTemplate = `{
                 }
             }
         },
-        "ReplaceTrackResponse": {
-            "type": "object",
-            "properties": {
-                "pin": {
-                    "type": "string"
-                },
-                "track": {
-                    "$ref": "#/definitions/TrackResponse"
-                }
-            }
-        },
         "SSENotification": {
             "type": "object",
             "properties": {
@@ -3113,6 +3128,18 @@ const docTemplate = `{
                 }
             }
         },
+        "TrackPinResponse": {
+            "type": "object",
+            "properties": {
+                "pin": {
+                    "type": "string",
+                    "example": "482910"
+                },
+                "track": {
+                    "$ref": "#/definitions/TrackResponse"
+                }
+            }
+        },
         "TrackResponse": {
             "type": "object",
             "properties": {
@@ -3133,10 +3160,6 @@ const docTemplate = `{
                         "IDLE",
                         "BUSY"
                     ]
-                },
-                "pin": {
-                    "type": "string",
-                    "example": "482910"
                 },
                 "status": {
                     "type": "string",
