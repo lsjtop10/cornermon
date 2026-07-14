@@ -153,9 +153,51 @@ const (
 	EventLockoutAlert              NotificationEvent = "lockout_alert"
 )
 
+func NotificationEvents() []NotificationEvent {
+	return []NotificationEvent{
+		EventTracksUpdated,
+		EventTrackUpdated,
+		EventCornersUpdated,
+		EventGroupsUpdated,
+		EventCampUpdated,
+		EventMessagesChanged,
+		EventTrackDeleted,
+		EventTrackReplaced,
+		EventSessionRevoked,
+		EventCampEnded,
+		EventDeviceRegistrationUpdated,
+		EventLockoutAlert,
+	}
+}
+
+type ScopeKind string
+
+const (
+	ScopeCamp  ScopeKind = "camp"
+	ScopeTrack ScopeKind = "track"
+)
+
+type Scope struct {
+	Kind    ScopeKind
+	TrackID domain.TrackID
+}
+
+func CampScope() Scope {
+	return Scope{Kind: ScopeCamp}
+}
+
+func TrackScope(trackID domain.TrackID) Scope {
+	return Scope{Kind: ScopeTrack, TrackID: trackID}
+}
+
+type SSEMessage struct {
+	Event NotificationEvent
+	Scope Scope
+}
+
 // Broadcaster는 트랜잭션 성공 후 SSE 클라이언트에게 실시간 알림을 푸시하는 포트입니다.
 type Broadcaster interface {
-	Broadcast(ctx context.Context, campID domain.CampID, event NotificationEvent, scope string) error
+	Broadcast(ctx context.Context, campID domain.CampID, event NotificationEvent, scope Scope) error
 }
 
 // ReportQuerier는 캠프 종료 시 사후 통계 집계를 담당하는 포트입니다.

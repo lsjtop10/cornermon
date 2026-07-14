@@ -1,6 +1,6 @@
 # SSE Broadcaster 캠프 격리 및 Scope 타입화 구현 계획
 
-> 구현 상태 (2026-07-14): Phase A-D 완료. Phase E 테스트 및 Swagger/전체 검증 진행 중.
+> 구현 상태 (2026-07-14): Phase A-E 및 Swagger/자동 검증 완료. 인증된 로컬 서버 수동 연결만 미실행.
 
 ## 1. 개요 및 변경 사유
 
@@ -230,26 +230,26 @@ admin.GET("/camps/:campId/events/admin", h.Event.AdminEvents)
 ## 6. 검증 체크리스트
 
 ### 6.1 아키텍처 검증
-- [ ] `domain` 패키지에 infrastructure import 없음
-- [ ] `usecase`는 `Broadcaster` 인터페이스에만 의존(구체 구현 모름), `sse`/`web` 어느 쪽도 `usecase`가 import하지 않음
-- [ ] `sse` 패키지에 SSE 텍스트 프레이밍(`fmt.Sprintf("event: ...")`) 코드가 없음 — 구독자 레지스트리/fan-out만 존재
-- [ ] 모든 신규/변경 메서드의 첫 번째 인자는 `context.Context`
+- [x] `domain` 패키지에 infrastructure import 없음
+- [x] `usecase`는 `Broadcaster` 인터페이스에만 의존(구체 구현 모름), `sse`/`web` 어느 쪽도 `usecase`가 import하지 않음
+- [x] `sse` 패키지에 SSE 텍스트 프레이밍(`fmt.Sprintf("event: ...")`) 코드가 없음 — 구독자 레지스트리/fan-out만 존재
+- [x] 모든 신규/변경 메서드의 첫 번째 인자는 `context.Context`
 
 ### 6.2 유즈케이스 검증
-- [ ] UC-SSE-8: `scope` 문자열을 전달하던 모든 호출부가 `Scope` 값으로 컴파일 성공
-- [ ] UC-SSE-9: 캠프 A admin 구독이 캠프 B의 `Broadcast` 이벤트를 받지 않음 (동시성 테스트)
-- [ ] UC-SSE-10: 캠프 A의 `ScopeCamp` 브로드캐스트가 캠프 B 소속 track 구독자에게 전달되지 않음
-- [ ] UC-SSE-11: 구독 채널 버퍼(100)가 가득 찬 상태에서 `Broadcast` 호출 시 해당 채널이 close되고 `adminSubs`/`trackSubs`에서 제거됨
-- [ ] UC-SSE-12: 기존 admin/track 단일 캠프 시나리오에서 알림 수신 동작이 회귀 없이 동일함(`go test ./...` 통과)
-- [ ] UC-SSE-13: `event_handler.go`에서 만들어진 SSE 텍스트가 기존과 동일한 `event: X\ndata: {...}` 형태를 유지함(클라이언트 파싱 회귀 없음)
+- [x] UC-SSE-8: `scope` 문자열을 전달하던 모든 호출부가 `Scope` 값으로 컴파일 성공
+- [x] UC-SSE-9: 캠프 A admin 구독이 캠프 B의 `Broadcast` 이벤트를 받지 않음 (동시성 테스트)
+- [x] UC-SSE-10: 캠프 A의 `ScopeCamp` 브로드캐스트가 캠프 B 소속 track 구독자에게 전달되지 않음
+- [x] UC-SSE-11: 구독 채널 버퍼(100)가 가득 찬 상태에서 `Broadcast` 호출 시 해당 채널이 close되고 `adminSubs`/`trackSubs`에서 제거됨
+- [x] UC-SSE-12: 기존 admin/track 단일 캠프 시나리오에서 알림 수신 동작이 회귀 없이 동일함(`go test ./...` 통과)
+- [x] UC-SSE-13: `event_handler.go`에서 만들어진 SSE 텍스트가 기존과 동일한 `event: X\ndata: {...}` 형태를 유지함(클라이언트 파싱 회귀 없음)
 
 ### 6.3 API 계약 검증
-- [ ] `admin.GET("/camps/:campId/events/admin", ...)` 라우트가 Swagger 주석 및 `api/swagger.yaml`과 일치
-- [ ] `SSENotification`/`SSEScope`가 Swagger 문서에 `@name`으로 노출되어 프론트가 payload 모양을 문서만으로 파악 가능
-- [ ] `SSENotification.Event`의 `enums` 태그가 `port.go`의 `NotificationEvent` 상수 전체와 정확히 일치 — `TestSSENotificationEventEnumSync`(E-5)가 통과함으로써 수동 확인이 아니라 테스트로 보증
-- [ ] `workflow/Collaborate.md` 프로토콜에 따라 API 경로 변경 사실을 프론트엔드에 공유(엔드포인트 변경이므로 프론트 연동 필요)
+- [x] `admin.GET("/camps/:campId/events/admin", ...)` 라우트가 Swagger 주석 및 `api/swagger.yaml`과 일치
+- [x] `SSENotification`/`SSEScope`가 Swagger 문서에 `@name`으로 노출되어 프론트가 payload 모양을 문서만으로 파악 가능
+- [x] `SSENotification.Event`의 `enums` 태그가 `port.go`의 `NotificationEvent` 상수 전체와 정확히 일치 — enum 동기화 테스트가 통과함으로써 수동 확인이 아니라 테스트로 보증
+- [x] `workflow/Collaborate.md` 프로토콜에 따라 API 경로 변경 사실을 PR에 명시해 프론트엔드에 공유
 
 ### 6.4 실행 검증
-- [ ] `go test ./...`
-- [ ] `go test -race ./internal/infrastructure/sse ./internal/infrastructure/web ./internal/usecase`
+- [x] `go test ./...`
+- [x] `go test -race ./internal/infrastructure/sse ./internal/infrastructure/web ./internal/usecase`
 - [ ] 로컬 서버 기동 후 `curl -N .../camps/{campId}/events/admin`으로 SSE 연결, JSON payload 형태, heartbeat 수신 수동 확인

@@ -64,7 +64,7 @@ func (s *CornerService) AddLearningCorner(ctx context.Context, campID domain.Cam
 	}
 
 	s.recordAuditLog(ctx, "admin", "CORNER_CREATE", string(corner.ID), true, map[string]any{"campID": string(campID), "name": name})
-	_ = s.broadcaster.Broadcast(ctx, campID, EventCornersUpdated, "camp")
+	_ = s.broadcaster.Broadcast(ctx, campID, EventCornersUpdated, CampScope())
 
 	return corner, nil
 }
@@ -108,7 +108,7 @@ func (s *CornerService) ModifyCornerSpecification(ctx context.Context, id domain
 	}
 
 	s.recordAuditLog(ctx, "admin", "CORNER_UPDATE", string(id), true, map[string]any{"name": name})
-	_ = s.broadcaster.Broadcast(ctx, corner.CampID, EventCornersUpdated, "camp")
+	_ = s.broadcaster.Broadcast(ctx, corner.CampID, EventCornersUpdated, CampScope())
 
 	return corner, nil
 }
@@ -133,7 +133,7 @@ func (s *CornerService) RemoveCornerFromCamp(ctx context.Context, id domain.Corn
 	}
 
 	s.recordAuditLog(ctx, "admin", "CORNER_DELETE", string(id), true, nil)
-	_ = s.broadcaster.Broadcast(ctx, corner.CampID, EventCornersUpdated, "camp")
+	_ = s.broadcaster.Broadcast(ctx, corner.CampID, EventCornersUpdated, CampScope())
 
 	return nil
 }
