@@ -5,19 +5,49 @@ import (
 	"time"
 
 	"cornermon/backend/internal/domain"
+
 	"github.com/google/uuid"
 )
 
-// MessageService owns only the administrator/facilitator thread for one track.
 type MessageService struct {
+	camps       CampRepository
 	corners     CornerRepository
 	tracks      TrackRepository
 	messages    MessageRepository
+	receipts    BroadcastReceiptRepository
+	sessions    FacilitatorSessionRepository
 	auditLogs   AuditLogRepository
 	broadcaster Broadcaster
 	tx          TxManager
-	nowFn       func() time.Time
-	uuidFn      func() string
+
+	nowFn  func() time.Time
+	uuidFn func() string
+}
+
+func NewMessageService(
+	camps CampRepository,
+	corners CornerRepository,
+	tracks TrackRepository,
+	messages MessageRepository,
+	receipts BroadcastReceiptRepository,
+	sessions FacilitatorSessionRepository,
+	auditLogs AuditLogRepository,
+	broadcaster Broadcaster,
+	tx TxManager,
+) *MessageService {
+	return &MessageService{
+		camps:       camps,
+		corners:     corners,
+		tracks:      tracks,
+		messages:    messages,
+		receipts:    receipts,
+		sessions:    sessions,
+		auditLogs:   auditLogs,
+		broadcaster: broadcaster,
+		tx:          tx,
+		nowFn:       func() time.Time { return time.Now().UTC() },
+		uuidFn:      uuid.NewString,
+	}
 }
 
 // SendBroadcast - UC-21
@@ -81,7 +111,14 @@ func (s *MessageService) SendBroadcast(
 	return msg, nil
 }
 
-func (s *MessageService) SendDirect(ctx context.Context, trackID domain.TrackID, content string, senderRole domain.SenderRole) (*domain.Message, error) {
+// SendDirect - UC-22
+func (s *MessageService) SendDirect(
+	ctx context.Context,
+	trackID domain.TrackID,
+	content string,
+	senderRole domain.SenderRole,
+) (*domain.Message, error) {
+	now := s.nowFn()
 	track, err := s.tracks.Get(ctx, trackID)
 	if err != nil {
 		return nil, err
@@ -114,6 +151,10 @@ func (s *MessageService) SendDirect(ctx context.Context, trackID domain.TrackID,
 		s.recordAuditLog(ctx, actor, "MESSAGE_DIRECT", "", false, map[string]any{"error": err.Error()})
 		return nil, err
 	}
+
+	s.recordAuditLog(ctx, actor, "MESSAGE_DIRECT", string(msg.ID), true, map[string]any{"trackID": string(trackID)})
+
+	// SSE 푸시를 위해 해당 트랙 소속 코너/캠프 조회
 	corner, err := s.corners.Get(ctx, track.CornerID)
 	if err != nil {
 		return nil, err
@@ -121,8 +162,9 @@ func (s *MessageService) SendDirect(ctx context.Context, trackID domain.TrackID,
 	if corner == nil {
 		return nil, domain.ErrCornerNotInItinerary
 	}
-	s.recordAuditLog(ctx, string(trackID), "MESSAGE_DIRECT", string(msg.ID), true, map[string]any{"trackID": string(trackID)})
+
 	_ = s.broadcaster.Broadcast(ctx, corner.CampID, EventMessagesChanged, TrackScope(trackID))
+
 	return msg, nil
 }
 
@@ -188,8 +230,41 @@ func (s *MessageService) ListDirectMessages(ctx context.Context, trackID domain.
 	return nil, nil
 }
 
-func (s *MessageService) recordAuditLog(ctx context.Context, actor, action, target string, success bool, metadata map[string]any) {
-	if s.auditLogs != nil {
-		_ = s.auditLogs.Save(ctx, domain.NewAuditLog(domain.AuditLogID(s.uuidFn()), actor, action, target, success, s.nowFn(), metadata))
+func (s *MessageService) GetBroadcastReceipts(ctx context.Context, messageID domain.MessageID) ([]BroadcastReceiptDTO, error) {
+	receipts, err := s.receipts.ListByMessage(ctx, messageID)
+	if err != nil {
+		return nil, err
 	}
+
+	dtos := make([]BroadcastReceiptDTO, len(receipts))
+	for i, r := range receipts {
+		track, err := s.tracks.Get(ctx, r.TrackID)
+		if err != nil {
+			return nil, err
+		}
+
+		var trackNo int
+		var cornerName string
+		if track != nil {
+			trackNo = track.TrackNo
+
+			corner, err := s.corners.Get(ctx, track.CornerID)
+			if err != nil {
+				return nil, err
+			}
+			if corner != nil {
+				cornerName = corner.Name
+			}
+		}
+
+		dtos[i] = BroadcastReceiptDTO{
+			TrackID:    r.TrackID,
+			TrackNo:    trackNo,
+			CornerName: cornerName,
+			IsRead:     r.ReadAt.IsSet(),
+			ReadAt:     r.ReadAt,
+		}
+	}
+
+	return dtos, nil
 }
