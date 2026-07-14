@@ -14,14 +14,17 @@ type AnnouncementService struct {
 	receipts      AnnouncementReceiptRepository
 	camps         CampRepository
 	tracks        TrackRepository
+	corners       CornerRepository
 	sessions      FacilitatorSessionRepository
 	tx            TxManager
+	auditLogs     AuditLogRepository
+	broadcaster   Broadcaster
 	nowFn         func() time.Time
 	uuidFn        func() string
 }
 
-func NewAnnouncementService(announcements AnnouncementRepository, receipts AnnouncementReceiptRepository, camps CampRepository, tracks TrackRepository, sessions FacilitatorSessionRepository, tx TxManager) *AnnouncementService {
-	return &AnnouncementService{announcements: announcements, receipts: receipts, camps: camps, tracks: tracks, sessions: sessions, tx: tx, nowFn: func() time.Time { return time.Now().UTC() }, uuidFn: uuid.NewString}
+func NewAnnouncementService(announcements AnnouncementRepository, receipts AnnouncementReceiptRepository, camps CampRepository, corners CornerRepository, tracks TrackRepository, sessions FacilitatorSessionRepository, tx TxManager, auditLogs AuditLogRepository, broadcaster Broadcaster) *AnnouncementService {
+	return &AnnouncementService{announcements: announcements, receipts: receipts, camps: camps, corners: corners, tracks: tracks, sessions: sessions, tx: tx, auditLogs: auditLogs, broadcaster: broadcaster, nowFn: func() time.Time { return time.Now().UTC() }, uuidFn: uuid.NewString}
 }
 
 func (s *AnnouncementService) SendAnnouncement(ctx context.Context, campID domain.CampID, content string, actorAdminID domain.AdminID) (*domain.Announcement, error) {
@@ -48,6 +51,15 @@ func (s *AnnouncementService) SendAnnouncement(ctx context.Context, campID domai
 		}
 		return nil
 	})
+	if err != nil && s.auditLogs != nil {
+		_ = s.auditLogs.Save(ctx, domain.NewAuditLog(domain.AuditLogID(s.uuidFn()), string(actorAdminID), "MESSAGE_BROADCAST", "", false, s.nowFn(), map[string]any{"error": err.Error()}))
+	}
+	if err == nil && s.auditLogs != nil {
+		_ = s.auditLogs.Save(ctx, domain.NewAuditLog(domain.AuditLogID(s.uuidFn()), string(actorAdminID), "MESSAGE_BROADCAST", string(a.ID), true, s.nowFn(), map[string]any{"campID": string(campID)}))
+	}
+	if err == nil && s.broadcaster != nil {
+		_ = s.broadcaster.Broadcast(ctx, campID, EventMessagesChanged, CampScope())
+	}
 	return a, err
 }
 
@@ -71,4 +83,32 @@ func (s *AnnouncementService) MarkNoticeRead(ctx context.Context, facilitatorTok
 		return err
 	}
 	return s.receipts.Save(ctx, r)
+}
+
+func (s *AnnouncementService) GetAnnouncementReceipts(ctx context.Context, announcementID domain.AnnouncementID) ([]BroadcastReceiptDTO, error) {
+	receipts, err := s.receipts.ListByMessage(ctx, announcementID)
+	if err != nil {
+		return nil, err
+	}
+	result := make([]BroadcastReceiptDTO, len(receipts))
+	for i, receipt := range receipts {
+		track, err := s.tracks.Get(ctx, receipt.TrackID)
+		if err != nil {
+			return nil, err
+		}
+		var trackNo int
+		var cornerName string
+		if track != nil {
+			trackNo = track.TrackNo
+			corner, err := s.corners.Get(ctx, track.CornerID)
+			if err != nil {
+				return nil, err
+			}
+			if corner != nil {
+				cornerName = corner.Name
+			}
+		}
+		result[i] = BroadcastReceiptDTO{TrackID: receipt.TrackID, TrackNo: trackNo, CornerName: cornerName, IsRead: receipt.ReadAt.IsSet(), ReadAt: receipt.ReadAt}
+	}
+	return result, nil
 }

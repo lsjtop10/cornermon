@@ -6,8 +6,6 @@ package db
 
 import (
 	"context"
-
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type Querier interface {
@@ -17,9 +15,9 @@ type Querier interface {
 	GetAdminSession(ctx context.Context, id string) (AdminSession, error)
 	GetAdminSessionByAccessTokenHash(ctx context.Context, accessTokenHash string) (AdminSession, error)
 	GetAdminSessionByRefreshTokenHash(ctx context.Context, refreshTokenHash string) (AdminSession, error)
+	GetAnnouncementReceiptByAnnouncementAndTrack(ctx context.Context, arg GetAnnouncementReceiptByAnnouncementAndTrackParams) (AnnouncementReceipt, error)
 	GetBadge(ctx context.Context, id string) (Badge, error)
 	GetBadgeByQRPayload(ctx context.Context, qrPayload string) (Badge, error)
-	GetBroadcastReceiptByMessageAndTrack(ctx context.Context, arg GetBroadcastReceiptByMessageAndTrackParams) (BroadcastReceipt, error)
 	GetCamp(ctx context.Context, id string) (Camp, error)
 	GetCompletedVisitByGroupAndCorner(ctx context.Context, arg GetCompletedVisitByGroupAndCornerParams) (Visit, error)
 	GetCorner(ctx context.Context, id string) (Corner, error)
@@ -37,28 +35,24 @@ type Querier interface {
 	ListActiveTracksByCamp(ctx context.Context, campID string) ([]Track, error)
 	ListAdminSessionsByAdmin(ctx context.Context, adminID string) ([]AdminSession, error)
 	ListAllBadges(ctx context.Context) ([]Badge, error)
-	ListAnnouncementsByCamp(ctx context.Context, campID pgtype.Text) ([]Message, error)
+	ListAnnouncementReceiptsByAnnouncement(ctx context.Context, announcementID string) ([]AnnouncementReceipt, error)
+	ListAnnouncementsByCamp(ctx context.Context, campID string) ([]Announcement, error)
 	ListAuditLogs(ctx context.Context, arg ListAuditLogsParams) ([]AuditLog, error)
-	ListBroadcastMessagesByCamp(ctx context.Context, campID pgtype.Text) ([]Message, error)
-	ListBroadcastReceiptsByMessage(ctx context.Context, messageID string) ([]BroadcastReceipt, error)
 	ListCamps(ctx context.Context) ([]Camp, error)
 	ListCornersByCamp(ctx context.Context, campID string) ([]Corner, error)
 	ListDeviceRegistrationsByCampAndStatus(ctx context.Context, arg ListDeviceRegistrationsByCampAndStatusParams) ([]DeviceRegistration, error)
-	ListDirectMessagesByTrack(ctx context.Context, trackID pgtype.Text) ([]Message, error)
 	ListGroupsByCamp(ctx context.Context, campID string) ([]Group, error)
-	ListMessagesByTrack(ctx context.Context, trackID pgtype.Text) ([]Message, error)
+	ListMessagesByTrack(ctx context.Context, trackID string) ([]Message, error)
 	ListPendingDeviceRegistrationsByCamp(ctx context.Context, campID string) ([]DeviceRegistration, error)
 	ListTracksByCamp(ctx context.Context, campID string) ([]Track, error)
 	ListTracksByCorner(ctx context.Context, cornerID string) ([]Track, error)
 	ListVisitsByCamp(ctx context.Context, campID string) ([]ListVisitsByCampRow, error)
 	ListVisitsByGroup(ctx context.Context, groupID string) ([]Visit, error)
 	SaveAdminSession(ctx context.Context, arg SaveAdminSessionParams) error
-	// Announcements use a dedicated repository contract while retaining the existing
-	// messages storage table for backwards-compatible migrations.
 	SaveAnnouncement(ctx context.Context, arg SaveAnnouncementParams) error
+	SaveAnnouncementReceipt(ctx context.Context, arg SaveAnnouncementReceiptParams) error
 	SaveAuditLog(ctx context.Context, arg SaveAuditLogParams) error
 	SaveBadge(ctx context.Context, arg SaveBadgeParams) error
-	SaveBroadcastReceipt(ctx context.Context, arg SaveBroadcastReceiptParams) error
 	SaveCamp(ctx context.Context, arg SaveCampParams) error
 	SaveCorner(ctx context.Context, arg SaveCornerParams) error
 	SaveDeviceRegistration(ctx context.Context, arg SaveDeviceRegistrationParams) error

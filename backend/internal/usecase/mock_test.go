@@ -465,20 +465,6 @@ func (r *MockMessageRepository) Save(ctx context.Context, msg *domain.Message) e
 	return nil
 }
 
-func (r *MockMessageRepository) ListBroadcastsByCamp(ctx context.Context, campID domain.CampID) ([]*domain.Message, error) {
-	var list []*domain.Message
-	for _, m := range r.Messages {
-		messageCampID, ok := m.CampID.Value()
-		if m.ChannelType == domain.MessageBroadcast && ok && messageCampID == campID {
-			list = append(list, m)
-		}
-	}
-	sort.Slice(list, func(i, j int) bool {
-		return list[i].SentAt.Before(list[j].SentAt)
-	})
-	return list, nil
-}
-
 func (r *MockMessageRepository) ListDirectByTrack(ctx context.Context, trackID domain.TrackID) ([]*domain.Message, error) {
 	var list []*domain.Message
 	for _, m := range r.Messages {
@@ -491,37 +477,57 @@ func (r *MockMessageRepository) ListDirectByTrack(ctx context.Context, trackID d
 	return list, nil
 }
 
-// MockBroadcastReceiptRepository
-type MockBroadcastReceiptRepository struct {
-	Receipts []*domain.BroadcastReceipt
+func (r *MockMessageRepository) ListMessageByTrack(ctx context.Context, trackID domain.TrackID) ([]*domain.Message, error) {
+	return r.ListDirectByTrack(ctx, trackID)
 }
 
-func NewMockBroadcastReceiptRepository() *MockBroadcastReceiptRepository {
-	return &MockBroadcastReceiptRepository{}
+type MockAnnouncementRepository struct {
+	Announcements map[domain.AnnouncementID]*domain.Announcement
 }
 
-func (r *MockBroadcastReceiptRepository) Save(ctx context.Context, receipt *domain.BroadcastReceipt) error {
-	r.Receipts = append(r.Receipts, receipt)
+func NewMockAnnouncementRepository() *MockAnnouncementRepository {
+	return &MockAnnouncementRepository{Announcements: make(map[domain.AnnouncementID]*domain.Announcement)}
+}
+func (r *MockAnnouncementRepository) Save(_ context.Context, a *domain.Announcement) error {
+	r.Announcements[a.ID] = a
 	return nil
 }
+func (r *MockAnnouncementRepository) ListNoticeByCamp(_ context.Context, campID domain.CampID) ([]*domain.Announcement, error) {
+	var out []*domain.Announcement
+	for _, a := range r.Announcements {
+		if a.CampID == campID {
+			out = append(out, a)
+		}
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].SentAt.Before(out[j].SentAt) })
+	return out, nil
+}
 
-func (r *MockBroadcastReceiptRepository) GetByMessageAndTrack(ctx context.Context, msgID domain.MessageID, trackID domain.TrackID) (*domain.BroadcastReceipt, error) {
-	for _, rc := range r.Receipts {
-		if rc.MessageID == msgID && rc.TrackID == trackID {
-			return rc, nil
+type MockAnnouncementReceiptRepository struct{ Receipts []*domain.AnnouncementReceipt }
+
+func NewMockAnnouncementReceiptRepository() *MockAnnouncementReceiptRepository {
+	return &MockAnnouncementReceiptRepository{}
+}
+func (r *MockAnnouncementReceiptRepository) Save(_ context.Context, x *domain.AnnouncementReceipt) error {
+	r.Receipts = append(r.Receipts, x)
+	return nil
+}
+func (r *MockAnnouncementReceiptRepository) GetByMessageAndTrack(_ context.Context, id domain.AnnouncementID, trackID domain.TrackID) (*domain.AnnouncementReceipt, error) {
+	for _, x := range r.Receipts {
+		if x.NoticeID == id && x.TrackID == trackID {
+			return x, nil
 		}
 	}
 	return nil, nil
 }
-
-func (r *MockBroadcastReceiptRepository) ListByMessage(ctx context.Context, msgID domain.MessageID) ([]*domain.BroadcastReceipt, error) {
-	var list []*domain.BroadcastReceipt
-	for _, rc := range r.Receipts {
-		if rc.MessageID == msgID {
-			list = append(list, rc)
+func (r *MockAnnouncementReceiptRepository) ListByMessage(_ context.Context, id domain.AnnouncementID) ([]*domain.AnnouncementReceipt, error) {
+	var out []*domain.AnnouncementReceipt
+	for _, x := range r.Receipts {
+		if x.NoticeID == id {
+			out = append(out, x)
 		}
 	}
-	return list, nil
+	return out, nil
 }
 
 // MockAuditLogRepository

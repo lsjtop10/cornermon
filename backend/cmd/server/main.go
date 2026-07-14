@@ -80,7 +80,8 @@ func main() {
 	adminSessionRepo := postgres.NewAdminSessionRepository(pool)
 	auditLogRepo := postgres.NewAuditLogRepository(pool)
 	badgeRepo := postgres.NewBadgeRepository(pool)
-	broadcastReceiptRepo := postgres.NewBroadcastReceiptRepository(pool)
+	announcementReceiptRepo := postgres.NewAnnouncementReceiptRepository(pool)
+	announcementRepo := postgres.NewAnnouncementRepository(pool)
 	campRepo := postgres.NewCampRepository(pool)
 	cornerRepo := postgres.NewCornerRepository(pool)
 	deviceRepo := postgres.NewDeviceRegistrationRepository(pool)
@@ -106,7 +107,8 @@ func main() {
 	trackService := usecase.NewTrackService(campRepo, cornerRepo, trackRepo, facilitatorSessionRepo, auditLogRepo, broadcaster, txManager, trackPINProtector)
 	reportService := usecase.NewReportService(campRepo, reportQuerier)
 	authFacilitatorService := usecase.NewFacilitatorAuthService(campRepo, cornerRepo, trackRepo, deviceRepo, facilitatorSessionRepo, auditLogRepo, broadcaster, txManager)
-	messageService := usecase.NewMessageService(campRepo, cornerRepo, trackRepo, messageRepo, broadcastReceiptRepo, facilitatorSessionRepo, auditLogRepo, broadcaster, txManager)
+	messageService := usecase.NewMessageService(cornerRepo, trackRepo, messageRepo, auditLogRepo, broadcaster, txManager)
+	announcementService := usecase.NewAnnouncementService(announcementRepo, announcementReceiptRepo, campRepo, cornerRepo, trackRepo, facilitatorSessionRepo, txManager, auditLogRepo, broadcaster)
 	campService := usecase.NewCampService(campRepo, trackRepo, facilitatorSessionRepo, auditLogRepo, broadcaster, txManager)
 
 	// Initialize Handlers
@@ -121,7 +123,7 @@ func main() {
 
 	eventHandler := web.NewEventHandler(broadcaster, trackRepo, cornerRepo)
 
-	messageHandler := web.NewMessageHandler(messageService)
+	messageHandler := web.NewMessageHandler(messageService, announcementService)
 	reportHandler := web.NewReportHandler(reportService, reportQuerier, campRepo)
 	auditHandler := web.NewAuditHandler(auditLogRepo)
 
