@@ -17,14 +17,14 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/api/v1/events/admin": {
+        "/api/v1/camps/{campId}/events/admin": {
             "get": {
                 "security": [
                     {
                         "AdminAuth": []
                     }
                 ],
-                "description": "관리자용 실시간 이벤트 스트림",
+                "description": "관리자용 실시간 이벤트 스트림. 각 event의 data는 SSENotification JSON이며 예시는 {\"event\":\"tracks_updated\",\"scope\":{\"kind\":\"camp\"}} 입니다.",
                 "produces": [
                     "text/event-stream"
                 ],
@@ -32,9 +32,21 @@ const docTemplate = `{
                     "F. Events (SSE)"
                 ],
                 "summary": "Admin SSE Stream",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "캠프 ID",
+                        "name": "campId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
                 "responses": {
                     "200": {
-                        "description": "SSE Stream"
+                        "description": "SSE Stream data payload",
+                        "schema": {
+                            "$ref": "#/definitions/SSENotification"
+                        }
                     }
                 }
             }
@@ -46,7 +58,7 @@ const docTemplate = `{
                         "TrackAuth": []
                     }
                 ],
-                "description": "트랙 진행자용 실시간 이벤트 스트림",
+                "description": "트랙 진행자용 실시간 이벤트 스트림. 각 event의 data는 SSENotification JSON이며 예시는 {\"event\":\"track_updated\",\"scope\":{\"kind\":\"track\",\"trackId\":\"track-id\"}} 입니다.",
                 "produces": [
                     "text/event-stream"
                 ],
@@ -65,7 +77,10 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "SSE Stream"
+                        "description": "SSE Stream data payload",
+                        "schema": {
+                            "$ref": "#/definitions/SSENotification"
+                        }
                     }
                 }
             }
@@ -2991,6 +3006,49 @@ const docTemplate = `{
                 },
                 "track": {
                     "$ref": "#/definitions/TrackResponse"
+                }
+            }
+        },
+        "SSENotification": {
+            "type": "object",
+            "properties": {
+                "event": {
+                    "type": "string",
+                    "enum": [
+                        "tracks_updated",
+                        "track_updated",
+                        "corners_updated",
+                        "groups_updated",
+                        "camp_updated",
+                        "messages_changed",
+                        "track_deleted",
+                        "track_replaced",
+                        "session_revoked",
+                        "camp_ended",
+                        "device_registration_updated",
+                        "lockout_alert"
+                    ],
+                    "example": "tracks_updated"
+                },
+                "scope": {
+                    "$ref": "#/definitions/SSEScope"
+                }
+            }
+        },
+        "SSEScope": {
+            "type": "object",
+            "properties": {
+                "kind": {
+                    "type": "string",
+                    "enum": [
+                        "camp",
+                        "track"
+                    ],
+                    "example": "camp"
+                },
+                "trackId": {
+                    "type": "string",
+                    "format": "uuid"
                 }
             }
         },

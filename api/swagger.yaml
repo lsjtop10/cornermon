@@ -446,6 +446,39 @@ definitions:
       track:
         $ref: '#/definitions/TrackResponse'
     type: object
+  SSENotification:
+    properties:
+      event:
+        enum:
+        - tracks_updated
+        - track_updated
+        - corners_updated
+        - groups_updated
+        - camp_updated
+        - messages_changed
+        - track_deleted
+        - track_replaced
+        - session_revoked
+        - camp_ended
+        - device_registration_updated
+        - lockout_alert
+        example: tracks_updated
+        type: string
+      scope:
+        $ref: '#/definitions/SSEScope'
+    type: object
+  SSEScope:
+    properties:
+      kind:
+        enum:
+        - camp
+        - track
+        example: camp
+        type: string
+      trackId:
+        format: uuid
+        type: string
+    type: object
   ScanAssignBadgeRequest:
     properties:
       groupName:
@@ -607,14 +640,23 @@ info:
   title: Cornermon API
   version: 1.0.0
 paths:
-  /api/v1/events/admin:
+  /api/v1/camps/{campId}/events/admin:
     get:
-      description: 관리자용 실시간 이벤트 스트림
+      description: 관리자용 실시간 이벤트 스트림. 각 event의 data는 SSENotification JSON이며 예시는 {"event":"tracks_updated","scope":{"kind":"camp"}}
+        입니다.
+      parameters:
+      - description: 캠프 ID
+        in: path
+        name: campId
+        required: true
+        type: string
       produces:
       - text/event-stream
       responses:
         "200":
-          description: SSE Stream
+          description: SSE Stream data payload
+          schema:
+            $ref: '#/definitions/SSENotification'
       security:
       - AdminAuth: []
       summary: Admin SSE Stream
@@ -622,7 +664,8 @@ paths:
       - F. Events (SSE)
   /api/v1/events/track/{trackId}:
     get:
-      description: 트랙 진행자용 실시간 이벤트 스트림
+      description: 트랙 진행자용 실시간 이벤트 스트림. 각 event의 data는 SSENotification JSON이며 예시는
+        {"event":"track_updated","scope":{"kind":"track","trackId":"track-id"}} 입니다.
       parameters:
       - description: 트랙 ID
         in: path
@@ -633,7 +676,9 @@ paths:
       - text/event-stream
       responses:
         "200":
-          description: SSE Stream
+          description: SSE Stream data payload
+          schema:
+            $ref: '#/definitions/SSENotification'
       security:
       - TrackAuth: []
       summary: Track SSE Stream
