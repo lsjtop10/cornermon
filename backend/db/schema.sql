@@ -43,6 +43,7 @@ CREATE TABLE tracks (
     track_no INT NOT NULL,
     status VARCHAR(50) NOT NULL,
     pin_hash VARCHAR(255) NOT NULL,
+    pin_ciphertext TEXT,
     current_visit_id VARCHAR(50),
     deleted_at TIMESTAMP WITH TIME ZONE
 );
@@ -52,6 +53,7 @@ COMMENT ON COLUMN tracks.corner_id IS '소속 코너 식별자';
 COMMENT ON COLUMN tracks.track_no IS '코너 내 트랙 번호 (1, 2, 3...)';
 COMMENT ON COLUMN tracks.status IS '트랙 상태 (ACTIVE, DELETED 등)';
 COMMENT ON COLUMN tracks.pin_hash IS '기기 등록을 위한 PIN 해시값';
+COMMENT ON COLUMN tracks.pin_ciphertext IS 'PIN 재인쇄 전용 AES-256-GCM 암호문';
 COMMENT ON COLUMN tracks.current_visit_id IS '현재 진행 중인 방문(Visit)의 식별자';
 COMMENT ON COLUMN tracks.deleted_at IS '논리적 삭제 시간';
 

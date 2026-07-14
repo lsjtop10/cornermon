@@ -12,6 +12,13 @@ type TxManager interface {
 	RunInTx(ctx context.Context, fn func(ctx context.Context) error) error
 }
 
+// TrackPINProtector seals PINs for the administrator-only reprint flow.
+// PIN hashes remain the sole source of truth for facilitator authentication.
+type TrackPINProtector interface {
+	Encrypt(ctx context.Context, pin string) (string, error)
+	Decrypt(ctx context.Context, ciphertext string) (string, error)
+}
+
 // CampRepository는 캠프 엔티티의 지속성을 담당하는 포트입니다.
 type CampRepository interface {
 	Get(ctx context.Context, id domain.CampID) (*domain.Camp, error)

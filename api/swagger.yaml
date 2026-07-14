@@ -365,6 +365,13 @@ definitions:
           $ref: '#/definitions/BadgeResponse'
         type: array
     type: object
+  ExportTracksResponse:
+    properties:
+      tracks:
+        items:
+          $ref: '#/definitions/TrackPinResponse'
+        type: array
+    type: object
   GroupResponse:
     properties:
       badgeId:
@@ -437,13 +444,6 @@ definitions:
       newCornerId:
         type: string
     type: object
-  ReplaceTrackResponse:
-    properties:
-      pin:
-        type: string
-      track:
-        $ref: '#/definitions/TrackResponse'
-    type: object
   SSENotification:
     properties:
       event:
@@ -500,6 +500,14 @@ definitions:
       trackToken:
         type: string
     type: object
+  TrackPinResponse:
+    properties:
+      pin:
+        example: "482910"
+        type: string
+      track:
+        $ref: '#/definitions/TrackResponse'
+    type: object
   TrackResponse:
     properties:
       cornerId:
@@ -514,9 +522,6 @@ definitions:
         enum:
         - IDLE
         - BUSY
-        type: string
-      pin:
-        example: "482910"
         type: string
       status:
         enum:
@@ -1786,7 +1791,7 @@ paths:
           description: Created
           schema:
             items:
-              $ref: '#/definitions/TrackResponse'
+              $ref: '#/definitions/TrackPinResponse'
             type: array
       security:
       - AdminAuth: []
@@ -1816,7 +1821,7 @@ paths:
       - B. Resource Management (Admin)
   /tracks/{id}/export:
     get:
-      description: 특정 트랙의 PIN 번호를 PDF 형태로 다운로드한다.
+      description: 특정 트랙의 PIN을 JSON으로 내려준다.
       parameters:
       - description: 트랙 ID
         in: path
@@ -1824,10 +1829,12 @@ paths:
         required: true
         type: string
       produces:
-      - application/pdf
+      - application/json
       responses:
         "200":
-          description: PDF 데이터
+          description: OK
+          schema:
+            $ref: '#/definitions/TrackPinResponse'
       security:
       - AdminAuth: []
       summary: 단일 트랙 인증 정보 내보내기
@@ -1874,7 +1881,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/TrackResponse'
+            $ref: '#/definitions/TrackPinResponse'
       security:
       - AdminAuth: []
       summary: PIN 재발급
@@ -1903,7 +1910,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/ReplaceTrackResponse'
+            $ref: '#/definitions/TrackPinResponse'
         "400":
           description: Bad Request
           schema:
@@ -2112,12 +2119,20 @@ paths:
       - B. Resource Management (Admin)
   /tracks/export:
     get:
-      description: 인쇄를 위해 전체 트랙의 PIN 번호 등을 CSV로 다운로드한다.
+      description: 인쇄를 위해 지정 캠프의 ACTIVE 트랙 PIN을 JSON으로 내려준다.
+      parameters:
+      - description: 캠프 ID
+        in: query
+        name: campId
+        required: true
+        type: string
       produces:
-      - text/csv
+      - application/json
       responses:
         "200":
-          description: CSV 데이터
+          description: OK
+          schema:
+            $ref: '#/definitions/ExportTracksResponse'
       security:
       - AdminAuth: []
       summary: 트랙 인증 정보 전체 내보내기

@@ -29,11 +29,12 @@ func (r *pgTrackRepository) queries(ctx context.Context) *db.Queries {
 
 func mapTrack(row db.Track) *domain.Track {
 	t := &domain.Track{
-		ID:       domain.TrackID(row.ID),
-		CornerID: domain.CornerID(row.CornerID),
-		TrackNo:  int(row.TrackNo),
-		Status:   domain.TrackStatus(row.Status),
-		PINHash:  row.PinHash,
+		ID:            domain.TrackID(row.ID),
+		CornerID:      domain.CornerID(row.CornerID),
+		TrackNo:       int(row.TrackNo),
+		Status:        domain.TrackStatus(row.Status),
+		PINHash:       row.PinHash,
+		PINCiphertext: row.PinCiphertext.String,
 	}
 
 	if row.CurrentVisitID.Valid {
@@ -90,11 +91,12 @@ func (r *pgTrackRepository) ListActiveByCamp(ctx context.Context, campID domain.
 
 func (r *pgTrackRepository) Save(ctx context.Context, track *domain.Track) error {
 	params := db.SaveTrackParams{
-		ID:       string(track.ID),
-		CornerID: string(track.CornerID),
-		TrackNo:  int32(track.TrackNo),
-		Status:   string(track.Status),
-		PinHash:  track.PINHash,
+		ID:            string(track.ID),
+		CornerID:      string(track.CornerID),
+		TrackNo:       int32(track.TrackNo),
+		Status:        string(track.Status),
+		PinHash:       track.PINHash,
+		PinCiphertext: pgtype.Text{String: track.PINCiphertext, Valid: track.PINCiphertext != ""},
 	}
 
 	if val, ok := track.CurrentVisitID.Value(); ok {
