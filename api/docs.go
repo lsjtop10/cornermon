@@ -801,6 +801,99 @@ const docTemplate = `{
                 }
             }
         },
+        "/camps/{campId}/messages/broadcast": {
+            "get": {
+                "security": [
+                    {
+                        "AdminAuth": []
+                    }
+                ],
+                "description": "관리자가 보낸 BROADCAST 메시지들의 목록을 조회한다.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "E. Message"
+                ],
+                "summary": "발송된 공지사항 목록",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "캠프 ID",
+                        "name": "campId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/MessageResponse"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "AdminAuth": []
+                    }
+                ],
+                "description": "모든 활성 트랙에 BROADCAST 메시지를 보낸다.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "E. Message"
+                ],
+                "summary": "전체 공지 발송",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "캠프 ID",
+                        "name": "campId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "메시지 내용",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/BroadcastMessageRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/MessageResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/camps/{campId}/reports/current": {
             "get": {
                 "security": [
@@ -1648,71 +1741,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/messages/broadcast": {
-            "get": {
-                "security": [
-                    {
-                        "AdminAuth": []
-                    }
-                ],
-                "description": "관리자가 보낸 BROADCAST 메시지들의 목록을 조회한다.",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "E. Message"
-                ],
-                "summary": "발송된 공지사항 목록",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/MessageResponse"
-                            }
-                        }
-                    }
-                }
-            },
-            "post": {
-                "security": [
-                    {
-                        "AdminAuth": []
-                    }
-                ],
-                "description": "모든 활성 트랙에 BROADCAST 메시지를 보낸다.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "E. Message"
-                ],
-                "summary": "전체 공지 발송",
-                "parameters": [
-                    {
-                        "description": "메시지 내용",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/BroadcastMessageRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Created",
-                        "schema": {
-                            "$ref": "#/definitions/MessageResponse"
-                        }
-                    }
-                }
-            }
-        },
         "/messages/broadcast/{id}/read": {
             "post": {
                 "security": [
@@ -2506,9 +2534,6 @@ const docTemplate = `{
         "BroadcastMessageRequest": {
             "type": "object",
             "properties": {
-                "campId": {
-                    "type": "string"
-                },
                 "content": {
                     "type": "string"
                 }

@@ -21,6 +21,7 @@ const (
 type Message struct {
 	ID          MessageID
 	ChannelType MessageChannelType
+	CampID      Optional[CampID]
 	TrackID     Optional[TrackID]
 	SenderRole  SenderRole
 	Content     string

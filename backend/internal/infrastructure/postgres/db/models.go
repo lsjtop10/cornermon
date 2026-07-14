@@ -170,6 +170,8 @@ type Message struct {
 	ID string `json:"id"`
 	// 전송 채널 (BROADCAST, DIRECT 등)
 	ChannelType string `json:"channel_type"`
+	// BROADCAST 채널인 경우 소속 캠프 식별자 (DIRECT면 NULL)
+	CampID pgtype.Text `json:"camp_id"`
 	// DIRECT 채널인 경우 대상 트랙 식별자 (BROADCAST면 NULL)
 	TrackID pgtype.Text `json:"track_id"`
 	// 발신자 역할 (ADMIN 등)

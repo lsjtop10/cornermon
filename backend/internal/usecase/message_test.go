@@ -47,6 +47,9 @@ func TestMessageService_SendBroadcast(t *testing.T) {
 		if msg.ID != "msg-uuid" {
 			t.Errorf("expected message ID 'msg-uuid', got '%s'", msg.ID)
 		}
+		if campID, ok := msg.CampID.Value(); !ok || campID != "camp-1" {
+			t.Errorf("expected broadcast CampID 'camp-1', got %q (set=%t)", campID, ok)
+		}
 
 		if len(receipts.Receipts) != 2 {
 			t.Errorf("expected 2 receipts to be saved, got %d", len(receipts.Receipts))
@@ -57,6 +60,50 @@ func TestMessageService_SendBroadcast(t *testing.T) {
 			broadcaster.Broadcasts[0].Event != EventMessagesChanged ||
 			broadcaster.Broadcasts[0].Scope != CampScope() {
 			t.Errorf("expected EventMessagesChanged broadcast with scope 'broadcast', got %v", broadcaster.Broadcasts)
+		}
+	})
+}
+
+func TestMessageService_ListBroadcastsByCamp(t *testing.T) {
+	t.Run("ShouldReturnOnlyMessagesForRequestedCampInSentAtOrder", func(t *testing.T) {
+		// Arrange
+		messages := NewMockMessageRepository()
+		messages.Save(context.Background(), &domain.Message{
+			ID:          "message-camp-b",
+			ChannelType: domain.MessageBroadcast,
+			CampID:      domain.Some(domain.CampID("camp-b")),
+			TrackID:     domain.None[domain.TrackID](),
+			SentAt:      time.Date(2026, 7, 14, 9, 0, 0, 0, time.UTC),
+		})
+		messages.Save(context.Background(), &domain.Message{
+			ID:          "message-camp-a-later",
+			ChannelType: domain.MessageBroadcast,
+			CampID:      domain.Some(domain.CampID("camp-a")),
+			TrackID:     domain.None[domain.TrackID](),
+			SentAt:      time.Date(2026, 7, 14, 11, 0, 0, 0, time.UTC),
+		})
+		messages.Save(context.Background(), &domain.Message{
+			ID:          "message-camp-a-earlier",
+			ChannelType: domain.MessageBroadcast,
+			CampID:      domain.Some(domain.CampID("camp-a")),
+			TrackID:     domain.None[domain.TrackID](),
+			SentAt:      time.Date(2026, 7, 14, 10, 0, 0, 0, time.UTC),
+		})
+
+		s := &MessageService{messages: messages}
+
+		// Act
+		result, err := s.ListBroadcastsByCamp(context.Background(), "camp-a")
+
+		// Assert
+		if err != nil {
+			t.Fatalf("expected no error, got %v", err)
+		}
+		if len(result) != 2 {
+			t.Fatalf("expected 2 camp-a messages, got %d", len(result))
+		}
+		if result[0].ID != "message-camp-a-earlier" || result[1].ID != "message-camp-a-later" {
+			t.Errorf("expected camp-a messages in sent_at order, got %q then %q", result[0].ID, result[1].ID)
 		}
 	})
 }

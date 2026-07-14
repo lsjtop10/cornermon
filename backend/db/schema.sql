@@ -178,6 +178,7 @@ COMMENT ON COLUMN admin_sessions.revoked_at IS '세션이 무효화된 시간';
 CREATE TABLE messages (
     id VARCHAR(50) PRIMARY KEY,
     channel_type VARCHAR(50) NOT NULL,
+    camp_id VARCHAR(50) REFERENCES camps(id) ON DELETE CASCADE,
     track_id VARCHAR(50),
     sender_role VARCHAR(50) NOT NULL,
     content TEXT NOT NULL,
@@ -186,6 +187,7 @@ CREATE TABLE messages (
 COMMENT ON TABLE messages IS '전체 공지사항 및 트랙별 메시지 발송 내역을 저장하는 테이블';
 COMMENT ON COLUMN messages.id IS '메시지 고유 식별자';
 COMMENT ON COLUMN messages.channel_type IS '전송 채널 (BROADCAST, DIRECT 등)';
+COMMENT ON COLUMN messages.camp_id IS 'BROADCAST 채널인 경우 소속 캠프 식별자 (DIRECT면 NULL)';
 COMMENT ON COLUMN messages.track_id IS 'DIRECT 채널인 경우 대상 트랙 식별자 (BROADCAST면 NULL)';
 COMMENT ON COLUMN messages.sender_role IS '발신자 역할 (ADMIN 등)';
 COMMENT ON COLUMN messages.content IS '메시지 본문';
