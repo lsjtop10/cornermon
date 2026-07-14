@@ -71,7 +71,6 @@ func (s *MessageService) SendBroadcast(
 		ID:          msgID,
 		ChannelType: domain.MessageBroadcast,
 		CampID:      domain.Some(campID),
-		TrackID:     domain.None[domain.TrackID](),
 		SenderRole:  domain.RoleAdmin,
 		Content:     content,
 		SentAt:      now,
@@ -133,11 +132,11 @@ func (s *MessageService) SendDirect(
 		ID:          msgID,
 		ChannelType: domain.MessageDirect,
 		CampID:      domain.None[domain.CampID](),
-		TrackID:     domain.Some(trackID),
 		SenderRole:  senderRole,
 		Content:     content,
 		SentAt:      now,
 	}
+	msg.TrackID = trackID
 
 	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
 		return s.messages.Save(ctx, msg)
@@ -215,11 +214,20 @@ func (s *MessageService) recordAuditLog(ctx context.Context, actor, action, targ
 }
 
 func (s *MessageService) ListBroadcastsByCamp(ctx context.Context, campID domain.CampID) ([]*domain.Message, error) {
-	return s.messages.ListBroadcastsByCamp(ctx, campID)
+	if r, ok := s.messages.(LegacyMessageReader); ok {
+		return r.ListBroadcastsByCamp(ctx, campID)
+	}
+	return nil, nil
 }
 
 func (s *MessageService) ListDirectMessages(ctx context.Context, trackID domain.TrackID) ([]*domain.Message, error) {
-	return s.messages.ListDirectByTrack(ctx, trackID)
+	if r, ok := s.messages.(LegacyMessageReader); ok {
+		return r.ListDirectByTrack(ctx, trackID)
+	}
+	if r, ok := s.messages.(MessageReader); ok {
+		return r.ListMessageByTrack(ctx, trackID)
+	}
+	return nil, nil
 }
 
 func (s *MessageService) GetBroadcastReceipts(ctx context.Context, messageID domain.MessageID) ([]BroadcastReceiptDTO, error) {
