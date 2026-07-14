@@ -28,8 +28,7 @@ func (r *pgMessageRepository) queries(ctx context.Context) *db.Queries {
 func mapMessage(row db.Message) *domain.Message {
 	m := &domain.Message{
 		ID:          domain.MessageID(row.ID),
-		ChannelType: domain.MessageDirect,
-		TrackID:     domain.TrackID(row.TrackID),
+		ChannelType: domain.MessageChannelType(row.ChannelType),
 		SenderRole:  domain.SenderRole(row.SenderRole),
 		Content:     row.Content,
 		SentAt:      row.SentAt.Time,
@@ -70,11 +69,25 @@ func (r *pgMessageRepository) Save(ctx context.Context, msg *domain.Message) err
 	return nil
 }
 
-func (r *pgMessageRepository) ListMessageByTrack(ctx context.Context, trackID domain.TrackID) ([]*domain.Message, error) {
-	rows, err := r.queries(ctx).ListMessagesByTrack(ctx, string(trackID))
+func (r *pgMessageRepository) ListBroadcastsByCamp(ctx context.Context, campID domain.CampID) ([]*domain.Message, error) {
+	rows, err := r.queries(ctx).ListBroadcastMessagesByCamp(ctx, pgtype.Text{String: string(campID), Valid: true})
 	if err != nil {
 		return nil, errs.Wrap(ctx, err)
 	}
+
+	messages := make([]*domain.Message, len(rows))
+	for i, row := range rows {
+		messages[i] = mapMessage(row)
+	}
+	return messages, nil
+}
+
+func (r *pgMessageRepository) ListDirectByTrack(ctx context.Context, trackID domain.TrackID) ([]*domain.Message, error) {
+	rows, err := r.queries(ctx).ListDirectMessagesByTrack(ctx, pgtype.Text{String: string(trackID), Valid: true})
+	if err != nil {
+		return nil, errs.Wrap(ctx, err)
+	}
+
 	messages := make([]*domain.Message, len(rows))
 	for i, row := range rows {
 		messages[i] = mapMessage(row)

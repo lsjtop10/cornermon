@@ -154,30 +154,26 @@ ON CONFLICT (id) DO UPDATE SET
     revoked_at = EXCLUDED.revoked_at;
 
 -- name: SaveMessage :exec
-INSERT INTO messages (id, track_id, sender_role, content, sent_at)
-VALUES ($1, $2, $3, $4, $5);
+INSERT INTO messages (id, channel_type, camp_id, track_id, sender_role, content, sent_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7);
 
--- name: ListMessagesByTrack :many
-SELECT * FROM messages WHERE track_id = $1 ORDER BY sent_at;
+-- name: ListBroadcastMessagesByCamp :many
+SELECT * FROM messages WHERE channel_type = 'BROADCAST' AND camp_id = $1 ORDER BY sent_at;
 
--- name: SaveAnnouncement :exec
-INSERT INTO announcements (id, camp_id, sender_role, content, sent_at)
-VALUES ($1, $2, $3, $4, $5);
+-- name: ListDirectMessagesByTrack :many
+SELECT * FROM messages WHERE track_id = $1 AND channel_type = 'DIRECT' ORDER BY sent_at;
 
--- name: ListAnnouncementsByCamp :many
-SELECT * FROM announcements WHERE camp_id = $1 ORDER BY sent_at;
-
--- name: SaveAnnouncementReceipt :exec
-INSERT INTO announcement_receipts (announcement_id, track_id, read_at)
+-- name: SaveBroadcastReceipt :exec
+INSERT INTO broadcast_receipts (message_id, track_id, read_at)
 VALUES ($1, $2, $3)
-ON CONFLICT (announcement_id, track_id) DO UPDATE SET
+ON CONFLICT (message_id, track_id) DO UPDATE SET
     read_at = EXCLUDED.read_at;
 
--- name: GetAnnouncementReceiptByAnnouncementAndTrack :one
-SELECT * FROM announcement_receipts WHERE announcement_id = $1 AND track_id = $2;
+-- name: GetBroadcastReceiptByMessageAndTrack :one
+SELECT * FROM broadcast_receipts WHERE message_id = $1 AND track_id = $2;
 
--- name: ListAnnouncementReceiptsByAnnouncement :many
-SELECT * FROM announcement_receipts WHERE announcement_id = $1;
+-- name: ListBroadcastReceiptsByMessage :many
+SELECT * FROM broadcast_receipts WHERE message_id = $1;
 
 -- name: SaveAuditLog :exec
 INSERT INTO audit_logs (id, actor, action, target, success, occurred_at, metadata)
