@@ -108,9 +108,7 @@ func main() {
 	badgeHandler := web.NewBadgeHandler(badgeService, groupService, campRepo)
 	visitHandler := web.NewVisitHandler(visitService)
 
-	// Assuming EventHandler expects a subscriber (Broadcaster could implement it)
-	// We might need to adjust this depending on sse package interfaces
-	eventHandler := web.NewEventHandler(broadcaster)
+	eventHandler := web.NewEventHandler(broadcaster, trackRepo, cornerRepo)
 
 	messageHandler := web.NewMessageHandler(messageService)
 	reportHandler := web.NewReportHandler(reportService, reportQuerier, campRepo)

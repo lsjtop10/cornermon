@@ -115,7 +115,7 @@ func RegisterRoutes(e *echo.Echo, h *Handlers, adminAuth AuthAdminUsecase, track
 
 	// ── F. Events (Admin) ──
 	if h.Event != nil {
-		admin.GET("/events/admin", h.Event.AdminEvents)
+		admin.GET("/camps/:campId/events/admin", h.Event.AdminEvents)
 	}
 
 	// ── Track Auth Required Routes ──
