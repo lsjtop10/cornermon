@@ -483,8 +483,7 @@ func (r *MockMessageRepository) ListDirectByTrack(ctx context.Context, trackID d
 	var list []*domain.Message
 	for _, m := range r.Messages {
 		if m.ChannelType == domain.MessageDirect {
-			val, ok := m.TrackID.Value()
-			if ok && val == trackID {
+			if m.TrackID == trackID {
 				list = append(list, m)
 			}
 		}

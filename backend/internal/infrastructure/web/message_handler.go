@@ -226,9 +226,8 @@ func (h *MessageHandler) SendDirect(c echo.Context) error {
 	}
 
 	var tID *string
-	if msg.TrackID.IsSet() {
-		val, _ := msg.TrackID.Value()
-		valStr := string(val)
+	if msg.TrackID != "" {
+		valStr := string(msg.TrackID)
 		tID = &valStr
 	}
 
@@ -261,9 +260,8 @@ func (h *MessageHandler) ListDirectMessages(c echo.Context) error {
 	res := make([]MessageResponse, len(msgs))
 	for i, msg := range msgs {
 		var tID *string
-		if msg.TrackID.IsSet() {
-			val, _ := msg.TrackID.Value()
-			valStr := string(val)
+		if msg.TrackID != "" {
+			valStr := string(msg.TrackID)
 			tID = &valStr
 		}
 		res[i] = MessageResponse{

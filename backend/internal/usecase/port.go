@@ -105,11 +105,30 @@ type AdminSessionRepository interface {
 // MessageRepository는 메시지 엔티티의 지속성을 담당하는 포트입니다.
 type MessageRepository interface {
 	Save(ctx context.Context, msg *domain.Message) error
+}
+
+type MessageReader interface {
+	ListMessageByTrack(ctx context.Context, trackID domain.TrackID) ([]*domain.Message, error)
+}
+type LegacyMessageReader interface {
 	ListBroadcastsByCamp(ctx context.Context, campID domain.CampID) ([]*domain.Message, error)
 	ListDirectByTrack(ctx context.Context, trackID domain.TrackID) ([]*domain.Message, error)
 }
 
+// MessageRepository는 공지사항 엔티티의 지속성을 담당하는 포트입니다.
+type AnnouncementRepository interface {
+	Save(ctx context.Context, msg *domain.Announcement) error
+	ListNoticeByCamp(ctx context.Context, campID domain.CampID) ([]*domain.Announcement, error)
+}
+
 // BroadcastReceiptRepository는 공지 수신 확인 엔티티의 지속성을 담당하는 포트입니다.
+type AnnouncementReceiptRepository interface {
+	Save(ctx context.Context, receipt *domain.AnnouncementReceipt) error
+	GetByMessageAndTrack(ctx context.Context, msgID domain.AnnouncementID, trackID domain.TrackID) (*domain.AnnouncementReceipt, error)
+	ListByMessage(ctx context.Context, msgID domain.AnnouncementID) ([]*domain.AnnouncementReceipt, error)
+}
+
+// BroadcastReceiptRepository is the compatibility name used by the existing HTTP contract.
 type BroadcastReceiptRepository interface {
 	Save(ctx context.Context, receipt *domain.BroadcastReceipt) error
 	GetByMessageAndTrack(ctx context.Context, msgID domain.MessageID, trackID domain.TrackID) (*domain.BroadcastReceipt, error)

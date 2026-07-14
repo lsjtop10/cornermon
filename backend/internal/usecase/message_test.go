@@ -72,21 +72,21 @@ func TestMessageService_ListBroadcastsByCamp(t *testing.T) {
 			ID:          "message-camp-b",
 			ChannelType: domain.MessageBroadcast,
 			CampID:      domain.Some(domain.CampID("camp-b")),
-			TrackID:     domain.None[domain.TrackID](),
+			TrackID:     "",
 			SentAt:      time.Date(2026, 7, 14, 9, 0, 0, 0, time.UTC),
 		})
 		messages.Save(context.Background(), &domain.Message{
 			ID:          "message-camp-a-later",
 			ChannelType: domain.MessageBroadcast,
 			CampID:      domain.Some(domain.CampID("camp-a")),
-			TrackID:     domain.None[domain.TrackID](),
+			TrackID:     "",
 			SentAt:      time.Date(2026, 7, 14, 11, 0, 0, 0, time.UTC),
 		})
 		messages.Save(context.Background(), &domain.Message{
 			ID:          "message-camp-a-earlier",
 			ChannelType: domain.MessageBroadcast,
 			CampID:      domain.Some(domain.CampID("camp-a")),
-			TrackID:     domain.None[domain.TrackID](),
+			TrackID:     "",
 			SentAt:      time.Date(2026, 7, 14, 10, 0, 0, 0, time.UTC),
 		})
 

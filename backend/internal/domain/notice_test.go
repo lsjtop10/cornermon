@@ -1,42 +1,41 @@
 package domain_test
 
 import (
-	"cornermon/backend/internal/domain"
 	"testing"
 	"time"
+
+	"cornermon/backend/internal/domain"
 )
 
-func TestMessage_MarkRead(t *testing.T) {
+func TestBroadcastReceipt_MarkRead(t *testing.T) {
 	now := time.Date(2026, 7, 9, 15, 0, 0, 0, time.UTC)
 
 	t.Run("MarkRead sets read time on first call and keeps it on subsequent calls", func(t *testing.T) {
-		msg := &domain.Message{
-			ID:         domain.MessageID("msg-1"),
-			SenderRole: domain.RoleAdmin,
-			Content:    "hello world",
-			TrackID:    domain.TrackID("track-1"),
-			ReadAt:     domain.None[time.Time](),
+		receipt := &domain.NoteceReceipt{
+			NoticeID: domain.NoticeID("msg-1"),
+			TrackID:  domain.TrackID("track-1"),
+			ReadAt:   domain.None[time.Time](),
 		}
 
 		// First call
-		err := msg.MarkRead(now)
+		err := receipt.MarkRead(now)
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
 
-		readAt, ok := msg.ReadAt.Value()
+		readAt, ok := receipt.ReadAt.Value()
 		if !ok || !readAt.Equal(now) {
 			t.Errorf("expected ReadAt to be %v, got %v", now, readAt)
 		}
 
 		// Second call with different time should keep the first time
 		later := now.Add(time.Minute)
-		err = msg.MarkRead(later)
+		err = receipt.MarkRead(later)
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
 
-		readAt2, ok2 := msg.ReadAt.Value()
+		readAt2, ok2 := receipt.ReadAt.Value()
 		if !ok2 || !readAt2.Equal(now) {
 			t.Errorf("expected ReadAt to remain %v, got %v", now, readAt2)
 		}
