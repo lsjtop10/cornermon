@@ -16,12 +16,14 @@ type AnnouncementService struct {
 	tracks        TrackRepository
 	sessions      FacilitatorSessionRepository
 	tx            TxManager
+	auditLogs     AuditLogRepository
+	broadcaster   Broadcaster
 	nowFn         func() time.Time
 	uuidFn        func() string
 }
 
-func NewAnnouncementService(announcements AnnouncementRepository, receipts AnnouncementReceiptRepository, camps CampRepository, tracks TrackRepository, sessions FacilitatorSessionRepository, tx TxManager) *AnnouncementService {
-	return &AnnouncementService{announcements: announcements, receipts: receipts, camps: camps, tracks: tracks, sessions: sessions, tx: tx, nowFn: func() time.Time { return time.Now().UTC() }, uuidFn: uuid.NewString}
+func NewAnnouncementService(announcements AnnouncementRepository, receipts AnnouncementReceiptRepository, camps CampRepository, tracks TrackRepository, sessions FacilitatorSessionRepository, tx TxManager, auditLogs AuditLogRepository, broadcaster Broadcaster) *AnnouncementService {
+	return &AnnouncementService{announcements: announcements, receipts: receipts, camps: camps, tracks: tracks, sessions: sessions, tx: tx, auditLogs: auditLogs, broadcaster: broadcaster, nowFn: func() time.Time { return time.Now().UTC() }, uuidFn: uuid.NewString}
 }
 
 func (s *AnnouncementService) SendAnnouncement(ctx context.Context, campID domain.CampID, content string, actorAdminID domain.AdminID) (*domain.Announcement, error) {
@@ -48,6 +50,15 @@ func (s *AnnouncementService) SendAnnouncement(ctx context.Context, campID domai
 		}
 		return nil
 	})
+	if err != nil && s.auditLogs != nil {
+		_ = s.auditLogs.Save(ctx, domain.NewAuditLog(domain.AuditLogID(s.uuidFn()), string(actorAdminID), "MESSAGE_BROADCAST", "", false, s.nowFn(), map[string]any{"error": err.Error()}))
+	}
+	if err == nil && s.auditLogs != nil {
+		_ = s.auditLogs.Save(ctx, domain.NewAuditLog(domain.AuditLogID(s.uuidFn()), string(actorAdminID), "MESSAGE_BROADCAST", string(a.ID), true, s.nowFn(), map[string]any{"campID": string(campID)}))
+	}
+	if err == nil && s.broadcaster != nil {
+		_ = s.broadcaster.Broadcast(ctx, campID, EventMessagesChanged, CampScope())
+	}
 	return a, err
 }
 

@@ -10,15 +10,16 @@ import (
 )
 
 type MessageService struct {
-	camps       CampRepository
-	corners     CornerRepository
-	tracks      TrackRepository
-	messages    MessageRepository
-	receipts    BroadcastReceiptRepository
-	sessions    FacilitatorSessionRepository
-	auditLogs   AuditLogRepository
-	broadcaster Broadcaster
-	tx          TxManager
+	announcements *AnnouncementService
+	camps         CampRepository
+	corners       CornerRepository
+	tracks        TrackRepository
+	messages      MessageRepository
+	receipts      BroadcastReceiptRepository
+	sessions      FacilitatorSessionRepository
+	auditLogs     AuditLogRepository
+	broadcaster   Broadcaster
+	tx            TxManager
 
 	nowFn  func() time.Time
 	uuidFn func() string
@@ -35,7 +36,7 @@ func NewMessageService(
 	broadcaster Broadcaster,
 	tx TxManager,
 ) *MessageService {
-	return &MessageService{
+	s := &MessageService{
 		camps:       camps,
 		corners:     corners,
 		tracks:      tracks,
@@ -48,6 +49,8 @@ func NewMessageService(
 		nowFn:       func() time.Time { return time.Now().UTC() },
 		uuidFn:      uuid.NewString,
 	}
+	s.announcements = NewAnnouncementService(legacyAnnouncementRepository{repo: messages}, legacyAnnouncementReceiptRepository{repo: receipts}, camps, tracks, sessions, tx, auditLogs, broadcaster)
+	return s
 }
 
 // SendBroadcast - UC-21
@@ -57,58 +60,15 @@ func (s *MessageService) SendBroadcast(
 	content string,
 	actorAdminID domain.AdminID,
 ) (*domain.Message, error) {
-	now := s.nowFn()
-	camp, err := s.camps.Get(ctx, campID)
+	if s.announcements == nil {
+		s.announcements = NewAnnouncementService(legacyAnnouncementRepository{repo: s.messages}, legacyAnnouncementReceiptRepository{repo: s.receipts}, s.camps, s.tracks, s.sessions, s.tx, s.auditLogs, s.broadcaster)
+	}
+	s.announcements.uuidFn = s.uuidFn
+	a, err := s.announcements.SendAnnouncement(ctx, campID, content, actorAdminID)
 	if err != nil {
 		return nil, err
 	}
-	if camp == nil || !camp.IsActive() {
-		return nil, domain.ErrCampInvalidTransition
-	}
-
-	msgID := domain.MessageID(s.uuidFn())
-	msg := &domain.Message{
-		ID:          msgID,
-		ChannelType: domain.MessageBroadcast,
-		CampID:      domain.Some(campID),
-		SenderRole:  domain.RoleAdmin,
-		Content:     content,
-		SentAt:      now,
-	}
-
-	activeTracks, err := s.tracks.ListActiveByCamp(ctx, campID)
-	if err != nil {
-		return nil, err
-	}
-
-	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
-		if err := s.messages.Save(ctx, msg); err != nil {
-			return err
-		}
-
-		for _, track := range activeTracks {
-			receipt := &domain.BroadcastReceipt{
-				MessageID: msg.ID,
-				TrackID:   track.ID,
-				ReadAt:    domain.None[time.Time](),
-			}
-			if err := s.receipts.Save(ctx, receipt); err != nil {
-				return err
-			}
-		}
-
-		return nil
-	})
-
-	if err != nil {
-		s.recordAuditLog(ctx, string(actorAdminID), "MESSAGE_BROADCAST", "", false, map[string]any{"error": err.Error()})
-		return nil, err
-	}
-
-	s.recordAuditLog(ctx, string(actorAdminID), "MESSAGE_BROADCAST", string(msg.ID), true, map[string]any{"campID": string(campID)})
-	_ = s.broadcaster.Broadcast(ctx, campID, EventMessagesChanged, CampScope())
-
-	return msg, nil
+	return announcementAsMessage(a), nil
 }
 
 // SendDirect - UC-22
@@ -174,30 +134,10 @@ func (s *MessageService) MarkBroadcastRead(
 	facilitatorToken string,
 	messageID domain.MessageID,
 ) error {
-	now := s.nowFn()
-	tokenHash := hashSHA256(facilitatorToken)
-
-	session, err := s.sessions.GetByTokenHash(ctx, tokenHash)
-	if err != nil {
-		return err
+	if s.announcements == nil {
+		s.announcements = NewAnnouncementService(legacyAnnouncementRepository{repo: s.messages}, legacyAnnouncementReceiptRepository{repo: s.receipts}, s.camps, s.tracks, s.sessions, s.tx, s.auditLogs, s.broadcaster)
 	}
-	if session == nil || !session.IsActive() {
-		return domain.ErrSessionRevoked
-	}
-
-	receipt, err := s.receipts.GetByMessageAndTrack(ctx, messageID, session.TrackID)
-	if err != nil {
-		return err
-	}
-	if receipt == nil {
-		return nil // 혹은 에러 반환. 여기서는 그냥 성공 처리
-	}
-
-	if err := receipt.MarkRead(now); err != nil {
-		return err
-	}
-
-	return s.receipts.Save(ctx, receipt)
+	return s.announcements.MarkNoticeRead(ctx, facilitatorToken, domain.AnnouncementID(messageID))
 }
 
 func (s *MessageService) recordAuditLog(ctx context.Context, actor, action, target string, success bool, metadata map[string]any) {
@@ -214,10 +154,21 @@ func (s *MessageService) recordAuditLog(ctx context.Context, actor, action, targ
 }
 
 func (s *MessageService) ListBroadcastsByCamp(ctx context.Context, campID domain.CampID) ([]*domain.Message, error) {
-	if r, ok := s.messages.(LegacyMessageReader); ok {
-		return r.ListBroadcastsByCamp(ctx, campID)
+	if s.announcements == nil {
+		if r, ok := s.messages.(LegacyMessageReader); ok {
+			return r.ListBroadcastsByCamp(ctx, campID)
+		}
+		return nil, nil
 	}
-	return nil, nil
+	rows, err := s.announcements.ListNoticesByCamp(ctx, campID)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]*domain.Message, len(rows))
+	for i, a := range rows {
+		out[i] = announcementAsMessage(a)
+	}
+	return out, nil
 }
 
 func (s *MessageService) ListDirectMessages(ctx context.Context, trackID domain.TrackID) ([]*domain.Message, error) {
