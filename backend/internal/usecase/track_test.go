@@ -52,7 +52,7 @@ func TestTrackService_CreateTrack(t *testing.T) {
 		if len(broadcaster.Broadcasts) != 1 ||
 			broadcaster.Broadcasts[0].CampID != "camp-1" ||
 			broadcaster.Broadcasts[0].Event != EventTracksUpdated ||
-			broadcaster.Broadcasts[0].Scope != "camp" {
+			broadcaster.Broadcasts[0].Scope != CampScope() {
 			t.Errorf("expected EventTracksUpdated broadcast with scope 'camp', got %v", broadcaster.Broadcasts)
 		}
 	})
@@ -142,8 +142,8 @@ func TestTrackService_DeleteTrack(t *testing.T) {
 		}
 
 		if len(broadcaster.Broadcasts) != 2 ||
-			broadcaster.Broadcasts[0].Event != EventTracksUpdated || broadcaster.Broadcasts[0].Scope != "camp" ||
-			broadcaster.Broadcasts[1].Event != EventTrackDeleted || broadcaster.Broadcasts[1].Scope != "track:track-1" {
+			broadcaster.Broadcasts[0].Event != EventTracksUpdated || broadcaster.Broadcasts[0].Scope != CampScope() ||
+			broadcaster.Broadcasts[1].Event != EventTrackDeleted || broadcaster.Broadcasts[1].Scope != TrackScope("track-1") {
 			t.Errorf("expected EventTracksUpdated and EventTrackDeleted broadcasts, got %v", broadcaster.Broadcasts)
 		}
 	})

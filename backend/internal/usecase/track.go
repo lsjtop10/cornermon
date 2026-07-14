@@ -103,7 +103,7 @@ func (s *TrackService) CreateTrack(
 	}
 
 	s.recordAuditLog(ctx, "admin", "TRACK_CREATE", string(track.ID), true, map[string]any{"campID": string(campID), "cornerID": string(cornerID)})
-	_ = s.broadcaster.Broadcast(ctx, campID, EventTracksUpdated, "camp")
+	_ = s.broadcaster.Broadcast(ctx, campID, EventTracksUpdated, CampScope())
 
 	return track, plainPIN, nil
 }
@@ -177,8 +177,8 @@ func (s *TrackService) DeleteTrack(
 
 	s.recordAuditLog(ctx, "admin", "TRACK_DELETE", string(trackID), true, map[string]any{"isLastTrack": isLastTrack})
 	if cornerCampID != "" {
-		_ = s.broadcaster.Broadcast(ctx, cornerCampID, EventTracksUpdated, "camp")
-		_ = s.broadcaster.Broadcast(ctx, cornerCampID, EventTrackDeleted, "track:"+string(trackID))
+		_ = s.broadcaster.Broadcast(ctx, cornerCampID, EventTracksUpdated, CampScope())
+		_ = s.broadcaster.Broadcast(ctx, cornerCampID, EventTrackDeleted, TrackScope(trackID))
 	}
 
 	return isLastTrack, nil
@@ -282,8 +282,8 @@ func (s *TrackService) ReplaceTrack(
 	}
 
 	s.recordAuditLog(ctx, "admin", "TRACK_REPLACE", string(newTrack.ID), true, map[string]any{"oldTrackID": string(oldTrackID)})
-	_ = s.broadcaster.Broadcast(ctx, newCorner.CampID, EventTracksUpdated, "camp")
-	_ = s.broadcaster.Broadcast(ctx, newCorner.CampID, EventTrackReplaced, "track:"+string(oldTrackID))
+	_ = s.broadcaster.Broadcast(ctx, newCorner.CampID, EventTracksUpdated, CampScope())
+	_ = s.broadcaster.Broadcast(ctx, newCorner.CampID, EventTrackReplaced, TrackScope(oldTrackID))
 
 	return newTrack, plainPIN, nil
 }
@@ -346,8 +346,8 @@ func (s *TrackService) RegeneratePIN(
 
 	s.recordAuditLog(ctx, "admin", "PIN_REGENERATE", string(trackID), true, nil)
 	if cornerCampID != "" {
-		_ = s.broadcaster.Broadcast(ctx, cornerCampID, EventTracksUpdated, "camp")
-		_ = s.broadcaster.Broadcast(ctx, cornerCampID, EventSessionRevoked, "track:"+string(trackID))
+		_ = s.broadcaster.Broadcast(ctx, cornerCampID, EventTracksUpdated, CampScope())
+		_ = s.broadcaster.Broadcast(ctx, cornerCampID, EventSessionRevoked, TrackScope(trackID))
 	}
 
 	return plainPIN, nil

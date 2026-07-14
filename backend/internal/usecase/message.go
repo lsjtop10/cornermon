@@ -106,7 +106,7 @@ func (s *MessageService) SendBroadcast(
 	}
 
 	s.recordAuditLog(ctx, string(actorAdminID), "MESSAGE_BROADCAST", string(msg.ID), true, map[string]any{"campID": string(campID)})
-	_ = s.broadcaster.Broadcast(ctx, campID, EventMessagesChanged, "broadcast")
+	_ = s.broadcaster.Broadcast(ctx, campID, EventMessagesChanged, CampScope())
 
 	return msg, nil
 }
@@ -162,7 +162,7 @@ func (s *MessageService) SendDirect(
 		return nil, domain.ErrCornerNotInItinerary
 	}
 
-	_ = s.broadcaster.Broadcast(ctx, corner.CampID, EventMessagesChanged, "track:"+string(trackID))
+	_ = s.broadcaster.Broadcast(ctx, corner.CampID, EventMessagesChanged, TrackScope(trackID))
 
 	return msg, nil
 }

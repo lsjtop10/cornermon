@@ -111,7 +111,7 @@ func (s *FacilitatorAuthService) Login(
 		_ = s.devices.Save(ctx, device)
 
 		if needsAdminAlert {
-			_ = s.broadcaster.Broadcast(ctx, device.CampID, EventLockoutAlert, "device:"+string(device.ID))
+			_ = s.broadcaster.Broadcast(ctx, device.CampID, EventLockoutAlert, CampScope())
 		}
 
 		s.recordAuditLog(ctx, "anonymous", "FACILITATOR_LOGIN", "", false, map[string]any{"error": "invalid pin", "device_failures": device.FailedPinAttempts})

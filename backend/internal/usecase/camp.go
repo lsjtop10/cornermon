@@ -97,7 +97,7 @@ func (s *CampService) UpdateCampSettings(
 	}
 
 	s.recordAuditLog(ctx, string(actorAdminID), "CAMP_SETTINGS_UPDATE", string(campID), true, nil)
-	_ = s.broadcaster.Broadcast(ctx, campID, EventCampUpdated, "camp")
+	_ = s.broadcaster.Broadcast(ctx, campID, EventCampUpdated, CampScope())
 	return camp, nil
 }
 
@@ -130,7 +130,7 @@ func (s *CampService) ActivateCamp(
 	}
 
 	s.recordAuditLog(ctx, string(actorAdminID), "CAMP_ACTIVATE", string(campID), true, nil)
-	_ = s.broadcaster.Broadcast(ctx, campID, EventCampUpdated, "camp")
+	_ = s.broadcaster.Broadcast(ctx, campID, EventCampUpdated, CampScope())
 
 	return nil
 }
@@ -177,8 +177,8 @@ func (s *CampService) EndCamp(
 	}
 
 	s.recordAuditLog(ctx, string(actorAdminID), "CAMP_END", string(campID), true, nil)
-	_ = s.broadcaster.Broadcast(ctx, campID, EventCampUpdated, "camp")
-	_ = s.broadcaster.Broadcast(ctx, campID, EventCampEnded, "camp")
+	_ = s.broadcaster.Broadcast(ctx, campID, EventCampUpdated, CampScope())
+	_ = s.broadcaster.Broadcast(ctx, campID, EventCampEnded, CampScope())
 
 	return nil
 }

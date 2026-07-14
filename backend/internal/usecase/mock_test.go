@@ -534,7 +534,7 @@ func (r *MockAuditLogRepository) Save(ctx context.Context, log *domain.AuditLog)
 type BroadcastCall struct {
 	CampID domain.CampID
 	Event  NotificationEvent
-	Scope  string
+	Scope  Scope
 }
 
 // MockBroadcaster
@@ -542,7 +542,7 @@ type MockBroadcaster struct {
 	Broadcasts []BroadcastCall
 }
 
-func (b *MockBroadcaster) Broadcast(ctx context.Context, campID domain.CampID, event NotificationEvent, scope string) error {
+func (b *MockBroadcaster) Broadcast(ctx context.Context, campID domain.CampID, event NotificationEvent, scope Scope) error {
 	b.Broadcasts = append(b.Broadcasts, BroadcastCall{
 		CampID: campID,
 		Event:  event,
