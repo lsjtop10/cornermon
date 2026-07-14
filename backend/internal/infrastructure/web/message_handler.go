@@ -12,16 +12,20 @@ import (
 )
 
 type MessageUsecase interface {
-	SendBroadcast(ctx context.Context, campID domain.CampID, content string, actorAdminID domain.AdminID) (*domain.Message, error)
-	ListBroadcastsByCamp(ctx context.Context, campID domain.CampID) ([]*domain.Message, error)
-	GetBroadcastReceipts(ctx context.Context, messageID domain.MessageID) ([]usecase.BroadcastReceiptDTO, error)
-	MarkBroadcastRead(ctx context.Context, facilitatorToken string, messageID domain.MessageID) error
 	SendDirect(ctx context.Context, trackID domain.TrackID, content string, senderRole domain.SenderRole) (*domain.Message, error)
 	ListDirectMessages(ctx context.Context, trackID domain.TrackID) ([]*domain.Message, error)
 }
 
+type AnnouncementUsecase interface {
+	SendAnnouncement(ctx context.Context, campID domain.CampID, content string, actorAdminID domain.AdminID) (*domain.Announcement, error)
+	ListNoticesByCamp(ctx context.Context, campID domain.CampID) ([]*domain.Announcement, error)
+	GetAnnouncementReceipts(ctx context.Context, announcementID domain.AnnouncementID) ([]usecase.BroadcastReceiptDTO, error)
+	MarkNoticeRead(ctx context.Context, facilitatorToken string, noticeID domain.AnnouncementID) error
+}
+
 type MessageHandler struct {
-	message MessageUsecase
+	message      MessageUsecase
+	announcement AnnouncementUsecase
 }
 
 type MessageResponse struct {
@@ -43,10 +47,8 @@ type BroadcastReceiptResponse struct {
 	ReadAt     *time.Time `json:"readAt,omitempty" format:"date-time"`
 } // @name BroadcastReceiptResponse
 
-func NewMessageHandler(message MessageUsecase) *MessageHandler {
-	return &MessageHandler{
-		message: message,
-	}
+func NewMessageHandler(message MessageUsecase, announcement AnnouncementUsecase) *MessageHandler {
+	return &MessageHandler{message: message, announcement: announcement}
 }
 
 type BroadcastMessageRequest struct {
@@ -79,17 +81,13 @@ func (h *MessageHandler) SendBroadcast(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: "invalid request"})
 	}
 
-	msg, err := h.message.SendBroadcast(c.Request().Context(), campID, req.Content, session.AdminID)
+	announcement, err := h.announcement.SendAnnouncement(c.Request().Context(), campID, req.Content, session.AdminID)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()})
 	}
 
 	return c.JSON(http.StatusCreated, MessageResponse{
-		ID:          string(msg.ID),
-		ChannelType: string(msg.ChannelType),
-		SenderRole:  string(msg.SenderRole),
-		Content:     msg.Content,
-		SentAt:      msg.SentAt,
+		ID: string(announcement.ID), ChannelType: string(domain.MessageBroadcast), SenderRole: string(announcement.SenderRole), Content: announcement.Content, SentAt: announcement.SentAt,
 	})
 }
 
@@ -108,19 +106,15 @@ func (h *MessageHandler) ListBroadcasts(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: "campId is required"})
 	}
 
-	msgs, err := h.message.ListBroadcastsByCamp(c.Request().Context(), campID)
+	announcements, err := h.announcement.ListNoticesByCamp(c.Request().Context(), campID)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()})
 	}
 
-	res := make([]MessageResponse, len(msgs))
-	for i, msg := range msgs {
+	res := make([]MessageResponse, len(announcements))
+	for i, announcement := range announcements {
 		res[i] = MessageResponse{
-			ID:          string(msg.ID),
-			ChannelType: string(msg.ChannelType),
-			SenderRole:  string(msg.SenderRole),
-			Content:     msg.Content,
-			SentAt:      msg.SentAt,
+			ID: string(announcement.ID), ChannelType: string(domain.MessageBroadcast), SenderRole: string(announcement.SenderRole), Content: announcement.Content, SentAt: announcement.SentAt,
 		}
 	}
 
@@ -136,9 +130,9 @@ func (h *MessageHandler) ListBroadcasts(c echo.Context) error {
 // @Success      200 {array} BroadcastReceiptResponse
 // @Router       /messages/broadcast/{id}/receipts [get]
 func (h *MessageHandler) GetBroadcastReceipts(c echo.Context) error {
-	msgID := domain.MessageID(c.Param("id"))
+	announcementID := domain.AnnouncementID(c.Param("id"))
 
-	dtos, err := h.message.GetBroadcastReceipts(c.Request().Context(), msgID)
+	dtos, err := h.announcement.GetAnnouncementReceipts(c.Request().Context(), announcementID)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()})
 	}
@@ -169,7 +163,7 @@ func (h *MessageHandler) GetBroadcastReceipts(c echo.Context) error {
 // @Success      204 "성공적으로 읽음 처리됨"
 // @Router       /messages/broadcast/{id}/read [post]
 func (h *MessageHandler) ReadBroadcast(c echo.Context) error {
-	msgID := domain.MessageID(c.Param("id"))
+	announcementID := domain.AnnouncementID(c.Param("id"))
 
 	token := c.Request().Header.Get("Authorization")
 	if token != "" {
@@ -181,7 +175,7 @@ func (h *MessageHandler) ReadBroadcast(c echo.Context) error {
 		token = c.Request().Header.Get("X-Device-Token")
 	}
 
-	err := h.message.MarkBroadcastRead(c.Request().Context(), token, msgID)
+	err := h.announcement.MarkNoticeRead(c.Request().Context(), token, announcementID)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()})
 	}

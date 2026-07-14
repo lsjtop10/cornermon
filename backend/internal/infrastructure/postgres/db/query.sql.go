@@ -102,6 +102,22 @@ func (q *Queries) GetAdminSessionByRefreshTokenHash(ctx context.Context, refresh
 	return i, err
 }
 
+const getAnnouncementReceiptByAnnouncementAndTrack = `-- name: GetAnnouncementReceiptByAnnouncementAndTrack :one
+SELECT announcement_id, track_id, read_at FROM announcement_receipts WHERE announcement_id = $1 AND track_id = $2
+`
+
+type GetAnnouncementReceiptByAnnouncementAndTrackParams struct {
+	AnnouncementID string `json:"announcement_id"`
+	TrackID        string `json:"track_id"`
+}
+
+func (q *Queries) GetAnnouncementReceiptByAnnouncementAndTrack(ctx context.Context, arg GetAnnouncementReceiptByAnnouncementAndTrackParams) (AnnouncementReceipt, error) {
+	row := q.db.QueryRow(ctx, getAnnouncementReceiptByAnnouncementAndTrack, arg.AnnouncementID, arg.TrackID)
+	var i AnnouncementReceipt
+	err := row.Scan(&i.AnnouncementID, &i.TrackID, &i.ReadAt)
+	return i, err
+}
+
 const getBadge = `-- name: GetBadge :one
 SELECT id, short_id, qr_payload, status, assigned_group_id FROM badges WHERE id = $1
 `
@@ -133,22 +149,6 @@ func (q *Queries) GetBadgeByQRPayload(ctx context.Context, qrPayload string) (Ba
 		&i.Status,
 		&i.AssignedGroupID,
 	)
-	return i, err
-}
-
-const getBroadcastReceiptByMessageAndTrack = `-- name: GetBroadcastReceiptByMessageAndTrack :one
-SELECT message_id, track_id, read_at FROM broadcast_receipts WHERE message_id = $1 AND track_id = $2
-`
-
-type GetBroadcastReceiptByMessageAndTrackParams struct {
-	MessageID string `json:"message_id"`
-	TrackID   string `json:"track_id"`
-}
-
-func (q *Queries) GetBroadcastReceiptByMessageAndTrack(ctx context.Context, arg GetBroadcastReceiptByMessageAndTrackParams) (BroadcastReceipt, error) {
-	row := q.db.QueryRow(ctx, getBroadcastReceiptByMessageAndTrack, arg.MessageID, arg.TrackID)
-	var i BroadcastReceipt
-	err := row.Scan(&i.MessageID, &i.TrackID, &i.ReadAt)
 	return i, err
 }
 
@@ -550,24 +550,46 @@ func (q *Queries) ListAllBadges(ctx context.Context) ([]Badge, error) {
 	return items, nil
 }
 
-const listAnnouncementsByCamp = `-- name: ListAnnouncementsByCamp :many
-SELECT id, channel_type, camp_id, track_id, sender_role, content, sent_at FROM messages WHERE channel_type = 'BROADCAST' AND camp_id = $1 ORDER BY sent_at
+const listAnnouncementReceiptsByAnnouncement = `-- name: ListAnnouncementReceiptsByAnnouncement :many
+SELECT announcement_id, track_id, read_at FROM announcement_receipts WHERE announcement_id = $1
 `
 
-func (q *Queries) ListAnnouncementsByCamp(ctx context.Context, campID pgtype.Text) ([]Message, error) {
+func (q *Queries) ListAnnouncementReceiptsByAnnouncement(ctx context.Context, announcementID string) ([]AnnouncementReceipt, error) {
+	rows, err := q.db.Query(ctx, listAnnouncementReceiptsByAnnouncement, announcementID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []AnnouncementReceipt
+	for rows.Next() {
+		var i AnnouncementReceipt
+		if err := rows.Scan(&i.AnnouncementID, &i.TrackID, &i.ReadAt); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listAnnouncementsByCamp = `-- name: ListAnnouncementsByCamp :many
+SELECT id, camp_id, sender_role, content, sent_at FROM announcements WHERE camp_id = $1 ORDER BY sent_at
+`
+
+func (q *Queries) ListAnnouncementsByCamp(ctx context.Context, campID string) ([]Announcement, error) {
 	rows, err := q.db.Query(ctx, listAnnouncementsByCamp, campID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Message
+	var items []Announcement
 	for rows.Next() {
-		var i Message
+		var i Announcement
 		if err := rows.Scan(
 			&i.ID,
-			&i.ChannelType,
 			&i.CampID,
-			&i.TrackID,
 			&i.SenderRole,
 			&i.Content,
 			&i.SentAt,
@@ -629,62 +651,6 @@ func (q *Queries) ListAuditLogs(ctx context.Context, arg ListAuditLogsParams) ([
 			&i.OccurredAt,
 			&i.Metadata,
 		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const listBroadcastMessagesByCamp = `-- name: ListBroadcastMessagesByCamp :many
-SELECT id, channel_type, camp_id, track_id, sender_role, content, sent_at FROM messages WHERE channel_type = 'BROADCAST' AND camp_id = $1 ORDER BY sent_at
-`
-
-func (q *Queries) ListBroadcastMessagesByCamp(ctx context.Context, campID pgtype.Text) ([]Message, error) {
-	rows, err := q.db.Query(ctx, listBroadcastMessagesByCamp, campID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []Message
-	for rows.Next() {
-		var i Message
-		if err := rows.Scan(
-			&i.ID,
-			&i.ChannelType,
-			&i.CampID,
-			&i.TrackID,
-			&i.SenderRole,
-			&i.Content,
-			&i.SentAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const listBroadcastReceiptsByMessage = `-- name: ListBroadcastReceiptsByMessage :many
-SELECT message_id, track_id, read_at FROM broadcast_receipts WHERE message_id = $1
-`
-
-func (q *Queries) ListBroadcastReceiptsByMessage(ctx context.Context, messageID string) ([]BroadcastReceipt, error) {
-	rows, err := q.db.Query(ctx, listBroadcastReceiptsByMessage, messageID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []BroadcastReceipt
-	for rows.Next() {
-		var i BroadcastReceipt
-		if err := rows.Scan(&i.MessageID, &i.TrackID, &i.ReadAt); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -798,38 +764,6 @@ func (q *Queries) ListDeviceRegistrationsByCampAndStatus(ctx context.Context, ar
 	return items, nil
 }
 
-const listDirectMessagesByTrack = `-- name: ListDirectMessagesByTrack :many
-SELECT id, channel_type, camp_id, track_id, sender_role, content, sent_at FROM messages WHERE track_id = $1 AND channel_type = 'DIRECT' ORDER BY sent_at
-`
-
-func (q *Queries) ListDirectMessagesByTrack(ctx context.Context, trackID pgtype.Text) ([]Message, error) {
-	rows, err := q.db.Query(ctx, listDirectMessagesByTrack, trackID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []Message
-	for rows.Next() {
-		var i Message
-		if err := rows.Scan(
-			&i.ID,
-			&i.ChannelType,
-			&i.CampID,
-			&i.TrackID,
-			&i.SenderRole,
-			&i.Content,
-			&i.SentAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const listGroupsByCamp = `-- name: ListGroupsByCamp :many
 SELECT id, camp_id, name, badge_id, itinerary FROM groups WHERE camp_id = $1
 `
@@ -861,10 +795,10 @@ func (q *Queries) ListGroupsByCamp(ctx context.Context, campID string) ([]Group,
 }
 
 const listMessagesByTrack = `-- name: ListMessagesByTrack :many
-SELECT id, channel_type, camp_id, track_id, sender_role, content, sent_at FROM messages WHERE track_id = $1 ORDER BY sent_at
+SELECT id, track_id, sender_role, content, sent_at FROM messages WHERE track_id = $1 ORDER BY sent_at
 `
 
-func (q *Queries) ListMessagesByTrack(ctx context.Context, trackID pgtype.Text) ([]Message, error) {
+func (q *Queries) ListMessagesByTrack(ctx context.Context, trackID string) ([]Message, error) {
 	rows, err := q.db.Query(ctx, listMessagesByTrack, trackID)
 	if err != nil {
 		return nil, err
@@ -875,8 +809,6 @@ func (q *Queries) ListMessagesByTrack(ctx context.Context, trackID pgtype.Text) 
 		var i Message
 		if err := rows.Scan(
 			&i.ID,
-			&i.ChannelType,
-			&i.CampID,
 			&i.TrackID,
 			&i.SenderRole,
 			&i.Content,
@@ -1111,20 +1043,18 @@ func (q *Queries) SaveAdminSession(ctx context.Context, arg SaveAdminSessionPara
 }
 
 const saveAnnouncement = `-- name: SaveAnnouncement :exec
-INSERT INTO messages (id, channel_type, camp_id, sender_role, content, sent_at)
-VALUES ($1, 'BROADCAST', $2, $3, $4, $5)
+INSERT INTO announcements (id, camp_id, sender_role, content, sent_at)
+VALUES ($1, $2, $3, $4, $5)
 `
 
 type SaveAnnouncementParams struct {
 	ID         string             `json:"id"`
-	CampID     pgtype.Text        `json:"camp_id"`
+	CampID     string             `json:"camp_id"`
 	SenderRole string             `json:"sender_role"`
 	Content    string             `json:"content"`
 	SentAt     pgtype.Timestamptz `json:"sent_at"`
 }
 
-// Announcements use a dedicated repository contract while retaining the existing
-// messages storage table for backwards-compatible migrations.
 func (q *Queries) SaveAnnouncement(ctx context.Context, arg SaveAnnouncementParams) error {
 	_, err := q.db.Exec(ctx, saveAnnouncement,
 		arg.ID,
@@ -1133,6 +1063,24 @@ func (q *Queries) SaveAnnouncement(ctx context.Context, arg SaveAnnouncementPara
 		arg.Content,
 		arg.SentAt,
 	)
+	return err
+}
+
+const saveAnnouncementReceipt = `-- name: SaveAnnouncementReceipt :exec
+INSERT INTO announcement_receipts (announcement_id, track_id, read_at)
+VALUES ($1, $2, $3)
+ON CONFLICT (announcement_id, track_id) DO UPDATE SET
+    read_at = EXCLUDED.read_at
+`
+
+type SaveAnnouncementReceiptParams struct {
+	AnnouncementID string             `json:"announcement_id"`
+	TrackID        string             `json:"track_id"`
+	ReadAt         pgtype.Timestamptz `json:"read_at"`
+}
+
+func (q *Queries) SaveAnnouncementReceipt(ctx context.Context, arg SaveAnnouncementReceiptParams) error {
+	_, err := q.db.Exec(ctx, saveAnnouncementReceipt, arg.AnnouncementID, arg.TrackID, arg.ReadAt)
 	return err
 }
 
@@ -1188,24 +1136,6 @@ func (q *Queries) SaveBadge(ctx context.Context, arg SaveBadgeParams) error {
 		arg.Status,
 		arg.AssignedGroupID,
 	)
-	return err
-}
-
-const saveBroadcastReceipt = `-- name: SaveBroadcastReceipt :exec
-INSERT INTO broadcast_receipts (message_id, track_id, read_at)
-VALUES ($1, $2, $3)
-ON CONFLICT (message_id, track_id) DO UPDATE SET
-    read_at = EXCLUDED.read_at
-`
-
-type SaveBroadcastReceiptParams struct {
-	MessageID string             `json:"message_id"`
-	TrackID   string             `json:"track_id"`
-	ReadAt    pgtype.Timestamptz `json:"read_at"`
-}
-
-func (q *Queries) SaveBroadcastReceipt(ctx context.Context, arg SaveBroadcastReceiptParams) error {
-	_, err := q.db.Exec(ctx, saveBroadcastReceipt, arg.MessageID, arg.TrackID, arg.ReadAt)
 	return err
 }
 
@@ -1368,25 +1298,21 @@ func (q *Queries) SaveGroup(ctx context.Context, arg SaveGroupParams) error {
 }
 
 const saveMessage = `-- name: SaveMessage :exec
-INSERT INTO messages (id, channel_type, camp_id, track_id, sender_role, content, sent_at)
-VALUES ($1, $2, $3, $4, $5, $6, $7)
+INSERT INTO messages (id, track_id, sender_role, content, sent_at)
+VALUES ($1, $2, $3, $4, $5)
 `
 
 type SaveMessageParams struct {
-	ID          string             `json:"id"`
-	ChannelType string             `json:"channel_type"`
-	CampID      pgtype.Text        `json:"camp_id"`
-	TrackID     pgtype.Text        `json:"track_id"`
-	SenderRole  string             `json:"sender_role"`
-	Content     string             `json:"content"`
-	SentAt      pgtype.Timestamptz `json:"sent_at"`
+	ID         string             `json:"id"`
+	TrackID    string             `json:"track_id"`
+	SenderRole string             `json:"sender_role"`
+	Content    string             `json:"content"`
+	SentAt     pgtype.Timestamptz `json:"sent_at"`
 }
 
 func (q *Queries) SaveMessage(ctx context.Context, arg SaveMessageParams) error {
 	_, err := q.db.Exec(ctx, saveMessage,
 		arg.ID,
-		arg.ChannelType,
-		arg.CampID,
 		arg.TrackID,
 		arg.SenderRole,
 		arg.Content,

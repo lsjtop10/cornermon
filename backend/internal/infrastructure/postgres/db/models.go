@@ -38,6 +38,21 @@ type AdminSession struct {
 	RevokedAt pgtype.Timestamptz `json:"revoked_at"`
 }
 
+type Announcement struct {
+	ID         string             `json:"id"`
+	CampID     string             `json:"camp_id"`
+	SenderRole string             `json:"sender_role"`
+	Content    string             `json:"content"`
+	SentAt     pgtype.Timestamptz `json:"sent_at"`
+}
+
+// 각 트랙의 공지 읽음 상태를 저장하는 테이블
+type AnnouncementReceipt struct {
+	AnnouncementID string             `json:"announcement_id"`
+	TrackID        string             `json:"track_id"`
+	ReadAt         pgtype.Timestamptz `json:"read_at"`
+}
+
 // 보안 이벤트 및 주요 시스템 변경 이력을 기록하는 감사(Audit) 로그 테이블
 type AuditLog struct {
 	// 감사 로그 고유 식별자
@@ -68,16 +83,6 @@ type Badge struct {
 	Status string `json:"status"`
 	// 배지가 할당된 조 식별자
 	AssignedGroupID pgtype.Text `json:"assigned_group_id"`
-}
-
-// 각 트랙이 전체 공지 메시지를 열람했는지 확인(수신확인)하는 테이블
-type BroadcastReceipt struct {
-	// 공지 메시지 식별자
-	MessageID string `json:"message_id"`
-	// 수신 트랙 식별자
-	TrackID string `json:"track_id"`
-	// 트랙(진행자)이 메시지를 읽은 시간
-	ReadAt pgtype.Timestamptz `json:"read_at"`
 }
 
 // 캠프(행사) 전체의 기본 정보 및 병목 판단 기준을 관리하는 테이블
@@ -164,16 +169,12 @@ type Group struct {
 	Itinerary []byte `json:"itinerary"`
 }
 
-// 전체 공지사항 및 트랙별 메시지 발송 내역을 저장하는 테이블
+// 트랙별 운영자/진행자 스레드 메시지를 저장하는 테이블
 type Message struct {
 	// 메시지 고유 식별자
 	ID string `json:"id"`
-	// 전송 채널 (BROADCAST, DIRECT 등)
-	ChannelType string `json:"channel_type"`
-	// BROADCAST 채널인 경우 소속 캠프 식별자 (DIRECT면 NULL)
-	CampID pgtype.Text `json:"camp_id"`
-	// DIRECT 채널인 경우 대상 트랙 식별자 (BROADCAST면 NULL)
-	TrackID pgtype.Text `json:"track_id"`
+	// 메시지 스레드의 트랙 식별자
+	TrackID string `json:"track_id"`
 	// 발신자 역할 (ADMIN 등)
 	SenderRole string `json:"sender_role"`
 	// 메시지 본문
