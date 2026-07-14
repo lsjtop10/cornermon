@@ -55,7 +55,7 @@ func TestMessageService_SendBroadcast(t *testing.T) {
 		if len(broadcaster.Broadcasts) != 1 ||
 			broadcaster.Broadcasts[0].CampID != "camp-1" ||
 			broadcaster.Broadcasts[0].Event != EventMessagesChanged ||
-			broadcaster.Broadcasts[0].Scope != "broadcast" {
+			broadcaster.Broadcasts[0].Scope != CampScope() {
 			t.Errorf("expected EventMessagesChanged broadcast with scope 'broadcast', got %v", broadcaster.Broadcasts)
 		}
 	})
@@ -105,7 +105,7 @@ func TestMessageService_SendDirect(t *testing.T) {
 		if len(broadcaster.Broadcasts) != 1 ||
 			broadcaster.Broadcasts[0].CampID != "camp-1" ||
 			broadcaster.Broadcasts[0].Event != EventMessagesChanged ||
-			broadcaster.Broadcasts[0].Scope != "track:track-1" {
+			broadcaster.Broadcasts[0].Scope != TrackScope("track-1") {
 			t.Errorf("expected EventMessagesChanged broadcast with scope 'track:track-1', got %v", broadcaster.Broadcasts)
 		}
 	})

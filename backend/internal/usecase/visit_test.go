@@ -104,7 +104,7 @@ func TestVisitService_StartVisitByQR(t *testing.T) {
 			broadcaster.Broadcasts[1].Event != EventGroupsUpdated ||
 			broadcaster.Broadcasts[2].Event != EventTracksUpdated ||
 			broadcaster.Broadcasts[3].Event != EventTrackUpdated ||
-			broadcaster.Broadcasts[3].Scope != "track:track-1" {
+			broadcaster.Broadcasts[3].Scope != TrackScope("track-1") {
 			t.Errorf("expected corners, groups, tracks, track alerts, got %v", broadcaster.Broadcasts)
 		}
 
@@ -292,7 +292,7 @@ func TestVisitService_CompleteVisit(t *testing.T) {
 			broadcaster.Broadcasts[1].Event != EventGroupsUpdated ||
 			broadcaster.Broadcasts[2].Event != EventTracksUpdated ||
 			broadcaster.Broadcasts[3].Event != EventTrackUpdated ||
-			broadcaster.Broadcasts[3].Scope != "track:track-1" {
+			broadcaster.Broadcasts[3].Scope != TrackScope("track-1") {
 			t.Errorf("expected corners, groups, tracks, track alerts, got %v", broadcaster.Broadcasts)
 		}
 	})

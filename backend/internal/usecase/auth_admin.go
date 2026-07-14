@@ -263,6 +263,6 @@ func (s *AdminAuthService) ForceTrackLogout(ctx context.Context, trackID domain.
 	}
 
 	s.recordAuditLog(ctx, string(actorAdminID), "TRACK_FORCE_LOGOUT", string(trackID), true, nil)
-	_ = s.broadcaster.Broadcast(ctx, corner.CampID, EventSessionRevoked, string(trackID))
+	_ = s.broadcaster.Broadcast(ctx, corner.CampID, EventSessionRevoked, TrackScope(trackID))
 	return nil
 }

@@ -44,7 +44,7 @@ func TestDeviceTrustService_RequestRegistration(t *testing.T) {
 		if len(broadcaster.Broadcasts) != 1 ||
 			broadcaster.Broadcasts[0].CampID != "camp-1" ||
 			broadcaster.Broadcasts[0].Event != EventDeviceRegistrationUpdated ||
-			broadcaster.Broadcasts[0].Scope != "camp" {
+			broadcaster.Broadcasts[0].Scope != CampScope() {
 			t.Errorf("expected EventDeviceRegistrationUpdated broadcast, got %v", broadcaster.Broadcasts)
 		}
 	})
@@ -87,7 +87,7 @@ func TestDeviceTrustService_ApproveDevice(t *testing.T) {
 		if len(broadcaster.Broadcasts) != 1 ||
 			broadcaster.Broadcasts[0].CampID != "camp-1" ||
 			broadcaster.Broadcasts[0].Event != EventDeviceRegistrationUpdated ||
-			broadcaster.Broadcasts[0].Scope != "camp" {
+			broadcaster.Broadcasts[0].Scope != CampScope() {
 			t.Errorf("expected EventDeviceRegistrationUpdated broadcast, got %v", broadcaster.Broadcasts)
 		}
 	})

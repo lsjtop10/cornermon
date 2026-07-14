@@ -79,7 +79,7 @@ func (s *DeviceTrustService) RequestRegistration(
 	}
 
 	s.recordAuditLog(ctx, "anonymous", "DEVICE_REQUEST", string(reg.ID), true, map[string]any{"campID": string(campID)})
-	_ = s.broadcaster.Broadcast(ctx, campID, EventDeviceRegistrationUpdated, "camp")
+	_ = s.broadcaster.Broadcast(ctx, campID, EventDeviceRegistrationUpdated, CampScope())
 	return plainToken, reg, nil
 }
 
@@ -128,7 +128,7 @@ func (s *DeviceTrustService) ApproveDevice(
 	}
 
 	s.recordAuditLog(ctx, string(actorAdminID), "DEVICE_APPROVED", string(regID), true, nil)
-	_ = s.broadcaster.Broadcast(ctx, device.CampID, EventDeviceRegistrationUpdated, "camp")
+	_ = s.broadcaster.Broadcast(ctx, device.CampID, EventDeviceRegistrationUpdated, CampScope())
 	return nil
 }
 
@@ -160,7 +160,7 @@ func (s *DeviceTrustService) RejectDevice(
 	}
 
 	s.recordAuditLog(ctx, string(actorAdminID), "DEVICE_REJECTED", string(regID), true, nil)
-	_ = s.broadcaster.Broadcast(ctx, device.CampID, EventDeviceRegistrationUpdated, "camp")
+	_ = s.broadcaster.Broadcast(ctx, device.CampID, EventDeviceRegistrationUpdated, CampScope())
 	return nil
 }
 
@@ -192,7 +192,7 @@ func (s *DeviceTrustService) RevokeDevice(
 	}
 
 	s.recordAuditLog(ctx, string(actorAdminID), "DEVICE_REVOKED", string(regID), true, nil)
-	_ = s.broadcaster.Broadcast(ctx, device.CampID, EventDeviceRegistrationUpdated, "camp")
+	_ = s.broadcaster.Broadcast(ctx, device.CampID, EventDeviceRegistrationUpdated, CampScope())
 	return nil
 }
 
@@ -222,7 +222,7 @@ func (s *DeviceTrustService) ResetPinFailures(
 	}
 
 	s.recordAuditLog(ctx, string(actorAdminID), "PIN_LOCK_RESET", string(regID), true, nil)
-	_ = s.broadcaster.Broadcast(ctx, device.CampID, EventDeviceRegistrationUpdated, "camp")
+	_ = s.broadcaster.Broadcast(ctx, device.CampID, EventDeviceRegistrationUpdated, CampScope())
 	return nil
 }
 
