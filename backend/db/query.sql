@@ -163,6 +163,18 @@ SELECT * FROM messages WHERE channel_type = 'BROADCAST' AND camp_id = $1 ORDER B
 -- name: ListDirectMessagesByTrack :many
 SELECT * FROM messages WHERE track_id = $1 AND channel_type = 'DIRECT' ORDER BY sent_at;
 
+-- name: ListMessagesByTrack :many
+SELECT * FROM messages WHERE track_id = $1 ORDER BY sent_at;
+
+-- Announcements use a dedicated repository contract while retaining the existing
+-- messages storage table for backwards-compatible migrations.
+-- name: SaveAnnouncement :exec
+INSERT INTO messages (id, channel_type, camp_id, sender_role, content, sent_at)
+VALUES ($1, 'BROADCAST', $2, $3, $4, $5);
+
+-- name: ListAnnouncementsByCamp :many
+SELECT * FROM messages WHERE channel_type = 'BROADCAST' AND camp_id = $1 ORDER BY sent_at;
+
 -- name: SaveBroadcastReceipt :exec
 INSERT INTO broadcast_receipts (message_id, track_id, read_at)
 VALUES ($1, $2, $3)
