@@ -24,6 +24,10 @@ type DeviceHandler struct {
 	deviceTrust DeviceTrustUsecase
 }
 
+type DeviceStatusResponse struct {
+	Status string `json:"status" enums:"PENDING,APPROVED,REJECTED,REVOKED"`
+} // @name DeviceStatusResponse
+
 type DeviceRegistrationResponse struct {
 	ID                string     `json:"id" format:"uuid"`
 	DeviceName        string     `json:"deviceName" example:"iPad Pro #3"`
@@ -33,6 +37,11 @@ type DeviceRegistrationResponse struct {
 	FailedPinAttempts int        `json:"failedPinAttempts"`
 	LockedUntil       *time.Time `json:"lockedUntil,omitempty" format:"date-time"`
 } // @name DeviceRegistrationResponse
+
+type DeviceRegistrationCreatedResponse struct {
+	DeviceRegistrationResponse
+	DeviceToken string `json:"deviceToken" example:"a1b2c3..."`
+} // @name DeviceRegistrationCreatedResponse
 
 func NewDeviceHandler(deviceTrust DeviceTrustUsecase) *DeviceHandler {
 	return &DeviceHandler{
@@ -51,7 +60,7 @@ type DeviceRegistrationRequest struct {
 // @Tags         A. Auth & Device Trust
 // @Accept       json
 // @Produce      json
-// @Success      200 {object} map[string]interface{}
+// @Success      200 {object} DeviceStatusResponse
 // @Router       /device-registrations/me [get]
 func (h *DeviceHandler) GetMyRegistrationStatus(c echo.Context) error {
 	token := extractToken(c.Request().Header.Get("Authorization"))
@@ -67,8 +76,8 @@ func (h *DeviceHandler) GetMyRegistrationStatus(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_ERROR", Message: err.Error()})
 	}
 
-	return c.JSON(http.StatusOK, map[string]interface{}{
-		"status": status,
+	return c.JSON(http.StatusOK, DeviceStatusResponse{
+		Status: string(*status),
 	})
 }
 
@@ -78,7 +87,7 @@ func (h *DeviceHandler) GetMyRegistrationStatus(c echo.Context) error {
 // @Accept       json
 // @Produce      json
 // @Param        request body DeviceRegistrationRequest true "등록 정보"
-// @Success      201 {object} DeviceRegistrationResponse
+// @Success      201 {object} DeviceRegistrationCreatedResponse
 // @Router       /device-registrations [post]
 func (h *DeviceHandler) RequestRegistration(c echo.Context) error {
 	var req DeviceRegistrationRequest
@@ -91,21 +100,22 @@ func (h *DeviceHandler) RequestRegistration(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()})
 	}
 
-	c.Response().Header().Set("X-Device-Token", token)
-
 	var approvedAt *time.Time
 	if reg.ApprovedAt.IsSet() {
 		t, _ := reg.ApprovedAt.Value()
 		approvedAt = &t
 	}
 
-	return c.JSON(http.StatusCreated, DeviceRegistrationResponse{
-		ID:                string(reg.ID),
-		DeviceName:        reg.DeviceName,
-		Status:            string(reg.Status),
-		CreatedAt:         reg.CreatedAt,
-		ApprovedAt:        approvedAt,
-		FailedPinAttempts: reg.FailedPinAttempts,
+	return c.JSON(http.StatusCreated, DeviceRegistrationCreatedResponse{
+		DeviceRegistrationResponse: DeviceRegistrationResponse{
+			ID:                string(reg.ID),
+			DeviceName:        reg.DeviceName,
+			Status:            string(reg.Status),
+			CreatedAt:         reg.CreatedAt,
+			ApprovedAt:        approvedAt,
+			FailedPinAttempts: reg.FailedPinAttempts,
+		},
+		DeviceToken: token,
 	})
 }
 

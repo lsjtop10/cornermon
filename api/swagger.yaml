@@ -317,6 +317,36 @@ definitions:
       count:
         type: integer
     type: object
+  DeviceRegistrationCreatedResponse:
+    properties:
+      approvedAt:
+        format: date-time
+        type: string
+      createdAt:
+        format: date-time
+        type: string
+      deviceName:
+        example: 'iPad Pro #3'
+        type: string
+      deviceToken:
+        example: a1b2c3...
+        type: string
+      failedPinAttempts:
+        type: integer
+      id:
+        format: uuid
+        type: string
+      lockedUntil:
+        format: date-time
+        type: string
+      status:
+        enum:
+        - PENDING
+        - APPROVED
+        - REJECTED
+        - REVOKED
+        type: string
+    type: object
   DeviceRegistrationRequest:
     properties:
       campId:
@@ -349,6 +379,16 @@ definitions:
       lockedUntil:
         format: date-time
         type: string
+      status:
+        enum:
+        - PENDING
+        - APPROVED
+        - REJECTED
+        - REVOKED
+        type: string
+    type: object
+  DeviceStatusResponse:
+    properties:
       status:
         enum:
         - PENDING
@@ -1663,7 +1703,7 @@ paths:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/DeviceRegistrationResponse'
+            $ref: '#/definitions/DeviceRegistrationCreatedResponse'
       summary: 기기 등록 요청 (최초 앱 실행 시)
       tags:
       - A. Auth & Device Trust
@@ -1768,8 +1808,7 @@ paths:
         "200":
           description: OK
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/DeviceStatusResponse'
       summary: 내 기기 등록 상태 자체 조회
       tags:
       - A. Auth & Device Trust
