@@ -204,11 +204,11 @@ Stream<SseEvent> adminEvents(Ref ref, CampId campId); // GET /camps/{campId}/eve
 
 ## 4. 검증 체크리스트
 
-- [ ] `openapi-generator-cli generate -c ../frontend/openapitools.json` 실행 시 오류 없이 완료되고, `git status`에 `lib/shared/api/gen` 아래 다수 파일 변경이 나타난다
-- [ ] `grep -rn "visits_exception_approve\|VisitsExceptionApprove" frontend/lib/shared/api/gen`이 빈 결과를 반환한다(A7 삭제 확인)
-- [ ] `grep -rn "events/admin" frontend/lib/shared/api/gen`에서 `/camps/{campId}/events/admin` 형태의 경로가 나온다(구 경로 `/api/v1/events/admin` 아님)
-- [ ] `dart run build_runner build --delete-conflicting-outputs` 이후 `lib/shared/api/gen/**`가 A-2 직후 상태와 동일하다(diff 없음 — build_runner가 gen 패키지를 건드리지 않았는지 확인, 과거 반복된 사고 지점). **주의**: 이 명령을 frontend 루트에서 실행하면 실제로 gen 패키지 자체의 `.g.dart`가 삭제되는 사고가 재현됨을 이번 세션에서 확인함 — gen의 `.g.dart`는 반드시 `cd lib/shared/api/gen`한 뒤 그 안에서 `dart run build_runner build`로만 재생성할 것(frontend 루트의 build_runner 실행은 `lib/**`의 `@riverpod` part만 대상으로 하고 gen에는 손대지 말아야 하나, 실제로는 건드려 삭제하므로 실행 직후 반드시 `find lib/shared/api/gen -iname "*.g.dart" | wc -l`로 개수 확인)
-- [ ] `bash scripts/patch_gen_language_version.sh` 실행 후 `dart run <임시 스크립트>`(또는 `flutter test`)로 `cornermon_api_gen`의 아무 모델이나 인스턴스화해 `language version override` 에러가 없는지 확인(§0 발견된 실전 버그 — `flutter analyze`는 이 에러를 잡지 못하므로 analyze 통과만으로 안심하지 말 것)
-- [ ] `flutter analyze`가 `frontend/lib/shared/**`, `frontend/lib/admin/**` 범위에서 0 에러(경고는 허용, `facilitator/**`는 이번 범위 밖이므로 기존에 이미 있던 오류는 무시)
-- [ ] 9개 기존 provider 파일 + 신규 3개 파일 모두 `*.g.dart`가 정상 생성되고 `@riverpod` 어노테이션 대상 함수/클래스가 빠짐없이 대응
-- [ ] `corner_track_providers.dart`, `group_providers.dart`, `message_providers.dart`, `report_providers.dart`의 모든 함수 시그니처에 필요한 곳마다 `CampId`(또는 원시 `String campId`) 파라미터가 있다
+- [x] `openapi-generator-cli generate -c ../frontend/openapitools.json` 실행 시 오류 없이 완료되고, `git status`에 `lib/shared/api/gen` 아래 다수 파일 변경이 나타난다(커밋 `ca4bfa9`)
+- [x] `grep -rn "visits_exception_approve\|VisitsExceptionApprove" frontend/lib/shared/api/gen`이 빈 결과를 반환한다(A7 삭제 확인 — 재확인 결과 0건)
+- [x] `grep -rn "events/admin" frontend/lib/shared/api/gen`에서 `/camps/{campId}/events/admin` 형태의 경로가 나온다(구 경로 `/api/v1/events/admin` 아님 — 재확인 결과 `f_events_sse_api.dart`에 `/api/v1/camps/{campId}/events/admin`로 존재. 단 실제 `admin_event_stream.dart`는 이 생성 메서드를 쓰지 않고 `track_event_stream.dart`와 동일하게 `/camps/{campId}/events/admin`로 직접 연결한다 — `/api/v1` 중복 접두사는 이 생성 메서드 고유의 스펙 문서 상 특이사항이며 실제 SSE 연결 경로에는 영향 없음)
+- [x] `dart run build_runner build --delete-conflicting-outputs` 이후 `lib/shared/api/gen/**`가 A-2 직후 상태와 동일하다(diff 없음 — build_runner가 gen 패키지를 건드리지 않았는지 확인, 과거 반복된 사고 지점). **주의**: 이 명령을 frontend 루트에서 실행하면 실제로 gen 패키지 자체의 `.g.dart`가 삭제되는 사고가 재현됨을 이번 세션에서 확인함 — gen의 `.g.dart`는 반드시 `cd lib/shared/api/gen`한 뒤 그 안에서 `dart run build_runner build`로만 재생성할 것(frontend 루트의 build_runner 실행은 `lib/**`의 `@riverpod` part만 대상으로 하고 gen에는 손대지 말아야 하나, 실제로는 건드려 삭제하므로 실행 직후 반드시 `find lib/shared/api/gen -iname "*.g.dart" | wc -l`로 개수 확인 — 재확인 결과 52개로 안정)
+- [x] `bash scripts/patch_gen_language_version.sh` 실행 후 `dart run <임시 스크립트>`(또는 `flutter test`)로 `cornermon_api_gen`의 아무 모델이나 인스턴스화해 `language version override` 에러가 없는지 확인(§0 발견된 실전 버그 — `flutter analyze`는 이 에러를 잡지 못하므로 analyze 통과만으로 안심하지 말 것 — 재확인 결과 스크립트는 멱등(0건 패치)이고 `dart run` 프로브 정상 실행됨)
+- [x] `flutter analyze`가 `frontend/lib/shared/**`, `frontend/lib/admin/**` 범위에서 0 에러(경고는 허용, `facilitator/**`는 이번 범위 밖이므로 기존에 이미 있던 오류는 무시 — 재확인 결과 "No issues found!")
+- [x] (계획 변경 반영, §3 C-1/C-2 참고) 9개 기존 provider 파일 + 신규 1개 파일(`admin_event_stream.dart`, 원래 계획한 `device_registration_providers.dart`/`auth_admin_providers.dart` 2개는 실제 생성 클래스가 하나로 묶여 나와 기존 `auth_device_trust_providers.dart`에 통합) 모두 `*.g.dart`가 정상 생성되고 `@riverpod` 어노테이션 대상 함수/클래스가 빠짐없이 대응 — 재확인 결과 `providers/*.g.dart` 9개 + `sse/*.g.dart` 3개(`admin_event_stream`/`sse_client`/`track_event_stream`) 총 12개 모두 존재
+- [x] `corner_track_providers.dart`, `group_providers.dart`, `message_providers.dart`, `report_providers.dart`의 모든 함수 시그니처에 필요한 곳마다 `CampId`(또는 원시 `String campId`) 파라미터가 있다 — 재확인 결과 4개 파일에 총 12건
