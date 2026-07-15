@@ -1,8 +1,8 @@
-import 'package:cornermon_api_gen/cornermon_api_gen.dart' as api;
+import 'package:cornermon/shared/api/domain_aliases.dart';
 
-extension FacilitatorTrackX on api.Track {
-  bool get isIdle => operationalStatus == api.TrackOperationalStatus.IDLE;
-  bool get isBusy => operationalStatus == api.TrackOperationalStatus.BUSY;
-  bool get isActive => status == api.TrackStatus.ACTIVE;
-  bool get isDeleted => status == api.TrackStatus.DELETED;
+extension FacilitatorTrackX on Track {
+  bool get isIdle => operationalStatus == TrackOperationalStatus.IDLE;
+  bool get isBusy => operationalStatus == TrackOperationalStatus.BUSY;
+  bool get isActive => status == TrackStatus.ACTIVE;
+  bool get isDeleted => status == TrackStatus.DELETED;
 }

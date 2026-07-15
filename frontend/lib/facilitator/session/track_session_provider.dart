@@ -4,8 +4,10 @@ import 'dart:convert';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:cornermon_api_gen/cornermon_api_gen.dart';
 
+import 'package:cornermon/shared/api/domain_aliases.dart';
 import 'package:cornermon/shared/api/providers/auth_device_trust_providers.dart';
 import 'package:cornermon/shared/auth/secure_token_store.dart';
+import 'device_trust_provider.dart';
 
 part 'track_session_provider.g.dart';
 
@@ -91,9 +93,15 @@ class TrackSession extends _$TrackSession {
 
   /// POST /auth/track/login — 세션 무만료(유휴 타임아웃 없음, §2.4).
   Future<void> loginWithPin(String pin) async {
+    final deviceToken = await ref.read(deviceTrustTokenProvider.future);
+    if (deviceToken == null) {
+      throw Exception('신뢰된 기기가 아닙니다.');
+    }
+
     final api = ref.read(authDeviceTrustApiProvider);
     final response = await api.authTrackLoginPost(
-      authTrackLoginPostRequest: AuthTrackLoginPostRequest(
+      xDeviceToken: deviceToken,
+      request: AuthTrackLoginPostRequest(
         (AuthTrackLoginPostRequestBuilder b) => b..pin = pin,
       ),
     );

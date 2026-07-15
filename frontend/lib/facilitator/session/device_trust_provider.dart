@@ -1,8 +1,8 @@
 import 'dart:io';
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:cornermon_api_gen/cornermon_api_gen.dart';
 
+import 'package:cornermon/shared/api/domain_aliases.dart';
 import 'package:cornermon/shared/api/providers/auth_device_trust_providers.dart';
 import 'package:cornermon/shared/auth/secure_token_store.dart';
 
@@ -12,16 +12,16 @@ part 'device_trust_provider.g.dart';
 /// 나머지 4개는 [DeviceRegistrationStatus](서버)를 그대로 미러링한다.
 enum DeviceTrustStatus { none, pending, approved, rejected, revoked }
 
-const _deviceTokenKey = 'device_trust_token';
 const _deviceRegistrationIdKey = 'device_trust_registration_id';
 const _deviceStatusKey = 'device_trust_status';
+const _deviceTrustTokenKey = 'device_trust_token';
 
-DeviceTrustStatus _fromApiStatus(DeviceRegistrationStatus status) =>
+DeviceTrustStatus _fromApiStatus(DeviceRegistrationCreatedStatus status) =>
     switch (status) {
-      DeviceRegistrationStatus.PENDING => DeviceTrustStatus.pending,
-      DeviceRegistrationStatus.APPROVED => DeviceTrustStatus.approved,
-      DeviceRegistrationStatus.REJECTED => DeviceTrustStatus.rejected,
-      DeviceRegistrationStatus.REVOKED => DeviceTrustStatus.revoked,
+      DeviceRegistrationCreatedStatus.PENDING => DeviceTrustStatus.pending,
+      DeviceRegistrationCreatedStatus.APPROVED => DeviceTrustStatus.approved,
+      DeviceRegistrationCreatedStatus.REJECTED => DeviceTrustStatus.rejected,
+      DeviceRegistrationCreatedStatus.REVOKED => DeviceTrustStatus.revoked,
       _ => DeviceTrustStatus.none,
     };
 
@@ -48,26 +48,35 @@ class DeviceTrust extends _$DeviceTrust {
     final store = ref.read(secureTokenStoreProvider);
 
     final response = await api.deviceRegistrationsPost(
-      deviceRegistrationsPostRequest: DeviceRegistrationsPostRequest(
+      request: DeviceRegistrationsPostRequest(
         (DeviceRegistrationsPostRequestBuilder b) => b
-          ..registrationCode = registrationCode
+          ..campId = registrationCode
           ..deviceName = _defaultDeviceName(),
       ),
     );
 
-    final registration = response.data?.deviceRegistration;
-    final deviceToken = response.data?.deviceToken;
-    if (registration == null || deviceToken == null) {
+    final registration = response.data;
+    if (registration == null ||
+        registration.id == null ||
+        registration.status == null ||
+        registration.deviceToken == null) {
       throw Exception('기기 등록 응답이 올바르지 않습니다.');
     }
 
-    await store.write(_deviceTokenKey, deviceToken);
-    await store.write(_deviceRegistrationIdKey, registration.id);
-    final status = _fromApiStatus(registration.status);
+    await store.write(_deviceRegistrationIdKey, registration.id!);
+    await store.write(_deviceTrustTokenKey, registration.deviceToken!);
+    final status = _fromApiStatus(registration.status!);
     await store.write(_deviceStatusKey, status.name);
     state = AsyncData(status);
   }
 
   static String _defaultDeviceName() =>
       '${Platform.operatingSystem} ${Platform.operatingSystemVersion}';
+}
+
+/// 신뢰기기 등록 시 발급받아 저장해둔 토큰 — B1 PIN 로그인(`X-Device-Token` 헤더)에만 쓰인다.
+@riverpod
+Future<String?> deviceTrustToken(Ref ref) async {
+  final store = ref.watch(secureTokenStoreProvider);
+  return store.read(_deviceTrustTokenKey);
 }
