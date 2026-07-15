@@ -105,14 +105,28 @@ JOIN corners c ON t.corner_id = c.id
 WHERE c.camp_id = $1 AND t.status = 'ACTIVE';
 
 -- name: SaveTrack :exec
-INSERT INTO tracks (id, corner_id, track_no, status, pin_hash, pin_ciphertext, current_visit_id, deleted_at)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+INSERT INTO tracks (id, corner_id, track_no, status, pin_hash, pin_ciphertext, current_visit_id, deleted_at, unread_by_admin_count, unread_by_track_count)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 ON CONFLICT (id) DO UPDATE SET
     status = EXCLUDED.status,
     pin_hash = EXCLUDED.pin_hash,
     pin_ciphertext = EXCLUDED.pin_ciphertext,
     current_visit_id = EXCLUDED.current_visit_id,
-    deleted_at = EXCLUDED.deleted_at;
+    deleted_at = EXCLUDED.deleted_at,
+    unread_by_admin_count = EXCLUDED.unread_by_admin_count,
+    unread_by_track_count = EXCLUDED.unread_by_track_count;
+
+-- name: IncrementTrackUnreadCount :exec
+UPDATE tracks
+SET unread_by_admin_count = unread_by_admin_count + CASE WHEN sqlc.arg(recipient)::VARCHAR = 'ADMIN' THEN 1 ELSE 0 END,
+    unread_by_track_count = unread_by_track_count + CASE WHEN sqlc.arg(recipient)::VARCHAR = 'TRACK' THEN 1 ELSE 0 END
+WHERE id = sqlc.arg(track_id);
+
+-- name: ResetTrackUnreadCount :exec
+UPDATE tracks
+SET unread_by_admin_count = CASE WHEN sqlc.arg(reader)::VARCHAR = 'ADMIN' THEN 0 ELSE unread_by_admin_count END,
+    unread_by_track_count = CASE WHEN sqlc.arg(reader)::VARCHAR = 'TRACK' THEN 0 ELSE unread_by_track_count END
+WHERE id = sqlc.arg(track_id);
 
 -- name: GetVisit :one
 SELECT * FROM visits WHERE id = $1;
@@ -219,11 +233,24 @@ ON CONFLICT (id) DO UPDATE SET
     revoked_at = EXCLUDED.revoked_at;
 
 -- name: SaveMessage :exec
-INSERT INTO messages (id, track_id, sender_role, content, sent_at)
-VALUES ($1, $2, $3, $4, $5);
+INSERT INTO messages (id, track_id, sender_role, content, sent_at, read_at)
+VALUES ($1, $2, $3, $4, $5, $6);
 
 -- name: ListMessagesByTrack :many
 SELECT * FROM messages WHERE track_id = $1 ORDER BY sent_at;
+
+-- name: ListMessagesByTrackAfter :many
+SELECT * FROM messages
+WHERE track_id = sqlc.arg(track_id)
+  AND (sqlc.narg(after)::TIMESTAMPTZ IS NULL OR sent_at > sqlc.narg(after)::TIMESTAMPTZ)
+ORDER BY sent_at;
+
+-- name: MarkAllMessagesReadByRecipient :exec
+UPDATE messages
+SET read_at = COALESCE(read_at, sqlc.arg(read_at)::TIMESTAMPTZ)
+WHERE track_id = sqlc.arg(track_id)
+  AND sender_role <> sqlc.arg(recipient)::VARCHAR
+  AND read_at IS NULL;
 
 -- name: SaveAnnouncement :exec
 INSERT INTO announcements (id, camp_id, sender_role, content, sent_at)

@@ -2284,17 +2284,20 @@ const docTemplate = `{
             "get": {
                 "security": [
                     {
+                        "AdminAuth": []
+                    },
+                    {
                         "TrackAuth": []
                     }
                 ],
-                "description": "트랙 진행자가 자신의 트랙과 관련된 DIRECT 메시지 내역을 조회한다(GitHub Issue #69, 구현 예정).",
+                "description": "관리자 또는 자신의 트랙 진행자가 DIRECT 메시지 내역을 조회한다.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "E. Message"
                 ],
-                "summary": "트랙별 메시지 내역 조회 (진행자)",
+                "summary": "트랙별 메시지 내역 조회",
                 "parameters": [
                     {
                         "type": "string",
@@ -2326,8 +2329,8 @@ const docTemplate = `{
                             }
                         }
                     },
-                    "501": {
-                        "description": "구현 예정 (GitHub Issue #69)",
+                    "403": {
+                        "description": "세션 트랙과 요청 트랙 불일치",
                         "schema": {
                             "$ref": "#/definitions/ErrorResponse"
                         }
@@ -2381,7 +2384,15 @@ const docTemplate = `{
         },
         "/tracks/{trackId}/messages/unread-count": {
             "get": {
-                "description": "호출자(관리자 또는 진행자) 기준으로 상대측이 보낸 미확인 메시지 개수를 반환한다(GitHub Issue #69, 구현 예정).",
+                "security": [
+                    {
+                        "AdminAuth": []
+                    },
+                    {
+                        "TrackAuth": []
+                    }
+                ],
+                "description": "호출자(관리자 또는 진행자) 기준으로 상대측이 보낸 미확인 메시지 개수를 반환한다.",
                 "produces": [
                     "application/json"
                 ],
@@ -2405,8 +2416,8 @@ const docTemplate = `{
                             "$ref": "#/definitions/UnreadCountResponse"
                         }
                     },
-                    "501": {
-                        "description": "구현 예정 (GitHub Issue #69)",
+                    "403": {
+                        "description": "세션 트랙과 요청 트랙 불일치",
                         "schema": {
                             "$ref": "#/definitions/ErrorResponse"
                         }

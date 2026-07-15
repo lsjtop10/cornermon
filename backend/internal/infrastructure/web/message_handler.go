@@ -2,7 +2,9 @@ package web
 
 import (
 	"context"
+	"errors"
 	"net/http"
+	"strconv"
 	"time"
 
 	"cornermon/backend/internal/domain"
@@ -13,7 +15,8 @@ import (
 
 type MessageUsecase interface {
 	SendDirect(ctx context.Context, trackID domain.TrackID, content string, senderRole domain.SenderRole) (*domain.Message, error)
-	ListDirectMessages(ctx context.Context, trackID domain.TrackID) ([]*domain.Message, error)
+	ListDirectMessages(ctx context.Context, trackID domain.TrackID, viewerRole domain.SenderRole, after domain.Optional[time.Time], markRead bool) ([]*domain.Message, error)
+	GetUnreadCount(ctx context.Context, trackID domain.TrackID, viewerRole domain.SenderRole) (int, error)
 }
 
 type AnnouncementUsecase interface {
@@ -209,6 +212,9 @@ func (h *MessageHandler) SendDirect(c echo.Context) error {
 	if c.Get("adminSession") != nil {
 		senderRole = domain.RoleAdmin
 	} else if c.Get("facilitatorSession") != nil {
+		if err := requireFacilitatorTrackScope(c, trackID); err != nil {
+			return err
+		}
 		senderRole = domain.RoleTrack
 	} else {
 		return c.JSON(http.StatusUnauthorized, ErrorResponse{Code: "UNAUTHORIZED", Message: "unauthorized"})
@@ -236,57 +242,40 @@ func (h *MessageHandler) SendDirect(c echo.Context) error {
 }
 
 // @Summary      트랙별 메시지 내역 조회
-// @Description  관리자가 해당 트랙과 관련된 DIRECT 메시지 내역을 조회한다. background/after 파라미터는
-// @Description  계약상 정의되어 있으나 아직 동작하지 않는다(GitHub Issue #69, 구현 예정).
+// @Description  관리자 또는 자신의 트랙 진행자가 DIRECT 메시지 내역을 조회한다.
 // @Tags         E. Message
 // @Security     AdminAuth
-// @Produce      json
-// @Param        trackId path string true "트랙 ID"
-// @Param        background query bool false "true면 상대측이 보낸 미확인 메시지를 읽음 처리 (구현 예정)"
-// @Param        after query string false "RFC3339 UTC 이후 메시지만 반환 (구현 예정)"
-// @Success      200 {array} MessageResponse
-// @Router       /tracks/{trackId}/messages [get]
-func (h *MessageHandler) ListDirectMessages(c echo.Context) error {
-	trackID := domain.TrackID(c.Param("trackId"))
-
-	msgs, err := h.message.ListDirectMessages(c.Request().Context(), trackID)
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()})
-	}
-
-	res := make([]MessageResponse, len(msgs))
-	for i, msg := range msgs {
-		var tID *string
-		if msg.TrackID != "" {
-			valStr := string(msg.TrackID)
-			tID = &valStr
-		}
-		res[i] = MessageResponse{
-			ID:          string(msg.ID),
-			ChannelType: string(msg.ChannelType),
-			TrackID:     tID,
-			SenderRole:  string(msg.SenderRole),
-			Content:     msg.Content,
-			SentAt:      msg.SentAt,
-		}
-	}
-
-	return c.JSON(http.StatusOK, res)
-}
-
-// @Summary      트랙별 메시지 내역 조회 (진행자)
-// @Description  트랙 진행자가 자신의 트랙과 관련된 DIRECT 메시지 내역을 조회한다(GitHub Issue #69, 구현 예정).
-// @Tags         E. Message
 // @Security     TrackAuth
 // @Produce      json
 // @Param        trackId path string true "트랙 ID"
 // @Param        background query bool false "true면 상대측이 보낸 미확인 메시지를 읽음 처리"
 // @Param        after query string false "RFC3339 UTC 이후 메시지만 반환"
 // @Success      200 {array} MessageResponse
-// @Failure      501 {object} ErrorResponse "구현 예정 (GitHub Issue #69)"
+// @Failure      403 {object} ErrorResponse "세션 트랙과 요청 트랙 불일치"
 // @Router       /tracks/{trackId}/messages [get]
-func (h *MessageHandler) ListDirectMessagesForTrack(c echo.Context) error {
-	return c.JSON(http.StatusNotImplemented, ErrorResponse{Code: "NOT_IMPLEMENTED", Message: "진행자용 메시지 조회는 아직 구현되지 않았습니다"})
+func (h *MessageHandler) ListDirectMessages(c echo.Context) error {
+	trackID := domain.TrackID(c.Param("trackId"))
+	viewerRole := domain.RoleAdmin
+	if _, ok := c.Get("facilitatorSession").(*domain.FacilitatorSession); ok {
+		if err := requireFacilitatorTrackScope(c, trackID); err != nil {
+			return err
+		}
+		viewerRole = domain.RoleTrack
+	}
+	background, err := parseBackground(c.QueryParam("background"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: err.Error()})
+	}
+	after, err := parseAfter(c.QueryParam("after"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: "after must be RFC3339"})
+	}
+	msgs, err := h.message.ListDirectMessages(c.Request().Context(), trackID, viewerRole, after, background)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()})
+	}
+
+	return c.JSON(http.StatusOK, mapMessages(msgs))
 }
 
 type UnreadCountResponse struct {
@@ -294,13 +283,76 @@ type UnreadCountResponse struct {
 } // @name UnreadCountResponse
 
 // @Summary      트랙 미확인 다이렉트 메시지 개수 조회
-// @Description  호출자(관리자 또는 진행자) 기준으로 상대측이 보낸 미확인 메시지 개수를 반환한다(GitHub Issue #69, 구현 예정).
+// @Description  호출자(관리자 또는 진행자) 기준으로 상대측이 보낸 미확인 메시지 개수를 반환한다.
 // @Tags         E. Message
+// @Security     AdminAuth
+// @Security     TrackAuth
 // @Produce      json
 // @Param        trackId path string true "트랙 ID"
 // @Success      200 {object} UnreadCountResponse
-// @Failure      501 {object} ErrorResponse "구현 예정 (GitHub Issue #69)"
+// @Failure      403 {object} ErrorResponse "세션 트랙과 요청 트랙 불일치"
 // @Router       /tracks/{trackId}/messages/unread-count [get]
 func (h *MessageHandler) GetUnreadCount(c echo.Context) error {
-	return c.JSON(http.StatusNotImplemented, ErrorResponse{Code: "NOT_IMPLEMENTED", Message: "미확인 메시지 개수 조회는 아직 구현되지 않았습니다"})
+	trackID := domain.TrackID(c.Param("trackId"))
+	role := domain.RoleAdmin
+	if _, ok := c.Get("facilitatorSession").(*domain.FacilitatorSession); ok {
+		if err := requireFacilitatorTrackScope(c, trackID); err != nil {
+			return err
+		}
+		role = domain.RoleTrack
+	}
+	count, err := h.message.GetUnreadCount(c.Request().Context(), trackID, role)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()})
+	}
+	return c.JSON(http.StatusOK, UnreadCountResponse{UnreadCount: count})
+}
+
+func requireFacilitatorTrackScope(c echo.Context, trackID domain.TrackID) error {
+	session, ok := c.Get("facilitatorSession").(*domain.FacilitatorSession)
+	if !ok {
+		return echo.NewHTTPError(http.StatusUnauthorized, "unauthorized")
+	}
+	if session.TrackID != trackID {
+		return domain.ErrTrackScopeForbidden
+	}
+	return nil
+}
+
+func parseBackground(value string) (bool, error) {
+	if value == "" {
+		return false, nil
+	}
+	parsed, err := strconv.ParseBool(value)
+	if err != nil {
+		return false, errors.New("background must be boolean")
+	}
+	return parsed, nil
+}
+
+func parseAfter(value string) (domain.Optional[time.Time], error) {
+	if value == "" {
+		return domain.None[time.Time](), nil
+	}
+	t, err := time.Parse(time.RFC3339, value)
+	if err != nil {
+		return domain.None[time.Time](), err
+	}
+	return domain.Some(t.UTC()), nil
+}
+
+func mapMessages(msgs []*domain.Message) []MessageResponse {
+	res := make([]MessageResponse, len(msgs))
+	for i, msg := range msgs {
+		var trackID *string
+		if msg.TrackID != "" {
+			value := string(msg.TrackID)
+			trackID = &value
+		}
+		res[i] = MessageResponse{ID: string(msg.ID), ChannelType: string(msg.ChannelType), TrackID: trackID, SenderRole: string(msg.SenderRole), Content: msg.Content, SentAt: msg.SentAt, IsRead: msg.ReadAt.IsSet()}
+		if readAt, ok := msg.ReadAt.Value(); ok {
+			res[i].ReadAt = &readAt
+		}
+	}
+	return res
 }

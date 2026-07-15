@@ -66,6 +66,8 @@ type TrackRepository interface {
 	ListActiveByCamp(ctx context.Context, campID domain.CampID) ([]*domain.Track, error)
 	ListByCamp(ctx context.Context, campID domain.CampID) ([]*domain.Track, error)
 	Save(ctx context.Context, track *domain.Track) error
+	IncrementUnreadCount(ctx context.Context, trackID domain.TrackID, recipient domain.SenderRole) error
+	ResetUnreadCount(ctx context.Context, trackID domain.TrackID, reader domain.SenderRole) error
 }
 
 // VisitRepository는 방문 엔티티의 지속성을 담당하는 포트입니다.
@@ -131,6 +133,8 @@ type AdminSessionRepository interface {
 type MessageRepository interface {
 	Save(ctx context.Context, msg *domain.Message) error
 	ListMessageByTrack(ctx context.Context, trackID domain.TrackID) ([]*domain.Message, error)
+	ListMessageByTrackAfter(ctx context.Context, trackID domain.TrackID, after domain.Optional[time.Time]) ([]*domain.Message, error)
+	MarkAllReadByRecipient(ctx context.Context, trackID domain.TrackID, recipient domain.SenderRole, readAt time.Time) error
 }
 
 // MessageRepository는 공지사항 엔티티의 지속성을 담당하는 포트입니다.

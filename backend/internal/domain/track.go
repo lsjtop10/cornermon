@@ -19,14 +19,16 @@ const (
 )
 
 type Track struct {
-	ID             TrackID
-	CornerID       CornerID
-	TrackNo        int
-	Status         TrackStatus
-	PINHash        string
-	PINCiphertext  string
-	CurrentVisitID Optional[VisitID]
-	DeletedAt      Optional[time.Time]
+	ID                 TrackID
+	CornerID           CornerID
+	TrackNo            int
+	Status             TrackStatus
+	PINHash            string
+	PINCiphertext      string
+	CurrentVisitID     Optional[VisitID]
+	DeletedAt          Optional[time.Time]
+	UnreadByAdminCount int
+	UnreadByTrackCount int
 }
 
 // StartVisit은 트랙에 방문(Visit)이 시작되었음을 기록합니다.

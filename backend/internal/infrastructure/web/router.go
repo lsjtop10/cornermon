@@ -112,8 +112,14 @@ func RegisterRoutes(e *echo.Echo, h *Handlers, adminAuth AuthAdminUsecase, track
 		admin.GET("/camps/:campId/messages/broadcast", h.Message.ListBroadcasts)
 		admin.GET("/messages/broadcast/:id/receipts", h.Message.GetBroadcastReceipts)
 		admin.POST("/tracks/:trackId/messages", h.Message.SendDirect)
-		admin.GET("/tracks/:trackId/messages", h.Message.ListDirectMessages)
-		admin.GET("/tracks/:trackId/messages/unread-count", h.Message.GetUnreadCount)
+
+		// Both administrator and facilitator sessions may access these paths.
+		// They must be registered once because Echo routes by method and path
+		// before group middleware is evaluated.
+		message := v1.Group("")
+		message.Use(MessageAuthMiddleware(adminAuth, trackAuth))
+		message.GET("/tracks/:trackId/messages", h.Message.ListDirectMessages)
+		message.GET("/tracks/:trackId/messages/unread-count", h.Message.GetUnreadCount)
 	}
 
 	// ── F. Events (Admin) ──
@@ -142,8 +148,6 @@ func RegisterRoutes(e *echo.Echo, h *Handlers, adminAuth AuthAdminUsecase, track
 		track.POST("/messages/broadcast/:id/read", h.Message.ReadBroadcast)
 		// Track can also send/get direct messages
 		track.POST("/tracks/:trackId/messages/from-track", h.Message.SendDirect)
-		track.GET("/tracks/:trackId/messages", h.Message.ListDirectMessagesForTrack)
-		track.GET("/tracks/:trackId/messages/unread-count", h.Message.GetUnreadCount)
 	}
 
 	if h.Event != nil {

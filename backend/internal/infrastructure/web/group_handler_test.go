@@ -26,6 +26,12 @@ func (trackRepoForGroupHandler) ListByCamp(context.Context, domain.CampID) ([]*d
 	return nil, nil
 }
 func (trackRepoForGroupHandler) Save(context.Context, *domain.Track) error { return nil }
+func (trackRepoForGroupHandler) IncrementUnreadCount(context.Context, domain.TrackID, domain.SenderRole) error {
+	return nil
+}
+func (trackRepoForGroupHandler) ResetUnreadCount(context.Context, domain.TrackID, domain.SenderRole) error {
+	return nil
+}
 
 type cornerRepoForGroupHandler struct{ corner *domain.Corner }
 

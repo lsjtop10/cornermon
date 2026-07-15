@@ -181,6 +181,7 @@ type Message struct {
 	Content string `json:"content"`
 	// 발송 시간
 	SentAt pgtype.Timestamptz `json:"sent_at"`
+	ReadAt pgtype.Timestamptz `json:"read_at"`
 }
 
 // 코너 내에서 병렬로 진행 가능한 세부 트랙(기기/테이블)을 정의하는 테이블
@@ -200,7 +201,9 @@ type Track struct {
 	// 현재 진행 중인 방문(Visit)의 식별자
 	CurrentVisitID pgtype.Text `json:"current_visit_id"`
 	// 논리적 삭제 시간
-	DeletedAt pgtype.Timestamptz `json:"deleted_at"`
+	DeletedAt          pgtype.Timestamptz `json:"deleted_at"`
+	UnreadByAdminCount int32              `json:"unread_by_admin_count"`
+	UnreadByTrackCount int32              `json:"unread_by_track_count"`
 }
 
 // 조가 코너(트랙)를 방문하여 진행한 이력을 저장하는 테이블

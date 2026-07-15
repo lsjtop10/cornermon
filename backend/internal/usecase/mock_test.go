@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"sort"
+	"time"
 
 	"cornermon/backend/internal/domain"
 )
@@ -122,6 +123,26 @@ func (r *MockTrackRepository) ListActiveByCamp(ctx context.Context, campID domai
 
 func (r *MockTrackRepository) Save(ctx context.Context, track *domain.Track) error {
 	r.Tracks[track.ID] = track
+	return nil
+}
+
+func (r *MockTrackRepository) IncrementUnreadCount(ctx context.Context, trackID domain.TrackID, recipient domain.SenderRole) error {
+	track := r.Tracks[trackID]
+	if recipient == domain.RoleAdmin {
+		track.UnreadByAdminCount++
+	} else {
+		track.UnreadByTrackCount++
+	}
+	return nil
+}
+
+func (r *MockTrackRepository) ResetUnreadCount(ctx context.Context, trackID domain.TrackID, reader domain.SenderRole) error {
+	track := r.Tracks[trackID]
+	if reader == domain.RoleAdmin {
+		track.UnreadByAdminCount = 0
+	} else {
+		track.UnreadByTrackCount = 0
+	}
 	return nil
 }
 
@@ -479,6 +500,29 @@ func (r *MockMessageRepository) ListDirectByTrack(ctx context.Context, trackID d
 
 func (r *MockMessageRepository) ListMessageByTrack(ctx context.Context, trackID domain.TrackID) ([]*domain.Message, error) {
 	return r.ListDirectByTrack(ctx, trackID)
+}
+
+func (r *MockMessageRepository) ListMessageByTrackAfter(ctx context.Context, trackID domain.TrackID, after domain.Optional[time.Time]) ([]*domain.Message, error) {
+	messages, _ := r.ListMessageByTrack(ctx, trackID)
+	if value, ok := after.Value(); ok {
+		filtered := messages[:0]
+		for _, message := range messages {
+			if message.SentAt.After(value) {
+				filtered = append(filtered, message)
+			}
+		}
+		messages = filtered
+	}
+	return messages, nil
+}
+
+func (r *MockMessageRepository) MarkAllReadByRecipient(ctx context.Context, trackID domain.TrackID, recipient domain.SenderRole, readAt time.Time) error {
+	for _, message := range r.Messages {
+		if message.TrackID == trackID && message.SenderRole != recipient {
+			_ = message.MarkRead(readAt)
+		}
+	}
+	return nil
 }
 
 type MockAnnouncementRepository struct {

@@ -405,7 +405,7 @@ func (q *Queries) GetInProgressVisitByTrack(ctx context.Context, trackID string)
 }
 
 const getTrack = `-- name: GetTrack :one
-SELECT id, corner_id, track_no, status, pin_hash, pin_ciphertext, current_visit_id, deleted_at FROM tracks WHERE id = $1
+SELECT id, corner_id, track_no, status, pin_hash, pin_ciphertext, current_visit_id, deleted_at, unread_by_admin_count, unread_by_track_count FROM tracks WHERE id = $1
 `
 
 func (q *Queries) GetTrack(ctx context.Context, id string) (Track, error) {
@@ -420,6 +420,8 @@ func (q *Queries) GetTrack(ctx context.Context, id string) (Track, error) {
 		&i.PinCiphertext,
 		&i.CurrentVisitID,
 		&i.DeletedAt,
+		&i.UnreadByAdminCount,
+		&i.UnreadByTrackCount,
 	)
 	return i, err
 }
@@ -442,6 +444,23 @@ func (q *Queries) GetVisit(ctx context.Context, id string) (Visit, error) {
 		&i.EndedAt,
 	)
 	return i, err
+}
+
+const incrementTrackUnreadCount = `-- name: IncrementTrackUnreadCount :exec
+UPDATE tracks
+SET unread_by_admin_count = unread_by_admin_count + CASE WHEN $1::VARCHAR = 'ADMIN' THEN 1 ELSE 0 END,
+    unread_by_track_count = unread_by_track_count + CASE WHEN $1::VARCHAR = 'TRACK' THEN 1 ELSE 0 END
+WHERE id = $2
+`
+
+type IncrementTrackUnreadCountParams struct {
+	Recipient string `json:"recipient"`
+	TrackID   string `json:"track_id"`
+}
+
+func (q *Queries) IncrementTrackUnreadCount(ctx context.Context, arg IncrementTrackUnreadCountParams) error {
+	_, err := q.db.Exec(ctx, incrementTrackUnreadCount, arg.Recipient, arg.TrackID)
+	return err
 }
 
 const listActiveFacilitatorSessionsByCamp = `-- name: ListActiveFacilitatorSessionsByCamp :many
@@ -508,7 +527,7 @@ func (q *Queries) ListActiveFacilitatorSessionsByTrack(ctx context.Context, trac
 }
 
 const listActiveTracksByCamp = `-- name: ListActiveTracksByCamp :many
-SELECT t.id, t.corner_id, t.track_no, t.status, t.pin_hash, t.pin_ciphertext, t.current_visit_id, t.deleted_at FROM tracks t
+SELECT t.id, t.corner_id, t.track_no, t.status, t.pin_hash, t.pin_ciphertext, t.current_visit_id, t.deleted_at, t.unread_by_admin_count, t.unread_by_track_count FROM tracks t
 JOIN corners c ON t.corner_id = c.id
 WHERE c.camp_id = $1 AND t.status = 'ACTIVE'
 `
@@ -531,6 +550,8 @@ func (q *Queries) ListActiveTracksByCamp(ctx context.Context, campID string) ([]
 			&i.PinCiphertext,
 			&i.CurrentVisitID,
 			&i.DeletedAt,
+			&i.UnreadByAdminCount,
+			&i.UnreadByTrackCount,
 		); err != nil {
 			return nil, err
 		}
@@ -921,7 +942,7 @@ func (q *Queries) ListGroupsByCamp(ctx context.Context, campID string) ([]Group,
 }
 
 const listMessagesByTrack = `-- name: ListMessagesByTrack :many
-SELECT id, track_id, sender_role, content, sent_at FROM messages WHERE track_id = $1 ORDER BY sent_at
+SELECT id, track_id, sender_role, content, sent_at, read_at FROM messages WHERE track_id = $1 ORDER BY sent_at
 `
 
 func (q *Queries) ListMessagesByTrack(ctx context.Context, trackID string) ([]Message, error) {
@@ -939,6 +960,46 @@ func (q *Queries) ListMessagesByTrack(ctx context.Context, trackID string) ([]Me
 			&i.SenderRole,
 			&i.Content,
 			&i.SentAt,
+			&i.ReadAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listMessagesByTrackAfter = `-- name: ListMessagesByTrackAfter :many
+SELECT id, track_id, sender_role, content, sent_at, read_at FROM messages
+WHERE track_id = $1
+  AND ($2::TIMESTAMPTZ IS NULL OR sent_at > $2::TIMESTAMPTZ)
+ORDER BY sent_at
+`
+
+type ListMessagesByTrackAfterParams struct {
+	TrackID string             `json:"track_id"`
+	After   pgtype.Timestamptz `json:"after"`
+}
+
+func (q *Queries) ListMessagesByTrackAfter(ctx context.Context, arg ListMessagesByTrackAfterParams) ([]Message, error) {
+	rows, err := q.db.Query(ctx, listMessagesByTrackAfter, arg.TrackID, arg.After)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Message
+	for rows.Next() {
+		var i Message
+		if err := rows.Scan(
+			&i.ID,
+			&i.TrackID,
+			&i.SenderRole,
+			&i.Content,
+			&i.SentAt,
+			&i.ReadAt,
 		); err != nil {
 			return nil, err
 		}
@@ -984,7 +1045,7 @@ func (q *Queries) ListPendingDeviceRegistrationsByCamp(ctx context.Context, camp
 }
 
 const listTracksByCamp = `-- name: ListTracksByCamp :many
-SELECT t.id, t.corner_id, t.track_no, t.status, t.pin_hash, t.pin_ciphertext, t.current_visit_id, t.deleted_at FROM tracks t
+SELECT t.id, t.corner_id, t.track_no, t.status, t.pin_hash, t.pin_ciphertext, t.current_visit_id, t.deleted_at, t.unread_by_admin_count, t.unread_by_track_count FROM tracks t
 JOIN corners c ON t.corner_id = c.id
 WHERE c.camp_id = $1
 `
@@ -1007,6 +1068,8 @@ func (q *Queries) ListTracksByCamp(ctx context.Context, campID string) ([]Track,
 			&i.PinCiphertext,
 			&i.CurrentVisitID,
 			&i.DeletedAt,
+			&i.UnreadByAdminCount,
+			&i.UnreadByTrackCount,
 		); err != nil {
 			return nil, err
 		}
@@ -1019,7 +1082,7 @@ func (q *Queries) ListTracksByCamp(ctx context.Context, campID string) ([]Track,
 }
 
 const listTracksByCorner = `-- name: ListTracksByCorner :many
-SELECT id, corner_id, track_no, status, pin_hash, pin_ciphertext, current_visit_id, deleted_at FROM tracks WHERE corner_id = $1
+SELECT id, corner_id, track_no, status, pin_hash, pin_ciphertext, current_visit_id, deleted_at, unread_by_admin_count, unread_by_track_count FROM tracks WHERE corner_id = $1
 `
 
 func (q *Queries) ListTracksByCorner(ctx context.Context, cornerID string) ([]Track, error) {
@@ -1040,6 +1103,8 @@ func (q *Queries) ListTracksByCorner(ctx context.Context, cornerID string) ([]Tr
 			&i.PinCiphertext,
 			&i.CurrentVisitID,
 			&i.DeletedAt,
+			&i.UnreadByAdminCount,
+			&i.UnreadByTrackCount,
 		); err != nil {
 			return nil, err
 		}
@@ -1133,6 +1198,42 @@ func (q *Queries) ListVisitsByGroup(ctx context.Context, groupID string) ([]Visi
 		return nil, err
 	}
 	return items, nil
+}
+
+const markAllMessagesReadByRecipient = `-- name: MarkAllMessagesReadByRecipient :exec
+UPDATE messages
+SET read_at = COALESCE(read_at, $1::TIMESTAMPTZ)
+WHERE track_id = $2
+  AND sender_role <> $3::VARCHAR
+  AND read_at IS NULL
+`
+
+type MarkAllMessagesReadByRecipientParams struct {
+	ReadAt    pgtype.Timestamptz `json:"read_at"`
+	TrackID   string             `json:"track_id"`
+	Recipient string             `json:"recipient"`
+}
+
+func (q *Queries) MarkAllMessagesReadByRecipient(ctx context.Context, arg MarkAllMessagesReadByRecipientParams) error {
+	_, err := q.db.Exec(ctx, markAllMessagesReadByRecipient, arg.ReadAt, arg.TrackID, arg.Recipient)
+	return err
+}
+
+const resetTrackUnreadCount = `-- name: ResetTrackUnreadCount :exec
+UPDATE tracks
+SET unread_by_admin_count = CASE WHEN $1::VARCHAR = 'ADMIN' THEN 0 ELSE unread_by_admin_count END,
+    unread_by_track_count = CASE WHEN $1::VARCHAR = 'TRACK' THEN 0 ELSE unread_by_track_count END
+WHERE id = $2
+`
+
+type ResetTrackUnreadCountParams struct {
+	Reader  string `json:"reader"`
+	TrackID string `json:"track_id"`
+}
+
+func (q *Queries) ResetTrackUnreadCount(ctx context.Context, arg ResetTrackUnreadCountParams) error {
+	_, err := q.db.Exec(ctx, resetTrackUnreadCount, arg.Reader, arg.TrackID)
+	return err
 }
 
 const saveAdminSession = `-- name: SaveAdminSession :exec
@@ -1424,8 +1525,8 @@ func (q *Queries) SaveGroup(ctx context.Context, arg SaveGroupParams) error {
 }
 
 const saveMessage = `-- name: SaveMessage :exec
-INSERT INTO messages (id, track_id, sender_role, content, sent_at)
-VALUES ($1, $2, $3, $4, $5)
+INSERT INTO messages (id, track_id, sender_role, content, sent_at, read_at)
+VALUES ($1, $2, $3, $4, $5, $6)
 `
 
 type SaveMessageParams struct {
@@ -1434,6 +1535,7 @@ type SaveMessageParams struct {
 	SenderRole string             `json:"sender_role"`
 	Content    string             `json:"content"`
 	SentAt     pgtype.Timestamptz `json:"sent_at"`
+	ReadAt     pgtype.Timestamptz `json:"read_at"`
 }
 
 func (q *Queries) SaveMessage(ctx context.Context, arg SaveMessageParams) error {
@@ -1443,30 +1545,35 @@ func (q *Queries) SaveMessage(ctx context.Context, arg SaveMessageParams) error 
 		arg.SenderRole,
 		arg.Content,
 		arg.SentAt,
+		arg.ReadAt,
 	)
 	return err
 }
 
 const saveTrack = `-- name: SaveTrack :exec
-INSERT INTO tracks (id, corner_id, track_no, status, pin_hash, pin_ciphertext, current_visit_id, deleted_at)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+INSERT INTO tracks (id, corner_id, track_no, status, pin_hash, pin_ciphertext, current_visit_id, deleted_at, unread_by_admin_count, unread_by_track_count)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 ON CONFLICT (id) DO UPDATE SET
     status = EXCLUDED.status,
     pin_hash = EXCLUDED.pin_hash,
     pin_ciphertext = EXCLUDED.pin_ciphertext,
     current_visit_id = EXCLUDED.current_visit_id,
-    deleted_at = EXCLUDED.deleted_at
+    deleted_at = EXCLUDED.deleted_at,
+    unread_by_admin_count = EXCLUDED.unread_by_admin_count,
+    unread_by_track_count = EXCLUDED.unread_by_track_count
 `
 
 type SaveTrackParams struct {
-	ID             string             `json:"id"`
-	CornerID       string             `json:"corner_id"`
-	TrackNo        int32              `json:"track_no"`
-	Status         string             `json:"status"`
-	PinHash        string             `json:"pin_hash"`
-	PinCiphertext  pgtype.Text        `json:"pin_ciphertext"`
-	CurrentVisitID pgtype.Text        `json:"current_visit_id"`
-	DeletedAt      pgtype.Timestamptz `json:"deleted_at"`
+	ID                 string             `json:"id"`
+	CornerID           string             `json:"corner_id"`
+	TrackNo            int32              `json:"track_no"`
+	Status             string             `json:"status"`
+	PinHash            string             `json:"pin_hash"`
+	PinCiphertext      pgtype.Text        `json:"pin_ciphertext"`
+	CurrentVisitID     pgtype.Text        `json:"current_visit_id"`
+	DeletedAt          pgtype.Timestamptz `json:"deleted_at"`
+	UnreadByAdminCount int32              `json:"unread_by_admin_count"`
+	UnreadByTrackCount int32              `json:"unread_by_track_count"`
 }
 
 func (q *Queries) SaveTrack(ctx context.Context, arg SaveTrackParams) error {
@@ -1479,6 +1586,8 @@ func (q *Queries) SaveTrack(ctx context.Context, arg SaveTrackParams) error {
 		arg.PinCiphertext,
 		arg.CurrentVisitID,
 		arg.DeletedAt,
+		arg.UnreadByAdminCount,
+		arg.UnreadByTrackCount,
 	)
 	return err
 }
