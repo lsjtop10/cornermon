@@ -13,6 +13,11 @@ type CornerHandler struct {
 	svc *usecase.CornerService
 }
 
+type CornerMatricResponse struct {
+	AvgDurationSeconds int `json:"avgDurationSeconds" example:"640"`
+	SampleCount        int `json:"sampleCount" example:"15"`
+} // @name CornerMatricResponse
+
 type CornerResponse struct {
 	ID            string                 `json:"id" format:"uuid"`
 	Name          string                 `json:"name" example:"코너 1"`
@@ -20,6 +25,8 @@ type CornerResponse struct {
 	Status        string                 `json:"status" enums:"INACTIVE,IDLE,BUSY"`
 	IsBottleneck  bool                   `json:"isBottleneck"`
 	ActiveTracks  []TrackSummaryResponse `json:"activeTracks"`
+
+	Matric CornerMatricResponse `json:"cornerMatric"`
 } // @name CornerResponse
 
 func NewCornerHandler(svc *usecase.CornerService) *CornerHandler {

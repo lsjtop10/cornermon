@@ -37,6 +37,7 @@ func (s *MessageService) SendDirect(ctx context.Context, trackID domain.TrackID,
 		s.recordAuditLog(ctx, string(trackID), "MESSAGE_DIRECT", "", false, map[string]any{"error": err.Error()})
 		return nil, err
 	}
+
 	corner, err := s.corners.Get(ctx, track.CornerID)
 	if err != nil {
 		return nil, err
@@ -44,6 +45,7 @@ func (s *MessageService) SendDirect(ctx context.Context, trackID domain.TrackID,
 	if corner == nil {
 		return nil, domain.ErrCornerNotInItinerary
 	}
+
 	s.recordAuditLog(ctx, string(trackID), "MESSAGE_DIRECT", string(msg.ID), true, map[string]any{"trackID": string(trackID)})
 	_ = s.broadcaster.Broadcast(ctx, corner.CampID, EventMessagesChanged, TrackScope(trackID))
 	return msg, nil

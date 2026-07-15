@@ -421,6 +421,55 @@ const docTemplate = `{
                 }
             }
         },
+        "/auth/track/sessions": {
+            "get": {
+                "security": [
+                    {
+                        "AdminAuth": []
+                    }
+                ],
+                "description": "캠프 내 취소되지 않은(active) 진행자 세션 목록을 조회한다.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "A. Auth \u0026 Device Trust"
+                ],
+                "summary": "활성 진행자 세션 목록 조회",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "캠프 ID",
+                        "name": "campId",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/FacilitatorSessionResponse"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "501": {
+                        "description": "구현 예정 (GitHub Issue #70)",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/auth/track/{trackId}/force-logout": {
             "post": {
                 "security": [
@@ -1544,6 +1593,55 @@ const docTemplate = `{
                 }
             }
         },
+        "/device-registrations/locked": {
+            "get": {
+                "security": [
+                    {
+                        "AdminAuth": []
+                    }
+                ],
+                "description": "캠프 내 PIN 연속 실패로 잠금된(APPROVED, LockedUntil이 미래) 기기 목록을 조회한다.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "A. Auth \u0026 Device Trust"
+                ],
+                "summary": "잠금 기기 목록 조회",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "캠프 ID",
+                        "name": "campId",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/DeviceRegistrationResponse"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "501": {
+                        "description": "구현 예정 (GitHub Issue #70)",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/device-registrations/me": {
             "get": {
                 "description": "미승인(PENDING) 기기가 자신의 승인 상태를 확인하기 위해 호출한다.",
@@ -2186,17 +2284,17 @@ const docTemplate = `{
             "get": {
                 "security": [
                     {
-                        "AdminAuth": []
+                        "TrackAuth": []
                     }
                 ],
-                "description": "관리자 또는 트랙 진행자가 해당 트랙과 관련된 DIRECT 메시지 내역을 조회한다.",
+                "description": "트랙 진행자가 자신의 트랙과 관련된 DIRECT 메시지 내역을 조회한다(GitHub Issue #69, 구현 예정).",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "E. Message"
                 ],
-                "summary": "트랙별 메시지 내역 조회",
+                "summary": "트랙별 메시지 내역 조회 (진행자)",
                 "parameters": [
                     {
                         "type": "string",
@@ -2204,6 +2302,18 @@ const docTemplate = `{
                         "name": "trackId",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "true면 상대측이 보낸 미확인 메시지를 읽음 처리",
+                        "name": "background",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "RFC3339 UTC 이후 메시지만 반환",
+                        "name": "after",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -2214,6 +2324,12 @@ const docTemplate = `{
                             "items": {
                                 "$ref": "#/definitions/MessageResponse"
                             }
+                        }
+                    },
+                    "501": {
+                        "description": "구현 예정 (GitHub Issue #69)",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -2258,6 +2374,41 @@ const docTemplate = `{
                         "description": "Created",
                         "schema": {
                             "$ref": "#/definitions/MessageResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/tracks/{trackId}/messages/unread-count": {
+            "get": {
+                "description": "호출자(관리자 또는 진행자) 기준으로 상대측이 보낸 미확인 메시지 개수를 반환한다(GitHub Issue #69, 구현 예정).",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "E. Message"
+                ],
+                "summary": "트랙 미확인 다이렉트 메시지 개수 조회",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "트랙 ID",
+                        "name": "trackId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/UnreadCountResponse"
+                        }
+                    },
+                    "501": {
+                        "description": "구현 예정 (GitHub Issue #69)",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -2738,6 +2889,19 @@ const docTemplate = `{
                 }
             }
         },
+        "CornerMatricResponse": {
+            "type": "object",
+            "properties": {
+                "avgDurationSeconds": {
+                    "type": "integer",
+                    "example": 640
+                },
+                "sampleCount": {
+                    "type": "integer",
+                    "example": 15
+                }
+            }
+        },
         "CornerProgressResponse": {
             "type": "object",
             "properties": {
@@ -2766,6 +2930,9 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/TrackSummaryResponse"
                     }
+                },
+                "cornerMatric": {
+                    "$ref": "#/definitions/CornerMatricResponse"
                 },
                 "id": {
                     "type": "string",
@@ -2883,9 +3050,16 @@ const docTemplate = `{
                     "type": "string",
                     "example": "iPad Pro #3"
                 },
+                "failedPinAttempts": {
+                    "type": "integer"
+                },
                 "id": {
                     "type": "string",
                     "format": "uuid"
+                },
+                "lockedUntil": {
+                    "type": "string",
+                    "format": "date-time"
                 },
                 "status": {
                     "type": "string",
@@ -2942,6 +3116,23 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/TrackPinResponse"
                     }
+                }
+            }
+        },
+        "FacilitatorSessionResponse": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time"
+                },
+                "id": {
+                    "type": "string",
+                    "format": "uuid"
+                },
+                "trackId": {
+                    "type": "string",
+                    "format": "uuid"
                 }
             }
         },
@@ -3220,6 +3411,14 @@ const docTemplate = `{
                     ]
                 },
                 "trackNo": {
+                    "type": "integer"
+                }
+            }
+        },
+        "UnreadCountResponse": {
+            "type": "object",
+            "properties": {
+                "unreadCount": {
                     "type": "integer"
                 }
             }

@@ -236,11 +236,14 @@ func (h *MessageHandler) SendDirect(c echo.Context) error {
 }
 
 // @Summary      트랙별 메시지 내역 조회
-// @Description  관리자 또는 트랙 진행자가 해당 트랙과 관련된 DIRECT 메시지 내역을 조회한다.
+// @Description  관리자가 해당 트랙과 관련된 DIRECT 메시지 내역을 조회한다. background/after 파라미터는
+// @Description  계약상 정의되어 있으나 아직 동작하지 않는다(GitHub Issue #69, 구현 예정).
 // @Tags         E. Message
 // @Security     AdminAuth
 // @Produce      json
 // @Param        trackId path string true "트랙 ID"
+// @Param        background query bool false "true면 상대측이 보낸 미확인 메시지를 읽음 처리 (구현 예정)"
+// @Param        after query string false "RFC3339 UTC 이후 메시지만 반환 (구현 예정)"
 // @Success      200 {array} MessageResponse
 // @Router       /tracks/{trackId}/messages [get]
 func (h *MessageHandler) ListDirectMessages(c echo.Context) error {
@@ -269,4 +272,35 @@ func (h *MessageHandler) ListDirectMessages(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, res)
+}
+
+// @Summary      트랙별 메시지 내역 조회 (진행자)
+// @Description  트랙 진행자가 자신의 트랙과 관련된 DIRECT 메시지 내역을 조회한다(GitHub Issue #69, 구현 예정).
+// @Tags         E. Message
+// @Security     TrackAuth
+// @Produce      json
+// @Param        trackId path string true "트랙 ID"
+// @Param        background query bool false "true면 상대측이 보낸 미확인 메시지를 읽음 처리"
+// @Param        after query string false "RFC3339 UTC 이후 메시지만 반환"
+// @Success      200 {array} MessageResponse
+// @Failure      501 {object} ErrorResponse "구현 예정 (GitHub Issue #69)"
+// @Router       /tracks/{trackId}/messages [get]
+func (h *MessageHandler) ListDirectMessagesForTrack(c echo.Context) error {
+	return c.JSON(http.StatusNotImplemented, ErrorResponse{Code: "NOT_IMPLEMENTED", Message: "진행자용 메시지 조회는 아직 구현되지 않았습니다"})
+}
+
+type UnreadCountResponse struct {
+	UnreadCount int `json:"unreadCount"`
+} // @name UnreadCountResponse
+
+// @Summary      트랙 미확인 다이렉트 메시지 개수 조회
+// @Description  호출자(관리자 또는 진행자) 기준으로 상대측이 보낸 미확인 메시지 개수를 반환한다(GitHub Issue #69, 구현 예정).
+// @Tags         E. Message
+// @Produce      json
+// @Param        trackId path string true "트랙 ID"
+// @Success      200 {object} UnreadCountResponse
+// @Failure      501 {object} ErrorResponse "구현 예정 (GitHub Issue #69)"
+// @Router       /tracks/{trackId}/messages/unread-count [get]
+func (h *MessageHandler) GetUnreadCount(c echo.Context) error {
+	return c.JSON(http.StatusNotImplemented, ErrorResponse{Code: "NOT_IMPLEMENTED", Message: "미확인 메시지 개수 조회는 아직 구현되지 않았습니다"})
 }
