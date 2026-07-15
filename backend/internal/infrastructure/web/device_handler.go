@@ -24,11 +24,13 @@ type DeviceHandler struct {
 }
 
 type DeviceRegistrationResponse struct {
-	ID         string     `json:"id" format:"uuid"`
-	DeviceName string     `json:"deviceName" example:"iPad Pro #3"`
-	Status     string     `json:"status" enums:"PENDING,APPROVED,REJECTED,REVOKED"`
-	CreatedAt  time.Time  `json:"createdAt" format:"date-time"`
-	ApprovedAt *time.Time `json:"approvedAt,omitempty" format:"date-time"`
+	ID                string     `json:"id" format:"uuid"`
+	DeviceName        string     `json:"deviceName" example:"iPad Pro #3"`
+	Status            string     `json:"status" enums:"PENDING,APPROVED,REJECTED,REVOKED"`
+	CreatedAt         time.Time  `json:"createdAt" format:"date-time"`
+	ApprovedAt        *time.Time `json:"approvedAt,omitempty" format:"date-time"`
+	FailedPinAttempts int        `json:"failedPinAttempts"`
+	LockedUntil       *time.Time `json:"lockedUntil,omitempty" format:"date-time"`
 } // @name DeviceRegistrationResponse
 
 func NewDeviceHandler(deviceTrust DeviceTrustUsecase) *DeviceHandler {
@@ -97,11 +99,12 @@ func (h *DeviceHandler) RequestRegistration(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusCreated, DeviceRegistrationResponse{
-		ID:         string(reg.ID),
-		DeviceName: reg.DeviceName,
-		Status:     string(reg.Status),
-		CreatedAt:  time.Now(),
-		ApprovedAt: approvedAt,
+		ID:                string(reg.ID),
+		DeviceName:        reg.DeviceName,
+		Status:            string(reg.Status),
+		CreatedAt:         time.Now(),
+		ApprovedAt:        approvedAt,
+		FailedPinAttempts: reg.FailedPinAttempts,
 	})
 }
 
@@ -137,16 +140,40 @@ func (h *DeviceHandler) ListRegistrations(c echo.Context) error {
 			t, _ := d.ApprovedAt.Value()
 			approvedAt = &t
 		}
+		var lockedUntil *time.Time
+		if d.LockedUntil.IsSet() {
+			t, _ := d.LockedUntil.Value()
+			lockedUntil = &t
+		}
 		res[i] = DeviceRegistrationResponse{
-			ID:         string(d.ID),
-			DeviceName: d.DeviceName,
-			Status:     string(d.Status),
-			CreatedAt:  time.Now(),
-			ApprovedAt: approvedAt,
+			ID:                string(d.ID),
+			DeviceName:        d.DeviceName,
+			Status:            string(d.Status),
+			CreatedAt:         time.Now(),
+			ApprovedAt:        approvedAt,
+			FailedPinAttempts: d.FailedPinAttempts,
+			LockedUntil:       lockedUntil,
 		}
 	}
 
 	return c.JSON(http.StatusOK, res)
+}
+
+// @Summary      잠금 기기 목록 조회
+// @Description  캠프 내 PIN 연속 실패로 잠금된(APPROVED, LockedUntil이 미래) 기기 목록을 조회한다.
+// @Tags         A. Auth & Device Trust
+// @Security     AdminAuth
+// @Produce      json
+// @Param        campId query string true "캠프 ID"
+// @Success      200 {array} DeviceRegistrationResponse
+// @Failure      400 {object} ErrorResponse
+// @Failure      501 {object} ErrorResponse "구현 예정 (GitHub Issue #70)"
+// @Router       /device-registrations/locked [get]
+func (h *DeviceHandler) ListLockedDevices(c echo.Context) error {
+	if c.QueryParam("campId") == "" {
+		return c.JSON(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: "missing campId"})
+	}
+	return c.JSON(http.StatusNotImplemented, ErrorResponse{Code: "NOT_IMPLEMENTED", Message: "잠금 기기 목록 조회는 아직 구현되지 않았습니다"})
 }
 
 // @Summary      기기 승인

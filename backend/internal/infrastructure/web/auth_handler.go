@@ -194,6 +194,29 @@ func (h *AuthHandler) ListAdminSessions(c echo.Context) error {
 	return c.JSON(http.StatusOK, res)
 }
 
+type FacilitatorSessionResponse struct {
+	ID        string    `json:"id" format:"uuid"`
+	TrackID   string    `json:"trackId" format:"uuid"`
+	CreatedAt time.Time `json:"createdAt" format:"date-time"`
+} // @name FacilitatorSessionResponse
+
+// @Summary      활성 진행자 세션 목록 조회
+// @Description  캠프 내 취소되지 않은(active) 진행자 세션 목록을 조회한다.
+// @Tags         A. Auth & Device Trust
+// @Security     AdminAuth
+// @Produce      json
+// @Param        campId query string true "캠프 ID"
+// @Success      200 {array} FacilitatorSessionResponse
+// @Failure      400 {object} ErrorResponse
+// @Failure      501 {object} ErrorResponse "구현 예정 (GitHub Issue #70)"
+// @Router       /auth/track/sessions [get]
+func (h *AuthHandler) ListActiveFacilitatorSessions(c echo.Context) error {
+	if c.QueryParam("campId") == "" {
+		return c.JSON(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: "missing campId"})
+	}
+	return c.JSON(http.StatusNotImplemented, ErrorResponse{Code: "NOT_IMPLEMENTED", Message: "활성 세션 목록 조회는 아직 구현되지 않았습니다"})
+}
+
 // @Summary      관리자 세션 강제 종료
 // @Description  특정 관리자 세션을 강제 만료 처리한다.
 // @Tags         A. Auth & Device Trust

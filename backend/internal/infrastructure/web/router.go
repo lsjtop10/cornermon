@@ -42,8 +42,10 @@ func RegisterRoutes(e *echo.Echo, h *Handlers, adminAuth AuthAdminUsecase, track
 	admin.POST("/auth/admin/sessions/:id/revoke", h.Auth.RevokeAdminSession)
 	admin.POST("/auth/track/:trackId/force-logout", h.Auth.ForceTrackLogout)
 	admin.POST("/auth/track/lockout/:deviceId/release", h.Auth.ReleaseLockout)
+	admin.GET("/auth/track/sessions", h.Auth.ListActiveFacilitatorSessions)
 
 	admin.GET("/device-registrations", h.Device.ListRegistrations)
+	admin.GET("/device-registrations/locked", h.Device.ListLockedDevices)
 	admin.POST("/device-registrations/:id/approve", h.Device.ApproveDevice)
 	admin.POST("/device-registrations/:id/reject", h.Device.RejectDevice)
 	admin.POST("/device-registrations/:id/revoke", h.Device.RevokeDevice)
@@ -111,6 +113,7 @@ func RegisterRoutes(e *echo.Echo, h *Handlers, adminAuth AuthAdminUsecase, track
 		admin.GET("/messages/broadcast/:id/receipts", h.Message.GetBroadcastReceipts)
 		admin.POST("/tracks/:trackId/messages", h.Message.SendDirect)
 		admin.GET("/tracks/:trackId/messages", h.Message.ListDirectMessages)
+		admin.GET("/tracks/:trackId/messages/unread-count", h.Message.GetUnreadCount)
 	}
 
 	// ── F. Events (Admin) ──
@@ -139,6 +142,8 @@ func RegisterRoutes(e *echo.Echo, h *Handlers, adminAuth AuthAdminUsecase, track
 		track.POST("/messages/broadcast/:id/read", h.Message.ReadBroadcast)
 		// Track can also send/get direct messages
 		track.POST("/tracks/:trackId/messages/from-track", h.Message.SendDirect)
+		track.GET("/tracks/:trackId/messages", h.Message.ListDirectMessagesForTrack)
+		track.GET("/tracks/:trackId/messages/unread-count", h.Message.GetUnreadCount)
 	}
 
 	if h.Event != nil {
