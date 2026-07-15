@@ -977,10 +977,6 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/ErrorResponse'
-        "501":
-          description: '구현 예정 (GitHub Issue #70)'
-          schema:
-            $ref: '#/definitions/ErrorResponse'
       security:
       - AdminAuth: []
       summary: 활성 진행자 세션 목록 조회
@@ -1754,10 +1750,6 @@ paths:
             type: array
         "400":
           description: Bad Request
-          schema:
-            $ref: '#/definitions/ErrorResponse'
-        "501":
-          description: '구현 예정 (GitHub Issue #70)'
           schema:
             $ref: '#/definitions/ErrorResponse'
       security:

@@ -24,6 +24,7 @@ type FacilitatorAuthUsecase interface {
 	Login(ctx context.Context, deviceToken, pin string) (*usecase.TrackLoginResult, error)
 	Logout(ctx context.Context, sessionID domain.FacilitatorSessionID) error
 	MigrateSession(ctx context.Context, oldSessionToken string) (*usecase.TrackLoginResult, error)
+	ListActiveSessions(ctx context.Context, campID domain.CampID) ([]*domain.FacilitatorSession, error)
 }
 
 type AuthDeviceTrustUsecase interface {
@@ -208,13 +209,21 @@ type FacilitatorSessionResponse struct {
 // @Param        campId query string true "캠프 ID"
 // @Success      200 {array} FacilitatorSessionResponse
 // @Failure      400 {object} ErrorResponse
-// @Failure      501 {object} ErrorResponse "구현 예정 (GitHub Issue #70)"
 // @Router       /auth/track/sessions [get]
 func (h *AuthHandler) ListActiveFacilitatorSessions(c echo.Context) error {
-	if c.QueryParam("campId") == "" {
+	campID := c.QueryParam("campId")
+	if campID == "" {
 		return c.JSON(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: "missing campId"})
 	}
-	return c.JSON(http.StatusNotImplemented, ErrorResponse{Code: "NOT_IMPLEMENTED", Message: "활성 세션 목록 조회는 아직 구현되지 않았습니다"})
+	sessions, err := h.facilitatorAuth.ListActiveSessions(c.Request().Context(), domain.CampID(campID))
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()})
+	}
+	res := make([]FacilitatorSessionResponse, len(sessions))
+	for i, session := range sessions {
+		res[i] = FacilitatorSessionResponse{ID: string(session.ID), TrackID: string(session.TrackID), CreatedAt: session.CreatedAt}
+	}
+	return c.JSON(http.StatusOK, res)
 }
 
 // @Summary      관리자 세션 강제 종료

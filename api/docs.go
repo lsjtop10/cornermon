@@ -460,12 +460,6 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/ErrorResponse"
                         }
-                    },
-                    "501": {
-                        "description": "구현 예정 (GitHub Issue #70)",
-                        "schema": {
-                            "$ref": "#/definitions/ErrorResponse"
-                        }
                     }
                 }
             }
@@ -1629,12 +1623,6 @@ const docTemplate = `{
                     },
                     "400": {
                         "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/ErrorResponse"
-                        }
-                    },
-                    "501": {
-                        "description": "구현 예정 (GitHub Issue #70)",
                         "schema": {
                             "$ref": "#/definitions/ErrorResponse"
                         }
