@@ -1581,7 +1581,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/DeviceRegistrationResponse"
+                            "$ref": "#/definitions/DeviceRegistrationCreatedResponse"
                         }
                     }
                 }
@@ -1647,8 +1647,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/DeviceStatusResponse"
                         }
                     }
                 }
@@ -3015,6 +3014,47 @@ const docTemplate = `{
                 }
             }
         },
+        "DeviceRegistrationCreatedResponse": {
+            "type": "object",
+            "properties": {
+                "approvedAt": {
+                    "type": "string",
+                    "format": "date-time"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time"
+                },
+                "deviceName": {
+                    "type": "string",
+                    "example": "iPad Pro #3"
+                },
+                "deviceToken": {
+                    "type": "string",
+                    "example": "a1b2c3..."
+                },
+                "failedPinAttempts": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "string",
+                    "format": "uuid"
+                },
+                "lockedUntil": {
+                    "type": "string",
+                    "format": "date-time"
+                },
+                "status": {
+                    "type": "string",
+                    "enum": [
+                        "PENDING",
+                        "APPROVED",
+                        "REJECTED",
+                        "REVOKED"
+                    ]
+                }
+            }
+        },
         "DeviceRegistrationRequest": {
             "type": "object",
             "properties": {
@@ -3060,6 +3100,20 @@ const docTemplate = `{
                     "type": "string",
                     "format": "date-time"
                 },
+                "status": {
+                    "type": "string",
+                    "enum": [
+                        "PENDING",
+                        "APPROVED",
+                        "REJECTED",
+                        "REVOKED"
+                    ]
+                }
+            }
+        },
+        "DeviceStatusResponse": {
+            "type": "object",
+            "properties": {
                 "status": {
                     "type": "string",
                     "enum": [
