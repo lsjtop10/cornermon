@@ -8,8 +8,8 @@ package web
 
 // @securityDefinitions.apikey TrustedDeviceAuth
 // @in header
-// @name Authorization
-// @description 관리자 승인된 기기 신뢰 토큰 (TRUSTED_DEVICE)
+// @name X-Device-Token
+// @description 관리자 승인된 기기 신뢰 토큰 (TRUSTED_DEVICE) — opaque token, 값을 그대로 전달
 
 // @securityDefinitions.apikey TrackAuth
 // @in header
