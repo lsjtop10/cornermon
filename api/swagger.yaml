@@ -1152,7 +1152,7 @@ paths:
       - B. Resource Management (Admin)
   /camps/{campId}/corners:
     get:
-      description: 특정 캠프의 모든 코너 목록을 조회한다.
+      description: 특정 캠프의 모든 코너 핵심 정보와 완료 방문 지표를 조회한다.
       parameters:
       - description: 캠프 ID
         in: path
@@ -1576,7 +1576,7 @@ paths:
       tags:
       - B. Resource Management (Admin)
     get:
-      description: 특정 코너 정보를 조회한다.
+      description: 특정 코너의 핵심 정보와 완료 방문 지표를 조회한다.
       parameters:
       - description: 코너 ID
         in: path

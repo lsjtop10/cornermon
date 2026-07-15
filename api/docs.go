@@ -771,7 +771,7 @@ const docTemplate = `{
                         "AdminAuth": []
                     }
                 ],
-                "description": "특정 캠프의 모든 코너 목록을 조회한다.",
+                "description": "특정 캠프의 모든 코너 핵심 정보와 완료 방문 지표를 조회한다.",
                 "produces": [
                     "application/json"
                 ],
@@ -1459,7 +1459,7 @@ const docTemplate = `{
                         "AdminAuth": []
                     }
                 ],
-                "description": "특정 코너 정보를 조회한다.",
+                "description": "특정 코너의 핵심 정보와 완료 방문 지표를 조회한다.",
                 "produces": [
                     "application/json"
                 ],
