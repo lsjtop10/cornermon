@@ -355,6 +355,13 @@
                 "summary": "진행자 트랙 PIN 로그인",
                 "parameters": [
                     {
+                        "type": "string",
+                        "description": "기기 신뢰 토큰 (opaque token, 값을 그대로 전달)",
+                        "name": "X-Device-Token",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
                         "description": "6자리 숫자 트랙 PIN",
                         "name": "request",
                         "in": "body",
@@ -2922,7 +2929,7 @@
                         "$ref": "#/definitions/TrackSummaryResponse"
                     }
                 },
-                "campID": {
+                "campId": {
                     "type": "string",
                     "format": "uuid"
                 },
@@ -3594,9 +3601,9 @@
             "in": "header"
         },
         "TrustedDeviceAuth": {
-            "description": "관리자 승인된 기기 신뢰 토큰 (TRUSTED_DEVICE)",
+            "description": "관리자 승인된 기기 신뢰 토큰 (TRUSTED_DEVICE) — opaque token, 값을 그대로 전달",
             "type": "apiKey",
-            "name": "Authorization",
+            "name": "X-Device-Token",
             "in": "header"
         }
     }

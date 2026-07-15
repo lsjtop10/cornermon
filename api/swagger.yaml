@@ -260,7 +260,7 @@ definitions:
         items:
           $ref: '#/definitions/TrackSummaryResponse'
         type: array
-      campID:
+      campId:
         format: uuid
         type: string
       cornerMetric:
@@ -955,6 +955,11 @@ paths:
       - application/json
       description: 신뢰 기기에서 트랙 PIN 으로 로그인하여 트랙 세션 토큰을 발급받는다.
       parameters:
+      - description: 기기 신뢰 토큰 (opaque token, 값을 그대로 전달)
+        in: header
+        name: X-Device-Token
+        required: true
+        type: string
       - description: 6자리 숫자 트랙 PIN
         in: body
         name: request
@@ -2323,8 +2328,8 @@ securityDefinitions:
     name: Authorization
     type: apiKey
   TrustedDeviceAuth:
-    description: 관리자 승인된 기기 신뢰 토큰 (TRUSTED_DEVICE)
+    description: 관리자 승인된 기기 신뢰 토큰 (TRUSTED_DEVICE) — opaque token, 값을 그대로 전달
     in: header
-    name: Authorization
+    name: X-Device-Token
     type: apiKey
 swagger: "2.0"
