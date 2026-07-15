@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:cornermon/shared/api/domain_aliases.dart';
 import 'package:cornermon/shared/api/ids.dart';
 import 'package:cornermon/shared/api/providers/group_providers.dart';
 import 'package:cornermon/shared/api/providers/visit_providers.dart';
@@ -17,7 +18,7 @@ class _FakeVisitScanFlowApi extends CVisitScanFlowApi {
   VisitSummary? endVisitData;
 
   String? capturedTrackId;
-  TracksTrackIdVisitsStartPostRequest? capturedStartRequest;
+  VisitStartRequest? capturedStartRequest;
 
   @override
   Future<Response<VisitSummary>> tracksTrackIdVisitsCurrentGet({
@@ -39,7 +40,7 @@ class _FakeVisitScanFlowApi extends CVisitScanFlowApi {
   @override
   Future<Response<VisitSummary>> tracksTrackIdVisitsStartPost({
     required String trackId,
-    required TracksTrackIdVisitsStartPostRequest tracksTrackIdVisitsStartPostRequest,
+    required VisitStartRequest request,
     CancelToken? cancelToken,
     Map<String, dynamic>? headers,
     Map<String, dynamic>? extra,
@@ -48,7 +49,7 @@ class _FakeVisitScanFlowApi extends CVisitScanFlowApi {
     ProgressCallback? onReceiveProgress,
   }) async {
     capturedTrackId = trackId;
-    capturedStartRequest = tracksTrackIdVisitsStartPostRequest;
+    capturedStartRequest = request;
     return Response<VisitSummary>(
       data: startVisitData,
       requestOptions: RequestOptions(path: '/tracks/$trackId/visits/start'),
@@ -139,9 +140,7 @@ void main() {
     // assert
     expect(result, same(visit));
     expect(fakeApi.capturedTrackId, 'track-1');
-    final oneOfValue =
-        fakeApi.capturedStartRequest!.oneOf.value as TracksTrackIdVisitsStartPostRequestOneOf;
-    expect(oneOfValue.qrToken, 'qr-token-abc');
+    expect(fakeApi.capturedStartRequest!.qrToken, 'qr-token-abc');
   });
 
   test('ShouldStartVisitManually', () async {
@@ -160,10 +159,8 @@ void main() {
 
     // assert
     expect(result, same(visit));
-    final oneOfValue =
-        fakeApi.capturedStartRequest!.oneOf.value as TracksTrackIdVisitsStartPostRequestOneOf1;
-    expect(oneOfValue.groupId, 'group-9');
-    expect(oneOfValue.method, TracksTrackIdVisitsStartPostRequestOneOf1MethodEnum.MANUAL);
+    expect(fakeApi.capturedStartRequest!.groupId, 'group-9');
+    expect(fakeApi.capturedStartRequest!.method, VisitStartRequestMethodEnum.MANUAL);
   });
 
   test('ShouldEndCurrentVisit', () async {

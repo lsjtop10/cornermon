@@ -6,7 +6,7 @@
     "generators": {
       "cornermon-dart-client": {
         "generatorName": "dart-dio",
-        "inputSpec": "../api/openapi.yaml",
+        "inputSpec": "../api/swagger.yaml",
         "output": "lib/shared/api/gen",
         "skipValidateSpec": true,
         "additionalProperties": {

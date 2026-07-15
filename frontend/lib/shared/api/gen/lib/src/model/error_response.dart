@@ -1,3 +1,4 @@
+// @dart=2.18
 //
 // AUTO-GENERATED FILE, DO NOT MODIFY!
 //
@@ -13,22 +14,19 @@ part 'error_response.g.dart';
 /// ErrorResponse
 ///
 /// Properties:
-/// * [code] - 에러 코드 (예: TRACK_BUSY, DUPLICATE_VISIT, DEVICE_NOT_TRUSTED)
-/// * [message] - 사람이 읽을 수 있는 에러 설명
-/// * [details] - 추가 컨텍스트 (선택적)
+/// * [code] 
+/// * [details] 
+/// * [message] 
 @BuiltValue()
 abstract class ErrorResponse implements Built<ErrorResponse, ErrorResponseBuilder> {
-  /// 에러 코드 (예: TRACK_BUSY, DUPLICATE_VISIT, DEVICE_NOT_TRUSTED)
   @BuiltValueField(wireName: r'code')
-  String get code;
+  String? get code;
 
-  /// 사람이 읽을 수 있는 에러 설명
-  @BuiltValueField(wireName: r'message')
-  String get message;
-
-  /// 추가 컨텍스트 (선택적)
   @BuiltValueField(wireName: r'details')
   BuiltMap<String, JsonObject?>? get details;
+
+  @BuiltValueField(wireName: r'message')
+  String? get message;
 
   ErrorResponse._();
 
@@ -53,21 +51,25 @@ class _$ErrorResponseSerializer implements PrimitiveSerializer<ErrorResponse> {
     ErrorResponse object, {
     FullType specifiedType = FullType.unspecified,
   }) sync* {
-    yield r'code';
-    yield serializers.serialize(
-      object.code,
-      specifiedType: const FullType(String),
-    );
-    yield r'message';
-    yield serializers.serialize(
-      object.message,
-      specifiedType: const FullType(String),
-    );
+    if (object.code != null) {
+      yield r'code';
+      yield serializers.serialize(
+        object.code,
+        specifiedType: const FullType(String),
+      );
+    }
     if (object.details != null) {
       yield r'details';
       yield serializers.serialize(
         object.details,
         specifiedType: const FullType(BuiltMap, [FullType(String), FullType.nullable(JsonObject)]),
+      );
+    }
+    if (object.message != null) {
+      yield r'message';
+      yield serializers.serialize(
+        object.message,
+        specifiedType: const FullType(String),
       );
     }
   }
@@ -100,19 +102,19 @@ class _$ErrorResponseSerializer implements PrimitiveSerializer<ErrorResponse> {
           ) as String;
           result.code = valueDes;
           break;
-        case r'message':
-          final valueDes = serializers.deserialize(
-            value,
-            specifiedType: const FullType(String),
-          ) as String;
-          result.message = valueDes;
-          break;
         case r'details':
           final valueDes = serializers.deserialize(
             value,
             specifiedType: const FullType(BuiltMap, [FullType(String), FullType.nullable(JsonObject)]),
           ) as BuiltMap<String, JsonObject?>;
           result.details.replace(valueDes);
+          break;
+        case r'message':
+          final valueDes = serializers.deserialize(
+            value,
+            specifiedType: const FullType(String),
+          ) as String;
+          result.message = valueDes;
           break;
         default:
           unhandled.add(key);

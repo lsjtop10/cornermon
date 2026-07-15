@@ -12,7 +12,7 @@ import '../client/api_client.dart';
 part 'sse_client.g.dart';
 
 /// technical-design.md §2.3 하이브리드 알림+풀 모델의 전송 계층.
-/// text/event-stream 바이트를 파싱해 [SseEvent]로 변환하고, 하트비트 침묵을 감지한다.
+/// text/event-stream 바이트를 파싱해 [SSENotification]으로 변환하고, 하트비트 침묵을 감지한다.
 /// 자동 재연결은 하지 않는다 — 그건 이 클래스를 감싸는 호출측(track_event_stream.dart) 책임.
 class SseClient {
   SseClient(
@@ -23,19 +23,17 @@ class SseClient {
   final Dio _dio;
   final Duration heartbeatTimeout;
 
-  /// [path] 예: '/events/track/{trackId}', '/events/admin'.
-  Stream<SseEvent> connect(String path) {
-    late final StreamController<SseEvent> controller;
+  /// [path] 예: '/events/track/{trackId}', '/camps/{campId}/events/admin'.
+  Stream<SSENotification> connect(String path) {
+    late final StreamController<SSENotification> controller;
     final cancelToken = CancelToken();
     StreamSubscription<Uint8List>? subscription;
     Timer? watchdogTimer;
 
     var buffer = '';
-    String? pendingEvent;
     final pendingData = <String>[];
 
     void clearPendingFrame() {
-      pendingEvent = null;
       pendingData.clear();
     }
 
@@ -56,13 +54,15 @@ class SseClient {
     void dispatchFrame() {
       if (pendingData.isNotEmpty) {
         try {
-          final decodedData = jsonDecode(pendingData.join('\n')) as Map<String, dynamic>;
-          final event = standardSerializers.deserializeWith(
-            SseEvent.serializer,
-            <String, dynamic>{'event': pendingEvent, 'data': decodedData},
+          // data: 라인 자체가 {"event": "...", "scope": {...}} 전체 SSENotification JSON이다
+          // (00_overview.md §2.3) — 별도 event: 라인과 조합하지 않는다.
+          final decodedData = jsonDecode(pendingData.join('\n'));
+          final notification = standardSerializers.deserializeWith(
+            SSENotification.serializer,
+            decodedData,
           );
-          if (event != null && !controller.isClosed) {
-            controller.add(event);
+          if (notification != null && !controller.isClosed) {
+            controller.add(notification);
           }
         } catch (_) {
           // 프레임 하나가 깨져도(알 수 없는 이벤트 타입 등) 스트림 전체를 죽이지 않는다.
@@ -84,7 +84,7 @@ class SseClient {
         return;
       }
       if (line.startsWith('event:')) {
-        pendingEvent = line.substring('event:'.length).trim();
+        // data: 라인 자체가 완전한 SSENotification JSON이므로 event: 라인 값은 쓰지 않는다.
         return;
       }
       if (line.startsWith('data:')) {
@@ -105,7 +105,7 @@ class SseClient {
       }
     }
 
-    controller = StreamController<SseEvent>(
+    controller = StreamController<SSENotification>(
       onListen: () async {
         resetWatchdog();
         try {

@@ -1,6 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:cornermon_api_gen/cornermon_api_gen.dart';
 import '../client/api_client.dart';
+import '../domain_aliases.dart';
 import '../ids.dart';
 import 'camp_providers.dart';
 
@@ -13,19 +14,10 @@ CVisitScanFlowApi visitScanFlowApi(Ref ref) {
 }
 
 @riverpod
-Future<List<Group>> groupList(
-  Ref ref, {
-  String? filter,
-  String? sort,
-  String? order,
-}) async {
+Future<List<Group>> groupList(Ref ref, CampId campId) async {
   final apiInstance = ref.watch(campApiProvider);
-  final response = await apiInstance.groupsGet(
-    filter: filter,
-    sort: sort,
-    order: order,
-  );
-  return response.data?.groups?.toList() ?? [];
+  final response = await apiInstance.campsCampIdGroupsGet(campId: campId.value);
+  return response.data?.toList() ?? [];
 }
 
 @riverpod
@@ -41,7 +33,14 @@ Future<Group> groupDetail(Ref ref, GroupId id) async {
 
 @riverpod
 Future<List<VisitSummary>> groupVisits(Ref ref, GroupId id) async {
-  final apiInstance = ref.watch(visitScanFlowApiProvider);
+  final apiInstance = ref.watch(campApiProvider);
   final response = await apiInstance.groupsIdVisitsGet(id: id.value);
-  return response.data?.visits?.toList() ?? [];
+  return response.data?.toList() ?? [];
+}
+
+@riverpod
+Future<List<Group>> trackScopedGroups(Ref ref, TrackId trackId) async {
+  final apiInstance = ref.watch(visitScanFlowApiProvider);
+  final response = await apiInstance.tracksTrackIdGroupsGet(trackId: trackId.value);
+  return response.data?.toList() ?? [];
 }

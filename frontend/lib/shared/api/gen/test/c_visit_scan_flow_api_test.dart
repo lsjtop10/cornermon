@@ -7,46 +7,39 @@ void main() {
   final instance = CornermonApiGen().getCVisitScanFlowApi();
 
   group(CVisitScanFlowApi, () {
-    // 특정 조의 전체 방문 이력
+    // 진행자 수동 체크인용 조 목록 조회
     //
-    //Future<GroupsIdVisitsGet200Response> groupsIdVisitsGet(String id) async
-    test('test groupsIdVisitsGet', () async {
+    // 인증된 진행자의 트랙이 속한 캠프의 조 목록을 반환한다. 세션의 트랙과 path trackId가 일치해야 한다.
+    //
+    //Future<BuiltList<GroupResponse>> tracksTrackIdGroupsGet(String trackId) async
+    test('test tracksTrackIdGroupsGet', () async {
       // TODO
     });
 
     // 현재 방문 종료 (조 퇴장)
     //
-    // 진행 중인 방문을 종료 처리한다. (화면의 종료 확인 2회 탭) 재스캔 없이 트랙에 유일하게 정해진 IN_PROGRESS 방문을 종료한다. 소요시간 및 목표시간 편차(deviation)를 계산해 저장한다. 
+    // 진행 중인 방문을 종료 처리한다. (화면의 종료 확인 2회 탭)
     //
-    //Future<VisitSummary> tracksTrackIdVisitsCurrentEndPost(String trackId) async
+    //Future<VisitSummaryResponse> tracksTrackIdVisitsCurrentEndPost(String trackId) async
     test('test tracksTrackIdVisitsCurrentEndPost', () async {
       // TODO
     });
 
-    // 현재 진행 중인 방문 조회
+    // 현재 진행 중인 방문 상태 조회
     //
-    // 진행자 앱 화면 새로고침용. 현재 트랙에서 IN_PROGRESS 상태인 방문을 반환한다.
+    // 스캐너 앱이 크래시되거나 새로고침 되었을 때, 현재 트랙에서 진행 중인 방문이 있는지 확인.
     //
-    //Future<VisitSummary> tracksTrackIdVisitsCurrentGet(String trackId) async
+    //Future<VisitSummaryResponse> tracksTrackIdVisitsCurrentGet(String trackId) async
     test('test tracksTrackIdVisitsCurrentGet', () async {
       // TODO
     });
 
     // 방문 시작 (조 입장)
     //
-    // 진행자가 조의 입장을 처리한다. - **QR 스캔**: `qrToken` 제공 - **수동 처리**: `groupId` + `method: \"MANUAL\"` 제공 (QR 배지 손상 시)  **거부 조건**: - 트랙이 이미 BUSY (동시 진행 조 있음) - 해당 조가 이미 이 코너를 COMPLETED - 해당 조가 다른 코너에서 IN_PROGRESS 상태 
+    // 진행자가 조의 입장을 처리한다. QR 스캔 또는 수동 처리.
     //
-    //Future<VisitSummary> tracksTrackIdVisitsStartPost(String trackId, TracksTrackIdVisitsStartPostRequest tracksTrackIdVisitsStartPostRequest) async
+    //Future<VisitSummaryResponse> tracksTrackIdVisitsStartPost(String trackId, VisitStartRequest request) async
     test('test tracksTrackIdVisitsStartPost', () async {
-      // TODO
-    });
-
-    // 중복 방문 예외 승인
-    //
-    // 중복 방문 금지 규칙의 예외를 관리자가 명시적으로 승인한다. 이후 해당 조의 해당 코너에서 재방문이 허용된다. 
-    //
-    //Future visitsExceptionApprovePost(VisitsExceptionApprovePostRequest visitsExceptionApprovePostRequest) async
-    test('test visitsExceptionApprovePost', () async {
       // TODO
     });
 

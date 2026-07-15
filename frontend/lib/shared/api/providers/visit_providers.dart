@@ -1,6 +1,6 @@
-import 'package:one_of/one_of.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:cornermon_api_gen/cornermon_api_gen.dart';
+import '../domain_aliases.dart';
 import '../ids.dart';
 import 'group_providers.dart';
 
@@ -23,13 +23,7 @@ class VisitActions extends _$VisitActions {
     final apiInstance = ref.read(visitScanFlowApiProvider);
     final response = await apiInstance.tracksTrackIdVisitsStartPost(
       trackId: trackId.value,
-      tracksTrackIdVisitsStartPostRequest: TracksTrackIdVisitsStartPostRequest(
-        (b) => b
-          ..oneOf = OneOf.fromValue2<TracksTrackIdVisitsStartPostRequestOneOf,
-              TracksTrackIdVisitsStartPostRequestOneOf1>(
-            value: TracksTrackIdVisitsStartPostRequestOneOf((b) => b..qrToken = qrToken),
-          ),
-      ),
+      request: VisitStartRequest((b) => b..qrToken = qrToken),
     );
     final data = response.data;
     if (data == null) {
@@ -43,16 +37,10 @@ class VisitActions extends _$VisitActions {
     final apiInstance = ref.read(visitScanFlowApiProvider);
     final response = await apiInstance.tracksTrackIdVisitsStartPost(
       trackId: trackId.value,
-      tracksTrackIdVisitsStartPostRequest: TracksTrackIdVisitsStartPostRequest(
+      request: VisitStartRequest(
         (b) => b
-          ..oneOf = OneOf.fromValue2<TracksTrackIdVisitsStartPostRequestOneOf,
-              TracksTrackIdVisitsStartPostRequestOneOf1>(
-            value: TracksTrackIdVisitsStartPostRequestOneOf1(
-              (b) => b
-                ..groupId = groupId.value
-                ..method = TracksTrackIdVisitsStartPostRequestOneOf1MethodEnum.MANUAL,
-            ),
-          ),
+          ..groupId = groupId.value
+          ..method = VisitStartRequestMethodEnum.MANUAL,
       ),
     );
     final data = response.data;

@@ -1,3 +1,4 @@
+// @dart=2.18
 //
 // AUTO-GENERATED FILE, DO NOT MODIFY!
 //
@@ -8,12 +9,12 @@ import 'package:built_value/json_object.dart';
 import 'package:built_value/serializer.dart';
 import 'package:dio/dio.dart';
 
+import 'package:built_collection/built_collection.dart';
 import 'package:cornermon_api_gen/src/api_util.dart';
 import 'package:cornermon_api_gen/src/model/error_response.dart';
-import 'package:cornermon_api_gen/src/model/groups_id_visits_get200_response.dart';
-import 'package:cornermon_api_gen/src/model/tracks_track_id_visits_start_post_request.dart';
-import 'package:cornermon_api_gen/src/model/visit_summary.dart';
-import 'package:cornermon_api_gen/src/model/visits_exception_approve_post_request.dart';
+import 'package:cornermon_api_gen/src/model/group_response.dart';
+import 'package:cornermon_api_gen/src/model/visit_start_request.dart';
+import 'package:cornermon_api_gen/src/model/visit_summary_response.dart';
 
 class CVisitScanFlowApi {
 
@@ -23,11 +24,11 @@ class CVisitScanFlowApi {
 
   const CVisitScanFlowApi(this._dio, this._serializers);
 
-  /// 특정 조의 전체 방문 이력
-  /// 
+  /// 진행자 수동 체크인용 조 목록 조회
+  /// 인증된 진행자의 트랙이 속한 캠프의 조 목록을 반환한다. 세션의 트랙과 path trackId가 일치해야 한다.
   ///
   /// Parameters:
-  /// * [id] - 조 ID
+  /// * [trackId] - 트랙 ID
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
   /// * [headers] - Can be used to add additional headers to the request
   /// * [extras] - Can be used to add flags to the request
@@ -35,10 +36,10 @@ class CVisitScanFlowApi {
   /// * [onSendProgress] - A [ProgressCallback] that can be used to get the send progress
   /// * [onReceiveProgress] - A [ProgressCallback] that can be used to get the receive progress
   ///
-  /// Returns a [Future] containing a [Response] with a [GroupsIdVisitsGet200Response] as data
+  /// Returns a [Future] containing a [Response] with a [BuiltList<GroupResponse>] as data
   /// Throws [DioException] if API call or serialization fails
-  Future<Response<GroupsIdVisitsGet200Response>> groupsIdVisitsGet({ 
-    required String id,
+  Future<Response<BuiltList<GroupResponse>>> tracksTrackIdGroupsGet({ 
+    required String trackId,
     CancelToken? cancelToken,
     Map<String, dynamic>? headers,
     Map<String, dynamic>? extra,
@@ -46,7 +47,7 @@ class CVisitScanFlowApi {
     ProgressCallback? onSendProgress,
     ProgressCallback? onReceiveProgress,
   }) async {
-    final _path = r'/groups/{id}/visits'.replaceAll('{' r'id' '}', encodeQueryParameter(_serializers, id, const FullType(String)).toString());
+    final _path = r'/tracks/{trackId}/groups'.replaceAll('{' r'trackId' '}', encodeQueryParameter(_serializers, trackId, const FullType(String)).toString());
     final _options = Options(
       method: r'GET',
       headers: <String, dynamic>{
@@ -55,9 +56,10 @@ class CVisitScanFlowApi {
       extra: <String, dynamic>{
         'secure': <Map<String, String>>[
           {
-            'type': 'http',
-            'scheme': 'bearer',
-            'name': 'AdminAuth',
+            'type': 'apiKey',
+            'name': 'TrackAuth',
+            'keyName': 'Authorization',
+            'where': 'header',
           },
         ],
         ...?extra,
@@ -73,14 +75,14 @@ class CVisitScanFlowApi {
       onReceiveProgress: onReceiveProgress,
     );
 
-    GroupsIdVisitsGet200Response? _responseData;
+    BuiltList<GroupResponse>? _responseData;
 
     try {
       final rawResponse = _response.data;
       _responseData = rawResponse == null ? null : _serializers.deserialize(
         rawResponse,
-        specifiedType: const FullType(GroupsIdVisitsGet200Response),
-      ) as GroupsIdVisitsGet200Response;
+        specifiedType: const FullType(BuiltList, [FullType(GroupResponse)]),
+      ) as BuiltList<GroupResponse>;
 
     } catch (error, stackTrace) {
       throw DioException(
@@ -92,7 +94,7 @@ class CVisitScanFlowApi {
       );
     }
 
-    return Response<GroupsIdVisitsGet200Response>(
+    return Response<BuiltList<GroupResponse>>(
       data: _responseData,
       headers: _response.headers,
       isRedirect: _response.isRedirect,
@@ -105,10 +107,10 @@ class CVisitScanFlowApi {
   }
 
   /// 현재 방문 종료 (조 퇴장)
-  /// 진행 중인 방문을 종료 처리한다. (화면의 종료 확인 2회 탭) 재스캔 없이 트랙에 유일하게 정해진 IN_PROGRESS 방문을 종료한다. 소요시간 및 목표시간 편차(deviation)를 계산해 저장한다. 
+  /// 진행 중인 방문을 종료 처리한다. (화면의 종료 확인 2회 탭)
   ///
   /// Parameters:
-  /// * [trackId] 
+  /// * [trackId] - 트랙 ID
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
   /// * [headers] - Can be used to add additional headers to the request
   /// * [extras] - Can be used to add flags to the request
@@ -116,9 +118,9 @@ class CVisitScanFlowApi {
   /// * [onSendProgress] - A [ProgressCallback] that can be used to get the send progress
   /// * [onReceiveProgress] - A [ProgressCallback] that can be used to get the receive progress
   ///
-  /// Returns a [Future] containing a [Response] with a [VisitSummary] as data
+  /// Returns a [Future] containing a [Response] with a [VisitSummaryResponse] as data
   /// Throws [DioException] if API call or serialization fails
-  Future<Response<VisitSummary>> tracksTrackIdVisitsCurrentEndPost({ 
+  Future<Response<VisitSummaryResponse>> tracksTrackIdVisitsCurrentEndPost({ 
     required String trackId,
     CancelToken? cancelToken,
     Map<String, dynamic>? headers,
@@ -136,9 +138,10 @@ class CVisitScanFlowApi {
       extra: <String, dynamic>{
         'secure': <Map<String, String>>[
           {
-            'type': 'http',
-            'scheme': 'bearer',
+            'type': 'apiKey',
             'name': 'TrackAuth',
+            'keyName': 'Authorization',
+            'where': 'header',
           },
         ],
         ...?extra,
@@ -154,14 +157,14 @@ class CVisitScanFlowApi {
       onReceiveProgress: onReceiveProgress,
     );
 
-    VisitSummary? _responseData;
+    VisitSummaryResponse? _responseData;
 
     try {
       final rawResponse = _response.data;
       _responseData = rawResponse == null ? null : _serializers.deserialize(
         rawResponse,
-        specifiedType: const FullType(VisitSummary),
-      ) as VisitSummary;
+        specifiedType: const FullType(VisitSummaryResponse),
+      ) as VisitSummaryResponse;
 
     } catch (error, stackTrace) {
       throw DioException(
@@ -173,7 +176,7 @@ class CVisitScanFlowApi {
       );
     }
 
-    return Response<VisitSummary>(
+    return Response<VisitSummaryResponse>(
       data: _responseData,
       headers: _response.headers,
       isRedirect: _response.isRedirect,
@@ -185,11 +188,11 @@ class CVisitScanFlowApi {
     );
   }
 
-  /// 현재 진행 중인 방문 조회
-  /// 진행자 앱 화면 새로고침용. 현재 트랙에서 IN_PROGRESS 상태인 방문을 반환한다.
+  /// 현재 진행 중인 방문 상태 조회
+  /// 스캐너 앱이 크래시되거나 새로고침 되었을 때, 현재 트랙에서 진행 중인 방문이 있는지 확인.
   ///
   /// Parameters:
-  /// * [trackId] 
+  /// * [trackId] - 트랙 ID
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
   /// * [headers] - Can be used to add additional headers to the request
   /// * [extras] - Can be used to add flags to the request
@@ -197,9 +200,9 @@ class CVisitScanFlowApi {
   /// * [onSendProgress] - A [ProgressCallback] that can be used to get the send progress
   /// * [onReceiveProgress] - A [ProgressCallback] that can be used to get the receive progress
   ///
-  /// Returns a [Future] containing a [Response] with a [VisitSummary] as data
+  /// Returns a [Future] containing a [Response] with a [VisitSummaryResponse] as data
   /// Throws [DioException] if API call or serialization fails
-  Future<Response<VisitSummary>> tracksTrackIdVisitsCurrentGet({ 
+  Future<Response<VisitSummaryResponse>> tracksTrackIdVisitsCurrentGet({ 
     required String trackId,
     CancelToken? cancelToken,
     Map<String, dynamic>? headers,
@@ -217,9 +220,10 @@ class CVisitScanFlowApi {
       extra: <String, dynamic>{
         'secure': <Map<String, String>>[
           {
-            'type': 'http',
-            'scheme': 'bearer',
+            'type': 'apiKey',
             'name': 'TrackAuth',
+            'keyName': 'Authorization',
+            'where': 'header',
           },
         ],
         ...?extra,
@@ -235,14 +239,14 @@ class CVisitScanFlowApi {
       onReceiveProgress: onReceiveProgress,
     );
 
-    VisitSummary? _responseData;
+    VisitSummaryResponse? _responseData;
 
     try {
       final rawResponse = _response.data;
       _responseData = rawResponse == null ? null : _serializers.deserialize(
         rawResponse,
-        specifiedType: const FullType(VisitSummary),
-      ) as VisitSummary;
+        specifiedType: const FullType(VisitSummaryResponse),
+      ) as VisitSummaryResponse;
 
     } catch (error, stackTrace) {
       throw DioException(
@@ -254,7 +258,7 @@ class CVisitScanFlowApi {
       );
     }
 
-    return Response<VisitSummary>(
+    return Response<VisitSummaryResponse>(
       data: _responseData,
       headers: _response.headers,
       isRedirect: _response.isRedirect,
@@ -267,11 +271,11 @@ class CVisitScanFlowApi {
   }
 
   /// 방문 시작 (조 입장)
-  /// 진행자가 조의 입장을 처리한다. - **QR 스캔**: &#x60;qrToken&#x60; 제공 - **수동 처리**: &#x60;groupId&#x60; + &#x60;method: \&quot;MANUAL\&quot;&#x60; 제공 (QR 배지 손상 시)  **거부 조건**: - 트랙이 이미 BUSY (동시 진행 조 있음) - 해당 조가 이미 이 코너를 COMPLETED - 해당 조가 다른 코너에서 IN_PROGRESS 상태 
+  /// 진행자가 조의 입장을 처리한다. QR 스캔 또는 수동 처리.
   ///
   /// Parameters:
-  /// * [trackId] 
-  /// * [tracksTrackIdVisitsStartPostRequest] 
+  /// * [trackId] - 트랙 ID
+  /// * [request] - 입장 방식 및 페이로드
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
   /// * [headers] - Can be used to add additional headers to the request
   /// * [extras] - Can be used to add flags to the request
@@ -279,11 +283,11 @@ class CVisitScanFlowApi {
   /// * [onSendProgress] - A [ProgressCallback] that can be used to get the send progress
   /// * [onReceiveProgress] - A [ProgressCallback] that can be used to get the receive progress
   ///
-  /// Returns a [Future] containing a [Response] with a [VisitSummary] as data
+  /// Returns a [Future] containing a [Response] with a [VisitSummaryResponse] as data
   /// Throws [DioException] if API call or serialization fails
-  Future<Response<VisitSummary>> tracksTrackIdVisitsStartPost({ 
+  Future<Response<VisitSummaryResponse>> tracksTrackIdVisitsStartPost({ 
     required String trackId,
-    required TracksTrackIdVisitsStartPostRequest tracksTrackIdVisitsStartPostRequest,
+    required VisitStartRequest request,
     CancelToken? cancelToken,
     Map<String, dynamic>? headers,
     Map<String, dynamic>? extra,
@@ -300,9 +304,10 @@ class CVisitScanFlowApi {
       extra: <String, dynamic>{
         'secure': <Map<String, String>>[
           {
-            'type': 'http',
-            'scheme': 'bearer',
+            'type': 'apiKey',
             'name': 'TrackAuth',
+            'keyName': 'Authorization',
+            'where': 'header',
           },
         ],
         ...?extra,
@@ -314,8 +319,8 @@ class CVisitScanFlowApi {
     dynamic _bodyData;
 
     try {
-      const _type = FullType(TracksTrackIdVisitsStartPostRequest);
-      _bodyData = _serializers.serialize(tracksTrackIdVisitsStartPostRequest, specifiedType: _type);
+      const _type = FullType(VisitStartRequest);
+      _bodyData = _serializers.serialize(request, specifiedType: _type);
 
     } catch(error, stackTrace) {
       throw DioException(
@@ -338,14 +343,14 @@ class CVisitScanFlowApi {
       onReceiveProgress: onReceiveProgress,
     );
 
-    VisitSummary? _responseData;
+    VisitSummaryResponse? _responseData;
 
     try {
       final rawResponse = _response.data;
       _responseData = rawResponse == null ? null : _serializers.deserialize(
         rawResponse,
-        specifiedType: const FullType(VisitSummary),
-      ) as VisitSummary;
+        specifiedType: const FullType(VisitSummaryResponse),
+      ) as VisitSummaryResponse;
 
     } catch (error, stackTrace) {
       throw DioException(
@@ -357,7 +362,7 @@ class CVisitScanFlowApi {
       );
     }
 
-    return Response<VisitSummary>(
+    return Response<VisitSummaryResponse>(
       data: _responseData,
       headers: _response.headers,
       isRedirect: _response.isRedirect,
@@ -367,79 +372,6 @@ class CVisitScanFlowApi {
       statusMessage: _response.statusMessage,
       extra: _response.extra,
     );
-  }
-
-  /// 중복 방문 예외 승인
-  /// 중복 방문 금지 규칙의 예외를 관리자가 명시적으로 승인한다. 이후 해당 조의 해당 코너에서 재방문이 허용된다. 
-  ///
-  /// Parameters:
-  /// * [visitsExceptionApprovePostRequest] 
-  /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
-  /// * [headers] - Can be used to add additional headers to the request
-  /// * [extras] - Can be used to add flags to the request
-  /// * [validateStatus] - A [ValidateStatus] callback that can be used to determine request success based on the HTTP status of the response
-  /// * [onSendProgress] - A [ProgressCallback] that can be used to get the send progress
-  /// * [onReceiveProgress] - A [ProgressCallback] that can be used to get the receive progress
-  ///
-  /// Returns a [Future]
-  /// Throws [DioException] if API call or serialization fails
-  Future<Response<void>> visitsExceptionApprovePost({ 
-    required VisitsExceptionApprovePostRequest visitsExceptionApprovePostRequest,
-    CancelToken? cancelToken,
-    Map<String, dynamic>? headers,
-    Map<String, dynamic>? extra,
-    ValidateStatus? validateStatus,
-    ProgressCallback? onSendProgress,
-    ProgressCallback? onReceiveProgress,
-  }) async {
-    final _path = r'/visits/exception-approve';
-    final _options = Options(
-      method: r'POST',
-      headers: <String, dynamic>{
-        ...?headers,
-      },
-      extra: <String, dynamic>{
-        'secure': <Map<String, String>>[
-          {
-            'type': 'http',
-            'scheme': 'bearer',
-            'name': 'AdminAuth',
-          },
-        ],
-        ...?extra,
-      },
-      contentType: 'application/json',
-      validateStatus: validateStatus,
-    );
-
-    dynamic _bodyData;
-
-    try {
-      const _type = FullType(VisitsExceptionApprovePostRequest);
-      _bodyData = _serializers.serialize(visitsExceptionApprovePostRequest, specifiedType: _type);
-
-    } catch(error, stackTrace) {
-      throw DioException(
-         requestOptions: _options.compose(
-          _dio.options,
-          _path,
-        ),
-        type: DioExceptionType.unknown,
-        error: error,
-        stackTrace: stackTrace,
-      );
-    }
-
-    final _response = await _dio.request<Object>(
-      _path,
-      data: _bodyData,
-      options: _options,
-      cancelToken: cancelToken,
-      onSendProgress: onSendProgress,
-      onReceiveProgress: onReceiveProgress,
-    );
-
-    return _response;
   }
 
 }

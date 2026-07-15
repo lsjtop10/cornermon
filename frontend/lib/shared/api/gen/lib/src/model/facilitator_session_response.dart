@@ -1,0 +1,145 @@
+// @dart=2.18
+//
+// AUTO-GENERATED FILE, DO NOT MODIFY!
+//
+
+// ignore_for_file: unused_element
+import 'package:built_value/built_value.dart';
+import 'package:built_value/serializer.dart';
+
+part 'facilitator_session_response.g.dart';
+
+/// FacilitatorSessionResponse
+///
+/// Properties:
+/// * [createdAt] 
+/// * [id] 
+/// * [trackId] 
+@BuiltValue()
+abstract class FacilitatorSessionResponse implements Built<FacilitatorSessionResponse, FacilitatorSessionResponseBuilder> {
+  @BuiltValueField(wireName: r'createdAt')
+  DateTime? get createdAt;
+
+  @BuiltValueField(wireName: r'id')
+  String? get id;
+
+  @BuiltValueField(wireName: r'trackId')
+  String? get trackId;
+
+  FacilitatorSessionResponse._();
+
+  factory FacilitatorSessionResponse([void updates(FacilitatorSessionResponseBuilder b)]) = _$FacilitatorSessionResponse;
+
+  @BuiltValueHook(initializeBuilder: true)
+  static void _defaults(FacilitatorSessionResponseBuilder b) => b;
+
+  @BuiltValueSerializer(custom: true)
+  static Serializer<FacilitatorSessionResponse> get serializer => _$FacilitatorSessionResponseSerializer();
+}
+
+class _$FacilitatorSessionResponseSerializer implements PrimitiveSerializer<FacilitatorSessionResponse> {
+  @override
+  final Iterable<Type> types = const [FacilitatorSessionResponse, _$FacilitatorSessionResponse];
+
+  @override
+  final String wireName = r'FacilitatorSessionResponse';
+
+  Iterable<Object?> _serializeProperties(
+    Serializers serializers,
+    FacilitatorSessionResponse object, {
+    FullType specifiedType = FullType.unspecified,
+  }) sync* {
+    if (object.createdAt != null) {
+      yield r'createdAt';
+      yield serializers.serialize(
+        object.createdAt,
+        specifiedType: const FullType(DateTime),
+      );
+    }
+    if (object.id != null) {
+      yield r'id';
+      yield serializers.serialize(
+        object.id,
+        specifiedType: const FullType(String),
+      );
+    }
+    if (object.trackId != null) {
+      yield r'trackId';
+      yield serializers.serialize(
+        object.trackId,
+        specifiedType: const FullType(String),
+      );
+    }
+  }
+
+  @override
+  Object serialize(
+    Serializers serializers,
+    FacilitatorSessionResponse object, {
+    FullType specifiedType = FullType.unspecified,
+  }) {
+    return _serializeProperties(serializers, object, specifiedType: specifiedType).toList();
+  }
+
+  void _deserializeProperties(
+    Serializers serializers,
+    Object serialized, {
+    FullType specifiedType = FullType.unspecified,
+    required List<Object?> serializedList,
+    required FacilitatorSessionResponseBuilder result,
+    required List<Object?> unhandled,
+  }) {
+    for (var i = 0; i < serializedList.length; i += 2) {
+      final key = serializedList[i] as String;
+      final value = serializedList[i + 1];
+      switch (key) {
+        case r'createdAt':
+          final valueDes = serializers.deserialize(
+            value,
+            specifiedType: const FullType(DateTime),
+          ) as DateTime;
+          result.createdAt = valueDes;
+          break;
+        case r'id':
+          final valueDes = serializers.deserialize(
+            value,
+            specifiedType: const FullType(String),
+          ) as String;
+          result.id = valueDes;
+          break;
+        case r'trackId':
+          final valueDes = serializers.deserialize(
+            value,
+            specifiedType: const FullType(String),
+          ) as String;
+          result.trackId = valueDes;
+          break;
+        default:
+          unhandled.add(key);
+          unhandled.add(value);
+          break;
+      }
+    }
+  }
+
+  @override
+  FacilitatorSessionResponse deserialize(
+    Serializers serializers,
+    Object serialized, {
+    FullType specifiedType = FullType.unspecified,
+  }) {
+    final result = FacilitatorSessionResponseBuilder();
+    final serializedList = (serialized as Iterable<Object?>).toList();
+    final unhandled = <Object?>[];
+    _deserializeProperties(
+      serializers,
+      serialized,
+      specifiedType: specifiedType,
+      serializedList: serializedList,
+      unhandled: unhandled,
+      result: result,
+    );
+    return result.build();
+  }
+}
+

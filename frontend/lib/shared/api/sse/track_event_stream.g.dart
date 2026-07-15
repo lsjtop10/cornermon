@@ -19,8 +19,12 @@ final trackEventsProvider = TrackEventsFamily._();
 
 final class TrackEventsProvider
     extends
-        $FunctionalProvider<AsyncValue<SseEvent>, SseEvent, Stream<SseEvent>>
-    with $FutureModifier<SseEvent>, $StreamProvider<SseEvent> {
+        $FunctionalProvider<
+          AsyncValue<SSENotification>,
+          SSENotification,
+          Stream<SSENotification>
+        >
+    with $FutureModifier<SSENotification>, $StreamProvider<SSENotification> {
   /// 원시 이벤트 스트림 — 에러/종료 시 짧은 backoff 후 재연결을 반복해
   /// 구독자에게는 끊기지 않는 스트림처럼 보이게 한다(좀비연결 감지는 SseClient 책임).
   TrackEventsProvider._({
@@ -46,11 +50,12 @@ final class TrackEventsProvider
 
   @$internal
   @override
-  $StreamProviderElement<SseEvent> $createElement($ProviderPointer pointer) =>
-      $StreamProviderElement(pointer);
+  $StreamProviderElement<SSENotification> $createElement(
+    $ProviderPointer pointer,
+  ) => $StreamProviderElement(pointer);
 
   @override
-  Stream<SseEvent> create(Ref ref) {
+  Stream<SSENotification> create(Ref ref) {
     final argument = this.argument as TrackId;
     return trackEvents(ref, argument);
   }
@@ -66,13 +71,13 @@ final class TrackEventsProvider
   }
 }
 
-String _$trackEventsHash() => r'61d4fe7031be40e1ffb7467d95666eda6f71874b';
+String _$trackEventsHash() => r'52016534ae8cc842cfc7a5d81044ecc8f8a4fae7';
 
 /// 원시 이벤트 스트림 — 에러/종료 시 짧은 backoff 후 재연결을 반복해
 /// 구독자에게는 끊기지 않는 스트림처럼 보이게 한다(좀비연결 감지는 SseClient 책임).
 
 final class TrackEventsFamily extends $Family
-    with $FunctionalFamilyOverride<Stream<SseEvent>, TrackId> {
+    with $FunctionalFamilyOverride<Stream<SSENotification>, TrackId> {
   TrackEventsFamily._()
     : super(
         retry: null,
@@ -141,7 +146,7 @@ final class TrackConnectionProvider
   }
 }
 
-String _$trackConnectionHash() => r'bb963db1ffa15aa55c62f209668eaa5b3b2da57f';
+String _$trackConnectionHash() => r'ebc3def95f68f7d598f1e46e43d55895fe22dc69';
 
 final class TrackConnectionFamily extends $Family
     with

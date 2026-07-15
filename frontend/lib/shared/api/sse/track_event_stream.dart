@@ -14,7 +14,7 @@ enum TrackConnectionState { connected, reconnecting, disconnected }
 /// 원시 이벤트 스트림 — 에러/종료 시 짧은 backoff 후 재연결을 반복해
 /// 구독자에게는 끊기지 않는 스트림처럼 보이게 한다(좀비연결 감지는 SseClient 책임).
 @riverpod
-Stream<SseEvent> trackEvents(Ref ref, TrackId trackId) async* {
+Stream<SSENotification> trackEvents(Ref ref, TrackId trackId) async* {
   var disposed = false;
   ref.onDispose(() => disposed = true);
 
@@ -37,7 +37,7 @@ Stream<SseEvent> trackEvents(Ref ref, TrackId trackId) async* {
 class TrackConnection extends _$TrackConnection {
   @override
   TrackConnectionState build(TrackId trackId) {
-    ref.listen<AsyncValue<SseEvent>>(
+    ref.listen<AsyncValue<SSENotification>>(
       trackEventsProvider(trackId),
       (previous, next) {
         state = next.when(
