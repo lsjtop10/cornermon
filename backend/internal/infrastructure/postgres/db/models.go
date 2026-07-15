@@ -139,6 +139,8 @@ type DeviceRegistration struct {
 	LockedUntil pgtype.Timestamptz `json:"locked_until"`
 	// 관리자에 의해 승인된 시간
 	ApprovedAt pgtype.Timestamptz `json:"approved_at"`
+	// 기기 등록 요청이 생성된 시각
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
 }
 
 // 특정 트랙에 로그인한 진행자의 세션 상태를 관리하는 테이블

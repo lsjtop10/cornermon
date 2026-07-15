@@ -272,7 +272,7 @@ func (q *Queries) GetCornerView(ctx context.Context, id string) (GetCornerViewRo
 }
 
 const getDeviceRegistration = `-- name: GetDeviceRegistration :one
-SELECT id, camp_id, device_name, status, token_hash, failed_pin_attempts, locked_until, approved_at FROM device_registrations WHERE id = $1
+SELECT id, camp_id, device_name, status, token_hash, failed_pin_attempts, locked_until, approved_at, created_at FROM device_registrations WHERE id = $1
 `
 
 func (q *Queries) GetDeviceRegistration(ctx context.Context, id string) (DeviceRegistration, error) {
@@ -287,12 +287,13 @@ func (q *Queries) GetDeviceRegistration(ctx context.Context, id string) (DeviceR
 		&i.FailedPinAttempts,
 		&i.LockedUntil,
 		&i.ApprovedAt,
+		&i.CreatedAt,
 	)
 	return i, err
 }
 
 const getDeviceRegistrationByTokenHash = `-- name: GetDeviceRegistrationByTokenHash :one
-SELECT id, camp_id, device_name, status, token_hash, failed_pin_attempts, locked_until, approved_at FROM device_registrations WHERE token_hash = $1
+SELECT id, camp_id, device_name, status, token_hash, failed_pin_attempts, locked_until, approved_at, created_at FROM device_registrations WHERE token_hash = $1
 `
 
 func (q *Queries) GetDeviceRegistrationByTokenHash(ctx context.Context, tokenHash string) (DeviceRegistration, error) {
@@ -307,6 +308,7 @@ func (q *Queries) GetDeviceRegistrationByTokenHash(ctx context.Context, tokenHas
 		&i.FailedPinAttempts,
 		&i.LockedUntil,
 		&i.ApprovedAt,
+		&i.CreatedAt,
 	)
 	return i, err
 }
@@ -873,7 +875,7 @@ func (q *Queries) ListCornersByCamp(ctx context.Context, campID string) ([]Corne
 }
 
 const listDeviceRegistrationsByCampAndStatus = `-- name: ListDeviceRegistrationsByCampAndStatus :many
-SELECT id, camp_id, device_name, status, token_hash, failed_pin_attempts, locked_until, approved_at FROM device_registrations
+SELECT id, camp_id, device_name, status, token_hash, failed_pin_attempts, locked_until, approved_at, created_at FROM device_registrations
 WHERE camp_id = $1 AND ($2::VARCHAR IS NULL OR status = $2)
 `
 
@@ -900,6 +902,7 @@ func (q *Queries) ListDeviceRegistrationsByCampAndStatus(ctx context.Context, ar
 			&i.FailedPinAttempts,
 			&i.LockedUntil,
 			&i.ApprovedAt,
+			&i.CreatedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -1012,7 +1015,7 @@ func (q *Queries) ListMessagesByTrackAfter(ctx context.Context, arg ListMessages
 }
 
 const listPendingDeviceRegistrationsByCamp = `-- name: ListPendingDeviceRegistrationsByCamp :many
-SELECT id, camp_id, device_name, status, token_hash, failed_pin_attempts, locked_until, approved_at FROM device_registrations WHERE camp_id = $1 AND status = 'PENDING'
+SELECT id, camp_id, device_name, status, token_hash, failed_pin_attempts, locked_until, approved_at, created_at FROM device_registrations WHERE camp_id = $1 AND status = 'PENDING'
 `
 
 func (q *Queries) ListPendingDeviceRegistrationsByCamp(ctx context.Context, campID string) ([]DeviceRegistration, error) {
@@ -1033,6 +1036,7 @@ func (q *Queries) ListPendingDeviceRegistrationsByCamp(ctx context.Context, camp
 			&i.FailedPinAttempts,
 			&i.LockedUntil,
 			&i.ApprovedAt,
+			&i.CreatedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -1436,8 +1440,8 @@ func (q *Queries) SaveCorner(ctx context.Context, arg SaveCornerParams) error {
 }
 
 const saveDeviceRegistration = `-- name: SaveDeviceRegistration :exec
-INSERT INTO device_registrations (id, camp_id, device_name, status, token_hash, failed_pin_attempts, locked_until, approved_at)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+INSERT INTO device_registrations (id, camp_id, device_name, status, token_hash, failed_pin_attempts, locked_until, approved_at, created_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 ON CONFLICT (id) DO UPDATE SET
     status = EXCLUDED.status,
     failed_pin_attempts = EXCLUDED.failed_pin_attempts,
@@ -1454,6 +1458,7 @@ type SaveDeviceRegistrationParams struct {
 	FailedPinAttempts int32              `json:"failed_pin_attempts"`
 	LockedUntil       pgtype.Timestamptz `json:"locked_until"`
 	ApprovedAt        pgtype.Timestamptz `json:"approved_at"`
+	CreatedAt         pgtype.Timestamptz `json:"created_at"`
 }
 
 func (q *Queries) SaveDeviceRegistration(ctx context.Context, arg SaveDeviceRegistrationParams) error {
@@ -1466,6 +1471,7 @@ func (q *Queries) SaveDeviceRegistration(ctx context.Context, arg SaveDeviceRegi
 		arg.FailedPinAttempts,
 		arg.LockedUntil,
 		arg.ApprovedAt,
+		arg.CreatedAt,
 	)
 	return err
 }

@@ -14,13 +14,17 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-type listDeviceTrustStub struct{ devices []*domain.DeviceRegistration }
+type listDeviceTrustStub struct {
+	devices         []*domain.DeviceRegistration
+	requestedReg    *domain.DeviceRegistration
+	reviewedDevices []*domain.DeviceRegistration
+}
 
 func (s *listDeviceTrustStub) GetMyRegistrationStatus(context.Context, string) (*domain.DeviceRegistrationStatus, error) {
 	return nil, nil
 }
 func (s *listDeviceTrustStub) RequestRegistration(context.Context, domain.CampID, string) (string, *domain.DeviceRegistration, error) {
-	return "", nil, nil
+	return "token", s.requestedReg, nil
 }
 func (s *listDeviceTrustStub) ApproveDevice(context.Context, domain.DeviceRegistrationID, domain.AdminID) error {
 	return nil
@@ -32,7 +36,7 @@ func (s *listDeviceTrustStub) RevokeDevice(context.Context, domain.DeviceRegistr
 	return nil
 }
 func (s *listDeviceTrustStub) ReviewDeviceTrustRequests(context.Context, domain.CampID, *domain.DeviceRegistrationStatus) ([]*domain.DeviceRegistration, error) {
-	return nil, nil
+	return s.reviewedDevices, nil
 }
 func (s *listDeviceTrustStub) ListLockedDevices(context.Context, domain.CampID) ([]*domain.DeviceRegistration, error) {
 	return s.devices, nil

@@ -41,6 +41,9 @@ func TestDeviceTrustService_RequestRegistration(t *testing.T) {
 		if reg.Status != domain.DevicePending {
 			t.Errorf("expected status 'PENDING', got %s", reg.Status)
 		}
+		if !reg.CreatedAt.Equal(now) {
+			t.Errorf("expected CreatedAt %v, got %v", now, reg.CreatedAt)
+		}
 		if len(broadcaster.Broadcasts) != 1 ||
 			broadcaster.Broadcasts[0].CampID != "camp-1" ||
 			broadcaster.Broadcasts[0].Event != EventDeviceRegistrationUpdated ||

@@ -119,7 +119,8 @@ CREATE TABLE device_registrations (
     token_hash VARCHAR(255) NOT NULL UNIQUE,
     failed_pin_attempts INT NOT NULL DEFAULT 0,
     locked_until TIMESTAMP WITH TIME ZONE,
-    approved_at TIMESTAMP WITH TIME ZONE
+    approved_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL
 );
 COMMENT ON TABLE device_registrations IS '진행자 기기의 등록 요청 및 승인/잠금 상태를 관리하는 테이블';
 COMMENT ON COLUMN device_registrations.id IS '기기 등록 요청 고유 식별자';
@@ -130,6 +131,7 @@ COMMENT ON COLUMN device_registrations.token_hash IS '기기를 인증하기 위
 COMMENT ON COLUMN device_registrations.failed_pin_attempts IS '트랙 PIN 입력 실패 횟수';
 COMMENT ON COLUMN device_registrations.locked_until IS 'PIN 오입력으로 인한 잠금 해제 예정 시간';
 COMMENT ON COLUMN device_registrations.approved_at IS '관리자에 의해 승인된 시간';
+COMMENT ON COLUMN device_registrations.created_at IS '기기 등록 요청이 생성된 시각';
 
 -- 진행자 세션 테이블
 CREATE TABLE facilitator_sessions (

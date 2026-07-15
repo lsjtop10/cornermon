@@ -103,7 +103,7 @@ func (h *DeviceHandler) RequestRegistration(c echo.Context) error {
 		ID:                string(reg.ID),
 		DeviceName:        reg.DeviceName,
 		Status:            string(reg.Status),
-		CreatedAt:         time.Now(),
+		CreatedAt:         reg.CreatedAt,
 		ApprovedAt:        approvedAt,
 		FailedPinAttempts: reg.FailedPinAttempts,
 	})
@@ -150,7 +150,7 @@ func (h *DeviceHandler) ListRegistrations(c echo.Context) error {
 			ID:                string(d.ID),
 			DeviceName:        d.DeviceName,
 			Status:            string(d.Status),
-			CreatedAt:         time.Now(),
+			CreatedAt:         d.CreatedAt,
 			ApprovedAt:        approvedAt,
 			FailedPinAttempts: d.FailedPinAttempts,
 			LockedUntil:       lockedUntil,
@@ -186,7 +186,7 @@ func (h *DeviceHandler) ListLockedDevices(c echo.Context) error {
 }
 
 func mapDeviceRegistration(device *domain.DeviceRegistration) DeviceRegistrationResponse {
-	response := DeviceRegistrationResponse{ID: string(device.ID), DeviceName: device.DeviceName, Status: string(device.Status), CreatedAt: time.Now().UTC(), FailedPinAttempts: device.FailedPinAttempts}
+	response := DeviceRegistrationResponse{ID: string(device.ID), DeviceName: device.DeviceName, Status: string(device.Status), CreatedAt: device.CreatedAt, FailedPinAttempts: device.FailedPinAttempts}
 	if value, ok := device.ApprovedAt.Value(); ok {
 		response.ApprovedAt = &value
 	}

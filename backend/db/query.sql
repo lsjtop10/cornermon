@@ -184,8 +184,8 @@ SELECT * FROM device_registrations WHERE token_hash = $1;
 SELECT * FROM device_registrations WHERE camp_id = $1 AND status = 'PENDING';
 
 -- name: SaveDeviceRegistration :exec
-INSERT INTO device_registrations (id, camp_id, device_name, status, token_hash, failed_pin_attempts, locked_until, approved_at)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+INSERT INTO device_registrations (id, camp_id, device_name, status, token_hash, failed_pin_attempts, locked_until, approved_at, created_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 ON CONFLICT (id) DO UPDATE SET
     status = EXCLUDED.status,
     failed_pin_attempts = EXCLUDED.failed_pin_attempts,
