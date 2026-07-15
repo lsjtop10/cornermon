@@ -1,20 +1,19 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'package:cornermon/admin/app.dart';
+import 'package:cornermon/admin/session/admin_session_token_source.dart';
+import 'package:cornermon/shared/auth/session_token_source.dart';
 
 void main() {
-  runApp(const AdminApp());
-}
-
-class AdminApp extends StatelessWidget {
-  const AdminApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const MaterialApp(
-      home: Scaffold(
-        body: Center(
-          child: Text('Admin App Stub'),
+  runApp(
+    ProviderScope(
+      overrides: [
+        sessionTokenSourceProvider.overrideWith(
+          (ref) => AdminSessionTokenSource(ref),
         ),
-      ),
-    );
-  }
+      ],
+      child: const AdminApp(),
+    ),
+  );
 }
