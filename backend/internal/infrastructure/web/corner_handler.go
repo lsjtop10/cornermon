@@ -10,7 +10,8 @@ import (
 )
 
 type CornerHandler struct {
-	svc *usecase.CornerService
+	svc   *usecase.CornerService
+	views usecase.CornerViewQuerier
 }
 
 type CornerMetricResponse struct {
@@ -29,8 +30,15 @@ type CornerResponse struct {
 	Metric CornerMetricResponse `json:"cornerMetric"`
 } // @name CornerResponse
 
-func NewCornerHandler(svc *usecase.CornerService) *CornerHandler {
-	return &CornerHandler{svc: svc}
+func NewCornerHandler(svc *usecase.CornerService, views usecase.CornerViewQuerier) *CornerHandler {
+	return &CornerHandler{svc: svc, views: views}
+}
+
+func mapCornerViewToDTO(view usecase.CornerView) CornerResponse {
+	return CornerResponse{
+		ID: string(view.ID), Name: view.Name, TargetMinutes: view.TargetMinutes,
+		Metric: CornerMetricResponse{AvgDurationSeconds: view.AvgDurationSeconds, SampleCount: view.SampleCount},
+	}
 }
 
 func mapDomainCornerToDTO(corner *domain.Corner) CornerResponse {
@@ -59,13 +67,13 @@ func (h *CornerHandler) ListCorners(c echo.Context) error {
 	if campID == "" {
 		return c.JSON(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: "campId is required"})
 	}
-	corners, err := h.svc.ListCorners(c.Request().Context(), campID)
+	views, err := h.views.ListCornerViewsByCamp(c.Request().Context(), campID)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_ERROR", Message: err.Error()})
 	}
-	res := make([]CornerResponse, len(corners))
-	for i, cr := range corners {
-		res[i] = mapDomainCornerToDTO(cr)
+	res := make([]CornerResponse, len(views))
+	for i, view := range views {
+		res[i] = mapCornerViewToDTO(view)
 	}
 	return c.JSON(http.StatusOK, res)
 }
@@ -110,11 +118,14 @@ func (h *CornerHandler) CreateCorner(c echo.Context) error {
 // @Router       /corners/{id} [get]
 func (h *CornerHandler) GetCorner(c echo.Context) error {
 	id := domain.CornerID(c.Param("id"))
-	corner, err := h.svc.GetCorner(c.Request().Context(), id)
+	view, err := h.views.GetCornerView(c.Request().Context(), id)
 	if err != nil {
 		return err
 	}
-	return c.JSON(http.StatusOK, mapDomainCornerToDTO(corner))
+	if view == nil {
+		return domain.ErrCornerNotFound
+	}
+	return c.JSON(http.StatusOK, mapCornerViewToDTO(*view))
 }
 
 // @Summary      코너 삭제

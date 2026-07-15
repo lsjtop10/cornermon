@@ -101,6 +101,7 @@ func main() {
 
 	deviceTrustService := usecase.NewDeviceTrustService(campRepo, deviceRepo, auditLogRepo, broadcaster, txManager)
 	cornerService := usecase.NewCornerService(campRepo, cornerRepo, auditLogRepo, broadcaster, txManager)
+	cornerViewQuerier := postgres.NewCornerViewQuerier(pool)
 	groupService := usecase.NewGroupService(campRepo, cornerRepo, trackRepo, groupRepo, badgeRepo, visitRepo, auditLogRepo, txManager)
 	badgeService := usecase.NewBadgeService(badgeRepo, groupRepo, auditLogRepo, txManager)
 	visitService := usecase.NewVisitService(campRepo, cornerRepo, trackRepo, visitRepo, groupRepo, badgeRepo, facilitatorSessionRepo, auditLogRepo, broadcaster, txManager)
@@ -115,7 +116,7 @@ func main() {
 	authHandler := web.NewAuthHandler(authAdminService, authFacilitatorService, deviceTrustService)
 	deviceHandler := web.NewDeviceHandler(deviceTrustService)
 	campHandler := web.NewCampHandler(campService)
-	cornerHandler := web.NewCornerHandler(cornerService)
+	cornerHandler := web.NewCornerHandler(cornerService, cornerViewQuerier)
 	trackHandler := web.NewTrackHandler(trackService)
 	groupHandler := web.NewGroupHandler(groupService)
 	badgeHandler := web.NewBadgeHandler(badgeService, groupService, campRepo)

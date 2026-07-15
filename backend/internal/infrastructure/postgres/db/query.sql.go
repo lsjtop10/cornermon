@@ -215,6 +215,44 @@ func (q *Queries) GetCorner(ctx context.Context, id string) (Corner, error) {
 	return i, err
 }
 
+const getCornerView = `-- name: GetCornerView :one
+SELECT
+    c.id,
+    c.name,
+    c.target_minutes,
+    COUNT(v.id) FILTER (WHERE v.status = 'COMPLETED') AS sample_count,
+    COALESCE(
+        AVG(EXTRACT(EPOCH FROM (v.ended_at - v.started_at)))
+            FILTER (WHERE v.status = 'COMPLETED'),
+        0
+    )::DOUBLE PRECISION AS avg_duration_seconds
+FROM corners c
+LEFT JOIN visits v ON v.corner_id = c.id
+WHERE c.id = $1
+GROUP BY c.id, c.name, c.target_minutes
+`
+
+type GetCornerViewRow struct {
+	ID                 string  `json:"id"`
+	Name               string  `json:"name"`
+	TargetMinutes      int32   `json:"target_minutes"`
+	SampleCount        int64   `json:"sample_count"`
+	AvgDurationSeconds float64 `json:"avg_duration_seconds"`
+}
+
+func (q *Queries) GetCornerView(ctx context.Context, id string) (GetCornerViewRow, error) {
+	row := q.db.QueryRow(ctx, getCornerView, id)
+	var i GetCornerViewRow
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.TargetMinutes,
+		&i.SampleCount,
+		&i.AvgDurationSeconds,
+	)
+	return i, err
+}
+
 const getDeviceRegistration = `-- name: GetDeviceRegistration :one
 SELECT id, camp_id, device_name, status, token_hash, failed_pin_attempts, locked_until, approved_at FROM device_registrations WHERE id = $1
 `
@@ -684,6 +722,58 @@ func (q *Queries) ListCamps(ctx context.Context) ([]Camp, error) {
 			&i.Status,
 			&i.BottleneckMinSamples,
 			&i.BottleneckRatioPct,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listCornerViewsByCamp = `-- name: ListCornerViewsByCamp :many
+SELECT
+    c.id,
+    c.name,
+    c.target_minutes,
+    COUNT(v.id) FILTER (WHERE v.status = 'COMPLETED') AS sample_count,
+    COALESCE(
+        AVG(EXTRACT(EPOCH FROM (v.ended_at - v.started_at)))
+            FILTER (WHERE v.status = 'COMPLETED'),
+        0
+    )::DOUBLE PRECISION AS avg_duration_seconds
+FROM corners c
+LEFT JOIN visits v ON v.corner_id = c.id
+WHERE c.camp_id = $1
+GROUP BY c.id, c.name, c.target_minutes
+ORDER BY c.id
+`
+
+type ListCornerViewsByCampRow struct {
+	ID                 string  `json:"id"`
+	Name               string  `json:"name"`
+	TargetMinutes      int32   `json:"target_minutes"`
+	SampleCount        int64   `json:"sample_count"`
+	AvgDurationSeconds float64 `json:"avg_duration_seconds"`
+}
+
+func (q *Queries) ListCornerViewsByCamp(ctx context.Context, campID string) ([]ListCornerViewsByCampRow, error) {
+	rows, err := q.db.Query(ctx, listCornerViewsByCamp, campID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListCornerViewsByCampRow
+	for rows.Next() {
+		var i ListCornerViewsByCampRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.TargetMinutes,
+			&i.SampleCount,
+			&i.AvgDurationSeconds,
 		); err != nil {
 			return nil, err
 		}

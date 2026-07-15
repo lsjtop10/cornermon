@@ -20,6 +20,39 @@ SELECT * FROM corners WHERE id = $1;
 -- name: ListCornersByCamp :many
 SELECT * FROM corners WHERE camp_id = $1;
 
+-- name: ListCornerViewsByCamp :many
+SELECT
+    c.id,
+    c.name,
+    c.target_minutes,
+    COUNT(v.id) FILTER (WHERE v.status = 'COMPLETED') AS sample_count,
+    COALESCE(
+        AVG(EXTRACT(EPOCH FROM (v.ended_at - v.started_at)))
+            FILTER (WHERE v.status = 'COMPLETED'),
+        0
+    )::DOUBLE PRECISION AS avg_duration_seconds
+FROM corners c
+LEFT JOIN visits v ON v.corner_id = c.id
+WHERE c.camp_id = $1
+GROUP BY c.id, c.name, c.target_minutes
+ORDER BY c.id;
+
+-- name: GetCornerView :one
+SELECT
+    c.id,
+    c.name,
+    c.target_minutes,
+    COUNT(v.id) FILTER (WHERE v.status = 'COMPLETED') AS sample_count,
+    COALESCE(
+        AVG(EXTRACT(EPOCH FROM (v.ended_at - v.started_at)))
+            FILTER (WHERE v.status = 'COMPLETED'),
+        0
+    )::DOUBLE PRECISION AS avg_duration_seconds
+FROM corners c
+LEFT JOIN visits v ON v.corner_id = c.id
+WHERE c.id = $1
+GROUP BY c.id, c.name, c.target_minutes;
+
 -- name: SaveCorner :exec
 INSERT INTO corners (id, camp_id, name, target_minutes, is_mandatory)
 VALUES ($1, $2, $3, $4, $5)
