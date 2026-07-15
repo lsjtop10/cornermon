@@ -247,6 +247,23 @@ func (s *DeviceTrustService) ReviewDeviceTrustRequests(ctx context.Context, camp
 	return s.devices.ListByCampAndStatus(ctx, campID, status)
 }
 
+// ListLockedDevices returns approved devices whose lockout window has not expired.
+func (s *DeviceTrustService) ListLockedDevices(ctx context.Context, campID domain.CampID) ([]*domain.DeviceRegistration, error) {
+	status := domain.DeviceApproved
+	devices, err := s.devices.ListByCampAndStatus(ctx, campID, &status)
+	if err != nil {
+		return nil, err
+	}
+	now := s.nowFn()
+	locked := make([]*domain.DeviceRegistration, 0, len(devices))
+	for _, device := range devices {
+		if device.IsLocked(now) {
+			locked = append(locked, device)
+		}
+	}
+	return locked, nil
+}
+
 func (s *DeviceTrustService) recordAuditLog(ctx context.Context, actor, action, target string, success bool, metadata map[string]any) {
 	log := domain.NewAuditLog(
 		domain.AuditLogID(s.uuidFn()),

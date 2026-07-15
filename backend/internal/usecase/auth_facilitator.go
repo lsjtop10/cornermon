@@ -30,6 +30,10 @@ type FacilitatorAuthService struct {
 	uuidFn func() string
 }
 
+func (s *FacilitatorAuthService) ListActiveSessions(ctx context.Context, campID domain.CampID) ([]*domain.FacilitatorSession, error) {
+	return s.sessions.ListActiveByCamp(ctx, campID)
+}
+
 func NewFacilitatorAuthService(
 	camps CampRepository,
 	corners CornerRepository,

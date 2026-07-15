@@ -17,6 +17,7 @@ type DeviceTrustUsecase interface {
 	RejectDevice(ctx context.Context, regID domain.DeviceRegistrationID, actorAdminID domain.AdminID) error
 	RevokeDevice(ctx context.Context, regID domain.DeviceRegistrationID, actorAdminID domain.AdminID) error
 	ReviewDeviceTrustRequests(ctx context.Context, campID domain.CampID, status *domain.DeviceRegistrationStatus) ([]*domain.DeviceRegistration, error)
+	ListLockedDevices(ctx context.Context, campID domain.CampID) ([]*domain.DeviceRegistration, error)
 }
 
 type DeviceHandler struct {
@@ -167,13 +168,32 @@ func (h *DeviceHandler) ListRegistrations(c echo.Context) error {
 // @Param        campId query string true "캠프 ID"
 // @Success      200 {array} DeviceRegistrationResponse
 // @Failure      400 {object} ErrorResponse
-// @Failure      501 {object} ErrorResponse "구현 예정 (GitHub Issue #70)"
 // @Router       /device-registrations/locked [get]
 func (h *DeviceHandler) ListLockedDevices(c echo.Context) error {
-	if c.QueryParam("campId") == "" {
+	campID := c.QueryParam("campId")
+	if campID == "" {
 		return c.JSON(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: "missing campId"})
 	}
-	return c.JSON(http.StatusNotImplemented, ErrorResponse{Code: "NOT_IMPLEMENTED", Message: "잠금 기기 목록 조회는 아직 구현되지 않았습니다"})
+	devices, err := h.deviceTrust.ListLockedDevices(c.Request().Context(), domain.CampID(campID))
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()})
+	}
+	res := make([]DeviceRegistrationResponse, len(devices))
+	for i, device := range devices {
+		res[i] = mapDeviceRegistration(device)
+	}
+	return c.JSON(http.StatusOK, res)
+}
+
+func mapDeviceRegistration(device *domain.DeviceRegistration) DeviceRegistrationResponse {
+	response := DeviceRegistrationResponse{ID: string(device.ID), DeviceName: device.DeviceName, Status: string(device.Status), CreatedAt: time.Now().UTC(), FailedPinAttempts: device.FailedPinAttempts}
+	if value, ok := device.ApprovedAt.Value(); ok {
+		response.ApprovedAt = &value
+	}
+	if value, ok := device.LockedUntil.Value(); ok {
+		response.LockedUntil = &value
+	}
+	return response
 }
 
 // @Summary      기기 승인
