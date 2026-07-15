@@ -30,6 +30,7 @@ type Querier interface {
 	GetInProgressVisitByTrack(ctx context.Context, trackID string) (Visit, error)
 	GetTrack(ctx context.Context, id string) (Track, error)
 	GetVisit(ctx context.Context, id string) (Visit, error)
+	IncrementTrackUnreadCount(ctx context.Context, arg IncrementTrackUnreadCountParams) error
 	ListActiveFacilitatorSessionsByCamp(ctx context.Context, campID string) ([]FacilitatorSession, error)
 	ListActiveFacilitatorSessionsByTrack(ctx context.Context, trackID string) ([]FacilitatorSession, error)
 	ListActiveTracksByCamp(ctx context.Context, campID string) ([]Track, error)
@@ -43,11 +44,14 @@ type Querier interface {
 	ListDeviceRegistrationsByCampAndStatus(ctx context.Context, arg ListDeviceRegistrationsByCampAndStatusParams) ([]DeviceRegistration, error)
 	ListGroupsByCamp(ctx context.Context, campID string) ([]Group, error)
 	ListMessagesByTrack(ctx context.Context, trackID string) ([]Message, error)
+	ListMessagesByTrackAfter(ctx context.Context, arg ListMessagesByTrackAfterParams) ([]Message, error)
 	ListPendingDeviceRegistrationsByCamp(ctx context.Context, campID string) ([]DeviceRegistration, error)
 	ListTracksByCamp(ctx context.Context, campID string) ([]Track, error)
 	ListTracksByCorner(ctx context.Context, cornerID string) ([]Track, error)
 	ListVisitsByCamp(ctx context.Context, campID string) ([]ListVisitsByCampRow, error)
 	ListVisitsByGroup(ctx context.Context, groupID string) ([]Visit, error)
+	MarkAllMessagesReadByRecipient(ctx context.Context, arg MarkAllMessagesReadByRecipientParams) error
+	ResetTrackUnreadCount(ctx context.Context, arg ResetTrackUnreadCountParams) error
 	SaveAdminSession(ctx context.Context, arg SaveAdminSessionParams) error
 	SaveAnnouncement(ctx context.Context, arg SaveAnnouncementParams) error
 	SaveAnnouncementReceipt(ctx context.Context, arg SaveAnnouncementReceiptParams) error

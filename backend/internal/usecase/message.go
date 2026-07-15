@@ -33,7 +33,12 @@ func (s *MessageService) SendDirect(ctx context.Context, trackID domain.TrackID,
 		return nil, domain.ErrTrackNotActive
 	}
 	msg := &domain.Message{ID: domain.MessageID(s.uuidFn()), ChannelType: domain.MessageDirect, TrackID: trackID, SenderRole: senderRole, Content: content, SentAt: s.nowFn()}
-	if err := s.tx.RunInTx(ctx, func(ctx context.Context) error { return s.messages.Save(ctx, msg) }); err != nil {
+	if err := s.tx.RunInTx(ctx, func(ctx context.Context) error {
+		if err := s.messages.Save(ctx, msg); err != nil {
+			return err
+		}
+		return s.tracks.IncrementUnreadCount(ctx, trackID, oppositeRole(senderRole))
+	}); err != nil {
 		s.recordAuditLog(ctx, string(trackID), "MESSAGE_DIRECT", "", false, map[string]any{"error": err.Error()})
 		return nil, err
 	}
@@ -51,8 +56,52 @@ func (s *MessageService) SendDirect(ctx context.Context, trackID domain.TrackID,
 	return msg, nil
 }
 
-func (s *MessageService) ListDirectMessages(ctx context.Context, trackID domain.TrackID) ([]*domain.Message, error) {
-	return s.messages.ListMessageByTrack(ctx, trackID)
+func (s *MessageService) ListDirectMessages(ctx context.Context, trackID domain.TrackID, viewerRole domain.SenderRole, after domain.Optional[time.Time], markRead bool) ([]*domain.Message, error) {
+	var messages []*domain.Message
+	err := s.tx.RunInTx(ctx, func(ctx context.Context) error {
+		var err error
+		messages, err = s.messages.ListMessageByTrackAfter(ctx, trackID, after)
+		if err != nil || !markRead {
+			return err
+		}
+		if err := s.messages.MarkAllReadByRecipient(ctx, trackID, viewerRole, s.nowFn()); err != nil {
+			return err
+		}
+		return s.tracks.ResetUnreadCount(ctx, trackID, viewerRole)
+	})
+	if err != nil {
+		return nil, err
+	}
+	if markRead {
+		now := s.nowFn()
+		for _, message := range messages {
+			if message.SenderRole == oppositeRole(viewerRole) {
+				_ = message.MarkRead(now)
+			}
+		}
+	}
+	return messages, nil
+}
+
+func (s *MessageService) GetUnreadCount(ctx context.Context, trackID domain.TrackID, viewerRole domain.SenderRole) (int, error) {
+	track, err := s.tracks.Get(ctx, trackID)
+	if err != nil {
+		return 0, err
+	}
+	if track == nil {
+		return 0, domain.ErrTrackNotFound
+	}
+	if viewerRole == domain.RoleAdmin {
+		return track.UnreadByAdminCount, nil
+	}
+	return track.UnreadByTrackCount, nil
+}
+
+func oppositeRole(role domain.SenderRole) domain.SenderRole {
+	if role == domain.RoleAdmin {
+		return domain.RoleTrack
+	}
+	return domain.RoleAdmin
 }
 
 func (s *MessageService) recordAuditLog(ctx context.Context, actor, action, target string, success bool, metadata map[string]any) {

@@ -2,7 +2,9 @@ package web
 
 import (
 	"context"
+	"errors"
 	"net/http"
+	"strconv"
 	"time"
 
 	"cornermon/backend/internal/domain"
@@ -13,7 +15,8 @@ import (
 
 type MessageUsecase interface {
 	SendDirect(ctx context.Context, trackID domain.TrackID, content string, senderRole domain.SenderRole) (*domain.Message, error)
-	ListDirectMessages(ctx context.Context, trackID domain.TrackID) ([]*domain.Message, error)
+	ListDirectMessages(ctx context.Context, trackID domain.TrackID, viewerRole domain.SenderRole, after domain.Optional[time.Time], markRead bool) ([]*domain.Message, error)
+	GetUnreadCount(ctx context.Context, trackID domain.TrackID, viewerRole domain.SenderRole) (int, error)
 }
 
 type AnnouncementUsecase interface {
@@ -247,31 +250,21 @@ func (h *MessageHandler) SendDirect(c echo.Context) error {
 // @Success      200 {array} MessageResponse
 // @Router       /tracks/{trackId}/messages [get]
 func (h *MessageHandler) ListDirectMessages(c echo.Context) error {
+	background, err := parseBackground(c.QueryParam("background"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: err.Error()})
+	}
+	after, err := parseAfter(c.QueryParam("after"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: "after must be RFC3339"})
+	}
 	trackID := domain.TrackID(c.Param("trackId"))
-
-	msgs, err := h.message.ListDirectMessages(c.Request().Context(), trackID)
+	msgs, err := h.message.ListDirectMessages(c.Request().Context(), trackID, domain.RoleAdmin, after, background)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()})
 	}
 
-	res := make([]MessageResponse, len(msgs))
-	for i, msg := range msgs {
-		var tID *string
-		if msg.TrackID != "" {
-			valStr := string(msg.TrackID)
-			tID = &valStr
-		}
-		res[i] = MessageResponse{
-			ID:          string(msg.ID),
-			ChannelType: string(msg.ChannelType),
-			TrackID:     tID,
-			SenderRole:  string(msg.SenderRole),
-			Content:     msg.Content,
-			SentAt:      msg.SentAt,
-		}
-	}
-
-	return c.JSON(http.StatusOK, res)
+	return c.JSON(http.StatusOK, mapMessages(msgs))
 }
 
 // @Summary      트랙별 메시지 내역 조회 (진행자)
@@ -286,7 +279,19 @@ func (h *MessageHandler) ListDirectMessages(c echo.Context) error {
 // @Failure      501 {object} ErrorResponse "구현 예정 (GitHub Issue #69)"
 // @Router       /tracks/{trackId}/messages [get]
 func (h *MessageHandler) ListDirectMessagesForTrack(c echo.Context) error {
-	return c.JSON(http.StatusNotImplemented, ErrorResponse{Code: "NOT_IMPLEMENTED", Message: "진행자용 메시지 조회는 아직 구현되지 않았습니다"})
+	background, err := parseBackground(c.QueryParam("background"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: err.Error()})
+	}
+	after, err := parseAfter(c.QueryParam("after"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: "after must be RFC3339"})
+	}
+	msgs, err := h.message.ListDirectMessages(c.Request().Context(), domain.TrackID(c.Param("trackId")), domain.RoleTrack, after, background)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()})
+	}
+	return c.JSON(http.StatusOK, mapMessages(msgs))
 }
 
 type UnreadCountResponse struct {
@@ -302,5 +307,51 @@ type UnreadCountResponse struct {
 // @Failure      501 {object} ErrorResponse "구현 예정 (GitHub Issue #69)"
 // @Router       /tracks/{trackId}/messages/unread-count [get]
 func (h *MessageHandler) GetUnreadCount(c echo.Context) error {
-	return c.JSON(http.StatusNotImplemented, ErrorResponse{Code: "NOT_IMPLEMENTED", Message: "미확인 메시지 개수 조회는 아직 구현되지 않았습니다"})
+	role := domain.RoleAdmin
+	if _, ok := c.Get("facilitatorSession").(*domain.FacilitatorSession); ok {
+		role = domain.RoleTrack
+	}
+	count, err := h.message.GetUnreadCount(c.Request().Context(), domain.TrackID(c.Param("trackId")), role)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()})
+	}
+	return c.JSON(http.StatusOK, UnreadCountResponse{UnreadCount: count})
+}
+
+func parseBackground(value string) (bool, error) {
+	if value == "" {
+		return false, nil
+	}
+	parsed, err := strconv.ParseBool(value)
+	if err != nil {
+		return false, errors.New("background must be boolean")
+	}
+	return parsed, nil
+}
+
+func parseAfter(value string) (domain.Optional[time.Time], error) {
+	if value == "" {
+		return domain.None[time.Time](), nil
+	}
+	t, err := time.Parse(time.RFC3339, value)
+	if err != nil {
+		return domain.None[time.Time](), err
+	}
+	return domain.Some(t.UTC()), nil
+}
+
+func mapMessages(msgs []*domain.Message) []MessageResponse {
+	res := make([]MessageResponse, len(msgs))
+	for i, msg := range msgs {
+		var trackID *string
+		if msg.TrackID != "" {
+			value := string(msg.TrackID)
+			trackID = &value
+		}
+		res[i] = MessageResponse{ID: string(msg.ID), ChannelType: string(msg.ChannelType), TrackID: trackID, SenderRole: string(msg.SenderRole), Content: msg.Content, SentAt: msg.SentAt, IsRead: msg.ReadAt.IsSet()}
+		if readAt, ok := msg.ReadAt.Value(); ok {
+			res[i].ReadAt = &readAt
+		}
+	}
+	return res
 }

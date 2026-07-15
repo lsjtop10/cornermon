@@ -29,12 +29,14 @@ func (r *pgTrackRepository) queries(ctx context.Context) *db.Queries {
 
 func mapTrack(row db.Track) *domain.Track {
 	t := &domain.Track{
-		ID:            domain.TrackID(row.ID),
-		CornerID:      domain.CornerID(row.CornerID),
-		TrackNo:       int(row.TrackNo),
-		Status:        domain.TrackStatus(row.Status),
-		PINHash:       row.PinHash,
-		PINCiphertext: row.PinCiphertext.String,
+		ID:                 domain.TrackID(row.ID),
+		CornerID:           domain.CornerID(row.CornerID),
+		TrackNo:            int(row.TrackNo),
+		Status:             domain.TrackStatus(row.Status),
+		PINHash:            row.PinHash,
+		PINCiphertext:      row.PinCiphertext.String,
+		UnreadByAdminCount: int(row.UnreadByAdminCount),
+		UnreadByTrackCount: int(row.UnreadByTrackCount),
 	}
 
 	if row.CurrentVisitID.Valid {
@@ -106,12 +108,24 @@ func (r *pgTrackRepository) Save(ctx context.Context, track *domain.Track) error
 	if val, ok := track.DeletedAt.Value(); ok {
 		params.DeletedAt = pgtype.Timestamptz{Time: val, Valid: true}
 	}
+	params.UnreadByAdminCount = int32(track.UnreadByAdminCount)
+	params.UnreadByTrackCount = int32(track.UnreadByTrackCount)
 
 	err := r.queries(ctx).SaveTrack(ctx, params)
 	if err != nil {
 		return errs.Wrap(ctx, err)
 	}
 	return nil
+}
+
+func (r *pgTrackRepository) IncrementUnreadCount(ctx context.Context, trackID domain.TrackID, recipient domain.SenderRole) error {
+	err := r.queries(ctx).IncrementTrackUnreadCount(ctx, db.IncrementTrackUnreadCountParams{TrackID: string(trackID), Recipient: string(recipient)})
+	return errs.Wrap(ctx, err)
+}
+
+func (r *pgTrackRepository) ResetUnreadCount(ctx context.Context, trackID domain.TrackID, reader domain.SenderRole) error {
+	err := r.queries(ctx).ResetTrackUnreadCount(ctx, db.ResetTrackUnreadCountParams{TrackID: string(trackID), Reader: string(reader)})
+	return errs.Wrap(ctx, err)
 }
 
 func (r *pgTrackRepository) ListByCamp(ctx context.Context, campID domain.CampID) ([]*domain.Track, error) {

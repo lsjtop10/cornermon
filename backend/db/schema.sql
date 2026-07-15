@@ -45,7 +45,9 @@ CREATE TABLE tracks (
     pin_hash VARCHAR(255) NOT NULL,
     pin_ciphertext TEXT,
     current_visit_id VARCHAR(50),
-    deleted_at TIMESTAMP WITH TIME ZONE
+    deleted_at TIMESTAMP WITH TIME ZONE,
+    unread_by_admin_count INT NOT NULL DEFAULT 0,
+    unread_by_track_count INT NOT NULL DEFAULT 0
 );
 COMMENT ON TABLE tracks IS '코너 내에서 병렬로 진행 가능한 세부 트랙(기기/테이블)을 정의하는 테이블';
 COMMENT ON COLUMN tracks.id IS '트랙 고유 식별자';
@@ -182,7 +184,8 @@ CREATE TABLE messages (
     track_id VARCHAR(50) NOT NULL REFERENCES tracks(id) ON DELETE CASCADE,
     sender_role VARCHAR(50) NOT NULL,
     content TEXT NOT NULL,
-    sent_at TIMESTAMP WITH TIME ZONE NOT NULL
+    sent_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    read_at TIMESTAMP WITH TIME ZONE
 );
 COMMENT ON TABLE messages IS '트랙별 운영자/진행자 스레드 메시지를 저장하는 테이블';
 COMMENT ON COLUMN messages.id IS '메시지 고유 식별자';
