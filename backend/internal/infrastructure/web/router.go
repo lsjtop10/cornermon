@@ -109,7 +109,6 @@ func RegisterRoutes(e *echo.Echo, h *Handlers, adminAuth AuthAdminUsecase, track
 	// ── E. Message (Admin) ──
 	if h.Message != nil {
 		admin.POST("/camps/:campId/messages/broadcast", h.Message.SendBroadcast)
-		admin.GET("/camps/:campId/messages/broadcast", h.Message.ListBroadcasts)
 		admin.GET("/messages/broadcast/:id/receipts", h.Message.GetBroadcastReceipts)
 		admin.POST("/tracks/:trackId/messages", h.Message.SendDirect)
 
@@ -118,6 +117,7 @@ func RegisterRoutes(e *echo.Echo, h *Handlers, adminAuth AuthAdminUsecase, track
 		// before group middleware is evaluated.
 		message := v1.Group("")
 		message.Use(MessageAuthMiddleware(adminAuth, trackAuth))
+		message.GET("/camps/:campId/messages/broadcast", h.Message.ListBroadcasts)
 		message.GET("/tracks/:trackId/messages", h.Message.ListDirectMessages)
 		message.GET("/tracks/:trackId/messages/unread-count", h.Message.GetUnreadCount)
 	}

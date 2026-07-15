@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"cornermon/backend/internal/domain"
+	"cornermon/backend/internal/usecase"
 
 	"github.com/labstack/echo/v4"
 )
@@ -32,6 +33,72 @@ func (m *messageUsecaseForHandler) ListDirectMessages(_ context.Context, _ domai
 
 func (m *messageUsecaseForHandler) GetUnreadCount(context.Context, domain.TrackID, domain.SenderRole) (int, error) {
 	return 0, nil
+}
+
+type announcementUsecaseForHandler struct {
+	notices []*domain.Announcement
+}
+
+func (a *announcementUsecaseForHandler) SendAnnouncement(context.Context, domain.CampID, string, domain.AdminID) (*domain.Announcement, error) {
+	return nil, nil
+}
+
+func (a *announcementUsecaseForHandler) ListNoticesByCamp(context.Context, domain.CampID) ([]*domain.Announcement, error) {
+	return a.notices, nil
+}
+
+func (a *announcementUsecaseForHandler) GetAnnouncementReceipts(context.Context, domain.AnnouncementID) ([]usecase.BroadcastReceiptDTO, error) {
+	return nil, nil
+}
+
+func (a *announcementUsecaseForHandler) MarkNoticeRead(context.Context, string, domain.AnnouncementID) error {
+	return nil
+}
+
+func TestListBroadcastsShoudReturnNoticesWhenAdminSessionPresent(t *testing.T) {
+	// Arrange
+	uc := &announcementUsecaseForHandler{notices: []*domain.Announcement{{ID: "notice-1", CampID: "camp-1", Content: "hello"}}}
+	e := echo.New()
+	req := httptest.NewRequest(http.MethodGet, "/camps/camp-1/messages/broadcast", nil)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+	c.SetParamNames("campId")
+	c.SetParamValues("camp-1")
+	c.Set("adminSession", &domain.AdminSession{AdminID: "admin-1"})
+
+	// Act
+	err := NewMessageHandler(&messageUsecaseForHandler{}, uc).ListBroadcasts(c)
+
+	// Assert
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", rec.Code)
+	}
+}
+
+func TestListBroadcastsShoudReturnNoticesWhenFacilitatorSessionPresent(t *testing.T) {
+	// Arrange
+	uc := &announcementUsecaseForHandler{notices: []*domain.Announcement{{ID: "notice-1", CampID: "camp-1", Content: "hello"}}}
+	e := echo.New()
+	req := httptest.NewRequest(http.MethodGet, "/camps/camp-1/messages/broadcast", nil)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+	c.SetParamNames("campId")
+	c.SetParamValues("camp-1")
+	c.Set("facilitatorSession", &domain.FacilitatorSession{TrackID: "track-1"})
+
+	// Act
+	err := NewMessageHandler(&messageUsecaseForHandler{}, uc).ListBroadcasts(c)
+
+	// Assert
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", rec.Code)
+	}
 }
 
 func TestListDirectMessagesShoudRejectRequestWhenSessionTrackDiffers(t *testing.T) {
