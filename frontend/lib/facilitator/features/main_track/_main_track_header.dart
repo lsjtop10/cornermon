@@ -3,9 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:cornermon/shared/api/ids.dart';
-import 'package:cornermon/shared/api/providers/message_providers.dart';
 import 'package:cornermon/shared/api/providers/visit_providers.dart';
 import 'package:cornermon/shared/api/sse/track_event_stream.dart';
+import 'package:cornermon/facilitator/session/facilitator_broadcast_provider.dart';
 import 'package:cornermon/shared/design_system/tokens/colors.dart';
 import 'package:cornermon/shared/design_system/tokens/spacing.dart';
 import 'package:cornermon/shared/design_system/tokens/typography.dart';
@@ -26,7 +26,7 @@ class MainTrackHeader extends ConsumerWidget {
         .maybeWhen(data: (visit) => visit != null, orElse: () => false);
 
     final unreadBroadcastCount = ref
-        .watch(broadcastMessageListProvider)
+        .watch(facilitatorBroadcastMessageListProvider)
         .maybeWhen(
           data: (messages) => messages.where((m) => m.readAt == null).length,
           orElse: () => 0,

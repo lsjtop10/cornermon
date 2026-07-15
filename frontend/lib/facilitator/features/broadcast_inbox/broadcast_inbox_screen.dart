@@ -1,14 +1,15 @@
 import 'dart:async';
 
-import 'package:cornermon_api_gen/cornermon_api_gen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:cornermon/shared/api/domain_aliases.dart';
 import 'package:cornermon/shared/api/providers/message_providers.dart';
 import 'package:cornermon/shared/design_system/tokens/colors.dart';
 import 'package:cornermon/shared/design_system/tokens/spacing.dart';
 import 'package:cornermon/shared/design_system/tokens/typography.dart';
 import 'package:cornermon/shared/design_system/widgets/empty_state.dart';
+import 'package:cornermon/facilitator/session/facilitator_broadcast_provider.dart';
 import 'package:cornermon/facilitator/widgets/local_time_label.dart';
 
 /// B6 공지함 — 진입 시 안읽은 공지를 자동 읽음 처리한다(screen-spec-facilitator.md B6).
@@ -31,14 +32,14 @@ class _BroadcastInboxScreenState extends ConsumerState<BroadcastInboxScreen> {
     final colors = isDark ? AppColors.dark : AppColors.light;
 
     // 목록이 갱신될 때마다(리빌드 포함) 안읽음 항목을 잡아낸다.
-    ref.listen(broadcastMessageListProvider, (previous, next) {
+    ref.listen(facilitatorBroadcastMessageListProvider, (previous, next) {
       final messages = next.value;
       if (messages != null) {
         unawaited(_markUnreadAsRead(messages));
       }
     });
 
-    final messagesAsync = ref.watch(broadcastMessageListProvider);
+    final messagesAsync = ref.watch(facilitatorBroadcastMessageListProvider);
 
     return Scaffold(
       backgroundColor: colors.bgCanvas,
@@ -54,7 +55,7 @@ class _BroadcastInboxScreenState extends ConsumerState<BroadcastInboxScreen> {
 
           // API가 순서를 보장하지 않으므로 화면에서 최신순으로 정렬한다.
           final sorted = [...messages]
-            ..sort((a, b) => b.sentAt.compareTo(a.sentAt));
+            ..sort((a, b) => b.sentAt!.compareTo(a.sentAt!));
 
           return ListView.separated(
             padding: const EdgeInsets.all(AppSpacing.space4),
@@ -64,7 +65,7 @@ class _BroadcastInboxScreenState extends ConsumerState<BroadcastInboxScreen> {
             itemBuilder: (context, index) {
               final message = sorted[index];
               final unread = message.readAt == null;
-              final expanded = _expandedIds.contains(message.id);
+              final expanded = _expandedIds.contains(message.id!);
 
               return _BroadcastMessageTile(
                 message: message,
@@ -73,9 +74,9 @@ class _BroadcastInboxScreenState extends ConsumerState<BroadcastInboxScreen> {
                 colors: colors,
                 onTap: () => setState(() {
                   if (expanded) {
-                    _expandedIds.remove(message.id);
+                    _expandedIds.remove(message.id!);
                   } else {
-                    _expandedIds.add(message.id);
+                    _expandedIds.add(message.id!);
                   }
                 }),
               );
@@ -99,16 +100,16 @@ class _BroadcastInboxScreenState extends ConsumerState<BroadcastInboxScreen> {
         .toList();
     if (targets.isEmpty) return;
 
-    _readRequestedIds.addAll(targets.map((m) => m.id));
+    _readRequestedIds.addAll(targets.map((m) => m.id!));
 
     final api = ref.read(messageApiProvider);
     await Future.wait(
-      targets.map((m) => api.messagesBroadcastIdReadPost(id: m.id)),
+      targets.map((m) => api.messagesBroadcastIdReadPost(id: m.id!)),
     );
 
     if (!mounted) return;
     // 개별 호출마다가 아니라 전부 끝난 뒤 한 번만 invalidate한다.
-    ref.invalidate(broadcastMessageListProvider);
+    ref.invalidate(facilitatorBroadcastMessageListProvider);
   }
 }
 
@@ -156,7 +157,7 @@ class _BroadcastMessageTile extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              message.content,
+              message.content ?? '',
               style: contentStyle,
               maxLines: expanded ? null : 2,
               overflow: expanded ? TextOverflow.visible : TextOverflow.ellipsis,
@@ -166,7 +167,7 @@ class _BroadcastMessageTile extends StatelessWidget {
               style: AppTypography.caption.copyWith(
                 color: colors.textSecondary,
               ),
-              child: LocalTimeLabel(dateTime: message.sentAt),
+              child: LocalTimeLabel(dateTime: message.sentAt!),
             ),
           ],
         ),

@@ -3,8 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:cornermon_api_gen/cornermon_api_gen.dart';
 
+import 'package:cornermon/shared/api/domain_aliases.dart';
 import 'package:cornermon/shared/api/ids.dart';
 import 'package:cornermon/shared/api/providers/group_providers.dart';
 import 'package:cornermon/shared/api/providers/visit_providers.dart';
@@ -145,7 +145,7 @@ class _BusyBodyState extends ConsumerState<_BusyBody> {
   void _updateElapsed() {
     if (!mounted) return;
     setState(
-      () => _elapsed = DateTime.now().difference(widget.visit.startedAt),
+      () => _elapsed = DateTime.now().difference(widget.visit.startedAt!),
     );
   }
 
@@ -175,7 +175,7 @@ class _BusyBodyState extends ConsumerState<_BusyBody> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final colors = isDark ? AppColors.dark : AppColors.light;
     final groupAsync = ref.watch(
-      groupDetailProvider(GroupId(widget.visit.groupId)),
+      groupDetailProvider(GroupId(widget.visit.groupId!)),
     );
 
     final targetSeconds = widget.targetMinutes != null
@@ -198,7 +198,7 @@ class _BusyBodyState extends ConsumerState<_BusyBody> {
         children: [
           groupAsync.when(
             data: (group) => Text(
-              group.name,
+              group.name ?? '',
               style: AppTypography.title1.copyWith(color: colors.textPrimary),
               textAlign: TextAlign.center,
             ),

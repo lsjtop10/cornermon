@@ -2,8 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:cornermon_api_gen/cornermon_api_gen.dart';
 
+import 'package:cornermon/shared/api/domain_aliases.dart';
 import 'package:cornermon/shared/api/ids.dart';
 import 'package:cornermon/shared/api/providers/group_providers.dart';
 import 'package:cornermon/shared/design_system/tokens/colors.dart';
@@ -70,7 +70,7 @@ class _VisitSummaryOverlayState extends ConsumerState<VisitSummaryOverlay> {
     final colors = isDark ? AppColors.dark : AppColors.light;
 
     final groupAsync = ref.watch(
-      groupDetailProvider(GroupId(widget.visit.groupId)),
+      groupDetailProvider(GroupId(widget.visit.groupId!)),
     );
     final duration = widget.visit.durationSeconds ?? 0;
     final deviation = widget.visit.deviationSeconds ?? 0;

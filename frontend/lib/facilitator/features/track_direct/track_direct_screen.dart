@@ -1,7 +1,7 @@
-import 'package:cornermon_api_gen/cornermon_api_gen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:cornermon/shared/api/domain_aliases.dart';
 import 'package:cornermon/shared/api/ids.dart';
 import 'package:cornermon/shared/api/providers/message_providers.dart';
 import 'package:cornermon/shared/design_system/tokens/colors.dart';
@@ -42,7 +42,7 @@ class _TrackDirectScreenState extends ConsumerState<TrackDirectScreen> {
       // 라우터 가드가 인증 후에만 이 화면으로 보내므로 정상 흐름에선 도달하지 않는다.
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
-    final trackId = TrackId(sessionState.track.id);
+    final trackId = TrackId(sessionState.track.id!);
 
     final messagesAsync = ref.watch(trackMessageListProvider(trackId));
 
@@ -63,7 +63,7 @@ class _TrackDirectScreenState extends ConsumerState<TrackDirectScreen> {
 
                   // 채팅 스레드는 오래된 메시지가 위, 최신 메시지가 아래로 오도록 정렬한다.
                   final sorted = [...messages]
-                    ..sort((a, b) => a.sentAt.compareTo(b.sentAt));
+                    ..sort((a, b) => a.sentAt!.compareTo(b.sentAt!));
 
                   return ListView.builder(
                     padding: const EdgeInsets.all(AppSpacing.space4),
@@ -127,13 +127,13 @@ class _MessageBubble extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              message.content,
+              message.content ?? '',
               style: AppTypography.body.copyWith(color: textColor),
             ),
             const SizedBox(height: AppSpacing.space1),
             DefaultTextStyle.merge(
               style: AppTypography.caption.copyWith(color: textColor),
-              child: LocalTimeLabel(dateTime: message.sentAt),
+              child: LocalTimeLabel(dateTime: message.sentAt!),
             ),
           ],
         ),
