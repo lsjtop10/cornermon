@@ -24,6 +24,10 @@ type DeviceHandler struct {
 	deviceTrust DeviceTrustUsecase
 }
 
+type DeviceStatusResponse struct {
+	Status string `json:"status" enums:"PENDING,APPROVED,REJECTED,REVOKED"`
+} // @name DeviceStatusResponse
+
 type DeviceRegistrationResponse struct {
 	ID                string     `json:"id" format:"uuid"`
 	DeviceName        string     `json:"deviceName" example:"iPad Pro #3"`
@@ -51,7 +55,7 @@ type DeviceRegistrationRequest struct {
 // @Tags         A. Auth & Device Trust
 // @Accept       json
 // @Produce      json
-// @Success      200 {object} map[string]interface{}
+// @Success      200 {object} DeviceStatusResponse
 // @Router       /device-registrations/me [get]
 func (h *DeviceHandler) GetMyRegistrationStatus(c echo.Context) error {
 	token := extractToken(c.Request().Header.Get("Authorization"))
@@ -67,8 +71,8 @@ func (h *DeviceHandler) GetMyRegistrationStatus(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_ERROR", Message: err.Error()})
 	}
 
-	return c.JSON(http.StatusOK, map[string]interface{}{
-		"status": status,
+	return c.JSON(http.StatusOK, DeviceStatusResponse{
+		Status: string(*status),
 	})
 }
 
