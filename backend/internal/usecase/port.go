@@ -34,6 +34,31 @@ type CornerRepository interface {
 	Delete(ctx context.Context, id domain.CornerID) error
 }
 
+// CornerViewQuerier는 코너 핵심 정보, 완료 방문 지표, 활성 트랙을 한 번에 반환하는 읽기 전용 포트입니다.
+// 현재 서비스는 단일 테넌트 관리자 모델이므로 campID/cornerID 범위만 검증합니다.
+type CornerViewQuerier interface {
+	ListCornerViewsByCamp(ctx context.Context, campID domain.CampID) ([]CornerView, error)
+	GetCornerView(ctx context.Context, id domain.CornerID) (*CornerView, error)
+}
+
+type CornerView struct {
+	ID                 domain.CornerID
+	Name               string
+	TargetMinutes      int
+	AvgDurationSeconds int
+	SampleCount        int
+	ActiveTracks       []TrackView
+}
+
+// TrackView는 코너 조회 응답에 포함되는 활성 트랙의 읽기 전용 요약입니다.
+type TrackView struct {
+	ID                domain.TrackID
+	CornerID          domain.CornerID
+	TrackNo           int
+	Status            domain.TrackStatus
+	OperationalStatus domain.TrackOperationalStatus
+}
+
 // TrackRepository는 트랙 엔티티의 지속성을 담당하는 포트입니다.
 type TrackRepository interface {
 	Get(ctx context.Context, id domain.TrackID) (*domain.Track, error)

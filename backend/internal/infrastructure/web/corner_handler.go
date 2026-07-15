@@ -10,12 +10,14 @@ import (
 )
 
 type CornerHandler struct {
-	svc *usecase.CornerService
+	svc   *usecase.CornerService
+	views usecase.CornerViewQuerier
 }
 
+// 추후에 Usecase에 정의된 View로 대체 고려
 type CornerMetricResponse struct {
-	AvgDurationSeconds int `json:"avgDurationSeconds" example:"640"`
-	SampleCount        int `json:"sampleCount" example:"15"`
+	AvgDurationSeconds int `json:"avgDurationSeconds" example:"640" description:"완료된 방문의 평균 소요 시간(초)"`
+	SampleCount        int `json:"sampleCount" example:"15" description:"평균 계산에 사용된 완료 방문 수"`
 } // @name CornerMetricResponse
 
 type CornerResponse struct {
@@ -26,11 +28,29 @@ type CornerResponse struct {
 	IsBottleneck  bool                   `json:"isBottleneck"`
 	ActiveTracks  []TrackSummaryResponse `json:"activeTracks"`
 
-	Metric CornerMetricResponse `json:"cornerMetric"`
+	Metric CornerMetricResponse `json:"cornerMetric" description:"조회 전용 코너 지표"`
 } // @name CornerResponse
 
-func NewCornerHandler(svc *usecase.CornerService) *CornerHandler {
-	return &CornerHandler{svc: svc}
+func NewCornerHandler(svc *usecase.CornerService, views usecase.CornerViewQuerier) *CornerHandler {
+	return &CornerHandler{svc: svc, views: views}
+}
+
+func mapCornerViewToDTO(view usecase.CornerView) CornerResponse {
+	activeTracks := make([]TrackSummaryResponse, len(view.ActiveTracks))
+	for i, track := range view.ActiveTracks {
+		activeTracks[i] = TrackSummaryResponse{
+			ID:                string(track.ID),
+			CornerID:          string(track.CornerID),
+			TrackNo:           track.TrackNo,
+			Status:            string(track.Status),
+			OperationalStatus: string(track.OperationalStatus),
+		}
+	}
+	return CornerResponse{
+		ID: string(view.ID), Name: view.Name, TargetMinutes: view.TargetMinutes,
+		ActiveTracks: activeTracks,
+		Metric:       CornerMetricResponse{AvgDurationSeconds: view.AvgDurationSeconds, SampleCount: view.SampleCount},
+	}
 }
 
 func mapDomainCornerToDTO(corner *domain.Corner) CornerResponse {
@@ -45,7 +65,7 @@ func mapDomainCornerToDTO(corner *domain.Corner) CornerResponse {
 }
 
 // @Summary      코너 목록 조회
-// @Description  특정 캠프의 모든 코너 목록을 조회한다.
+// @Description  특정 캠프의 모든 코너 핵심 정보와 완료 방문 지표를 조회한다.
 // @Tags         B. Resource Management (Admin)
 // @Security     AdminAuth
 // @Produce      json
@@ -59,13 +79,13 @@ func (h *CornerHandler) ListCorners(c echo.Context) error {
 	if campID == "" {
 		return c.JSON(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: "campId is required"})
 	}
-	corners, err := h.svc.ListCorners(c.Request().Context(), campID)
+	views, err := h.views.ListCornerViewsByCamp(c.Request().Context(), campID)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_ERROR", Message: err.Error()})
 	}
-	res := make([]CornerResponse, len(corners))
-	for i, cr := range corners {
-		res[i] = mapDomainCornerToDTO(cr)
+	res := make([]CornerResponse, len(views))
+	for i, view := range views {
+		res[i] = mapCornerViewToDTO(view)
 	}
 	return c.JSON(http.StatusOK, res)
 }
@@ -100,7 +120,7 @@ func (h *CornerHandler) CreateCorner(c echo.Context) error {
 }
 
 // @Summary      코너 상세 조회
-// @Description  특정 코너 정보를 조회한다.
+// @Description  특정 코너의 핵심 정보와 완료 방문 지표를 조회한다.
 // @Tags         B. Resource Management (Admin)
 // @Security     AdminAuth
 // @Produce      json
@@ -110,11 +130,14 @@ func (h *CornerHandler) CreateCorner(c echo.Context) error {
 // @Router       /corners/{id} [get]
 func (h *CornerHandler) GetCorner(c echo.Context) error {
 	id := domain.CornerID(c.Param("id"))
-	corner, err := h.svc.GetCorner(c.Request().Context(), id)
+	view, err := h.views.GetCornerView(c.Request().Context(), id)
 	if err != nil {
 		return err
 	}
-	return c.JSON(http.StatusOK, mapDomainCornerToDTO(corner))
+	if view == nil {
+		return domain.ErrCornerNotFound
+	}
+	return c.JSON(http.StatusOK, mapCornerViewToDTO(*view))
 }
 
 // @Summary      코너 삭제

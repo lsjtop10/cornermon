@@ -215,6 +215,62 @@ func (q *Queries) GetCorner(ctx context.Context, id string) (Corner, error) {
 	return i, err
 }
 
+const getCornerView = `-- name: GetCornerView :one
+SELECT
+    c.id,
+    c.name,
+    c.target_minutes,
+    metrics.sample_count,
+    metrics.avg_duration_seconds,
+    active_tracks.active_tracks
+FROM corners c
+JOIN LATERAL (
+    SELECT
+        COUNT(*)::BIGINT AS sample_count,
+        COALESCE(AVG(EXTRACT(EPOCH FROM (v.ended_at - v.started_at))), 0)::DOUBLE PRECISION AS avg_duration_seconds
+    FROM visits v
+    WHERE v.corner_id = c.id AND v.status = 'COMPLETED'
+) metrics ON TRUE
+JOIN LATERAL (
+    SELECT COALESCE(
+        jsonb_agg(jsonb_build_object(
+            'id', t.id,
+            'cornerId', t.corner_id,
+            'trackNo', t.track_no,
+            'status', t.status,
+            'operationalStatus', CASE WHEN t.current_visit_id IS NULL THEN 'IDLE' ELSE 'BUSY' END
+        ) ORDER BY t.track_no),
+        '[]'::jsonb
+    ) AS active_tracks
+    FROM tracks t
+    WHERE t.corner_id = c.id AND t.status = 'ACTIVE'
+) active_tracks ON TRUE
+WHERE c.id = $1
+`
+
+type GetCornerViewRow struct {
+	ID                 string      `json:"id"`
+	Name               string      `json:"name"`
+	TargetMinutes      int32       `json:"target_minutes"`
+	SampleCount        int64       `json:"sample_count"`
+	AvgDurationSeconds float64     `json:"avg_duration_seconds"`
+	ActiveTracks       interface{} `json:"active_tracks"`
+}
+
+func (q *Queries) GetCornerView(ctx context.Context, id string) (GetCornerViewRow, error) {
+	row := q.db.QueryRow(ctx, getCornerView, id)
+	var i GetCornerViewRow
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.TargetMinutes,
+		&i.SampleCount,
+		&i.AvgDurationSeconds,
+		&i.ActiveTracks,
+	)
+	return i, err
+}
+
 const getDeviceRegistration = `-- name: GetDeviceRegistration :one
 SELECT id, camp_id, device_name, status, token_hash, failed_pin_attempts, locked_until, approved_at FROM device_registrations WHERE id = $1
 `
@@ -684,6 +740,76 @@ func (q *Queries) ListCamps(ctx context.Context) ([]Camp, error) {
 			&i.Status,
 			&i.BottleneckMinSamples,
 			&i.BottleneckRatioPct,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listCornerViewsByCamp = `-- name: ListCornerViewsByCamp :many
+SELECT
+    c.id,
+    c.name,
+    c.target_minutes,
+    metrics.sample_count,
+    metrics.avg_duration_seconds,
+    active_tracks.active_tracks
+FROM corners c
+JOIN LATERAL (
+    SELECT
+        COUNT(*)::BIGINT AS sample_count,
+        COALESCE(AVG(EXTRACT(EPOCH FROM (v.ended_at - v.started_at))), 0)::DOUBLE PRECISION AS avg_duration_seconds
+    FROM visits v
+    WHERE v.corner_id = c.id AND v.status = 'COMPLETED'
+) metrics ON TRUE
+JOIN LATERAL (
+    SELECT COALESCE(
+        jsonb_agg(jsonb_build_object(
+            'id', t.id,
+            'cornerId', t.corner_id,
+            'trackNo', t.track_no,
+            'status', t.status,
+            'operationalStatus', CASE WHEN t.current_visit_id IS NULL THEN 'IDLE' ELSE 'BUSY' END
+        ) ORDER BY t.track_no),
+        '[]'::jsonb
+    ) AS active_tracks
+    FROM tracks t
+    WHERE t.corner_id = c.id AND t.status = 'ACTIVE'
+) active_tracks ON TRUE
+WHERE c.camp_id = $1
+ORDER BY c.id
+`
+
+type ListCornerViewsByCampRow struct {
+	ID                 string      `json:"id"`
+	Name               string      `json:"name"`
+	TargetMinutes      int32       `json:"target_minutes"`
+	SampleCount        int64       `json:"sample_count"`
+	AvgDurationSeconds float64     `json:"avg_duration_seconds"`
+	ActiveTracks       interface{} `json:"active_tracks"`
+}
+
+func (q *Queries) ListCornerViewsByCamp(ctx context.Context, campID string) ([]ListCornerViewsByCampRow, error) {
+	rows, err := q.db.Query(ctx, listCornerViewsByCamp, campID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListCornerViewsByCampRow
+	for rows.Next() {
+		var i ListCornerViewsByCampRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.TargetMinutes,
+			&i.SampleCount,
+			&i.AvgDurationSeconds,
+			&i.ActiveTracks,
 		); err != nil {
 			return nil, err
 		}
