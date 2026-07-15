@@ -234,15 +234,16 @@ func (h *CornerHandler) GetCorner(c echo.Context) error
 - [x] `CreateCorner`/`BulkUpdateCorners`/`DeleteCorner`는 기존과 동일하게 `h.svc`만 사용(회귀 없음)
 
 ### 6.2 유즈케이스 검증
-- [ ] UC-1/2: 완료된 visit이 없는 코너는 `avgDurationSeconds=0, sampleCount=0` 반환(에러 아님)
-- [ ] UC-1: 다른 캠프의 visit이 지표에 섞이지 않음
-- [ ] UC-1/2: `IN_PROGRESS` 상태 visit은 표본에서 제외
-- [ ] UC-1/2: `activeTracks`는 ACTIVE 트랙만 포함하고 트랙 번호 순으로 반환
-- [ ] UC-2: 존재하지 않는 코너 ID 요청 시 404(`ErrCornerNotFound`)
-- [ ] UC-2: 단건 조회 응답과 목록 조회 응답의 동일 코너 지표 값이 일치
-- [ ] UC-3: 코너 생성/수정/삭제 API가 기존과 동일하게 동작(회귀 테스트)
+- [ ] UC-1/2: 완료된 visit이 없는 코너는 `avgDurationSeconds=0, sampleCount=0` 반환(에러 아님) — 실 DB 미기동으로 생략
+- [ ] UC-1: 다른 캠프의 visit이 지표에 섞이지 않음 — 실 DB 미기동으로 생략
+- [ ] UC-1/2: `IN_PROGRESS` 상태 visit은 표본에서 제외 — 실 DB 미기동으로 생략
+- [ ] UC-1/2: `activeTracks`는 ACTIVE 트랙만 포함하고 트랙 번호 순으로 반환 — 실 DB 미기동으로 생략
+- [x] UC-2: 존재하지 않는 코너 ID 요청 시 404(`ErrCornerNotFound`)
+- [ ] UC-2: 단건 조회 응답과 목록 조회 응답의 동일 코너 지표 값이 일치 — 실 DB 미기동으로 생략
+- [x] UC-3: 코너 생성/수정/삭제 API가 기존과 동일하게 동작(회귀 테스트)
 
 ### 6.3 자동화 테스트
-- [ ] `pgCornerViewQuerier` 통합 테스트: 완료 0건/1건/N건, 진행중 혼합, 존재하지 않는 ID 케이스
-- [ ] handler 레벨 테스트: `ListCorners`/`GetCorner`가 `CornerViewQuerier`의 fake만으로 테스트 가능한지 확인(= `CornerService` 의존성 없이 격리됨을 증명)
+- [ ] `pgCornerViewQuerier` 통합 테스트: 완료 0건/1건/N건, 진행중 혼합, 존재하지 않는 ID 케이스 — 실 DB 미기동으로 생략
+- [x] handler 레벨 테스트: `ListCorners`/`GetCorner`가 `CornerViewQuerier`의 fake만으로 테스트 가능한지 확인(= `CornerService` 의존성 없이 격리됨을 증명)
 - [x] handler 레벨 테스트: 응답 JSON에 `cornerMetric.avgDurationSeconds`, `cornerMetric.sampleCount`, `activeTracks` 존재 확인
+- [x] `mapCornerView` 단위 테스트: 빈 활성 트랙과 활성 트랙 JSON 요약을 `CornerView`로 매핑

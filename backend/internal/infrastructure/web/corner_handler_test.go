@@ -54,6 +54,44 @@ func TestShouldReturnCornerMetricsWhenListingCornerViews(t *testing.T) {
 	}
 }
 
+func TestGetCornerShouldReturnViewAndNotFound(t *testing.T) {
+	t.Run("returns the complete view", func(t *testing.T) {
+		e := echo.New()
+		req := httptest.NewRequest(http.MethodGet, "/corners/corner-1", nil)
+		rec := httptest.NewRecorder()
+		c := e.NewContext(req, rec)
+		c.SetPath("/corners/:id")
+		c.SetParamNames("id")
+		c.SetParamValues("corner-1")
+		h := NewCornerHandler(nil, fakeCornerViewQuerier{views: []usecase.CornerView{{
+			ID: "corner-1", Name: "코너 1", TargetMinutes: 10, AvgDurationSeconds: 600, SampleCount: 2,
+			ActiveTracks: []usecase.TrackView{{ID: "track-2", CornerID: "corner-1", TrackNo: 2, Status: domain.TrackActive, OperationalStatus: domain.TrackIdle}},
+		}}})
+
+		if err := h.GetCorner(c); err != nil {
+			t.Fatalf("expected no error, got %v", err)
+		}
+		if rec.Code != http.StatusOK || !containsAll(rec.Body.String(), `"sampleCount":2`, `"id":"track-2"`, `"operationalStatus":"IDLE"`) {
+			t.Fatalf("expected complete corner view, status=%d body=%s", rec.Code, rec.Body.String())
+		}
+	})
+
+	t.Run("returns the domain not-found error", func(t *testing.T) {
+		e := echo.New()
+		req := httptest.NewRequest(http.MethodGet, "/corners/missing", nil)
+		rec := httptest.NewRecorder()
+		c := e.NewContext(req, rec)
+		c.SetPath("/corners/:id")
+		c.SetParamNames("id")
+		c.SetParamValues("missing")
+
+		err := NewCornerHandler(nil, fakeCornerViewQuerier{}).GetCorner(c)
+		if err != domain.ErrCornerNotFound {
+			t.Fatalf("expected ErrCornerNotFound, got %v", err)
+		}
+	})
+}
+
 func containsAll(value string, parts ...string) bool {
 	for _, part := range parts {
 		if !strings.Contains(value, part) {
