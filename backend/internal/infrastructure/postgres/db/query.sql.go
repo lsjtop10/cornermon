@@ -220,6 +220,7 @@ SELECT
     c.id,
     c.name,
     c.target_minutes,
+    c.camp_id,
     metrics.sample_count,
     metrics.avg_duration_seconds,
     active_tracks.active_tracks
@@ -252,6 +253,7 @@ type GetCornerViewRow struct {
 	ID                 string      `json:"id"`
 	Name               string      `json:"name"`
 	TargetMinutes      int32       `json:"target_minutes"`
+	CampID             string      `json:"camp_id"`
 	SampleCount        int64       `json:"sample_count"`
 	AvgDurationSeconds float64     `json:"avg_duration_seconds"`
 	ActiveTracks       interface{} `json:"active_tracks"`
@@ -264,6 +266,7 @@ func (q *Queries) GetCornerView(ctx context.Context, id string) (GetCornerViewRo
 		&i.ID,
 		&i.Name,
 		&i.TargetMinutes,
+		&i.CampID,
 		&i.SampleCount,
 		&i.AvgDurationSeconds,
 		&i.ActiveTracks,
@@ -778,6 +781,7 @@ const listCornerViewsByCamp = `-- name: ListCornerViewsByCamp :many
 SELECT
     c.id,
     c.name,
+    c.camp_id,
     c.target_minutes,
     metrics.sample_count,
     metrics.avg_duration_seconds,
@@ -811,6 +815,7 @@ ORDER BY c.id
 type ListCornerViewsByCampRow struct {
 	ID                 string      `json:"id"`
 	Name               string      `json:"name"`
+	CampID             string      `json:"camp_id"`
 	TargetMinutes      int32       `json:"target_minutes"`
 	SampleCount        int64       `json:"sample_count"`
 	AvgDurationSeconds float64     `json:"avg_duration_seconds"`
@@ -829,6 +834,7 @@ func (q *Queries) ListCornerViewsByCamp(ctx context.Context, campID string) ([]L
 		if err := rows.Scan(
 			&i.ID,
 			&i.Name,
+			&i.CampID,
 			&i.TargetMinutes,
 			&i.SampleCount,
 			&i.AvgDurationSeconds,

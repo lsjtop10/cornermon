@@ -9,6 +9,7 @@ import (
 
 	"cornermon/backend/internal/domain"
 	"cornermon/backend/internal/usecase"
+
 	"github.com/labstack/echo/v4"
 )
 
@@ -37,7 +38,7 @@ func TestShouldReturnCornerMetricsWhenListingCornerViews(t *testing.T) {
 	c.SetParamNames("campId")
 	c.SetParamValues("camp-1")
 	h := NewCornerHandler(nil, fakeCornerViewQuerier{views: []usecase.CornerView{{
-		ID: "corner-1", Name: "코너 1", TargetMinutes: 10, AvgDurationSeconds: 640, SampleCount: 15,
+		ID: "corner-1", CampID: "camp-1", Name: "코너 1", TargetMinutes: 10, AvgDurationSeconds: 640, SampleCount: 15,
 		ActiveTracks: []usecase.TrackView{{ID: "track-1", CornerID: "corner-1", TrackNo: 1, Status: domain.TrackActive, OperationalStatus: domain.TrackBusy}},
 	}}})
 
@@ -64,7 +65,7 @@ func TestGetCornerShouldReturnViewAndNotFound(t *testing.T) {
 		c.SetParamNames("id")
 		c.SetParamValues("corner-1")
 		h := NewCornerHandler(nil, fakeCornerViewQuerier{views: []usecase.CornerView{{
-			ID: "corner-1", Name: "코너 1", TargetMinutes: 10, AvgDurationSeconds: 600, SampleCount: 2,
+			ID: "corner-1", CampID: "camp-1", Name: "코너 1", TargetMinutes: 10, AvgDurationSeconds: 600, SampleCount: 2,
 			ActiveTracks: []usecase.TrackView{{ID: "track-2", CornerID: "corner-1", TrackNo: 2, Status: domain.TrackActive, OperationalStatus: domain.TrackIdle}},
 		}}})
 

@@ -43,6 +43,7 @@ type CornerViewQuerier interface {
 
 type CornerView struct {
 	ID                 domain.CornerID
+	CampID             domain.CampID
 	Name               string
 	TargetMinutes      int
 	AvgDurationSeconds int

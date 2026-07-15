@@ -22,6 +22,7 @@ type CornerMetricResponse struct {
 
 type CornerResponse struct {
 	ID            string                 `json:"id" format:"uuid"`
+	CampID        string                 `json:"campID" format:"uuid"`
 	Name          string                 `json:"name" example:"코너 1"`
 	TargetMinutes int                    `json:"targetMinutes" example:"10"`
 	Status        string                 `json:"status" enums:"INACTIVE,IDLE,BUSY"`

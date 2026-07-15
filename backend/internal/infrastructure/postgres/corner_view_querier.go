@@ -29,9 +29,10 @@ func (r *pgCornerViewQuerier) queries(ctx context.Context) *db.Queries {
 	return db.New(r.pool)
 }
 
-func mapCornerView(id, name string, targetMinutes int32, avgDurationSeconds float64, sampleCount int64, activeTracksValue any) (usecase.CornerView, error) {
+func mapCornerView(id, campID, name string, targetMinutes int32, avgDurationSeconds float64, sampleCount int64, activeTracksValue any) (usecase.CornerView, error) {
 	view := usecase.CornerView{
 		ID:                 domain.CornerID(id),
+		CampID:             domain.CampID(campID),
 		Name:               name,
 		TargetMinutes:      int(targetMinutes),
 		AvgDurationSeconds: int(avgDurationSeconds),
@@ -54,7 +55,7 @@ func (r *pgCornerViewQuerier) ListCornerViewsByCamp(ctx context.Context, campID 
 	}
 	views := make([]usecase.CornerView, len(rows))
 	for i, row := range rows {
-		view, err := mapCornerView(row.ID, row.Name, row.TargetMinutes, row.AvgDurationSeconds, row.SampleCount, row.ActiveTracks)
+		view, err := mapCornerView(row.ID, row.CampID, row.Name, row.TargetMinutes, row.AvgDurationSeconds, row.SampleCount, row.ActiveTracks)
 		if err != nil {
 			return nil, errs.Wrap(ctx, err)
 		}
@@ -71,7 +72,7 @@ func (r *pgCornerViewQuerier) GetCornerView(ctx context.Context, id domain.Corne
 		}
 		return nil, errs.Wrap(ctx, err)
 	}
-	view, err := mapCornerView(row.ID, row.Name, row.TargetMinutes, row.AvgDurationSeconds, row.SampleCount, row.ActiveTracks)
+	view, err := mapCornerView(row.ID, row.CampID, row.Name, row.TargetMinutes, row.AvgDurationSeconds, row.SampleCount, row.ActiveTracks)
 	if err != nil {
 		return nil, errs.Wrap(ctx, err)
 	}

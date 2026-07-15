@@ -288,8 +288,9 @@ func (h *AuthHandler) TrackLogin(c echo.Context) error {
 			},
 		},
 		Corner: CornerResponse{
-			ID:   string(res.Corner.ID),
-			Name: res.Corner.Name,
+			ID:     string(res.Corner.ID),
+			Name:   res.Corner.Name,
+			CampID: string(res.Corner.CampID),
 		},
 	})
 }
