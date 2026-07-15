@@ -255,6 +255,7 @@ func (h *AuthHandler) RevokeAdminSession(c echo.Context) error {
 // @Security     TrustedDeviceAuth
 // @Accept       json
 // @Produce      json
+// @Param        X-Device-Token header string true "기기 신뢰 토큰 (opaque token, 값을 그대로 전달)"
 // @Param        request body TrackLoginRequest true "6자리 숫자 트랙 PIN"
 // @Success      200 {object} TrackLoginResponse "로그인 성공 — 트랙 세션 토큰 발급"
 // @Failure      400 {object} ErrorResponse "잘못된 PIN (지연 가능)"
