@@ -14,17 +14,19 @@ import (
 )
 
 type messageUsecaseForHandler struct {
-	markRead bool
-	after    domain.Optional[time.Time]
+	markRead   bool
+	after      domain.Optional[time.Time]
+	viewerRole domain.SenderRole
 }
 
 func (m *messageUsecaseForHandler) SendDirect(context.Context, domain.TrackID, string, domain.SenderRole) (*domain.Message, error) {
 	return nil, nil
 }
 
-func (m *messageUsecaseForHandler) ListDirectMessages(_ context.Context, _ domain.TrackID, _ domain.SenderRole, after domain.Optional[time.Time], markRead bool) ([]*domain.Message, error) {
+func (m *messageUsecaseForHandler) ListDirectMessages(_ context.Context, _ domain.TrackID, viewerRole domain.SenderRole, after domain.Optional[time.Time], markRead bool) ([]*domain.Message, error) {
 	m.after = after
 	m.markRead = markRead
+	m.viewerRole = viewerRole
 	return []*domain.Message{}, nil
 }
 
@@ -32,7 +34,7 @@ func (m *messageUsecaseForHandler) GetUnreadCount(context.Context, domain.TrackI
 	return 0, nil
 }
 
-func TestListDirectMessagesForTrackShoudRejectRequestWhenSessionTrackDiffers(t *testing.T) {
+func TestListDirectMessagesShoudRejectRequestWhenSessionTrackDiffers(t *testing.T) {
 	// Arrange
 	e := echo.New()
 	req := httptest.NewRequest(http.MethodGet, "/tracks/track-2/messages", nil)
@@ -43,7 +45,7 @@ func TestListDirectMessagesForTrackShoudRejectRequestWhenSessionTrackDiffers(t *
 	c.Set("facilitatorSession", &domain.FacilitatorSession{TrackID: "track-1"})
 
 	// Act
-	err := NewMessageHandler(&messageUsecaseForHandler{}, nil).ListDirectMessagesForTrack(c)
+	err := NewMessageHandler(&messageUsecaseForHandler{}, nil).ListDirectMessages(c)
 
 	// Assert
 	if err != domain.ErrTrackScopeForbidden {
@@ -90,7 +92,7 @@ func TestSendDirectShoudRejectRequestWhenSessionTrackDiffers(t *testing.T) {
 	}
 }
 
-func TestListDirectMessagesForTrackShoudNotMarkReadWhenBackgroundIsOmitted(t *testing.T) {
+func TestListDirectMessagesShoudNotMarkReadWhenBackgroundIsOmitted(t *testing.T) {
 	// Arrange
 	uc := &messageUsecaseForHandler{}
 	e := echo.New()
@@ -102,7 +104,7 @@ func TestListDirectMessagesForTrackShoudNotMarkReadWhenBackgroundIsOmitted(t *te
 	c.Set("facilitatorSession", &domain.FacilitatorSession{TrackID: "track-1"})
 
 	// Act
-	err := NewMessageHandler(uc, nil).ListDirectMessagesForTrack(c)
+	err := NewMessageHandler(uc, nil).ListDirectMessages(c)
 
 	// Assert
 	if err != nil {

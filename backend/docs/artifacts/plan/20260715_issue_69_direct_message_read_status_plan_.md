@@ -121,15 +121,15 @@ func (h *MessageHandler) GetUnreadCount(c echo.Context) error
 
 ```go
 // internal/infrastructure/web/router.go
-// admin 그룹: 기존 GET에 파라미터만 추가되므로 라우트 등록은 그대로.
-admin.GET("/tracks/:trackId/messages/unread-count", h.Message.GetUnreadCount)
-
-// track 그룹: 진행자도 자신의 스레드를 조회/집계할 수 있어야 함 (UC-3)
-track.GET("/tracks/:trackId/messages", h.Message.ListDirectMessages)
-track.GET("/tracks/:trackId/messages/unread-count", h.Message.GetUnreadCount)
+// Echo는 같은 method/path에 하나의 handler만 등록할 수 있으므로,
+// 관리자/진행자 세션을 모두 허용하는 전용 그룹에 GET을 한 번만 등록한다.
+message := v1.Group("")
+message.Use(MessageAuthMiddleware(adminAuth, trackAuth))
+message.GET("/tracks/:trackId/messages", h.Message.ListDirectMessages)
+message.GET("/tracks/:trackId/messages/unread-count", h.Message.GetUnreadCount)
 ```
 
-handler 내부에서 `c.Get("adminSession")`/`c.Get("facilitatorSession")`으로 `viewerRole`을 판별한다(기존 `SendDirect`와 동일 패턴, `message_handler.go:208-215`). 또한 `track` 그룹에 걸린 `TrackAuthMiddleware`가 요청 트랙 ID와 세션 트랙 ID 일치를 검증하는지 확인하고, 없다면 `domain.ErrTrackScopeForbidden` 체크를 handler에 추가한다.
+handler 내부에서 `c.Get("adminSession")`/`c.Get("facilitatorSession")`으로 `viewerRole`을 판별한다. 또한 진행자 세션의 `TrackID`와 요청 트랙 ID가 일치하지 않으면 `domain.ErrTrackScopeForbidden`을 반환한다.
 
 ## 3. 아키텍처 원칙 명시
 
@@ -225,10 +225,12 @@ type TrackRepository interface {
 - [x] 동시성 테스트: 트랙 행 잠금 획득 순서(`increment → save`, `reset → mark-read`)를 검증하고 `go test -race ./internal/usecase ./internal/infrastructure/web`를 통과했다.
 - [x] repository/query 경계 테스트: `after`와 정확히 일치하는 `sent_at`은 제외하고 이후 메시지만 반환하는 계약을 검증했다.
 - [x] handler 레벨 테스트: `background` 미지정 시 기본값(false)이 안전한 방향(읽음 처리 안 함)인지 확인했다.
+- [x] router 레벨 테스트: 중복 GET 등록 없이 관리자와 진행자 토큰이 같은 endpoint로 각각 접근하고 올바른 `viewerRole`로 처리되는지 확인했다.
 
 ## 7. 완료 기록 (2026-07-15)
 
 - 진행자 세션의 `TrackID`와 path `trackId` 불일치를 모든 DIRECT 메시지 읽기·미확인 수·발신 경로에서 403으로 차단했다.
 - 카운터를 0으로 갱신하는 읽음 처리와 증가시키는 발송 처리는 동일한 `tracks` 행을 먼저 갱신해 직렬화한다.
 - OpenAPI를 재생성해 두 GET endpoint가 `AdminAuth` 또는 `TrackAuth`를 허용하고 `background`, `after`, 403 계약을 명시한다.
+- Echo의 동일 method/path 중복 등록 문제를 제거하고, 두 인증 방식을 판별하는 `MessageAuthMiddleware`로 단일 GET route를 등록한다.
 - 검증 명령: `go test ./...`, `go test -race ./internal/usecase ./internal/infrastructure/web`.

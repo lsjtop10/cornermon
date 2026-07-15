@@ -254,27 +254,13 @@ func (h *MessageHandler) SendDirect(c echo.Context) error {
 // @Failure      403 {object} ErrorResponse "세션 트랙과 요청 트랙 불일치"
 // @Router       /tracks/{trackId}/messages [get]
 func (h *MessageHandler) ListDirectMessages(c echo.Context) error {
-	background, err := parseBackground(c.QueryParam("background"))
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: err.Error()})
-	}
-	after, err := parseAfter(c.QueryParam("after"))
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: "after must be RFC3339"})
-	}
 	trackID := domain.TrackID(c.Param("trackId"))
-	msgs, err := h.message.ListDirectMessages(c.Request().Context(), trackID, domain.RoleAdmin, after, background)
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()})
-	}
-
-	return c.JSON(http.StatusOK, mapMessages(msgs))
-}
-
-func (h *MessageHandler) ListDirectMessagesForTrack(c echo.Context) error {
-	trackID := domain.TrackID(c.Param("trackId"))
-	if err := requireFacilitatorTrackScope(c, trackID); err != nil {
-		return err
+	viewerRole := domain.RoleAdmin
+	if _, ok := c.Get("facilitatorSession").(*domain.FacilitatorSession); ok {
+		if err := requireFacilitatorTrackScope(c, trackID); err != nil {
+			return err
+		}
+		viewerRole = domain.RoleTrack
 	}
 	background, err := parseBackground(c.QueryParam("background"))
 	if err != nil {
@@ -284,10 +270,11 @@ func (h *MessageHandler) ListDirectMessagesForTrack(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: "after must be RFC3339"})
 	}
-	msgs, err := h.message.ListDirectMessages(c.Request().Context(), trackID, domain.RoleTrack, after, background)
+	msgs, err := h.message.ListDirectMessages(c.Request().Context(), trackID, viewerRole, after, background)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()})
 	}
+
 	return c.JSON(http.StatusOK, mapMessages(msgs))
 }
 
