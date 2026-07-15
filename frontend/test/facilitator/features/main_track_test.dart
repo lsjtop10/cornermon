@@ -1,16 +1,16 @@
 import 'package:built_collection/built_collection.dart';
 import 'package:cornermon/facilitator/features/main_track/_main_track_body.dart';
 import 'package:cornermon/facilitator/features/main_track/main_track_screen.dart';
+import 'package:cornermon/facilitator/session/facilitator_broadcast_provider.dart';
 import 'package:cornermon/facilitator/session/track_session_provider.dart';
 import 'package:cornermon/facilitator/widgets/double_tap_confirm_button.dart';
+import 'package:cornermon/shared/api/domain_aliases.dart';
 import 'package:cornermon/shared/api/ids.dart';
 import 'package:cornermon/shared/api/providers/corner_track_providers.dart';
 import 'package:cornermon/shared/api/providers/group_providers.dart';
-import 'package:cornermon/shared/api/providers/message_providers.dart';
 import 'package:cornermon/shared/api/providers/visit_providers.dart';
 import 'package:cornermon/shared/api/sse/track_event_stream.dart';
 import 'package:cornermon/shared/design_system/tokens/colors.dart';
-import 'package:cornermon_api_gen/cornermon_api_gen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -259,7 +259,7 @@ void main() {
                   ..status = CornerOperationalStatus.IDLE,
               ),
             ),
-            broadcastMessageListProvider.overrideWith((ref) => <Message>[]),
+            facilitatorBroadcastMessageListProvider.overrideWith((ref) => <Message>[]),
             trackEventsProvider(trackId).overrideWith((ref) => const Stream<SseEvent>.empty()),
           ],
         ),

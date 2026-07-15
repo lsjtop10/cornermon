@@ -1,6 +1,8 @@
 import 'package:cornermon/facilitator/features/pin_login/pin_login_error_provider.dart';
 import 'package:cornermon/facilitator/features/pin_login/pin_login_screen.dart';
+import 'package:cornermon/facilitator/session/device_trust_provider.dart';
 import 'package:cornermon/facilitator/widgets/pin_otp_input.dart';
+import 'package:cornermon/shared/api/domain_aliases.dart';
 import 'package:cornermon/shared/api/providers/auth_device_trust_providers.dart';
 import 'package:cornermon/shared/auth/secure_token_store.dart';
 import 'package:cornermon_api_gen/cornermon_api_gen.dart';
@@ -20,7 +22,8 @@ class _FakeAuthDeviceTrustApi extends AAuthDeviceTrustApi {
 
   @override
   Future<Response<AuthTrackLoginPost200Response>> authTrackLoginPost({
-    required AuthTrackLoginPostRequest authTrackLoginPostRequest,
+    required String xDeviceToken,
+    required AuthTrackLoginPostRequest request,
     CancelToken? cancelToken,
     Map<String, dynamic>? headers,
     Map<String, dynamic>? extra,
@@ -79,6 +82,8 @@ ProviderContainer _buildContainer(DioException exception) => ProviderContainer(
       overrides: [
         authDeviceTrustApiProvider.overrideWithValue(_FakeAuthDeviceTrustApi(exception)),
         secureTokenStoreProvider.overrideWithValue(_FakeSecureTokenStore()),
+        // 신뢰기기 토큰이 있어야 loginWithPin이 실제 API 호출(및 그 실패)까지 도달한다.
+        deviceTrustTokenProvider.overrideWith((ref) async => 'fake-device-token'),
       ],
     );
 

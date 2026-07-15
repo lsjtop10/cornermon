@@ -1,6 +1,6 @@
 import 'package:cornermon/facilitator/features/track_confirm/track_confirm_screen.dart';
 import 'package:cornermon/facilitator/session/track_session_provider.dart';
-import 'package:cornermon_api_gen/cornermon_api_gen.dart';
+import 'package:cornermon/shared/api/domain_aliases.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../test_utils/widget_test_helpers.dart';

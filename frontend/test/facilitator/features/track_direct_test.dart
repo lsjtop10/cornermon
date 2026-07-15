@@ -1,9 +1,9 @@
 import 'package:cornermon/facilitator/features/track_direct/track_direct_actions_provider.dart';
 import 'package:cornermon/facilitator/features/track_direct/track_direct_screen.dart';
 import 'package:cornermon/facilitator/session/track_session_provider.dart';
+import 'package:cornermon/shared/api/domain_aliases.dart';
 import 'package:cornermon/shared/api/ids.dart';
 import 'package:cornermon/shared/api/providers/message_providers.dart';
-import 'package:cornermon_api_gen/cornermon_api_gen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 

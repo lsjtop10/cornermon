@@ -1,12 +1,13 @@
 import 'dart:async';
 
 import 'package:cornermon/facilitator/features/main_track/track_event_coordinator.dart';
+import 'package:cornermon/facilitator/session/facilitator_broadcast_provider.dart';
 import 'package:cornermon/facilitator/session/track_session_provider.dart';
+import 'package:cornermon/shared/api/domain_aliases.dart';
 import 'package:cornermon/shared/api/ids.dart';
 import 'package:cornermon/shared/api/providers/message_providers.dart';
 import 'package:cornermon/shared/api/providers/visit_providers.dart';
 import 'package:cornermon/shared/api/sse/track_event_stream.dart';
-import 'package:cornermon_api_gen/cornermon_api_gen.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -58,7 +59,7 @@ void main() {
           currentVisitBuildCount++;
           return null;
         }),
-        broadcastMessageListProvider.overrideWith((ref) {
+        facilitatorBroadcastMessageListProvider.overrideWith((ref) {
           broadcastListBuildCount++;
           return <Message>[];
         }),
@@ -75,7 +76,7 @@ void main() {
     // 재빌드(카운터 증가)를 관찰할 수 있다 — 리스너가 없으면 즉시 dispose되어 버린다.
     container.listen(trackEventCoordinatorProvider(trackId), (_, _) {});
     container.listen(currentVisitProvider(trackId), (_, _) {});
-    container.listen(broadcastMessageListProvider, (_, _) {});
+    container.listen(facilitatorBroadcastMessageListProvider, (_, _) {});
     container.listen(trackMessageListProvider(trackId), (_, _) {});
   });
 
@@ -85,7 +86,8 @@ void main() {
     final event = SseEvent(
       (b) => b
         ..event = SseEventEventEnum.trackUpdated
-        ..data.scope = 'track:${trackId.value}',
+        ..scope.kind = SseScopeKind.track
+        ..scope.trackId = trackId.value,
     );
 
     // act
@@ -101,7 +103,8 @@ void main() {
     final event = SseEvent(
       (b) => b
         ..event = SseEventEventEnum.trackUpdated
-        ..data.scope = 'track:${otherTrackId.value}',
+        ..scope.kind = SseScopeKind.track
+        ..scope.trackId = otherTrackId.value,
     );
 
     // act
@@ -117,7 +120,7 @@ void main() {
     final event = SseEvent(
       (b) => b
         ..event = SseEventEventEnum.messagesChanged
-        ..data.scope = 'broadcast',
+        ..scope.kind = SseScopeKind.camp,
     );
 
     // act
@@ -133,7 +136,8 @@ void main() {
     final event = SseEvent(
       (b) => b
         ..event = SseEventEventEnum.messagesChanged
-        ..data.scope = 'track:${trackId.value}',
+        ..scope.kind = SseScopeKind.track
+        ..scope.trackId = trackId.value,
     );
 
     // act

@@ -1,9 +1,9 @@
 import 'package:cornermon/facilitator/features/manual_checkin/manual_checkin_screen.dart';
 import 'package:cornermon/facilitator/session/track_session_provider.dart';
+import 'package:cornermon/shared/api/domain_aliases.dart';
 import 'package:cornermon/shared/api/ids.dart';
 import 'package:cornermon/shared/api/providers/group_providers.dart';
 import 'package:cornermon/shared/api/providers/visit_providers.dart';
-import 'package:cornermon_api_gen/cornermon_api_gen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -90,7 +90,7 @@ void main() {
         const ManualCheckinScreen(),
         overrides: [
           trackSessionProvider.overrideWith(() => _FakeTrackSession(buildAuthenticatedState())),
-          groupListProvider().overrideWith((ref) async => groups),
+          trackScopedGroupsProvider(trackId).overrideWith((ref) async => groups),
         ],
       ),
     );
@@ -126,7 +126,7 @@ void main() {
           const ManualCheckinScreen(),
           overrides: [
             trackSessionProvider.overrideWith(() => _FakeTrackSession(buildAuthenticatedState())),
-            groupListProvider().overrideWith((ref) async => [completedGroup]),
+            trackScopedGroupsProvider(trackId).overrideWith((ref) async => [completedGroup]),
             visitActionsProvider(trackId).overrideWith(() => fakeActions),
           ],
         ),
@@ -169,7 +169,7 @@ void main() {
       ProviderScope(
         overrides: [
           trackSessionProvider.overrideWith(() => _FakeTrackSession(buildAuthenticatedState())),
-          groupListProvider().overrideWith((ref) async => [group]),
+          trackScopedGroupsProvider(trackId).overrideWith((ref) async => [group]),
           visitActionsProvider(trackId).overrideWith(() => fakeActions),
         ],
         child: MaterialApp.router(routerConfig: router),
