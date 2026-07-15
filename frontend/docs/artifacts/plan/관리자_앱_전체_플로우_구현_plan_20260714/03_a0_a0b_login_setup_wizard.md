@@ -24,7 +24,7 @@
 | **P0** | UC-2: 로그인 성공 후 캠프 유무에 따른 분기 | `GET /camps` 결과가 0개면 `/setup-wizard`, 1개 이상이면 `/camps`로 — 이 라우팅 판단 자체는 `adminRouterProvider`(`02`)가 하고, 이 화면은 판단에 필요한 `campListProvider` 상태를 정확히 채운다 | 프로덕션 핵심 |
 | **P0** | UC-3: 마법사 1단계 — 캠프 정보 입력 | 이름/시작일/종료일 로컬 상태로만 보관(아직 API 호출 없음) | 프로덕션 핵심 |
 | **P0** | UC-4: 마법사 2단계 — 코너 이름 붙여넣기 파싱 + 미리보기 표/개별 조정/삭제 | 줄바꿈 텍스트 → `SetupWizardCornerRow` 리스트, "예시 10개" 템플릿 버튼 | 프로덕션 핵심 |
-| **P0** | UC-5: 코너 0개 상태에서 다음 단계 진행 차단 | "코너를 1개 이상 추가하세요" 소프트 가드(scenarios.md Feature 2-d) | 프로덕션 핵심 |
+| **P0** | UC-5: 코너 없이 캠프만 생성 | 코너가 0개여도 다음 단계와 캠프 생성을 허용하고, 완료 후 코너·트랙 관리 화면에서 추가한다 | 프로덕션 핵심 |
 | **P0** | UC-6: 마법사 3단계 — 검토 및 확정 | `POST /camps` → `PATCH /camps/{id}`(기간) → 코너별 `POST /corners` → 코너별 `POST /tracks` 순차 실행, 진행 상태 표시, 완료 시 `selectedCampIdProvider.select()` 후 `/corner-track-manage`로 이동 | 프로덕션 핵심 |
 | P1 | UC-7: 확정 도중 일부 코너 생성 실패 시 부분 성공 상태를 검토 화면에 남겨 재시도 | §0에서 결정한 부분 실패 처리 | 장애 복구 |
 | P2 | UC-8: 이미 캠프가 있으면 마법사를 건너뛴다 | `adminRouterProvider`가 이미 처리(§UC-2와 동일 메커니즘) — 이 화면 자체는 별도 분기 로직 불필요, 라우터가 애초에 이 화면으로 보내지 않음 | 회귀 방지 |
@@ -167,7 +167,6 @@ class SetupWizardState {
     this.corners = const [],
     this.defaultTargetMinutes = 10,
     this.defaultTrackCountPerCorner = 1,
-    this.blockedMessage,         // "코너를 1개 이상 추가하세요" — 2단계 진행 차단 시 세팅
     this.isSubmitting = false,
     this.createdCampId,          // 3단계 확정 중 POST /camps 성공 직후 채워짐(재시도 시 캠프를 중복 생성하지 않기 위한 가드)
     this.submitError,
@@ -179,12 +178,10 @@ class SetupWizardState {
   final List<SetupWizardCornerRow> corners;
   final int defaultTargetMinutes;
   final int defaultTrackCountPerCorner;
-  final String? blockedMessage;
   final bool isSubmitting;
   final CampId? createdCampId;
   final String? submitError;
 
-  bool get canFinish => corners.isNotEmpty; // 2단계 소프트 가드와 동일 조건, 3단계 진입 시에도 재확인
 }
 ```
 
@@ -205,7 +202,7 @@ class SetupWizard extends _$SetupWizard {
   void removeCornerRow(int index);
   void setDefaults({int? targetMinutes, int? trackCountPerCorner}); // 이후 parseCornerNames 호출에만 영향, 이미 만들어진 행은 유지
 
-  bool tryAdvanceFromCornerStep(); // corners.isEmpty면 blockedMessage 세팅 후 false 반환, 아니면 step=2로 이동 후 true
+  bool tryAdvanceFromCornerStep(); // 코너 유무와 무관하게 step=2로 이동 후 true 반환
 
   // 3단계 확정 — §0에서 결정한 순차 실행 + 부분 실패 시 재시도 가능한 형태.
   // 의사코드(구현 로직 상세는 개발자 재량, 아래는 책임 범위만 명시):
@@ -218,7 +215,7 @@ class SetupWizard extends _$SetupWizard {
   //        성공: createTracksForCorner(createdCampId, corner.id, row.trackCount) 호출 → 둘 다 성공하면 status = created, createdCornerId 저장
   //        실패(둘 중 하나): status = failed, errorMessage 저장 — 다음 행 계속 진행(한 코너 실패가 나머지를 막지 않는다,
   //          §0의 "부분 실패를 투명하게 보여준다" 결정)
-  //   4. 모든 행이 created면 selectedCampIdProvider.notifier.select(createdCampId) 호출 후 완료 신호(화면이 라우팅 수행)
+  //   4. 모든 행이 created(빈 목록 포함)면 selectedCampIdProvider.notifier.select(createdCampId) 호출 후 완료 신호(화면이 라우팅 수행)
   //      하나라도 failed면 완료 신호를 보내지 않고 검토 화면에 실패 행 재시도 버튼을 노출한다
   Future<bool> submit(); // true = 전체 성공(라우팅 가능), false = 부분 실패(화면에 머무름)
 }
@@ -265,9 +262,7 @@ class _CornerTrackStep extends ConsumerWidget {
   //   이후 개별 행 수정(updateCornerRow)은 이 텍스트 영역과 독립적으로 SetupWizardCornerRow 리스트만 갱신한다.
   // 우측: 파싱된 corners를 표로 미리보기 — 각 행에 이름/목표시간/트랙 수 인라인 편집 필드 + 삭제 아이콘 버튼.
   // corners가 비어 있으면 EmptyState(message: '붙여넣거나 예시 템플릿을 사용하세요') 표시.
-  // blockedMessage != null이면 표 위에 danger 색 경고 텍스트로 "코너를 1개 이상 추가하세요" 노출.
-  // "다음" 버튼: setupWizardProvider.notifier.tryAdvanceFromCornerStep() 호출, false면 그대로 머무름(blockedMessage가
-  //   상태에 이미 세팅되어 위 경고가 자동으로 나타남 — 별도 SnackBar 불필요).
+  // "다음" 버튼: 코너 유무와 무관하게 setupWizardProvider.notifier.tryAdvanceFromCornerStep() 호출로 검토 단계로 이동한다.
 }
 
 // frontend/lib/admin/features/setup_wizard/steps/review_step.dart
@@ -353,7 +348,7 @@ frontend/lib/admin/features/
 - [ ] 1단계에서 캠프 이름을 비운 채 "다음"을 누르면 버튼이 비활성화 상태라 진행 자체가 안 된다(위젯 테스트)
 - [ ] 2단계에서 10줄 텍스트를 붙여넣고 "적용"하면 `corners.length == 10`이고 각 행의 `targetMinutes`/`trackCount`가 그 시점의 기본값으로 채워진다(unit 테스트, `SetupWizard.parseCornerNames`)
 - [ ] "예시 10개로 빠르게 시작" 클릭 시 텍스트 영역이 `kSetupWizardExampleCornerNames`로 채워지고 미리보기 표가 즉시 갱신된다(위젯 테스트)
-- [ ] 코너 0개 상태에서 "다음"을 누르면 `blockedMessage`가 세팅되고 화면에 "코너를 1개 이상 추가하세요"가 표시되며 3단계로 넘어가지 않는다(scenarios.md Feature 2-d 재현, 위젯 테스트)
+- [ ] 코너 0개 상태에서도 "다음"으로 3단계에 진입하고, 캠프만 생성한 뒤 코너·트랙 관리 화면으로 이동한다(위젯/통합 테스트)
 - [ ] 미리보기 표에서 개별 행의 이름/목표시간/트랙 수를 수정하면 해당 인덱스의 `SetupWizardCornerRow`만 갱신되고 나머지는 그대로다(unit 테스트, `updateCornerRow`)
 - [ ] 행 삭제 버튼이 해당 인덱스만 제거한다(unit 테스트, `removeCornerRow`)
 - [ ] 3단계 "설정 완료"를 눌렀을 때 `createCamp` → (기간 입력 시)`updateCamp` → 코너별 `createCorner`+`createTracksForCorner` 순서로 호출된다(unit 테스트, mock provider 호출 순서 검증 — `verifyInOrder` 류)
