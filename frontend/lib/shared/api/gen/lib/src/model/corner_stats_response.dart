@@ -162,4 +162,3 @@ class _$CornerStatsResponseSerializer implements PrimitiveSerializer<CornerStats
     return result.build();
   }
 }
-

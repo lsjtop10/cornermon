@@ -1,8 +1,8 @@
-import 'package:cornermon_api_gen/cornermon_api_gen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:cornermon/facilitator/features/visit_summary/visit_summary_overlay.dart';
+import 'package:cornermon/shared/api/domain_aliases.dart';
 import 'package:cornermon/shared/api/ids.dart';
 import 'package:cornermon/shared/api/providers/group_providers.dart';
 import 'package:cornermon/shared/design_system/tokens/colors.dart';
@@ -51,7 +51,7 @@ void main() {
     await tester.pumpWidget(
       buildTestable(
         VisitSummaryOverlay(visit: visit, onDismiss: () {}),
-        overrides: [groupDetailProvider(GroupId(visit.groupId)).overrideWith((ref) => group)],
+        overrides: [groupDetailProvider(GroupId(visit.groupId!)).overrideWith((ref) => group)],
       ),
     );
     await tester.pump(); // groupDetailProvider(FutureOr) 1틱 대기
@@ -71,7 +71,7 @@ void main() {
     await tester.pumpWidget(
       buildTestable(
         VisitSummaryOverlay(visit: visit, onDismiss: () {}),
-        overrides: [groupDetailProvider(GroupId(visit.groupId)).overrideWith((ref) => group)],
+        overrides: [groupDetailProvider(GroupId(visit.groupId!)).overrideWith((ref) => group)],
       ),
     );
     await tester.pump();
@@ -93,7 +93,7 @@ void main() {
       buildTestable(
         VisitSummaryOverlay(visit: zeroVisit, onDismiss: () {}),
         overrides: [
-          groupDetailProvider(GroupId(zeroVisit.groupId)).overrideWith((ref) => group),
+          groupDetailProvider(GroupId(zeroVisit.groupId!)).overrideWith((ref) => group),
         ],
       ),
     );
@@ -110,7 +110,7 @@ void main() {
       buildTestable(
         VisitSummaryOverlay(visit: negativeVisit, onDismiss: () {}),
         overrides: [
-          groupDetailProvider(GroupId(negativeVisit.groupId)).overrideWith((ref) => group),
+          groupDetailProvider(GroupId(negativeVisit.groupId!)).overrideWith((ref) => group),
         ],
       ),
     );
@@ -132,7 +132,7 @@ void main() {
     await tester.pumpWidget(
       buildTestable(
         VisitSummaryOverlay(visit: visit, onDismiss: () => dismissCount++),
-        overrides: [groupDetailProvider(GroupId(visit.groupId)).overrideWith((ref) => group)],
+        overrides: [groupDetailProvider(GroupId(visit.groupId!)).overrideWith((ref) => group)],
       ),
     );
     await tester.pump();
@@ -154,7 +154,7 @@ void main() {
       await tester.pumpWidget(
         buildTestable(
           VisitSummaryOverlay(visit: visit, onDismiss: () => dismissCount++),
-          overrides: [groupDetailProvider(GroupId(visit.groupId)).overrideWith((ref) => group)],
+          overrides: [groupDetailProvider(GroupId(visit.groupId!)).overrideWith((ref) => group)],
         ),
       );
       await tester.pump();

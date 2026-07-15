@@ -2,9 +2,9 @@ import 'dart:async';
 
 import 'package:cornermon/facilitator/features/qr_scan/qr_scan_screen.dart';
 import 'package:cornermon/facilitator/session/track_session_provider.dart';
+import 'package:cornermon/shared/api/domain_aliases.dart';
 import 'package:cornermon/shared/api/ids.dart';
 import 'package:cornermon/shared/api/providers/visit_providers.dart';
-import 'package:cornermon_api_gen/cornermon_api_gen.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';

@@ -195,4 +195,3 @@ class BadgeResponseStatusEnum extends EnumClass {
   static BuiltSet<BadgeResponseStatusEnum> get values => _$badgeResponseStatusEnumValues;
   static BadgeResponseStatusEnum valueOf(String name) => _$badgeResponseStatusEnumValueOf(name);
 }
-

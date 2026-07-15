@@ -13,7 +13,7 @@ Method | HTTP request | Description
 [**campsCampIdMessagesBroadcastPost**](EMessageApi.md#campscampidmessagesbroadcastpost) | **POST** /camps/{campId}/messages/broadcast | 전체 공지 발송
 [**messagesBroadcastIdReadPost**](EMessageApi.md#messagesbroadcastidreadpost) | **POST** /messages/broadcast/{id}/read | 공지사항 읽음 처리
 [**messagesBroadcastIdReceiptsGet**](EMessageApi.md#messagesbroadcastidreceiptsget) | **GET** /messages/broadcast/{id}/receipts | 공지사항 수신 확인 현황
-[**tracksTrackIdMessagesGet**](EMessageApi.md#trackstrackidmessagesget) | **GET** /tracks/{trackId}/messages | 트랙별 메시지 내역 조회 (진행자)
+[**tracksTrackIdMessagesGet**](EMessageApi.md#trackstrackidmessagesget) | **GET** /tracks/{trackId}/messages | 트랙별 메시지 내역 조회
 [**tracksTrackIdMessagesPost**](EMessageApi.md#trackstrackidmessagespost) | **POST** /tracks/{trackId}/messages | 다이렉트 메시지 발송
 [**tracksTrackIdMessagesUnreadCountGet**](EMessageApi.md#trackstrackidmessagesunreadcountget) | **GET** /tracks/{trackId}/messages/unread-count | 트랙 미확인 다이렉트 메시지 개수 조회
 
@@ -210,13 +210,17 @@ Name | Type | Description  | Notes
 # **tracksTrackIdMessagesGet**
 > BuiltList<MessageResponse> tracksTrackIdMessagesGet(trackId, background, after)
 
-트랙별 메시지 내역 조회 (진행자)
+트랙별 메시지 내역 조회
 
-트랙 진행자가 자신의 트랙과 관련된 DIRECT 메시지 내역을 조회한다(GitHub Issue #69, 구현 예정).
+관리자 또는 자신의 트랙 진행자가 DIRECT 메시지 내역을 조회한다.
 
 ### Example
 ```dart
 import 'package:cornermon_api_gen/api.dart';
+// TODO Configure API key authorization: AdminAuth
+//defaultApiClient.getAuthentication<ApiKeyAuth>('AdminAuth').apiKey = 'YOUR_API_KEY';
+// uncomment below to setup prefix (e.g. Bearer) for API key, if needed
+//defaultApiClient.getAuthentication<ApiKeyAuth>('AdminAuth').apiKeyPrefix = 'Bearer';
 // TODO Configure API key authorization: TrackAuth
 //defaultApiClient.getAuthentication<ApiKeyAuth>('TrackAuth').apiKey = 'YOUR_API_KEY';
 // uncomment below to setup prefix (e.g. Bearer) for API key, if needed
@@ -249,7 +253,7 @@ Name | Type | Description  | Notes
 
 ### Authorization
 
-[TrackAuth](../README.md#TrackAuth)
+[AdminAuth](../README.md#AdminAuth), [TrackAuth](../README.md#TrackAuth)
 
 ### HTTP request headers
 
@@ -312,11 +316,19 @@ Name | Type | Description  | Notes
 
 트랙 미확인 다이렉트 메시지 개수 조회
 
-호출자(관리자 또는 진행자) 기준으로 상대측이 보낸 미확인 메시지 개수를 반환한다(GitHub Issue #69, 구현 예정).
+호출자(관리자 또는 진행자) 기준으로 상대측이 보낸 미확인 메시지 개수를 반환한다.
 
 ### Example
 ```dart
 import 'package:cornermon_api_gen/api.dart';
+// TODO Configure API key authorization: AdminAuth
+//defaultApiClient.getAuthentication<ApiKeyAuth>('AdminAuth').apiKey = 'YOUR_API_KEY';
+// uncomment below to setup prefix (e.g. Bearer) for API key, if needed
+//defaultApiClient.getAuthentication<ApiKeyAuth>('AdminAuth').apiKeyPrefix = 'Bearer';
+// TODO Configure API key authorization: TrackAuth
+//defaultApiClient.getAuthentication<ApiKeyAuth>('TrackAuth').apiKey = 'YOUR_API_KEY';
+// uncomment below to setup prefix (e.g. Bearer) for API key, if needed
+//defaultApiClient.getAuthentication<ApiKeyAuth>('TrackAuth').apiKeyPrefix = 'Bearer';
 
 final api = CornermonApiGen().getEMessageApi();
 final String trackId = trackId_example; // String | 트랙 ID
@@ -341,7 +353,7 @@ Name | Type | Description  | Notes
 
 ### Authorization
 
-No authorization required
+[AdminAuth](../README.md#AdminAuth), [TrackAuth](../README.md#TrackAuth)
 
 ### HTTP request headers
 

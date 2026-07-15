@@ -9,6 +9,7 @@ import 'package:cornermon_api_gen/api.dart';
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **activeTracks** | [**BuiltList&lt;TrackSummaryResponse&gt;**](TrackSummaryResponse.md) |  | [optional] 
+**campId** | **String** |  | [optional] 
 **cornerMetric** | [**CornerMetricResponse**](CornerMetricResponse.md) |  | [optional] 
 **id** | **String** |  | [optional] 
 **isBottleneck** | **bool** |  | [optional] 

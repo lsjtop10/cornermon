@@ -2,8 +2,8 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:cornermon_api_gen/cornermon_api_gen.dart';
 
+import 'package:cornermon/shared/api/domain_aliases.dart';
 import 'package:cornermon/shared/api/ids.dart';
 import 'package:cornermon/shared/api/providers/group_providers.dart';
 import 'package:cornermon/shared/api/providers/visit_providers.dart';
@@ -48,7 +48,7 @@ class _ManualCheckinScreenState extends ConsumerState<ManualCheckinScreen> {
     if (session is! TrackSessionAuthenticated) {
       throw StateError('수동 처리는 인증된 트랙 세션에서만 가능합니다.');
     }
-    return TrackId(session.track.id);
+    return TrackId(session.track.id!);
   }
 
   @override
@@ -60,7 +60,9 @@ class _ManualCheckinScreenState extends ConsumerState<ManualCheckinScreen> {
     final cornerId = session is TrackSessionAuthenticated
         ? session.corner.id
         : null;
-    final groupsAsync = ref.watch(groupListProvider());
+    final groupsAsync = session is TrackSessionAuthenticated
+        ? ref.watch(trackScopedGroupsProvider(TrackId(session.track.id!)))
+        : const AsyncValue<List<Group>>.data([]);
 
     return Scaffold(
       backgroundColor: colors.bgCanvas,
@@ -96,7 +98,10 @@ class _ManualCheckinScreenState extends ConsumerState<ManualCheckinScreen> {
                 final filtered = query.isEmpty
                     ? groups
                     : groups
-                          .where((g) => g.name.toLowerCase().contains(query))
+                          .where(
+                            (g) =>
+                                (g.name ?? '').toLowerCase().contains(query),
+                          )
                           .toList();
 
                 if (filtered.isEmpty) {
@@ -119,7 +124,7 @@ class _ManualCheckinScreenState extends ConsumerState<ManualCheckinScreen> {
                     // 자기 코너(=현재 로그인한 트랙의 코너)가 이미 COMPLETED면 재시작 자체를 막는다.
                     final completed =
                         cornerId != null &&
-                        group.itinerary.any(
+                        (group.itinerary ?? const <CornerProgress>[]).any(
                           (p) =>
                               p.cornerId == cornerId &&
                               p.status == VisitStatusPerCorner.COMPLETED,
@@ -158,7 +163,7 @@ class _ManualCheckinScreenState extends ConsumerState<ManualCheckinScreen> {
     try {
       await ref
           .read(visitActionsProvider(_trackId).notifier)
-          .startManual(GroupId(group.id));
+          .startManual(GroupId(group.id!));
       if (!mounted) return;
       context.pop(); // 성공 → B2로 복귀
     } on DioException catch (e) {
@@ -261,7 +266,7 @@ class _GroupCard extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  group.name,
+                  group.name ?? '',
                   style: AppTypography.title3.copyWith(
                     color: completed ? colors.textDisabled : colors.textPrimary,
                   ),

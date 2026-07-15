@@ -273,7 +273,7 @@ Name | Type | Description  | Notes
 
 코너 목록 조회
 
-특정 캠프의 모든 코너 목록을 조회한다.
+특정 캠프의 모든 코너 핵심 정보와 완료 방문 지표를 조회한다.
 
 ### Example
 ```dart
@@ -834,7 +834,7 @@ void (empty response body)
 
 코너 상세 조회
 
-특정 코너 정보를 조회한다.
+특정 코너의 핵심 정보와 완료 방문 지표를 조회한다.
 
 ### Example
 ```dart

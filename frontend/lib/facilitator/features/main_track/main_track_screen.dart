@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:cornermon_api_gen/cornermon_api_gen.dart';
 
+import 'package:cornermon/shared/api/domain_aliases.dart';
 import 'package:cornermon/shared/api/ids.dart';
 import 'package:cornermon/shared/api/providers/corner_track_providers.dart';
 import 'package:cornermon/shared/api/providers/visit_providers.dart';
@@ -35,7 +35,7 @@ class _MainTrackScreenState extends ConsumerState<MainTrackScreen> {
       return const SizedBox.shrink();
     }
 
-    final trackId = TrackId(session.track.id);
+    final trackId = TrackId(session.track.id!);
 
     // 코디네이터는 watch만 해서 화면이 떠 있는 동안만 활성화한다 — @riverpod 기본값
     // (autoDispose)이므로 화면이 unmount되면 코디네이터와 그 안의 trackEvents 구독도
@@ -74,7 +74,7 @@ class _MainTrackScreenState extends ConsumerState<MainTrackScreen> {
                     trackId: trackId,
                     currentVisit: currentVisit,
                     cornerName: session.corner.name ?? '',
-                    trackNo: session.track.trackNo,
+                    trackNo: session.track.trackNo ?? 0,
                     targetMinutes: targetMinutes,
                     onVisitEnded: (summary) =>
                         setState(() => _visitJustCompleted = summary),

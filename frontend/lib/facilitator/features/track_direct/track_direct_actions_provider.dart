@@ -1,4 +1,3 @@
-import 'package:cornermon_api_gen/cornermon_api_gen.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import 'package:cornermon/shared/api/ids.dart';
@@ -13,13 +12,7 @@ class TrackDirectActions extends _$TrackDirectActions {
 
   /// POST /tracks/{trackId}/messages — 발신자 role은 서버가 세션(TrackAuth)으로 판단한다.
   Future<void> send(String content) async {
-    final api = ref.read(messageApiProvider);
-    await api.tracksTrackIdMessagesPost(
-      trackId: trackId.value,
-      messagesBroadcastPostRequest: MessagesBroadcastPostRequest(
-        (b) => b..content = content,
-      ),
-    );
+    await ref.read(sendDirectMessageProvider(trackId, content).future);
     ref.invalidate(trackMessageListProvider(trackId));
   }
 }

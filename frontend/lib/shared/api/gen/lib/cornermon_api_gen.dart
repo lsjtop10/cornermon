@@ -45,8 +45,10 @@ export 'package:cornermon_api_gen/src/model/corner_stats_response.dart';
 export 'package:cornermon_api_gen/src/model/create_camp_request.dart';
 export 'package:cornermon_api_gen/src/model/create_corner_request.dart';
 export 'package:cornermon_api_gen/src/model/create_tracks_request.dart';
+export 'package:cornermon_api_gen/src/model/device_registration_created_response.dart';
 export 'package:cornermon_api_gen/src/model/device_registration_request.dart';
 export 'package:cornermon_api_gen/src/model/device_registration_response.dart';
+export 'package:cornermon_api_gen/src/model/device_status_response.dart';
 export 'package:cornermon_api_gen/src/model/direct_message_request.dart';
 export 'package:cornermon_api_gen/src/model/error_response.dart';
 export 'package:cornermon_api_gen/src/model/export_badges_response.dart';
@@ -70,4 +72,3 @@ export 'package:cornermon_api_gen/src/model/unvisited_group_response.dart';
 export 'package:cornermon_api_gen/src/model/update_camp_request.dart';
 export 'package:cornermon_api_gen/src/model/visit_start_request.dart';
 export 'package:cornermon_api_gen/src/model/visit_summary_response.dart';
-

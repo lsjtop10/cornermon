@@ -40,8 +40,10 @@ import 'package:cornermon_api_gen/src/model/corner_stats_response.dart';
 import 'package:cornermon_api_gen/src/model/create_camp_request.dart';
 import 'package:cornermon_api_gen/src/model/create_corner_request.dart';
 import 'package:cornermon_api_gen/src/model/create_tracks_request.dart';
+import 'package:cornermon_api_gen/src/model/device_registration_created_response.dart';
 import 'package:cornermon_api_gen/src/model/device_registration_request.dart';
 import 'package:cornermon_api_gen/src/model/device_registration_response.dart';
+import 'package:cornermon_api_gen/src/model/device_status_response.dart';
 import 'package:cornermon_api_gen/src/model/direct_message_request.dart';
 import 'package:cornermon_api_gen/src/model/error_response.dart';
 import 'package:cornermon_api_gen/src/model/export_badges_response.dart';
@@ -94,8 +96,10 @@ part 'serializers.g.dart';
   CreateCampRequest,
   CreateCornerRequest,
   CreateTracksRequest,
+  DeviceRegistrationCreatedResponse,
   DeviceRegistrationRequest,
   DeviceRegistrationResponse,
+  DeviceStatusResponse,
   DirectMessageRequest,
   ErrorResponse,
   ExportBadgesResponse,
@@ -122,22 +126,6 @@ part 'serializers.g.dart';
 ])
 Serializers serializers = (_$serializers.toBuilder()
       ..addBuilderFactory(
-        const FullType(BuiltList, [FullType(DeviceRegistrationResponse)]),
-        () => ListBuilder<DeviceRegistrationResponse>(),
-      )
-      ..addBuilderFactory(
-        const FullType(BuiltList, [FullType(AdminSessionResponse)]),
-        () => ListBuilder<AdminSessionResponse>(),
-      )
-      ..addBuilderFactory(
-        const FullType(BuiltList, [FullType(VisitSummaryResponse)]),
-        () => ListBuilder<VisitSummaryResponse>(),
-      )
-      ..addBuilderFactory(
-        const FullType(BuiltList, [FullType(MessageResponse)]),
-        () => ListBuilder<MessageResponse>(),
-      )
-      ..addBuilderFactory(
         const FullType(BuiltList, [FullType(TrackPinResponse)]),
         () => ListBuilder<TrackPinResponse>(),
       )
@@ -154,6 +142,10 @@ Serializers serializers = (_$serializers.toBuilder()
         () => ListBuilder<FacilitatorSessionResponse>(),
       )
       ..addBuilderFactory(
+        const FullType(BuiltList, [FullType(DeviceRegistrationResponse)]),
+        () => ListBuilder<DeviceRegistrationResponse>(),
+      )
+      ..addBuilderFactory(
         const FullType(BuiltList, [FullType(CornerResponse)]),
         () => ListBuilder<CornerResponse>(),
       )
@@ -166,12 +158,20 @@ Serializers serializers = (_$serializers.toBuilder()
         () => ListBuilder<TrackResponse>(),
       )
       ..addBuilderFactory(
+        const FullType(BuiltList, [FullType(AdminSessionResponse)]),
+        () => ListBuilder<AdminSessionResponse>(),
+      )
+      ..addBuilderFactory(
+        const FullType(BuiltList, [FullType(VisitSummaryResponse)]),
+        () => ListBuilder<VisitSummaryResponse>(),
+      )
+      ..addBuilderFactory(
         const FullType(BuiltList, [FullType(BadgeResponse)]),
         () => ListBuilder<BadgeResponse>(),
       )
       ..addBuilderFactory(
-        const FullType(BuiltMap, [FullType(String), FullType(JsonObject)]),
-        () => MapBuilder<String, JsonObject>(),
+        const FullType(BuiltList, [FullType(MessageResponse)]),
+        () => ListBuilder<MessageResponse>(),
       )
       ..add(const OneOfSerializer())
       ..add(const AnyOfSerializer())

@@ -162,4 +162,3 @@ class SSENotificationEventEnum extends EnumClass {
   static BuiltSet<SSENotificationEventEnum> get values => _$sSENotificationEventEnumValues;
   static SSENotificationEventEnum valueOf(String name) => _$sSENotificationEventEnumValueOf(name);
 }
-

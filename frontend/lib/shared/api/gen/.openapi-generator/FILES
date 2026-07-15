@@ -31,8 +31,10 @@ doc/CreateCampRequest.md
 doc/CreateCornerRequest.md
 doc/CreateTracksRequest.md
 doc/DReportApi.md
+doc/DeviceRegistrationCreatedResponse.md
 doc/DeviceRegistrationRequest.md
 doc/DeviceRegistrationResponse.md
+doc/DeviceStatusResponse.md
 doc/DirectMessageRequest.md
 doc/EMessageApi.md
 doc/ErrorResponse.md
@@ -102,8 +104,10 @@ lib/src/model/create_camp_request.dart
 lib/src/model/create_corner_request.dart
 lib/src/model/create_tracks_request.dart
 lib/src/model/date.dart
+lib/src/model/device_registration_created_response.dart
 lib/src/model/device_registration_request.dart
 lib/src/model/device_registration_response.dart
+lib/src/model/device_status_response.dart
 lib/src/model/direct_message_request.dart
 lib/src/model/error_response.dart
 lib/src/model/export_badges_response.dart
@@ -129,6 +133,3 @@ lib/src/model/visit_start_request.dart
 lib/src/model/visit_summary_response.dart
 lib/src/serializers.dart
 pubspec.yaml
-test/a_auth_device_trust_api_test.dart
-test/b_camp_corner_track_api_test.dart
-test/c_visit_scan_flow_api_test.dart

@@ -292,7 +292,7 @@ void (empty response body)
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **authTrackLoginPost**
-> TrackLoginResponse authTrackLoginPost(request)
+> TrackLoginResponse authTrackLoginPost(xDeviceToken, request)
 
 진행자 트랙 PIN 로그인
 
@@ -307,10 +307,11 @@ import 'package:cornermon_api_gen/api.dart';
 //defaultApiClient.getAuthentication<ApiKeyAuth>('TrustedDeviceAuth').apiKeyPrefix = 'Bearer';
 
 final api = CornermonApiGen().getAAuthDeviceTrustApi();
+final String xDeviceToken = xDeviceToken_example; // String | 기기 신뢰 토큰 (opaque token, 값을 그대로 전달)
 final TrackLoginRequest request = ; // TrackLoginRequest | 6자리 숫자 트랙 PIN
 
 try {
-    final response = api.authTrackLoginPost(request);
+    final response = api.authTrackLoginPost(xDeviceToken, request);
     print(response);
 } on DioException catch (e) {
     print('Exception when calling AAuthDeviceTrustApi->authTrackLoginPost: $e\n');
@@ -321,6 +322,7 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
+ **xDeviceToken** | **String**| 기기 신뢰 토큰 (opaque token, 값을 그대로 전달) | 
  **request** | [**TrackLoginRequest**](TrackLoginRequest.md)| 6자리 숫자 트랙 PIN | 
 
 ### Return type
@@ -705,7 +707,7 @@ Name | Type | Description  | Notes
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **deviceRegistrationsMeGet**
-> BuiltMap<String, JsonObject> deviceRegistrationsMeGet()
+> DeviceStatusResponse deviceRegistrationsMeGet()
 
 내 기기 등록 상태 자체 조회
 
@@ -730,7 +732,7 @@ This endpoint does not need any parameter.
 
 ### Return type
 
-[**BuiltMap&lt;String, JsonObject&gt;**](JsonObject.md)
+[**DeviceStatusResponse**](DeviceStatusResponse.md)
 
 ### Authorization
 
@@ -744,7 +746,7 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **deviceRegistrationsPost**
-> DeviceRegistrationResponse deviceRegistrationsPost(request)
+> DeviceRegistrationCreatedResponse deviceRegistrationsPost(request)
 
 기기 등록 요청 (최초 앱 실행 시)
 
@@ -773,7 +775,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**DeviceRegistrationResponse**](DeviceRegistrationResponse.md)
+[**DeviceRegistrationCreatedResponse**](DeviceRegistrationCreatedResponse.md)
 
 ### Authorization
 

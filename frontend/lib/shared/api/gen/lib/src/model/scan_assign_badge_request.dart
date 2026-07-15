@@ -124,4 +124,3 @@ class _$ScanAssignBadgeRequestSerializer implements PrimitiveSerializer<ScanAssi
     return result.build();
   }
 }
-

@@ -43,7 +43,7 @@ class _QrScanScreenState extends ConsumerState<QrScanScreen> {
     if (session is! TrackSessionAuthenticated) {
       throw StateError('QR 스캔은 인증된 트랙 세션에서만 가능합니다.');
     }
-    return TrackId(session.track.id);
+    return TrackId(session.track.id!);
   }
 
   void _onDetect(BarcodeCapture capture) {

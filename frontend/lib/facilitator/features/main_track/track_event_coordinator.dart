@@ -1,10 +1,11 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:cornermon_api_gen/cornermon_api_gen.dart';
 
+import 'package:cornermon/shared/api/domain_aliases.dart';
 import 'package:cornermon/shared/api/ids.dart';
 import 'package:cornermon/shared/api/providers/message_providers.dart';
 import 'package:cornermon/shared/api/providers/visit_providers.dart';
 import 'package:cornermon/shared/api/sse/track_event_stream.dart';
+import 'package:cornermon/facilitator/session/facilitator_broadcast_provider.dart';
 import 'package:cornermon/facilitator/session/track_session_provider.dart';
 
 part 'track_event_coordinator.g.dart';
@@ -24,19 +25,21 @@ class TrackEventCoordinator extends _$TrackEventCoordinator {
   }
 
   void _handle(TrackId trackId, SseEvent event) {
-    final scope = event.data?.scope;
+    final scope = event.scope;
+    final isThisTrack =
+        scope?.kind == SseScopeKind.track && scope?.trackId == trackId.value;
     switch (event.event) {
       case SseEventEventEnum.trackUpdated:
-        // 계약상(api/openapi.yaml /events/track/{trackId})이 스트림엔 이미 "자기 트랙"
+        // 계약상(api/swagger.yaml /events/track/{trackId})이 스트림엔 이미 "자기 트랙"
         // 알림만 오지만, 공짜로 넣을 수 있는 방어 코드라 scope를 한 번 더 확인한다.
-        if (scope == 'track:${trackId.value}') {
+        if (isThisTrack) {
           ref.invalidate(currentVisitProvider(trackId));
         }
         break;
       case SseEventEventEnum.messagesChanged:
-        if (scope == 'broadcast') {
-          ref.invalidate(broadcastMessageListProvider);
-        } else if (scope == 'track:${trackId.value}') {
+        if (scope?.kind == SseScopeKind.camp) {
+          ref.invalidate(facilitatorBroadcastMessageListProvider);
+        } else if (isThisTrack) {
           ref.invalidate(trackMessageListProvider(trackId));
         }
         break;

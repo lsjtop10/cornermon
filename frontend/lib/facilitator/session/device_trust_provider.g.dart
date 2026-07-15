@@ -33,7 +33,7 @@ final class DeviceTrustProvider
   DeviceTrust create() => DeviceTrust();
 }
 
-String _$deviceTrustHash() => r'e382716e7552d0c97d99d140bc1f99ec4bab468b';
+String _$deviceTrustHash() => r'3f417be2c70ec888c4389f40a03e95faa1f4bf71';
 
 abstract class _$DeviceTrust extends $AsyncNotifier<DeviceTrustStatus> {
   FutureOr<DeviceTrustStatus> build();
@@ -53,3 +53,41 @@ abstract class _$DeviceTrust extends $AsyncNotifier<DeviceTrustStatus> {
     return element.handleCreate(ref, build);
   }
 }
+
+/// 신뢰기기 등록 시 발급받아 저장해둔 토큰 — B1 PIN 로그인(`X-Device-Token` 헤더)에만 쓰인다.
+
+@ProviderFor(deviceTrustToken)
+final deviceTrustTokenProvider = DeviceTrustTokenProvider._();
+
+/// 신뢰기기 등록 시 발급받아 저장해둔 토큰 — B1 PIN 로그인(`X-Device-Token` 헤더)에만 쓰인다.
+
+final class DeviceTrustTokenProvider
+    extends $FunctionalProvider<AsyncValue<String?>, String?, FutureOr<String?>>
+    with $FutureModifier<String?>, $FutureProvider<String?> {
+  /// 신뢰기기 등록 시 발급받아 저장해둔 토큰 — B1 PIN 로그인(`X-Device-Token` 헤더)에만 쓰인다.
+  DeviceTrustTokenProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'deviceTrustTokenProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$deviceTrustTokenHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<String?> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<String?> create(Ref ref) {
+    return deviceTrustToken(ref);
+  }
+}
+
+String _$deviceTrustTokenHash() => r'601854c4b6e6d825daf8a4f1b635b7302afec13f';

@@ -1,5 +1,7 @@
 import 'package:cornermon/facilitator/features/broadcast_inbox/broadcast_inbox_screen.dart';
+import 'package:cornermon/facilitator/session/facilitator_broadcast_provider.dart';
 import 'package:cornermon/facilitator/widgets/local_time_label.dart';
+import 'package:cornermon/shared/api/domain_aliases.dart';
 import 'package:cornermon/shared/api/providers/message_providers.dart';
 import 'package:cornermon_api_gen/cornermon_api_gen.dart';
 import 'package:dio/dio.dart';
@@ -9,7 +11,7 @@ import 'package:flutter_test/flutter_test.dart';
 import '../../test_utils/widget_test_helpers.dart';
 
 /// 읽음 처리 POST 호출만 기록하는 가짜 구현 — 다른 메서드는 이 테스트에서 호출되지 않는다.
-class _FakeMessagesApi extends EMessagesApi {
+class _FakeMessagesApi extends EMessageApi {
   _FakeMessagesApi() : super(Dio(), serializers);
 
   final List<String> readCalledIds = [];
@@ -62,7 +64,7 @@ void main() {
       buildTestable(
         const BroadcastInboxScreen(),
         overrides: [
-          broadcastMessageListProvider.overrideWith((ref) => [unread, read]),
+          facilitatorBroadcastMessageListProvider.overrideWith((ref) => [unread, read]),
           messageApiProvider.overrideWithValue(fakeApi),
         ],
       ),
@@ -92,7 +94,7 @@ void main() {
       buildTestable(
         const BroadcastInboxScreen(),
         overrides: [
-          broadcastMessageListProvider.overrideWith((ref) => [unreadA, unreadB, alreadyRead]),
+          facilitatorBroadcastMessageListProvider.overrideWith((ref) => [unreadA, unreadB, alreadyRead]),
           messageApiProvider.overrideWithValue(fakeApi),
         ],
       ),
@@ -116,7 +118,7 @@ void main() {
       buildTestable(
         const BroadcastInboxScreen(),
         overrides: [
-          broadcastMessageListProvider.overrideWith((ref) => [message]),
+          facilitatorBroadcastMessageListProvider.overrideWith((ref) => [message]),
           messageApiProvider.overrideWithValue(fakeApi),
         ],
       ),

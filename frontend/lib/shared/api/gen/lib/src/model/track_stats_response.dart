@@ -178,4 +178,3 @@ class _$TrackStatsResponseSerializer implements PrimitiveSerializer<TrackStatsRe
     return result.build();
   }
 }
-
