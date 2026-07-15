@@ -212,6 +212,9 @@ func (h *MessageHandler) SendDirect(c echo.Context) error {
 	if c.Get("adminSession") != nil {
 		senderRole = domain.RoleAdmin
 	} else if c.Get("facilitatorSession") != nil {
+		if err := requireFacilitatorTrackScope(c, trackID); err != nil {
+			return err
+		}
 		senderRole = domain.RoleTrack
 	} else {
 		return c.JSON(http.StatusUnauthorized, ErrorResponse{Code: "UNAUTHORIZED", Message: "unauthorized"})
@@ -239,15 +242,16 @@ func (h *MessageHandler) SendDirect(c echo.Context) error {
 }
 
 // @Summary      트랙별 메시지 내역 조회
-// @Description  관리자가 해당 트랙과 관련된 DIRECT 메시지 내역을 조회한다. background/after 파라미터는
-// @Description  계약상 정의되어 있으나 아직 동작하지 않는다(GitHub Issue #69, 구현 예정).
+// @Description  관리자 또는 자신의 트랙 진행자가 DIRECT 메시지 내역을 조회한다.
 // @Tags         E. Message
 // @Security     AdminAuth
+// @Security     TrackAuth
 // @Produce      json
 // @Param        trackId path string true "트랙 ID"
-// @Param        background query bool false "true면 상대측이 보낸 미확인 메시지를 읽음 처리 (구현 예정)"
-// @Param        after query string false "RFC3339 UTC 이후 메시지만 반환 (구현 예정)"
+// @Param        background query bool false "true면 상대측이 보낸 미확인 메시지를 읽음 처리"
+// @Param        after query string false "RFC3339 UTC 이후 메시지만 반환"
 // @Success      200 {array} MessageResponse
+// @Failure      403 {object} ErrorResponse "세션 트랙과 요청 트랙 불일치"
 // @Router       /tracks/{trackId}/messages [get]
 func (h *MessageHandler) ListDirectMessages(c echo.Context) error {
 	background, err := parseBackground(c.QueryParam("background"))
@@ -267,18 +271,11 @@ func (h *MessageHandler) ListDirectMessages(c echo.Context) error {
 	return c.JSON(http.StatusOK, mapMessages(msgs))
 }
 
-// @Summary      트랙별 메시지 내역 조회 (진행자)
-// @Description  트랙 진행자가 자신의 트랙과 관련된 DIRECT 메시지 내역을 조회한다(GitHub Issue #69, 구현 예정).
-// @Tags         E. Message
-// @Security     TrackAuth
-// @Produce      json
-// @Param        trackId path string true "트랙 ID"
-// @Param        background query bool false "true면 상대측이 보낸 미확인 메시지를 읽음 처리"
-// @Param        after query string false "RFC3339 UTC 이후 메시지만 반환"
-// @Success      200 {array} MessageResponse
-// @Failure      501 {object} ErrorResponse "구현 예정 (GitHub Issue #69)"
-// @Router       /tracks/{trackId}/messages [get]
 func (h *MessageHandler) ListDirectMessagesForTrack(c echo.Context) error {
+	trackID := domain.TrackID(c.Param("trackId"))
+	if err := requireFacilitatorTrackScope(c, trackID); err != nil {
+		return err
+	}
 	background, err := parseBackground(c.QueryParam("background"))
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: err.Error()})
@@ -287,7 +284,7 @@ func (h *MessageHandler) ListDirectMessagesForTrack(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: "after must be RFC3339"})
 	}
-	msgs, err := h.message.ListDirectMessages(c.Request().Context(), domain.TrackID(c.Param("trackId")), domain.RoleTrack, after, background)
+	msgs, err := h.message.ListDirectMessages(c.Request().Context(), trackID, domain.RoleTrack, after, background)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()})
 	}
@@ -299,23 +296,40 @@ type UnreadCountResponse struct {
 } // @name UnreadCountResponse
 
 // @Summary      트랙 미확인 다이렉트 메시지 개수 조회
-// @Description  호출자(관리자 또는 진행자) 기준으로 상대측이 보낸 미확인 메시지 개수를 반환한다(GitHub Issue #69, 구현 예정).
+// @Description  호출자(관리자 또는 진행자) 기준으로 상대측이 보낸 미확인 메시지 개수를 반환한다.
 // @Tags         E. Message
+// @Security     AdminAuth
+// @Security     TrackAuth
 // @Produce      json
 // @Param        trackId path string true "트랙 ID"
 // @Success      200 {object} UnreadCountResponse
-// @Failure      501 {object} ErrorResponse "구현 예정 (GitHub Issue #69)"
+// @Failure      403 {object} ErrorResponse "세션 트랙과 요청 트랙 불일치"
 // @Router       /tracks/{trackId}/messages/unread-count [get]
 func (h *MessageHandler) GetUnreadCount(c echo.Context) error {
+	trackID := domain.TrackID(c.Param("trackId"))
 	role := domain.RoleAdmin
 	if _, ok := c.Get("facilitatorSession").(*domain.FacilitatorSession); ok {
+		if err := requireFacilitatorTrackScope(c, trackID); err != nil {
+			return err
+		}
 		role = domain.RoleTrack
 	}
-	count, err := h.message.GetUnreadCount(c.Request().Context(), domain.TrackID(c.Param("trackId")), role)
+	count, err := h.message.GetUnreadCount(c.Request().Context(), trackID, role)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()})
 	}
 	return c.JSON(http.StatusOK, UnreadCountResponse{UnreadCount: count})
+}
+
+func requireFacilitatorTrackScope(c echo.Context, trackID domain.TrackID) error {
+	session, ok := c.Get("facilitatorSession").(*domain.FacilitatorSession)
+	if !ok {
+		return echo.NewHTTPError(http.StatusUnauthorized, "unauthorized")
+	}
+	if session.TrackID != trackID {
+		return domain.ErrTrackScopeForbidden
+	}
+	return nil
 }
 
 func parseBackground(value string) (bool, error) {
