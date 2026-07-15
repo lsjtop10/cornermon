@@ -1,3 +1,4 @@
+// @dart=2.18
 //
 // AUTO-GENERATED FILE, DO NOT MODIFY!
 //
@@ -11,10 +12,11 @@ import 'package:cornermon_api_gen/src/auth/bearer_auth.dart';
 import 'package:cornermon_api_gen/src/auth/oauth.dart';
 import 'package:cornermon_api_gen/src/api/a_auth_device_trust_api.dart';
 import 'package:cornermon_api_gen/src/api/b_camp_corner_track_api.dart';
+import 'package:cornermon_api_gen/src/api/b_resource_management_admin_api.dart';
 import 'package:cornermon_api_gen/src/api/c_visit_scan_flow_api.dart';
-import 'package:cornermon_api_gen/src/api/d_realtime_sse_api.dart';
-import 'package:cornermon_api_gen/src/api/e_messages_api.dart';
-import 'package:cornermon_api_gen/src/api/f_reports_analytics_api.dart';
+import 'package:cornermon_api_gen/src/api/d_report_api.dart';
+import 'package:cornermon_api_gen/src/api/e_message_api.dart';
+import 'package:cornermon_api_gen/src/api/f_events_sse_api.dart';
 import 'package:cornermon_api_gen/src/api/g_audit_logs_api.dart';
 
 class CornermonApiGen {
@@ -123,28 +125,34 @@ class CornermonApiGen {
     return BCampCornerTrackApi(dio, serializers);
   }
 
+  /// Get BResourceManagementAdminApi instance, base route and serializer can be overridden by a given but be careful,
+  /// by doing that all interceptors will not be executed
+  BResourceManagementAdminApi getBResourceManagementAdminApi() {
+    return BResourceManagementAdminApi(dio, serializers);
+  }
+
   /// Get CVisitScanFlowApi instance, base route and serializer can be overridden by a given but be careful,
   /// by doing that all interceptors will not be executed
   CVisitScanFlowApi getCVisitScanFlowApi() {
     return CVisitScanFlowApi(dio, serializers);
   }
 
-  /// Get DRealtimeSSEApi instance, base route and serializer can be overridden by a given but be careful,
+  /// Get DReportApi instance, base route and serializer can be overridden by a given but be careful,
   /// by doing that all interceptors will not be executed
-  DRealtimeSSEApi getDRealtimeSSEApi() {
-    return DRealtimeSSEApi(dio, serializers);
+  DReportApi getDReportApi() {
+    return DReportApi(dio, serializers);
   }
 
-  /// Get EMessagesApi instance, base route and serializer can be overridden by a given but be careful,
+  /// Get EMessageApi instance, base route and serializer can be overridden by a given but be careful,
   /// by doing that all interceptors will not be executed
-  EMessagesApi getEMessagesApi() {
-    return EMessagesApi(dio, serializers);
+  EMessageApi getEMessageApi() {
+    return EMessageApi(dio, serializers);
   }
 
-  /// Get FReportsAnalyticsApi instance, base route and serializer can be overridden by a given but be careful,
+  /// Get FEventsSSEApi instance, base route and serializer can be overridden by a given but be careful,
   /// by doing that all interceptors will not be executed
-  FReportsAnalyticsApi getFReportsAnalyticsApi() {
-    return FReportsAnalyticsApi(dio, serializers);
+  FEventsSSEApi getFEventsSSEApi() {
+    return FEventsSSEApi(dio, serializers);
   }
 
   /// Get GAuditLogsApi instance, base route and serializer can be overridden by a given but be careful,

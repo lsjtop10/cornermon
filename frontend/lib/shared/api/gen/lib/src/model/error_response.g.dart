@@ -1,3 +1,4 @@
+// @dart=2.18
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
 part of 'error_response.dart';
@@ -8,17 +9,16 @@ part of 'error_response.dart';
 
 class _$ErrorResponse extends ErrorResponse {
   @override
-  final String code;
-  @override
-  final String message;
+  final String? code;
   @override
   final BuiltMap<String, JsonObject?>? details;
+  @override
+  final String? message;
 
   factory _$ErrorResponse([void Function(ErrorResponseBuilder)? updates]) =>
       (ErrorResponseBuilder()..update(updates))._build();
 
-  _$ErrorResponse._({required this.code, required this.message, this.details})
-    : super._();
+  _$ErrorResponse._({this.code, this.details, this.message}) : super._();
   @override
   ErrorResponse rebuild(void Function(ErrorResponseBuilder) updates) =>
       (toBuilder()..update(updates)).build();
@@ -31,16 +31,16 @@ class _$ErrorResponse extends ErrorResponse {
     if (identical(other, this)) return true;
     return other is ErrorResponse &&
         code == other.code &&
-        message == other.message &&
-        details == other.details;
+        details == other.details &&
+        message == other.message;
   }
 
   @override
   int get hashCode {
     var _$hash = 0;
     _$hash = $jc(_$hash, code.hashCode);
-    _$hash = $jc(_$hash, message.hashCode);
     _$hash = $jc(_$hash, details.hashCode);
+    _$hash = $jc(_$hash, message.hashCode);
     _$hash = $jf(_$hash);
     return _$hash;
   }
@@ -49,8 +49,8 @@ class _$ErrorResponse extends ErrorResponse {
   String toString() {
     return (newBuiltValueToStringHelper(r'ErrorResponse')
           ..add('code', code)
-          ..add('message', message)
-          ..add('details', details))
+          ..add('details', details)
+          ..add('message', message))
         .toString();
   }
 }
@@ -63,15 +63,15 @@ class ErrorResponseBuilder
   String? get code => _$this._code;
   set code(String? code) => _$this._code = code;
 
-  String? _message;
-  String? get message => _$this._message;
-  set message(String? message) => _$this._message = message;
-
   MapBuilder<String, JsonObject?>? _details;
   MapBuilder<String, JsonObject?> get details =>
       _$this._details ??= MapBuilder<String, JsonObject?>();
   set details(MapBuilder<String, JsonObject?>? details) =>
       _$this._details = details;
+
+  String? _message;
+  String? get message => _$this._message;
+  set message(String? message) => _$this._message = message;
 
   ErrorResponseBuilder() {
     ErrorResponse._defaults(this);
@@ -81,8 +81,8 @@ class ErrorResponseBuilder
     final $v = _$v;
     if ($v != null) {
       _code = $v.code;
-      _message = $v.message;
       _details = $v.details?.toBuilder();
+      _message = $v.message;
       _$v = null;
     }
     return this;
@@ -104,20 +104,11 @@ class ErrorResponseBuilder
   _$ErrorResponse _build() {
     _$ErrorResponse _$result;
     try {
-      _$result =
-          _$v ??
+      _$result = _$v ??
           _$ErrorResponse._(
-            code: BuiltValueNullFieldError.checkNotNull(
-              code,
-              r'ErrorResponse',
-              'code',
-            ),
-            message: BuiltValueNullFieldError.checkNotNull(
-              message,
-              r'ErrorResponse',
-              'message',
-            ),
+            code: code,
             details: _details?.build(),
+            message: message,
           );
     } catch (_) {
       late String _$failedField;
@@ -126,10 +117,7 @@ class ErrorResponseBuilder
         _details?.build();
       } catch (e) {
         throw BuiltValueNestedFieldError(
-          r'ErrorResponse',
-          _$failedField,
-          e.toString(),
-        );
+            r'ErrorResponse', _$failedField, e.toString());
       }
       rethrow;
     }

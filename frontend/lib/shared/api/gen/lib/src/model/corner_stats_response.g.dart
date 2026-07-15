@@ -1,0 +1,149 @@
+// @dart=2.18
+// GENERATED CODE - DO NOT MODIFY BY HAND
+
+part of 'corner_stats_response.dart';
+
+// **************************************************************************
+// BuiltValueGenerator
+// **************************************************************************
+
+class _$CornerStatsResponse extends CornerStatsResponse {
+  @override
+  final int? completedVisitCount;
+  @override
+  final String? cornerId;
+  @override
+  final String? cornerName;
+  @override
+  final BuiltList<UnvisitedGroupResponse>? unvisitedGroups;
+
+  factory _$CornerStatsResponse(
+          [void Function(CornerStatsResponseBuilder)? updates]) =>
+      (CornerStatsResponseBuilder()..update(updates))._build();
+
+  _$CornerStatsResponse._(
+      {this.completedVisitCount,
+      this.cornerId,
+      this.cornerName,
+      this.unvisitedGroups})
+      : super._();
+  @override
+  CornerStatsResponse rebuild(
+          void Function(CornerStatsResponseBuilder) updates) =>
+      (toBuilder()..update(updates)).build();
+
+  @override
+  CornerStatsResponseBuilder toBuilder() =>
+      CornerStatsResponseBuilder()..replace(this);
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(other, this)) return true;
+    return other is CornerStatsResponse &&
+        completedVisitCount == other.completedVisitCount &&
+        cornerId == other.cornerId &&
+        cornerName == other.cornerName &&
+        unvisitedGroups == other.unvisitedGroups;
+  }
+
+  @override
+  int get hashCode {
+    var _$hash = 0;
+    _$hash = $jc(_$hash, completedVisitCount.hashCode);
+    _$hash = $jc(_$hash, cornerId.hashCode);
+    _$hash = $jc(_$hash, cornerName.hashCode);
+    _$hash = $jc(_$hash, unvisitedGroups.hashCode);
+    _$hash = $jf(_$hash);
+    return _$hash;
+  }
+
+  @override
+  String toString() {
+    return (newBuiltValueToStringHelper(r'CornerStatsResponse')
+          ..add('completedVisitCount', completedVisitCount)
+          ..add('cornerId', cornerId)
+          ..add('cornerName', cornerName)
+          ..add('unvisitedGroups', unvisitedGroups))
+        .toString();
+  }
+}
+
+class CornerStatsResponseBuilder
+    implements Builder<CornerStatsResponse, CornerStatsResponseBuilder> {
+  _$CornerStatsResponse? _$v;
+
+  int? _completedVisitCount;
+  int? get completedVisitCount => _$this._completedVisitCount;
+  set completedVisitCount(int? completedVisitCount) =>
+      _$this._completedVisitCount = completedVisitCount;
+
+  String? _cornerId;
+  String? get cornerId => _$this._cornerId;
+  set cornerId(String? cornerId) => _$this._cornerId = cornerId;
+
+  String? _cornerName;
+  String? get cornerName => _$this._cornerName;
+  set cornerName(String? cornerName) => _$this._cornerName = cornerName;
+
+  ListBuilder<UnvisitedGroupResponse>? _unvisitedGroups;
+  ListBuilder<UnvisitedGroupResponse> get unvisitedGroups =>
+      _$this._unvisitedGroups ??= ListBuilder<UnvisitedGroupResponse>();
+  set unvisitedGroups(ListBuilder<UnvisitedGroupResponse>? unvisitedGroups) =>
+      _$this._unvisitedGroups = unvisitedGroups;
+
+  CornerStatsResponseBuilder() {
+    CornerStatsResponse._defaults(this);
+  }
+
+  CornerStatsResponseBuilder get _$this {
+    final $v = _$v;
+    if ($v != null) {
+      _completedVisitCount = $v.completedVisitCount;
+      _cornerId = $v.cornerId;
+      _cornerName = $v.cornerName;
+      _unvisitedGroups = $v.unvisitedGroups?.toBuilder();
+      _$v = null;
+    }
+    return this;
+  }
+
+  @override
+  void replace(CornerStatsResponse other) {
+    _$v = other as _$CornerStatsResponse;
+  }
+
+  @override
+  void update(void Function(CornerStatsResponseBuilder)? updates) {
+    if (updates != null) updates(this);
+  }
+
+  @override
+  CornerStatsResponse build() => _build();
+
+  _$CornerStatsResponse _build() {
+    _$CornerStatsResponse _$result;
+    try {
+      _$result = _$v ??
+          _$CornerStatsResponse._(
+            completedVisitCount: completedVisitCount,
+            cornerId: cornerId,
+            cornerName: cornerName,
+            unvisitedGroups: _unvisitedGroups?.build(),
+          );
+    } catch (_) {
+      late String _$failedField;
+      try {
+        _$failedField = 'unvisitedGroups';
+        _unvisitedGroups?.build();
+      } catch (e) {
+        throw BuiltValueNestedFieldError(
+            r'CornerStatsResponse', _$failedField, e.toString());
+      }
+      rethrow;
+    }
+    replace(_$result);
+    return _$result;
+  }
+}
+
+// ignore_for_file: deprecated_member_use_from_same_package,type=lint

@@ -1,3 +1,4 @@
+// @dart=2.18
 //
 // AUTO-GENERATED FILE, DO NOT MODIFY!
 //
@@ -8,19 +9,19 @@ import 'package:built_value/json_object.dart';
 import 'package:built_value/serializer.dart';
 import 'package:dio/dio.dart';
 
+import 'package:built_collection/built_collection.dart';
+import 'package:built_value/json_object.dart';
 import 'package:cornermon_api_gen/src/api_util.dart';
-import 'package:cornermon_api_gen/src/model/auth_admin_login_post200_response.dart';
-import 'package:cornermon_api_gen/src/model/auth_admin_login_post_request.dart';
-import 'package:cornermon_api_gen/src/model/auth_admin_refresh_post200_response.dart';
-import 'package:cornermon_api_gen/src/model/auth_admin_sessions_get200_response.dart';
-import 'package:cornermon_api_gen/src/model/auth_track_login_post200_response.dart';
-import 'package:cornermon_api_gen/src/model/auth_track_login_post_request.dart';
-import 'package:cornermon_api_gen/src/model/device_registration.dart';
-import 'package:cornermon_api_gen/src/model/device_registration_status.dart';
-import 'package:cornermon_api_gen/src/model/device_registrations_get200_response.dart';
-import 'package:cornermon_api_gen/src/model/device_registrations_post201_response.dart';
-import 'package:cornermon_api_gen/src/model/device_registrations_post_request.dart';
+import 'package:cornermon_api_gen/src/model/admin_login_request.dart';
+import 'package:cornermon_api_gen/src/model/admin_login_response.dart';
+import 'package:cornermon_api_gen/src/model/admin_refresh_response.dart';
+import 'package:cornermon_api_gen/src/model/admin_session_response.dart';
+import 'package:cornermon_api_gen/src/model/device_registration_request.dart';
+import 'package:cornermon_api_gen/src/model/device_registration_response.dart';
 import 'package:cornermon_api_gen/src/model/error_response.dart';
+import 'package:cornermon_api_gen/src/model/facilitator_session_response.dart';
+import 'package:cornermon_api_gen/src/model/track_login_request.dart';
+import 'package:cornermon_api_gen/src/model/track_login_response.dart';
 
 class AAuthDeviceTrustApi {
 
@@ -31,10 +32,10 @@ class AAuthDeviceTrustApi {
   const AAuthDeviceTrustApi(this._dio, this._serializers);
 
   /// 관리자 로그인
-  /// 관리자 ID/비밀번호로 로그인하여 액세스 토큰(수명 15~30분)과 리프레시 토큰(슬라이딩 만료 12시간)을 발급받는다. 
+  /// 관리자 ID/비밀번호로 로그인하여 액세스 토큰과 리프레시 토큰을 발급받는다.
   ///
   /// Parameters:
-  /// * [authAdminLoginPostRequest] 
+  /// * [request] - 로그인 정보
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
   /// * [headers] - Can be used to add additional headers to the request
   /// * [extras] - Can be used to add flags to the request
@@ -42,10 +43,10 @@ class AAuthDeviceTrustApi {
   /// * [onSendProgress] - A [ProgressCallback] that can be used to get the send progress
   /// * [onReceiveProgress] - A [ProgressCallback] that can be used to get the receive progress
   ///
-  /// Returns a [Future] containing a [Response] with a [AuthAdminLoginPost200Response] as data
+  /// Returns a [Future] containing a [Response] with a [AdminLoginResponse] as data
   /// Throws [DioException] if API call or serialization fails
-  Future<Response<AuthAdminLoginPost200Response>> authAdminLoginPost({ 
-    required AuthAdminLoginPostRequest authAdminLoginPostRequest,
+  Future<Response<AdminLoginResponse>> authAdminLoginPost({ 
+    required AdminLoginRequest request,
     CancelToken? cancelToken,
     Map<String, dynamic>? headers,
     Map<String, dynamic>? extra,
@@ -70,8 +71,8 @@ class AAuthDeviceTrustApi {
     dynamic _bodyData;
 
     try {
-      const _type = FullType(AuthAdminLoginPostRequest);
-      _bodyData = _serializers.serialize(authAdminLoginPostRequest, specifiedType: _type);
+      const _type = FullType(AdminLoginRequest);
+      _bodyData = _serializers.serialize(request, specifiedType: _type);
 
     } catch(error, stackTrace) {
       throw DioException(
@@ -94,14 +95,14 @@ class AAuthDeviceTrustApi {
       onReceiveProgress: onReceiveProgress,
     );
 
-    AuthAdminLoginPost200Response? _responseData;
+    AdminLoginResponse? _responseData;
 
     try {
       final rawResponse = _response.data;
       _responseData = rawResponse == null ? null : _serializers.deserialize(
         rawResponse,
-        specifiedType: const FullType(AuthAdminLoginPost200Response),
-      ) as AuthAdminLoginPost200Response;
+        specifiedType: const FullType(AdminLoginResponse),
+      ) as AdminLoginResponse;
 
     } catch (error, stackTrace) {
       throw DioException(
@@ -113,7 +114,7 @@ class AAuthDeviceTrustApi {
       );
     }
 
-    return Response<AuthAdminLoginPost200Response>(
+    return Response<AdminLoginResponse>(
       data: _responseData,
       headers: _response.headers,
       isRedirect: _response.isRedirect,
@@ -125,8 +126,8 @@ class AAuthDeviceTrustApi {
     );
   }
 
-  /// 관리자 액세스 토큰 재발급 (Silent Refresh)
-  /// 리프레시 토큰으로 새 액세스 토큰을 발급한다. 리프레시 토큰의 슬라이딩 만료 시계도 리셋된다.
+  /// 관리자 로그아웃
+  /// 현재 활성화된 리프레시 토큰(세션)을 취소(Revoke)한다.
   ///
   /// Parameters:
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
@@ -136,9 +137,61 @@ class AAuthDeviceTrustApi {
   /// * [onSendProgress] - A [ProgressCallback] that can be used to get the send progress
   /// * [onReceiveProgress] - A [ProgressCallback] that can be used to get the receive progress
   ///
-  /// Returns a [Future] containing a [Response] with a [AuthAdminRefreshPost200Response] as data
+  /// Returns a [Future]
   /// Throws [DioException] if API call or serialization fails
-  Future<Response<AuthAdminRefreshPost200Response>> authAdminRefreshPost({ 
+  Future<Response<void>> authAdminLogoutPost({ 
+    CancelToken? cancelToken,
+    Map<String, dynamic>? headers,
+    Map<String, dynamic>? extra,
+    ValidateStatus? validateStatus,
+    ProgressCallback? onSendProgress,
+    ProgressCallback? onReceiveProgress,
+  }) async {
+    final _path = r'/auth/admin/logout';
+    final _options = Options(
+      method: r'POST',
+      headers: <String, dynamic>{
+        ...?headers,
+      },
+      extra: <String, dynamic>{
+        'secure': <Map<String, String>>[
+          {
+            'type': 'apiKey',
+            'name': 'AdminAuth',
+            'keyName': 'Authorization',
+            'where': 'header',
+          },
+        ],
+        ...?extra,
+      },
+      validateStatus: validateStatus,
+    );
+
+    final _response = await _dio.request<Object>(
+      _path,
+      options: _options,
+      cancelToken: cancelToken,
+      onSendProgress: onSendProgress,
+      onReceiveProgress: onReceiveProgress,
+    );
+
+    return _response;
+  }
+
+  /// 관리자 액세스 토큰 재발급
+  /// 리프레시 토큰으로 새 액세스 토큰을 발급한다.
+  ///
+  /// Parameters:
+  /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
+  /// * [headers] - Can be used to add additional headers to the request
+  /// * [extras] - Can be used to add flags to the request
+  /// * [validateStatus] - A [ValidateStatus] callback that can be used to determine request success based on the HTTP status of the response
+  /// * [onSendProgress] - A [ProgressCallback] that can be used to get the send progress
+  /// * [onReceiveProgress] - A [ProgressCallback] that can be used to get the receive progress
+  ///
+  /// Returns a [Future] containing a [Response] with a [AdminRefreshResponse] as data
+  /// Throws [DioException] if API call or serialization fails
+  Future<Response<AdminRefreshResponse>> authAdminRefreshPost({ 
     CancelToken? cancelToken,
     Map<String, dynamic>? headers,
     Map<String, dynamic>? extra,
@@ -155,9 +208,10 @@ class AAuthDeviceTrustApi {
       extra: <String, dynamic>{
         'secure': <Map<String, String>>[
           {
-            'type': 'http',
-            'scheme': 'bearer',
+            'type': 'apiKey',
             'name': 'AdminRefreshAuth',
+            'keyName': 'Authorization',
+            'where': 'header',
           },
         ],
         ...?extra,
@@ -173,14 +227,14 @@ class AAuthDeviceTrustApi {
       onReceiveProgress: onReceiveProgress,
     );
 
-    AuthAdminRefreshPost200Response? _responseData;
+    AdminRefreshResponse? _responseData;
 
     try {
       final rawResponse = _response.data;
       _responseData = rawResponse == null ? null : _serializers.deserialize(
         rawResponse,
-        specifiedType: const FullType(AuthAdminRefreshPost200Response),
-      ) as AuthAdminRefreshPost200Response;
+        specifiedType: const FullType(AdminRefreshResponse),
+      ) as AdminRefreshResponse;
 
     } catch (error, stackTrace) {
       throw DioException(
@@ -192,7 +246,7 @@ class AAuthDeviceTrustApi {
       );
     }
 
-    return Response<AuthAdminRefreshPost200Response>(
+    return Response<AdminRefreshResponse>(
       data: _responseData,
       headers: _response.headers,
       isRedirect: _response.isRedirect,
@@ -204,8 +258,8 @@ class AAuthDeviceTrustApi {
     );
   }
 
-  /// 관리자 활성 세션 목록 조회
-  /// 관리자 2인 모두의 활성 리프레시 토큰(세션) 목록을 조회한다. 기기 분실 등 상황에서 상대방 세션을 강제 종료하기 위한 목적. 
+  /// 관리자 세션 목록 조회
+  /// 현재 로그인된 관리자 세션 목록을 반환한다.
   ///
   /// Parameters:
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
@@ -215,9 +269,9 @@ class AAuthDeviceTrustApi {
   /// * [onSendProgress] - A [ProgressCallback] that can be used to get the send progress
   /// * [onReceiveProgress] - A [ProgressCallback] that can be used to get the receive progress
   ///
-  /// Returns a [Future] containing a [Response] with a [AuthAdminSessionsGet200Response] as data
+  /// Returns a [Future] containing a [Response] with a [BuiltList<AdminSessionResponse>] as data
   /// Throws [DioException] if API call or serialization fails
-  Future<Response<AuthAdminSessionsGet200Response>> authAdminSessionsGet({ 
+  Future<Response<BuiltList<AdminSessionResponse>>> authAdminSessionsGet({ 
     CancelToken? cancelToken,
     Map<String, dynamic>? headers,
     Map<String, dynamic>? extra,
@@ -234,9 +288,10 @@ class AAuthDeviceTrustApi {
       extra: <String, dynamic>{
         'secure': <Map<String, String>>[
           {
-            'type': 'http',
-            'scheme': 'bearer',
+            'type': 'apiKey',
             'name': 'AdminAuth',
+            'keyName': 'Authorization',
+            'where': 'header',
           },
         ],
         ...?extra,
@@ -252,14 +307,14 @@ class AAuthDeviceTrustApi {
       onReceiveProgress: onReceiveProgress,
     );
 
-    AuthAdminSessionsGet200Response? _responseData;
+    BuiltList<AdminSessionResponse>? _responseData;
 
     try {
       final rawResponse = _response.data;
       _responseData = rawResponse == null ? null : _serializers.deserialize(
         rawResponse,
-        specifiedType: const FullType(AuthAdminSessionsGet200Response),
-      ) as AuthAdminSessionsGet200Response;
+        specifiedType: const FullType(BuiltList, [FullType(AdminSessionResponse)]),
+      ) as BuiltList<AdminSessionResponse>;
 
     } catch (error, stackTrace) {
       throw DioException(
@@ -271,7 +326,7 @@ class AAuthDeviceTrustApi {
       );
     }
 
-    return Response<AuthAdminSessionsGet200Response>(
+    return Response<BuiltList<AdminSessionResponse>>(
       data: _responseData,
       headers: _response.headers,
       isRedirect: _response.isRedirect,
@@ -283,11 +338,11 @@ class AAuthDeviceTrustApi {
     );
   }
 
-  /// 관리자 특정 세션 강제 종료
-  /// 자신 또는 상대 관리자의 리프레시 토큰 세션을 강제 폐기한다.
+  /// 관리자 세션 강제 종료
+  /// 특정 관리자 세션을 강제 만료 처리한다.
   ///
   /// Parameters:
-  /// * [id] - 세션(리프레시 토큰) ID
+  /// * [id] - 세션 ID
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
   /// * [headers] - Can be used to add additional headers to the request
   /// * [extras] - Can be used to add flags to the request
@@ -315,9 +370,10 @@ class AAuthDeviceTrustApi {
       extra: <String, dynamic>{
         'secure': <Map<String, String>>[
           {
-            'type': 'http',
-            'scheme': 'bearer',
+            'type': 'apiKey',
             'name': 'AdminAuth',
+            'keyName': 'Authorization',
+            'where': 'header',
           },
         ],
         ...?extra,
@@ -336,11 +392,11 @@ class AAuthDeviceTrustApi {
     return _response;
   }
 
-  /// PIN 잠금(지연) 즉시 해제
-  /// 관리자가 특정 기기의 PIN 실패 카운트와 지연 상태를 즉시 초기화한다.
+  /// 디바이스 락아웃 해제
+  /// 관리자가 PIN 다회 오류로 잠긴 기기를 해제한다.
   ///
   /// Parameters:
-  /// * [deviceId] - 기기 등록 ID
+  /// * [deviceId] - 기기 ID
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
   /// * [headers] - Can be used to add additional headers to the request
   /// * [extras] - Can be used to add flags to the request
@@ -368,9 +424,10 @@ class AAuthDeviceTrustApi {
       extra: <String, dynamic>{
         'secure': <Map<String, String>>[
           {
-            'type': 'http',
-            'scheme': 'bearer',
+            'type': 'apiKey',
             'name': 'AdminAuth',
+            'keyName': 'Authorization',
+            'where': 'header',
           },
         ],
         ...?extra,
@@ -390,10 +447,10 @@ class AAuthDeviceTrustApi {
   }
 
   /// 진행자 트랙 PIN 로그인
-  /// 신뢰 기기에서 트랙 PIN 으로 로그인하여 트랙 세션 토큰을 발급받는다. - 신뢰 기기(APPROVED 토큰)가 아니면 즉시 거부 (하드 블록). - 해당 트랙이 속한 캠프가 ACTIVE 상태가 아니면 거부 — PENDING 단계에서 PIN은 미리 발급돼 인쇄 가능하지만 로그인은 불가. - 로그인 성공 응답에 코너·트랙 표시명을 포함해 클라이언트가 확인 모달(B1-b)에 즉시 표시할 수 있도록 한다. - 연속 실패 시 점증형 지연(§domain-model.md 3.4) 적용. 
+  /// 신뢰 기기에서 트랙 PIN 으로 로그인하여 트랙 세션 토큰을 발급받는다.
   ///
   /// Parameters:
-  /// * [authTrackLoginPostRequest] 
+  /// * [request] - 6자리 숫자 트랙 PIN
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
   /// * [headers] - Can be used to add additional headers to the request
   /// * [extras] - Can be used to add flags to the request
@@ -401,10 +458,10 @@ class AAuthDeviceTrustApi {
   /// * [onSendProgress] - A [ProgressCallback] that can be used to get the send progress
   /// * [onReceiveProgress] - A [ProgressCallback] that can be used to get the receive progress
   ///
-  /// Returns a [Future] containing a [Response] with a [AuthTrackLoginPost200Response] as data
+  /// Returns a [Future] containing a [Response] with a [TrackLoginResponse] as data
   /// Throws [DioException] if API call or serialization fails
-  Future<Response<AuthTrackLoginPost200Response>> authTrackLoginPost({ 
-    required AuthTrackLoginPostRequest authTrackLoginPostRequest,
+  Future<Response<TrackLoginResponse>> authTrackLoginPost({ 
+    required TrackLoginRequest request,
     CancelToken? cancelToken,
     Map<String, dynamic>? headers,
     Map<String, dynamic>? extra,
@@ -421,9 +478,10 @@ class AAuthDeviceTrustApi {
       extra: <String, dynamic>{
         'secure': <Map<String, String>>[
           {
-            'type': 'http',
-            'scheme': 'bearer',
+            'type': 'apiKey',
             'name': 'TrustedDeviceAuth',
+            'keyName': 'Authorization',
+            'where': 'header',
           },
         ],
         ...?extra,
@@ -435,8 +493,8 @@ class AAuthDeviceTrustApi {
     dynamic _bodyData;
 
     try {
-      const _type = FullType(AuthTrackLoginPostRequest);
-      _bodyData = _serializers.serialize(authTrackLoginPostRequest, specifiedType: _type);
+      const _type = FullType(TrackLoginRequest);
+      _bodyData = _serializers.serialize(request, specifiedType: _type);
 
     } catch(error, stackTrace) {
       throw DioException(
@@ -459,14 +517,14 @@ class AAuthDeviceTrustApi {
       onReceiveProgress: onReceiveProgress,
     );
 
-    AuthTrackLoginPost200Response? _responseData;
+    TrackLoginResponse? _responseData;
 
     try {
       final rawResponse = _response.data;
       _responseData = rawResponse == null ? null : _serializers.deserialize(
         rawResponse,
-        specifiedType: const FullType(AuthTrackLoginPost200Response),
-      ) as AuthTrackLoginPost200Response;
+        specifiedType: const FullType(TrackLoginResponse),
+      ) as TrackLoginResponse;
 
     } catch (error, stackTrace) {
       throw DioException(
@@ -478,7 +536,7 @@ class AAuthDeviceTrustApi {
       );
     }
 
-    return Response<AuthTrackLoginPost200Response>(
+    return Response<TrackLoginResponse>(
       data: _responseData,
       headers: _response.headers,
       isRedirect: _response.isRedirect,
@@ -490,8 +548,8 @@ class AAuthDeviceTrustApi {
     );
   }
 
-  /// 진행자 자발적 로그아웃
-  /// 코너·트랙 확인 모달(B1-b)에서 \&quot;아니요, 다시 로그인\&quot;을 눌렀을 때 방금 발급된 세션을 즉시 폐기한다. 관리자 강제 로그아웃과 달리 본인 세션을 스스로 종료하는 경로. 
+  /// 진행자 트랙 로그아웃
+  /// 트랙 진행자가 스스로 로그아웃한다.
   ///
   /// Parameters:
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
@@ -520,9 +578,10 @@ class AAuthDeviceTrustApi {
       extra: <String, dynamic>{
         'secure': <Map<String, String>>[
           {
-            'type': 'http',
-            'scheme': 'bearer',
+            'type': 'apiKey',
             'name': 'TrackAuth',
+            'keyName': 'Authorization',
+            'where': 'header',
           },
         ],
         ...?extra,
@@ -541,11 +600,98 @@ class AAuthDeviceTrustApi {
     return _response;
   }
 
-  /// 특정 트랙 세션 강제 로그아웃
-  /// 관리자가 특정 트랙의 진행자 세션을 강제 종료한다. 진행 중인 방문이 있어도 즉시 실행된다.
+  /// 활성 진행자 세션 목록 조회
+  /// 캠프 내 취소되지 않은(active) 진행자 세션 목록을 조회한다.
   ///
   /// Parameters:
-  /// * [trackId] 
+  /// * [campId] - 캠프 ID
+  /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
+  /// * [headers] - Can be used to add additional headers to the request
+  /// * [extras] - Can be used to add flags to the request
+  /// * [validateStatus] - A [ValidateStatus] callback that can be used to determine request success based on the HTTP status of the response
+  /// * [onSendProgress] - A [ProgressCallback] that can be used to get the send progress
+  /// * [onReceiveProgress] - A [ProgressCallback] that can be used to get the receive progress
+  ///
+  /// Returns a [Future] containing a [Response] with a [BuiltList<FacilitatorSessionResponse>] as data
+  /// Throws [DioException] if API call or serialization fails
+  Future<Response<BuiltList<FacilitatorSessionResponse>>> authTrackSessionsGet({ 
+    required String campId,
+    CancelToken? cancelToken,
+    Map<String, dynamic>? headers,
+    Map<String, dynamic>? extra,
+    ValidateStatus? validateStatus,
+    ProgressCallback? onSendProgress,
+    ProgressCallback? onReceiveProgress,
+  }) async {
+    final _path = r'/auth/track/sessions';
+    final _options = Options(
+      method: r'GET',
+      headers: <String, dynamic>{
+        ...?headers,
+      },
+      extra: <String, dynamic>{
+        'secure': <Map<String, String>>[
+          {
+            'type': 'apiKey',
+            'name': 'AdminAuth',
+            'keyName': 'Authorization',
+            'where': 'header',
+          },
+        ],
+        ...?extra,
+      },
+      validateStatus: validateStatus,
+    );
+
+    final _queryParameters = <String, dynamic>{
+      r'campId': encodeQueryParameter(_serializers, campId, const FullType(String)),
+    };
+
+    final _response = await _dio.request<Object>(
+      _path,
+      options: _options,
+      queryParameters: _queryParameters,
+      cancelToken: cancelToken,
+      onSendProgress: onSendProgress,
+      onReceiveProgress: onReceiveProgress,
+    );
+
+    BuiltList<FacilitatorSessionResponse>? _responseData;
+
+    try {
+      final rawResponse = _response.data;
+      _responseData = rawResponse == null ? null : _serializers.deserialize(
+        rawResponse,
+        specifiedType: const FullType(BuiltList, [FullType(FacilitatorSessionResponse)]),
+      ) as BuiltList<FacilitatorSessionResponse>;
+
+    } catch (error, stackTrace) {
+      throw DioException(
+        requestOptions: _response.requestOptions,
+        response: _response,
+        type: DioExceptionType.unknown,
+        error: error,
+        stackTrace: stackTrace,
+      );
+    }
+
+    return Response<BuiltList<FacilitatorSessionResponse>>(
+      data: _responseData,
+      headers: _response.headers,
+      isRedirect: _response.isRedirect,
+      requestOptions: _response.requestOptions,
+      redirects: _response.redirects,
+      statusCode: _response.statusCode,
+      statusMessage: _response.statusMessage,
+      extra: _response.extra,
+    );
+  }
+
+  /// 트랙 강제 로그아웃
+  /// 관리자가 특정 트랙의 진행자 세션을 강제 종료시킨다.
+  ///
+  /// Parameters:
+  /// * [trackId] - 트랙 ID
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
   /// * [headers] - Can be used to add additional headers to the request
   /// * [extras] - Can be used to add flags to the request
@@ -573,9 +719,10 @@ class AAuthDeviceTrustApi {
       extra: <String, dynamic>{
         'secure': <Map<String, String>>[
           {
-            'type': 'http',
-            'scheme': 'bearer',
+            'type': 'apiKey',
             'name': 'AdminAuth',
+            'keyName': 'Authorization',
+            'where': 'header',
           },
         ],
         ...?extra,
@@ -594,11 +741,10 @@ class AAuthDeviceTrustApi {
     return _response;
   }
 
-  /// 기기 등록 요청 목록 조회 (대기 목록)
-  /// 관리자가 승인 대기 중인 기기 등록 요청 목록을 조회한다.
+  /// 기기 등록 목록 조회
+  /// 관리자가 등록되었거나 대기 중인 기기 목록을 확인한다.
   ///
   /// Parameters:
-  /// * [status] - 상태 필터 (기본값: PENDING)
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
   /// * [headers] - Can be used to add additional headers to the request
   /// * [extras] - Can be used to add flags to the request
@@ -606,10 +752,9 @@ class AAuthDeviceTrustApi {
   /// * [onSendProgress] - A [ProgressCallback] that can be used to get the send progress
   /// * [onReceiveProgress] - A [ProgressCallback] that can be used to get the receive progress
   ///
-  /// Returns a [Future] containing a [Response] with a [DeviceRegistrationsGet200Response] as data
+  /// Returns a [Future] containing a [Response] with a [BuiltList<DeviceRegistrationResponse>] as data
   /// Throws [DioException] if API call or serialization fails
-  Future<Response<DeviceRegistrationsGet200Response>> deviceRegistrationsGet({ 
-    DeviceRegistrationStatus? status,
+  Future<Response<BuiltList<DeviceRegistrationResponse>>> deviceRegistrationsGet({ 
     CancelToken? cancelToken,
     Map<String, dynamic>? headers,
     Map<String, dynamic>? extra,
@@ -626,9 +771,10 @@ class AAuthDeviceTrustApi {
       extra: <String, dynamic>{
         'secure': <Map<String, String>>[
           {
-            'type': 'http',
-            'scheme': 'bearer',
+            'type': 'apiKey',
             'name': 'AdminAuth',
+            'keyName': 'Authorization',
+            'where': 'header',
           },
         ],
         ...?extra,
@@ -636,27 +782,22 @@ class AAuthDeviceTrustApi {
       validateStatus: validateStatus,
     );
 
-    final _queryParameters = <String, dynamic>{
-      if (status != null) r'status': encodeQueryParameter(_serializers, status, const FullType(DeviceRegistrationStatus)),
-    };
-
     final _response = await _dio.request<Object>(
       _path,
       options: _options,
-      queryParameters: _queryParameters,
       cancelToken: cancelToken,
       onSendProgress: onSendProgress,
       onReceiveProgress: onReceiveProgress,
     );
 
-    DeviceRegistrationsGet200Response? _responseData;
+    BuiltList<DeviceRegistrationResponse>? _responseData;
 
     try {
       final rawResponse = _response.data;
       _responseData = rawResponse == null ? null : _serializers.deserialize(
         rawResponse,
-        specifiedType: const FullType(DeviceRegistrationsGet200Response),
-      ) as DeviceRegistrationsGet200Response;
+        specifiedType: const FullType(BuiltList, [FullType(DeviceRegistrationResponse)]),
+      ) as BuiltList<DeviceRegistrationResponse>;
 
     } catch (error, stackTrace) {
       throw DioException(
@@ -668,7 +809,7 @@ class AAuthDeviceTrustApi {
       );
     }
 
-    return Response<DeviceRegistrationsGet200Response>(
+    return Response<BuiltList<DeviceRegistrationResponse>>(
       data: _responseData,
       headers: _response.headers,
       isRedirect: _response.isRedirect,
@@ -680,11 +821,11 @@ class AAuthDeviceTrustApi {
     );
   }
 
-  /// 기기 등록 승인 (PENDING → APPROVED)
-  /// 
+  /// 기기 승인
+  /// PENDING 상태인 기기를 APPROVED로 승인한다.
   ///
   /// Parameters:
-  /// * [id] - 기기 등록 요청 ID
+  /// * [id] - 기기 등록 ID
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
   /// * [headers] - Can be used to add additional headers to the request
   /// * [extras] - Can be used to add flags to the request
@@ -692,9 +833,9 @@ class AAuthDeviceTrustApi {
   /// * [onSendProgress] - A [ProgressCallback] that can be used to get the send progress
   /// * [onReceiveProgress] - A [ProgressCallback] that can be used to get the receive progress
   ///
-  /// Returns a [Future] containing a [Response] with a [DeviceRegistration] as data
+  /// Returns a [Future] containing a [Response] with a [DeviceRegistrationResponse] as data
   /// Throws [DioException] if API call or serialization fails
-  Future<Response<DeviceRegistration>> deviceRegistrationsIdApprovePost({ 
+  Future<Response<DeviceRegistrationResponse>> deviceRegistrationsIdApprovePost({ 
     required String id,
     CancelToken? cancelToken,
     Map<String, dynamic>? headers,
@@ -712,9 +853,10 @@ class AAuthDeviceTrustApi {
       extra: <String, dynamic>{
         'secure': <Map<String, String>>[
           {
-            'type': 'http',
-            'scheme': 'bearer',
+            'type': 'apiKey',
             'name': 'AdminAuth',
+            'keyName': 'Authorization',
+            'where': 'header',
           },
         ],
         ...?extra,
@@ -730,14 +872,14 @@ class AAuthDeviceTrustApi {
       onReceiveProgress: onReceiveProgress,
     );
 
-    DeviceRegistration? _responseData;
+    DeviceRegistrationResponse? _responseData;
 
     try {
       final rawResponse = _response.data;
       _responseData = rawResponse == null ? null : _serializers.deserialize(
         rawResponse,
-        specifiedType: const FullType(DeviceRegistration),
-      ) as DeviceRegistration;
+        specifiedType: const FullType(DeviceRegistrationResponse),
+      ) as DeviceRegistrationResponse;
 
     } catch (error, stackTrace) {
       throw DioException(
@@ -749,7 +891,7 @@ class AAuthDeviceTrustApi {
       );
     }
 
-    return Response<DeviceRegistration>(
+    return Response<DeviceRegistrationResponse>(
       data: _responseData,
       headers: _response.headers,
       isRedirect: _response.isRedirect,
@@ -761,11 +903,11 @@ class AAuthDeviceTrustApi {
     );
   }
 
-  /// 기기 등록 거절 (PENDING → REJECTED)
-  /// 
+  /// 기기 거절
+  /// PENDING 상태인 기기를 REJECTED로 거절한다.
   ///
   /// Parameters:
-  /// * [id] 
+  /// * [id] - 기기 등록 ID
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
   /// * [headers] - Can be used to add additional headers to the request
   /// * [extras] - Can be used to add flags to the request
@@ -773,9 +915,9 @@ class AAuthDeviceTrustApi {
   /// * [onSendProgress] - A [ProgressCallback] that can be used to get the send progress
   /// * [onReceiveProgress] - A [ProgressCallback] that can be used to get the receive progress
   ///
-  /// Returns a [Future] containing a [Response] with a [DeviceRegistration] as data
+  /// Returns a [Future] containing a [Response] with a [DeviceRegistrationResponse] as data
   /// Throws [DioException] if API call or serialization fails
-  Future<Response<DeviceRegistration>> deviceRegistrationsIdRejectPost({ 
+  Future<Response<DeviceRegistrationResponse>> deviceRegistrationsIdRejectPost({ 
     required String id,
     CancelToken? cancelToken,
     Map<String, dynamic>? headers,
@@ -793,9 +935,10 @@ class AAuthDeviceTrustApi {
       extra: <String, dynamic>{
         'secure': <Map<String, String>>[
           {
-            'type': 'http',
-            'scheme': 'bearer',
+            'type': 'apiKey',
             'name': 'AdminAuth',
+            'keyName': 'Authorization',
+            'where': 'header',
           },
         ],
         ...?extra,
@@ -811,14 +954,14 @@ class AAuthDeviceTrustApi {
       onReceiveProgress: onReceiveProgress,
     );
 
-    DeviceRegistration? _responseData;
+    DeviceRegistrationResponse? _responseData;
 
     try {
       final rawResponse = _response.data;
       _responseData = rawResponse == null ? null : _serializers.deserialize(
         rawResponse,
-        specifiedType: const FullType(DeviceRegistration),
-      ) as DeviceRegistration;
+        specifiedType: const FullType(DeviceRegistrationResponse),
+      ) as DeviceRegistrationResponse;
 
     } catch (error, stackTrace) {
       throw DioException(
@@ -830,7 +973,7 @@ class AAuthDeviceTrustApi {
       );
     }
 
-    return Response<DeviceRegistration>(
+    return Response<DeviceRegistrationResponse>(
       data: _responseData,
       headers: _response.headers,
       isRedirect: _response.isRedirect,
@@ -842,11 +985,11 @@ class AAuthDeviceTrustApi {
     );
   }
 
-  /// 승인된 기기 신뢰 회수 (APPROVED → REVOKED)
-  /// 이미 승인된 기기의 신뢰를 즉시 철회한다. 해당 기기는 PIN 입력 화면에 더 이상 접근할 수 없다.
+  /// 기기 신뢰 취소 (폐기/분실)
+  /// APPROVED 기기의 권한을 REVOKED로 박탈한다.
   ///
   /// Parameters:
-  /// * [id] 
+  /// * [id] - 기기 등록 ID
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
   /// * [headers] - Can be used to add additional headers to the request
   /// * [extras] - Can be used to add flags to the request
@@ -854,9 +997,9 @@ class AAuthDeviceTrustApi {
   /// * [onSendProgress] - A [ProgressCallback] that can be used to get the send progress
   /// * [onReceiveProgress] - A [ProgressCallback] that can be used to get the receive progress
   ///
-  /// Returns a [Future] containing a [Response] with a [DeviceRegistration] as data
+  /// Returns a [Future] containing a [Response] with a [DeviceRegistrationResponse] as data
   /// Throws [DioException] if API call or serialization fails
-  Future<Response<DeviceRegistration>> deviceRegistrationsIdRevokePost({ 
+  Future<Response<DeviceRegistrationResponse>> deviceRegistrationsIdRevokePost({ 
     required String id,
     CancelToken? cancelToken,
     Map<String, dynamic>? headers,
@@ -874,9 +1017,10 @@ class AAuthDeviceTrustApi {
       extra: <String, dynamic>{
         'secure': <Map<String, String>>[
           {
-            'type': 'http',
-            'scheme': 'bearer',
+            'type': 'apiKey',
             'name': 'AdminAuth',
+            'keyName': 'Authorization',
+            'where': 'header',
           },
         ],
         ...?extra,
@@ -892,14 +1036,14 @@ class AAuthDeviceTrustApi {
       onReceiveProgress: onReceiveProgress,
     );
 
-    DeviceRegistration? _responseData;
+    DeviceRegistrationResponse? _responseData;
 
     try {
       final rawResponse = _response.data;
       _responseData = rawResponse == null ? null : _serializers.deserialize(
         rawResponse,
-        specifiedType: const FullType(DeviceRegistration),
-      ) as DeviceRegistration;
+        specifiedType: const FullType(DeviceRegistrationResponse),
+      ) as DeviceRegistrationResponse;
 
     } catch (error, stackTrace) {
       throw DioException(
@@ -911,7 +1055,7 @@ class AAuthDeviceTrustApi {
       );
     }
 
-    return Response<DeviceRegistration>(
+    return Response<DeviceRegistrationResponse>(
       data: _responseData,
       headers: _response.headers,
       isRedirect: _response.isRedirect,
@@ -923,11 +1067,11 @@ class AAuthDeviceTrustApi {
     );
   }
 
-  /// 기기 등록 요청
-  /// 진행자 기기가 등록 코드와 함께 신뢰 기기 등록을 요청한다. 성공 시 PENDING 상태의 기기 신뢰 토큰을 즉시 발급해 응답에 담아준다. 이 토큰은 관리자가 승인(APPROVED)할 때까지 PIN 입력 화면 진입이 불가능하다. 
+  /// 잠금 기기 목록 조회
+  /// 캠프 내 PIN 연속 실패로 잠금된(APPROVED, LockedUntil이 미래) 기기 목록을 조회한다.
   ///
   /// Parameters:
-  /// * [deviceRegistrationsPostRequest] 
+  /// * [campId] - 캠프 ID
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
   /// * [headers] - Can be used to add additional headers to the request
   /// * [extras] - Can be used to add flags to the request
@@ -935,10 +1079,170 @@ class AAuthDeviceTrustApi {
   /// * [onSendProgress] - A [ProgressCallback] that can be used to get the send progress
   /// * [onReceiveProgress] - A [ProgressCallback] that can be used to get the receive progress
   ///
-  /// Returns a [Future] containing a [Response] with a [DeviceRegistrationsPost201Response] as data
+  /// Returns a [Future] containing a [Response] with a [BuiltList<DeviceRegistrationResponse>] as data
   /// Throws [DioException] if API call or serialization fails
-  Future<Response<DeviceRegistrationsPost201Response>> deviceRegistrationsPost({ 
-    required DeviceRegistrationsPostRequest deviceRegistrationsPostRequest,
+  Future<Response<BuiltList<DeviceRegistrationResponse>>> deviceRegistrationsLockedGet({ 
+    required String campId,
+    CancelToken? cancelToken,
+    Map<String, dynamic>? headers,
+    Map<String, dynamic>? extra,
+    ValidateStatus? validateStatus,
+    ProgressCallback? onSendProgress,
+    ProgressCallback? onReceiveProgress,
+  }) async {
+    final _path = r'/device-registrations/locked';
+    final _options = Options(
+      method: r'GET',
+      headers: <String, dynamic>{
+        ...?headers,
+      },
+      extra: <String, dynamic>{
+        'secure': <Map<String, String>>[
+          {
+            'type': 'apiKey',
+            'name': 'AdminAuth',
+            'keyName': 'Authorization',
+            'where': 'header',
+          },
+        ],
+        ...?extra,
+      },
+      validateStatus: validateStatus,
+    );
+
+    final _queryParameters = <String, dynamic>{
+      r'campId': encodeQueryParameter(_serializers, campId, const FullType(String)),
+    };
+
+    final _response = await _dio.request<Object>(
+      _path,
+      options: _options,
+      queryParameters: _queryParameters,
+      cancelToken: cancelToken,
+      onSendProgress: onSendProgress,
+      onReceiveProgress: onReceiveProgress,
+    );
+
+    BuiltList<DeviceRegistrationResponse>? _responseData;
+
+    try {
+      final rawResponse = _response.data;
+      _responseData = rawResponse == null ? null : _serializers.deserialize(
+        rawResponse,
+        specifiedType: const FullType(BuiltList, [FullType(DeviceRegistrationResponse)]),
+      ) as BuiltList<DeviceRegistrationResponse>;
+
+    } catch (error, stackTrace) {
+      throw DioException(
+        requestOptions: _response.requestOptions,
+        response: _response,
+        type: DioExceptionType.unknown,
+        error: error,
+        stackTrace: stackTrace,
+      );
+    }
+
+    return Response<BuiltList<DeviceRegistrationResponse>>(
+      data: _responseData,
+      headers: _response.headers,
+      isRedirect: _response.isRedirect,
+      requestOptions: _response.requestOptions,
+      redirects: _response.redirects,
+      statusCode: _response.statusCode,
+      statusMessage: _response.statusMessage,
+      extra: _response.extra,
+    );
+  }
+
+  /// 내 기기 등록 상태 자체 조회
+  /// 미승인(PENDING) 기기가 자신의 승인 상태를 확인하기 위해 호출한다.
+  ///
+  /// Parameters:
+  /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
+  /// * [headers] - Can be used to add additional headers to the request
+  /// * [extras] - Can be used to add flags to the request
+  /// * [validateStatus] - A [ValidateStatus] callback that can be used to determine request success based on the HTTP status of the response
+  /// * [onSendProgress] - A [ProgressCallback] that can be used to get the send progress
+  /// * [onReceiveProgress] - A [ProgressCallback] that can be used to get the receive progress
+  ///
+  /// Returns a [Future] containing a [Response] with a [BuiltMap<String, JsonObject>] as data
+  /// Throws [DioException] if API call or serialization fails
+  Future<Response<BuiltMap<String, JsonObject>>> deviceRegistrationsMeGet({ 
+    CancelToken? cancelToken,
+    Map<String, dynamic>? headers,
+    Map<String, dynamic>? extra,
+    ValidateStatus? validateStatus,
+    ProgressCallback? onSendProgress,
+    ProgressCallback? onReceiveProgress,
+  }) async {
+    final _path = r'/device-registrations/me';
+    final _options = Options(
+      method: r'GET',
+      headers: <String, dynamic>{
+        ...?headers,
+      },
+      extra: <String, dynamic>{
+        'secure': <Map<String, String>>[],
+        ...?extra,
+      },
+      validateStatus: validateStatus,
+    );
+
+    final _response = await _dio.request<Object>(
+      _path,
+      options: _options,
+      cancelToken: cancelToken,
+      onSendProgress: onSendProgress,
+      onReceiveProgress: onReceiveProgress,
+    );
+
+    BuiltMap<String, JsonObject>? _responseData;
+
+    try {
+      final rawResponse = _response.data;
+      _responseData = rawResponse == null ? null : _serializers.deserialize(
+        rawResponse,
+        specifiedType: const FullType(BuiltMap, [FullType(String), FullType(JsonObject)]),
+      ) as BuiltMap<String, JsonObject>;
+
+    } catch (error, stackTrace) {
+      throw DioException(
+        requestOptions: _response.requestOptions,
+        response: _response,
+        type: DioExceptionType.unknown,
+        error: error,
+        stackTrace: stackTrace,
+      );
+    }
+
+    return Response<BuiltMap<String, JsonObject>>(
+      data: _responseData,
+      headers: _response.headers,
+      isRedirect: _response.isRedirect,
+      requestOptions: _response.requestOptions,
+      redirects: _response.redirects,
+      statusCode: _response.statusCode,
+      statusMessage: _response.statusMessage,
+      extra: _response.extra,
+    );
+  }
+
+  /// 기기 등록 요청 (최초 앱 실행 시)
+  /// 기기가 서버에 등록을 요청한다. 이후 관리자의 승인 대기.
+  ///
+  /// Parameters:
+  /// * [request] - 등록 정보
+  /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
+  /// * [headers] - Can be used to add additional headers to the request
+  /// * [extras] - Can be used to add flags to the request
+  /// * [validateStatus] - A [ValidateStatus] callback that can be used to determine request success based on the HTTP status of the response
+  /// * [onSendProgress] - A [ProgressCallback] that can be used to get the send progress
+  /// * [onReceiveProgress] - A [ProgressCallback] that can be used to get the receive progress
+  ///
+  /// Returns a [Future] containing a [Response] with a [DeviceRegistrationResponse] as data
+  /// Throws [DioException] if API call or serialization fails
+  Future<Response<DeviceRegistrationResponse>> deviceRegistrationsPost({ 
+    required DeviceRegistrationRequest request,
     CancelToken? cancelToken,
     Map<String, dynamic>? headers,
     Map<String, dynamic>? extra,
@@ -963,8 +1267,8 @@ class AAuthDeviceTrustApi {
     dynamic _bodyData;
 
     try {
-      const _type = FullType(DeviceRegistrationsPostRequest);
-      _bodyData = _serializers.serialize(deviceRegistrationsPostRequest, specifiedType: _type);
+      const _type = FullType(DeviceRegistrationRequest);
+      _bodyData = _serializers.serialize(request, specifiedType: _type);
 
     } catch(error, stackTrace) {
       throw DioException(
@@ -987,14 +1291,14 @@ class AAuthDeviceTrustApi {
       onReceiveProgress: onReceiveProgress,
     );
 
-    DeviceRegistrationsPost201Response? _responseData;
+    DeviceRegistrationResponse? _responseData;
 
     try {
       final rawResponse = _response.data;
       _responseData = rawResponse == null ? null : _serializers.deserialize(
         rawResponse,
-        specifiedType: const FullType(DeviceRegistrationsPost201Response),
-      ) as DeviceRegistrationsPost201Response;
+        specifiedType: const FullType(DeviceRegistrationResponse),
+      ) as DeviceRegistrationResponse;
 
     } catch (error, stackTrace) {
       throw DioException(
@@ -1006,7 +1310,7 @@ class AAuthDeviceTrustApi {
       );
     }
 
-    return Response<DeviceRegistrationsPost201Response>(
+    return Response<DeviceRegistrationResponse>(
       data: _responseData,
       headers: _response.headers,
       isRedirect: _response.isRedirect,

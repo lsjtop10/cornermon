@@ -10,36 +10,40 @@ All URIs are relative to */api/v1*
 Method | HTTP request | Description
 ------------- | ------------- | -------------
 [**authAdminLoginPost**](AAuthDeviceTrustApi.md#authadminloginpost) | **POST** /auth/admin/login | 관리자 로그인
-[**authAdminRefreshPost**](AAuthDeviceTrustApi.md#authadminrefreshpost) | **POST** /auth/admin/refresh | 관리자 액세스 토큰 재발급 (Silent Refresh)
-[**authAdminSessionsGet**](AAuthDeviceTrustApi.md#authadminsessionsget) | **GET** /auth/admin/sessions | 관리자 활성 세션 목록 조회
-[**authAdminSessionsIdRevokePost**](AAuthDeviceTrustApi.md#authadminsessionsidrevokepost) | **POST** /auth/admin/sessions/{id}/revoke | 관리자 특정 세션 강제 종료
-[**authTrackLockoutDeviceIdReleasePost**](AAuthDeviceTrustApi.md#authtracklockoutdeviceidreleasepost) | **POST** /auth/track/lockout/{deviceId}/release | PIN 잠금(지연) 즉시 해제
+[**authAdminLogoutPost**](AAuthDeviceTrustApi.md#authadminlogoutpost) | **POST** /auth/admin/logout | 관리자 로그아웃
+[**authAdminRefreshPost**](AAuthDeviceTrustApi.md#authadminrefreshpost) | **POST** /auth/admin/refresh | 관리자 액세스 토큰 재발급
+[**authAdminSessionsGet**](AAuthDeviceTrustApi.md#authadminsessionsget) | **GET** /auth/admin/sessions | 관리자 세션 목록 조회
+[**authAdminSessionsIdRevokePost**](AAuthDeviceTrustApi.md#authadminsessionsidrevokepost) | **POST** /auth/admin/sessions/{id}/revoke | 관리자 세션 강제 종료
+[**authTrackLockoutDeviceIdReleasePost**](AAuthDeviceTrustApi.md#authtracklockoutdeviceidreleasepost) | **POST** /auth/track/lockout/{deviceId}/release | 디바이스 락아웃 해제
 [**authTrackLoginPost**](AAuthDeviceTrustApi.md#authtrackloginpost) | **POST** /auth/track/login | 진행자 트랙 PIN 로그인
-[**authTrackLogoutPost**](AAuthDeviceTrustApi.md#authtracklogoutpost) | **POST** /auth/track/logout | 진행자 자발적 로그아웃
-[**authTrackTrackIdForceLogoutPost**](AAuthDeviceTrustApi.md#authtracktrackidforcelogoutpost) | **POST** /auth/track/{trackId}/force-logout | 특정 트랙 세션 강제 로그아웃
-[**deviceRegistrationsGet**](AAuthDeviceTrustApi.md#deviceregistrationsget) | **GET** /device-registrations | 기기 등록 요청 목록 조회 (대기 목록)
-[**deviceRegistrationsIdApprovePost**](AAuthDeviceTrustApi.md#deviceregistrationsidapprovepost) | **POST** /device-registrations/{id}/approve | 기기 등록 승인 (PENDING → APPROVED)
-[**deviceRegistrationsIdRejectPost**](AAuthDeviceTrustApi.md#deviceregistrationsidrejectpost) | **POST** /device-registrations/{id}/reject | 기기 등록 거절 (PENDING → REJECTED)
-[**deviceRegistrationsIdRevokePost**](AAuthDeviceTrustApi.md#deviceregistrationsidrevokepost) | **POST** /device-registrations/{id}/revoke | 승인된 기기 신뢰 회수 (APPROVED → REVOKED)
-[**deviceRegistrationsPost**](AAuthDeviceTrustApi.md#deviceregistrationspost) | **POST** /device-registrations | 기기 등록 요청
+[**authTrackLogoutPost**](AAuthDeviceTrustApi.md#authtracklogoutpost) | **POST** /auth/track/logout | 진행자 트랙 로그아웃
+[**authTrackSessionsGet**](AAuthDeviceTrustApi.md#authtracksessionsget) | **GET** /auth/track/sessions | 활성 진행자 세션 목록 조회
+[**authTrackTrackIdForceLogoutPost**](AAuthDeviceTrustApi.md#authtracktrackidforcelogoutpost) | **POST** /auth/track/{trackId}/force-logout | 트랙 강제 로그아웃
+[**deviceRegistrationsGet**](AAuthDeviceTrustApi.md#deviceregistrationsget) | **GET** /device-registrations | 기기 등록 목록 조회
+[**deviceRegistrationsIdApprovePost**](AAuthDeviceTrustApi.md#deviceregistrationsidapprovepost) | **POST** /device-registrations/{id}/approve | 기기 승인
+[**deviceRegistrationsIdRejectPost**](AAuthDeviceTrustApi.md#deviceregistrationsidrejectpost) | **POST** /device-registrations/{id}/reject | 기기 거절
+[**deviceRegistrationsIdRevokePost**](AAuthDeviceTrustApi.md#deviceregistrationsidrevokepost) | **POST** /device-registrations/{id}/revoke | 기기 신뢰 취소 (폐기/분실)
+[**deviceRegistrationsLockedGet**](AAuthDeviceTrustApi.md#deviceregistrationslockedget) | **GET** /device-registrations/locked | 잠금 기기 목록 조회
+[**deviceRegistrationsMeGet**](AAuthDeviceTrustApi.md#deviceregistrationsmeget) | **GET** /device-registrations/me | 내 기기 등록 상태 자체 조회
+[**deviceRegistrationsPost**](AAuthDeviceTrustApi.md#deviceregistrationspost) | **POST** /device-registrations | 기기 등록 요청 (최초 앱 실행 시)
 
 
 # **authAdminLoginPost**
-> AuthAdminLoginPost200Response authAdminLoginPost(authAdminLoginPostRequest)
+> AdminLoginResponse authAdminLoginPost(request)
 
 관리자 로그인
 
-관리자 ID/비밀번호로 로그인하여 액세스 토큰(수명 15~30분)과 리프레시 토큰(슬라이딩 만료 12시간)을 발급받는다. 
+관리자 ID/비밀번호로 로그인하여 액세스 토큰과 리프레시 토큰을 발급받는다.
 
 ### Example
 ```dart
 import 'package:cornermon_api_gen/api.dart';
 
 final api = CornermonApiGen().getAAuthDeviceTrustApi();
-final AuthAdminLoginPostRequest authAdminLoginPostRequest = ; // AuthAdminLoginPostRequest | 
+final AdminLoginRequest request = ; // AdminLoginRequest | 로그인 정보
 
 try {
-    final response = api.authAdminLoginPost(authAdminLoginPostRequest);
+    final response = api.authAdminLoginPost(request);
     print(response);
 } on DioException catch (e) {
     print('Exception when calling AAuthDeviceTrustApi->authAdminLoginPost: $e\n');
@@ -50,11 +54,11 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **authAdminLoginPostRequest** | [**AuthAdminLoginPostRequest**](AuthAdminLoginPostRequest.md)|  | 
+ **request** | [**AdminLoginRequest**](AdminLoginRequest.md)| 로그인 정보 | 
 
 ### Return type
 
-[**AuthAdminLoginPost200Response**](AuthAdminLoginPost200Response.md)
+[**AdminLoginResponse**](AdminLoginResponse.md)
 
 ### Authorization
 
@@ -67,16 +71,62 @@ No authorization required
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
-# **authAdminRefreshPost**
-> AuthAdminRefreshPost200Response authAdminRefreshPost()
+# **authAdminLogoutPost**
+> authAdminLogoutPost()
 
-관리자 액세스 토큰 재발급 (Silent Refresh)
+관리자 로그아웃
 
-리프레시 토큰으로 새 액세스 토큰을 발급한다. 리프레시 토큰의 슬라이딩 만료 시계도 리셋된다.
+현재 활성화된 리프레시 토큰(세션)을 취소(Revoke)한다.
 
 ### Example
 ```dart
 import 'package:cornermon_api_gen/api.dart';
+// TODO Configure API key authorization: AdminAuth
+//defaultApiClient.getAuthentication<ApiKeyAuth>('AdminAuth').apiKey = 'YOUR_API_KEY';
+// uncomment below to setup prefix (e.g. Bearer) for API key, if needed
+//defaultApiClient.getAuthentication<ApiKeyAuth>('AdminAuth').apiKeyPrefix = 'Bearer';
+
+final api = CornermonApiGen().getAAuthDeviceTrustApi();
+
+try {
+    api.authAdminLogoutPost();
+} on DioException catch (e) {
+    print('Exception when calling AAuthDeviceTrustApi->authAdminLogoutPost: $e\n');
+}
+```
+
+### Parameters
+This endpoint does not need any parameter.
+
+### Return type
+
+void (empty response body)
+
+### Authorization
+
+[AdminAuth](../README.md#AdminAuth)
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **authAdminRefreshPost**
+> AdminRefreshResponse authAdminRefreshPost()
+
+관리자 액세스 토큰 재발급
+
+리프레시 토큰으로 새 액세스 토큰을 발급한다.
+
+### Example
+```dart
+import 'package:cornermon_api_gen/api.dart';
+// TODO Configure API key authorization: AdminRefreshAuth
+//defaultApiClient.getAuthentication<ApiKeyAuth>('AdminRefreshAuth').apiKey = 'YOUR_API_KEY';
+// uncomment below to setup prefix (e.g. Bearer) for API key, if needed
+//defaultApiClient.getAuthentication<ApiKeyAuth>('AdminRefreshAuth').apiKeyPrefix = 'Bearer';
 
 final api = CornermonApiGen().getAAuthDeviceTrustApi();
 
@@ -93,7 +143,7 @@ This endpoint does not need any parameter.
 
 ### Return type
 
-[**AuthAdminRefreshPost200Response**](AuthAdminRefreshPost200Response.md)
+[**AdminRefreshResponse**](AdminRefreshResponse.md)
 
 ### Authorization
 
@@ -107,15 +157,19 @@ This endpoint does not need any parameter.
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **authAdminSessionsGet**
-> AuthAdminSessionsGet200Response authAdminSessionsGet()
+> BuiltList<AdminSessionResponse> authAdminSessionsGet()
 
-관리자 활성 세션 목록 조회
+관리자 세션 목록 조회
 
-관리자 2인 모두의 활성 리프레시 토큰(세션) 목록을 조회한다. 기기 분실 등 상황에서 상대방 세션을 강제 종료하기 위한 목적. 
+현재 로그인된 관리자 세션 목록을 반환한다.
 
 ### Example
 ```dart
 import 'package:cornermon_api_gen/api.dart';
+// TODO Configure API key authorization: AdminAuth
+//defaultApiClient.getAuthentication<ApiKeyAuth>('AdminAuth').apiKey = 'YOUR_API_KEY';
+// uncomment below to setup prefix (e.g. Bearer) for API key, if needed
+//defaultApiClient.getAuthentication<ApiKeyAuth>('AdminAuth').apiKeyPrefix = 'Bearer';
 
 final api = CornermonApiGen().getAAuthDeviceTrustApi();
 
@@ -132,7 +186,7 @@ This endpoint does not need any parameter.
 
 ### Return type
 
-[**AuthAdminSessionsGet200Response**](AuthAdminSessionsGet200Response.md)
+[**BuiltList&lt;AdminSessionResponse&gt;**](AdminSessionResponse.md)
 
 ### Authorization
 
@@ -148,16 +202,20 @@ This endpoint does not need any parameter.
 # **authAdminSessionsIdRevokePost**
 > authAdminSessionsIdRevokePost(id)
 
-관리자 특정 세션 강제 종료
+관리자 세션 강제 종료
 
-자신 또는 상대 관리자의 리프레시 토큰 세션을 강제 폐기한다.
+특정 관리자 세션을 강제 만료 처리한다.
 
 ### Example
 ```dart
 import 'package:cornermon_api_gen/api.dart';
+// TODO Configure API key authorization: AdminAuth
+//defaultApiClient.getAuthentication<ApiKeyAuth>('AdminAuth').apiKey = 'YOUR_API_KEY';
+// uncomment below to setup prefix (e.g. Bearer) for API key, if needed
+//defaultApiClient.getAuthentication<ApiKeyAuth>('AdminAuth').apiKeyPrefix = 'Bearer';
 
 final api = CornermonApiGen().getAAuthDeviceTrustApi();
-final String id = 38400000-8cf0-11bd-b23e-10b96e4ef00d; // String | 세션(리프레시 토큰) ID
+final String id = id_example; // String | 세션 ID
 
 try {
     api.authAdminSessionsIdRevokePost(id);
@@ -170,7 +228,7 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **id** | **String**| 세션(리프레시 토큰) ID | 
+ **id** | **String**| 세션 ID | 
 
 ### Return type
 
@@ -183,23 +241,27 @@ void (empty response body)
 ### HTTP request headers
 
  - **Content-Type**: Not defined
- - **Accept**: application/json
+ - **Accept**: Not defined
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **authTrackLockoutDeviceIdReleasePost**
 > authTrackLockoutDeviceIdReleasePost(deviceId)
 
-PIN 잠금(지연) 즉시 해제
+디바이스 락아웃 해제
 
-관리자가 특정 기기의 PIN 실패 카운트와 지연 상태를 즉시 초기화한다.
+관리자가 PIN 다회 오류로 잠긴 기기를 해제한다.
 
 ### Example
 ```dart
 import 'package:cornermon_api_gen/api.dart';
+// TODO Configure API key authorization: AdminAuth
+//defaultApiClient.getAuthentication<ApiKeyAuth>('AdminAuth').apiKey = 'YOUR_API_KEY';
+// uncomment below to setup prefix (e.g. Bearer) for API key, if needed
+//defaultApiClient.getAuthentication<ApiKeyAuth>('AdminAuth').apiKeyPrefix = 'Bearer';
 
 final api = CornermonApiGen().getAAuthDeviceTrustApi();
-final String deviceId = 38400000-8cf0-11bd-b23e-10b96e4ef00d; // String | 기기 등록 ID
+final String deviceId = deviceId_example; // String | 기기 ID
 
 try {
     api.authTrackLockoutDeviceIdReleasePost(deviceId);
@@ -212,7 +274,7 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **deviceId** | **String**| 기기 등록 ID | 
+ **deviceId** | **String**| 기기 ID | 
 
 ### Return type
 
@@ -225,26 +287,30 @@ void (empty response body)
 ### HTTP request headers
 
  - **Content-Type**: Not defined
- - **Accept**: application/json
+ - **Accept**: Not defined
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **authTrackLoginPost**
-> AuthTrackLoginPost200Response authTrackLoginPost(authTrackLoginPostRequest)
+> TrackLoginResponse authTrackLoginPost(request)
 
 진행자 트랙 PIN 로그인
 
-신뢰 기기에서 트랙 PIN 으로 로그인하여 트랙 세션 토큰을 발급받는다. - 신뢰 기기(APPROVED 토큰)가 아니면 즉시 거부 (하드 블록). - 해당 트랙이 속한 캠프가 ACTIVE 상태가 아니면 거부 — PENDING 단계에서 PIN은 미리 발급돼 인쇄 가능하지만 로그인은 불가. - 로그인 성공 응답에 코너·트랙 표시명을 포함해 클라이언트가 확인 모달(B1-b)에 즉시 표시할 수 있도록 한다. - 연속 실패 시 점증형 지연(§domain-model.md 3.4) 적용. 
+신뢰 기기에서 트랙 PIN 으로 로그인하여 트랙 세션 토큰을 발급받는다.
 
 ### Example
 ```dart
 import 'package:cornermon_api_gen/api.dart';
+// TODO Configure API key authorization: TrustedDeviceAuth
+//defaultApiClient.getAuthentication<ApiKeyAuth>('TrustedDeviceAuth').apiKey = 'YOUR_API_KEY';
+// uncomment below to setup prefix (e.g. Bearer) for API key, if needed
+//defaultApiClient.getAuthentication<ApiKeyAuth>('TrustedDeviceAuth').apiKeyPrefix = 'Bearer';
 
 final api = CornermonApiGen().getAAuthDeviceTrustApi();
-final AuthTrackLoginPostRequest authTrackLoginPostRequest = ; // AuthTrackLoginPostRequest | 
+final TrackLoginRequest request = ; // TrackLoginRequest | 6자리 숫자 트랙 PIN
 
 try {
-    final response = api.authTrackLoginPost(authTrackLoginPostRequest);
+    final response = api.authTrackLoginPost(request);
     print(response);
 } on DioException catch (e) {
     print('Exception when calling AAuthDeviceTrustApi->authTrackLoginPost: $e\n');
@@ -255,11 +321,11 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **authTrackLoginPostRequest** | [**AuthTrackLoginPostRequest**](AuthTrackLoginPostRequest.md)|  | 
+ **request** | [**TrackLoginRequest**](TrackLoginRequest.md)| 6자리 숫자 트랙 PIN | 
 
 ### Return type
 
-[**AuthTrackLoginPost200Response**](AuthTrackLoginPost200Response.md)
+[**TrackLoginResponse**](TrackLoginResponse.md)
 
 ### Authorization
 
@@ -275,13 +341,17 @@ Name | Type | Description  | Notes
 # **authTrackLogoutPost**
 > authTrackLogoutPost()
 
-진행자 자발적 로그아웃
+진행자 트랙 로그아웃
 
-코너·트랙 확인 모달(B1-b)에서 \"아니요, 다시 로그인\"을 눌렀을 때 방금 발급된 세션을 즉시 폐기한다. 관리자 강제 로그아웃과 달리 본인 세션을 스스로 종료하는 경로. 
+트랙 진행자가 스스로 로그아웃한다.
 
 ### Example
 ```dart
 import 'package:cornermon_api_gen/api.dart';
+// TODO Configure API key authorization: TrackAuth
+//defaultApiClient.getAuthentication<ApiKeyAuth>('TrackAuth').apiKey = 'YOUR_API_KEY';
+// uncomment below to setup prefix (e.g. Bearer) for API key, if needed
+//defaultApiClient.getAuthentication<ApiKeyAuth>('TrackAuth').apiKeyPrefix = 'Bearer';
 
 final api = CornermonApiGen().getAAuthDeviceTrustApi();
 
@@ -306,28 +376,33 @@ void (empty response body)
 ### HTTP request headers
 
  - **Content-Type**: Not defined
- - **Accept**: application/json
+ - **Accept**: Not defined
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
-# **authTrackTrackIdForceLogoutPost**
-> authTrackTrackIdForceLogoutPost(trackId)
+# **authTrackSessionsGet**
+> BuiltList<FacilitatorSessionResponse> authTrackSessionsGet(campId)
 
-특정 트랙 세션 강제 로그아웃
+활성 진행자 세션 목록 조회
 
-관리자가 특정 트랙의 진행자 세션을 강제 종료한다. 진행 중인 방문이 있어도 즉시 실행된다.
+캠프 내 취소되지 않은(active) 진행자 세션 목록을 조회한다.
 
 ### Example
 ```dart
 import 'package:cornermon_api_gen/api.dart';
+// TODO Configure API key authorization: AdminAuth
+//defaultApiClient.getAuthentication<ApiKeyAuth>('AdminAuth').apiKey = 'YOUR_API_KEY';
+// uncomment below to setup prefix (e.g. Bearer) for API key, if needed
+//defaultApiClient.getAuthentication<ApiKeyAuth>('AdminAuth').apiKeyPrefix = 'Bearer';
 
 final api = CornermonApiGen().getAAuthDeviceTrustApi();
-final String trackId = 38400000-8cf0-11bd-b23e-10b96e4ef00d; // String | 
+final String campId = campId_example; // String | 캠프 ID
 
 try {
-    api.authTrackTrackIdForceLogoutPost(trackId);
+    final response = api.authTrackSessionsGet(campId);
+    print(response);
 } on DioException catch (e) {
-    print('Exception when calling AAuthDeviceTrustApi->authTrackTrackIdForceLogoutPost: $e\n');
+    print('Exception when calling AAuthDeviceTrustApi->authTrackSessionsGet: $e\n');
 }
 ```
 
@@ -335,11 +410,11 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **trackId** | **String**|  | 
+ **campId** | **String**| 캠프 ID | 
 
 ### Return type
 
-void (empty response body)
+[**BuiltList&lt;FacilitatorSessionResponse&gt;**](FacilitatorSessionResponse.md)
 
 ### Authorization
 
@@ -352,25 +427,28 @@ void (empty response body)
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
-# **deviceRegistrationsGet**
-> DeviceRegistrationsGet200Response deviceRegistrationsGet(status)
+# **authTrackTrackIdForceLogoutPost**
+> authTrackTrackIdForceLogoutPost(trackId)
 
-기기 등록 요청 목록 조회 (대기 목록)
+트랙 강제 로그아웃
 
-관리자가 승인 대기 중인 기기 등록 요청 목록을 조회한다.
+관리자가 특정 트랙의 진행자 세션을 강제 종료시킨다.
 
 ### Example
 ```dart
 import 'package:cornermon_api_gen/api.dart';
+// TODO Configure API key authorization: AdminAuth
+//defaultApiClient.getAuthentication<ApiKeyAuth>('AdminAuth').apiKey = 'YOUR_API_KEY';
+// uncomment below to setup prefix (e.g. Bearer) for API key, if needed
+//defaultApiClient.getAuthentication<ApiKeyAuth>('AdminAuth').apiKeyPrefix = 'Bearer';
 
 final api = CornermonApiGen().getAAuthDeviceTrustApi();
-final DeviceRegistrationStatus status = ; // DeviceRegistrationStatus | 상태 필터 (기본값: PENDING)
+final String trackId = trackId_example; // String | 트랙 ID
 
 try {
-    final response = api.deviceRegistrationsGet(status);
-    print(response);
+    api.authTrackTrackIdForceLogoutPost(trackId);
 } on DioException catch (e) {
-    print('Exception when calling AAuthDeviceTrustApi->deviceRegistrationsGet: $e\n');
+    print('Exception when calling AAuthDeviceTrustApi->authTrackTrackIdForceLogoutPost: $e\n');
 }
 ```
 
@@ -378,11 +456,54 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **status** | [**DeviceRegistrationStatus**](.md)| 상태 필터 (기본값: PENDING) | [optional] 
+ **trackId** | **String**| 트랙 ID | 
 
 ### Return type
 
-[**DeviceRegistrationsGet200Response**](DeviceRegistrationsGet200Response.md)
+void (empty response body)
+
+### Authorization
+
+[AdminAuth](../README.md#AdminAuth)
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: Not defined
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **deviceRegistrationsGet**
+> BuiltList<DeviceRegistrationResponse> deviceRegistrationsGet()
+
+기기 등록 목록 조회
+
+관리자가 등록되었거나 대기 중인 기기 목록을 확인한다.
+
+### Example
+```dart
+import 'package:cornermon_api_gen/api.dart';
+// TODO Configure API key authorization: AdminAuth
+//defaultApiClient.getAuthentication<ApiKeyAuth>('AdminAuth').apiKey = 'YOUR_API_KEY';
+// uncomment below to setup prefix (e.g. Bearer) for API key, if needed
+//defaultApiClient.getAuthentication<ApiKeyAuth>('AdminAuth').apiKeyPrefix = 'Bearer';
+
+final api = CornermonApiGen().getAAuthDeviceTrustApi();
+
+try {
+    final response = api.deviceRegistrationsGet();
+    print(response);
+} on DioException catch (e) {
+    print('Exception when calling AAuthDeviceTrustApi->deviceRegistrationsGet: $e\n');
+}
+```
+
+### Parameters
+This endpoint does not need any parameter.
+
+### Return type
+
+[**BuiltList&lt;DeviceRegistrationResponse&gt;**](DeviceRegistrationResponse.md)
 
 ### Authorization
 
@@ -396,16 +517,22 @@ Name | Type | Description  | Notes
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **deviceRegistrationsIdApprovePost**
-> DeviceRegistration deviceRegistrationsIdApprovePost(id)
+> DeviceRegistrationResponse deviceRegistrationsIdApprovePost(id)
 
-기기 등록 승인 (PENDING → APPROVED)
+기기 승인
+
+PENDING 상태인 기기를 APPROVED로 승인한다.
 
 ### Example
 ```dart
 import 'package:cornermon_api_gen/api.dart';
+// TODO Configure API key authorization: AdminAuth
+//defaultApiClient.getAuthentication<ApiKeyAuth>('AdminAuth').apiKey = 'YOUR_API_KEY';
+// uncomment below to setup prefix (e.g. Bearer) for API key, if needed
+//defaultApiClient.getAuthentication<ApiKeyAuth>('AdminAuth').apiKeyPrefix = 'Bearer';
 
 final api = CornermonApiGen().getAAuthDeviceTrustApi();
-final String id = 38400000-8cf0-11bd-b23e-10b96e4ef00d; // String | 기기 등록 요청 ID
+final String id = id_example; // String | 기기 등록 ID
 
 try {
     final response = api.deviceRegistrationsIdApprovePost(id);
@@ -419,11 +546,11 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **id** | **String**| 기기 등록 요청 ID | 
+ **id** | **String**| 기기 등록 ID | 
 
 ### Return type
 
-[**DeviceRegistration**](DeviceRegistration.md)
+[**DeviceRegistrationResponse**](DeviceRegistrationResponse.md)
 
 ### Authorization
 
@@ -437,16 +564,22 @@ Name | Type | Description  | Notes
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **deviceRegistrationsIdRejectPost**
-> DeviceRegistration deviceRegistrationsIdRejectPost(id)
+> DeviceRegistrationResponse deviceRegistrationsIdRejectPost(id)
 
-기기 등록 거절 (PENDING → REJECTED)
+기기 거절
+
+PENDING 상태인 기기를 REJECTED로 거절한다.
 
 ### Example
 ```dart
 import 'package:cornermon_api_gen/api.dart';
+// TODO Configure API key authorization: AdminAuth
+//defaultApiClient.getAuthentication<ApiKeyAuth>('AdminAuth').apiKey = 'YOUR_API_KEY';
+// uncomment below to setup prefix (e.g. Bearer) for API key, if needed
+//defaultApiClient.getAuthentication<ApiKeyAuth>('AdminAuth').apiKeyPrefix = 'Bearer';
 
 final api = CornermonApiGen().getAAuthDeviceTrustApi();
-final String id = 38400000-8cf0-11bd-b23e-10b96e4ef00d; // String | 
+final String id = id_example; // String | 기기 등록 ID
 
 try {
     final response = api.deviceRegistrationsIdRejectPost(id);
@@ -460,11 +593,11 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **id** | **String**|  | 
+ **id** | **String**| 기기 등록 ID | 
 
 ### Return type
 
-[**DeviceRegistration**](DeviceRegistration.md)
+[**DeviceRegistrationResponse**](DeviceRegistrationResponse.md)
 
 ### Authorization
 
@@ -478,18 +611,22 @@ Name | Type | Description  | Notes
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **deviceRegistrationsIdRevokePost**
-> DeviceRegistration deviceRegistrationsIdRevokePost(id)
+> DeviceRegistrationResponse deviceRegistrationsIdRevokePost(id)
 
-승인된 기기 신뢰 회수 (APPROVED → REVOKED)
+기기 신뢰 취소 (폐기/분실)
 
-이미 승인된 기기의 신뢰를 즉시 철회한다. 해당 기기는 PIN 입력 화면에 더 이상 접근할 수 없다.
+APPROVED 기기의 권한을 REVOKED로 박탈한다.
 
 ### Example
 ```dart
 import 'package:cornermon_api_gen/api.dart';
+// TODO Configure API key authorization: AdminAuth
+//defaultApiClient.getAuthentication<ApiKeyAuth>('AdminAuth').apiKey = 'YOUR_API_KEY';
+// uncomment below to setup prefix (e.g. Bearer) for API key, if needed
+//defaultApiClient.getAuthentication<ApiKeyAuth>('AdminAuth').apiKeyPrefix = 'Bearer';
 
 final api = CornermonApiGen().getAAuthDeviceTrustApi();
-final String id = 38400000-8cf0-11bd-b23e-10b96e4ef00d; // String | 
+final String id = id_example; // String | 기기 등록 ID
 
 try {
     final response = api.deviceRegistrationsIdRevokePost(id);
@@ -503,11 +640,11 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **id** | **String**|  | 
+ **id** | **String**| 기기 등록 ID | 
 
 ### Return type
 
-[**DeviceRegistration**](DeviceRegistration.md)
+[**DeviceRegistrationResponse**](DeviceRegistrationResponse.md)
 
 ### Authorization
 
@@ -520,22 +657,108 @@ Name | Type | Description  | Notes
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
-# **deviceRegistrationsPost**
-> DeviceRegistrationsPost201Response deviceRegistrationsPost(deviceRegistrationsPostRequest)
+# **deviceRegistrationsLockedGet**
+> BuiltList<DeviceRegistrationResponse> deviceRegistrationsLockedGet(campId)
 
-기기 등록 요청
+잠금 기기 목록 조회
 
-진행자 기기가 등록 코드와 함께 신뢰 기기 등록을 요청한다. 성공 시 PENDING 상태의 기기 신뢰 토큰을 즉시 발급해 응답에 담아준다. 이 토큰은 관리자가 승인(APPROVED)할 때까지 PIN 입력 화면 진입이 불가능하다. 
+캠프 내 PIN 연속 실패로 잠금된(APPROVED, LockedUntil이 미래) 기기 목록을 조회한다.
+
+### Example
+```dart
+import 'package:cornermon_api_gen/api.dart';
+// TODO Configure API key authorization: AdminAuth
+//defaultApiClient.getAuthentication<ApiKeyAuth>('AdminAuth').apiKey = 'YOUR_API_KEY';
+// uncomment below to setup prefix (e.g. Bearer) for API key, if needed
+//defaultApiClient.getAuthentication<ApiKeyAuth>('AdminAuth').apiKeyPrefix = 'Bearer';
+
+final api = CornermonApiGen().getAAuthDeviceTrustApi();
+final String campId = campId_example; // String | 캠프 ID
+
+try {
+    final response = api.deviceRegistrationsLockedGet(campId);
+    print(response);
+} on DioException catch (e) {
+    print('Exception when calling AAuthDeviceTrustApi->deviceRegistrationsLockedGet: $e\n');
+}
+```
+
+### Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **campId** | **String**| 캠프 ID | 
+
+### Return type
+
+[**BuiltList&lt;DeviceRegistrationResponse&gt;**](DeviceRegistrationResponse.md)
+
+### Authorization
+
+[AdminAuth](../README.md#AdminAuth)
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **deviceRegistrationsMeGet**
+> BuiltMap<String, JsonObject> deviceRegistrationsMeGet()
+
+내 기기 등록 상태 자체 조회
+
+미승인(PENDING) 기기가 자신의 승인 상태를 확인하기 위해 호출한다.
 
 ### Example
 ```dart
 import 'package:cornermon_api_gen/api.dart';
 
 final api = CornermonApiGen().getAAuthDeviceTrustApi();
-final DeviceRegistrationsPostRequest deviceRegistrationsPostRequest = ; // DeviceRegistrationsPostRequest | 
 
 try {
-    final response = api.deviceRegistrationsPost(deviceRegistrationsPostRequest);
+    final response = api.deviceRegistrationsMeGet();
+    print(response);
+} on DioException catch (e) {
+    print('Exception when calling AAuthDeviceTrustApi->deviceRegistrationsMeGet: $e\n');
+}
+```
+
+### Parameters
+This endpoint does not need any parameter.
+
+### Return type
+
+[**BuiltMap&lt;String, JsonObject&gt;**](JsonObject.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **deviceRegistrationsPost**
+> DeviceRegistrationResponse deviceRegistrationsPost(request)
+
+기기 등록 요청 (최초 앱 실행 시)
+
+기기가 서버에 등록을 요청한다. 이후 관리자의 승인 대기.
+
+### Example
+```dart
+import 'package:cornermon_api_gen/api.dart';
+
+final api = CornermonApiGen().getAAuthDeviceTrustApi();
+final DeviceRegistrationRequest request = ; // DeviceRegistrationRequest | 등록 정보
+
+try {
+    final response = api.deviceRegistrationsPost(request);
     print(response);
 } on DioException catch (e) {
     print('Exception when calling AAuthDeviceTrustApi->deviceRegistrationsPost: $e\n');
@@ -546,11 +769,11 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **deviceRegistrationsPostRequest** | [**DeviceRegistrationsPostRequest**](DeviceRegistrationsPostRequest.md)|  | 
+ **request** | [**DeviceRegistrationRequest**](DeviceRegistrationRequest.md)| 등록 정보 | 
 
 ### Return type
 
-[**DeviceRegistrationsPost201Response**](DeviceRegistrationsPost201Response.md)
+[**DeviceRegistrationResponse**](DeviceRegistrationResponse.md)
 
 ### Authorization
 
