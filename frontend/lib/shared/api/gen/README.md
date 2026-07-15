@@ -123,7 +123,7 @@ Class | Method | HTTP request | Description
 [*EMessageApi*](doc/EMessageApi.md) | [**campsCampIdMessagesBroadcastPost**](doc/EMessageApi.md#campscampidmessagesbroadcastpost) | **POST** /camps/{campId}/messages/broadcast | 전체 공지 발송
 [*EMessageApi*](doc/EMessageApi.md) | [**messagesBroadcastIdReadPost**](doc/EMessageApi.md#messagesbroadcastidreadpost) | **POST** /messages/broadcast/{id}/read | 공지사항 읽음 처리
 [*EMessageApi*](doc/EMessageApi.md) | [**messagesBroadcastIdReceiptsGet**](doc/EMessageApi.md#messagesbroadcastidreceiptsget) | **GET** /messages/broadcast/{id}/receipts | 공지사항 수신 확인 현황
-[*EMessageApi*](doc/EMessageApi.md) | [**tracksTrackIdMessagesGet**](doc/EMessageApi.md#trackstrackidmessagesget) | **GET** /tracks/{trackId}/messages | 트랙별 메시지 내역 조회 (진행자)
+[*EMessageApi*](doc/EMessageApi.md) | [**tracksTrackIdMessagesGet**](doc/EMessageApi.md#trackstrackidmessagesget) | **GET** /tracks/{trackId}/messages | 트랙별 메시지 내역 조회
 [*EMessageApi*](doc/EMessageApi.md) | [**tracksTrackIdMessagesPost**](doc/EMessageApi.md#trackstrackidmessagespost) | **POST** /tracks/{trackId}/messages | 다이렉트 메시지 발송
 [*EMessageApi*](doc/EMessageApi.md) | [**tracksTrackIdMessagesUnreadCountGet**](doc/EMessageApi.md#trackstrackidmessagesunreadcountget) | **GET** /tracks/{trackId}/messages/unread-count | 트랙 미확인 다이렉트 메시지 개수 조회
 [*FEventsSSEApi*](doc/FEventsSSEApi.md) | [**apiV1CampsCampIdEventsAdminGet**](doc/FEventsSSEApi.md#apiv1campscampideventsadminget) | **GET** /api/v1/camps/{campId}/events/admin | Admin SSE Stream
@@ -158,8 +158,10 @@ Class | Method | HTTP request | Description
  - [CreateCampRequest](doc/CreateCampRequest.md)
  - [CreateCornerRequest](doc/CreateCornerRequest.md)
  - [CreateTracksRequest](doc/CreateTracksRequest.md)
+ - [DeviceRegistrationCreatedResponse](doc/DeviceRegistrationCreatedResponse.md)
  - [DeviceRegistrationRequest](doc/DeviceRegistrationRequest.md)
  - [DeviceRegistrationResponse](doc/DeviceRegistrationResponse.md)
+ - [DeviceStatusResponse](doc/DeviceStatusResponse.md)
  - [DirectMessageRequest](doc/DirectMessageRequest.md)
  - [ErrorResponse](doc/ErrorResponse.md)
  - [ExportBadgesResponse](doc/ExportBadgesResponse.md)
@@ -210,7 +212,7 @@ Authentication schemes defined for the API:
 ### TrustedDeviceAuth
 
 - **Type**: API key
-- **API key parameter name**: Authorization
+- **API key parameter name**: X-Device-Token
 - **Location**: HTTP header
 
 

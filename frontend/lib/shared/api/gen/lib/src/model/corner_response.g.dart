@@ -72,6 +72,8 @@ class _$CornerResponse extends CornerResponse {
   @override
   final BuiltList<TrackSummaryResponse>? activeTracks;
   @override
+  final String? campId;
+  @override
   final CornerMetricResponse? cornerMetric;
   @override
   final String? id;
@@ -89,6 +91,7 @@ class _$CornerResponse extends CornerResponse {
 
   _$CornerResponse._(
       {this.activeTracks,
+      this.campId,
       this.cornerMetric,
       this.id,
       this.isBottleneck,
@@ -108,6 +111,7 @@ class _$CornerResponse extends CornerResponse {
     if (identical(other, this)) return true;
     return other is CornerResponse &&
         activeTracks == other.activeTracks &&
+        campId == other.campId &&
         cornerMetric == other.cornerMetric &&
         id == other.id &&
         isBottleneck == other.isBottleneck &&
@@ -120,6 +124,7 @@ class _$CornerResponse extends CornerResponse {
   int get hashCode {
     var _$hash = 0;
     _$hash = $jc(_$hash, activeTracks.hashCode);
+    _$hash = $jc(_$hash, campId.hashCode);
     _$hash = $jc(_$hash, cornerMetric.hashCode);
     _$hash = $jc(_$hash, id.hashCode);
     _$hash = $jc(_$hash, isBottleneck.hashCode);
@@ -134,6 +139,7 @@ class _$CornerResponse extends CornerResponse {
   String toString() {
     return (newBuiltValueToStringHelper(r'CornerResponse')
           ..add('activeTracks', activeTracks)
+          ..add('campId', campId)
           ..add('cornerMetric', cornerMetric)
           ..add('id', id)
           ..add('isBottleneck', isBottleneck)
@@ -153,6 +159,10 @@ class CornerResponseBuilder
       _$this._activeTracks ??= ListBuilder<TrackSummaryResponse>();
   set activeTracks(ListBuilder<TrackSummaryResponse>? activeTracks) =>
       _$this._activeTracks = activeTracks;
+
+  String? _campId;
+  String? get campId => _$this._campId;
+  set campId(String? campId) => _$this._campId = campId;
 
   CornerMetricResponseBuilder? _cornerMetric;
   CornerMetricResponseBuilder get cornerMetric =>
@@ -189,6 +199,7 @@ class CornerResponseBuilder
     final $v = _$v;
     if ($v != null) {
       _activeTracks = $v.activeTracks?.toBuilder();
+      _campId = $v.campId;
       _cornerMetric = $v.cornerMetric?.toBuilder();
       _id = $v.id;
       _isBottleneck = $v.isBottleneck;
@@ -219,6 +230,7 @@ class CornerResponseBuilder
       _$result = _$v ??
           _$CornerResponse._(
             activeTracks: _activeTracks?.build(),
+            campId: campId,
             cornerMetric: _cornerMetric?.build(),
             id: id,
             isBottleneck: isBottleneck,
@@ -231,6 +243,7 @@ class CornerResponseBuilder
       try {
         _$failedField = 'activeTracks';
         _activeTracks?.build();
+
         _$failedField = 'cornerMetric';
         _cornerMetric?.build();
       } catch (e) {

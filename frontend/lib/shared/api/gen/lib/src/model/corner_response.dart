@@ -16,6 +16,7 @@ part 'corner_response.g.dart';
 ///
 /// Properties:
 /// * [activeTracks] 
+/// * [campId] 
 /// * [cornerMetric] 
 /// * [id] 
 /// * [isBottleneck] 
@@ -26,6 +27,9 @@ part 'corner_response.g.dart';
 abstract class CornerResponse implements Built<CornerResponse, CornerResponseBuilder> {
   @BuiltValueField(wireName: r'activeTracks')
   BuiltList<TrackSummaryResponse>? get activeTracks;
+
+  @BuiltValueField(wireName: r'campId')
+  String? get campId;
 
   @BuiltValueField(wireName: r'cornerMetric')
   CornerMetricResponse? get cornerMetric;
@@ -74,6 +78,13 @@ class _$CornerResponseSerializer implements PrimitiveSerializer<CornerResponse> 
       yield serializers.serialize(
         object.activeTracks,
         specifiedType: const FullType(BuiltList, [FullType(TrackSummaryResponse)]),
+      );
+    }
+    if (object.campId != null) {
+      yield r'campId';
+      yield serializers.serialize(
+        object.campId,
+        specifiedType: const FullType(String),
       );
     }
     if (object.cornerMetric != null) {
@@ -147,6 +158,13 @@ class _$CornerResponseSerializer implements PrimitiveSerializer<CornerResponse> 
             specifiedType: const FullType(BuiltList, [FullType(TrackSummaryResponse)]),
           ) as BuiltList<TrackSummaryResponse>;
           result.activeTracks.replace(valueDes);
+          break;
+        case r'campId':
+          final valueDes = serializers.deserialize(
+            value,
+            specifiedType: const FullType(String),
+          ) as String;
+          result.campId = valueDes;
           break;
         case r'cornerMetric':
           final valueDes = serializers.deserialize(
@@ -235,4 +253,3 @@ class CornerResponseStatusEnum extends EnumClass {
   static BuiltSet<CornerResponseStatusEnum> get values => _$cornerResponseStatusEnumValues;
   static CornerResponseStatusEnum valueOf(String name) => _$cornerResponseStatusEnumValueOf(name);
 }
-

@@ -216,4 +216,3 @@ class _$AuditLogResponseSerializer implements PrimitiveSerializer<AuditLogRespon
     return result.build();
   }
 }
-

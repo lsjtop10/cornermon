@@ -160,4 +160,3 @@ class _$GroupStatsResponseSerializer implements PrimitiveSerializer<GroupStatsRe
     return result.build();
   }
 }
-

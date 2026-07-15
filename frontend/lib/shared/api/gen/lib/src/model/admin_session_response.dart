@@ -178,4 +178,3 @@ class _$AdminSessionResponseSerializer implements PrimitiveSerializer<AdminSessi
     return result.build();
   }
 }
-

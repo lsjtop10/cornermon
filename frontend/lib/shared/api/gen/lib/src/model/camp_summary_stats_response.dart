@@ -306,4 +306,3 @@ class _$CampSummaryStatsResponseSerializer implements PrimitiveSerializer<CampSu
     return result.build();
   }
 }
-

@@ -126,4 +126,3 @@ class _$AuditLogPageResponseSerializer implements PrimitiveSerializer<AuditLogPa
     return result.build();
   }
 }
-

@@ -348,8 +348,8 @@ class EMessageApi {
     );
   }
 
-  /// 트랙별 메시지 내역 조회 (진행자)
-  /// 트랙 진행자가 자신의 트랙과 관련된 DIRECT 메시지 내역을 조회한다(GitHub Issue #69, 구현 예정).
+  /// 트랙별 메시지 내역 조회
+  /// 관리자 또는 자신의 트랙 진행자가 DIRECT 메시지 내역을 조회한다.
   ///
   /// Parameters:
   /// * [trackId] - 트랙 ID
@@ -384,6 +384,11 @@ class EMessageApi {
       extra: <String, dynamic>{
         'secure': <Map<String, String>>[
           {
+            'type': 'apiKey',
+            'name': 'AdminAuth',
+            'keyName': 'Authorization',
+            'where': 'header',
+          },{
             'type': 'apiKey',
             'name': 'TrackAuth',
             'keyName': 'Authorization',
@@ -545,7 +550,7 @@ class EMessageApi {
   }
 
   /// 트랙 미확인 다이렉트 메시지 개수 조회
-  /// 호출자(관리자 또는 진행자) 기준으로 상대측이 보낸 미확인 메시지 개수를 반환한다(GitHub Issue #69, 구현 예정).
+  /// 호출자(관리자 또는 진행자) 기준으로 상대측이 보낸 미확인 메시지 개수를 반환한다.
   ///
   /// Parameters:
   /// * [trackId] - 트랙 ID
@@ -574,7 +579,19 @@ class EMessageApi {
         ...?headers,
       },
       extra: <String, dynamic>{
-        'secure': <Map<String, String>>[],
+        'secure': <Map<String, String>>[
+          {
+            'type': 'apiKey',
+            'name': 'AdminAuth',
+            'keyName': 'Authorization',
+            'where': 'header',
+          },{
+            'type': 'apiKey',
+            'name': 'TrackAuth',
+            'keyName': 'Authorization',
+            'where': 'header',
+          },
+        ],
         ...?extra,
       },
       validateStatus: validateStatus,

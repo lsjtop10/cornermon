@@ -124,4 +124,3 @@ class _$AdminRefreshResponseSerializer implements PrimitiveSerializer<AdminRefre
     return result.build();
   }
 }
-

@@ -233,4 +233,3 @@ class CampResponseStatusEnum extends EnumClass {
   static BuiltSet<CampResponseStatusEnum> get values => _$campResponseStatusEnumValues;
   static CampResponseStatusEnum valueOf(String name) => _$campResponseStatusEnumValueOf(name);
 }
-
