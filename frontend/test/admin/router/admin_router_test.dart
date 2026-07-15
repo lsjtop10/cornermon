@@ -68,7 +68,9 @@ void main() {
     adminId: 'admin-1',
   );
 
-  testWidgets('ShouldRedirectUnauthenticatedDashboardRequestToLogin', (tester) async {
+  testWidgets('ShouldRedirectUnauthenticatedDashboardRequestToLogin', (
+    tester,
+  ) async {
     // arrange
     final container = _container(session: const AdminSessionUnauthenticated());
     addTearDown(container.dispose);
@@ -79,19 +81,24 @@ void main() {
     await tester.pumpAndSettle();
 
     // assert
-    expect(find.text('A0 로그인'), findsOneWidget);
+    expect(find.text('코너학습 관리자'), findsOneWidget);
   });
 
-  testWidgets('ShouldRedirectLoginToSetupOrCampListByCampCount', (tester) async {
+  testWidgets('ShouldRedirectLoginToSetupOrCampListByCampCount', (
+    tester,
+  ) async {
     // arrange
     final emptyContainer = _container(session: authenticated);
-    final campContainer = _container(session: authenticated, camps: [_camp(CampStatus.PENDING)]);
+    final campContainer = _container(
+      session: authenticated,
+      camps: [_camp(CampStatus.PENDING)],
+    );
     addTearDown(emptyContainer.dispose);
     addTearDown(campContainer.dispose);
 
     // act & assert
     await _pumpApp(tester, emptyContainer);
-    expect(find.text('A0-b 초기 설정'), findsOneWidget);
+    expect(find.text('초기 설정'), findsOneWidget);
     await tester.pumpWidget(const SizedBox());
     await _pumpApp(tester, campContainer);
     expect(find.text('A0-c 캠프 목록'), findsOneWidget);
@@ -147,9 +154,9 @@ void main() {
     final activeCamp = _camp(CampStatus.ACTIVE);
     final container = ProviderContainer(
       overrides: [
-        campDetailProvider(campId).overrideWith(
-          (ref) => Future<Camp>.error(StateError('재조회하면 안 됩니다.')),
-        ),
+        campDetailProvider(
+          campId,
+        ).overrideWith((ref) => Future<Camp>.error(StateError('재조회하면 안 됩니다.'))),
       ],
     );
     addTearDown(container.dispose);

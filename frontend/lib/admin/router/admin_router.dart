@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:cornermon/admin/features/admin_stub_screen.dart';
+import 'package:cornermon/admin/features/login/login_screen.dart';
+import 'package:cornermon/admin/features/setup_wizard/setup_wizard_screen.dart';
 import 'package:cornermon/admin/session/admin_session_provider.dart';
 import 'package:cornermon/admin/session/selected_camp_provider.dart';
 import 'package:cornermon/admin/widgets/admin_scaffold.dart';
@@ -30,8 +32,11 @@ final adminRouterProvider = Provider<GoRouter>((ref) {
     refreshListenable: refresh,
     redirect: (_, state) => _redirect(ref, state.matchedLocation),
     routes: [
-      _plainRoute('/login', 'A0 로그인'),
-      _plainRoute('/setup-wizard', 'A0-b 초기 설정'),
+      GoRoute(path: '/login', builder: (_, _) => const LoginScreen()),
+      GoRoute(
+        path: '/setup-wizard',
+        builder: (_, _) => const SetupWizardScreen(),
+      ),
       _plainRoute('/camps', 'A0-c 캠프 목록'),
       _plainRoute('/camps/start', 'A0-e 코너학습 시작'),
       _plainRoute('/badges', 'A0-d QR 배지'),
