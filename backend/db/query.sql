@@ -25,16 +25,32 @@ SELECT
     c.id,
     c.name,
     c.target_minutes,
-    COUNT(v.id) FILTER (WHERE v.status = 'COMPLETED') AS sample_count,
-    COALESCE(
-        AVG(EXTRACT(EPOCH FROM (v.ended_at - v.started_at)))
-            FILTER (WHERE v.status = 'COMPLETED'),
-        0
-    )::DOUBLE PRECISION AS avg_duration_seconds
+    metrics.sample_count,
+    metrics.avg_duration_seconds,
+    active_tracks.active_tracks
 FROM corners c
-LEFT JOIN visits v ON v.corner_id = c.id
+JOIN LATERAL (
+    SELECT
+        COUNT(*)::BIGINT AS sample_count,
+        COALESCE(AVG(EXTRACT(EPOCH FROM (v.ended_at - v.started_at))), 0)::DOUBLE PRECISION AS avg_duration_seconds
+    FROM visits v
+    WHERE v.corner_id = c.id AND v.status = 'COMPLETED'
+) metrics ON TRUE
+JOIN LATERAL (
+    SELECT COALESCE(
+        jsonb_agg(jsonb_build_object(
+            'id', t.id,
+            'cornerId', t.corner_id,
+            'trackNo', t.track_no,
+            'status', t.status,
+            'operationalStatus', CASE WHEN t.current_visit_id IS NULL THEN 'IDLE' ELSE 'BUSY' END
+        ) ORDER BY t.track_no),
+        '[]'::jsonb
+    ) AS active_tracks
+    FROM tracks t
+    WHERE t.corner_id = c.id AND t.status = 'ACTIVE'
+) active_tracks ON TRUE
 WHERE c.camp_id = $1
-GROUP BY c.id, c.name, c.target_minutes
 ORDER BY c.id;
 
 -- name: GetCornerView :one
@@ -42,16 +58,32 @@ SELECT
     c.id,
     c.name,
     c.target_minutes,
-    COUNT(v.id) FILTER (WHERE v.status = 'COMPLETED') AS sample_count,
-    COALESCE(
-        AVG(EXTRACT(EPOCH FROM (v.ended_at - v.started_at)))
-            FILTER (WHERE v.status = 'COMPLETED'),
-        0
-    )::DOUBLE PRECISION AS avg_duration_seconds
+    metrics.sample_count,
+    metrics.avg_duration_seconds,
+    active_tracks.active_tracks
 FROM corners c
-LEFT JOIN visits v ON v.corner_id = c.id
-WHERE c.id = $1
-GROUP BY c.id, c.name, c.target_minutes;
+JOIN LATERAL (
+    SELECT
+        COUNT(*)::BIGINT AS sample_count,
+        COALESCE(AVG(EXTRACT(EPOCH FROM (v.ended_at - v.started_at))), 0)::DOUBLE PRECISION AS avg_duration_seconds
+    FROM visits v
+    WHERE v.corner_id = c.id AND v.status = 'COMPLETED'
+) metrics ON TRUE
+JOIN LATERAL (
+    SELECT COALESCE(
+        jsonb_agg(jsonb_build_object(
+            'id', t.id,
+            'cornerId', t.corner_id,
+            'trackNo', t.track_no,
+            'status', t.status,
+            'operationalStatus', CASE WHEN t.current_visit_id IS NULL THEN 'IDLE' ELSE 'BUSY' END
+        ) ORDER BY t.track_no),
+        '[]'::jsonb
+    ) AS active_tracks
+    FROM tracks t
+    WHERE t.corner_id = c.id AND t.status = 'ACTIVE'
+) active_tracks ON TRUE
+WHERE c.id = $1;
 
 -- name: SaveCorner :exec
 INSERT INTO corners (id, camp_id, name, target_minutes, is_mandatory)
