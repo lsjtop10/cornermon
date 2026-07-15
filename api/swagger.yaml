@@ -260,6 +260,9 @@ definitions:
         items:
           $ref: '#/definitions/TrackSummaryResponse'
         type: array
+      campID:
+        format: uuid
+        type: string
       cornerMetric:
         $ref: '#/definitions/CornerMetricResponse'
       id:

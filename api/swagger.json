@@ -2922,6 +2922,10 @@
                         "$ref": "#/definitions/TrackSummaryResponse"
                     }
                 },
+                "campID": {
+                    "type": "string",
+                    "format": "uuid"
+                },
                 "cornerMetric": {
                     "$ref": "#/definitions/CornerMetricResponse"
                 },
