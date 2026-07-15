@@ -324,11 +324,15 @@ func (r *MockDeviceRegistrationRepository) ListByCampAndStatus(ctx context.Conte
 
 // MockFacilitatorSessionRepository
 type MockFacilitatorSessionRepository struct {
-	Sessions map[string]*domain.FacilitatorSession
+	Sessions     map[string]*domain.FacilitatorSession
+	TrackCampIDs map[domain.TrackID]domain.CampID
 }
 
 func NewMockFacilitatorSessionRepository() *MockFacilitatorSessionRepository {
-	return &MockFacilitatorSessionRepository{Sessions: make(map[string]*domain.FacilitatorSession)}
+	return &MockFacilitatorSessionRepository{
+		Sessions:     make(map[string]*domain.FacilitatorSession),
+		TrackCampIDs: make(map[domain.TrackID]domain.CampID),
+	}
 }
 
 func (r *MockFacilitatorSessionRepository) Get(ctx context.Context, id domain.FacilitatorSessionID) (*domain.FacilitatorSession, error) {
@@ -359,10 +363,9 @@ func (r *MockFacilitatorSessionRepository) ListActiveByTrack(ctx context.Context
 }
 
 func (r *MockFacilitatorSessionRepository) ListActiveByCamp(ctx context.Context, campID domain.CampID) ([]*domain.FacilitatorSession, error) {
-	// Simple mock: returns all active sessions
 	var list []*domain.FacilitatorSession
 	for _, s := range r.Sessions {
-		if s.IsActive() {
+		if s.IsActive() && (len(r.TrackCampIDs) == 0 || r.TrackCampIDs[s.TrackID] == campID) {
 			list = append(list, s)
 		}
 	}
