@@ -4,6 +4,13 @@
 > 목적: `main_admin.dart`가 독립 바이너리로 기동되고, 로그인 상태 + 선택된 캠프의 상태(PENDING/ACTIVE/ENDED)에 따라 3가지 사이드바 모드 중 하나로만 화면이 렌더링되도록 라우팅 가드를 세운다. 이 Phase는 각 화면의 **레이아웃은 만들지 않는다** — 빈 `Scaffold` 스텁만 배선하고, `03`~`11`이 그 자리를 채운다.
 > 기존 `frontend/docs/artifacts/plan/프론트엔드_스캐폴딩_아키텍처_plan_20260709/06_admin_app_skeleton.md`는 구버전 API 가정(캠프 컨텍스트 전달 방식 미정 등)으로 작성되어 실행되지 않은 채 남아 있다 — 참고만 하고 이 문서가 실제 실행 대상이다.
 
+## 진행 현황
+
+- [x] F-1 관리자 세션 및 토큰 소스
+- [x] F-2 선택 캠프 상태
+- [x] F-3~F-7 앱·라우터·사이드바·화면 스텁·진입점
+- [ ] 자동화 검증 및 자체 리뷰
+
 ## 1. 유즈케이스
 
 | 우선순위 | 유즈케이스 | 설명 | 용도 |
@@ -143,11 +150,11 @@ GoRouter adminRouter(Ref ref);
 
 ## 4. 검증 체크리스트
 
-- [ ] 로그아웃 상태에서 임의 라우트(`/dashboard` 등) 직접 진입 시도 시 `/login`으로 강제 리다이렉트된다
-- [ ] 로그인 성공 직후 캠프가 0개면 `/setup-wizard`, 1개 이상이면 `/camps`로 이동한다(A0-b/A0-c 분기 — screen-spec Feature 2-g)
-- [ ] PENDING 캠프 진입 시 `/dashboard`, `/messages/*`, `/report`, `/audit-log` 라우트가 차단되고 `/corner-track-manage`, `/groups`, `/devices`, `/settings`만 허용된다(URL 직접 조작으로도 우회 불가 — 자동화 테스트에서 `context.go('/dashboard')` 강제 호출 후 최종 위치 검증)
-- [ ] ENDED 캠프는 `/report` 외 전 라우트가 차단된다
-- [ ] `/login`, `/setup-wizard`, `/camps`, `/badges` 4개 라우트만 사이드바 없이 렌더링되고 나머지는 항상 3모드 사이드바 중 하나를 동반한다
-- [ ] A0-e(코너학습 시작, `POST /camps/{id}/start`) 성공 직후 재조회 없이 `selectedCampProvider`가 갱신되어 사이드바가 준비→운영 모드로 즉시 전환된다(캠프 상태를 로컬에서 낙관적으로 갱신하거나 `startCamp` 응답의 `Camp`로 캐시를 직접 덮어씀 — `campDetailProvider` invalidate만으로는 "재조회 없이"를 만족 못하므로 주의)
-- [ ] `/badges`(A0-d)는 `selectedCampId`가 null이어도(즉 캠프 목록에서 캠프를 고르지 않은 상태에서도) 접근 가능하다
+- [x] 로그아웃 상태에서 임의 라우트(`/dashboard` 등) 직접 진입 시도 시 `/login`으로 강제 리다이렉트된다
+- [x] 로그인 성공 직후 캠프가 0개면 `/setup-wizard`, 1개 이상이면 `/camps`로 이동한다(A0-b/A0-c 분기 — screen-spec Feature 2-g)
+- [x] PENDING 캠프 진입 시 `/dashboard`, `/messages/*`, `/report`, `/audit-log` 라우트가 차단되고 `/corner-track-manage`, `/groups`, `/devices`, `/settings`만 허용된다(URL 직접 조작으로도 우회 불가 — 자동화 테스트에서 `context.go('/dashboard')` 강제 호출 후 최종 위치 검증)
+- [x] ENDED 캠프는 `/report` 외 전 라우트가 차단된다
+- [x] `/login`, `/setup-wizard`, `/camps`, `/badges` 4개 라우트만 사이드바 없이 렌더링되고 나머지는 항상 3모드 사이드바 중 하나를 동반한다
+- [x] A0-e(코너학습 시작, `POST /camps/{id}/start`) 성공 직후 재조회 없이 `selectedCampProvider`가 갱신되어 사이드바가 준비→운영 모드로 즉시 전환된다(캠프 상태를 로컬에서 낙관적으로 갱신하거나 `startCamp` 응답의 `Camp`로 캐시를 직접 덮어씀 — `campDetailProvider` invalidate만으로는 "재조회 없이"를 만족 못하므로 주의)
+- [x] `/badges`(A0-d)는 `selectedCampId`가 null이어도(즉 캠프 목록에서 캠프를 고르지 않은 상태에서도) 접근 가능하다
 - [ ] `flutter run -t lib/main_admin.dart --flavor admin`으로 로그인 목업 → 캠프 목록 → PENDING 캠프 선택(A2B) → ACTIVE 캠프 선택(A1) 두 경로가 실기기/에뮬레이터에서 수동 구동된다
