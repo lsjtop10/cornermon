@@ -14,6 +14,7 @@ type CornerHandler struct {
 	views usecase.CornerViewQuerier
 }
 
+// 추후에 Usecase에 정의된 View로 대체 고려
 type CornerMetricResponse struct {
 	AvgDurationSeconds int `json:"avgDurationSeconds" example:"640" description:"완료된 방문의 평균 소요 시간(초)"`
 	SampleCount        int `json:"sampleCount" example:"15" description:"평균 계산에 사용된 완료 방문 수"`
