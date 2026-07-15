@@ -13,13 +13,8 @@ part of 'report_providers.dart';
 final reportApiProvider = ReportApiProvider._();
 
 final class ReportApiProvider
-    extends
-        $FunctionalProvider<
-          FReportsAnalyticsApi,
-          FReportsAnalyticsApi,
-          FReportsAnalyticsApi
-        >
-    with $Provider<FReportsAnalyticsApi> {
+    extends $FunctionalProvider<DReportApi, DReportApi, DReportApi>
+    with $Provider<DReportApi> {
   ReportApiProvider._()
     : super(
         from: null,
@@ -36,28 +31,27 @@ final class ReportApiProvider
 
   @$internal
   @override
-  $ProviderElement<FReportsAnalyticsApi> $createElement(
-    $ProviderPointer pointer,
-  ) => $ProviderElement(pointer);
+  $ProviderElement<DReportApi> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
 
   @override
-  FReportsAnalyticsApi create(Ref ref) {
+  DReportApi create(Ref ref) {
     return reportApi(ref);
   }
 
   /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(FReportsAnalyticsApi value) {
+  Override overrideWithValue(DReportApi value) {
     return $ProviderOverride(
       origin: this,
-      providerOverride: $SyncValueProvider<FReportsAnalyticsApi>(value),
+      providerOverride: $SyncValueProvider<DReportApi>(value),
     );
   }
 }
 
-String _$reportApiHash() => r'b17fbb50b4d085c472eea1649357b0ffa2ec2ec1';
+String _$reportApiHash() => r'd9781ebe04fbcb0fb5660fb3e6c2f22cf61bd563';
 
 @ProviderFor(currentReport)
-final currentReportProvider = CurrentReportProvider._();
+final currentReportProvider = CurrentReportFamily._();
 
 final class CurrentReportProvider
     extends
@@ -67,19 +61,26 @@ final class CurrentReportProvider
           FutureOr<CampReport>
         >
     with $FutureModifier<CampReport>, $FutureProvider<CampReport> {
-  CurrentReportProvider._()
-    : super(
-        from: null,
-        argument: null,
-        retry: null,
-        name: r'currentReportProvider',
-        isAutoDispose: true,
-        dependencies: null,
-        $allTransitiveDependencies: null,
-      );
+  CurrentReportProvider._({
+    required CurrentReportFamily super.from,
+    required CampId super.argument,
+  }) : super(
+         retry: null,
+         name: r'currentReportProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
 
   @override
   String debugGetCreateSourceHash() => _$currentReportHash();
+
+  @override
+  String toString() {
+    return r'currentReportProvider'
+        ''
+        '($argument)';
+  }
 
   @$internal
   @override
@@ -88,49 +89,260 @@ final class CurrentReportProvider
 
   @override
   FutureOr<CampReport> create(Ref ref) {
-    return currentReport(ref);
+    final argument = this.argument as CampId;
+    return currentReport(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is CurrentReportProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
   }
 }
 
-String _$currentReportHash() => r'4199b44103de722c1a0216162ecf82dd1058e435';
+String _$currentReportHash() => r'794bfcd6de1e713024ad52645b45d24eda32c291';
+
+final class CurrentReportFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<CampReport>, CampId> {
+  CurrentReportFamily._()
+    : super(
+        retry: null,
+        name: r'currentReportProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  CurrentReportProvider call(CampId campId) =>
+      CurrentReportProvider._(argument: campId, from: this);
+
+  @override
+  String toString() => r'currentReportProvider';
+}
+
+@ProviderFor(generateReport)
+final generateReportProvider = GenerateReportFamily._();
+
+final class GenerateReportProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<CampReport>,
+          CampReport,
+          FutureOr<CampReport>
+        >
+    with $FutureModifier<CampReport>, $FutureProvider<CampReport> {
+  GenerateReportProvider._({
+    required GenerateReportFamily super.from,
+    required CampId super.argument,
+  }) : super(
+         retry: null,
+         name: r'generateReportProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$generateReportHash();
+
+  @override
+  String toString() {
+    return r'generateReportProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<CampReport> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<CampReport> create(Ref ref) {
+    final argument = this.argument as CampId;
+    return generateReport(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is GenerateReportProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$generateReportHash() => r'eeea938652213e63d05bd86f7973a81f6e6043e0';
+
+final class GenerateReportFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<CampReport>, CampId> {
+  GenerateReportFamily._()
+    : super(
+        retry: null,
+        name: r'generateReportProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  GenerateReportProvider call(CampId campId) =>
+      GenerateReportProvider._(argument: campId, from: this);
+
+  @override
+  String toString() => r'generateReportProvider';
+}
 
 @ProviderFor(liveSummary)
-final liveSummaryProvider = LiveSummaryProvider._();
+final liveSummaryProvider = LiveSummaryFamily._();
 
 final class LiveSummaryProvider
     extends
         $FunctionalProvider<
-          AsyncValue<ReportsLiveSummaryGet200Response>,
-          ReportsLiveSummaryGet200Response,
-          FutureOr<ReportsLiveSummaryGet200Response>
+          AsyncValue<CampSummaryStats>,
+          CampSummaryStats,
+          FutureOr<CampSummaryStats>
         >
-    with
-        $FutureModifier<ReportsLiveSummaryGet200Response>,
-        $FutureProvider<ReportsLiveSummaryGet200Response> {
-  LiveSummaryProvider._()
-    : super(
-        from: null,
-        argument: null,
-        retry: null,
-        name: r'liveSummaryProvider',
-        isAutoDispose: true,
-        dependencies: null,
-        $allTransitiveDependencies: null,
-      );
+    with $FutureModifier<CampSummaryStats>, $FutureProvider<CampSummaryStats> {
+  LiveSummaryProvider._({
+    required LiveSummaryFamily super.from,
+    required CampId super.argument,
+  }) : super(
+         retry: null,
+         name: r'liveSummaryProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
 
   @override
   String debugGetCreateSourceHash() => _$liveSummaryHash();
 
+  @override
+  String toString() {
+    return r'liveSummaryProvider'
+        ''
+        '($argument)';
+  }
+
   @$internal
   @override
-  $FutureProviderElement<ReportsLiveSummaryGet200Response> $createElement(
+  $FutureProviderElement<CampSummaryStats> $createElement(
     $ProviderPointer pointer,
   ) => $FutureProviderElement(pointer);
 
   @override
-  FutureOr<ReportsLiveSummaryGet200Response> create(Ref ref) {
-    return liveSummary(ref);
+  FutureOr<CampSummaryStats> create(Ref ref) {
+    final argument = this.argument as CampId;
+    return liveSummary(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is LiveSummaryProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
   }
 }
 
-String _$liveSummaryHash() => r'03e4bc0630091a3d80862975c98faf784ee6204a';
+String _$liveSummaryHash() => r'0862e00e13c3934580cf45dea195f47ff67111c2';
+
+final class LiveSummaryFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<CampSummaryStats>, CampId> {
+  LiveSummaryFamily._()
+    : super(
+        retry: null,
+        name: r'liveSummaryProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  LiveSummaryProvider call(CampId campId) =>
+      LiveSummaryProvider._(argument: campId, from: this);
+
+  @override
+  String toString() => r'liveSummaryProvider';
+}
+
+@ProviderFor(exportReport)
+final exportReportProvider = ExportReportFamily._();
+
+final class ExportReportProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<CampReport>,
+          CampReport,
+          FutureOr<CampReport>
+        >
+    with $FutureModifier<CampReport>, $FutureProvider<CampReport> {
+  ExportReportProvider._({
+    required ExportReportFamily super.from,
+    required CampId super.argument,
+  }) : super(
+         retry: null,
+         name: r'exportReportProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$exportReportHash();
+
+  @override
+  String toString() {
+    return r'exportReportProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<CampReport> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<CampReport> create(Ref ref) {
+    final argument = this.argument as CampId;
+    return exportReport(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is ExportReportProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$exportReportHash() => r'1b9856f9a48cf957da62e0bcd2b70eac15170dae';
+
+final class ExportReportFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<CampReport>, CampId> {
+  ExportReportFamily._()
+    : super(
+        retry: null,
+        name: r'exportReportProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  ExportReportProvider call(CampId campId) =>
+      ExportReportProvider._(argument: campId, from: this);
+
+  @override
+  String toString() => r'exportReportProvider';
+}

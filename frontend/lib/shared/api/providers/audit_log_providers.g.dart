@@ -56,16 +56,20 @@ final auditLogListProvider = AuditLogListFamily._();
 final class AuditLogListProvider
     extends
         $FunctionalProvider<
-          AsyncValue<AuditLogsGet200Response>,
-          AuditLogsGet200Response,
-          FutureOr<AuditLogsGet200Response>
+          AsyncValue<AuditLogPage>,
+          AuditLogPage,
+          FutureOr<AuditLogPage>
         >
-    with
-        $FutureModifier<AuditLogsGet200Response>,
-        $FutureProvider<AuditLogsGet200Response> {
+    with $FutureModifier<AuditLogPage>, $FutureProvider<AuditLogPage> {
   AuditLogListProvider._({
     required AuditLogListFamily super.from,
-    required ({int? limit, DateTime? before, String? action, String? actor})
+    required ({
+      int? limit,
+      String? before,
+      String? action,
+      String? actor,
+      String? result,
+    })
     super.argument,
   }) : super(
          retry: null,
@@ -87,21 +91,28 @@ final class AuditLogListProvider
 
   @$internal
   @override
-  $FutureProviderElement<AuditLogsGet200Response> $createElement(
+  $FutureProviderElement<AuditLogPage> $createElement(
     $ProviderPointer pointer,
   ) => $FutureProviderElement(pointer);
 
   @override
-  FutureOr<AuditLogsGet200Response> create(Ref ref) {
+  FutureOr<AuditLogPage> create(Ref ref) {
     final argument =
         this.argument
-            as ({int? limit, DateTime? before, String? action, String? actor});
+            as ({
+              int? limit,
+              String? before,
+              String? action,
+              String? actor,
+              String? result,
+            });
     return auditLogList(
       ref,
       limit: argument.limit,
       before: argument.before,
       action: argument.action,
       actor: argument.actor,
+      result: argument.result,
     );
   }
 
@@ -116,13 +127,19 @@ final class AuditLogListProvider
   }
 }
 
-String _$auditLogListHash() => r'3d1e35a98db42f3f7df7a2af9f73e2034553c2cb';
+String _$auditLogListHash() => r'd2eb0ac65c0a2a09092ebab0b3b1590162d8f7ac';
 
 final class AuditLogListFamily extends $Family
     with
         $FunctionalFamilyOverride<
-          FutureOr<AuditLogsGet200Response>,
-          ({int? limit, DateTime? before, String? action, String? actor})
+          FutureOr<AuditLogPage>,
+          ({
+            int? limit,
+            String? before,
+            String? action,
+            String? actor,
+            String? result,
+          })
         > {
   AuditLogListFamily._()
     : super(
@@ -135,11 +152,18 @@ final class AuditLogListFamily extends $Family
 
   AuditLogListProvider call({
     int? limit,
-    DateTime? before,
+    String? before,
     String? action,
     String? actor,
+    String? result,
   }) => AuditLogListProvider._(
-    argument: (limit: limit, before: before, action: action, actor: actor),
+    argument: (
+      limit: limit,
+      before: before,
+      action: action,
+      actor: actor,
+      result: result,
+    ),
     from: this,
   );
 

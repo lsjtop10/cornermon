@@ -69,7 +69,7 @@ final class GroupListProvider
     with $FutureModifier<List<Group>>, $FutureProvider<List<Group>> {
   GroupListProvider._({
     required GroupListFamily super.from,
-    required ({String? filter, String? sort, String? order}) super.argument,
+    required CampId super.argument,
   }) : super(
          retry: null,
          name: r'groupListProvider',
@@ -85,7 +85,7 @@ final class GroupListProvider
   String toString() {
     return r'groupListProvider'
         ''
-        '$argument';
+        '($argument)';
   }
 
   @$internal
@@ -96,14 +96,8 @@ final class GroupListProvider
 
   @override
   FutureOr<List<Group>> create(Ref ref) {
-    final argument =
-        this.argument as ({String? filter, String? sort, String? order});
-    return groupList(
-      ref,
-      filter: argument.filter,
-      sort: argument.sort,
-      order: argument.order,
-    );
+    final argument = this.argument as CampId;
+    return groupList(ref, argument);
   }
 
   @override
@@ -117,14 +111,10 @@ final class GroupListProvider
   }
 }
 
-String _$groupListHash() => r'6e320f16f92708161de5605e7c96eb0bfb939e4f';
+String _$groupListHash() => r'920da8dab0a7ca2e27e2499508394b69f8e1d45c';
 
 final class GroupListFamily extends $Family
-    with
-        $FunctionalFamilyOverride<
-          FutureOr<List<Group>>,
-          ({String? filter, String? sort, String? order})
-        > {
+    with $FunctionalFamilyOverride<FutureOr<List<Group>>, CampId> {
   GroupListFamily._()
     : super(
         retry: null,
@@ -134,11 +124,8 @@ final class GroupListFamily extends $Family
         isAutoDispose: true,
       );
 
-  GroupListProvider call({String? filter, String? sort, String? order}) =>
-      GroupListProvider._(
-        argument: (filter: filter, sort: sort, order: order),
-        from: this,
-      );
+  GroupListProvider call(CampId campId) =>
+      GroupListProvider._(argument: campId, from: this);
 
   @override
   String toString() => r'groupListProvider';
@@ -270,7 +257,7 @@ final class GroupVisitsProvider
   }
 }
 
-String _$groupVisitsHash() => r'8f1761b2361352fb7aa6f137da2492af477c60e8';
+String _$groupVisitsHash() => r'7da94f761c8adb908f2deacc222fe3bd44cd9ca5';
 
 final class GroupVisitsFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<List<VisitSummary>>, GroupId> {
@@ -288,4 +275,79 @@ final class GroupVisitsFamily extends $Family
 
   @override
   String toString() => r'groupVisitsProvider';
+}
+
+@ProviderFor(trackScopedGroups)
+final trackScopedGroupsProvider = TrackScopedGroupsFamily._();
+
+final class TrackScopedGroupsProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<Group>>,
+          List<Group>,
+          FutureOr<List<Group>>
+        >
+    with $FutureModifier<List<Group>>, $FutureProvider<List<Group>> {
+  TrackScopedGroupsProvider._({
+    required TrackScopedGroupsFamily super.from,
+    required TrackId super.argument,
+  }) : super(
+         retry: null,
+         name: r'trackScopedGroupsProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$trackScopedGroupsHash();
+
+  @override
+  String toString() {
+    return r'trackScopedGroupsProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<List<Group>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<List<Group>> create(Ref ref) {
+    final argument = this.argument as TrackId;
+    return trackScopedGroups(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is TrackScopedGroupsProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$trackScopedGroupsHash() => r'0f7cf26ec55e5ca0444496f076b425badca19e19';
+
+final class TrackScopedGroupsFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<List<Group>>, TrackId> {
+  TrackScopedGroupsFamily._()
+    : super(
+        retry: null,
+        name: r'trackScopedGroupsProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  TrackScopedGroupsProvider call(TrackId trackId) =>
+      TrackScopedGroupsProvider._(argument: trackId, from: this);
+
+  @override
+  String toString() => r'trackScopedGroupsProvider';
 }

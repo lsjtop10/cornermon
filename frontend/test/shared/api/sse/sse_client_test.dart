@@ -44,9 +44,9 @@ Uint8List _bytes(String s) => Uint8List.fromList(utf8.encode(s));
 
 void main() {
   group('SseClient.connect', () {
-    test('ShouldParseEventAndDataIntoSseEvent', () async {
-      // arrange
-      const frame = 'event: track_updated\ndata: {"scope":"track:t1"}\n\n';
+    test('ShouldParseDataLineIntoSseNotification', () async {
+      // arrange — data: 라인 자체가 완전한 SSENotification JSON이다(00_overview.md §2.3).
+      const frame = 'event: track_updated\ndata: {"event":"track_updated","scope":{"kind":"track","trackId":"t1"}}\n\n';
       final dio = _buildFakeDio(() => Stream.value(_bytes(frame)));
       final sseClient = SseClient(dio);
 
@@ -55,14 +55,15 @@ void main() {
 
       // assert
       expect(events, hasLength(1));
-      expect(events.single.event, SseEventEventEnum.trackUpdated);
-      expect(events.single.data?.scope, 'track:t1');
+      expect(events.single.event, SSENotificationEventEnum.trackUpdated);
+      expect(events.single.scope?.kind, SSEScopeKindEnum.track);
+      expect(events.single.scope?.trackId, 't1');
     });
 
     test('ShouldIgnoreHeartbeatCommentLines', () async {
       // arrange
       const heartbeat = ': heartbeat\n\n';
-      const realFrame = 'event: camp_updated\ndata: {"scope":"camp"}\n\n';
+      const realFrame = 'event: camp_updated\ndata: {"event":"camp_updated","scope":{"kind":"camp"}}\n\n';
       final dio = _buildFakeDio(
         () => Stream.fromIterable([
           _bytes(heartbeat),
@@ -77,8 +78,8 @@ void main() {
 
       // assert — 하트비트 주석 프레임은 이벤트로 남지 않고, 실제 프레임 파싱도 깨지지 않는다.
       expect(events, hasLength(1));
-      expect(events.single.event, SseEventEventEnum.campUpdated);
-      expect(events.single.data?.scope, 'camp');
+      expect(events.single.event, SSENotificationEventEnum.campUpdated);
+      expect(events.single.scope?.kind, SSEScopeKindEnum.camp);
     });
 
     test('ShouldEmitErrorWhenHeartbeatTimeoutElapsesWithoutAnyChunk', () async {
@@ -101,7 +102,7 @@ void main() {
     test('ShouldSkipMalformedFrameWithoutBreakingSubsequentFrames', () async {
       // arrange — data가 JSON으로 파싱 불가능한 깨진 프레임 뒤에 정상 프레임을 이어붙인다.
       const malformedFrame = 'event: track_updated\ndata: {not-valid-json}\n\n';
-      const validFrame = 'event: groups_updated\ndata: {"scope":"camp"}\n\n';
+      const validFrame = 'event: groups_updated\ndata: {"event":"groups_updated","scope":{"kind":"camp"}}\n\n';
       final dio = _buildFakeDio(
         () => Stream.value(_bytes('$malformedFrame$validFrame')),
       );
@@ -112,8 +113,8 @@ void main() {
 
       // assert
       expect(events, hasLength(1));
-      expect(events.single.event, SseEventEventEnum.groupsUpdated);
-      expect(events.single.data?.scope, 'camp');
+      expect(events.single.event, SSENotificationEventEnum.groupsUpdated);
+      expect(events.single.scope?.kind, SSEScopeKindEnum.camp);
     });
   });
 }

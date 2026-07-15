@@ -132,7 +132,7 @@ final class VisitActionsProvider extends $NotifierProvider<VisitActions, void> {
   }
 }
 
-String _$visitActionsHash() => r'c6884d448fea004e4722f498fee8e208b1a2e8cb';
+String _$visitActionsHash() => r'5fa678fd04dc169bd257545b2f94c86e732698a2';
 
 final class VisitActionsFamily extends $Family
     with $ClassFamilyOverride<VisitActions, void, void, void, TrackId> {

@@ -1,4 +1,4 @@
-import 'package:cornermon_api_gen/cornermon_api_gen.dart' as api;
+import '../../shared/api/domain_aliases.dart' as api;
 
 extension AdminCampX on api.Camp {
   bool get isPending => status == api.CampStatus.PENDING;
