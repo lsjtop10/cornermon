@@ -61,3 +61,48 @@ func TestMessageRoutesShoudAuthenticateAdminAndTrackWithoutDuplicateRouteRegistr
 		})
 	}
 }
+
+func TestListBroadcastsRouteShoudAuthenticateBothAdminAndTrackSessions(t *testing.T) {
+	// Arrange
+	announcementUC := &announcementUsecaseForHandler{notices: []*domain.Announcement{{ID: "notice-1", CampID: "camp-1", Content: "hello"}}}
+	e := echo.New()
+	RegisterRoutes(e, &Handlers{Auth: &AuthHandler{}, Device: &DeviceHandler{}, Message: NewMessageHandler(&messageUsecaseForHandler{}, announcementUC)}, adminAuthForMessageRoutes{}, trackAuthForMessageRoutes{})
+
+	for _, tc := range []struct {
+		name  string
+		token string
+	}{
+		{name: "admin", token: "admin-token"},
+		{name: "track", token: "track-token"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			// Act
+			req := httptest.NewRequest(http.MethodGet, "/api/v1/camps/camp-1/messages/broadcast", nil)
+			req.Header.Set(echo.HeaderAuthorization, "Bearer "+tc.token)
+			rec := httptest.NewRecorder()
+			e.ServeHTTP(rec, req)
+
+			// Assert
+			if rec.Code != http.StatusOK {
+				t.Fatalf("expected status 200, got %d: %s", rec.Code, rec.Body.String())
+			}
+		})
+	}
+}
+
+func TestListBroadcastsRouteShoudRejectRequestWithoutSession(t *testing.T) {
+	// Arrange
+	announcementUC := &announcementUsecaseForHandler{}
+	e := echo.New()
+	RegisterRoutes(e, &Handlers{Auth: &AuthHandler{}, Device: &DeviceHandler{}, Message: NewMessageHandler(&messageUsecaseForHandler{}, announcementUC)}, adminAuthForMessageRoutes{}, trackAuthForMessageRoutes{})
+
+	// Act
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/camps/camp-1/messages/broadcast", nil)
+	rec := httptest.NewRecorder()
+	e.ServeHTTP(rec, req)
+
+	// Assert
+	if rec.Code != http.StatusUnauthorized {
+		t.Fatalf("expected status 401, got %d: %s", rec.Code, rec.Body.String())
+	}
+}

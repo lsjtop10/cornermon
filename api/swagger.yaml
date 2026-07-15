@@ -1250,7 +1250,7 @@ paths:
       - B. Resource Management (Admin)
   /camps/{campId}/messages/broadcast:
     get:
-      description: 관리자가 보낸 BROADCAST 메시지들의 목록을 조회한다.
+      description: 관리자 또는 진행자가 캠프에 발송된 BROADCAST 메시지들의 목록을 조회한다.
       parameters:
       - description: 캠프 ID
         in: path
@@ -1270,8 +1270,13 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/ErrorResponse'
       security:
       - AdminAuth: []
+      - TrackAuth: []
       summary: 발송된 공지사항 목록
       tags:
       - E. Message

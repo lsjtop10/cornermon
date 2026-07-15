@@ -849,9 +849,12 @@
                 "security": [
                     {
                         "AdminAuth": []
+                    },
+                    {
+                        "TrackAuth": []
                     }
                 ],
-                "description": "관리자가 보낸 BROADCAST 메시지들의 목록을 조회한다.",
+                "description": "관리자 또는 진행자가 캠프에 발송된 BROADCAST 메시지들의 목록을 조회한다.",
                 "produces": [
                     "application/json"
                 ],
@@ -880,6 +883,12 @@
                     },
                     "400": {
                         "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
                         "schema": {
                             "$ref": "#/definitions/ErrorResponse"
                         }

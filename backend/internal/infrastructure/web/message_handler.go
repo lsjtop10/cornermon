@@ -95,13 +95,15 @@ func (h *MessageHandler) SendBroadcast(c echo.Context) error {
 }
 
 // @Summary      발송된 공지사항 목록
-// @Description  관리자가 보낸 BROADCAST 메시지들의 목록을 조회한다.
+// @Description  관리자 또는 진행자가 캠프에 발송된 BROADCAST 메시지들의 목록을 조회한다.
 // @Tags         E. Message
 // @Security     AdminAuth
+// @Security     TrackAuth
 // @Produce      json
 // @Param        campId path string true "캠프 ID"
 // @Success      200 {array} MessageResponse
 // @Failure      400 {object} ErrorResponse
+// @Failure      401 {object} ErrorResponse
 // @Router       /camps/{campId}/messages/broadcast [get]
 func (h *MessageHandler) ListBroadcasts(c echo.Context) error {
 	campID := domain.CampID(c.Param("campId"))
