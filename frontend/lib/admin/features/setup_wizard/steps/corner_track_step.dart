@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cornermon/admin/features/setup_wizard/setup_wizard_provider.dart';
 import 'package:cornermon/admin/features/setup_wizard/setup_wizard_state.dart';
 import 'package:cornermon/admin/features/setup_wizard/setup_wizard_templates.dart';
-import 'package:cornermon/shared/design_system/tokens/colors.dart';
 import 'package:cornermon/shared/design_system/tokens/spacing.dart';
 import 'package:cornermon/shared/design_system/widgets/app_button.dart';
 
@@ -40,9 +39,6 @@ class _CornerTrackStepState extends ConsumerState<CornerTrackStep> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(setupWizardProvider);
-    final colors = Theme.of(context).brightness == Brightness.dark
-        ? AppColors.dark
-        : AppColors.light;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -91,10 +87,6 @@ class _CornerTrackStepState extends ConsumerState<CornerTrackStep> {
             ),
           ],
         ),
-        if (state.blockedMessage != null) ...[
-          const SizedBox(height: AppSpacing.space3),
-          Text(state.blockedMessage!, style: TextStyle(color: colors.danger)),
-        ],
         const SizedBox(height: AppSpacing.space4),
         if (state.corners.isEmpty)
           const Padding(

@@ -22,8 +22,7 @@ class SetupWizard extends _$SetupWizard {
     );
   }
 
-  void goToStep(int step) =>
-      state = state.copyWith(step: step, clearBlockedMessage: true);
+  void goToStep(int step) => state = state.copyWith(step: step);
 
   void parseCornerNames(String pastedText) {
     final names = pastedText
@@ -39,7 +38,6 @@ class SetupWizard extends _$SetupWizard {
             trackCount: state.defaultTrackCountPerCorner,
           ),
       ],
-      clearBlockedMessage: true,
     );
   }
 
@@ -83,16 +81,12 @@ class SetupWizard extends _$SetupWizard {
   }
 
   bool tryAdvanceFromCornerStep() {
-    if (state.corners.isEmpty) {
-      state = state.copyWith(blockedMessage: '코너를 1개 이상 추가하세요');
-      return false;
-    }
-    state = state.copyWith(step: 2, clearBlockedMessage: true);
+    state = state.copyWith(step: 2);
     return true;
   }
 
   Future<bool> submit() async {
-    if (!state.canFinish || state.isSubmitting) return false;
+    if (state.isSubmitting) return false;
     state = state.copyWith(isSubmitting: true, clearSubmitError: true);
     CampId campId;
     try {

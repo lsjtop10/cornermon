@@ -24,17 +24,14 @@ void main() {
     });
 
     test(
-      'blocks advance without a corner and changes only the requested row',
+      'allows advancing without a corner and changes only the requested row',
       () {
         final container = ProviderContainer();
         addTearDown(container.dispose);
         final notifier = container.read(setupWizardProvider.notifier);
 
-        expect(notifier.tryAdvanceFromCornerStep(), isFalse);
-        expect(
-          container.read(setupWizardProvider).blockedMessage,
-          '코너를 1개 이상 추가하세요',
-        );
+        expect(notifier.tryAdvanceFromCornerStep(), isTrue);
+        expect(container.read(setupWizardProvider).step, 2);
 
         notifier.parseCornerNames('1코너\n2코너');
         notifier.updateCornerRow(1, targetMinutes: 20, trackCount: 3);

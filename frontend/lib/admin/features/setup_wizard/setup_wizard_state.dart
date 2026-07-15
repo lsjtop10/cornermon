@@ -46,7 +46,6 @@ class SetupWizardState {
     this.corners = const [],
     this.defaultTargetMinutes = 10,
     this.defaultTrackCountPerCorner = 1,
-    this.blockedMessage,
     this.isSubmitting = false,
     this.createdCampId,
     this.submitError,
@@ -59,12 +58,9 @@ class SetupWizardState {
   final List<SetupWizardCornerRow> corners;
   final int defaultTargetMinutes;
   final int defaultTrackCountPerCorner;
-  final String? blockedMessage;
   final bool isSubmitting;
   final CampId? createdCampId;
   final String? submitError;
-
-  bool get canFinish => corners.isNotEmpty;
 
   SetupWizardState copyWith({
     int? step,
@@ -76,8 +72,6 @@ class SetupWizardState {
     List<SetupWizardCornerRow>? corners,
     int? defaultTargetMinutes,
     int? defaultTrackCountPerCorner,
-    String? blockedMessage,
-    bool clearBlockedMessage = false,
     bool? isSubmitting,
     CampId? createdCampId,
     String? submitError,
@@ -91,9 +85,6 @@ class SetupWizardState {
     defaultTargetMinutes: defaultTargetMinutes ?? this.defaultTargetMinutes,
     defaultTrackCountPerCorner:
         defaultTrackCountPerCorner ?? this.defaultTrackCountPerCorner,
-    blockedMessage: clearBlockedMessage
-        ? null
-        : blockedMessage ?? this.blockedMessage,
     isSubmitting: isSubmitting ?? this.isSubmitting,
     createdCampId: createdCampId ?? this.createdCampId,
     submitError: clearSubmitError ? null : submitError ?? this.submitError,
