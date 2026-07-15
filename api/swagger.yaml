@@ -231,7 +231,7 @@ definitions:
       visitCompletionRate:
         type: number
     type: object
-  CornerMatricResponse:
+  CornerMetricResponse:
     properties:
       avgDurationSeconds:
         example: 640
@@ -260,8 +260,8 @@ definitions:
         items:
           $ref: '#/definitions/TrackSummaryResponse'
         type: array
-      cornerMatric:
-        $ref: '#/definitions/CornerMatricResponse'
+      cornerMetric:
+        $ref: '#/definitions/CornerMetricResponse'
       id:
         format: uuid
         type: string

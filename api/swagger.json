@@ -2882,7 +2882,7 @@
                 }
             }
         },
-        "CornerMatricResponse": {
+        "CornerMetricResponse": {
             "type": "object",
             "properties": {
                 "avgDurationSeconds": {
@@ -2924,8 +2924,8 @@
                         "$ref": "#/definitions/TrackSummaryResponse"
                     }
                 },
-                "cornerMatric": {
-                    "$ref": "#/definitions/CornerMatricResponse"
+                "cornerMetric": {
+                    "$ref": "#/definitions/CornerMetricResponse"
                 },
                 "id": {
                     "type": "string",

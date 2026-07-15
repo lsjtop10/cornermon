@@ -2889,7 +2889,7 @@ const docTemplate = `{
                 }
             }
         },
-        "CornerMatricResponse": {
+        "CornerMetricResponse": {
             "type": "object",
             "properties": {
                 "avgDurationSeconds": {
@@ -2931,8 +2931,8 @@ const docTemplate = `{
                         "$ref": "#/definitions/TrackSummaryResponse"
                     }
                 },
-                "cornerMatric": {
-                    "$ref": "#/definitions/CornerMatricResponse"
+                "cornerMetric": {
+                    "$ref": "#/definitions/CornerMetricResponse"
                 },
                 "id": {
                     "type": "string",
