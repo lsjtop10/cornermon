@@ -35,6 +35,7 @@ func mapDeviceRegistration(row db.DeviceRegistration) *domain.DeviceRegistration
 		Status:            domain.DeviceRegistrationStatus(row.Status),
 		TokenHash:         row.TokenHash,
 		FailedPinAttempts: int(row.FailedPinAttempts),
+		CreatedAt:         row.CreatedAt.Time,
 	}
 
 	if row.LockedUntil.Valid {
@@ -95,6 +96,7 @@ func (r *pgDeviceRegistrationRepository) Save(ctx context.Context, reg *domain.D
 		Status:            string(reg.Status),
 		TokenHash:         reg.TokenHash,
 		FailedPinAttempts: int32(reg.FailedPinAttempts),
+		CreatedAt:         pgtype.Timestamptz{Time: reg.CreatedAt, Valid: true},
 	}
 
 	if val, ok := reg.LockedUntil.Value(); ok {

@@ -67,6 +67,7 @@ func (s *DeviceTrustService) RequestRegistration(
 		FailedPinAttempts: 0,
 		LockedUntil:       domain.None[time.Time](),
 		ApprovedAt:        domain.None[time.Time](),
+		CreatedAt:         s.nowFn(),
 	}
 
 	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {

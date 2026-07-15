@@ -22,6 +22,7 @@ type DeviceRegistration struct {
 	FailedPinAttempts int
 	LockedUntil       Optional[time.Time]
 	ApprovedAt        Optional[time.Time]
+	CreatedAt         time.Time
 }
 
 // Approve는 대기 중인 기기 등록 요청을 승인합니다.
