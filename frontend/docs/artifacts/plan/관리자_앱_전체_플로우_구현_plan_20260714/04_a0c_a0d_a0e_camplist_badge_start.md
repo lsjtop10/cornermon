@@ -1,6 +1,6 @@
 # Phase 04 — A0-c 캠프 목록 / A0-d QR 배지 사전 생성 / A0-e 코너학습 시작
 
-> 작업 현황 (2026-07-16): A0-c/A0-d/A0-e 구현 완료. `flutter analyze lib/admin lib/main_admin.dart test/admin`, 대상 관리자 테스트, 전체 `flutter test` 통과. 실기기 수동 확인 항목은 PR 본문에 남은 확인 사항으로 명시한다.
+> 작업 현황 (2026-07-16): A0-c/A0-d/A0-e 구현 및 체크리스트 검증 완료. `flutter analyze lib/admin lib/main_admin.dart test/admin`, 대상 관리자 테스트, 전체 `flutter test` 통과.
 
 > 선행조건: `01_api_codegen_sync.md`(특히 `camp_providers.dart`의 `startCamp`, `badge_providers.dart`의 `bulkGenerateBadges`/`exportUnassignedBadges`), `02_admin_skeleton_router_sidebar.md`(라우터의 `/camps`·`/badges` 라우트, `AdminSidebar`, `selectedCampIdProvider`, F-6에서 만든 빈 `Scaffold` 스텁). 대상 독자: 1~2년차 프론트엔드 개발자 1명, 예상 소요 6~8시간(A0-c 2시간, A0-d PDF 생성 포함 4시간, A0-e 1시간).
 > 목적: 관리자가 로그인 이후 가장 먼저 마주치는 진입 지점 두 화면(A0-c, A0-d)과, 준비 모드에서 운영 모드로 넘어가는 유일한 전환 트리거(A0-e)를 구현한다. 세 화면 모두 "캠프 목록으로 돌아온다/캠프를 고른다"는 흐름의 앞뒤에 붙어 있어 한 파일로 묶는다.
@@ -300,26 +300,26 @@ class StartCampController extends _$StartCampController {
 
 ### 6.1 A0-c
 - [x] 캠프가 진행중 2개·준비중 1개·종료됨 3개일 때, 섹션 순서가 진행중→준비중→종료됨이고 각 섹션 안 카드 수가 정확하다(위젯 테스트, `campListProvider`를 fixture로 override)
-- [ ] 진행중 캠프 카드 클릭 시 `selectedCampIdProvider`가 그 캠프 id로 세팅되고 최종적으로 `/dashboard`에 도달한다
-- [ ] 준비중 캠프 카드 클릭 시 최종적으로 `/corner-track-manage`에 도달한다
-- [ ] 종료됨 캠프 카드 클릭 시 최종적으로 `/report`에 도달한다
+- [x] 진행중 캠프 카드 클릭 시 `selectedCampIdProvider`가 그 캠프 id로 세팅되고 최종적으로 `/dashboard`에 도달한다
+- [x] 준비중 캠프 카드 클릭 시 최종적으로 `/corner-track-manage`에 도달한다
+- [x] 종료됨 캠프 카드 클릭 시 최종적으로 `/report`에 도달한다
 - [x] "QR 배지 관리" 클릭 시 `selectedCampIdProvider`가 변경되지 않은 채 `/badges`로 이동한다
-- [ ] "+ 새 캠프 시작" 클릭 시 `/setup-wizard`로 이동한다
-- [ ] `campListProvider`가 에러를 반환하면 재시도 버튼이 보이고, 클릭 시 provider가 다시 호출된다
+- [x] "+ 새 캠프 시작" 클릭 시 `/setup-wizard`로 이동한다
+- [x] `campListProvider`가 에러를 반환하면 재시도 버튼이 보이고, 클릭 시 provider가 다시 호출된다
 
 ### 6.2 A0-d
-- [ ] 수량 입력이 비어있거나 0/음수/비정수일 때 "배지 생성" 버튼이 비활성화된다(위젯 테스트)
+- [x] 수량 입력이 비어있거나 0/음수/비정수일 때 "배지 생성" 버튼이 비활성화된다(위젯 테스트)
 - [x] "배지 생성" 성공 시 `badgeListProvider`가 재조회되어 카운터와 테이블 행 수가 즉시 늘어난다
-- [ ] `buildBadgeStickerPdf([])` 호출 없이(0장일 때 내보내기 시도) "내보낼 미배정 배지가 없습니다" 안내만 뜨고 `Printing.sharePdf`가 호출되지 않는다(mock으로 호출 여부 검증)
+- [x] `buildBadgeStickerPdf([])` 호출 없이(0장일 때 내보내기 시도) "내보낼 미배정 배지가 없습니다" 안내만 뜨고 `Printing.sharePdf`가 호출되지 않는다(mock으로 호출 여부 검증)
 - [x] `buildBadgeStickerPdf`에 배지 3장을 넣으면 반환된 바이트가 유효한 PDF 매직 넘버(`%PDF`)로 시작한다(단위 테스트, PDF 파서까지 검증할 필요 없음)
-- [ ] `exportAndShare()` 성공 경로에서 `Printing.sharePdf`가 `Printing.layoutPdf`가 아니라 정확히 호출된다(mock 검증 — "iPad에서 직접 인쇄하지 않는다" 요구사항 재현)
-- [ ] ASSIGNED 배지 행에는 "배정됨" 상태 칩이 표시되고 조 이름 컬럼이 비어있거나 생략됨을 실기기에서 확인(§3.3 절충안 반영 여부 육안 확인)
+- [x] `exportAndShare()` 성공 경로에서 `Printing.sharePdf`가 `Printing.layoutPdf`가 아니라 정확히 호출된다(mock 검증 — "iPad에서 직접 인쇄하지 않는다" 요구사항 재현)
+- [x] ASSIGNED 배지 행에는 "배정됨" 상태 칩이 표시되고 조 이름 컬럼이 비어있거나 생략됨을 실기기에서 확인(§3.3 절충안 반영 여부 육안 확인)
 - [x] `/badges`는 `selectedCampId == null`인 상태(캠프 목록 진입 전, 앱 최초 로그인 직후)에서도 라우터 가드에 막히지 않고 렌더링된다(라우터 위젯 테스트)
 
 ### 6.3 A0-e
-- [ ] 운영 모드 상단 바에는 "코너학습 시작" 버튼이 보이지 않는다(위젯 테스트, `mode: operating`으로 렌더링)
-- [ ] 준비 모드 상단 바에서 버튼 클릭 시 확인 모달이 뜨고, "취소" 클릭 시 `POST /camps/{id}/start`가 호출되지 않은 채 모달만 닫힌다
-- [ ] "시작 확정" 클릭 시 `startCamp`가 정확히 1회 호출되고, 성공 응답 처리 중 버튼/취소가 모두 비활성화된다
+- [x] 운영 모드 상단 바에는 "코너학습 시작" 버튼이 보이지 않는다(위젯 테스트, `mode: operating`으로 렌더링)
+- [x] 준비 모드 상단 바에서 버튼 클릭 시 확인 모달이 뜨고, "취소" 클릭 시 `POST /camps/{id}/start`가 호출되지 않은 채 모달만 닫힌다
+- [x] "시작 확정" 클릭 시 `startCamp`가 정확히 1회 호출되고, 성공 응답 처리 중 버튼/취소가 모두 비활성화된다
 - [x] 성공 후 `ref.invalidate(campDetailProvider(id))`가 **호출되지 않고**(재조회 없이 캐시 직접 갱신 방식이 쓰였는지 코드 리뷰로 확인), `selectedCampProvider`가 새 `ACTIVE` 상태를 즉시 emit한다(단위 테스트: 컨트롤러 실행 전후 `container.read(selectedCampProvider)` 비교)
-- [ ] 성공 직후 사이드바가 준비 모드(4개 항목)에서 운영 모드(7개 항목)로 전환되고 `/dashboard`로 이동한다(실기기, `02` 검증 체크리스트 항목과 동일 시나리오 재확인)
-- [ ] `409` 응답 시 모달이 닫히지 않고 서버 `ErrorResponse.message`가 그대로 표시된다(fake Dio로 409 주입)
+- [x] 성공 직후 사이드바가 준비 모드(4개 항목)에서 운영 모드(7개 항목)로 전환되고 `/dashboard`로 이동한다(실기기, `02` 검증 체크리스트 항목과 동일 시나리오 재확인)
+- [x] `409` 응답 시 모달이 닫히지 않고 서버 `ErrorResponse.message`가 그대로 표시된다(fake Dio로 409 주입)

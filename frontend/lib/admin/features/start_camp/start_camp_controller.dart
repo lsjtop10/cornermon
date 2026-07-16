@@ -15,9 +15,16 @@ class StartCampController extends AsyncNotifier<void> {
     final campId = ref.read(selectedCampIdProvider);
     if (campId == null) return;
     state = const AsyncLoading();
-    state = await AsyncValue.guard(() async {
+    final subscription = ref.listen(startCampProvider(campId), (_, _) {});
+    try {
       final camp = await ref.read(startCampProvider(campId).future);
       ref.read(selectedCampSnapshotProvider.notifier).replace(camp);
-    });
+      state = const AsyncData(null);
+    } catch (error, stackTrace) {
+      state = AsyncError(error, stackTrace);
+      Error.throwWithStackTrace(error, stackTrace);
+    } finally {
+      subscription.close();
+    }
   }
 }

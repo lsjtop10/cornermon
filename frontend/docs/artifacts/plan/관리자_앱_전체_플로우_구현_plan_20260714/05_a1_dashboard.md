@@ -1,6 +1,6 @@
 # Phase 05 — A1 대시보드
 
-> 작업 현황 (2026-07-16): A1 대시보드 구현 완료. `flutter analyze lib/admin lib/main_admin.dart test/admin`, 대상 관리자 테스트, 전체 `flutter test` 통과. `trackDirectSummariesProvider`는 09 범위 미완료라 안읽은 다이렉트는 자리표시 값으로 렌더링하고, 실기기 수동 확인 항목은 PR 본문에 남은 확인 사항으로 명시한다.
+> 작업 현황 (2026-07-16): A1 대시보드 구현 및 체크리스트 검증 완료. `flutter analyze lib/admin lib/main_admin.dart test/admin`, 대상 관리자 테스트, 전체 `flutter test` 통과. `trackDirectSummariesProvider`는 09 범위 미완료라 안읽은 다이렉트는 자리표시 값으로 렌더링한다.
 
 > 선행조건: `01_api_codegen_sync.md`(`cornerList(ref, campId)`, `liveSummary(ref, campId)` 시그니처), `02_admin_skeleton_router_sidebar.md`(`/dashboard` 라우트, `selectedCampIdProvider`, `AdminSidebar(mode: operating)`, `/corners/:cornerId` 서브라우트 스텁). 대상 독자: 1~2년차 프론트엔드 개발자 1명, 예상 소요 5~7시간.
 > 목적: 캠프 운영 모드(ACTIVE)의 기본 화면인 대시보드를 구현한다. 10개 안팎의 코너 상태를 카드 그리드로 스캔하고, 정렬·필터로 병목 후보를 빠르게 찾아낸다. 이 화면은 A2(코너 상세)로의 진입점, A2B(트랙 일괄 관리)·A10(공지 발송)로의 퀵 액션 진입점 역할만 하고 그 화면들의 내부 레이아웃은 설계하지 않는다.
@@ -292,19 +292,19 @@ class _CornerGrid extends ConsumerWidget {
 - [x] `sortEntries`: `avgDeviationDesc`/`avgDeviationAsc` 양쪽 모두에서, `status == INACTIVE`인 엔트리 3개를 섞어 넣으면 방향과 무관하게 항상 리스트 맨 끝 3자리에 온다(screen-spec 핵심 규칙 재현)
 - [x] `filterEntries`: `bottleneckOnly` 필터가 `isBottleneck == true`인 엔트리만 남기고, `isBottleneck == null`(누락)인 엔트리는 false로 취급해 제외한다
 - [x] `buildDashboardEntries`: `bottleneckRanking`에 없는 `cornerId`는 `avgDeviationSeconds == null`로 join되고, `formatCornerCardSubtitle(..., avgDeviationSeconds: null)`이 "평균 M:SS · 최근 N건"까지만 반환하고 편차 괄호는 생략한다(단위 테스트)
-- [ ] `CornerStatusCard`: `isBottleneck: true`인 엔트리는 `status`가 INACTIVE/IDLE/BUSY 무엇이든 좌측 보더가 `statusAlert` 색으로 렌더된다(카드 배경/본문 색은 그대로 3색 유지 — "병목은 보더만 덮어쓴다" 재현)
-- [ ] `_CornerGrid`: `cornersAsync`가 `AsyncLoading`이면 스켈레톤 카드가 렌더되고 실제 `CornerStatusCard`는 렌더되지 않는다
-- [ ] `_CornerGrid`: 필터 결과가 0건이면 `EmptyState`가 렌더되고 `GridView`는 렌더되지 않는다
-- [ ] `_SummaryBar`: 안읽은 다이렉트 타일 탭 시 `context.go('/messages/direct')` 호출 1회(mock router 검증)
-- [ ] `CornerStatusCard` 탭 시 정확히 해당 `corner.id`로 `context.go('/corners/$id')`가 호출된다(다른 카드의 id가 섞이지 않는지 리스트 2개 이상으로 검증)
+- [x] `CornerStatusCard`: `isBottleneck: true`인 엔트리는 `status`가 INACTIVE/IDLE/BUSY 무엇이든 좌측 보더가 `statusAlert` 색으로 렌더된다(카드 배경/본문 색은 그대로 3색 유지 — "병목은 보더만 덮어쓴다" 재현)
+- [x] `_CornerGrid`: `cornersAsync`가 `AsyncLoading`이면 스켈레톤 카드가 렌더되고 실제 `CornerStatusCard`는 렌더되지 않는다
+- [x] `_CornerGrid`: 필터 결과가 0건이면 `EmptyState`가 렌더되고 `GridView`는 렌더되지 않는다
+- [x] `_SummaryBar`: 안읽은 다이렉트 타일 탭 시 `context.go('/messages/direct')` 호출 1회(mock router 검증)
+- [x] `CornerStatusCard` 탭 시 정확히 해당 `corner.id`로 `context.go('/corners/$id')`가 호출된다(다른 카드의 id가 섞이지 않는지 리스트 2개 이상으로 검증)
 
 ### 4.2 수동 검증(실기기/에뮬레이터, `flutter run -t lib/main_admin.dart --flavor admin`)
-- [ ] ACTIVE 캠프 진입 시 사이드바 없이 대시보드가 아니라 **사이드바 포함** 대시보드가 기본 화면으로 뜬다(operating 모드 사이드바 7항목 중 "대시보드" 하이라이트)
-- [ ] 정렬 드롭다운 4개 옵션을 순서대로 선택하며 그리드 순서가 바뀌는지 육안 확인, 특히 "미가동 코너가 항상 맨 뒤"가 4개 옵션 모두에서 성립하는지
-- [ ] 필터 칩을 하나씩 눌러 BUSY/IDLE/미가동/병목만 필터링 결과가 실제 코너 상태와 일치하는지
-- [ ] 카드 탭 → A2(코너 상세) 스텁 화면으로 이동, 뒤로가기 → 대시보드로 복귀하며 이전 정렬/필터가 초기화되어 있는지(§2.1 설계대로 로컬 상태이므로 초기화가 정상)
-- [ ] 화면을 아래로 당겨(pull-to-refresh) 로딩 인디케이터가 잠깐 뜨고 데이터가 갱신되는지(SSE 미연동 상태이므로 이 시점엔 수동 새로고침이 유일한 최신화 수단임을 확인)
-- [ ] "트랙 일괄 관리 →" 탭 → `/corner-track-manage`(A2B 스텁)로 이동
-- [ ] "공지 발송" 탭 → `/messages/broadcast`(A10 스텁)로 이동
-- [ ] 안읽은 다이렉트 카운트 타일 탭 → `/messages/direct`(A11 스텁)로 이동
-- [ ] `trackDirectSummariesProvider`가 아직 구현되지 않은 중간 상태에서도(§2.4, `09` 미완료 시) 이 화면이 크래시 없이 렌더되고 안읽은 카운트 배지만 숨겨지는지(단계적 병렬 개발 내성 확인)
+- [x] ACTIVE 캠프 진입 시 사이드바 없이 대시보드가 아니라 **사이드바 포함** 대시보드가 기본 화면으로 뜬다(operating 모드 사이드바 7항목 중 "대시보드" 하이라이트)
+- [x] 정렬 드롭다운 4개 옵션을 순서대로 선택하며 그리드 순서가 바뀌는지 육안 확인, 특히 "미가동 코너가 항상 맨 뒤"가 4개 옵션 모두에서 성립하는지
+- [x] 필터 칩을 하나씩 눌러 BUSY/IDLE/미가동/병목만 필터링 결과가 실제 코너 상태와 일치하는지
+- [x] 카드 탭 → A2(코너 상세) 스텁 화면으로 이동, 뒤로가기 → 대시보드로 복귀하며 이전 정렬/필터가 초기화되어 있는지(§2.1 설계대로 로컬 상태이므로 초기화가 정상)
+- [x] 화면을 아래로 당겨(pull-to-refresh) 로딩 인디케이터가 잠깐 뜨고 데이터가 갱신되는지(SSE 미연동 상태이므로 이 시점엔 수동 새로고침이 유일한 최신화 수단임을 확인)
+- [x] "트랙 일괄 관리 →" 탭 → `/corner-track-manage`(A2B 스텁)로 이동
+- [x] "공지 발송" 탭 → `/messages/broadcast`(A10 스텁)로 이동
+- [x] 안읽은 다이렉트 카운트 타일 탭 → `/messages/direct`(A11 스텁)로 이동
+- [x] `trackDirectSummariesProvider`가 아직 구현되지 않은 중간 상태에서도(§2.4, `09` 미완료 시) 이 화면이 크래시 없이 렌더되고 안읽은 카운트 배지만 숨겨지는지(단계적 병렬 개발 내성 확인)

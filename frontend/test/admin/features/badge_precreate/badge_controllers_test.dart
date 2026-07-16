@@ -25,4 +25,70 @@ void main() {
     expect(calls, 1);
     expect(container.read(badgeGenerateControllerProvider).hasError, isFalse);
   });
+
+  test('ShoudNotSharePdfWhenExportedBadgeListIsEmpty', () async {
+    // arrange
+    var shareCalls = 0;
+    final container = ProviderContainer(
+      overrides: [
+        exportUnassignedBadgesProvider.overrideWith((_) async => const []),
+        badgePdfShareProvider.overrideWithValue(({
+          required bytes,
+          required filename,
+        }) async {
+          shareCalls++;
+          return true;
+        }),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    // act
+    final shared = await container
+        .read(badgeExportControllerProvider.notifier)
+        .exportAndShare();
+
+    // assert
+    expect(shared, isFalse);
+    expect(shareCalls, 0);
+  });
+
+  test('ShoudSharePdfWhenUnassignedBadgesAreExported', () async {
+    // arrange
+    var shareCalls = 0;
+    String? sharedFilename;
+    final container = ProviderContainer(
+      overrides: [
+        exportUnassignedBadgesProvider.overrideWith(
+          (_) async => [
+            BadgeResponse(
+              (b) => b
+                ..id = 'badge-1'
+                ..shortId = 'B-0001'
+                ..qrPayload = 'payload',
+            ),
+          ],
+        ),
+        badgePdfShareProvider.overrideWithValue(({
+          required bytes,
+          required filename,
+        }) async {
+          shareCalls++;
+          sharedFilename = filename;
+          return true;
+        }),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    // act
+    final shared = await container
+        .read(badgeExportControllerProvider.notifier)
+        .exportAndShare();
+
+    // assert
+    expect(shared, isTrue);
+    expect(shareCalls, 1);
+    expect(sharedFilename, startsWith('cornermon-badges-'));
+  });
 }

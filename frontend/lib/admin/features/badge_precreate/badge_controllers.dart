@@ -1,9 +1,15 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:cornermon/admin/features/badge_precreate/badge_sticker_pdf.dart';
 import 'package:cornermon/shared/api/providers/badge_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:printing/printing.dart';
+
+typedef SharePdf =
+    Future<bool> Function({required Uint8List bytes, required String filename});
+
+final badgePdfShareProvider = Provider<SharePdf>((ref) => Printing.sharePdf);
 
 final badgeGenerateControllerProvider =
     AsyncNotifierProvider<BadgeGenerateController, void>(
@@ -36,7 +42,7 @@ class BadgeExportController extends AsyncNotifier<bool> {
       final badges = await ref.read(exportUnassignedBadgesProvider.future);
       if (badges.isEmpty) return false;
       final bytes = await buildBadgeStickerPdf(badges);
-      await Printing.sharePdf(
+      await ref.read(badgePdfShareProvider)(
         bytes: bytes,
         filename:
             'cornermon-badges-${DateTime.now().millisecondsSinceEpoch}.pdf',

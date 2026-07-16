@@ -6,6 +6,8 @@ import 'package:cornermon/shared/api/domain_aliases.dart' hide AdminSession;
 import 'package:cornermon/shared/api/ids.dart';
 import 'package:cornermon/shared/api/providers/badge_providers.dart';
 import 'package:cornermon/shared/api/providers/camp_providers.dart';
+import 'package:cornermon/shared/api/providers/corner_track_providers.dart';
+import 'package:cornermon/shared/api/providers/report_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -157,6 +159,86 @@ void main() {
     // assert
     expect(find.text('QR 배지 관리'), findsOneWidget);
     expect(find.byType(AdminSidebar), findsNothing);
+  });
+
+  testWidgets('ShouldRenderActiveDashboardWithOperatingSidebar', (
+    tester,
+  ) async {
+    // arrange
+    final campId = CampId('camp-1');
+    final container = ProviderContainer(
+      overrides: [
+        adminSessionProvider.overrideWith(
+          () => _FakeAdminSession(authenticated),
+        ),
+        selectedCampIdProvider.overrideWith(() => _FakeSelectedCampId(campId)),
+        campDetailProvider(
+          campId,
+        ).overrideWith((ref) async => _camp(CampStatus.ACTIVE)),
+        campListProvider.overrideWith(
+          (ref) async => [_camp(CampStatus.ACTIVE)],
+        ),
+        cornerListProvider(campId).overrideWith((ref) async => const []),
+        liveSummaryProvider(
+          campId,
+        ).overrideWith((ref) async => CampSummaryStats()),
+      ],
+    );
+    addTearDown(container.dispose);
+    await _pumpApp(tester, container);
+
+    // act
+    container.read(adminRouterProvider).go('/dashboard');
+    await tester.pumpAndSettle();
+
+    // assert
+    expect(find.byType(AdminSidebar), findsOneWidget);
+    expect(find.text('대시보드'), findsOneWidget);
+    expect(find.text('조건에 맞는 코너가 없습니다'), findsOneWidget);
+  });
+
+  testWidgets('ShouldNavigateToDashboardWhenStartCampSucceeds', (tester) async {
+    // arrange
+    final campId = CampId('camp-1');
+    var calls = 0;
+    final activeCamp = _camp(CampStatus.ACTIVE);
+    final container = ProviderContainer(
+      overrides: [
+        adminSessionProvider.overrideWith(
+          () => _FakeAdminSession(authenticated),
+        ),
+        selectedCampIdProvider.overrideWith(() => _FakeSelectedCampId(campId)),
+        campDetailProvider(
+          campId,
+        ).overrideWith((ref) async => _camp(CampStatus.PENDING)),
+        campListProvider.overrideWith(
+          (ref) async => [_camp(CampStatus.PENDING)],
+        ),
+        startCampProvider(campId).overrideWith((ref) async {
+          calls++;
+          return activeCamp;
+        }),
+        cornerListProvider(campId).overrideWith((ref) async => const []),
+        liveSummaryProvider(
+          campId,
+        ).overrideWith((ref) async => CampSummaryStats()),
+      ],
+    );
+    addTearDown(container.dispose);
+    await _pumpApp(tester, container);
+
+    // act
+    container.read(adminRouterProvider).go('/corner-track-manage');
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('코너학습 시작'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('시작 확정'));
+    await tester.pumpAndSettle();
+
+    // assert
+    expect(calls, 1);
+    expect(find.text('대시보드'), findsOneWidget);
+    expect(find.byType(AdminSidebar), findsOneWidget);
   });
 
   test('ShouldUseStartCampSnapshotWithoutRefetch', () async {
