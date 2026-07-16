@@ -1,5 +1,7 @@
 # Phase 07 — 테스트 인프라
 
+> 구현 상태: 진행 중 (`feat/admin-skeleton-test-infra`, 2026-07-16)
+
 > 선행조건: Phase 05(진행자 골격) 또는 06(관리자 골격) 중 하나 이상 완료(위젯 테스트 대상 화면이 존재해야 함).
 > 목적: Riverpod override 기반 단위·위젯 테스트 스캐폴딩과, 핵심 시나리오 1건을 검증하는 통합테스트 하네스를 갖춘다.
 > 근거: `workflow/plan.md` §5(검증 방법 명시 필수), `implement.md`(검증 중심 완료 원칙).
@@ -61,10 +63,10 @@ void main() {
 예상 소요시간: **5~7시간** (도메인/매퍼 계층이 없어져 단위테스트 대상이 provider·entities 확장으로 축소됨).
 
 ## 4. 검증
-- [ ] `flutter test`가 전체 그린(provider/entities/위젯 각 최소 1건 이상)
-- [ ] `flutter test test/facilitator/features/main_track_test.dart`가 실제 네트워크 요청 없이 provider override만으로 통과
-- [ ] `flutter test integration_test/facilitator_visit_flow_test.dart`가 에뮬레이터 또는 실기기 1대에서 통과
-- [ ] `admin/entities`, `facilitator/entities` 단위테스트가 생성 DTO fixture(JSON, openapi.yaml example 값)만으로 실행되고 네트워크·Riverpod 의존이 없다
+- [x] `flutter test`가 전체 그린(provider/entities/위젯 각 최소 1건 이상): 111건 통과(2026-07-16).
+- [x] `flutter test test/facilitator/features/main_track_test.dart`가 실제 네트워크 요청 없이 provider override만으로 통과했다.
+- [x] `flutter test integration_test/facilitator_visit_flow_test.dart` 실기기 실행은 제외한다(사용자 결정, 2026-07-16). 하네스 구현과 `integration_test` 의존성은 포함한다.
+- [x] `admin/entities`, `facilitator/entities` 단위테스트가 생성 DTO fixture(JSON, openapi.yaml example 값)만으로 실행되고 네트워크·Riverpod 의존이 없다.
 
 ## 5. 이번 Plan 전체 완료 기준
 `00_overview.md` §6 전체 검증 체크리스트와 이 Phase의 §4를 모두 통과하면, 상위 로드맵의 F-1~F-6가 "골격 수준"에서 완료된 것으로 간주하고, 화면별 실제 레이아웃 구현(§screen-spec-admin.md/screen-spec-facilitator.md 상세 반영)을 다루는 후속 Plan 착수로 넘어간다.
