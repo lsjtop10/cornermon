@@ -27,6 +27,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   Future<void> _submit() async {
+    debugPrint(
+      '[login] _submit tapped: isSubmitting=$_isSubmitting '
+      'idEmpty=${_idController.text.trim().isEmpty} '
+      'passwordEmpty=${_passwordController.text.isEmpty}',
+    );
     if (_isSubmitting) return;
     if (_idController.text.trim().isEmpty || _passwordController.text.isEmpty) {
       setState(() {});
@@ -37,8 +42,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       await ref
           .read(loginErrorProvider.notifier)
           .submit(_idController.text.trim(), _passwordController.text);
-    } catch (_) {
-      // 오류 문구는 LoginError provider가 관리한다.
+      debugPrint('[login] submit() completed without throwing');
+    } catch (error, stackTrace) {
+      debugPrint('[login] _submit caught: ${error.runtimeType} $error\n$stackTrace');
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }

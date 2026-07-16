@@ -55,9 +55,9 @@ class AdminSession extends Notifier<AdminSessionState> {
   }
 
   Future<void> login(String loginId, String password) async {
-    final response = await ref.read(
-      adminLoginProvider(loginId, password).future,
-    );
+    final provider = adminLoginProvider(loginId, password);
+    final sub = ref.listen(provider, (_, _) {});
+    final response = await ref.read(provider.future).whenComplete(sub.close);
     final accessToken = response.accessToken;
     if (accessToken == null) {
       throw Exception('관리자 로그인 응답에 토큰이 없습니다.');
@@ -78,9 +78,11 @@ class AdminSession extends Notifier<AdminSessionState> {
   Future<void> invalidate() => _becomeUnauthenticated();
 
   Future<void> logout() async {
+    final sub = ref.listen(adminLogoutProvider, (_, _) {});
     try {
       await ref.read(adminLogoutProvider.future);
     } finally {
+      sub.close();
       await _becomeUnauthenticated();
     }
   }

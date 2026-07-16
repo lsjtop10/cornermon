@@ -163,7 +163,7 @@ final class CreateCornerProvider
     required CreateCornerFamily super.from,
     required (CampId, String, int) super.argument,
   }) : super(
-         retry: null,
+         retry: noRetry,
          name: r'createCornerProvider',
          isAutoDispose: true,
          dependencies: null,
@@ -202,13 +202,13 @@ final class CreateCornerProvider
   }
 }
 
-String _$createCornerHash() => r'e950a43b12f38d861c30c98ccb9f391f2c49a323';
+String _$createCornerHash() => r'8991ab69aaee5892e39846ff4b23021d87f8924f';
 
 final class CreateCornerFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<Corner>, (CampId, String, int)> {
   CreateCornerFamily._()
     : super(
-        retry: null,
+        retry: noRetry,
         name: r'createCornerProvider',
         dependencies: null,
         $allTransitiveDependencies: null,
@@ -538,7 +538,7 @@ final class CreateTracksForCornerProvider
     required CreateTracksForCornerFamily super.from,
     required (CampId, CornerId, int) super.argument,
   }) : super(
-         retry: null,
+         retry: noRetry,
          name: r'createTracksForCornerProvider',
          isAutoDispose: true,
          dependencies: null,
@@ -579,7 +579,7 @@ final class CreateTracksForCornerProvider
 }
 
 String _$createTracksForCornerHash() =>
-    r'047fe98ebc699b6433c7d42940afcf74d7cb8327';
+    r'a87511105b8ac01a4d6f766e5d67136174992a04';
 
 final class CreateTracksForCornerFamily extends $Family
     with
@@ -589,7 +589,7 @@ final class CreateTracksForCornerFamily extends $Family
         > {
   CreateTracksForCornerFamily._()
     : super(
-        retry: null,
+        retry: noRetry,
         name: r'createTracksForCornerProvider',
         dependencies: null,
         $allTransitiveDependencies: null,

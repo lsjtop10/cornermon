@@ -3,6 +3,7 @@ import 'package:cornermon_api_gen/cornermon_api_gen.dart';
 import '../domain_aliases.dart';
 import '../ids.dart';
 import 'camp_providers.dart';
+import 'no_retry.dart';
 
 part 'corner_track_providers.g.dart';
 
@@ -31,7 +32,7 @@ Future<Corner> cornerDetail(Ref ref, CornerId id) async {
   return data;
 }
 
-@riverpod
+@Riverpod(retry: noRetry)
 Future<Corner> createCorner(Ref ref, CampId campId, String name, int targetMinutes) async {
   final apiInstance = ref.watch(campApiProvider);
   final response = await apiInstance.cornersPost(
@@ -89,7 +90,7 @@ Future<List<Track>> cornerTrackList(Ref ref, CornerId cornerId) async {
   return response.data?.toList() ?? [];
 }
 
-@riverpod
+@Riverpod(retry: noRetry)
 Future<List<TrackPin>> createTracksForCorner(Ref ref, CampId campId, CornerId cornerId, int count) async {
   final apiInstance = ref.watch(campApiProvider);
   final response = await apiInstance.tracksPost(

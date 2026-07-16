@@ -3,6 +3,7 @@ import 'package:cornermon_api_gen/cornermon_api_gen.dart';
 import '../client/api_client.dart';
 import '../domain_aliases.dart';
 import '../ids.dart';
+import 'no_retry.dart';
 
 part 'auth_device_trust_providers.g.dart';
 
@@ -12,7 +13,7 @@ AAuthDeviceTrustApi authDeviceTrustApi(Ref ref) {
   return AAuthDeviceTrustApi(dio, standardSerializers);
 }
 
-@riverpod
+@Riverpod(retry: noRetry)
 Future<AdminLoginResponse> adminLogin(Ref ref, String id, String password) async {
   final apiInstance = ref.watch(authDeviceTrustApiProvider);
   final response = await apiInstance.authAdminLoginPost(
@@ -29,7 +30,7 @@ Future<AdminLoginResponse> adminLogin(Ref ref, String id, String password) async
   return data;
 }
 
-@riverpod
+@Riverpod(retry: noRetry)
 Future<void> adminLogout(Ref ref) async {
   final apiInstance = ref.watch(authDeviceTrustApiProvider);
   await apiInstance.authAdminLogoutPost();

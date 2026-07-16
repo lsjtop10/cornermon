@@ -41,7 +41,7 @@ final class SetupWizardProvider
   }
 }
 
-String _$setupWizardHash() => r'bf1f18e0b8eee43e06769013847c3eaa7b72874e';
+String _$setupWizardHash() => r'404305799f42ee7bc3fa63464aae5fc57411523c';
 
 abstract class _$SetupWizard extends $Notifier<SetupWizardState> {
   SetupWizardState build();

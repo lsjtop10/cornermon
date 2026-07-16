@@ -74,7 +74,7 @@ final class AdminLoginProvider
     required AdminLoginFamily super.from,
     required (String, String) super.argument,
   }) : super(
-         retry: null,
+         retry: noRetry,
          name: r'adminLoginProvider',
          isAutoDispose: true,
          dependencies: null,
@@ -114,7 +114,7 @@ final class AdminLoginProvider
   }
 }
 
-String _$adminLoginHash() => r'aa074ee91319b8b5b2ef1529cc4b3577db612aa9';
+String _$adminLoginHash() => r'ff467d0e37b70329de45c96ded536b0eef3085fa';
 
 final class AdminLoginFamily extends $Family
     with
@@ -124,7 +124,7 @@ final class AdminLoginFamily extends $Family
         > {
   AdminLoginFamily._()
     : super(
-        retry: null,
+        retry: noRetry,
         name: r'adminLoginProvider',
         dependencies: null,
         $allTransitiveDependencies: null,
@@ -148,7 +148,7 @@ final class AdminLogoutProvider
     : super(
         from: null,
         argument: null,
-        retry: null,
+        retry: noRetry,
         name: r'adminLogoutProvider',
         isAutoDispose: true,
         dependencies: null,
@@ -169,7 +169,7 @@ final class AdminLogoutProvider
   }
 }
 
-String _$adminLogoutHash() => r'049e5f1020034d0193af50cffed59132e6b10ada';
+String _$adminLogoutHash() => r'581075dbca3f7720c54b47388cb1b8ffedcee6dd';
 
 @ProviderFor(adminSessionList)
 final adminSessionListProvider = AdminSessionListProvider._();
