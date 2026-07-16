@@ -478,7 +478,7 @@ final class ActiveSessionListProvider
   }
 }
 
-String _$activeSessionListHash() => r'ac3e6bd1980d6451633ce6967a78bcfff62019de';
+String _$activeSessionListHash() => r'51c274dd215bf481eeab2654a662cab4adbe33d5';
 
 final class ActiveSessionListFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<List<FacilitatorSession>>, CampId> {
@@ -597,7 +597,7 @@ final class LockedDeviceListProvider
   }
 }
 
-String _$lockedDeviceListHash() => r'29c7b066da197a453c168006e375dad846ed1c96';
+String _$lockedDeviceListHash() => r'8187c1ad5957e40e779ef3e5cd61dc1813327d60';
 
 final class LockedDeviceListFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<List<DeviceRegistration>>, CampId> {

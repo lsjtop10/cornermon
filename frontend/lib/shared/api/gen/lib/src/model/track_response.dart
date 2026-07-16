@@ -230,4 +230,3 @@ class TrackResponseStatusEnum extends EnumClass {
   static BuiltSet<TrackResponseStatusEnum> get values => _$trackResponseStatusEnumValues;
   static TrackResponseStatusEnum valueOf(String name) => _$trackResponseStatusEnumValueOf(name);
 }
-

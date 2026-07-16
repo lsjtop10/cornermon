@@ -157,4 +157,3 @@ class VisitStartRequestMethodEnum extends EnumClass {
   static BuiltSet<VisitStartRequestMethodEnum> get values => _$visitStartRequestMethodEnumValues;
   static VisitStartRequestMethodEnum valueOf(String name) => _$visitStartRequestMethodEnumValueOf(name);
 }
-

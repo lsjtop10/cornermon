@@ -1,6 +1,6 @@
 import 'package:cornermon/facilitator/features/broadcast_inbox/broadcast_inbox_screen.dart';
 import 'package:cornermon/facilitator/session/facilitator_broadcast_provider.dart';
-import 'package:cornermon/facilitator/widgets/local_time_label.dart';
+import 'package:cornermon/shared/widgets/local_time_label.dart';
 import 'package:cornermon/shared/api/domain_aliases.dart';
 import 'package:cornermon/shared/api/providers/message_providers.dart';
 import 'package:cornermon_api_gen/cornermon_api_gen.dart';

@@ -62,7 +62,8 @@ func (s *TrackService) CreateTrack(
 	if err != nil {
 		return nil, "", err
 	}
-	if camp == nil || !camp.IsActive() {
+
+	if camp == nil {
 		return nil, "", domain.ErrCampInvalidTransition
 	}
 

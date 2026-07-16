@@ -1,9 +1,11 @@
+import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:cornermon_api_gen/cornermon_api_gen.dart';
 import '../client/api_client.dart';
 import '../domain_aliases.dart';
 import '../ids.dart';
 import 'no_retry.dart';
+import '../not_implemented_exception.dart';
 
 part 'auth_device_trust_providers.g.dart';
 
@@ -64,8 +66,15 @@ Future<void> forceLogoutTrack(Ref ref, TrackId trackId) async {
 @riverpod
 Future<List<FacilitatorSession>> activeSessionList(Ref ref, CampId campId) async {
   final apiInstance = ref.watch(authDeviceTrustApiProvider);
-  final response = await apiInstance.authTrackSessionsGet(campId: campId.value);
-  return response.data?.toList() ?? [];
+  try {
+    final response = await apiInstance.authTrackSessionsGet(campId: campId.value);
+    return response.data?.toList() ?? [];
+  } on DioException catch (e) {
+    if (e.response?.statusCode == 501) {
+      throw const NotImplementedException('active-sessions');
+    }
+    rethrow;
+  }
 }
 
 @riverpod
@@ -78,8 +87,15 @@ Future<List<DeviceRegistration>> deviceRegistrationList(Ref ref) async {
 @riverpod
 Future<List<DeviceRegistration>> lockedDeviceList(Ref ref, CampId campId) async {
   final apiInstance = ref.watch(authDeviceTrustApiProvider);
-  final response = await apiInstance.deviceRegistrationsLockedGet(campId: campId.value);
-  return response.data?.toList() ?? [];
+  try {
+    final response = await apiInstance.deviceRegistrationsLockedGet(campId: campId.value);
+    return response.data?.toList() ?? [];
+  } on DioException catch (e) {
+    if (e.response?.statusCode == 501) {
+      throw const NotImplementedException('locked-devices');
+    }
+    rethrow;
+  }
 }
 
 @riverpod

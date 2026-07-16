@@ -142,4 +142,3 @@ class _$CreateCornerRequestSerializer implements PrimitiveSerializer<CreateCorne
     return result.build();
   }
 }
-
