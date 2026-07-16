@@ -24,6 +24,7 @@ SELECT * FROM corners WHERE camp_id = $1;
 SELECT
     c.id,
     c.name,
+    c.camp_id,
     c.target_minutes,
     metrics.sample_count,
     metrics.avg_duration_seconds,
@@ -58,6 +59,7 @@ SELECT
     c.id,
     c.name,
     c.target_minutes,
+    c.camp_id,
     metrics.sample_count,
     metrics.avg_duration_seconds,
     active_tracks.active_tracks
