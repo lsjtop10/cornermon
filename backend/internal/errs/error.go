@@ -102,6 +102,9 @@ func NewSlogWrappedHandler(h slog.Handler) *SlogWrappedHandler {
 }
 
 // Handle은 로그를 가로채 AppError 및 Context 정보 전처리를 수행한 뒤 원본 핸들러에 위임합니다.
+// 원본 "error" Any 속성(호출부가 AppError 추출용으로 넘긴 에러 객체, 대부분 unexported 필드만
+// 가진 에러 타입이라 그대로 출력해도 정보 가치가 낮음)은 최종 레코드에서 제거하고, 호출부가 명시적으로
+// 남긴 "error_msg" 문자열 속성만 노출한다.
 func (h *SlogWrappedHandler) Handle(ctx context.Context, r slog.Record) error {
 	var appErr *AppError
 
@@ -118,23 +121,33 @@ func (h *SlogWrappedHandler) Handle(ctx context.Context, r slog.Record) error {
 		return true
 	})
 
-	// AppError가 발견된 경우 로그 레코드 속성에 자동 주입
+	var extraAttrs []slog.Attr
 	if appErr != nil {
+		// AppError가 발견된 경우 로그 레코드 속성에 자동 주입
 		if appErr.TraceID != "" {
-			r.AddAttrs(slog.String("trace_id", appErr.TraceID))
+			extraAttrs = append(extraAttrs, slog.String("trace_id", appErr.TraceID))
 		}
-		stack := appErr.FormatStack()
-		if len(stack) > 0 {
-			r.AddAttrs(slog.Any("stack_trace", stack))
+		if stack := appErr.FormatStack(); len(stack) > 0 {
+			extraAttrs = append(extraAttrs, slog.Any("stack_trace", stack))
 		}
-	} else {
+	} else if ctx != nil {
 		// AppError는 없지만 context에 trace_id가 주입되어 있는 경우 백업 로깅
-		if ctx != nil {
-			if traceID, ok := ctx.Value(TraceIDKey).(string); ok {
-				r.AddAttrs(slog.String("trace_id", traceID))
-			}
+		if traceID, ok := ctx.Value(TraceIDKey).(string); ok {
+			extraAttrs = append(extraAttrs, slog.String("trace_id", traceID))
 		}
 	}
 
-	return h.Handler.Handle(ctx, r)
+	out := slog.NewRecord(r.Time, r.Level, r.Message, r.PC)
+	r.Attrs(func(attr slog.Attr) bool {
+		if attr.Key == "error" && attr.Value.Kind() == slog.KindAny {
+			if _, ok := attr.Value.Any().(error); ok {
+				return true // 원본 error 속성은 건너뛰고 계속 순회
+			}
+		}
+		out.AddAttrs(attr)
+		return true
+	})
+	out.AddAttrs(extraAttrs...)
+
+	return h.Handler.Handle(ctx, out)
 }

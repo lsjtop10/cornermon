@@ -61,20 +61,28 @@ func ErrorHandler() echo.HTTPErrorHandler {
 			}
 		}
 
-		if code >= 500 {
-			slog.ErrorContext(ctx, "System error occurred",
-				slog.String("method", c.Request().Method),
-				slog.String("path", c.Request().URL.Path),
-				slog.Int("status", code),
-				slog.Any("error", err),
-			)
+		var durationMsAttr slog.Attr
+		if requestStart, ok := c.Get(requestStartKey).(time.Time); ok {
+			durationMsAttr = slog.Float64("duration_ms", durationMs(time.Since(requestStart)))
 		} else {
-			slog.WarnContext(ctx, "Request warning",
-				slog.String("method", c.Request().Method),
-				slog.String("path", c.Request().URL.Path),
-				slog.Int("status", code),
-				slog.Any("error", err),
-			)
+			durationMsAttr = slog.Float64("duration_ms", 0)
+		}
+
+		commonAttrs := []any{
+			slog.String("method", c.Request().Method),
+			slog.String("path", c.Request().URL.Path),
+			slog.Int("status", code),
+			durationMsAttr,
+			slog.String("ip", c.RealIP()),
+			slog.String("user_agent", c.Request().UserAgent()),
+			slog.String("error_msg", err.Error()),
+			slog.Any("error", err), // errs.SlogWrappedHandler가 AppError/stack_trace 추출에만 사용, 최종 출력에서는 제거됨
+		}
+
+		if code >= 500 {
+			slog.ErrorContext(ctx, "System error occurred", commonAttrs...)
+		} else {
+			slog.WarnContext(ctx, "Request warning", commonAttrs...)
 		}
 
 		_ = c.JSON(code, ErrorResponse{
