@@ -27,6 +27,12 @@ class SetupWizardScreen extends ConsumerWidget {
       _ => const ReviewStep(),
     };
     return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          onPressed: () => context.go('/camps'),
+          icon: const Icon(Icons.arrow_back),
+        ),
+      ),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
