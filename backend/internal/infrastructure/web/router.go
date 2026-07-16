@@ -18,6 +18,7 @@ type Handlers struct {
 	Report          *ReportHandler
 	Audit           *AuditHandler
 	AdminManagement *AdminManagementHandler
+	Health          *HealthHandler
 }
 
 func RegisterRoutes(e *echo.Echo, h *Handlers, adminAuth AuthAdminUsecase, trackAuth AuthFacilitatorUsecase) {
@@ -25,6 +26,10 @@ func RegisterRoutes(e *echo.Echo, h *Handlers, adminAuth AuthAdminUsecase, track
 	e.HTTPErrorHandler = ErrorHandler()
 
 	v1 := e.Group("/api/v1")
+
+	if h.Health != nil {
+		v1.GET("/health", h.Health.Check)
+	}
 
 	// ── A. Auth & Device Trust ──
 	auth := v1.Group("/auth")

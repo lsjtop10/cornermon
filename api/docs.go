@@ -1960,6 +1960,26 @@ const docTemplate = `{
                 }
             }
         },
+        "/health": {
+            "get": {
+                "description": "서버가 정상적으로 응답하는지 확인한다. 인증이 필요하지 않다.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Health"
+                ],
+                "summary": "헬스체크",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/HealthResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/messages/broadcast/{id}/read": {
             "post": {
                 "security": [
@@ -3405,6 +3425,15 @@ const docTemplate = `{
                 },
                 "totalDurationSeconds": {
                     "type": "integer"
+                }
+            }
+        },
+        "HealthResponse": {
+            "type": "object",
+            "properties": {
+                "status": {
+                    "type": "string",
+                    "example": "ok"
                 }
             }
         },

@@ -132,6 +132,7 @@ func main() {
 	reportHandler := web.NewReportHandler(reportService, reportQuerier, campRepo)
 	auditHandler := web.NewAuditHandler(auditLogRepo)
 	adminManagementHandler := web.NewAdminManagementHandler(authAdminService)
+	healthHandler := web.NewHealthHandler()
 
 	handlers := &web.Handlers{
 		Auth:            authHandler,
@@ -147,6 +148,7 @@ func main() {
 		Report:          reportHandler,
 		Audit:           auditHandler,
 		AdminManagement: adminManagementHandler,
+		Health:          healthHandler,
 	}
 
 	e := echo.New()
