@@ -218,6 +218,23 @@ SELECT * FROM admins WHERE id = $1;
 -- name: GetAdminByUsername :one
 SELECT * FROM admins WHERE username = $1;
 
+-- name: SaveAdmin :exec
+INSERT INTO admins (id, username, password_hash, role)
+VALUES ($1, $2, $3, $4)
+ON CONFLICT (id) DO UPDATE SET
+    username = EXCLUDED.username,
+    password_hash = EXCLUDED.password_hash,
+    role = EXCLUDED.role;
+
+-- name: DeleteAdmin :exec
+DELETE FROM admins WHERE id = $1;
+
+-- name: CountAdmins :one
+SELECT COUNT(*) FROM admins;
+
+-- name: CountAdminsByRole :one
+SELECT COUNT(*) FROM admins WHERE role = $1;
+
 -- name: GetAdminSession :one
 SELECT * FROM admin_sessions WHERE id = $1;
 

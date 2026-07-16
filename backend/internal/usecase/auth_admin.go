@@ -136,6 +136,139 @@ func (s *AdminAuthService) ValidateAccessToken(
 	return session, nil
 }
 
+func (s *AdminAuthService) CreateAdmin(
+	ctx context.Context,
+	actorAdminID domain.AdminID,
+	username string,
+	password string,
+	role domain.AdminRole,
+) (*domain.Admin, error) {
+	if _, err := s.authorizeSystemAdmin(ctx, actorAdminID); err != nil {
+		return nil, err
+	}
+	if role != domain.AdminRoleCornerOperator {
+		if role == domain.AdminRoleSystemAdmin {
+			return nil, domain.ErrAdminForbidden
+		}
+		return nil, domain.ErrAdminInvalidRole
+	}
+	existing, err := s.admins.GetByUsername(ctx, username)
+	if err != nil {
+		return nil, err
+	}
+	if existing != nil {
+		return nil, domain.ErrAdminUsernameTaken
+	}
+	passwordHash, err := hashPassword(password)
+	if err != nil {
+		return nil, err
+	}
+	admin := &domain.Admin{
+		ID:           domain.AdminID(s.uuidFn()),
+		Username:     username,
+		PasswordHash: passwordHash,
+		Role:         role,
+	}
+	if err := s.tx.RunInTx(ctx, func(ctx context.Context) error {
+		return s.admins.Save(ctx, admin)
+	}); err != nil {
+		s.recordAuditLog(ctx, string(actorAdminID), "ADMIN_CREATE", username, false, map[string]any{"error": err.Error()})
+		return nil, err
+	}
+	s.recordAuditLog(ctx, string(actorAdminID), "ADMIN_CREATE", string(admin.ID), true, map[string]any{"role": string(role)})
+	return admin, nil
+}
+
+func (s *AdminAuthService) ChangeAdminPassword(
+	ctx context.Context,
+	actorAdminID domain.AdminID,
+	targetAdminID domain.AdminID,
+	newPassword string,
+) error {
+	if err := s.authorizeSelfOrSystemAdmin(ctx, actorAdminID, targetAdminID); err != nil {
+		return err
+	}
+	admin, err := s.admins.Get(ctx, targetAdminID)
+	if err != nil {
+		return err
+	}
+	if admin == nil {
+		return domain.ErrAdminNotFound
+	}
+	passwordHash, err := hashPassword(newPassword)
+	if err != nil {
+		return err
+	}
+	admin.PasswordHash = passwordHash
+	if err := s.tx.RunInTx(ctx, func(ctx context.Context) error {
+		return s.admins.Save(ctx, admin)
+	}); err != nil {
+		s.recordAuditLog(ctx, string(actorAdminID), "ADMIN_PASSWORD_CHANGE", string(targetAdminID), false, map[string]any{"error": err.Error()})
+		return err
+	}
+	s.recordAuditLog(ctx, string(actorAdminID), "ADMIN_PASSWORD_CHANGE", string(targetAdminID), true, map[string]any{"self": actorAdminID == targetAdminID})
+	return nil
+}
+
+func (s *AdminAuthService) DeleteAdmin(
+	ctx context.Context,
+	actorAdminID domain.AdminID,
+	targetAdminID domain.AdminID,
+) error {
+	if _, err := s.authorizeSystemAdmin(ctx, actorAdminID); err != nil {
+		return err
+	}
+	if actorAdminID == targetAdminID {
+		return domain.ErrAdminSelfDeleteForbidden
+	}
+	target, err := s.admins.Get(ctx, targetAdminID)
+	if err != nil {
+		return err
+	}
+	if target == nil {
+		return domain.ErrAdminNotFound
+	}
+	if target.IsSystemAdmin() {
+		count, err := s.admins.CountByRole(ctx, domain.AdminRoleSystemAdmin)
+		if err != nil {
+			return err
+		}
+		if count <= 1 {
+			return domain.ErrAdminLastSystemAdmin
+		}
+	}
+	if err := s.tx.RunInTx(ctx, func(ctx context.Context) error {
+		return s.admins.Delete(ctx, targetAdminID)
+	}); err != nil {
+		s.recordAuditLog(ctx, string(actorAdminID), "ADMIN_DELETE", string(targetAdminID), false, map[string]any{"error": err.Error()})
+		return err
+	}
+	s.recordAuditLog(ctx, string(actorAdminID), "ADMIN_DELETE", string(targetAdminID), true, nil)
+	return nil
+}
+
+func (s *AdminAuthService) authorizeSystemAdmin(ctx context.Context, actorAdminID domain.AdminID) (*domain.Admin, error) {
+	admin, err := s.admins.Get(ctx, actorAdminID)
+	if err != nil {
+		return nil, err
+	}
+	if admin == nil {
+		return nil, domain.ErrAdminNotFound
+	}
+	if !admin.IsSystemAdmin() {
+		return nil, domain.ErrAdminForbidden
+	}
+	return admin, nil
+}
+
+func (s *AdminAuthService) authorizeSelfOrSystemAdmin(ctx context.Context, actorAdminID, targetAdminID domain.AdminID) error {
+	if actorAdminID == targetAdminID {
+		return nil
+	}
+	_, err := s.authorizeSystemAdmin(ctx, actorAdminID)
+	return err
+}
+
 // RevokeSession - UC-17
 func (s *AdminAuthService) RevokeSession(
 	ctx context.Context,

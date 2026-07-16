@@ -119,6 +119,10 @@ type FacilitatorSessionRepository interface {
 type AdminRepository interface {
 	Get(ctx context.Context, id domain.AdminID) (*domain.Admin, error)
 	GetByUsername(ctx context.Context, username string) (*domain.Admin, error)
+	Save(ctx context.Context, admin *domain.Admin) error
+	Delete(ctx context.Context, id domain.AdminID) error
+	Count(ctx context.Context) (int, error)
+	CountByRole(ctx context.Context, role domain.AdminRole) (int, error)
 }
 
 // AdminSessionRepository는 관리자 세션 엔티티의 지속성을 담당하는 포트입니다.

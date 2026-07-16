@@ -246,6 +246,33 @@ void main() {
       );
     });
 
+    testWidgets('ShouldRenderQuietAndInactiveCardAffordances', (tester) async {
+      // arrange
+      await _pumpDashboard(
+        tester,
+        campId: CampId('camp-1'),
+        corners: [
+          _corner('corner-1', '코너 1', CornerResponseStatusEnum.IDLE),
+          _corner('corner-2', '코너 2', CornerResponseStatusEnum.INACTIVE),
+        ],
+      );
+
+      // assert
+      expect(find.textContaining('유휴'), findsOneWidget);
+      expect(find.text('✕  미가동'), findsOneWidget);
+      expect(find.text('트랙 생성'), findsOneWidget);
+      expect(
+        find.byWidgetPredicate((widget) {
+          if (widget is! Container || widget.decoration is! BoxDecoration) {
+            return false;
+          }
+          final border = (widget.decoration! as BoxDecoration).border;
+          return border is Border && border.left.color == AppColors.light.quiet;
+        }),
+        findsOneWidget,
+      );
+    });
+
     testWidgets('ShoudShowLoadingIndicatorWhenCornersAreLoading', (
       tester,
     ) async {

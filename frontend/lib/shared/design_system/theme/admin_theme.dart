@@ -14,10 +14,14 @@ class AdminTheme {
   static ThemeData _buildTheme(AppColors colors) {
     return ThemeData(
       useMaterial3: true,
-      brightness: colors == AppColors.light ? Brightness.light : Brightness.dark,
+      brightness: colors == AppColors.light
+          ? Brightness.light
+          : Brightness.dark,
       scaffoldBackgroundColor: colors.bgCanvas,
       colorScheme: ColorScheme(
-        brightness: colors == AppColors.light ? Brightness.light : Brightness.dark,
+        brightness: colors == AppColors.light
+            ? Brightness.light
+            : Brightness.dark,
         primary: colors.brandPrimary,
         onPrimary: colors.bgSurface,
         secondary: colors.textSecondary,
@@ -27,9 +31,30 @@ class AdminTheme {
         surface: colors.bgSurface,
         onSurface: colors.textPrimary,
       ),
-      dividerTheme: DividerThemeData(
-        color: colors.border,
-        thickness: 1.0,
+      dividerTheme: DividerThemeData(color: colors.border, thickness: 1.0),
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          minimumSize: const Size(44, 44),
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          minimumSize: const Size(44, 44),
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      ),
+      iconButtonTheme: IconButtonThemeData(
+        style: IconButton.styleFrom(
+          minimumSize: const Size(44, 44),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
       ),
       textTheme: TextTheme(
         displayLarge: AppTypography.display.copyWith(color: colors.textPrimary),
@@ -37,7 +62,9 @@ class AdminTheme {
         titleMedium: AppTypography.title2.copyWith(color: colors.textPrimary),
         titleSmall: AppTypography.title3.copyWith(color: colors.textPrimary),
         bodyLarge: AppTypography.body.copyWith(color: colors.textPrimary),
-        bodyMedium: AppTypography.bodyEmphasis.copyWith(color: colors.textPrimary),
+        bodyMedium: AppTypography.bodyEmphasis.copyWith(
+          color: colors.textPrimary,
+        ),
         bodySmall: AppTypography.caption.copyWith(color: colors.textSecondary),
         labelLarge: AppTypography.label.copyWith(color: colors.textPrimary),
       ),
