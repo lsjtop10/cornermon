@@ -4,7 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cornermon/admin/features/setup_wizard/setup_wizard_provider.dart';
 import 'package:cornermon/admin/features/setup_wizard/setup_wizard_state.dart';
 import 'package:cornermon/admin/features/setup_wizard/setup_wizard_templates.dart';
+import 'package:cornermon/shared/design_system/tokens/colors.dart';
 import 'package:cornermon/shared/design_system/tokens/spacing.dart';
+import 'package:cornermon/shared/design_system/tokens/typography.dart';
 import 'package:cornermon/shared/design_system/widgets/app_button.dart';
 
 class CornerTrackStep extends ConsumerStatefulWidget {
@@ -27,7 +29,7 @@ class _CornerTrackStepState extends ConsumerState<CornerTrackStep> {
     super.dispose();
   }
 
-  void _apply() {
+  void _reparse() {
     final notifier = ref.read(setupWizardProvider.notifier);
     notifier.setDefaults(
       targetMinutes: int.tryParse(_minutesController.text),
@@ -39,41 +41,19 @@ class _CornerTrackStepState extends ConsumerState<CornerTrackStep> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(setupWizardProvider);
+    final colors = Theme.of(context).brightness == Brightness.dark
+        ? AppColors.dark
+        : AppColors.light;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Text('코너 이름을 줄바꿈으로 입력하세요.'),
-        const SizedBox(height: AppSpacing.space3),
-        TextField(
-          controller: _pasteController,
-          maxLines: 3,
-          decoration: const InputDecoration(hintText: '1코너\n2코너'),
-        ),
-        const SizedBox(height: AppSpacing.space3),
-        Wrap(
-          spacing: AppSpacing.space3,
-          runSpacing: AppSpacing.space2,
+        Row(
           children: [
-            SizedBox(
-              width: 140,
-              child: TextField(
-                controller: _minutesController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: '기본 목표 시간(분)'),
+            Expanded(
+              child: Text(
+                '코너 목록 (한 줄에 하나씩)',
+                style: AppTypography.bodyEmphasis,
               ),
-            ),
-            SizedBox(
-              width: 140,
-              child: TextField(
-                controller: _trackController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: '코너당 트랙 수'),
-              ),
-            ),
-            AppButton(
-              variant: AppButtonVariant.secondary,
-              label: '입력 적용',
-              onPressed: _apply,
             ),
             AppButton(
               variant: AppButtonVariant.secondary,
@@ -87,36 +67,50 @@ class _CornerTrackStepState extends ConsumerState<CornerTrackStep> {
             ),
           ],
         ),
-        const SizedBox(height: AppSpacing.space4),
-        Expanded(
+        const SizedBox(height: AppSpacing.space3),
+        TextField(
+          controller: _pasteController,
+          maxLines: 5,
+          onChanged: (_) => _reparse(),
+          decoration: const InputDecoration(hintText: '성경 퀴즈\n보드게임 마스터\n...'),
+        ),
+        const SizedBox(height: AppSpacing.space3),
+        Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: _minutesController,
+                keyboardType: TextInputType.number,
+                onChanged: (_) => _reparse(),
+                decoration: const InputDecoration(labelText: '기본 목표시간(분)'),
+              ),
+            ),
+            const SizedBox(width: AppSpacing.space3),
+            Expanded(
+              child: TextField(
+                controller: _trackController,
+                keyboardType: TextInputType.number,
+                onChanged: (_) => _reparse(),
+                decoration: const InputDecoration(labelText: '코너당 기본 트랙 수'),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.space3),
+        Text(
+          '코너별로 다르게 조정하고 싶으면 아래 목록에서 개별 수정하세요. 트랙마다 PIN은 자동 발급됩니다.',
+          style: AppTypography.caption.copyWith(color: colors.textSecondary),
+        ),
+        const SizedBox(height: AppSpacing.space3),
+        SizedBox(
+          height: 220,
           child: state.corners.isEmpty
               ? const Center(child: Text('붙여넣거나 예시 템플릿을 사용하세요'))
               : ListView.builder(
-                  padding: const EdgeInsets.only(top: AppSpacing.space2),
                   itemCount: state.corners.length,
                   itemBuilder: (context, index) =>
                       _CornerRow(index: index, row: state.corners[index]),
                 ),
-        ),
-        const Divider(),
-        const SizedBox(height: AppSpacing.space3),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            AppButton(
-              variant: AppButtonVariant.secondary,
-              label: '이전',
-              onPressed: () =>
-                  ref.read(setupWizardProvider.notifier).goToStep(0),
-            ),
-            AppButton(
-              variant: AppButtonVariant.primary,
-              label: '다음',
-              onPressed: () => ref
-                  .read(setupWizardProvider.notifier)
-                  .tryAdvanceFromCornerStep(),
-            ),
-          ],
         ),
       ],
     );
