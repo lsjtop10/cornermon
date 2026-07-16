@@ -54,7 +54,7 @@ final class CampApiProvider
   }
 }
 
-String _$campApiHash() => r'65ecb5f892b27813d989fb747515363de2027955';
+String _$campApiHash() => r'da566b484cc615fa8a649ca24939cf6d58a6ae6b';
 
 @ProviderFor(campList)
 final campListProvider = CampListProvider._();
@@ -171,7 +171,7 @@ final class CreateCampProvider
     with $FutureModifier<Camp>, $FutureProvider<Camp> {
   CreateCampProvider._({
     required CreateCampFamily super.from,
-    required String super.argument,
+    required (String, {DateTime startAt, DateTime endAt}) super.argument,
   }) : super(
          retry: null,
          name: r'createCampProvider',
@@ -187,7 +187,7 @@ final class CreateCampProvider
   String toString() {
     return r'createCampProvider'
         ''
-        '($argument)';
+        '$argument';
   }
 
   @$internal
@@ -197,8 +197,14 @@ final class CreateCampProvider
 
   @override
   FutureOr<Camp> create(Ref ref) {
-    final argument = this.argument as String;
-    return createCamp(ref, argument);
+    final argument =
+        this.argument as (String, {DateTime startAt, DateTime endAt});
+    return createCamp(
+      ref,
+      argument.$1,
+      startAt: argument.startAt,
+      endAt: argument.endAt,
+    );
   }
 
   @override
@@ -212,10 +218,14 @@ final class CreateCampProvider
   }
 }
 
-String _$createCampHash() => r'ac6b77f9194aa83923717dcdebb93e4a2cf9d45e';
+String _$createCampHash() => r'0a7e551d2f1cf3a5cb2ce81895876b8de7e4e354';
 
 final class CreateCampFamily extends $Family
-    with $FunctionalFamilyOverride<FutureOr<Camp>, String> {
+    with
+        $FunctionalFamilyOverride<
+          FutureOr<Camp>,
+          (String, {DateTime startAt, DateTime endAt})
+        > {
   CreateCampFamily._()
     : super(
         retry: null,
@@ -225,8 +235,14 @@ final class CreateCampFamily extends $Family
         isAutoDispose: true,
       );
 
-  CreateCampProvider call(String name) =>
-      CreateCampProvider._(argument: name, from: this);
+  CreateCampProvider call(
+    String name, {
+    required DateTime startAt,
+    required DateTime endAt,
+  }) => CreateCampProvider._(
+    argument: (name, startAt: startAt, endAt: endAt),
+    from: this,
+  );
 
   @override
   String toString() => r'createCampProvider';

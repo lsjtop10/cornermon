@@ -1,4 +1,3 @@
-// @dart=2.18
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
 part of 'create_camp_request.dart';
@@ -9,13 +8,17 @@ part of 'create_camp_request.dart';
 
 class _$CreateCampRequest extends CreateCampRequest {
   @override
+  final DateTime? endAt;
+  @override
   final String? name;
+  @override
+  final DateTime? startAt;
 
   factory _$CreateCampRequest(
           [void Function(CreateCampRequestBuilder)? updates]) =>
       (CreateCampRequestBuilder()..update(updates))._build();
 
-  _$CreateCampRequest._({this.name}) : super._();
+  _$CreateCampRequest._({this.endAt, this.name, this.startAt}) : super._();
   @override
   CreateCampRequest rebuild(void Function(CreateCampRequestBuilder) updates) =>
       (toBuilder()..update(updates)).build();
@@ -27,13 +30,18 @@ class _$CreateCampRequest extends CreateCampRequest {
   @override
   bool operator ==(Object other) {
     if (identical(other, this)) return true;
-    return other is CreateCampRequest && name == other.name;
+    return other is CreateCampRequest &&
+        endAt == other.endAt &&
+        name == other.name &&
+        startAt == other.startAt;
   }
 
   @override
   int get hashCode {
     var _$hash = 0;
+    _$hash = $jc(_$hash, endAt.hashCode);
     _$hash = $jc(_$hash, name.hashCode);
+    _$hash = $jc(_$hash, startAt.hashCode);
     _$hash = $jf(_$hash);
     return _$hash;
   }
@@ -41,7 +49,9 @@ class _$CreateCampRequest extends CreateCampRequest {
   @override
   String toString() {
     return (newBuiltValueToStringHelper(r'CreateCampRequest')
-          ..add('name', name))
+          ..add('endAt', endAt)
+          ..add('name', name)
+          ..add('startAt', startAt))
         .toString();
   }
 }
@@ -50,9 +60,17 @@ class CreateCampRequestBuilder
     implements Builder<CreateCampRequest, CreateCampRequestBuilder> {
   _$CreateCampRequest? _$v;
 
+  DateTime? _endAt;
+  DateTime? get endAt => _$this._endAt;
+  set endAt(DateTime? endAt) => _$this._endAt = endAt;
+
   String? _name;
   String? get name => _$this._name;
   set name(String? name) => _$this._name = name;
+
+  DateTime? _startAt;
+  DateTime? get startAt => _$this._startAt;
+  set startAt(DateTime? startAt) => _$this._startAt = startAt;
 
   CreateCampRequestBuilder() {
     CreateCampRequest._defaults(this);
@@ -61,7 +79,9 @@ class CreateCampRequestBuilder
   CreateCampRequestBuilder get _$this {
     final $v = _$v;
     if ($v != null) {
+      _endAt = $v.endAt;
       _name = $v.name;
+      _startAt = $v.startAt;
       _$v = null;
     }
     return this;
@@ -83,7 +103,9 @@ class CreateCampRequestBuilder
   _$CreateCampRequest _build() {
     final _$result = _$v ??
         _$CreateCampRequest._(
+          endAt: endAt,
           name: name,
+          startAt: startAt,
         );
     replace(_$result);
     return _$result;
