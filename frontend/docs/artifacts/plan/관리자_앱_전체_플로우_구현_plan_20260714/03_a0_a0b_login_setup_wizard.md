@@ -336,24 +336,24 @@ frontend/lib/admin/features/
 ## 5. 검증 체크리스트
 
 ### 5.1 A0 로그인
-- [ ] 올바른 ID/비밀번호로 `login()` 성공 시 `adminSessionProvider` 상태가 `AdminSessionAuthenticated`로 바뀐다(unit 테스트, fake `authAdminProviders` 사용)
-- [ ] 401 응답 시 `loginErrorProvider`가 `AdminLoginInvalidCredentials`로 바뀌고, 화면에 "ID 또는 비밀번호가 올바르지 않습니다" 인라인 에러가 렌더링된다(위젯 테스트)
-- [ ] 500 등 401 외 오류는 `AdminLoginServerError`로 구분 매핑된다(unit 테스트)
-- [ ] 제출 중(`_isSubmitting == true`) "로그인" 버튼이 비활성화되고 로딩 인디케이터가 보인다(위젯 테스트)
-- [ ] 로그인 성공 후 `campListProvider`가 빈 배열이면 `/setup-wizard`로, 1개 이상이면 `/camps`로 이동한다 — **이 검증은 `adminRouterProvider`(02) 대상 테스트에 포함**되며, 이 화면 자체는 `context.go`를 호출하지 않는다는 사실만 코드 리뷰로 확인
-- [ ] 로그아웃 상태에서 `/dashboard` 등 보호된 라우트로 직접 진입 시 `/login`으로 리다이렉트된다(02 검증 항목과 중복 확인 — 회귀 방지)
+- [x] 올바른 ID/비밀번호로 `login()` 성공 시 `adminSessionProvider` 상태가 `AdminSessionAuthenticated`로 바뀐다(unit 테스트, fake `authAdminProviders` 사용)
+- [x] 401 응답 시 `loginErrorProvider`가 `AdminLoginInvalidCredentials`로 바뀌고, 화면에 "ID 또는 비밀번호가 올바르지 않습니다" 인라인 에러가 렌더링된다(위젯 테스트)
+- [x] 500 등 401 외 오류는 `AdminLoginServerError`로 구분 매핑된다(unit 테스트)
+- [x] 제출 중(`_isSubmitting == true`) "로그인" 버튼이 비활성화되고 로딩 인디케이터가 보인다(위젯 테스트)
+- [x] 로그인 성공 후 `campListProvider`가 빈 배열이면 `/setup-wizard`로, 1개 이상이면 `/camps`로 이동한다 — **이 검증은 `adminRouterProvider`(02) 대상 테스트에 포함**되며, 이 화면 자체는 `context.go`를 호출하지 않는다는 사실만 코드 리뷰로 확인
+- [x] 로그아웃 상태에서 `/dashboard` 등 보호된 라우트로 직접 진입 시 `/login`으로 리다이렉트된다(02 검증 항목과 중복 확인 — 회귀 방지)
 - [ ] 실기기(`flutter run -t lib/main_admin.dart --flavor admin`)에서 잘못된 비밀번호 1회, 올바른 비밀번호 1회 순서로 입력해 에러 텍스트가 사라지고 다음 화면으로 넘어가는지 수동 확인
 
 ### 5.2 A0-b 초기 설정 마법사
-- [ ] 1단계에서 캠프 이름을 비운 채 "다음"을 누르면 버튼이 비활성화 상태라 진행 자체가 안 된다(위젯 테스트)
-- [ ] 2단계에서 10줄 텍스트를 붙여넣고 "적용"하면 `corners.length == 10`이고 각 행의 `targetMinutes`/`trackCount`가 그 시점의 기본값으로 채워진다(unit 테스트, `SetupWizard.parseCornerNames`)
-- [ ] "예시 10개로 빠르게 시작" 클릭 시 텍스트 영역이 `kSetupWizardExampleCornerNames`로 채워지고 미리보기 표가 즉시 갱신된다(위젯 테스트)
+- [x] 1단계에서 캠프 이름을 비운 채 "다음"을 누르면 버튼이 비활성화 상태라 진행 자체가 안 된다(위젯 테스트)
+- [x] 2단계에서 10줄 텍스트를 붙여넣고 "적용"하면 `corners.length == 10`이고 각 행의 `targetMinutes`/`trackCount`가 그 시점의 기본값으로 채워진다(unit 테스트, `SetupWizard.parseCornerNames`)
+- [x] "예시 10개로 빠르게 시작" 클릭 시 텍스트 영역이 `kSetupWizardExampleCornerNames`로 채워지고 미리보기 표가 즉시 갱신된다(위젯 테스트)
 - [ ] 코너 0개 상태에서도 "다음"으로 3단계에 진입하고, 캠프만 생성한 뒤 코너·트랙 관리 화면으로 이동한다(위젯/통합 테스트)
-- [ ] 미리보기 표에서 개별 행의 이름/목표시간/트랙 수를 수정하면 해당 인덱스의 `SetupWizardCornerRow`만 갱신되고 나머지는 그대로다(unit 테스트, `updateCornerRow`)
-- [ ] 행 삭제 버튼이 해당 인덱스만 제거한다(unit 테스트, `removeCornerRow`)
-- [ ] 3단계 "설정 완료"를 눌렀을 때 `createCamp` → (기간 입력 시)`updateCamp` → 코너별 `createCorner`+`createTracksForCorner` 순서로 호출된다(unit 테스트, mock provider 호출 순서 검증 — `verifyInOrder` 류)
-- [ ] 코너 3개 중 2번째에서 `createCorner`가 실패하도록 mock했을 때, 1번째/3번째는 `created`, 2번째만 `failed` 상태로 남고 `submit()`이 `false`를 반환한다(unit 테스트, §0 부분 실패 시나리오)
-- [ ] 위 실패 상태에서 "재시도" 시 이미 `created`인 행에 대해서는 `createCorner`가 다시 호출되지 않는다(unit 테스트 — 중복 생성 방지 가드 확인)
+- [x] 미리보기 표에서 개별 행의 이름/목표시간/트랙 수를 수정하면 해당 인덱스의 `SetupWizardCornerRow`만 갱신되고 나머지는 그대로다(unit 테스트, `updateCornerRow`)
+- [x] 행 삭제 버튼이 해당 인덱스만 제거한다(unit 테스트, `removeCornerRow`)
+- [x] 3단계 "설정 완료"를 눌렀을 때 `createCamp` → (기간 입력 시)`updateCamp` → 코너별 `createCorner`+`createTracksForCorner` 순서로 호출된다(unit 테스트, mock provider 호출 순서 검증 — `verifyInOrder` 류)
+- [x] 코너 3개 중 2번째에서 `createCorner`가 실패하도록 mock했을 때, 1번째/3번째는 `created`, 2번째만 `failed` 상태로 남고 `submit()`이 `false`를 반환한다(unit 테스트, §0 부분 실패 시나리오)
+- [x] 위 실패 상태에서 "재시도" 시 이미 `created`인 행에 대해서는 `createCorner`가 다시 호출되지 않는다(unit 테스트 — 중복 생성 방지 가드 확인)
 - [ ] 전체 성공 시 `selectedCampIdProvider`가 새로 생성된 `createdCampId`로 세팅되고, 화면이 `/corner-track-manage`로 이동한다(위젯/통합 테스트)
 - [ ] 실기기에서 코너 10개(예시 템플릿) + 코너당 트랙 1개로 마법사를 끝까지 진행해 새 캠프가 "준비 중" 배지로 캠프 목록에 나타나고, 곧장 그 캠프의 준비 모드(A2B)로 진입하는지 수동 확인(scenarios.md Feature 2-d "코너 이름 붙여넣기로 일괄 생성" 시나리오 전체 재현)
 - [ ] 이미 캠프가 1개 이상 있는 계정으로 로그인하면 이 화면 자체에 도달하지 않고 곧장 `/camps`로 이동한다(수동 확인, scenarios.md "이미 캠프가 설정돼 있으면 마법사를 건너뛴다")

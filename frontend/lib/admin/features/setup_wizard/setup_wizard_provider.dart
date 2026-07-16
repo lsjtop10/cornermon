@@ -137,13 +137,13 @@ class SetupWizard extends _$SetupWizard {
             row.copyWith(createdCornerId: cornerId, clearErrorMessage: true),
           );
         }
-        await ref.read(
-          createTracksForCornerProvider(
-            campId,
-            cornerId,
-            row.trackCount,
-          ).future,
+        final tracksProvider = createTracksForCornerProvider(
+          campId,
+          cornerId,
+          row.trackCount,
         );
+        ref.invalidate(tracksProvider);
+        await ref.read(tracksProvider.future);
         _replaceRow(
           index,
           row.copyWith(
@@ -184,9 +184,9 @@ class SetupWizard extends _$SetupWizard {
     CampId campId,
     SetupWizardCornerRow row,
   ) async {
-    final corner = await ref.read(
-      createCornerProvider(campId, row.name, row.targetMinutes).future,
-    );
+    final provider = createCornerProvider(campId, row.name, row.targetMinutes);
+    ref.invalidate(provider);
+    final corner = await ref.read(provider.future);
     final id = corner.id;
     if (id == null) throw StateError('생성된 코너 ID가 없습니다.');
     return CornerId(id);
