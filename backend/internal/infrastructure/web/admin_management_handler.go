@@ -39,6 +39,7 @@ type AdminResponse struct {
 } // @name AdminResponse
 
 // @Summary      관리자 생성
+// @Description  SYSTEM_ADMIN만 호출할 수 있습니다. 역할은 SYSTEM_ADMIN 또는 CORNER_OPERATOR만 허용하며, 동일한 username은 생성할 수 없습니다.
 // @Tags         A. Auth & Device Trust
 // @Security     AdminAuth
 // @Accept       json
@@ -64,6 +65,7 @@ func (h *AdminManagementHandler) CreateAdmin(c echo.Context) error {
 }
 
 // @Summary      관리자 비밀번호 변경
+// @Description  대상 관리자 본인 또는 SYSTEM_ADMIN만 호출할 수 있습니다. 비밀번호 변경은 기존 세션을 즉시 무효화하지 않으며, 현재 access token은 기존 TTL까지 유효합니다.
 // @Tags         A. Auth & Device Trust
 // @Security     AdminAuth
 // @Accept       json
@@ -88,6 +90,7 @@ func (h *AdminManagementHandler) ChangeAdminPassword(c echo.Context) error {
 }
 
 // @Summary      관리자 삭제
+// @Description  SYSTEM_ADMIN만 호출할 수 있습니다. 자기 자신은 삭제할 수 없으므로 마지막 SYSTEM_ADMIN 삭제 요청은 성립하지 않습니다. 삭제 시 admin_sessions는 DB foreign key cascade로 함께 제거됩니다.
 // @Tags         A. Auth & Device Trust
 // @Security     AdminAuth
 // @Param        id path string true "관리자 ID"
