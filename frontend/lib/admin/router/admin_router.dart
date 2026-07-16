@@ -7,11 +7,16 @@ import 'package:cornermon/admin/features/login/login_screen.dart';
 import 'package:cornermon/admin/features/camp_list/camp_list_screen.dart';
 import 'package:cornermon/admin/features/badge_precreate/badge_precreate_screen.dart';
 import 'package:cornermon/admin/features/dashboard/dashboard_screen.dart';
+import 'package:cornermon/admin/features/corner_detail/corner_detail_screen.dart';
+import 'package:cornermon/admin/features/track_bulk_manage/track_bulk_manage_screen.dart';
+import 'package:cornermon/admin/features/group_list/group_list_screen.dart';
+import 'package:cornermon/admin/features/group_detail/group_detail_screen.dart';
 import 'package:cornermon/admin/features/setup_wizard/setup_wizard_screen.dart';
 import 'package:cornermon/admin/session/admin_session_provider.dart';
 import 'package:cornermon/admin/session/selected_camp_provider.dart';
 import 'package:cornermon/admin/widgets/admin_scaffold.dart';
 import 'package:cornermon/shared/api/domain_aliases.dart';
+import 'package:cornermon/shared/api/ids.dart';
 import 'package:cornermon/shared/api/providers/camp_providers.dart';
 
 const _campIndependentLocations = {
@@ -47,10 +52,30 @@ final adminRouterProvider = Provider<GoRouter>((ref) {
         path: '/dashboard',
         builder: (_, _) => const AdminScaffold(body: DashboardScreen()),
       ),
-      _screenRoute('/corners/:cornerId', 'A2 코너 상세'),
-      _screenRoute('/corner-track-manage', 'A2B 코너·트랙 관리'),
-      _screenRoute('/groups', 'A5 조 현황'),
-      _screenRoute('/groups/:groupId', 'A6 조 상세'),
+      GoRoute(
+        path: '/dashboard/corners/:cornerId',
+        builder: (_, state) => AdminScaffold(
+          body: CornerDetailScreen(
+            cornerId: CornerId(state.pathParameters['cornerId']!),
+          ),
+        ),
+      ),
+      GoRoute(
+        path: '/corner-track-manage',
+        builder: (_, _) => const AdminScaffold(body: TrackBulkManageScreen()),
+      ),
+      GoRoute(
+        path: '/groups',
+        builder: (_, _) => const AdminScaffold(body: GroupListScreen()),
+      ),
+      GoRoute(
+        path: '/groups/:groupId',
+        builder: (_, state) => AdminScaffold(
+          body: GroupDetailScreen(
+            groupId: GroupId(state.pathParameters['groupId']!),
+          ),
+        ),
+      ),
       _screenRoute('/devices', 'A8 기기 관리'),
       _screenRoute('/sessions', 'A9 세션 관리'),
       _screenRoute('/messages/broadcast', 'A10 공지 메시지'),
@@ -92,8 +117,7 @@ String? _redirect(Ref ref, String location) {
   return switch (camp!.status!) {
     CampStatus.PENDING =>
       _preparingLocations.contains(location) ? null : '/corner-track-manage',
-    CampStatus.ACTIVE =>
-      _preparingLocations.contains(location) ? '/dashboard' : null,
+    CampStatus.ACTIVE => null,
     CampStatus.ENDED => location == '/report' ? null : '/report',
     _ => '/camps',
   };

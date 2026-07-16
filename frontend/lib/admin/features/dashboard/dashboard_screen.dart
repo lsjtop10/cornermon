@@ -183,7 +183,8 @@ class DashboardScreen extends ConsumerWidget {
                     for (final entry in visible)
                       CornerStatusCard(
                         entry: entry,
-                        onTap: () => context.go('/corners/${entry.corner.id}'),
+                        onTap: () =>
+                            context.go('/dashboard/corners/${entry.corner.id}'),
                       ),
                   ],
                 );

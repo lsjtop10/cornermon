@@ -1,5 +1,7 @@
 # Phase 07 — A5 조 현황 목록 / A6 조 상세(순회표)
 
+> 구현 상태: 완료 (`feat/admin-corner-track-group-status`, 2026-07-16)
+
 > 선행조건: `01_api_codegen_sync.md`(`groupList(ref, campId)`/`groupDetail`/`groupVisits`/`badgeList`/`registerBadge`/`scanRegisterBadge` provider 확정), `02_admin_skeleton_router_sidebar.md`(`/groups`, `/groups/:groupId` 라우트 + `selectedCampIdProvider`).
 > 대상 독자: 1~2년차 프론트엔드 개발자 1명, 예상 소요 6~8시간(모달 API 비대칭 확인 회의 시간 별도).
 > 근거: `docs/front/screen-spec-admin.md` A5/A6, `docs/front/scenarios.md` Feature 2-h(조 등록) + Feature 1 Background/마지막 시나리오(방문 이력 맥락).
@@ -264,3 +266,11 @@ extension AdminGroupX on api.Group {
 - [ ] `group_ext.dart`의 `isFinished` getter가 삭제되고, 모든 호출부가 `api.Group.isFinished`(서버 필드)를 직접 참조한다(`grep -rn "\.isFinished" frontend/lib/admin`으로 getter 정의가 아닌 필드 접근만 남았는지 확인)
 - [ ] `flutter analyze`가 `frontend/lib/admin/features/group_list/**`, `frontend/lib/admin/features/group_detail/**` 범위에서 0 에러
 - [ ] `flutter run -t lib/main_admin.dart --flavor admin`으로 ACTIVE 캠프 진입 → A5 → "+ 조 등록"(목록 탭) → A6 진입까지 1회 실기기 수동 구동
+
+## 구현·검증 결과 (2026-07-16)
+
+- A5: 서버 `isFinished` 필드 기반 필터/정렬, pull-to-refresh, 카메라 QR와 미배정 배지 목록을 동일한 `scanRegisterBadge` 등록 흐름으로 연결했다.
+- A6: 순회표 상태 아이콘, 서버 완료 상태, 시간순 방문 이력과 코너명/트랙 번호 조립을 구현했고 A7 예외 승인 UI를 추가하지 않았다.
+- 디자인 시스템: 상태 필터 칩, `SegmentedButton`, `DataTable`, 표준 아이콘과 기존 색상/확인 패턴을 사용하도록 코드 리뷰했다.
+- 자동 검증: `flutter analyze lib/admin test/admin`을 통과했고, A6 범위에 예외 승인 기능 및 단건 트랙 삭제 provider 호출이 없는 것을 검색으로 확인했다.
+- 제외: 사용자 요청에 따라 실기기 수동 구동과 통합 테스트는 수행하지 않는다.

@@ -1,5 +1,7 @@
 # Phase 06 — A2 코너 상세 / A2B 트랙 일괄 관리 / A3 트랙 교체 / A4 PIN 전체 내보내기
 
+> 구현 상태: 완료 (`feat/admin-corner-track-group-status`, 2026-07-16)
+
 > 선행조건: `01_api_codegen_sync.md`(특히 `corner_track_providers.dart`의 `cornerList`/`cornerDetail`/`bulkUpdateCorners`/`deleteCorner`/`trackList`/`createTracks`/`deleteTrack`/`bulkDeleteTracks`/`replaceTrack`/`regeneratePin`/`exportAllTracksCsv`/`exportTrackPdf`), `02_admin_skeleton_router_sidebar.md`(라우트 `/dashboard/corners/:cornerId`, `/corner-track-manage`, `selectedCampIdProvider`, `AdminSidebar`). 대상 독자: 1~2년차 프론트엔드 개발자 1명, 예상 소요 10~14시간(이 그룹이 트랙 관리 시나리오 20개를 전부 담당하는 가장 밀도 높은 화면군).
 > 목적: 코너 하나의 트랙을 다루는 A2, 캠프 전체 트랙을 다루는 A2B, 그 안에 내장된 모달(A3)과 버튼(A4)까지 4개 화면 단위를 구현한다. **A3와 A4는 별도 라우트/파일이 아니다** — A3는 A2에 내장된 모달 위젯, A4는 A2B 상단에 내장된 버튼+토스트+이력 컴포넌트다. `02`의 라우트 표에도 이 두 개는 등록돼 있지 않다.
 
@@ -7,7 +9,7 @@
 
 1. **단건 코너 수정 = `PUT /corners/bulk-update`를 1건 배열로.** `PATCH /corners/{id}`는 계약에 없다(`00_overview.md` §2.2). A2의 인라인 이름/목표시간 편집은 `bulkUpdateCorners(ref, [CornerUpdateInput(id: corner.id, name: ..., targetMinutes: ...)])`를 호출한다. A2B의 일괄 목표시간 변경도 동일 엔드포인트를 N건 배열로 호출한다.
 2. **`DELETE /tracks/{id}` 단건 엔드포인트가 계약에 없다.** `api/swagger.yaml`의 `/tracks/{id}`에는 `get`만 있고 `delete`가 없다 — 트랙 삭제는 `DELETE /tracks/bulk-delete`(`BulkDeleteTracksRequest.trackIds`) 하나뿐이다. **확인 필요**: `01_api_codegen_sync.md` §2.2에는 `deleteTrack(Ref ref, TrackId id); // DELETE /tracks/{id}`가 나열돼 있지만 실제 계약과 불일치한다 — 이 Phase에서는 `01`의 그 시그니처를 오류로 간주하고, **A2 트랙 행의 단건 "삭제"도 `bulkDeleteTracks(ref, [trackId])` 1건 배열 호출로 구현한다**(코너 단건 수정과 동일한 패턴). `01` 구현자가 `deleteTrack`을 이미 만들었다면 이 Phase에서 `bulkDeleteTracks` 1건 호출로 대체하고 `deleteTrack` provider는 사용하지 않는다.
-3. **PIN 내보내기 포맷이 단건/전체 다르다.** `GET /tracks/{id}/export` → `application/pdf`(A2 트랙 행), `GET /tracks/export` → `text/csv`(A2B/A4). 공용 "내보내기" 위젯을 만들 때 MIME 타입과 파일 확장자를 하드코딩하지 말 것.
+3. **PIN 내보내기 응답은 JSON이다.** `GET /tracks/{id}/export`는 단건 PIN을 반환하므로 A2는 PIN 확인 팝업과 복사 버튼을 제공한다. `GET /tracks/export`는 전체 PIN 목록을 반환하므로 A2B는 클라이언트에서 CSV를 생성하고 `share_plus`로 공유한다. `printing`은 PDF 전용이므로 CSV 공유에 사용하지 않는다.
 4. **`campId`는 `selectedCampIdProvider`에서 얻는다.** URL param으로 다시 파싱하지 않는다(`02` §2.3).
 5. **코너의 `status`(`INACTIVE`/`IDLE`/`BUSY`)와 트랙의 `operationalStatus`(`IDLE`/`BUSY`)는 다른 필드다.** A2B 상태 필터는 트랙의 `operationalStatus`를 기준으로 한다(코너 단위 상태가 아님).
 6. **트랙 `status`(`ACTIVE`/`DELETED`)는 소프트 삭제 마커다.** `trackList`/`cornerList` 응답에 `DELETED` 트랙이 섞여 내려오는지는 `01` 구현 확인 필요 — 이 Phase는 **클라이언트에서 `status == ACTIVE`인 트랙만 화면에 노출**한다고 가정한다(스펙에 명시된 필터링 규칙 없음, `00_overview.md` §2.7 "서버사이드 필터 없음"과 일관되게 클라이언트에서 거른다).
@@ -108,13 +110,13 @@ class TrackTable extends ConsumerWidget {
   const TrackTable({required this.corner, required this.tracks, required this.campId, super.key});
   final Corner corner;
   final List<Track> tracks; // corner에 속한 ACTIVE 트랙만(§2.2 forCorner)
-  // 컬럼: 트랙 번호(trackNo) | 상태(operationalStatus, StatusBadge 재사용) | 현재 조(currentVisit?.groupName류 — VisitSummaryResponse 필드 확인 후 매핑) | PIN(마스킹, "••••••" + 우측 "표시" 토글 아이콘) | 액션(PIN 내보내기/교체/삭제/PIN 재발급)
+// 컬럼: 트랙 번호(trackNo) | 상태(operationalStatus, StatusBadge 재사용) | 현재 조(currentVisit?.groupName류 — VisitSummaryResponse 필드 확인 후 매핑) | PIN(마스킹, "••••••" + 우측 "표시" 토글 아이콘) | 액션(PIN 보기/교체/삭제/PIN 재발급)
 }
 ```
 
 행 액션 시그니처:
 ```dart
-Future<void> _exportPinPdf(WidgetRef ref, Track track); // exportTrackPdf(ref, track.id) → bytes → printing/share_plus로 저장(§2.6 참고 패키지) → 토스트
+Future<void> _showPin(BuildContext context, WidgetRef ref, Track track); // exportTrackPdf(ref, track.id) → TrackPinResponse.pin을 팝업으로 표시하고 Clipboard 복사
 Future<void> _openReplaceModal(BuildContext context, WidgetRef ref, Corner corner, Track track, String campId); // §2.5 ReplaceTrackModal 오픈
 Future<void> _deleteTrack(BuildContext context, WidgetRef ref, Corner corner, Track track, String campId);
   // 1. track.operationalStatus == BUSY → showConfirmModal(kind: hardBlock, title: "진행 중인 방문이 있어 삭제할 수 없습니다") 표시 후 return(호출 전 로컬 상태로 판단 가능하지만, 레이스 대비 서버 409 응답도 동일 문구로 폴백 처리)
@@ -237,13 +239,13 @@ class TrackBulkTable extends StatelessWidget {
 // 행: Checkbox + 셀들, PIN 컬럼은 TrackTable과 동일한 마스킹/토글 패턴 재사용(공용 위젯으로 뽑아도 됨: shared/design_system/widgets/masked_pin_text.dart 신규 — 선택사항, 중복이 2곳뿐이라 굳이 안 뽑아도 무방)
 ```
 
-### 2.7 A4 — 전체 PIN 내보내기 (A2B 상단에 내장)
+### 2.7 A4 — 전체 PIN CSV 다운로드 (A2B 상단에 내장)
 
 ```dart
 // track_bulk_action_bar.dart 내부 위젯 조각(별도 파일로 안 뺌)
 Future<void> _exportAllCsv(BuildContext context, WidgetRef ref, String campId, ValueNotifier<List<ExportHistoryEntry>> history) async {
-  final bytes = await ref.read(exportAllTracksCsvProvider(campId).future); // List<int>, text/csv
-  // path_provider + 파일 저장 또는 share_plus 공유 시트(§2.6 A2 PDF와 동일 패키지 선택 기준 — 구현 착수 시 pubspec에 이미 있는지 확인, 없으면 04_a0c_a0d_a0e에서 pdf/printing 추가할 때 함께 검토)
+  final response = await ref.read(exportAllTracksCsvProvider(campId).future); // ExportTracksResponse JSON
+  // response.tracks에서 UTF-8 CSV를 생성한 뒤 share_plus의 XFile.fromData(..., mimeType: 'text/csv')로 공유한다.
   history.value = [
     ExportHistoryEntry(exportedAt: DateTime.now(), adminName: ref.read(adminSessionProvider).let((s) => s is AdminSessionAuthenticated ? s.adminId : '')),
     ...history.value,
@@ -287,7 +289,7 @@ class ExportHistoryEntry {
 - [ ] "트랙 추가" 탭 시 `POST /corners/{cornerId}/tracks`(count=1)가 호출되고 목록에 새 트랙이 나타난다
 - [ ] BUSY 트랙의 "삭제" 탭 시 하드 블록 모달("진행 중인 방문이 있어 삭제할 수 없습니다")이 뜨고 바깥 탭으로 닫히지 않으며, 삭제 API가 호출되지 않는다
 - [ ] 코너의 마지막 IDLE 트랙 삭제 시 소프트 확인 모달이 뜨고, "취소" 시 삭제되지 않으며 "진행" 시 `bulkDeleteTracks(trackIds: [해당 id])` 1건 배열로 호출된다
-- [ ] 트랙 행 "PIN 내보내기" 탭 시 `GET /tracks/{id}/export`가 호출되고 PDF 바이트가 저장/공유된다(CSV 아님)
+- [ ] 트랙 행 "PIN 보기" 탭 시 `GET /tracks/{id}/export`가 호출되고 PIN 팝업과 복사 버튼이 표시된다
 - [ ] "교체" 탭 시 A3 모달이 뜬다(§4.3)
 - [ ] "PIN 재발급" 탭 후 확인 시 `regeneratePin` 호출, 이후 트랙 목록에 새 PIN이 반영된다
 
@@ -299,7 +301,7 @@ class ExportHistoryEntry {
 - [ ] 선택된 3개 트랙 중 1개라도 BUSY면 "선택 삭제" 버튼이 비활성 상태이고 경고 문구가 보이며, 버튼을 강제로 눌러도(비활성이므로 불가) 아무 요청도 발생하지 않는다
 - [ ] 선택된 트랙이 모두 IDLE이면 "선택 삭제" 활성화, 소프트 확인 후 `bulkDeleteTracks`가 호출되고 성공 시 selectedIds가 비워진다
 - [ ] 코너/트랙번호/상태 컬럼 헤더 클릭 시 오름차순→내림차순 토글되고 아이콘이 바뀐다
-- [ ] "전체 PIN 내보내기" 탭 시 `GET /tracks/export`(CSV)가 호출되고, 성공 후 이력 리스트 최상단에 방금 내보낸 시각+관리자명이 추가된다(화면을 벗어났다 재진입하면 이력이 초기화되는 것은 알려진 한계로 허용)
+- [ ] "전체 PIN CSV 다운로드" 탭 시 `GET /tracks/export` JSON 응답에서 CSV를 생성해 공유하고, 성공 후 이력 리스트 최상단에 방금 내보낸 시각+관리자명이 추가된다(화면을 벗어났다 재진입하면 이력이 초기화되는 것은 알려진 한계로 허용)
 
 ### 4.3 A3 트랙 교체 (A2 내 모달)
 - [ ] BUSY 트랙의 "교체" 탭 시 A3 모달을 열지 않고(또는 열되 즉시) 하드 블록 모달이 뜬다 — "진행 중인 방문이 완료된 후 다시 시도하세요"
@@ -313,4 +315,13 @@ class ExportHistoryEntry {
 - [ ] 단건 코너 수정(A2)과 일괄 코너 수정(A2B)이 동일한 `bulkUpdateCornersProvider` 하나만 쓴다(별도 PATCH 계열 provider를 새로 만들지 않았는지 코드 리뷰로 확인)
 - [ ] 단건 트랙 삭제(A2)와 일괄 트랙 삭제(A2B)가 동일한 `bulkDeleteTracksProvider` 하나만 쓴다(`deleteTrack` 단건 provider가 호출되는 곳이 없는지 `grep -rn "deleteTrackProvider" frontend/lib/admin`으로 확인 — 있다면 §0-2에 따라 제거)
 - [ ] `flutter analyze`가 `frontend/lib/admin/features/corner_detail/**`, `frontend/lib/admin/features/track_bulk_manage/**` 범위에서 0 에러
+- [ ] 새 화면·모달·테이블이 `docs/design-system.md`의 상태 색상·아이콘 병기, 48pt 테이블 행 높이, 정렬/필터 패턴, 확인 모달 규칙을 준수하는지 코드 리뷰로 확인한다
 - [ ] `flutter run -t lib/main_admin.dart --flavor admin`으로 PENDING 캠프 → 사이드바 "코너·트랙"(A2B) → 트랙 3개 선택 후 목표시간 일괄 변경 → A2 진입 → 트랙 교체(A3) → 전체 PIN 내보내기(A4) 흐름을 1회 수동 구동한다
+
+## 구현·검증 결과 (2026-07-16)
+
+- A2/A3: 코너 인라인 수정, ACTIVE 트랙 관리, BUSY/마지막 트랙 가드, PIN 팝업·복사·PDF 내보내기, 트랙 교체를 구현했다.
+- A2B/A4: 필터 범위 전체선택, 컬럼 정렬, 코너 단위 목표시간 일괄 변경, BUSY 일괄 삭제 차단, CSV 다운로드/공유와 세션 내 내보내기 이력을 구현했다.
+- 디자인 시스템: `StatusBadge`, `EmptyState`, `ConfirmModal`, 아이콘 액션과 `DataTable` 정렬 패턴을 사용하도록 코드 리뷰했다.
+- 자동 검증: `flutter analyze lib/admin test/admin`, CSV escaping/BOM 및 단건 PIN PDF 생성 단위 테스트를 통과했다.
+- 제외: 사용자 요청에 따라 실기기 수동 구동과 통합 테스트는 수행하지 않는다.
