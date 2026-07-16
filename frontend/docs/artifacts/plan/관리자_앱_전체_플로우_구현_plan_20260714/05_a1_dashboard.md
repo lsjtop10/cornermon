@@ -1,5 +1,7 @@
 # Phase 05 — A1 대시보드
 
+> 작업 현황 (2026-07-16): A1 대시보드 구현 완료. `flutter analyze lib/admin lib/main_admin.dart test/admin`, 대상 관리자 테스트, 전체 `flutter test` 통과. `trackDirectSummariesProvider`는 09 범위 미완료라 안읽은 다이렉트는 자리표시 값으로 렌더링하고, 실기기 수동 확인 항목은 PR 본문에 남은 확인 사항으로 명시한다.
+
 > 선행조건: `01_api_codegen_sync.md`(`cornerList(ref, campId)`, `liveSummary(ref, campId)` 시그니처), `02_admin_skeleton_router_sidebar.md`(`/dashboard` 라우트, `selectedCampIdProvider`, `AdminSidebar(mode: operating)`, `/corners/:cornerId` 서브라우트 스텁). 대상 독자: 1~2년차 프론트엔드 개발자 1명, 예상 소요 5~7시간.
 > 목적: 캠프 운영 모드(ACTIVE)의 기본 화면인 대시보드를 구현한다. 10개 안팎의 코너 상태를 카드 그리드로 스캔하고, 정렬·필터로 병목 후보를 빠르게 찾아낸다. 이 화면은 A2(코너 상세)로의 진입점, A2B(트랙 일괄 관리)·A10(공지 발송)로의 퀵 액션 진입점 역할만 하고 그 화면들의 내부 레이아웃은 설계하지 않는다.
 > 근거: `docs/front/screen-spec-admin.md` "A1. 대시보드 (홈)", `docs/front/scenarios.md` Feature 2 "전체 트랙 가동 상태 감지", "유휴 코너 감지".
@@ -286,10 +288,10 @@ class _CornerGrid extends ConsumerWidget {
 ## 4. 검증 체크리스트
 
 ### 4.1 단위/위젯 테스트
-- [ ] `sortEntries`: `cornerNo` 옵션에서 이름이 "코너 1".."코너 10"인 10개 엔트리를 무작위 순서로 넣으면 숫자 오름차순으로 정렬된다(2자리 vs 1자리 문자열 정렬 버그 없는지 — "코너 10"이 "코너 2"보다 뒤에 오는지 확인, 문자열 비교가 아니라 숫자 파싱 비교인지 검증)
-- [ ] `sortEntries`: `avgDeviationDesc`/`avgDeviationAsc` 양쪽 모두에서, `status == INACTIVE`인 엔트리 3개를 섞어 넣으면 방향과 무관하게 항상 리스트 맨 끝 3자리에 온다(screen-spec 핵심 규칙 재현)
-- [ ] `filterEntries`: `bottleneckOnly` 필터가 `isBottleneck == true`인 엔트리만 남기고, `isBottleneck == null`(누락)인 엔트리는 false로 취급해 제외한다
-- [ ] `buildDashboardEntries`: `bottleneckRanking`에 없는 `cornerId`는 `avgDeviationSeconds == null`로 join되고, `formatCornerCardSubtitle(..., avgDeviationSeconds: null)`이 "평균 M:SS · 최근 N건"까지만 반환하고 편차 괄호는 생략한다(위젯 테스트로 확인)
+- [x] `sortEntries`: `cornerNo` 옵션에서 이름이 "코너 1".."코너 10"인 10개 엔트리를 무작위 순서로 넣으면 숫자 오름차순으로 정렬된다(2자리 vs 1자리 문자열 정렬 버그 없는지 — "코너 10"이 "코너 2"보다 뒤에 오는지 확인, 문자열 비교가 아니라 숫자 파싱 비교인지 검증)
+- [x] `sortEntries`: `avgDeviationDesc`/`avgDeviationAsc` 양쪽 모두에서, `status == INACTIVE`인 엔트리 3개를 섞어 넣으면 방향과 무관하게 항상 리스트 맨 끝 3자리에 온다(screen-spec 핵심 규칙 재현)
+- [x] `filterEntries`: `bottleneckOnly` 필터가 `isBottleneck == true`인 엔트리만 남기고, `isBottleneck == null`(누락)인 엔트리는 false로 취급해 제외한다
+- [x] `buildDashboardEntries`: `bottleneckRanking`에 없는 `cornerId`는 `avgDeviationSeconds == null`로 join되고, `formatCornerCardSubtitle(..., avgDeviationSeconds: null)`이 "평균 M:SS · 최근 N건"까지만 반환하고 편차 괄호는 생략한다(단위 테스트)
 - [ ] `CornerStatusCard`: `isBottleneck: true`인 엔트리는 `status`가 INACTIVE/IDLE/BUSY 무엇이든 좌측 보더가 `statusAlert` 색으로 렌더된다(카드 배경/본문 색은 그대로 3색 유지 — "병목은 보더만 덮어쓴다" 재현)
 - [ ] `_CornerGrid`: `cornersAsync`가 `AsyncLoading`이면 스켈레톤 카드가 렌더되고 실제 `CornerStatusCard`는 렌더되지 않는다
 - [ ] `_CornerGrid`: 필터 결과가 0건이면 `EmptyState`가 렌더되고 `GridView`는 렌더되지 않는다

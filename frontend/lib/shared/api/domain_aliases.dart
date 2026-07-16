@@ -26,13 +26,15 @@ typedef DeviceRegistration = DeviceRegistrationResponse;
 typedef DeviceRegistrationStatus = DeviceRegistrationResponseStatusEnum;
 typedef DeviceRegistrationRequestBody = DeviceRegistrationRequest;
 typedef DeviceRegistrationCreated = DeviceRegistrationCreatedResponse;
-typedef DeviceRegistrationCreatedStatus = DeviceRegistrationCreatedResponseStatusEnum;
+typedef DeviceRegistrationCreatedStatus =
+    DeviceRegistrationCreatedResponseStatusEnum;
 typedef AdminSession = AdminSessionResponse;
 typedef FacilitatorSession = FacilitatorSessionResponse;
 typedef AuditLog = AuditLogResponse;
 typedef AuditLogPage = AuditLogPageResponse;
 typedef CampReport = CampReportResponse;
 typedef CampSummaryStats = CampSummaryStatsResponse;
+typedef BottleneckRanking = BottleneckRankingResponse;
 typedef CornerStats = CornerStatsResponse;
 typedef GroupStats = GroupStatsResponse;
 typedef TrackStats = TrackStatsResponse;
@@ -49,7 +51,8 @@ typedef AuthTrackLoginPost200ResponseCorner = CornerResponse;
 typedef AuthTrackLoginPostRequest = TrackLoginRequest;
 typedef AuthTrackLoginPostRequestBuilder = TrackLoginRequestBuilder;
 typedef DeviceRegistrationsPostRequest = DeviceRegistrationRequest;
-typedef DeviceRegistrationsPostRequestBuilder = DeviceRegistrationRequestBuilder;
+typedef DeviceRegistrationsPostRequestBuilder =
+    DeviceRegistrationRequestBuilder;
 typedef SseEvent = SSENotification;
 typedef SseEventEventEnum = SSENotificationEventEnum;
 typedef SseScopeKind = SSEScopeKindEnum;

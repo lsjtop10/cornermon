@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:cornermon/admin/session/selected_camp_provider.dart';
 import 'package:cornermon/admin/widgets/sidebar/admin_sidebar.dart';
+import 'package:cornermon/admin/features/start_camp/start_camp_button.dart';
 
 class AdminScaffold extends ConsumerWidget {
   const AdminScaffold({required this.body, super.key});
@@ -28,7 +29,21 @@ class AdminScaffold extends ConsumerWidget {
             children: [
               AdminSidebar(mode: sidebarModeFor(camp!.status!)),
               const VerticalDivider(width: 1),
-              Expanded(child: body),
+              Expanded(
+                child: Column(
+                  children: [
+                    if (sidebarModeFor(camp.status!) == SidebarMode.preparing)
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: StartCampButton(),
+                        ),
+                      ),
+                    Expanded(child: body),
+                  ],
+                ),
+              ),
             ],
           ),
         );

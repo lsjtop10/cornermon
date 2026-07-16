@@ -4,6 +4,7 @@ import 'package:cornermon/admin/session/selected_camp_provider.dart';
 import 'package:cornermon/admin/widgets/sidebar/admin_sidebar.dart';
 import 'package:cornermon/shared/api/domain_aliases.dart' hide AdminSession;
 import 'package:cornermon/shared/api/ids.dart';
+import 'package:cornermon/shared/api/providers/badge_providers.dart';
 import 'package:cornermon/shared/api/providers/camp_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -101,7 +102,7 @@ void main() {
     expect(find.text('초기 설정'), findsOneWidget);
     await tester.pumpWidget(const SizedBox());
     await _pumpApp(tester, campContainer);
-    expect(find.text('A0-c 캠프 목록'), findsOneWidget);
+    expect(find.text('캠프 목록'), findsOneWidget);
   });
 
   testWidgets('ShouldBlockPendingAndEndedCampRoutes', (tester) async {
@@ -135,7 +136,17 @@ void main() {
 
   testWidgets('ShouldAllowBadgesWithoutSelectedCamp', (tester) async {
     // arrange
-    final container = _container(session: authenticated);
+    final container = ProviderContainer(
+      overrides: [
+        adminSessionProvider.overrideWith(
+          () => _FakeAdminSession(authenticated),
+        ),
+        selectedCampIdProvider.overrideWith(() => _FakeSelectedCampId(null)),
+        selectedCampProvider.overrideWith((ref) async => null),
+        campListProvider.overrideWith((ref) async => const []),
+        badgeListProvider.overrideWith((ref) async => const []),
+      ],
+    );
     addTearDown(container.dispose);
     await _pumpApp(tester, container);
 
@@ -144,7 +155,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // assert
-    expect(find.text('A0-d QR 배지'), findsOneWidget);
+    expect(find.text('QR 배지 관리'), findsOneWidget);
     expect(find.byType(AdminSidebar), findsNothing);
   });
 
