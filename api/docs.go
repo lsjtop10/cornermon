@@ -155,7 +155,7 @@ const docTemplate = `{
         },
         "/auth/admin/login": {
             "post": {
-                "description": "관리자 ID/비밀번호로 로그인하여 액세스 토큰과 리프레시 토큰을 발급받는다.",
+                "description": "관리자 ID/비밀번호로 로그인하여 액세스 토큰을 발급받는다. 토큰은 슬라이딩 세션으로 활동이 있으면 만료가 연장된다.",
                 "consumes": [
                     "application/json"
                 ],
@@ -211,37 +211,6 @@ const docTemplate = `{
                 "responses": {
                     "204": {
                         "description": "로그아웃 성공"
-                    },
-                    "401": {
-                        "description": "권한 없음",
-                        "schema": {
-                            "$ref": "#/definitions/ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/auth/admin/refresh": {
-            "post": {
-                "security": [
-                    {
-                        "AdminRefreshAuth": []
-                    }
-                ],
-                "description": "리프레시 토큰으로 새 액세스 토큰을 발급한다.",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "A. Auth \u0026 Device Trust"
-                ],
-                "summary": "관리자 액세스 토큰 재발급",
-                "responses": {
-                    "200": {
-                        "description": "새 액세스 토큰 발급",
-                        "schema": {
-                            "$ref": "#/definitions/AdminRefreshResponse"
-                        }
                     },
                     "401": {
                         "description": "권한 없음",
@@ -2578,20 +2547,6 @@ const docTemplate = `{
                 },
                 "expiresInSeconds": {
                     "type": "integer"
-                },
-                "refreshToken": {
-                    "type": "string"
-                }
-            }
-        },
-        "AdminRefreshResponse": {
-            "type": "object",
-            "properties": {
-                "accessToken": {
-                    "type": "string"
-                },
-                "expiresInSeconds": {
-                    "type": "integer"
                 }
             }
         },
@@ -2944,6 +2899,10 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/TrackSummaryResponse"
                     }
+                },
+                "campId": {
+                    "type": "string",
+                    "format": "uuid"
                 },
                 "cornerMetric": {
                     "$ref": "#/definitions/CornerMetricResponse"
@@ -3595,13 +3554,7 @@ const docTemplate = `{
     },
     "securityDefinitions": {
         "AdminAuth": {
-            "description": "관리자 액세스 토큰 (ADMIN)",
-            "type": "apiKey",
-            "name": "Authorization",
-            "in": "header"
-        },
-        "AdminRefreshAuth": {
-            "description": "관리자 리프레시 토큰 (ADMIN_REFRESH) — 액세스 토큰 재발급 전용",
+            "description": "관리자 액세스 토큰 (ADMIN) — 슬라이딩 세션, 활동 시 12시간 단위로 만료 연장",
             "type": "apiKey",
             "name": "Authorization",
             "in": "header"

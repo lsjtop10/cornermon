@@ -19,9 +19,4 @@ package web
 // @securityDefinitions.apikey AdminAuth
 // @in header
 // @name Authorization
-// @description 관리자 액세스 토큰 (ADMIN)
-
-// @securityDefinitions.apikey AdminRefreshAuth
-// @in header
-// @name Authorization
-// @description 관리자 리프레시 토큰 (ADMIN_REFRESH) — 액세스 토큰 재발급 전용
+// @description 관리자 액세스 토큰 (ADMIN) — 슬라이딩 세션, 활동 시 12시간 단위로 만료 연장

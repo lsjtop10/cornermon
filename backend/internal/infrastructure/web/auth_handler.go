@@ -3,7 +3,6 @@ package web
 import (
 	"context"
 	"net/http"
-	"strings"
 	"time"
 
 	"cornermon/backend/internal/domain"
@@ -13,8 +12,7 @@ import (
 )
 
 type AdminAuthUsecase interface {
-	Login(ctx context.Context, username, password, deviceInfo string) (string, string, *domain.AdminSession, error)
-	RefreshToken(ctx context.Context, refreshToken string) (string, error)
+	Login(ctx context.Context, username, password, deviceInfo string) (string, *domain.AdminSession, error)
 	RevokeSession(ctx context.Context, sessionID domain.AdminSessionID, actorAdminID domain.AdminID) error
 	ListSessions(ctx context.Context, adminID domain.AdminID) ([]*domain.AdminSession, error)
 	ForceTrackLogout(ctx context.Context, trackID domain.TrackID, actorAdminID domain.AdminID) error
@@ -52,14 +50,8 @@ type AdminLoginRequest struct {
 
 type AdminLoginResponse struct {
 	AccessToken      string `json:"accessToken"`
-	RefreshToken     string `json:"refreshToken"`
 	ExpiresInSeconds int    `json:"expiresInSeconds"`
 } // @name AdminLoginResponse
-
-type AdminRefreshResponse struct {
-	AccessToken      string `json:"accessToken"`
-	ExpiresInSeconds int    `json:"expiresInSeconds"`
-} // @name AdminRefreshResponse
 
 type TrackLoginRequest struct {
 	PIN string `json:"pin"`
@@ -84,7 +76,7 @@ func NewAuthHandler(
 }
 
 // @Summary      관리자 로그인
-// @Description  관리자 ID/비밀번호로 로그인하여 액세스 토큰과 리프레시 토큰을 발급받는다.
+// @Description  관리자 ID/비밀번호로 로그인하여 액세스 토큰을 발급받는다. 토큰은 슬라이딩 세션으로 활동이 있으면 만료가 연장된다.
 // @Tags         A. Auth & Device Trust
 // @Accept       json
 // @Produce      json
@@ -99,41 +91,14 @@ func (h *AuthHandler) AdminLogin(c echo.Context) error {
 	}
 
 	deviceInfo := c.Request().UserAgent()
-	access, refresh, _, err := h.adminAuth.Login(c.Request().Context(), req.ID, req.Password, deviceInfo)
+	access, _, err := h.adminAuth.Login(c.Request().Context(), req.ID, req.Password, deviceInfo)
 	if err != nil {
 		return c.JSON(http.StatusUnauthorized, ErrorResponse{Code: "UNAUTHORIZED", Message: err.Error()})
 	}
 
 	return c.JSON(http.StatusOK, AdminLoginResponse{
 		AccessToken:      access,
-		RefreshToken:     refresh,
-		ExpiresInSeconds: 1800,
-	})
-}
-
-// @Summary      관리자 액세스 토큰 재발급
-// @Description  리프레시 토큰으로 새 액세스 토큰을 발급한다.
-// @Tags         A. Auth & Device Trust
-// @Security     AdminRefreshAuth
-// @Produce      json
-// @Success      200 {object} AdminRefreshResponse "새 액세스 토큰 발급"
-// @Failure      401 {object} ErrorResponse "권한 없음"
-// @Router       /auth/admin/refresh [post]
-func (h *AuthHandler) AdminRefresh(c echo.Context) error {
-	authHeader := c.Request().Header.Get("Authorization")
-	refreshToken := strings.TrimPrefix(authHeader, "Bearer ")
-	if refreshToken == "" {
-		return c.JSON(http.StatusUnauthorized, ErrorResponse{Code: "UNAUTHORIZED", Message: "missing token"})
-	}
-
-	access, err := h.adminAuth.RefreshToken(c.Request().Context(), refreshToken)
-	if err != nil {
-		return c.JSON(http.StatusUnauthorized, ErrorResponse{Code: "UNAUTHORIZED", Message: err.Error()})
-	}
-
-	return c.JSON(http.StatusOK, AdminRefreshResponse{
-		AccessToken:      access,
-		ExpiresInSeconds: 1800,
+		ExpiresInSeconds: int(usecase.AdminAccessTokenTTL.Seconds()),
 	})
 }
 

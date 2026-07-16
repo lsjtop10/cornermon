@@ -164,17 +164,15 @@ CREATE TABLE admin_sessions (
     id VARCHAR(50) PRIMARY KEY,
     admin_id VARCHAR(50) NOT NULL REFERENCES admins(id) ON DELETE CASCADE,
     access_token_hash VARCHAR(255) NOT NULL UNIQUE,
-    refresh_token_hash VARCHAR(255) NOT NULL UNIQUE,
     device_info TEXT NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL,
     last_used_at TIMESTAMP WITH TIME ZONE NOT NULL,
     revoked_at TIMESTAMP WITH TIME ZONE
 );
-COMMENT ON TABLE admin_sessions IS '관리자의 인증 토큰(Access/Refresh) 세션을 관리하는 테이블';
+COMMENT ON TABLE admin_sessions IS '관리자의 인증 토큰(Access) 세션을 관리하는 테이블';
 COMMENT ON COLUMN admin_sessions.id IS '세션 고유 식별자';
 COMMENT ON COLUMN admin_sessions.admin_id IS '관리자 식별자';
 COMMENT ON COLUMN admin_sessions.access_token_hash IS 'Access Token 해시';
-COMMENT ON COLUMN admin_sessions.refresh_token_hash IS 'Refresh Token 해시';
 COMMENT ON COLUMN admin_sessions.device_info IS '로그인 환경(User-Agent 등) 정보';
 COMMENT ON COLUMN admin_sessions.created_at IS '세션 생성 시간';
 COMMENT ON COLUMN admin_sessions.last_used_at IS '마지막 세션 사용 시간 (슬라이딩 만료용)';

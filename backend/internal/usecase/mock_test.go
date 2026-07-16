@@ -451,15 +451,6 @@ func (r *MockAdminSessionRepository) GetByAccessTokenHash(ctx context.Context, h
 	return nil, nil
 }
 
-func (r *MockAdminSessionRepository) GetByRefreshTokenHash(ctx context.Context, hash string) (*domain.AdminSession, error) {
-	for _, s := range r.Sessions {
-		if s.RefreshTokenHash == hash {
-			return s, nil
-		}
-	}
-	return nil, nil
-}
-
 func (r *MockAdminSessionRepository) Save(ctx context.Context, session *domain.AdminSession) error {
 	r.Sessions[session.ID] = session
 	return nil

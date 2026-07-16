@@ -14,7 +14,6 @@ type Querier interface {
 	GetAdminByUsername(ctx context.Context, username string) (Admin, error)
 	GetAdminSession(ctx context.Context, id string) (AdminSession, error)
 	GetAdminSessionByAccessTokenHash(ctx context.Context, accessTokenHash string) (AdminSession, error)
-	GetAdminSessionByRefreshTokenHash(ctx context.Context, refreshTokenHash string) (AdminSession, error)
 	GetAnnouncementReceiptByAnnouncementAndTrack(ctx context.Context, arg GetAnnouncementReceiptByAnnouncementAndTrackParams) (AnnouncementReceipt, error)
 	GetBadge(ctx context.Context, id string) (Badge, error)
 	GetBadgeByQRPayload(ctx context.Context, qrPayload string) (Badge, error)

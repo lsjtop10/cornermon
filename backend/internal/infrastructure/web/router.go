@@ -36,7 +36,6 @@ func RegisterRoutes(e *echo.Echo, h *Handlers, adminAuth AuthAdminUsecase, track
 	admin := v1.Group("")
 	admin.Use(AdminAuthMiddleware(adminAuth))
 
-	admin.POST("/auth/admin/refresh", h.Auth.AdminRefresh)
 	admin.POST("/auth/admin/logout", h.Auth.AdminLogout)
 	admin.GET("/auth/admin/sessions", h.Auth.ListAdminSessions)
 	admin.POST("/auth/admin/sessions/:id/revoke", h.Auth.RevokeAdminSession)

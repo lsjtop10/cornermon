@@ -43,7 +43,7 @@ func (q *Queries) GetAdminByUsername(ctx context.Context, username string) (Admi
 }
 
 const getAdminSession = `-- name: GetAdminSession :one
-SELECT id, admin_id, access_token_hash, refresh_token_hash, device_info, created_at, last_used_at, revoked_at FROM admin_sessions WHERE id = $1
+SELECT id, admin_id, access_token_hash, device_info, created_at, last_used_at, revoked_at FROM admin_sessions WHERE id = $1
 `
 
 func (q *Queries) GetAdminSession(ctx context.Context, id string) (AdminSession, error) {
@@ -53,7 +53,6 @@ func (q *Queries) GetAdminSession(ctx context.Context, id string) (AdminSession,
 		&i.ID,
 		&i.AdminID,
 		&i.AccessTokenHash,
-		&i.RefreshTokenHash,
 		&i.DeviceInfo,
 		&i.CreatedAt,
 		&i.LastUsedAt,
@@ -63,7 +62,7 @@ func (q *Queries) GetAdminSession(ctx context.Context, id string) (AdminSession,
 }
 
 const getAdminSessionByAccessTokenHash = `-- name: GetAdminSessionByAccessTokenHash :one
-SELECT id, admin_id, access_token_hash, refresh_token_hash, device_info, created_at, last_used_at, revoked_at FROM admin_sessions WHERE access_token_hash = $1
+SELECT id, admin_id, access_token_hash, device_info, created_at, last_used_at, revoked_at FROM admin_sessions WHERE access_token_hash = $1
 `
 
 func (q *Queries) GetAdminSessionByAccessTokenHash(ctx context.Context, accessTokenHash string) (AdminSession, error) {
@@ -73,27 +72,6 @@ func (q *Queries) GetAdminSessionByAccessTokenHash(ctx context.Context, accessTo
 		&i.ID,
 		&i.AdminID,
 		&i.AccessTokenHash,
-		&i.RefreshTokenHash,
-		&i.DeviceInfo,
-		&i.CreatedAt,
-		&i.LastUsedAt,
-		&i.RevokedAt,
-	)
-	return i, err
-}
-
-const getAdminSessionByRefreshTokenHash = `-- name: GetAdminSessionByRefreshTokenHash :one
-SELECT id, admin_id, access_token_hash, refresh_token_hash, device_info, created_at, last_used_at, revoked_at FROM admin_sessions WHERE refresh_token_hash = $1
-`
-
-func (q *Queries) GetAdminSessionByRefreshTokenHash(ctx context.Context, refreshTokenHash string) (AdminSession, error) {
-	row := q.db.QueryRow(ctx, getAdminSessionByRefreshTokenHash, refreshTokenHash)
-	var i AdminSession
-	err := row.Scan(
-		&i.ID,
-		&i.AdminID,
-		&i.AccessTokenHash,
-		&i.RefreshTokenHash,
 		&i.DeviceInfo,
 		&i.CreatedAt,
 		&i.LastUsedAt,
@@ -569,7 +547,7 @@ func (q *Queries) ListActiveTracksByCamp(ctx context.Context, campID string) ([]
 }
 
 const listAdminSessionsByAdmin = `-- name: ListAdminSessionsByAdmin :many
-SELECT id, admin_id, access_token_hash, refresh_token_hash, device_info, created_at, last_used_at, revoked_at FROM admin_sessions
+SELECT id, admin_id, access_token_hash, device_info, created_at, last_used_at, revoked_at FROM admin_sessions
 WHERE admin_id = $1 AND revoked_at IS NULL
 `
 
@@ -586,7 +564,6 @@ func (q *Queries) ListAdminSessionsByAdmin(ctx context.Context, adminID string) 
 			&i.ID,
 			&i.AdminID,
 			&i.AccessTokenHash,
-			&i.RefreshTokenHash,
 			&i.DeviceInfo,
 			&i.CreatedAt,
 			&i.LastUsedAt,
@@ -1247,22 +1224,21 @@ func (q *Queries) ResetTrackUnreadCount(ctx context.Context, arg ResetTrackUnrea
 }
 
 const saveAdminSession = `-- name: SaveAdminSession :exec
-INSERT INTO admin_sessions (id, admin_id, access_token_hash, refresh_token_hash, device_info, created_at, last_used_at, revoked_at)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+INSERT INTO admin_sessions (id, admin_id, access_token_hash, device_info, created_at, last_used_at, revoked_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7)
 ON CONFLICT (id) DO UPDATE SET
     last_used_at = EXCLUDED.last_used_at,
     revoked_at = EXCLUDED.revoked_at
 `
 
 type SaveAdminSessionParams struct {
-	ID               string             `json:"id"`
-	AdminID          string             `json:"admin_id"`
-	AccessTokenHash  string             `json:"access_token_hash"`
-	RefreshTokenHash string             `json:"refresh_token_hash"`
-	DeviceInfo       string             `json:"device_info"`
-	CreatedAt        pgtype.Timestamptz `json:"created_at"`
-	LastUsedAt       pgtype.Timestamptz `json:"last_used_at"`
-	RevokedAt        pgtype.Timestamptz `json:"revoked_at"`
+	ID              string             `json:"id"`
+	AdminID         string             `json:"admin_id"`
+	AccessTokenHash string             `json:"access_token_hash"`
+	DeviceInfo      string             `json:"device_info"`
+	CreatedAt       pgtype.Timestamptz `json:"created_at"`
+	LastUsedAt      pgtype.Timestamptz `json:"last_used_at"`
+	RevokedAt       pgtype.Timestamptz `json:"revoked_at"`
 }
 
 func (q *Queries) SaveAdminSession(ctx context.Context, arg SaveAdminSessionParams) error {
@@ -1270,7 +1246,6 @@ func (q *Queries) SaveAdminSession(ctx context.Context, arg SaveAdminSessionPara
 		arg.ID,
 		arg.AdminID,
 		arg.AccessTokenHash,
-		arg.RefreshTokenHash,
 		arg.DeviceInfo,
 		arg.CreatedAt,
 		arg.LastUsedAt,

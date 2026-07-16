@@ -125,7 +125,6 @@ type AdminRepository interface {
 type AdminSessionRepository interface {
 	Get(ctx context.Context, id domain.AdminSessionID) (*domain.AdminSession, error)
 	GetByAccessTokenHash(ctx context.Context, hash string) (*domain.AdminSession, error)
-	GetByRefreshTokenHash(ctx context.Context, hash string) (*domain.AdminSession, error)
 	Save(ctx context.Context, session *domain.AdminSession) error
 	ListByAdmin(ctx context.Context, adminID domain.AdminID) ([]*domain.AdminSession, error)
 }

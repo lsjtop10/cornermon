@@ -14,32 +14,31 @@ func TestAdminSession_Lifecycle(t *testing.T) {
 
 	t.Run("Session touch sliding expiration and expiry verification", func(t *testing.T) {
 		session := &domain.AdminSession{
-			ID:               domain.AdminSessionID("session-1"),
-			AdminID:          domain.AdminID("admin-1"),
-			AccessTokenHash:  "access-hash",
-			RefreshTokenHash: "refresh-hash",
-			CreatedAt:        now,
-			LastUsedAt:       now,
-			RevokedAt:        domain.None[time.Time](),
+			ID:              domain.AdminSessionID("session-1"),
+			AdminID:         domain.AdminID("admin-1"),
+			AccessTokenHash: "access-hash",
+			CreatedAt:       now,
+			LastUsedAt:      now,
+			RevokedAt:       domain.None[time.Time](),
 		}
 
 		// 1. Initially not expired
-		if session.IsRefreshExpired(now.Add(10*time.Minute), idleTTL) {
+		if session.IsExpired(now.Add(10*time.Minute), idleTTL) {
 			t.Error("expected session not to be expired")
 		}
 
 		// 2. Expired after idleTTL
-		if !session.IsRefreshExpired(now.Add(31*time.Minute), idleTTL) {
+		if !session.IsExpired(now.Add(31*time.Minute), idleTTL) {
 			t.Error("expected session to be expired after idleTTL")
 		}
 
-		// 3. TouchRefresh slides expiration
-		session.TouchRefresh(now.Add(10 * time.Minute))
-		if session.IsRefreshExpired(now.Add(31*time.Minute), idleTTL) {
+		// 3. TouchActivity slides expiration
+		session.TouchActivity(now.Add(10 * time.Minute))
+		if session.IsExpired(now.Add(31*time.Minute), idleTTL) {
 			t.Error("expected session not to be expired because lastUsedAt was touched")
 		}
 
-		// 4. TouchRefresh updates LastUsedAt
+		// 4. TouchActivity updates LastUsedAt
 		if !session.LastUsedAt.Equal(now.Add(10 * time.Minute)) {
 			t.Errorf("expected LastUsedAt to be touched, got %v", session.LastUsedAt)
 		}
@@ -58,7 +57,7 @@ func TestAdminSession_Lifecycle(t *testing.T) {
 		}
 
 		// Expired because it is revoked
-		if !session.IsRefreshExpired(now, idleTTL) {
+		if !session.IsExpired(now, idleTTL) {
 			t.Error("expected session to be expired because it was revoked")
 		}
 
