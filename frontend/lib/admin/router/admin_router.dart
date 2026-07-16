@@ -12,6 +12,7 @@ import 'package:cornermon/admin/features/track_bulk_manage/track_bulk_manage_scr
 import 'package:cornermon/admin/features/group_list/group_list_screen.dart';
 import 'package:cornermon/admin/features/group_detail/group_detail_screen.dart';
 import 'package:cornermon/admin/features/setup_wizard/setup_wizard_screen.dart';
+import 'package:cornermon/admin/features/device_manage/device_manage_screen.dart';
 import 'package:cornermon/admin/session/admin_session_provider.dart';
 import 'package:cornermon/admin/session/selected_camp_provider.dart';
 import 'package:cornermon/admin/widgets/admin_scaffold.dart';
@@ -76,7 +77,10 @@ final adminRouterProvider = Provider<GoRouter>((ref) {
           ),
         ),
       ),
-      _screenRoute('/devices', 'A8 기기 관리'),
+      GoRoute(
+        path: '/devices',
+        builder: (_, _) => const AdminScaffold(body: DeviceManageScreen()),
+      ),
       _screenRoute('/sessions', 'A9 세션 관리'),
       _screenRoute('/messages/broadcast', 'A10 공지 메시지'),
       _screenRoute('/messages/direct', 'A11 다이렉트 메시지'),
