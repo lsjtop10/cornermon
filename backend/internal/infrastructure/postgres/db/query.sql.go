@@ -11,6 +11,37 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const countAdmins = `-- name: CountAdmins :one
+SELECT COUNT(*) FROM admins
+`
+
+func (q *Queries) CountAdmins(ctx context.Context) (int64, error) {
+	row := q.db.QueryRow(ctx, countAdmins)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const countAdminsByRole = `-- name: CountAdminsByRole :one
+SELECT COUNT(*) FROM admins WHERE role = $1
+`
+
+func (q *Queries) CountAdminsByRole(ctx context.Context, role string) (int64, error) {
+	row := q.db.QueryRow(ctx, countAdminsByRole, role)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const deleteAdmin = `-- name: DeleteAdmin :exec
+DELETE FROM admins WHERE id = $1
+`
+
+func (q *Queries) DeleteAdmin(ctx context.Context, id string) error {
+	_, err := q.db.Exec(ctx, deleteAdmin, id)
+	return err
+}
+
 const deleteCorner = `-- name: DeleteCorner :exec
 DELETE FROM corners WHERE id = $1
 `
@@ -21,24 +52,34 @@ func (q *Queries) DeleteCorner(ctx context.Context, id string) error {
 }
 
 const getAdmin = `-- name: GetAdmin :one
-SELECT id, username, password_hash FROM admins WHERE id = $1
+SELECT id, username, password_hash, role FROM admins WHERE id = $1
 `
 
 func (q *Queries) GetAdmin(ctx context.Context, id string) (Admin, error) {
 	row := q.db.QueryRow(ctx, getAdmin, id)
 	var i Admin
-	err := row.Scan(&i.ID, &i.Username, &i.PasswordHash)
+	err := row.Scan(
+		&i.ID,
+		&i.Username,
+		&i.PasswordHash,
+		&i.Role,
+	)
 	return i, err
 }
 
 const getAdminByUsername = `-- name: GetAdminByUsername :one
-SELECT id, username, password_hash FROM admins WHERE username = $1
+SELECT id, username, password_hash, role FROM admins WHERE username = $1
 `
 
 func (q *Queries) GetAdminByUsername(ctx context.Context, username string) (Admin, error) {
 	row := q.db.QueryRow(ctx, getAdminByUsername, username)
 	var i Admin
-	err := row.Scan(&i.ID, &i.Username, &i.PasswordHash)
+	err := row.Scan(
+		&i.ID,
+		&i.Username,
+		&i.PasswordHash,
+		&i.Role,
+	)
 	return i, err
 }
 
@@ -1243,6 +1284,32 @@ type ResetTrackUnreadCountParams struct {
 
 func (q *Queries) ResetTrackUnreadCount(ctx context.Context, arg ResetTrackUnreadCountParams) error {
 	_, err := q.db.Exec(ctx, resetTrackUnreadCount, arg.Reader, arg.TrackID)
+	return err
+}
+
+const saveAdmin = `-- name: SaveAdmin :exec
+INSERT INTO admins (id, username, password_hash, role)
+VALUES ($1, $2, $3, $4)
+ON CONFLICT (id) DO UPDATE SET
+    username = EXCLUDED.username,
+    password_hash = EXCLUDED.password_hash,
+    role = EXCLUDED.role
+`
+
+type SaveAdminParams struct {
+	ID           string `json:"id"`
+	Username     string `json:"username"`
+	PasswordHash string `json:"password_hash"`
+	Role         string `json:"role"`
+}
+
+func (q *Queries) SaveAdmin(ctx context.Context, arg SaveAdminParams) error {
+	_, err := q.db.Exec(ctx, saveAdmin,
+		arg.ID,
+		arg.Username,
+		arg.PasswordHash,
+		arg.Role,
+	)
 	return err
 }
 

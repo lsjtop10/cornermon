@@ -4,11 +4,21 @@ import (
 	"time"
 )
 
+type AdminRole string
+
+const (
+	AdminRoleSystemAdmin    AdminRole = "SYSTEM_ADMIN"
+	AdminRoleCornerOperator AdminRole = "CORNER_OPERATOR"
+)
+
 type Admin struct {
 	ID           AdminID
 	Username     string
 	PasswordHash string
+	Role         AdminRole
 }
+
+func (a *Admin) IsSystemAdmin() bool { return a.Role == AdminRoleSystemAdmin }
 
 type AdminSession struct {
 	ID               AdminSessionID

@@ -30,6 +30,7 @@ func mapAdmin(row db.Admin) *domain.Admin {
 		ID:           domain.AdminID(row.ID),
 		Username:     row.Username,
 		PasswordHash: row.PasswordHash,
+		Role:         domain.AdminRole(row.Role),
 	}
 }
 
@@ -53,4 +54,27 @@ func (r *pgAdminRepository) GetByUsername(ctx context.Context, username string) 
 		return nil, errs.Wrap(ctx, err)
 	}
 	return mapAdmin(row), nil
+}
+
+func (r *pgAdminRepository) Save(ctx context.Context, admin *domain.Admin) error {
+	return r.queries(ctx).SaveAdmin(ctx, db.SaveAdminParams{
+		ID:           string(admin.ID),
+		Username:     admin.Username,
+		PasswordHash: admin.PasswordHash,
+		Role:         string(admin.Role),
+	})
+}
+
+func (r *pgAdminRepository) Delete(ctx context.Context, id domain.AdminID) error {
+	return r.queries(ctx).DeleteAdmin(ctx, string(id))
+}
+
+func (r *pgAdminRepository) Count(ctx context.Context) (int, error) {
+	count, err := r.queries(ctx).CountAdmins(ctx)
+	return int(count), err
+}
+
+func (r *pgAdminRepository) CountByRole(ctx context.Context, role domain.AdminRole) (int, error) {
+	count, err := r.queries(ctx).CountAdminsByRole(ctx, string(role))
+	return int(count), err
 }

@@ -416,13 +416,36 @@ func (r *MockAdminRepository) Get(ctx context.Context, id domain.AdminID) (*doma
 }
 
 func (r *MockAdminRepository) GetByUsername(ctx context.Context, username string) (*domain.Admin, error) {
-	// Simple mock: admin name is same as ID
 	for _, a := range r.Admins {
-		if string(a.ID) == username {
+		if a.Username == username || string(a.ID) == username {
 			return a, nil
 		}
 	}
 	return nil, nil
+}
+
+func (r *MockAdminRepository) Save(ctx context.Context, admin *domain.Admin) error {
+	r.Admins[admin.ID] = admin
+	return nil
+}
+
+func (r *MockAdminRepository) Delete(ctx context.Context, id domain.AdminID) error {
+	delete(r.Admins, id)
+	return nil
+}
+
+func (r *MockAdminRepository) Count(ctx context.Context) (int, error) {
+	return len(r.Admins), nil
+}
+
+func (r *MockAdminRepository) CountByRole(ctx context.Context, role domain.AdminRole) (int, error) {
+	count := 0
+	for _, admin := range r.Admins {
+		if admin.Role == role {
+			count++
+		}
+	}
+	return count, nil
 }
 
 // MockAdminSessionRepository

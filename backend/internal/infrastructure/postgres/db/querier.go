@@ -9,6 +9,9 @@ import (
 )
 
 type Querier interface {
+	CountAdmins(ctx context.Context) (int64, error)
+	CountAdminsByRole(ctx context.Context, role string) (int64, error)
+	DeleteAdmin(ctx context.Context, id string) error
 	DeleteCorner(ctx context.Context, id string) error
 	GetAdmin(ctx context.Context, id string) (Admin, error)
 	GetAdminByUsername(ctx context.Context, username string) (Admin, error)
@@ -54,6 +57,7 @@ type Querier interface {
 	ListVisitsByGroup(ctx context.Context, groupID string) ([]Visit, error)
 	MarkAllMessagesReadByRecipient(ctx context.Context, arg MarkAllMessagesReadByRecipientParams) error
 	ResetTrackUnreadCount(ctx context.Context, arg ResetTrackUnreadCountParams) error
+	SaveAdmin(ctx context.Context, arg SaveAdminParams) error
 	SaveAdminSession(ctx context.Context, arg SaveAdminSessionParams) error
 	SaveAnnouncement(ctx context.Context, arg SaveAnnouncementParams) error
 	SaveAnnouncementReceipt(ctx context.Context, arg SaveAnnouncementReceiptParams) error
