@@ -5,6 +5,21 @@
 어떻게 그 의도를 구현하고 있는지"를 다룹니다. 새 유스케이스/리포지토리/핸들러를 추가할 때
 이 문서의 패턴을 따르세요.
 
+## 0. 실행 명령어
+
+```bash
+cd backend
+
+go test ./...                                   # 전체 테스트
+go test ./internal/domain/...                    # 패키지 단위
+go test ./internal/domain/... -run TestCampActivate  # 단일 테스트
+go run ./cmd/server/main.go                       # 서버 실행
+gofmt -w .                                        # 포맷
+go vet ./...                                      # vet
+```
+
+`make gen`/`make dev-server`/`make dev-app` 최상위 Makefile 명령은 아직 구현되어 있지 않다.
+
 ## 1. 레이어 구조
 
 ```
