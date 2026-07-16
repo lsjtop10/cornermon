@@ -55,7 +55,7 @@ final class AuthDeviceTrustApiProvider
 }
 
 String _$authDeviceTrustApiHash() =>
-    r'449aed9864dc440caed137139e4054035540b5ba';
+    r'21e0c964144f0566a278a09d7a8141ec4c066062';
 
 @ProviderFor(adminLogin)
 final adminLoginProvider = AdminLoginFamily._();
@@ -170,47 +170,6 @@ final class AdminLogoutProvider
 }
 
 String _$adminLogoutHash() => r'049e5f1020034d0193af50cffed59132e6b10ada';
-
-@ProviderFor(adminRefresh)
-final adminRefreshProvider = AdminRefreshProvider._();
-
-final class AdminRefreshProvider
-    extends
-        $FunctionalProvider<
-          AsyncValue<AdminRefreshResponse>,
-          AdminRefreshResponse,
-          FutureOr<AdminRefreshResponse>
-        >
-    with
-        $FutureModifier<AdminRefreshResponse>,
-        $FutureProvider<AdminRefreshResponse> {
-  AdminRefreshProvider._()
-    : super(
-        from: null,
-        argument: null,
-        retry: null,
-        name: r'adminRefreshProvider',
-        isAutoDispose: true,
-        dependencies: null,
-        $allTransitiveDependencies: null,
-      );
-
-  @override
-  String debugGetCreateSourceHash() => _$adminRefreshHash();
-
-  @$internal
-  @override
-  $FutureProviderElement<AdminRefreshResponse> $createElement(
-    $ProviderPointer pointer,
-  ) => $FutureProviderElement(pointer);
-
-  @override
-  FutureOr<AdminRefreshResponse> create(Ref ref) {
-    return adminRefresh(ref);
-  }
-}
-
-String _$adminRefreshHash() => r'7953adaefc6a72c5dc10506028edb58368bb8bd3';
 
 @ProviderFor(adminSessionList)
 final adminSessionListProvider = AdminSessionListProvider._();

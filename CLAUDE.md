@@ -137,3 +137,7 @@ Plans must lead with use cases (P0/P1/P2), include object definitions + method s
 ## scope of work
 
 사용자가 명시하지 않는 이상 백엔드 작업은 백엔드 폴더만 프론트엔드 작업은 프론트엔드 폴더만 수정합니다.
+
+## 보고 필수
+
+작업을 시작하기 전 혹은 중간 과정을 사용자에게 간단히 브리핑합니다.

@@ -48,13 +48,12 @@ import 'package:cornermon_api_gen/cornermon_api_gen.dart';
 
 
 final api = CornermonApiGen().getAAuthDeviceTrustApi();
-final AdminLoginRequest request = ; // AdminLoginRequest | 로그인 정보
+final String id = id_example; // String | 관리자 ID
 
 try {
-    final response = await api.authAdminLoginPost(request);
-    print(response);
+    api.adminsIdDelete(id);
 } on DioException catch (e) {
-    print("Exception when calling AAuthDeviceTrustApi->authAdminLoginPost: $e\n");
+    print("Exception when calling AAuthDeviceTrustApi->adminsIdDelete: $e\n");
 }
 
 ```
@@ -65,9 +64,11 @@ All URIs are relative to */api/v1*
 
 Class | Method | HTTP request | Description
 ------------ | ------------- | ------------- | -------------
+[*AAuthDeviceTrustApi*](doc/AAuthDeviceTrustApi.md) | [**adminsIdDelete**](doc/AAuthDeviceTrustApi.md#adminsiddelete) | **DELETE** /admins/{id} | 관리자 삭제
+[*AAuthDeviceTrustApi*](doc/AAuthDeviceTrustApi.md) | [**adminsIdPasswordPatch**](doc/AAuthDeviceTrustApi.md#adminsidpasswordpatch) | **PATCH** /admins/{id}/password | 관리자 비밀번호 변경
+[*AAuthDeviceTrustApi*](doc/AAuthDeviceTrustApi.md) | [**adminsPost**](doc/AAuthDeviceTrustApi.md#adminspost) | **POST** /admins | 관리자 생성
 [*AAuthDeviceTrustApi*](doc/AAuthDeviceTrustApi.md) | [**authAdminLoginPost**](doc/AAuthDeviceTrustApi.md#authadminloginpost) | **POST** /auth/admin/login | 관리자 로그인
 [*AAuthDeviceTrustApi*](doc/AAuthDeviceTrustApi.md) | [**authAdminLogoutPost**](doc/AAuthDeviceTrustApi.md#authadminlogoutpost) | **POST** /auth/admin/logout | 관리자 로그아웃
-[*AAuthDeviceTrustApi*](doc/AAuthDeviceTrustApi.md) | [**authAdminRefreshPost**](doc/AAuthDeviceTrustApi.md#authadminrefreshpost) | **POST** /auth/admin/refresh | 관리자 액세스 토큰 재발급
 [*AAuthDeviceTrustApi*](doc/AAuthDeviceTrustApi.md) | [**authAdminSessionsGet**](doc/AAuthDeviceTrustApi.md#authadminsessionsget) | **GET** /auth/admin/sessions | 관리자 세션 목록 조회
 [*AAuthDeviceTrustApi*](doc/AAuthDeviceTrustApi.md) | [**authAdminSessionsIdRevokePost**](doc/AAuthDeviceTrustApi.md#authadminsessionsidrevokepost) | **POST** /auth/admin/sessions/{id}/revoke | 관리자 세션 강제 종료
 [*AAuthDeviceTrustApi*](doc/AAuthDeviceTrustApi.md) | [**authTrackLockoutDeviceIdReleasePost**](doc/AAuthDeviceTrustApi.md#authtracklockoutdeviceidreleasepost) | **POST** /auth/track/lockout/{deviceId}/release | 디바이스 락아웃 해제
@@ -129,13 +130,15 @@ Class | Method | HTTP request | Description
 [*FEventsSSEApi*](doc/FEventsSSEApi.md) | [**apiV1CampsCampIdEventsAdminGet**](doc/FEventsSSEApi.md#apiv1campscampideventsadminget) | **GET** /api/v1/camps/{campId}/events/admin | Admin SSE Stream
 [*FEventsSSEApi*](doc/FEventsSSEApi.md) | [**apiV1EventsTrackTrackIdGet**](doc/FEventsSSEApi.md#apiv1eventstracktrackidget) | **GET** /api/v1/events/track/{trackId} | Track SSE Stream
 [*GAuditLogsApi*](doc/GAuditLogsApi.md) | [**auditLogsGet**](doc/GAuditLogsApi.md#auditlogsget) | **GET** /audit-logs | 감사 로그 조회
+[*HealthApi*](doc/HealthApi.md) | [**healthGet**](doc/HealthApi.md#healthget) | **GET** /health | 헬스체크
+[*HealthApi*](doc/HealthApi.md) | [**readyGet**](doc/HealthApi.md#readyget) | **GET** /ready | 레디니스 체크
 
 
 ## Documentation For Models
 
  - [AdminLoginRequest](doc/AdminLoginRequest.md)
  - [AdminLoginResponse](doc/AdminLoginResponse.md)
- - [AdminRefreshResponse](doc/AdminRefreshResponse.md)
+ - [AdminResponse](doc/AdminResponse.md)
  - [AdminSessionResponse](doc/AdminSessionResponse.md)
  - [AssignBadgeRequest](doc/AssignBadgeRequest.md)
  - [AuditLogPageResponse](doc/AuditLogPageResponse.md)
@@ -151,10 +154,12 @@ Class | Method | HTTP request | Description
  - [CampReportResponse](doc/CampReportResponse.md)
  - [CampResponse](doc/CampResponse.md)
  - [CampSummaryStatsResponse](doc/CampSummaryStatsResponse.md)
+ - [ChangeAdminPasswordRequest](doc/ChangeAdminPasswordRequest.md)
  - [CornerMetricResponse](doc/CornerMetricResponse.md)
  - [CornerProgressResponse](doc/CornerProgressResponse.md)
  - [CornerResponse](doc/CornerResponse.md)
  - [CornerStatsResponse](doc/CornerStatsResponse.md)
+ - [CreateAdminRequest](doc/CreateAdminRequest.md)
  - [CreateCampRequest](doc/CreateCampRequest.md)
  - [CreateCornerRequest](doc/CreateCornerRequest.md)
  - [CreateTracksRequest](doc/CreateTracksRequest.md)
@@ -169,6 +174,7 @@ Class | Method | HTTP request | Description
  - [FacilitatorSessionResponse](doc/FacilitatorSessionResponse.md)
  - [GroupResponse](doc/GroupResponse.md)
  - [GroupStatsResponse](doc/GroupStatsResponse.md)
+ - [HealthResponse](doc/HealthResponse.md)
  - [MessageResponse](doc/MessageResponse.md)
  - [ReplaceTrackRequest](doc/ReplaceTrackRequest.md)
  - [SSENotification](doc/SSENotification.md)
@@ -192,12 +198,6 @@ Class | Method | HTTP request | Description
 
 Authentication schemes defined for the API:
 ### AdminAuth
-
-- **Type**: API key
-- **API key parameter name**: Authorization
-- **Location**: HTTP header
-
-### AdminRefreshAuth
 
 - **Type**: API key
 - **API key parameter name**: Authorization

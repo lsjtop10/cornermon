@@ -1,4 +1,3 @@
-// @dart=2.18
 //
 // AUTO-GENERATED FILE, DO NOT MODIFY!
 //
@@ -160,3 +159,4 @@ class DeviceRegistrationRequestRoleEnum extends EnumClass {
   static BuiltSet<DeviceRegistrationRequestRoleEnum> get values => _$deviceRegistrationRequestRoleEnumValues;
   static DeviceRegistrationRequestRoleEnum valueOf(String name) => _$deviceRegistrationRequestRoleEnumValueOf(name);
 }
+

@@ -1,4 +1,3 @@
-// @dart=2.18
 //
 // AUTO-GENERATED FILE, DO NOT MODIFY!
 //
@@ -161,3 +160,4 @@ class CornerProgressResponseStatusEnum extends EnumClass {
   static BuiltSet<CornerProgressResponseStatusEnum> get values => _$cornerProgressResponseStatusEnumValues;
   static CornerProgressResponseStatusEnum valueOf(String name) => _$cornerProgressResponseStatusEnumValueOf(name);
 }
+

@@ -1,4 +1,3 @@
-// @dart=2.18
 //
 // AUTO-GENERATED FILE, DO NOT MODIFY!
 //
@@ -142,3 +141,4 @@ class _$FacilitatorSessionResponseSerializer implements PrimitiveSerializer<Faci
     return result.build();
   }
 }
+

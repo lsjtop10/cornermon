@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cornermon/shared/api/providers/auth_device_trust_providers.dart';
 import 'package:cornermon/shared/auth/secure_token_store.dart';
 
-const _refreshTokenKey = 'admin_refresh_token';
+const _accessTokenKey = 'admin_access_token';
 const _adminIdKey = 'admin_id';
 
 sealed class AdminSessionState {
@@ -21,12 +21,10 @@ class AdminSessionUnauthenticated extends AdminSessionState {
 class AdminSessionAuthenticated extends AdminSessionState {
   const AdminSessionAuthenticated({
     required this.accessToken,
-    required this.refreshToken,
     required this.adminId,
   });
 
   final String accessToken;
-  final String refreshToken;
   final String adminId;
 
   @override
@@ -46,10 +44,10 @@ class AdminSession extends Notifier<AdminSessionState> {
 
   Future<void> _restore() async {
     final store = ref.read(secureTokenStoreProvider);
-    final refreshToken = await store.read(_refreshTokenKey);
-    if (refreshToken == null) return;
-    await refreshSession(
-      refreshToken: refreshToken,
+    final accessToken = await store.read(_accessTokenKey);
+    if (accessToken == null) return;
+    state = AdminSessionAuthenticated(
+      accessToken: accessToken,
       adminId: await store.read(_adminIdKey) ?? '',
     );
   }
@@ -59,48 +57,22 @@ class AdminSession extends Notifier<AdminSessionState> {
       adminLoginProvider(loginId, password).future,
     );
     final accessToken = response.accessToken;
-    final refreshToken = response.refreshToken;
-    if (accessToken == null || refreshToken == null) {
+    if (accessToken == null) {
       throw Exception('관리자 로그인 응답에 토큰이 없습니다.');
     }
 
     final store = ref.read(secureTokenStoreProvider);
-    await store.write(_refreshTokenKey, refreshToken);
+    await store.write(_accessTokenKey, accessToken);
     await store.write(_adminIdKey, loginId);
     state = AdminSessionAuthenticated(
       accessToken: accessToken,
-      refreshToken: refreshToken,
       adminId: loginId,
     );
   }
 
-  Future<bool> refreshSession({String? refreshToken, String? adminId}) async {
-    final current = state;
-    final token =
-        refreshToken ??
-        (current is AdminSessionAuthenticated ? current.refreshToken : null);
-    if (token == null) {
-      await _becomeUnauthenticated();
-      return false;
-    }
-
-    try {
-      final response = await ref.read(adminRefreshProvider.future);
-      final accessToken = response.accessToken;
-      if (accessToken == null) throw Exception('관리자 토큰 갱신 응답이 비어 있습니다.');
-      state = AdminSessionAuthenticated(
-        accessToken: accessToken,
-        refreshToken: token,
-        adminId:
-            adminId ??
-            (current is AdminSessionAuthenticated ? current.adminId : ''),
-      );
-      return true;
-    } catch (_) {
-      await _becomeUnauthenticated();
-      return false;
-    }
-  }
+  /// 슬라이딩 세션: 서버가 인증된 요청마다 만료를 자동 연장하므로 별도 refresh 호출이 없다.
+  /// 401을 받았다는 것은 세션이 이미 만료/무효화됐다는 뜻이므로 로컬 상태만 정리한다.
+  Future<void> invalidate() => _becomeUnauthenticated();
 
   Future<void> logout() async {
     try {
@@ -112,7 +84,7 @@ class AdminSession extends Notifier<AdminSessionState> {
 
   Future<void> _becomeUnauthenticated() async {
     final store = ref.read(secureTokenStoreProvider);
-    await store.delete(_refreshTokenKey);
+    await store.delete(_accessTokenKey);
     await store.delete(_adminIdKey);
     state = const AdminSessionUnauthenticated();
   }

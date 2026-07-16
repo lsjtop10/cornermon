@@ -23,7 +23,7 @@ Method | HTTP request | Description
 
 발송된 공지사항 목록
 
-관리자가 보낸 BROADCAST 메시지들의 목록을 조회한다.
+관리자 또는 진행자가 캠프에 발송된 BROADCAST 메시지들의 목록을 조회한다.
 
 ### Example
 ```dart
@@ -32,6 +32,10 @@ import 'package:cornermon_api_gen/api.dart';
 //defaultApiClient.getAuthentication<ApiKeyAuth>('AdminAuth').apiKey = 'YOUR_API_KEY';
 // uncomment below to setup prefix (e.g. Bearer) for API key, if needed
 //defaultApiClient.getAuthentication<ApiKeyAuth>('AdminAuth').apiKeyPrefix = 'Bearer';
+// TODO Configure API key authorization: TrackAuth
+//defaultApiClient.getAuthentication<ApiKeyAuth>('TrackAuth').apiKey = 'YOUR_API_KEY';
+// uncomment below to setup prefix (e.g. Bearer) for API key, if needed
+//defaultApiClient.getAuthentication<ApiKeyAuth>('TrackAuth').apiKeyPrefix = 'Bearer';
 
 final api = CornermonApiGen().getEMessageApi();
 final String campId = campId_example; // String | 캠프 ID
@@ -56,7 +60,7 @@ Name | Type | Description  | Notes
 
 ### Authorization
 
-[AdminAuth](../README.md#AdminAuth)
+[AdminAuth](../README.md#AdminAuth), [TrackAuth](../README.md#TrackAuth)
 
 ### HTTP request headers
 

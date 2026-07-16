@@ -1,4 +1,3 @@
-// @dart=2.18
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
 part of 'bottleneck_ranking_response.dart';

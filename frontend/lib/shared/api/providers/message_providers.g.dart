@@ -48,7 +48,7 @@ final class MessageApiProvider
   }
 }
 
-String _$messageApiHash() => r'bc33ba9f418b6b8926f567782389893c56c1d53a';
+String _$messageApiHash() => r'f609885512e238e505a6e43c52309191e51e7ae1';
 
 @ProviderFor(broadcastMessageList)
 final broadcastMessageListProvider = BroadcastMessageListFamily._();

@@ -1,4 +1,3 @@
-// @dart=2.18
 //
 // AUTO-GENERATED FILE, DO NOT MODIFY!
 //
@@ -124,3 +123,4 @@ class _$UnvisitedGroupResponseSerializer implements PrimitiveSerializer<Unvisite
     return result.build();
   }
 }
+

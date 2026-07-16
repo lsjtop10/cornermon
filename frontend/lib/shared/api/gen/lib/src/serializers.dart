@@ -1,4 +1,3 @@
-// @dart=2.18
 //
 // AUTO-GENERATED FILE, DO NOT MODIFY!
 //
@@ -17,7 +16,7 @@ import 'package:cornermon_api_gen/src/model/date.dart';
 
 import 'package:cornermon_api_gen/src/model/admin_login_request.dart';
 import 'package:cornermon_api_gen/src/model/admin_login_response.dart';
-import 'package:cornermon_api_gen/src/model/admin_refresh_response.dart';
+import 'package:cornermon_api_gen/src/model/admin_response.dart';
 import 'package:cornermon_api_gen/src/model/admin_session_response.dart';
 import 'package:cornermon_api_gen/src/model/assign_badge_request.dart';
 import 'package:cornermon_api_gen/src/model/audit_log_page_response.dart';
@@ -33,10 +32,12 @@ import 'package:cornermon_api_gen/src/model/bulk_update_corners_request_corners_
 import 'package:cornermon_api_gen/src/model/camp_report_response.dart';
 import 'package:cornermon_api_gen/src/model/camp_response.dart';
 import 'package:cornermon_api_gen/src/model/camp_summary_stats_response.dart';
+import 'package:cornermon_api_gen/src/model/change_admin_password_request.dart';
 import 'package:cornermon_api_gen/src/model/corner_metric_response.dart';
 import 'package:cornermon_api_gen/src/model/corner_progress_response.dart';
 import 'package:cornermon_api_gen/src/model/corner_response.dart';
 import 'package:cornermon_api_gen/src/model/corner_stats_response.dart';
+import 'package:cornermon_api_gen/src/model/create_admin_request.dart';
 import 'package:cornermon_api_gen/src/model/create_camp_request.dart';
 import 'package:cornermon_api_gen/src/model/create_corner_request.dart';
 import 'package:cornermon_api_gen/src/model/create_tracks_request.dart';
@@ -51,6 +52,7 @@ import 'package:cornermon_api_gen/src/model/export_tracks_response.dart';
 import 'package:cornermon_api_gen/src/model/facilitator_session_response.dart';
 import 'package:cornermon_api_gen/src/model/group_response.dart';
 import 'package:cornermon_api_gen/src/model/group_stats_response.dart';
+import 'package:cornermon_api_gen/src/model/health_response.dart';
 import 'package:cornermon_api_gen/src/model/message_response.dart';
 import 'package:cornermon_api_gen/src/model/replace_track_request.dart';
 import 'package:cornermon_api_gen/src/model/sse_notification.dart';
@@ -73,7 +75,7 @@ part 'serializers.g.dart';
 @SerializersFor([
   AdminLoginRequest,
   AdminLoginResponse,
-  AdminRefreshResponse,
+  AdminResponse,
   AdminSessionResponse,
   AssignBadgeRequest,
   AuditLogPageResponse,
@@ -89,10 +91,12 @@ part 'serializers.g.dart';
   CampReportResponse,
   CampResponse,
   CampSummaryStatsResponse,
+  ChangeAdminPasswordRequest,
   CornerMetricResponse,
   CornerProgressResponse,
   CornerResponse,
   CornerStatsResponse,
+  CreateAdminRequest,
   CreateCampRequest,
   CreateCornerRequest,
   CreateTracksRequest,
@@ -107,6 +111,7 @@ part 'serializers.g.dart';
   FacilitatorSessionResponse,
   GroupResponse,
   GroupStatsResponse,
+  HealthResponse,
   MessageResponse,
   ReplaceTrackRequest,
   SSENotification,

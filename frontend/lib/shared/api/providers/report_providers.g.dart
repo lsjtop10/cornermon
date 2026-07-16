@@ -48,7 +48,7 @@ final class ReportApiProvider
   }
 }
 
-String _$reportApiHash() => r'd9781ebe04fbcb0fb5660fb3e6c2f22cf61bd563';
+String _$reportApiHash() => r'ead9e38b6b3b34d6aade67fdc949b468dce99248';
 
 @ProviderFor(currentReport)
 final currentReportProvider = CurrentReportFamily._();

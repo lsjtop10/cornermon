@@ -1,4 +1,3 @@
-// @dart=2.18
 //
 // AUTO-GENERATED FILE, DO NOT MODIFY!
 //
@@ -211,3 +210,4 @@ class TrackSummaryResponseStatusEnum extends EnumClass {
   static BuiltSet<TrackSummaryResponseStatusEnum> get values => _$trackSummaryResponseStatusEnumValues;
   static TrackSummaryResponseStatusEnum valueOf(String name) => _$trackSummaryResponseStatusEnumValueOf(name);
 }
+

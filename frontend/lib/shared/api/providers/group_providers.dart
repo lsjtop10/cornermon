@@ -10,7 +10,7 @@ part 'group_providers.g.dart';
 @riverpod
 CVisitScanFlowApi visitScanFlowApi(Ref ref) {
   final dio = ref.watch(apiClientProvider);
-  return CVisitScanFlowApi(dio, serializers);
+  return CVisitScanFlowApi(dio, standardSerializers);
 }
 
 @riverpod

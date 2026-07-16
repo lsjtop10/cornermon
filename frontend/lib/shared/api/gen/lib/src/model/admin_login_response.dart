@@ -1,4 +1,3 @@
-// @dart=2.18
 //
 // AUTO-GENERATED FILE, DO NOT MODIFY!
 //
@@ -14,7 +13,6 @@ part 'admin_login_response.g.dart';
 /// Properties:
 /// * [accessToken] 
 /// * [expiresInSeconds] 
-/// * [refreshToken] 
 @BuiltValue()
 abstract class AdminLoginResponse implements Built<AdminLoginResponse, AdminLoginResponseBuilder> {
   @BuiltValueField(wireName: r'accessToken')
@@ -22,9 +20,6 @@ abstract class AdminLoginResponse implements Built<AdminLoginResponse, AdminLogi
 
   @BuiltValueField(wireName: r'expiresInSeconds')
   int? get expiresInSeconds;
-
-  @BuiltValueField(wireName: r'refreshToken')
-  String? get refreshToken;
 
   AdminLoginResponse._();
 
@@ -61,13 +56,6 @@ class _$AdminLoginResponseSerializer implements PrimitiveSerializer<AdminLoginRe
       yield serializers.serialize(
         object.expiresInSeconds,
         specifiedType: const FullType(int),
-      );
-    }
-    if (object.refreshToken != null) {
-      yield r'refreshToken';
-      yield serializers.serialize(
-        object.refreshToken,
-        specifiedType: const FullType(String),
       );
     }
   }
@@ -107,13 +95,6 @@ class _$AdminLoginResponseSerializer implements PrimitiveSerializer<AdminLoginRe
           ) as int;
           result.expiresInSeconds = valueDes;
           break;
-        case r'refreshToken':
-          final valueDes = serializers.deserialize(
-            value,
-            specifiedType: const FullType(String),
-          ) as String;
-          result.refreshToken = valueDes;
-          break;
         default:
           unhandled.add(key);
           unhandled.add(value);
@@ -142,3 +123,4 @@ class _$AdminLoginResponseSerializer implements PrimitiveSerializer<AdminLoginRe
     return result.build();
   }
 }
+

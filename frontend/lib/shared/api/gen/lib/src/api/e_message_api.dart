@@ -1,4 +1,3 @@
-// @dart=2.18
 //
 // AUTO-GENERATED FILE, DO NOT MODIFY!
 //
@@ -27,7 +26,7 @@ class EMessageApi {
   const EMessageApi(this._dio, this._serializers);
 
   /// 발송된 공지사항 목록
-  /// 관리자가 보낸 BROADCAST 메시지들의 목록을 조회한다.
+  /// 관리자 또는 진행자가 캠프에 발송된 BROADCAST 메시지들의 목록을 조회한다.
   ///
   /// Parameters:
   /// * [campId] - 캠프 ID
@@ -60,6 +59,11 @@ class EMessageApi {
           {
             'type': 'apiKey',
             'name': 'AdminAuth',
+            'keyName': 'Authorization',
+            'where': 'header',
+          },{
+            'type': 'apiKey',
+            'name': 'TrackAuth',
             'keyName': 'Authorization',
             'where': 'header',
           },
