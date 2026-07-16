@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import 'package:cornermon/admin/features/setup_wizard/setup_wizard_provider.dart';
 import 'package:cornermon/admin/features/setup_wizard/setup_wizard_state.dart';
 import 'package:cornermon/shared/design_system/tokens/colors.dart';
 import 'package:cornermon/shared/design_system/tokens/spacing.dart';
-import 'package:cornermon/shared/design_system/widgets/app_button.dart';
+import 'package:cornermon/shared/design_system/tokens/typography.dart';
 
 class ReviewStep extends ConsumerWidget {
   const ReviewStep({super.key});
@@ -27,9 +26,45 @@ class ReviewStep extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text('캠프: ${state.campName}'),
-        Text('기간: ${_dateRange(state.startAt, state.endAt)}'),
-        Text('코너 ${state.corners.length}개 · 트랙 총 $tracks개'),
+        Text('설정 내용을 확인하세요', style: AppTypography.bodyEmphasis),
+        const SizedBox(height: AppSpacing.space2),
+        _SummaryRow(
+          label: '캠프',
+          value: state.campName.isEmpty ? '(이름 없음)' : state.campName,
+          colors: colors,
+        ),
+        _SummaryRow(
+          label: '기간',
+          value: _dateRange(state.startAt, state.endAt),
+          colors: colors,
+        ),
+        _SummaryRow(
+          label: '코너 수',
+          value: '${state.corners.length}개',
+          colors: colors,
+        ),
+        _SummaryRow(
+          label: '생성될 트랙 수',
+          value: '총 $tracks개 (PIN 자동 발급)',
+          colors: colors,
+          showDivider: false,
+        ),
+        const SizedBox(height: AppSpacing.space3),
+        Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.space3,
+            vertical: AppSpacing.space2,
+          ),
+          decoration: BoxDecoration(
+            color: colors.brandPrimary.withValues(alpha: .1),
+            borderRadius: BorderRadius.circular(9),
+          ),
+          child: Text(
+            '완료 즉시 "준비 중" 상태로 캠프 목록에 추가되며, 곧장 코너·트랙 준비 화면으로 이동합니다. '
+            '트랙 PIN은 지금 바로 발급되지만, "코너학습 시작"을 확정하기 전까지는 로그인이 열리지 않습니다.',
+            style: AppTypography.caption.copyWith(color: colors.brandPrimary),
+          ),
+        ),
         if (state.submitError != null) ...[
           const SizedBox(height: AppSpacing.space3),
           Container(
@@ -43,8 +78,9 @@ class ReviewStep extends ConsumerWidget {
         ],
         if (state.isSubmitting || hasFailures) ...[
           const SizedBox(height: AppSpacing.space4),
-          const Text('생성 상태'),
-          Expanded(
+          Text('생성 상태', style: AppTypography.bodyEmphasis),
+          SizedBox(
+            height: 180,
             child: ListView(
               children: [
                 for (final row in state.corners)
@@ -59,50 +95,44 @@ class ReviewStep extends ConsumerWidget {
               ],
             ),
           ),
-        ] else
-          const Spacer(),
-        const Divider(),
-        const SizedBox(height: AppSpacing.space3),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            AppButton(
-              variant: AppButtonVariant.secondary,
-              label: '이전',
-              onPressed: state.isSubmitting
-                  ? null
-                  : () => ref.read(setupWizardProvider.notifier).goToStep(1),
-            ),
-            Stack(
-              alignment: Alignment.center,
-              children: [
-                AppButton(
-                  variant: AppButtonVariant.primary,
-                  label: hasFailures ? '실패한 코너 재시도' : '설정 완료 → 코너·트랙 준비로',
-                  onPressed: state.isSubmitting
-                      ? null
-                      : () async {
-                          final completed = await ref
-                              .read(setupWizardProvider.notifier)
-                              .submit();
-                          if (completed && context.mounted) {
-                            context.go('/corner-track-manage');
-                          }
-                        },
-                ),
-                if (state.isSubmitting)
-                  const SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  ),
-              ],
-            ),
-          ],
-        ),
+        ],
       ],
     );
   }
+}
+
+class _SummaryRow extends StatelessWidget {
+  const _SummaryRow({
+    required this.label,
+    required this.value,
+    required this.colors,
+    this.showDivider = true,
+  });
+
+  final String label;
+  final String value;
+  final AppColors colors;
+  final bool showDivider;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(vertical: AppSpacing.space2),
+    decoration: showDivider
+        ? BoxDecoration(
+            border: Border(bottom: BorderSide(color: colors.border)),
+          )
+        : null,
+    child: Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: AppTypography.caption.copyWith(color: colors.textSecondary),
+        ),
+        Text(value, style: AppTypography.bodyEmphasis),
+      ],
+    ),
+  );
 }
 
 class _StatusLabel extends StatelessWidget {
