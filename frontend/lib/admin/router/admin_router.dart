@@ -17,7 +17,6 @@ import 'package:cornermon/admin/session/selected_camp_provider.dart';
 import 'package:cornermon/admin/widgets/admin_scaffold.dart';
 import 'package:cornermon/shared/api/domain_aliases.dart';
 import 'package:cornermon/shared/api/ids.dart';
-import 'package:cornermon/shared/api/providers/camp_providers.dart';
 
 const _campIndependentLocations = {
   '/login',
@@ -125,7 +124,6 @@ class _AdminRouterRefresh extends ChangeNotifier {
       ref.listen(adminSessionProvider, (_, _) => notifyListeners()),
       ref.listen(selectedCampIdProvider, (_, _) => notifyListeners()),
       ref.listen(selectedCampProvider, (_, _) => notifyListeners()),
-      ref.listen(campListProvider, (_, _) => notifyListeners()),
     ];
   }
 
