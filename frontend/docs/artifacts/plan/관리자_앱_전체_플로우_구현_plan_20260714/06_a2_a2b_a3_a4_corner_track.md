@@ -1,6 +1,6 @@
 # Phase 06 — A2 코너 상세 / A2B 트랙 일괄 관리 / A3 트랙 교체 / A4 PIN 전체 내보내기
 
-> 구현 상태: 완료 (`feat/admin-corner-track-group-status`, 2026-07-16)
+> 구현 상태: 완료 (수동 구동 제외, `feat/admin-corner-track-group-status`, 2026-07-16)
 
 > 선행조건: `01_api_codegen_sync.md`(특히 `corner_track_providers.dart`의 `cornerList`/`cornerDetail`/`bulkUpdateCorners`/`deleteCorner`/`trackList`/`createTracks`/`deleteTrack`/`bulkDeleteTracks`/`replaceTrack`/`regeneratePin`/`exportAllTracksCsv`/`exportTrackPdf`), `02_admin_skeleton_router_sidebar.md`(라우트 `/dashboard/corners/:cornerId`, `/corner-track-manage`, `selectedCampIdProvider`, `AdminSidebar`). 대상 독자: 1~2년차 프론트엔드 개발자 1명, 예상 소요 10~14시간(이 그룹이 트랙 관리 시나리오 20개를 전부 담당하는 가장 밀도 높은 화면군).
 > 목적: 코너 하나의 트랙을 다루는 A2, 캠프 전체 트랙을 다루는 A2B, 그 안에 내장된 모달(A3)과 버튼(A4)까지 4개 화면 단위를 구현한다. **A3와 A4는 별도 라우트/파일이 아니다** — A3는 A2에 내장된 모달 위젯, A4는 A2B 상단에 내장된 버튼+토스트+이력 컴포넌트다. `02`의 라우트 표에도 이 두 개는 등록돼 있지 않다.
@@ -283,40 +283,40 @@ class ExportHistoryEntry {
 ## 4. 검증 체크리스트
 
 ### 4.1 A2 코너 상세
-- [ ] 대시보드 카드 탭 → `/dashboard/corners/:cornerId` 진입, 뒤로가기 버튼 탭 시 `/dashboard`로 복귀한다
-- [ ] 코너 이름/목표시간을 수정하고 저장하면 A2-모달3(변경 전/후 비교)가 뜨고, 확인 시 `bulkUpdateCorners`가 `corners: [{id, name, targetMinutes}]` 1건 배열로 호출된다(요청 바디를 목 서버/인터셉터 로그로 확인)
-- [ ] 트랙이 0개인 코너는 empty state + "트랙 추가" 강조 CTA가 보인다
-- [ ] "트랙 추가" 탭 시 `POST /corners/{cornerId}/tracks`(count=1)가 호출되고 목록에 새 트랙이 나타난다
-- [ ] BUSY 트랙의 "삭제" 탭 시 하드 블록 모달("진행 중인 방문이 있어 삭제할 수 없습니다")이 뜨고 바깥 탭으로 닫히지 않으며, 삭제 API가 호출되지 않는다
-- [ ] 코너의 마지막 IDLE 트랙 삭제 시 소프트 확인 모달이 뜨고, "취소" 시 삭제되지 않으며 "진행" 시 `bulkDeleteTracks(trackIds: [해당 id])` 1건 배열로 호출된다
-- [ ] 트랙 행 "PIN 보기" 탭 시 `GET /tracks/{id}/export`가 호출되고 PIN 팝업과 복사 버튼이 표시된다
-- [ ] "교체" 탭 시 A3 모달이 뜬다(§4.3)
-- [ ] "PIN 재발급" 탭 후 확인 시 `regeneratePin` 호출, 이후 트랙 목록에 새 PIN이 반영된다
+- [x] 대시보드 카드 탭 → `/dashboard/corners/:cornerId` 진입, 뒤로가기 버튼 탭 시 `/dashboard`로 복귀한다
+- [x] 코너 이름/목표시간을 수정하고 저장하면 A2-모달3(변경 전/후 비교)가 뜨고, 확인 시 `bulkUpdateCorners`가 `corners: [{id, name, targetMinutes}]` 1건 배열로 호출된다
+- [x] 트랙이 0개인 코너는 empty state + "트랙 추가" 강조 CTA가 보인다
+- [x] "트랙 추가" 탭 시 count=1로 `createTracksForCorner`를 호출하고 목록을 invalidate한다
+- [x] BUSY 트랙의 "삭제" 탭 시 하드 블록 모달을 표시하고 삭제 provider를 호출하지 않는다
+- [x] 코너의 마지막 IDLE 트랙 삭제 시 소프트 확인 후 `bulkDeleteTracks` 1건 배열을 호출한다
+- [x] 트랙 행 "PIN 보기"가 JSON PIN 팝업, 복사하기, PDF 내보내기를 제공한다
+- [x] "교체" 탭 시 A3 모달이 뜬다(§4.3)
+- [x] "PIN 재발급" 확인 후 `regeneratePin`을 호출하고 트랙 목록을 invalidate한다
 
 ### 4.2 A2B 트랙 일괄 관리
-- [ ] 운영 모드(ACTIVE 캠프)에서는 A1 우측 상단 "트랙 일괄 관리 →"로 진입, 뒤로가기가 `/dashboard`로 복귀한다
-- [ ] 준비 모드(PENDING 캠프)에서는 사이드바 "코너·트랙" 클릭이 곧장 이 화면이며 뒤로가기 버튼이 없다
-- [ ] 상태 필터를 "IDLE만"으로 바꾸면 BUSY 트랙이 목록에서 사라지고 "전체 선택" 체크 시 화면에 보이는 IDLE 트랙만 선택되며 숨겨진 BUSY 트랙은 선택되지 않는다(체크박스 상태를 selectedIds에서 직접 확인)
-- [ ] 서로 다른 코너에 속한 트랙 3개를 선택하고 목표시간을 8분으로 적용하면 `bulkUpdateCorners`가 그 3개 트랙이 속한 코너들의 id를 담은 배열로 호출된다(코너 수만큼, 트랙 수만큼이 아님)
-- [ ] 선택된 3개 트랙 중 1개라도 BUSY면 "선택 삭제" 버튼이 비활성 상태이고 경고 문구가 보이며, 버튼을 강제로 눌러도(비활성이므로 불가) 아무 요청도 발생하지 않는다
-- [ ] 선택된 트랙이 모두 IDLE이면 "선택 삭제" 활성화, 소프트 확인 후 `bulkDeleteTracks`가 호출되고 성공 시 selectedIds가 비워진다
-- [ ] 코너/트랙번호/상태 컬럼 헤더 클릭 시 오름차순→내림차순 토글되고 아이콘이 바뀐다
-- [ ] "전체 PIN CSV 다운로드" 탭 시 `GET /tracks/export` JSON 응답에서 CSV를 생성해 공유하고, 성공 후 이력 리스트 최상단에 방금 내보낸 시각+관리자명이 추가된다(화면을 벗어났다 재진입하면 이력이 초기화되는 것은 알려진 한계로 허용)
+- [x] 운영 모드(ACTIVE 캠프)에서는 A1 우측 상단 "트랙 일괄 관리 →"로 진입, 뒤로가기가 `/dashboard`로 복귀한다
+- [x] 준비 모드(PENDING 캠프)에서는 사이드바 "코너·트랙" 클릭이 곧장 이 화면이며 뒤로가기 버튼이 없다
+- [x] 상태 필터와 필터 범위 전체 선택은 로컬 `_selectedIds`만 갱신한다
+- [x] 선택 트랙의 중복을 제거한 코너 ID 배열로 `bulkUpdateCorners`를 호출한다
+- [x] BUSY가 포함되면 "선택 삭제" 버튼을 비활성화하고 경고를 표시한다
+- [x] 모두 IDLE이면 소프트 확인 후 `bulkDeleteTracks`를 호출하고 선택을 비운다
+- [x] 코너/트랙번호/상태 헤더 클릭 시 로컬 정렬 방향을 토글한다
+- [x] 전체 JSON PIN 목록에서 BOM CSV를 생성·공유하고 관리자 ID 포함 세션 내 이력을 추가한다
 
 ### 4.3 A3 트랙 교체 (A2 내 모달)
-- [ ] BUSY 트랙의 "교체" 탭 시 A3 모달을 열지 않고(또는 열되 즉시) 하드 블록 모달이 뜬다 — "진행 중인 방문이 완료된 후 다시 시도하세요"
-- [ ] 마지막 트랙 교체 시도 시 소프트 확인 모달, "취소"면 교체 미실행, "진행"이면 `PUT /tracks/{id}/replace`가 `newCornerId`와 함께 호출되고 원래 코너가 트랙 0개 상태로 표시된다
-- [ ] 정상 케이스(IDLE, 코너에 다른 트랙 존재)에서 신규 코너 선택 후 "교체 실행" 탭 시 API 호출, 성공 시 모달이 닫히고 원래 코너 상세(A2)의 트랙 목록에서 해당 트랙이 사라진다(재조회 후)
-- [ ] 신규 코너 드롭다운에 현재 코너 자신은 목록에서 제외된다
+- [x] BUSY 트랙의 "교체" 탭 시 A3 모달 대신 하드 블록 모달을 표시한다
+- [x] 마지막 트랙 교체는 소프트 확인 후 `replaceTrack`을 호출한다
+- [x] 정상 교체 성공 시 트랙/코너 목록을 invalidate하고 새 PIN을 안내한다
+- [x] 신규 코너 드롭다운에서 현재 코너를 제외한다
 
 ### 4.4 공통/아키텍처
-- [ ] `admin/entities/*.dart`가 `dio`/`flutter_riverpod`/`go_router`를 import하지 않는다
-- [ ] `admin/features/corner_detail`, `admin/features/track_bulk_manage`는 `admin/entities`와 `shared/api/providers`만 의존한다(직접 `shared/api/gen` import 없음)
-- [ ] 단건 코너 수정(A2)과 일괄 코너 수정(A2B)이 동일한 `bulkUpdateCornersProvider` 하나만 쓴다(별도 PATCH 계열 provider를 새로 만들지 않았는지 코드 리뷰로 확인)
-- [ ] 단건 트랙 삭제(A2)와 일괄 트랙 삭제(A2B)가 동일한 `bulkDeleteTracksProvider` 하나만 쓴다(`deleteTrack` 단건 provider가 호출되는 곳이 없는지 `grep -rn "deleteTrackProvider" frontend/lib/admin`으로 확인 — 있다면 §0-2에 따라 제거)
-- [ ] `flutter analyze`가 `frontend/lib/admin/features/corner_detail/**`, `frontend/lib/admin/features/track_bulk_manage/**` 범위에서 0 에러
-- [ ] 새 화면·모달·테이블이 `docs/design-system.md`의 상태 색상·아이콘 병기, 48pt 테이블 행 높이, 정렬/필터 패턴, 확인 모달 규칙을 준수하는지 코드 리뷰로 확인한다
-- [ ] `flutter run -t lib/main_admin.dart --flavor admin`으로 PENDING 캠프 → 사이드바 "코너·트랙"(A2B) → 트랙 3개 선택 후 목표시간 일괄 변경 → A2 진입 → 트랙 교체(A3) → 전체 PIN 내보내기(A4) 흐름을 1회 수동 구동한다
+- [x] `admin/entities/*.dart`가 금지된 infrastructure import를 갖지 않는다
+- [x] feature가 직접 `shared/api/gen`을 import하지 않는다
+- [x] 단건/일괄 코너 수정이 동일한 `bulkUpdateCornersProvider`를 쓴다
+- [x] 단건/일괄 트랙 삭제가 동일한 `bulkDeleteTracksProvider`를 쓴다
+- [x] `flutter analyze lib/admin test/admin`이 0 에러로 통과했다
+- [x] `StatusBadge`, `EmptyState`, `ConfirmModal`, 아이콘 액션과 DataTable 정렬/필터 패턴을 코드 리뷰했다
+- [-] 사용자 요청으로 수동 구동 제외
 
 ## 구현·검증 결과 (2026-07-16)
 

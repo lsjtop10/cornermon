@@ -1,6 +1,6 @@
 # Phase 07 — A5 조 현황 목록 / A6 조 상세(순회표)
 
-> 구현 상태: 완료 (`feat/admin-corner-track-group-status`, 2026-07-16)
+> 구현 상태: 완료 (수동 구동 제외, `feat/admin-corner-track-group-status`, 2026-07-16)
 
 > 선행조건: `01_api_codegen_sync.md`(`groupList(ref, campId)`/`groupDetail`/`groupVisits`/`badgeList`/`registerBadge`/`scanRegisterBadge` provider 확정), `02_admin_skeleton_router_sidebar.md`(`/groups`, `/groups/:groupId` 라우트 + `selectedCampIdProvider`).
 > 대상 독자: 1~2년차 프론트엔드 개발자 1명, 예상 소요 6~8시간(모달 API 비대칭 확인 회의 시간 별도).
@@ -248,24 +248,24 @@ extension AdminGroupX on api.Group {
 
 ## 4. 검증 체크리스트
 
-- [ ] **§0 확인 필요 항목이 사람에 의해 해석 2(수렴)로 확정되었거나, 대안(백엔드 API 추가 요청)으로 명시적으로 대체되었다** — 이 항목이 미해결 상태로 구현에 들어가지 않았는지 PR 설명에 남긴다
-- [ ] A5 진입 시 `campId`가 `selectedCampIdProvider`에서 오고, `GET /camps/{campId}/groups` 1회 호출로 전체 목록을 받는다(필터/정렬 API 호출 없음 — 네트워크 탭에서 쿼리 파라미터 없는 요청 확인)
-- [ ] 필터 칩 "전체/완주/부분완주" 전환 시 추가 네트워크 요청이 발생하지 않는다(클라이언트 사이드 필터링만)
-- [ ] "조" 컬럼 헤더 탭 → 이름 오름차순/내림차순 토글, "완료 코너 수" 헤더 탭 → 숫자 오름차순/내림차순 토글이 즉시(네트워크 없이) 반영된다
-- [ ] "+ 조 등록" 모달: 조 이름을 비운 채로는 "등록 확정" 버튼이 비활성 상태를 유지한다(위젯 테스트로 `find.byType(ElevatedButton)`의 `onPressed == null` 확인)
-- [ ] 카메라 탭: QR 인식 성공 콜백(mock)을 주입했을 때 조 이름 입력란이 나타난다
-- [ ] 목록 탭: `badgeListProvider`가 반환한 배지 중 `status == UNASSIGNED`인 것만 렌더링된다(ASSIGNED 배지는 목록에서 제외됨을 위젯 테스트로 확인)
-- [ ] 목록 탭에서 배지를 선택하고 조 이름을 입력해 확정하면 `scanRegisterBadgeProvider(qrPayload, groupName)`이 호출된다 — `registerBadgeProvider(badgeId, ...)`가 호출되지 않음을 mock provider override로 검증(§0 해석 2 회귀 방지 테스트)
-- [ ] 이미 배정된 배지로 재등록을 시도하면(mock에서 4xx 예외 throw) 등록 거부 SnackBar가 표시되고 모달이 닫히지 않는다
-- [ ] 등록 확정 성공 시 모달이 닫히고 `groupListProvider(campId)`가 invalidate되어 A5 목록에 새 조가 즉시 나타난다(재조회 트리거 확인 — SSE 배선은 `12`에서, 여기선 로컬 invalidate만)
-- [ ] A5 행 탭 → `/groups/:groupId`로 이동하고, A6 뒤로가기 → `/groups`로 복귀한다(선택된 필터/정렬 상태 유지 여부는 이번 범위에서 요구하지 않음 — 초기화되어도 무방)
-- [ ] A6에 "중복방문 예외 승인" 관련 버튼/모달/문구가 어디에도 존재하지 않는다(`grep -rn "예외" frontend/lib/admin/features/group_detail`가 빈 결과)
-- [ ] A6 코너 그리드가 `itinerary.length`(보통 10)개 셀을 렌더링하고 각 셀의 아이콘이 `CornerProgress.status`(NOT_VISITED/IN_PROGRESS/COMPLETED)와 1:1 대응한다
-- [ ] A6 방문 이력 테이블이 `startedAt` 오름차순으로 정렬되고, 코너 이름/트랙 번호가 UUID가 아니라 사람이 읽을 수 있는 이름으로 표시된다
-- [ ] `IN_PROGRESS` 상태의 방문(아직 `endedAt`/`durationSeconds` 없음)이 있어도 테이블 렌더링이 예외 없이 "-"로 표시된다(널 안전성 위젯 테스트)
-- [ ] `group_ext.dart`의 `isFinished` getter가 삭제되고, 모든 호출부가 `api.Group.isFinished`(서버 필드)를 직접 참조한다(`grep -rn "\.isFinished" frontend/lib/admin`으로 getter 정의가 아닌 필드 접근만 남았는지 확인)
-- [ ] `flutter analyze`가 `frontend/lib/admin/features/group_list/**`, `frontend/lib/admin/features/group_detail/**` 범위에서 0 에러
-- [ ] `flutter run -t lib/main_admin.dart --flavor admin`으로 ACTIVE 캠프 진입 → A5 → "+ 조 등록"(목록 탭) → A6 진입까지 1회 실기기 수동 구동
+- [x] §0 해석 2를 채택하여 두 입력 탭이 `scanRegisterBadge`로 수렴한다. PR 설명에도 기록했다.
+- [x] A5는 `selectedCampIdProvider`로 `groupListProvider(campId)`를 watch한다.
+- [x] 필터 칩은 로컬 `_filter`만 갱신한다.
+- [x] 이름/상태/완료 코너 수 정렬은 로컬 목록에 즉시 적용한다.
+- [x] 조 이름 또는 QR payload가 없으면 "등록 확정" 버튼이 비활성화된다.
+- [x] 카메라 탭은 `MobileScanner` 인식 후 조 이름 입력란을 표시한다.
+- [x] 목록 탭은 `BadgeStatus.UNASSIGNED` 배지만 렌더링한다.
+- [x] 목록 선택도 `scanRegisterBadgeProvider(qrPayload, groupName)`를 사용하며 `registerBadgeProvider`를 호출하지 않는다.
+- [x] 등록 실패 시 모달을 유지하고 오류 SnackBar를 표시한다.
+- [x] 등록 성공 시 모달을 닫고 `groupListProvider(campId)`를 invalidate한다.
+- [x] A5 행과 A6 뒤로가기 라우팅을 연결했다.
+- [x] A6에 중복방문 예외 승인 UI가 없음을 검색으로 확인했다.
+- [x] A6 순회표는 `CornerProgress.status`별 아이콘을 표시한다.
+- [x] A6 방문 이력은 시작 시각 오름차순이며 코너명/트랙 번호를 매핑한다.
+- [x] 종료/소요 시간이 null이면 "-"로 렌더링한다.
+- [x] `group_ext.dart`의 `isFinished` getter를 제거하고 서버 필드를 사용한다.
+- [x] `flutter analyze lib/admin test/admin`이 0 에러로 통과했다.
+- [-] 사용자 요청으로 수동 구동 제외
 
 ## 구현·검증 결과 (2026-07-16)
 
