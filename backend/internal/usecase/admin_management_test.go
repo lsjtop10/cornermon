@@ -97,7 +97,7 @@ func TestAdminAuthService_AdminManagement(t *testing.T) {
 
 		// Act
 		err := service.ChangeAdminPassword(context.Background(), "system", "operator", "new")
-		_, _, _, loginErr := service.Login(context.Background(), "operator", "new", "test")
+		_, _, loginErr := service.Login(context.Background(), "operator", "new", "test")
 
 		// Assert
 		if err != nil || loginErr != nil {
