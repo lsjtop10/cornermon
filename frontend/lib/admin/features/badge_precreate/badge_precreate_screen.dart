@@ -4,6 +4,7 @@ import 'package:cornermon/shared/api/domain_aliases.dart' as api;
 import 'package:cornermon/shared/api/providers/badge_providers.dart';
 import 'package:cornermon/shared/api/providers/group_providers.dart';
 import 'package:cornermon/shared/design_system/widgets/empty_state.dart';
+import 'package:cornermon/shared/design_system/widgets/app_tag.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -137,10 +138,18 @@ class _BadgePrecreateScreenState extends ConsumerState<BadgePrecreateScreen> {
                         decoration: const InputDecoration(labelText: '생성 수량'),
                       ),
                     ),
-                    FilledButton(
-                      onPressed: _busy || _count == null ? null : _generate,
-                      child: const Text('배지 생성'),
-                    ),
+                    _count == null
+                        ? const Tooltip(
+                            message: '생성 수량은 1 이상이어야 합니다.',
+                            child: FilledButton(
+                              onPressed: null,
+                              child: Text('배지 생성'),
+                            ),
+                          )
+                        : FilledButton(
+                            onPressed: _busy ? null : _generate,
+                            child: const Text('배지 생성'),
+                          ),
                     OutlinedButton.icon(
                       onPressed: _busy ? null : _export,
                       icon: const Icon(Icons.ios_share),
@@ -191,10 +200,13 @@ class BadgeTable extends StatelessWidget {
               cells: [
                 DataCell(Text(badge.shortId ?? badge.id ?? '-')),
                 DataCell(
-                  Chip(
-                    label: Text(
-                      badge.status == api.BadgeStatus.ASSIGNED ? '배정됨' : '미배정',
-                    ),
+                  AppTag(
+                    label: badge.status == api.BadgeStatus.ASSIGNED
+                        ? '배정됨'
+                        : '미배정',
+                    tone: badge.status == api.BadgeStatus.ASSIGNED
+                        ? AppTagTone.success
+                        : AppTagTone.neutral,
                   ),
                 ),
                 DataCell(

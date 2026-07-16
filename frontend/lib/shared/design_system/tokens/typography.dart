@@ -33,7 +33,7 @@ class AppTypography {
 
   static const TextStyle bodyEmphasis = TextStyle(
     fontSize: 16.0,
-    fontWeight: FontWeight.bold,
+    fontWeight: FontWeight.w600,
     height: 1.5,
   );
 
@@ -45,7 +45,7 @@ class AppTypography {
 
   static const TextStyle label = TextStyle(
     fontSize: 12.0,
-    fontWeight: FontWeight.bold,
+    fontWeight: FontWeight.w600,
     letterSpacing: 0.4,
     height: 1.2,
   );

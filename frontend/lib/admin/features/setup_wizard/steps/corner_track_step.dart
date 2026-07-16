@@ -46,7 +46,7 @@ class _CornerTrackStepState extends ConsumerState<CornerTrackStep> {
         const SizedBox(height: AppSpacing.space3),
         TextField(
           controller: _pasteController,
-          maxLines: 5,
+          maxLines: 3,
           decoration: const InputDecoration(hintText: '1코너\n2코너'),
         ),
         const SizedBox(height: AppSpacing.space3),
@@ -88,16 +88,18 @@ class _CornerTrackStepState extends ConsumerState<CornerTrackStep> {
           ],
         ),
         const SizedBox(height: AppSpacing.space4),
-        if (state.corners.isEmpty)
-          const Padding(
-            padding: EdgeInsets.all(AppSpacing.space6),
-            child: Center(child: Text('붙여넣거나 예시 템플릿을 사용하세요')),
-          )
-        else
-          ...state.corners.indexed.map(
-            (entry) => _CornerRow(index: entry.$1, row: entry.$2),
-          ),
-        const SizedBox(height: AppSpacing.space6),
+        Expanded(
+          child: state.corners.isEmpty
+              ? const Center(child: Text('붙여넣거나 예시 템플릿을 사용하세요'))
+              : ListView.builder(
+                  padding: const EdgeInsets.only(top: AppSpacing.space2),
+                  itemCount: state.corners.length,
+                  itemBuilder: (context, index) =>
+                      _CornerRow(index: index, row: state.corners[index]),
+                ),
+        ),
+        const Divider(),
+        const SizedBox(height: AppSpacing.space3),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [

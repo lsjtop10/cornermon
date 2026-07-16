@@ -4,6 +4,7 @@ import 'package:cornermon/shared/api/providers/corner_track_providers.dart';
 import 'package:cornermon/shared/api/providers/report_providers.dart';
 import 'package:cornermon/shared/design_system/tokens/colors.dart';
 import 'package:cornermon/shared/design_system/widgets/empty_state.dart';
+import 'package:cornermon/shared/design_system/widgets/connection_banner.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -133,6 +134,7 @@ class DashboardScreen extends ConsumerWidget {
         child: ListView(
           padding: const EdgeInsets.all(24),
           children: [
+            const ConnectionBanner(state: ConnectionBannerState.hidden),
             _SummaryBar(summary: summary),
             const SizedBox(height: 20),
             _Controls(),
@@ -140,10 +142,7 @@ class DashboardScreen extends ConsumerWidget {
             _Filters(),
             const SizedBox(height: 16),
             corners.when(
-              loading: () => const SizedBox(
-                height: 400,
-                child: Center(child: CircularProgressIndicator()),
-              ),
+              loading: () => const _CornerGridSkeleton(),
               error: (error, _) => SizedBox(
                 height: 300,
                 child: EmptyState(
@@ -164,11 +163,20 @@ class DashboardScreen extends ConsumerWidget {
                   ref.watch(dashboardSortProvider),
                 );
                 if (visible.isEmpty) {
-                  return const SizedBox(
+                  final noCorners = items.isEmpty;
+                  return SizedBox(
                     height: 300,
                     child: EmptyState(
-                      message: '조건에 맞는 코너가 없습니다',
-                      icon: Icons.filter_alt_off,
+                      message: noCorners
+                          ? '아직 생성된 코너가 없습니다'
+                          : '조건에 맞는 코너가 없습니다',
+                      icon: noCorners
+                          ? Icons.account_tree_outlined
+                          : Icons.filter_alt_off,
+                      actionLabel: noCorners ? '코너·트랙 관리' : null,
+                      onAction: noCorners
+                          ? () => context.go('/corner-track-manage')
+                          : null,
                     ),
                   );
                 }
@@ -178,7 +186,7 @@ class DashboardScreen extends ConsumerWidget {
                       : 3,
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
-                  childAspectRatio: 1.15,
+                  childAspectRatio: .85,
                   children: [
                     for (final entry in visible)
                       CornerStatusCard(
@@ -354,11 +362,19 @@ class CornerStatusCard extends StatelessWidget {
       _ => (color: colors.statusInactive, icon: '✕', label: '미가동'),
     };
     final metric = entry.corner.cornerMetric;
+    final List<api.TrackSummary> tracks =
+        entry.corner.activeTracks?.toList() ?? [];
+    final busyTrackCount = tracks
+        .where((track) => track.operationalStatus?.name == 'BUSY')
+        .length;
     return Card(
       clipBehavior: Clip.antiAlias,
       child: InkWell(
+        key: ValueKey('corner-card-${entry.corner.id}'),
         onTap: onTap,
-        child: Container(
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOut,
           decoration: BoxDecoration(
             border: Border(
               left: BorderSide(
@@ -383,6 +399,7 @@ class CornerStatusCard extends StatelessWidget {
                 icon: presentation.icon,
                 label: presentation.label,
               ),
+              Text('활성 ${tracks.length}트랙 중 $busyTrackCount BUSY'),
               Text('목표 ${entry.corner.targetMinutes ?? 0}분'),
               Text(
                 formatCornerCardSubtitle(
@@ -404,6 +421,33 @@ class CornerStatusCard extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _CornerGridSkeleton extends StatelessWidget {
+  const _CornerGridSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).brightness == Brightness.dark
+        ? AppColors.dark
+        : AppColors.light;
+    return GridView.count(
+      crossAxisCount: MediaQuery.sizeOf(context).width > 1100 ? 4 : 3,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      childAspectRatio: .85,
+      children: [
+        for (var index = 0; index < 10; index++)
+          Container(
+            margin: const EdgeInsets.all(2),
+            decoration: BoxDecoration(
+              color: colors.textDisabled.withValues(alpha: .08),
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+      ],
     );
   }
 }

@@ -133,6 +133,7 @@ class _BroadcastMessageTile extends StatelessWidget {
     final contentStyle =
         (unread ? AppTypography.bodyEmphasis : AppTypography.body).copyWith(
           color: colors.textPrimary,
+          fontWeight: unread ? FontWeight.bold : null,
         );
 
     return InkWell(

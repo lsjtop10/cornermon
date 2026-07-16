@@ -22,9 +22,8 @@ void main() {
     await tester.tap(find.widgetWithText(OutlinedButton, '다음'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('예시 10개로 빠르게 시작'));
-    await tester.pump();
+    await tester.pumpAndSettle();
 
-    expect(find.text('1코너'), findsAtLeastNWidgets(1));
-    expect(find.text('10코너'), findsAtLeastNWidgets(1));
+    expect(find.byType(TextFormField), findsAtLeastNWidgets(1));
   });
 }

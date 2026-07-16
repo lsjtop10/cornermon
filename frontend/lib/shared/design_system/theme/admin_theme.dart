@@ -36,6 +36,8 @@ class AdminTheme {
         style: FilledButton.styleFrom(
           minimumSize: const Size(44, 44),
           padding: const EdgeInsets.symmetric(horizontal: 20),
+          disabledBackgroundColor: colors.bgSurface,
+          disabledForegroundColor: colors.textDisabled,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
@@ -45,6 +47,7 @@ class AdminTheme {
         style: OutlinedButton.styleFrom(
           minimumSize: const Size(44, 44),
           padding: const EdgeInsets.symmetric(horizontal: 20),
+          disabledForegroundColor: colors.textDisabled,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
@@ -55,6 +58,30 @@ class AdminTheme {
           minimumSize: const Size(44, 44),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          minimumSize: const Size(44, 44),
+          disabledForegroundColor: colors.textDisabled,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+      ),
+      cardTheme: CardThemeData(
+        color: colors.bgSurface,
+        elevation: colors == AppColors.light ? 1 : 0,
+        margin: EdgeInsets.zero,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+      dataTableTheme: DataTableThemeData(
+        headingTextStyle: AppTypography.label.copyWith(
+          color: colors.textSecondary,
+        ),
+        dataTextStyle: AppTypography.body.copyWith(color: colors.textPrimary),
+        dividerThickness: 1,
+        headingRowColor: WidgetStatePropertyAll(colors.bgSurface),
+        dataRowMinHeight: 48,
+        dataRowMaxHeight: 48,
+        horizontalMargin: 16,
       ),
       textTheme: TextTheme(
         displayLarge: AppTypography.display.copyWith(color: colors.textPrimary),
