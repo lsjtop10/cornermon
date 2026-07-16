@@ -9,7 +9,7 @@ part 'camp_providers.g.dart';
 @riverpod
 BResourceManagementAdminApi campApi(Ref ref) {
   final dio = ref.watch(apiClientProvider);
-  return BResourceManagementAdminApi(dio, serializers);
+  return BResourceManagementAdminApi(dio, standardSerializers);
 }
 
 @riverpod
@@ -31,10 +31,18 @@ Future<Camp> campDetail(Ref ref, CampId id) async {
 }
 
 @riverpod
-Future<Camp> createCamp(Ref ref, String name) async {
+Future<Camp> createCamp(
+  Ref ref,
+  String name, {
+  required DateTime startAt,
+  required DateTime endAt,
+}) async {
   final apiInstance = ref.watch(campApiProvider);
   final response = await apiInstance.campsPost(
-    request: CreateCampRequest((b) => b..name = name),
+    request: CreateCampRequest((b) => b
+      ..name = name
+      ..startAt = startAt
+      ..endAt = endAt),
   );
   final data = response.data;
   if (data == null) {

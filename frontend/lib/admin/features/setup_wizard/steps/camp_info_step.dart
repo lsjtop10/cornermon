@@ -47,7 +47,10 @@ class _CampInfoStepState extends ConsumerState<CampInfoStep> {
 
   @override
   Widget build(BuildContext context) {
-    final valid = _nameController.text.trim().isNotEmpty;
+    final valid =
+        _nameController.text.trim().isNotEmpty &&
+        _startAt != null &&
+        _endAt != null;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -66,13 +69,13 @@ class _CampInfoStepState extends ConsumerState<CampInfoStep> {
             OutlinedButton(
               onPressed: () => _selectDate(true),
               child: Text(
-                _startAt == null ? '시작일 선택 (선택)' : '시작일 ${_date(_startAt!)}',
+                _startAt == null ? '시작일 선택' : '시작일 ${_date(_startAt!)}',
               ),
             ),
             OutlinedButton(
               onPressed: () => _selectDate(false),
               child: Text(
-                _endAt == null ? '종료일 선택 (선택)' : '종료일 ${_date(_endAt!)}',
+                _endAt == null ? '종료일 선택' : '종료일 ${_date(_endAt!)}',
               ),
             ),
           ],
@@ -85,7 +88,7 @@ class _CampInfoStepState extends ConsumerState<CampInfoStep> {
           child: AppButton(
             variant: AppButtonVariant.primary,
             label: '다음',
-            disabledReason: '캠프 이름을 입력하면 다음 단계로 이동할 수 있습니다.',
+            disabledReason: '캠프 이름과 시작일·종료일을 입력하면 다음 단계로 이동할 수 있습니다.',
             onPressed: valid
                 ? () {
                     ref

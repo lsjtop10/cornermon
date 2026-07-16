@@ -102,22 +102,6 @@ class SetupWizard extends _$SetupWizard {
       return false;
     }
 
-    if (state.startAt != null || state.endAt != null) {
-      try {
-        await ref.read(
-          updateCampProvider(
-            campId,
-            startAt: state.startAt,
-            endAt: state.endAt,
-          ).future,
-        );
-      } catch (_) {
-        state = state.copyWith(
-          submitError: '캠프 기간은 저장하지 못했습니다. 설정에서 다시 지정할 수 있습니다.',
-        );
-      }
-    }
-
     for (var index = 0; index < state.corners.length; index++) {
       final row = state.corners[index];
       if (row.status == SetupWizardCornerStatus.created) continue;
@@ -174,7 +158,18 @@ class SetupWizard extends _$SetupWizard {
   }
 
   Future<CampId> _createCamp() async {
-    final camp = await ref.read(createCampProvider(state.campName).future);
+    final startAt = state.startAt;
+    final endAt = state.endAt;
+    if (startAt == null || endAt == null) {
+      throw StateError('캠프 시작일/종료일이 설정되지 않았습니다.');
+    }
+    final camp = await ref.read(
+      createCampProvider(
+        state.campName,
+        startAt: startAt,
+        endAt: endAt,
+      ).future,
+    );
     final id = camp.id;
     if (id == null) throw StateError('생성된 캠프 ID가 없습니다.');
     return CampId(id);

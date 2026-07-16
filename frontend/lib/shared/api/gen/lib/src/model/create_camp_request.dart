@@ -1,4 +1,3 @@
-// @dart=2.18
 //
 // AUTO-GENERATED FILE, DO NOT MODIFY!
 //
@@ -12,11 +11,19 @@ part 'create_camp_request.g.dart';
 /// CreateCampRequest
 ///
 /// Properties:
+/// * [endAt] 
 /// * [name] 
+/// * [startAt] 
 @BuiltValue()
 abstract class CreateCampRequest implements Built<CreateCampRequest, CreateCampRequestBuilder> {
+  @BuiltValueField(wireName: r'endAt')
+  DateTime? get endAt;
+
   @BuiltValueField(wireName: r'name')
   String? get name;
+
+  @BuiltValueField(wireName: r'startAt')
+  DateTime? get startAt;
 
   CreateCampRequest._();
 
@@ -41,11 +48,25 @@ class _$CreateCampRequestSerializer implements PrimitiveSerializer<CreateCampReq
     CreateCampRequest object, {
     FullType specifiedType = FullType.unspecified,
   }) sync* {
+    if (object.endAt != null) {
+      yield r'endAt';
+      yield serializers.serialize(
+        object.endAt,
+        specifiedType: const FullType(DateTime),
+      );
+    }
     if (object.name != null) {
       yield r'name';
       yield serializers.serialize(
         object.name,
         specifiedType: const FullType(String),
+      );
+    }
+    if (object.startAt != null) {
+      yield r'startAt';
+      yield serializers.serialize(
+        object.startAt,
+        specifiedType: const FullType(DateTime),
       );
     }
   }
@@ -71,12 +92,26 @@ class _$CreateCampRequestSerializer implements PrimitiveSerializer<CreateCampReq
       final key = serializedList[i] as String;
       final value = serializedList[i + 1];
       switch (key) {
+        case r'endAt':
+          final valueDes = serializers.deserialize(
+            value,
+            specifiedType: const FullType(DateTime),
+          ) as DateTime;
+          result.endAt = valueDes;
+          break;
         case r'name':
           final valueDes = serializers.deserialize(
             value,
             specifiedType: const FullType(String),
           ) as String;
           result.name = valueDes;
+          break;
+        case r'startAt':
+          final valueDes = serializers.deserialize(
+            value,
+            specifiedType: const FullType(DateTime),
+          ) as DateTime;
+          result.startAt = valueDes;
           break;
         default:
           unhandled.add(key);
@@ -106,3 +141,4 @@ class _$CreateCampRequestSerializer implements PrimitiveSerializer<CreateCampReq
     return result.build();
   }
 }
+
