@@ -44,18 +44,25 @@ class ReviewStep extends ConsumerWidget {
         if (state.isSubmitting || hasFailures) ...[
           const SizedBox(height: AppSpacing.space4),
           const Text('생성 상태'),
-          ...state.corners.map(
-            (row) => ListTile(
-              contentPadding: EdgeInsets.zero,
-              title: Text(row.name),
-              subtitle: row.errorMessage == null
-                  ? null
-                  : Text(row.errorMessage!),
-              trailing: _StatusLabel(status: row.status),
+          Expanded(
+            child: ListView(
+              children: [
+                for (final row in state.corners)
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(row.name),
+                    subtitle: row.errorMessage == null
+                        ? null
+                        : Text(row.errorMessage!),
+                    trailing: _StatusLabel(status: row.status),
+                  ),
+              ],
             ),
           ),
-        ],
-        const SizedBox(height: AppSpacing.space6),
+        ] else
+          const Spacer(),
+        const Divider(),
+        const SizedBox(height: AppSpacing.space3),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [

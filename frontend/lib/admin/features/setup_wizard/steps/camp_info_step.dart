@@ -77,12 +77,15 @@ class _CampInfoStepState extends ConsumerState<CampInfoStep> {
             ),
           ],
         ),
-        const SizedBox(height: AppSpacing.space6),
+        const Spacer(),
+        const Divider(),
+        const SizedBox(height: AppSpacing.space3),
         Align(
           alignment: Alignment.centerRight,
           child: AppButton(
             variant: AppButtonVariant.primary,
             label: '다음',
+            disabledReason: '캠프 이름을 입력하면 다음 단계로 이동할 수 있습니다.',
             onPressed: valid
                 ? () {
                     ref

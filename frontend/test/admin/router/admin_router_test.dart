@@ -126,7 +126,7 @@ void main() {
     await _pumpApp(tester, pendingContainer);
     pendingContainer.read(adminRouterProvider).go('/dashboard');
     await tester.pumpAndSettle();
-    expect(find.text('A2B 코너·트랙 관리'), findsOneWidget);
+    expect(find.text('코너·트랙 관리'), findsOneWidget);
     expect(find.byType(AdminSidebar), findsOneWidget);
 
     await tester.pumpWidget(const SizedBox());
@@ -194,7 +194,7 @@ void main() {
     // assert
     expect(find.byType(AdminSidebar), findsOneWidget);
     expect(find.text('대시보드'), findsOneWidget);
-    expect(find.text('조건에 맞는 코너가 없습니다'), findsOneWidget);
+    expect(find.text('아직 생성된 코너가 없습니다'), findsOneWidget);
   });
 
   testWidgets('ShouldNavigateToDashboardWhenStartCampSucceeds', (tester) async {

@@ -2,6 +2,10 @@ import 'package:cornermon/admin/features/start_camp/start_camp_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:cornermon/shared/design_system/tokens/colors.dart';
+import 'package:cornermon/shared/design_system/tokens/spacing.dart';
+import 'package:cornermon/shared/design_system/tokens/typography.dart';
+
 class StartCampButton extends ConsumerWidget {
   const StartCampButton({super.key});
 
@@ -47,34 +51,60 @@ class _StartCampConfirmDialogState
   }
 
   @override
-  Widget build(BuildContext context) => AlertDialog(
-    title: const Text('코너학습을 시작할까요?'),
-    content: Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text('PIN 카드는 이미 발급돼 있으니 시작 전까지는 로그인이 거부됩니다'),
-        if (_error != null)
-          Padding(
-            padding: const EdgeInsets.only(top: 12),
-            child: Text(_error!, style: const TextStyle(color: Colors.red)),
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).brightness == Brightness.dark
+        ? AppColors.dark
+        : AppColors.light;
+    return AlertDialog(
+      backgroundColor: colors.bgSurfaceRaised,
+      constraints: const BoxConstraints(minWidth: 480, maxWidth: 640),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      title: Row(
+        children: [
+          Icon(Icons.warning_amber_rounded, color: colors.warning, size: 28),
+          const SizedBox(width: AppSpacing.space3),
+          Text(
+            '코너학습을 시작할까요?',
+            style: AppTypography.title3.copyWith(color: colors.textPrimary),
           ),
+        ],
+      ),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'PIN 카드는 이미 발급돼 있으니 시작 전까지는 로그인이 거부됩니다',
+            style: AppTypography.body.copyWith(color: colors.textSecondary),
+          ),
+          if (_error != null)
+            Padding(
+              padding: const EdgeInsets.only(top: AppSpacing.space3),
+              child: Semantics(
+                liveRegion: true,
+                child: Text(
+                  _error!,
+                  style: AppTypography.caption.copyWith(color: colors.danger),
+                ),
+              ),
+            ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: _submitting ? null : () => Navigator.pop(context),
+          child: const Text('취소'),
+        ),
+        FilledButton(
+          onPressed: _submitting ? null : _confirm,
+          child: _submitting
+              ? const SizedBox.square(
+                  dimension: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Text('시작 확정'),
+        ),
       ],
-    ),
-    actions: [
-      TextButton(
-        onPressed: _submitting ? null : () => Navigator.pop(context),
-        child: const Text('취소'),
-      ),
-      FilledButton(
-        onPressed: _submitting ? null : _confirm,
-        child: _submitting
-            ? const SizedBox.square(
-                dimension: 18,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              )
-            : const Text('시작 확정'),
-      ),
-    ],
-  );
+    );
+  }
 }

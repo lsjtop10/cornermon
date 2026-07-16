@@ -93,10 +93,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                     if (errorText != null) ...[
                       const SizedBox(height: AppSpacing.space2),
-                      Text(
-                        errorText,
-                        style: AppTypography.caption.copyWith(
-                          color: colors.danger,
+                      Semantics(
+                        liveRegion: true,
+                        child: Text(
+                          errorText,
+                          style: AppTypography.caption.copyWith(
+                            color: colors.danger,
+                          ),
                         ),
                       ),
                     ],
@@ -109,6 +112,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           child: AppButton(
                             variant: AppButtonVariant.primary,
                             label: '로그인',
+                            disabledReason: 'ID와 비밀번호를 모두 입력하면 로그인할 수 있습니다.',
                             onPressed: canSubmit ? _submit : null,
                           ),
                         ),

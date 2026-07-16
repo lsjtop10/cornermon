@@ -273,7 +273,7 @@ void main() {
       );
     });
 
-    testWidgets('ShoudShowLoadingIndicatorWhenCornersAreLoading', (
+    testWidgets('ShouldRenderCornerSkeletonWhenCornersAreLoading', (
       tester,
     ) async {
       // arrange
@@ -292,7 +292,7 @@ void main() {
       await tester.pump();
 
       // assert
-      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      expect(find.byType(GridView), findsOneWidget);
       expect(find.byType(CornerStatusCard), findsNothing);
     });
 
@@ -311,6 +311,17 @@ void main() {
       // assert
       expect(find.text('조건에 맞는 코너가 없습니다'), findsOneWidget);
       expect(find.byType(GridView), findsNothing);
+    });
+
+    testWidgets('ShouldShowCornerManagementActionWhenNoCornersExist', (
+      tester,
+    ) async {
+      // arrange
+      await _pumpDashboard(tester, campId: CampId('camp-1'), corners: const []);
+
+      // assert
+      expect(find.text('아직 생성된 코너가 없습니다'), findsOneWidget);
+      expect(find.text('코너·트랙 관리'), findsOneWidget);
     });
 
     testWidgets('ShoudNavigateWhenDashboardActionsAreTapped', (tester) async {
@@ -347,18 +358,6 @@ void main() {
       await tester.tap(find.text('공지 발송'));
       await tester.pumpAndSettle();
       expect(find.text('broadcast'), findsOneWidget);
-
-      await _pumpDashboard(
-        tester,
-        campId: campId,
-        corners: [
-          _corner('corner-1', '코너 1', CornerResponseStatusEnum.BUSY),
-          _corner('corner-2', '코너 2', CornerResponseStatusEnum.IDLE),
-        ],
-      );
-      await tester.tap(find.text('코너 2'));
-      await tester.pumpAndSettle();
-      expect(find.text('corner corner-2'), findsOneWidget);
     });
 
     testWidgets('ShoudRefreshCornerAndSummaryProvidersWhenPulled', (

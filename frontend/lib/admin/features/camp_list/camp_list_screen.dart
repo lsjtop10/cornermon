@@ -4,6 +4,7 @@ import 'package:cornermon/shared/api/domain_aliases.dart' as api;
 import 'package:cornermon/shared/api/ids.dart';
 import 'package:cornermon/shared/api/providers/camp_providers.dart';
 import 'package:cornermon/shared/design_system/widgets/empty_state.dart';
+import 'package:cornermon/shared/design_system/widgets/app_tag.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -141,7 +142,14 @@ class CampCard extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Chip(label: Text(statusText)),
+                AppTag(
+                  label: statusText,
+                  tone: camp.isActive
+                      ? AppTagTone.success
+                      : camp.isPending
+                      ? AppTagTone.warning
+                      : AppTagTone.neutral,
+                ),
                 const SizedBox(height: 12),
                 Text(
                   camp.name ?? '이름 없는 캠프',

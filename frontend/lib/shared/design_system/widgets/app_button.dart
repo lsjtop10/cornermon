@@ -10,6 +10,7 @@ class AppButton extends StatelessWidget {
     required this.label,
     required this.onPressed,
     this.icon,
+    this.disabledReason,
     super.key,
   });
 
@@ -17,6 +18,7 @@ class AppButton extends StatelessWidget {
   final String label;
   final VoidCallback? onPressed;
   final IconData? icon;
+  final String? disabledReason;
 
   @override
   Widget build(BuildContext context) {
@@ -24,11 +26,16 @@ class AppButton extends StatelessWidget {
     final colors = isDark ? AppColors.dark : AppColors.light;
 
     if (variant == AppButtonVariant.iconOnly) {
-      return SizedBox(
+      final button = SizedBox(
         width: 48.0,
         height: 48.0,
         child: IconButton(
-          icon: Icon(icon, color: onPressed != null ? colors.brandPrimary : colors.textDisabled),
+          icon: Icon(
+            icon,
+            color: onPressed != null
+                ? colors.brandPrimary
+                : colors.textDisabled,
+          ),
           onPressed: onPressed,
           style: IconButton.styleFrom(
             shape: RoundedRectangleBorder(
@@ -37,6 +44,7 @@ class AppButton extends StatelessWidget {
           ),
         ),
       );
+      return _withDisabledReason(button);
     }
 
     Color bgColor;
@@ -46,8 +54,9 @@ class AppButton extends StatelessWidget {
     final isEnabled = onPressed != null;
 
     if (!isEnabled) {
-      bgColor = isDark ? const Color(0xFF2E333D) : const Color(0xFFE2E5EA);
+      bgColor = Colors.transparent;
       textColor = colors.textDisabled;
+      borderSide = BorderSide(color: colors.border);
     } else {
       switch (variant) {
         case AppButtonVariant.primary:
@@ -84,17 +93,24 @@ class AppButton extends StatelessWidget {
       ],
     );
 
-    return OutlinedButton(
-      onPressed: onPressed,
-      style: OutlinedButton.styleFrom(
-        backgroundColor: bgColor,
-        side: borderSide,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12.0),
+    return _withDisabledReason(
+      OutlinedButton(
+        onPressed: onPressed,
+        style: OutlinedButton.styleFrom(
+          backgroundColor: bgColor,
+          side: borderSide,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12.0),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+        child: buttonContent,
       ),
-      child: buttonContent,
     );
+  }
+
+  Widget _withDisabledReason(Widget button) {
+    if (onPressed != null || disabledReason == null) return button;
+    return Tooltip(message: disabledReason!, child: button);
   }
 }
