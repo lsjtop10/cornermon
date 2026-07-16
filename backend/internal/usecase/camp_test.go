@@ -13,6 +13,57 @@ type failingTxManager struct{ err error }
 
 func (m failingTxManager) RunInTx(context.Context, func(context.Context) error) error { return m.err }
 
+func TestCampService_OpenNewCamp(t *testing.T) {
+	t.Run("ShoudCreatePendingCampWhenValid", func(t *testing.T) {
+		// Arrange
+		start := time.Date(2026, 7, 20, 9, 0, 0, 0, time.UTC)
+		end := start.Add(2 * time.Hour)
+		camps := NewMockCampRepository()
+		auditLogs := &MockAuditLogRepository{}
+		broadcaster := &MockBroadcaster{}
+		tx := &MockTxManager{}
+
+		s := NewCampService(camps, nil, NewMockFacilitatorSessionRepository(), auditLogs, broadcaster, tx)
+		s.uuidFn = func() string { return "camp-1" }
+
+		// Act
+		camp, err := s.OpenNewCamp(context.Background(), "New Camp", start, end)
+
+		// Assert
+		if err != nil {
+			t.Fatalf("expected no error, got %v", err)
+		}
+		saved, _ := camps.Get(context.Background(), "camp-1")
+		if saved == nil || saved.Name != "New Camp" || saved.StartAt != start || saved.EndAt != end || saved.Status != domain.CampPending {
+			t.Fatalf("camp not saved as expected: %+v", saved)
+		}
+		if camp.ID != "camp-1" {
+			t.Fatalf("unexpected returned camp: %+v", camp)
+		}
+	})
+
+	t.Run("ShoudReturnInvalidSettingsWithoutSavingWhenPeriodMissing", func(t *testing.T) {
+		// Arrange
+		camps := NewMockCampRepository()
+		s := NewCampService(camps, nil, NewMockFacilitatorSessionRepository(), &MockAuditLogRepository{}, &MockBroadcaster{}, &MockTxManager{})
+		s.uuidFn = func() string { return "camp-1" }
+
+		// Act
+		camp, err := s.OpenNewCamp(context.Background(), "New Camp", time.Time{}, time.Time{})
+
+		// Assert
+		if err != domain.ErrCampInvalidSettings {
+			t.Fatalf("expected ErrCampInvalidSettings, got %v", err)
+		}
+		if camp != nil {
+			t.Fatalf("expected nil camp on error, got %+v", camp)
+		}
+		if saved, _ := camps.Get(context.Background(), "camp-1"); saved != nil {
+			t.Fatalf("camp should not have been saved: %+v", saved)
+		}
+	})
+}
+
 func TestCampService_ActivateCamp(t *testing.T) {
 	t.Run("ShouldActivateCampSuccessfullyWhenPending", func(t *testing.T) {
 		// Arrange

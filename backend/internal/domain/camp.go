@@ -25,6 +25,23 @@ type Camp struct {
 	BottleneckRatioPct   int // 기본값 20
 }
 
+// NewCamp는 필수 설정값을 검증한 뒤 PENDING 상태의 새 캠프를 생성합니다.
+func NewCamp(id CampID, name string, startAt, endAt time.Time) (*Camp, error) {
+	name = strings.TrimSpace(name)
+	if name == "" || startAt.IsZero() || endAt.IsZero() || !startAt.Before(endAt) {
+		return nil, ErrCampInvalidSettings
+	}
+	return &Camp{
+		ID:                   id,
+		Name:                 name,
+		StartAt:              startAt,
+		EndAt:                endAt,
+		Status:               CampPending,
+		BottleneckMinSamples: 3,
+		BottleneckRatioPct:   20,
+	}, nil
+}
+
 type CampSettingsPatch struct {
 	Name                 Optional[string]
 	StartAt              Optional[time.Time]

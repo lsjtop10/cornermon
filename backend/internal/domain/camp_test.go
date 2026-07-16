@@ -193,6 +193,55 @@ func TestUpdateSettingsShoudRejectInvalidPatchWithoutMutation(t *testing.T) {
 	}
 }
 
+func TestNewCampShoudCreatePendingCampWhenValid(t *testing.T) {
+	// Arrange
+	start := time.Date(2026, 7, 20, 9, 0, 0, 0, time.UTC)
+	end := start.Add(2 * time.Hour)
+
+	// Act
+	camp, err := domain.NewCamp("camp-1", "  2026 여름 코너학습  ", start, end)
+
+	// Assert
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if camp.ID != "camp-1" || camp.Name != "2026 여름 코너학습" || camp.StartAt != start || camp.EndAt != end {
+		t.Fatalf("unexpected camp: %+v", camp)
+	}
+	if camp.Status != domain.CampPending || camp.BottleneckMinSamples != 3 || camp.BottleneckRatioPct != 20 {
+		t.Fatalf("unexpected defaults: %+v", camp)
+	}
+}
+
+func TestNewCampShoudRejectInvalidInputWithoutCreatingCamp(t *testing.T) {
+	start := time.Date(2026, 7, 20, 9, 0, 0, 0, time.UTC)
+	tests := []struct {
+		name     string
+		campName string
+		startAt  time.Time
+		endAt    time.Time
+	}{
+		{name: "blank name", campName: "  ", startAt: start, endAt: start.Add(time.Hour)},
+		{name: "missing startAt", campName: "Camp", startAt: time.Time{}, endAt: start.Add(time.Hour)},
+		{name: "missing endAt", campName: "Camp", startAt: start, endAt: time.Time{}},
+		{name: "startAt not before endAt", campName: "Camp", startAt: start.Add(time.Hour), endAt: start},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			// Act
+			camp, err := domain.NewCamp("camp-1", tc.campName, tc.startAt, tc.endAt)
+
+			// Assert
+			if err != domain.ErrCampInvalidSettings {
+				t.Fatalf("expected ErrCampInvalidSettings, got %v", err)
+			}
+			if camp != nil {
+				t.Fatalf("expected nil camp on error, got %+v", camp)
+			}
+		})
+	}
+}
+
 func TestUpdateSettingsShoudReturnConflictErrorWhenCampEnded(t *testing.T) {
 	// Arrange
 	camp := &domain.Camp{Status: domain.CampEnded}

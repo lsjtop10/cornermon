@@ -42,15 +42,12 @@ func NewCampService(
 }
 
 // OpenNewCamp
-func (s *CampService) OpenNewCamp(ctx context.Context, name string) (*domain.Camp, error) {
-	camp := &domain.Camp{
-		ID:                   domain.CampID(s.uuidFn()),
-		Name:                 name,
-		Status:               domain.CampPending,
-		BottleneckMinSamples: 3,
-		BottleneckRatioPct:   20,
+func (s *CampService) OpenNewCamp(ctx context.Context, name string, startAt, endAt time.Time) (*domain.Camp, error) {
+	camp, err := domain.NewCamp(domain.CampID(s.uuidFn()), name, startAt, endAt)
+	if err != nil {
+		return nil, err
 	}
-	err := s.tx.RunInTx(ctx, func(ctx context.Context) error {
+	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
 		return s.camps.Save(ctx, camp)
 	})
 	if err != nil {
