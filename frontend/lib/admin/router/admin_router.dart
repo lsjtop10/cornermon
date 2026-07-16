@@ -7,6 +7,15 @@ import 'package:cornermon/admin/features/login/login_screen.dart';
 import 'package:cornermon/admin/features/camp_list/camp_list_screen.dart';
 import 'package:cornermon/admin/features/badge_precreate/badge_precreate_screen.dart';
 import 'package:cornermon/admin/features/dashboard/dashboard_screen.dart';
+import 'package:cornermon/admin/features/corner_detail/corner_detail_screen.dart';
+import 'package:cornermon/admin/features/group_list/group_list_screen.dart';
+import 'package:cornermon/admin/features/group_detail/group_detail_screen.dart';
+import 'package:cornermon/admin/features/duplicate_visit_approve/duplicate_visit_approve_screen.dart';
+import 'package:cornermon/admin/features/device_registration/device_registration_screen.dart';
+import 'package:cornermon/admin/features/lockout_session_manage/lockout_session_manage_screen.dart';
+import 'package:cornermon/admin/features/broadcast/broadcast_screen.dart';
+import 'package:cornermon/admin/features/track_direct/track_direct_screen.dart';
+import 'package:cornermon/admin/features/end_camp/end_camp_screen.dart';
 import 'package:cornermon/admin/features/setup_wizard/setup_wizard_screen.dart';
 import 'package:cornermon/admin/session/admin_session_provider.dart';
 import 'package:cornermon/admin/session/selected_camp_provider.dart';
@@ -41,31 +50,57 @@ final adminRouterProvider = Provider<GoRouter>((ref) {
         builder: (_, _) => const SetupWizardScreen(),
       ),
       GoRoute(path: '/camps', builder: (_, _) => const CampListScreen()),
-      _plainRoute('/camps/start', 'A0-e 코너학습 시작'),
       GoRoute(path: '/badges', builder: (_, _) => const BadgePrecreateScreen()),
       GoRoute(
         path: '/dashboard',
         builder: (_, _) => const AdminScaffold(body: DashboardScreen()),
       ),
-      _screenRoute('/corners/:cornerId', 'A2 코너 상세'),
+      GoRoute(
+        path: '/corners/:cornerId',
+        builder: (_, _) => const AdminScaffold(body: CornerDetailScreen()),
+      ),
       _screenRoute('/corner-track-manage', 'A2B 코너·트랙 관리'),
-      _screenRoute('/groups', 'A5 조 현황'),
-      _screenRoute('/groups/:groupId', 'A6 조 상세'),
-      _screenRoute('/devices', 'A8 기기 관리'),
-      _screenRoute('/sessions', 'A9 세션 관리'),
-      _screenRoute('/messages/broadcast', 'A10 공지 메시지'),
-      _screenRoute('/messages/direct', 'A11 다이렉트 메시지'),
+      GoRoute(
+        path: '/groups',
+        builder: (_, _) => const AdminScaffold(body: GroupListScreen()),
+      ),
+      GoRoute(
+        path: '/groups/:groupId',
+        builder: (_, _) => const AdminScaffold(body: GroupDetailScreen()),
+      ),
+      GoRoute(
+        path: '/groups/:groupId/duplicate-visits',
+        builder: (_, _) =>
+            const AdminScaffold(body: DuplicateVisitApproveScreen()),
+      ),
+      GoRoute(
+        path: '/devices',
+        builder: (_, _) =>
+            const AdminScaffold(body: DeviceRegistrationScreen()),
+      ),
+      GoRoute(
+        path: '/sessions',
+        builder: (_, _) =>
+            const AdminScaffold(body: LockoutSessionManageScreen()),
+      ),
+      GoRoute(
+        path: '/messages/broadcast',
+        builder: (_, _) => const AdminScaffold(body: BroadcastScreen()),
+      ),
+      GoRoute(
+        path: '/messages/direct',
+        builder: (_, _) => const AdminScaffold(body: TrackDirectScreen()),
+      ),
       _screenRoute('/report', 'A12 리포트'),
       _screenRoute('/audit-log', 'A13 감사 로그'),
+      GoRoute(
+        path: '/end-camp',
+        builder: (_, _) => const AdminScaffold(body: EndCampScreen()),
+      ),
       _screenRoute('/settings', 'A15 설정'),
     ],
   );
 });
-
-GoRoute _plainRoute(String path, String title) => GoRoute(
-  path: path,
-  builder: (_, _) => AdminStubScreen(title: title),
-);
 
 GoRoute _screenRoute(String path, String title) => GoRoute(
   path: path,
@@ -92,8 +127,7 @@ String? _redirect(Ref ref, String location) {
   return switch (camp!.status!) {
     CampStatus.PENDING =>
       _preparingLocations.contains(location) ? null : '/corner-track-manage',
-    CampStatus.ACTIVE =>
-      _preparingLocations.contains(location) ? '/dashboard' : null,
+    CampStatus.ACTIVE => null,
     CampStatus.ENDED => location == '/report' ? null : '/report',
     _ => '/camps',
   };

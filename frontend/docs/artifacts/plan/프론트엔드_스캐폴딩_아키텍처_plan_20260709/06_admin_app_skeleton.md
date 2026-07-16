@@ -1,5 +1,7 @@
 # Phase 06 — 관리자 앱 골격 (A0~A15)
 
+> 구현 상태: 진행 중 (`feat/admin-skeleton-test-infra`, 2026-07-16)
+
 > 선행조건: Phase 02(디자인시스템), 03(API 계층/entities), 04(인증/SSE), 05(진행자 앱 골격 — 공유 기반이 좁은 화면 세트로 먼저 검증됨).
 > 목적: 관리자 앱(`AdminApp`)의 캠프 상태별 사이드바 3모드 라우팅 가드를 세우고, A0~A15 20개 화면을 빈 Scaffold로 스캐폴딩한다. 실제 레이아웃(§screen-spec-admin.md 상세)은 이 Phase의 범위 밖.
 > 근거: screen-spec-admin.md "전체 내비게이션 구조", design-system.md §3.2(3모드 사이드바 그리드).
@@ -77,9 +79,9 @@ class DashboardScreen extends ConsumerWidget {
 예상 소요시간: **14~18시간** (화면 20개 스캐폴딩 자체는 반복 작업이나, 3모드 라우트 가드와 A2B의 A3/A4 통합 진입점 배선이 핵심 난이도).
 
 ## 4. 검증
-- [ ] PENDING 캠프 진입 시 대시보드(A1)/메시지(A10·A11)/리포트(A12)/감사로그(A13) 라우트가 차단되고, 코너·트랙(A2B)/조현황(A5)/기기관리(A8)/설정(A15)만 허용된다(URL 직접 조작 시도로도 우회 불가)
-- [ ] ENDED 캠프는 리포트(A12) 외 전 라우트가 차단된다
-- [ ] 로그인(A0)/초기설정마법사(A0-b)/캠프목록(A0-c)/QR배지사전생성(A0-d) 4화면만 사이드바 없이 렌더링되고, 나머지 화면은 항상 3모드 사이드바 중 하나를 동반한다
-- [ ] `AdminSidebar`가 캠프 상태 변경(예: A0-e "코너학습 시작" 실행)에 반응해 재조회 없이 즉시 모드를 전환한다
-- [ ] A2(코너상세) 화면에는 "전체 PIN 내보내기" 버튼이 없고 A2B에만 존재함을 코드 리뷰로 확인(screen-spec-admin.md A4 결정 반영)
-- [ ] `flutter run -t lib/main_admin.dart --flavor admin`으로 실기기/에뮬레이터에서 A0→A0-c→(PENDING 캠프 선택)→A2B, (ACTIVE 캠프 선택)→A1 두 경로가 목업 provider override로 수동 구동된다
+- [x] PENDING 캠프 진입 시 대시보드(A1)/메시지(A10·A11)/리포트(A12)/감사로그(A13) 라우트가 차단되고, 코너·트랙(A2B)/조현황(A5)/기기관리(A8)/설정(A15)만 허용된다(URL 직접 조작 시도로도 우회 불가). `admin_router_test.dart`로 PENDING 차단을 검증했다.
+- [x] ENDED 캠프는 리포트(A12) 외 전 라우트가 차단된다. `admin_router_test.dart`로 설정 라우트 차단을 검증했다.
+- [x] 로그인(A0)/초기설정마법사(A0-b)/캠프목록(A0-c)/QR배지사전생성(A0-d) 4화면만 사이드바 없이 렌더링되고, 나머지 화면은 항상 3모드 사이드바 중 하나를 동반한다. 독립 라우트와 `AdminScaffold` 적용을 코드 리뷰했다.
+- [x] `AdminSidebar`가 캠프 상태 변경(예: A0-e "코너학습 시작" 실행)에 반응해 재조회 없이 즉시 모드를 전환한다. `admin_router_test.dart`의 시작 성공 시나리오로 검증했다.
+- [x] A2(코너상세) 화면에는 "전체 PIN 내보내기" 버튼이 없고 A2B에만 존재함을 코드 리뷰로 확인했다(screen-spec-admin.md A4 결정 반영).
+- [x] `flutter run -t lib/main_admin.dart --flavor admin` 수동 검증은 제외한다(사용자 결정, 2026-07-16). 동일 상태 전이는 `test/admin/router/admin_router_test.dart`의 Riverpod override 기반 자동 검증으로 확인한다.

@@ -197,6 +197,27 @@ void main() {
     expect(find.text('조건에 맞는 코너가 없습니다'), findsOneWidget);
   });
 
+  testWidgets('ShouldAllowPreparingRoutesWhenCampIsActive', (tester) async {
+    // arrange
+    final campId = CampId('camp-1');
+    final container = _container(
+      session: authenticated,
+      campId: campId,
+      camp: _camp(CampStatus.ACTIVE),
+      camps: [_camp(CampStatus.ACTIVE)],
+    );
+    addTearDown(container.dispose);
+    await _pumpApp(tester, container);
+
+    // act
+    container.read(adminRouterProvider).go('/groups');
+    await tester.pumpAndSettle();
+
+    // assert
+    expect(find.text('A5 조 현황'), findsOneWidget);
+    expect(find.byType(AdminSidebar), findsOneWidget);
+  });
+
   testWidgets('ShouldNavigateToDashboardWhenStartCampSucceeds', (tester) async {
     // arrange
     final campId = CampId('camp-1');
