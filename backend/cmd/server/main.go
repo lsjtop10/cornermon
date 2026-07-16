@@ -132,7 +132,7 @@ func main() {
 	reportHandler := web.NewReportHandler(reportService, reportQuerier, campRepo)
 	auditHandler := web.NewAuditHandler(auditLogRepo)
 	adminManagementHandler := web.NewAdminManagementHandler(authAdminService)
-	healthHandler := web.NewHealthHandler()
+	healthHandler := web.NewHealthHandler(pool)
 
 	handlers := &web.Handlers{
 		Auth:            authHandler,

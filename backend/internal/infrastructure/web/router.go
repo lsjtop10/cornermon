@@ -29,6 +29,7 @@ func RegisterRoutes(e *echo.Echo, h *Handlers, adminAuth AuthAdminUsecase, track
 
 	if h.Health != nil {
 		v1.GET("/health", h.Health.Check)
+		v1.GET("/ready", h.Health.Ready)
 	}
 
 	// ── A. Auth & Device Trust ──

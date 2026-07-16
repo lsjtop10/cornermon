@@ -2027,6 +2027,23 @@ paths:
       summary: 공지사항 수신 확인 현황
       tags:
       - E. Message
+  /ready:
+    get:
+      description: 서버가 데이터베이스 등 필수 의존성에 연결되어 트래픽을 받을 준비가 되었는지 확인한다. 인증이 필요하지 않다.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/HealthResponse'
+        "503":
+          description: Service Unavailable
+          schema:
+            $ref: '#/definitions/HealthResponse'
+      summary: 레디니스 체크
+      tags:
+      - Health
   /tracks:
     post:
       consumes:
