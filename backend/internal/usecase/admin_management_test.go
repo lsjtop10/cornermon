@@ -16,18 +16,30 @@ func newAdminManagementService(admins *MockAdminRepository) *AdminAuthService {
 
 func TestAdminAuthService_AdminManagement(t *testing.T) {
 	t.Run("ShouldCreateAdminWhenActorIsSystemAdmin", func(t *testing.T) {
-		for _, role := range []domain.AdminRole{domain.AdminRoleCornerOperator, domain.AdminRoleSystemAdmin} {
-			// Arrange
-			admins := NewMockAdminRepository()
-			admins.Admins["system"] = &domain.Admin{ID: "system", Username: "system", Role: domain.AdminRoleSystemAdmin}
+		// Arrange
+		admins := NewMockAdminRepository()
+		admins.Admins["system"] = &domain.Admin{ID: "system", Username: "system", Role: domain.AdminRoleSystemAdmin}
 
-			// Act
-			created, err := newAdminManagementService(admins).CreateAdmin(context.Background(), "system", "new", "password", role)
+		// Act
+		created, err := newAdminManagementService(admins).CreateAdmin(context.Background(), "system", "new", "password", domain.AdminRoleCornerOperator)
 
-			// Assert
-			if err != nil || created.Role != role {
-				t.Fatalf("expected %s creation, got admin=%+v err=%v", role, created, err)
-			}
+		// Assert
+		if err != nil || created.Role != domain.AdminRoleCornerOperator {
+			t.Fatalf("expected corner operator creation, got admin=%+v err=%v", created, err)
+		}
+	})
+
+	t.Run("ShouldReturnForbiddenWhenSystemAdminCreatesAnotherSystemAdmin", func(t *testing.T) {
+		// Arrange
+		admins := NewMockAdminRepository()
+		admins.Admins["system"] = &domain.Admin{ID: "system", Role: domain.AdminRoleSystemAdmin}
+
+		// Act
+		_, err := newAdminManagementService(admins).CreateAdmin(context.Background(), "system", "new-system", "password", domain.AdminRoleSystemAdmin)
+
+		// Assert
+		if !errors.Is(err, domain.ErrAdminForbidden) {
+			t.Fatalf("expected forbidden, got %v", err)
 		}
 	})
 

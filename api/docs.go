@@ -24,7 +24,7 @@ const docTemplate = `{
                         "AdminAuth": []
                     }
                 ],
-                "description": "SYSTEM_ADMIN만 호출할 수 있습니다. 역할은 SYSTEM_ADMIN 또는 CORNER_OPERATOR만 허용하며, 동일한 username은 생성할 수 없습니다.",
+                "description": "SYSTEM_ADMIN만 호출할 수 있습니다. 생성할 역할은 CORNER_OPERATOR로 고정되며, SYSTEM_ADMIN은 다른 SYSTEM_ADMIN을 생성할 수 없습니다. 동일한 username은 생성할 수 없습니다.",
                 "consumes": [
                     "application/json"
                 ],
@@ -3178,7 +3178,6 @@ const docTemplate = `{
                 "role": {
                     "type": "string",
                     "enum": [
-                        "SYSTEM_ADMIN",
                         "CORNER_OPERATOR"
                     ]
                 },

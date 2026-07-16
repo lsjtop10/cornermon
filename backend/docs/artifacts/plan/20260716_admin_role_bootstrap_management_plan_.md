@@ -18,7 +18,7 @@
 | 우선순위 | 유즈케이스 | 설명 | 용도 |
 |---|---|---|---|
 | **P0** | UC-B1: 서버 부트스트랩 시 최초 관리자 시딩 | 서버 기동 시 `admins` 테이블이 비어있으면 ENV(`ADMIN_BOOTSTRAP_USERNAME`, `ADMIN_BOOTSTRAP_PASSWORD`)로 SYSTEM_ADMIN 1명 생성 | **프로덕션 핵심 로직** |
-| **P0** | UC-B2: 관리자 생성 | SYSTEM_ADMIN이 새 관리자(SYSTEM_ADMIN 또는 CORNER_OPERATOR)를 생성 | **프로덕션 핵심 로직** |
+| **P0** | UC-B2: 관리자 생성 | SYSTEM_ADMIN이 새 CORNER_OPERATOR를 생성 (SYSTEM_ADMIN 생성 금지) | **프로덕션 핵심 로직** |
 | **P0** | UC-B3: 관리자 비밀번호 변경 | 본인 또는 SYSTEM_ADMIN이 임의 관리자의 비밀번호를 변경 | **프로덕션 핵심 로직** |
 | **P0** | UC-B4: 관리자 삭제 | SYSTEM_ADMIN이 임의 관리자를 삭제(세션도 함께 무효화) | **프로덕션 핵심 로직** |
 | **P0** | UC-B6: 삭제 엣지케이스 가드 | 자기 자신 삭제 방지, 마지막 SYSTEM_ADMIN 삭제 방지 | 운영 사고 방지 |
@@ -26,6 +26,7 @@
 
 **정책 확정 사항** (사용자 확답):
 - 역할은 `SYSTEM_ADMIN`(시스템 관리자), `CORNER_OPERATOR`(코너 운용 관리자) 2종.
+- SYSTEM_ADMIN은 다른 SYSTEM_ADMIN을 생성할 수 없으며, 관리자 생성 API는 CORNER_OPERATOR 생성만 허용한다.
 - 관리자 생성/비밀번호변경/삭제는 전부 **SYSTEM_ADMIN 전용**.
 - **(사용자 피드백 반영)** 자기 자신 삭제 방지, 마지막 SYSTEM_ADMIN 삭제 방지는 이번 계획 범위에 **포함**한다 (UC-B6). 아래 §2.2~2.4, §3, §5에 반영됨.
 - **(사용자 피드백 반영)** 비밀번호 변경(UC-B3)은 SYSTEM_ADMIN 전용이 아니라 **본인 또는 SYSTEM_ADMIN**이 수행 가능하다 (생성/삭제는 여전히 SYSTEM_ADMIN 전용). 아래 §2.4, §2.8, §5에 반영됨.
@@ -124,7 +125,7 @@ func (s *AdminAuthService) authorizeSystemAdmin(ctx context.Context, actorAdminI
 ```
 
 책임:
-- `CreateAdmin`: `authorizeSystemAdmin` 호출 → role 유효성 검사(`ErrAdminInvalidRole`) → username 중복 확인 → `hashPassword` → `AdminRepository.Save` (트랜잭션 내) → 감사 로그(`recordAuditLog`, action `ADMIN_CREATE`)
+- `CreateAdmin`: `authorizeSystemAdmin` 호출 → CORNER_OPERATOR 역할만 허용(SYSTEM_ADMIN 요청은 `ErrAdminForbidden`, 그 외 값은 `ErrAdminInvalidRole`) → username 중복 확인 → `hashPassword` → `AdminRepository.Save` (트랜잭션 내) → 감사 로그(`recordAuditLog`, action `ADMIN_CREATE`)
 - `ChangeAdminPassword` (UC-B3, 사용자 피드백 반영): `authorizeSelfOrSystemAdmin(actorAdminID, targetAdminID)` 호출(`actorAdminID == targetAdminID`이면 통과, 아니면 actor가 SYSTEM_ADMIN인지 확인 후 실패 시 `ErrAdminForbidden`) → 대상 조회 → `hashPassword` → `Save` → 감사 로그 `ADMIN_PASSWORD_CHANGE`(본인 변경/타인 변경 여부를 필드로 구분 기록)
 - `DeleteAdmin` (UC-B4 + UC-B6 가드 포함): `authorizeSystemAdmin` 호출 →
   1. `actorAdminID == targetAdminID` → `ErrAdminSelfDeleteForbidden` (자기 자신 삭제 방지)
@@ -273,7 +274,7 @@ func (h *AdminManagementHandler) DeleteAdmin(c echo.Context) error       // DELE
 ### 5.2 유즈케이스 검증
 - [x] UC-B1: 빈 테이블 + ENV 설정 → 서버 기동 시 SYSTEM_ADMIN 1명 생성, 재기동해도 중복 생성 안 됨
 - [x] UC-B1: ENV 미설정 + 빈 테이블 → 서버 기동 실패(Fatal)
-- [x] UC-B2: SYSTEM_ADMIN이 CORNER_OPERATOR/SYSTEM_ADMIN 생성 가능
+- [x] UC-B2: SYSTEM_ADMIN이 CORNER_OPERATOR를 생성할 수 있고, SYSTEM_ADMIN 생성 요청은 403 + `ErrAdminForbidden`
 - [x] UC-B3: SYSTEM_ADMIN이 임의 관리자 비밀번호 변경 후 새 비밀번호로 로그인 성공, 기존 세션 access token은 TTL 만료 전까지 유효(재로그인 강제 아님 — 범위 확인됨)
 - [x] UC-B3: CORNER_OPERATOR가 본인 비밀번호 변경 가능
 - [x] UC-B3: CORNER_OPERATOR가 타인(다른 CORNER_OPERATOR/SYSTEM_ADMIN) 비밀번호 변경 시도 시 403 + `ErrAdminForbidden`

@@ -25,7 +25,7 @@ func NewAdminManagementHandler(admins AdminManagementUsecase) *AdminManagementHa
 type CreateAdminRequest struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
-	Role     string `json:"role" enums:"SYSTEM_ADMIN,CORNER_OPERATOR"`
+	Role     string `json:"role" enums:"CORNER_OPERATOR"`
 } // @name CreateAdminRequest
 
 type ChangeAdminPasswordRequest struct {
@@ -39,7 +39,7 @@ type AdminResponse struct {
 } // @name AdminResponse
 
 // @Summary      관리자 생성
-// @Description  SYSTEM_ADMIN만 호출할 수 있습니다. 역할은 SYSTEM_ADMIN 또는 CORNER_OPERATOR만 허용하며, 동일한 username은 생성할 수 없습니다.
+// @Description  SYSTEM_ADMIN만 호출할 수 있습니다. 생성할 역할은 CORNER_OPERATOR로 고정되며, SYSTEM_ADMIN은 다른 SYSTEM_ADMIN을 생성할 수 없습니다. 동일한 username은 생성할 수 없습니다.
 // @Tags         A. Auth & Device Trust
 // @Security     AdminAuth
 // @Accept       json
