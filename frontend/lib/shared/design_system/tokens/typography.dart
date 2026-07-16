@@ -15,13 +15,13 @@ class AppTypography {
 
   static const TextStyle title2 = TextStyle(
     fontSize: 22.0,
-    fontWeight: FontWeight.bold,
+    fontWeight: FontWeight.w600,
     height: 1.35,
   );
 
   static const TextStyle title3 = TextStyle(
     fontSize: 18.0,
-    fontWeight: FontWeight.bold,
+    fontWeight: FontWeight.w600,
     height: 1.4,
   );
 

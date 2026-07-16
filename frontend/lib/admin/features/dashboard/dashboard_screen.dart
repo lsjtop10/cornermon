@@ -178,12 +178,15 @@ class DashboardScreen extends ConsumerWidget {
                       : 3,
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
-                  childAspectRatio: 1.35,
+                  childAspectRatio: 1.15,
                   children: [
                     for (final entry in visible)
                       CornerStatusCard(
                         entry: entry,
                         onTap: () => context.go('/corners/${entry.corner.id}'),
+                        onCreateTrack: entry.inactive
+                            ? () => context.go('/corner-track-manage')
+                            : null,
                       ),
                   ],
                 );
@@ -319,22 +322,39 @@ class _Filters extends ConsumerWidget {
 }
 
 class CornerStatusCard extends StatelessWidget {
-  const CornerStatusCard({required this.entry, required this.onTap, super.key});
+  const CornerStatusCard({
+    required this.entry,
+    required this.onTap,
+    this.onCreateTrack,
+    super.key,
+  });
+
   final CornerDashboardEntry entry;
   final VoidCallback onTap;
+  final VoidCallback? onCreateTrack;
+
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).brightness == Brightness.dark
         ? AppColors.dark
         : AppColors.light;
     final status = entry.corner.status;
-    final color = status == api.CornerOperationalStatus.BUSY
-        ? colors.statusIdle
-        : status == api.CornerOperationalStatus.IDLE
-        ? colors.quiet
-        : colors.statusInactive;
+    final presentation = switch (status) {
+      api.CornerOperationalStatus.BUSY => (
+        color: colors.statusIdle,
+        icon: '●',
+        label: '정상',
+      ),
+      api.CornerOperationalStatus.IDLE => (
+        color: colors.quiet,
+        icon: '○',
+        label: '유휴',
+      ),
+      _ => (color: colors.statusInactive, icon: '✕', label: '미가동'),
+    };
     final metric = entry.corner.cornerMetric;
     return Card(
+      clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
         child: Container(
@@ -344,7 +364,7 @@ class CornerStatusCard extends StatelessWidget {
                 width: 4,
                 color: entry.corner.isBottleneck ?? false
                     ? colors.statusAlert
-                    : Colors.transparent,
+                    : presentation.color,
               ),
             ),
           ),
@@ -357,9 +377,10 @@ class CornerStatusCard extends StatelessWidget {
                 style: Theme.of(context).textTheme.titleMedium,
               ),
               const Spacer(),
-              Chip(
-                avatar: Icon(Icons.circle, size: 12, color: color),
-                label: Text(status?.name ?? '미가동'),
+              _CornerStatusPill(
+                color: presentation.color,
+                icon: presentation.icon,
+                label: presentation.label,
               ),
               Text('목표 ${entry.corner.targetMinutes ?? 0}분'),
               Text(
@@ -369,9 +390,46 @@ class CornerStatusCard extends StatelessWidget {
                   avgDeviationSeconds: entry.avgDeviationSeconds,
                 ),
               ),
+              if (entry.inactive && onCreateTrack != null)
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton.icon(
+                    onPressed: onCreateTrack,
+                    icon: const Icon(Icons.add),
+                    label: const Text('트랙 생성'),
+                  ),
+                ),
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _CornerStatusPill extends StatelessWidget {
+  const _CornerStatusPill({
+    required this.color,
+    required this.icon,
+    required this.label,
+  });
+
+  final Color color;
+  final String icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final opacity = Theme.of(context).brightness == Brightness.dark ? .20 : .12;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: opacity),
+        borderRadius: BorderRadius.circular(100),
+      ),
+      child: Text(
+        '$icon  $label',
+        style: Theme.of(context).textTheme.labelLarge?.copyWith(color: color),
       ),
     );
   }
