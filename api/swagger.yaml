@@ -23,6 +23,18 @@ definitions:
       expiresInSeconds:
         type: integer
     type: object
+  AdminResponse:
+    properties:
+      id:
+        type: string
+      role:
+        enum:
+        - SYSTEM_ADMIN
+        - CORNER_OPERATOR
+        type: string
+      username:
+        type: string
+    type: object
   AdminSessionResponse:
     properties:
       adminId:
@@ -231,6 +243,11 @@ definitions:
       visitCompletionRate:
         type: number
     type: object
+  ChangeAdminPasswordRequest:
+    properties:
+      password:
+        type: string
+    type: object
   CornerMetricResponse:
     properties:
       avgDurationSeconds:
@@ -296,6 +313,18 @@ definitions:
         items:
           $ref: '#/definitions/UnvisitedGroupResponse'
         type: array
+    type: object
+  CreateAdminRequest:
+    properties:
+      password:
+        type: string
+      role:
+        enum:
+        - SYSTEM_ADMIN
+        - CORNER_OPERATOR
+        type: string
+      username:
+        type: string
     type: object
   CreateCampRequest:
     properties:
@@ -719,6 +748,97 @@ info:
   title: Cornermon API
   version: 1.0.0
 paths:
+  /admins:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 생성할 관리자
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/CreateAdminRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/AdminResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+      - AdminAuth: []
+      summary: 관리자 생성
+      tags:
+      - A. Auth & Device Trust
+  /admins/{id}:
+    delete:
+      parameters:
+      - description: 관리자 ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+      - AdminAuth: []
+      summary: 관리자 삭제
+      tags:
+      - A. Auth & Device Trust
+  /admins/{id}/password:
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: 관리자 ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: 새 비밀번호
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/ChangeAdminPasswordRequest'
+      responses:
+        "204":
+          description: No Content
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+      - AdminAuth: []
+      summary: 관리자 비밀번호 변경
+      tags:
+      - A. Auth & Device Trust
   /api/v1/camps/{campId}/events/admin:
     get:
       description: 관리자용 실시간 변경 알림 스트림입니다. 각 event의 data는 SSENotification JSON이며 예시는

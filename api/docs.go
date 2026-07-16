@@ -17,6 +17,152 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/admins": {
+            "post": {
+                "security": [
+                    {
+                        "AdminAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "A. Auth \u0026 Device Trust"
+                ],
+                "summary": "관리자 생성",
+                "parameters": [
+                    {
+                        "description": "생성할 관리자",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/CreateAdminRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/AdminResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/admins/{id}": {
+            "delete": {
+                "security": [
+                    {
+                        "AdminAuth": []
+                    }
+                ],
+                "tags": [
+                    "A. Auth \u0026 Device Trust"
+                ],
+                "summary": "관리자 삭제",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "관리자 ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/admins/{id}/password": {
+            "patch": {
+                "security": [
+                    {
+                        "AdminAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "A. Auth \u0026 Device Trust"
+                ],
+                "summary": "관리자 비밀번호 변경",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "관리자 ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "새 비밀번호",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/ChangeAdminPasswordRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/camps/{campId}/events/admin": {
             "get": {
                 "security": [
@@ -2595,6 +2741,24 @@ const docTemplate = `{
                 }
             }
         },
+        "AdminResponse": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "role": {
+                    "type": "string",
+                    "enum": [
+                        "SYSTEM_ADMIN",
+                        "CORNER_OPERATOR"
+                    ]
+                },
+                "username": {
+                    "type": "string"
+                }
+            }
+        },
         "AdminSessionResponse": {
             "type": "object",
             "properties": {
@@ -2903,6 +3067,14 @@ const docTemplate = `{
                 }
             }
         },
+        "ChangeAdminPasswordRequest": {
+            "type": "object",
+            "properties": {
+                "password": {
+                    "type": "string"
+                }
+            }
+        },
         "CornerMetricResponse": {
             "type": "object",
             "properties": {
@@ -2991,6 +3163,24 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/UnvisitedGroupResponse"
                     }
+                }
+            }
+        },
+        "CreateAdminRequest": {
+            "type": "object",
+            "properties": {
+                "password": {
+                    "type": "string"
+                },
+                "role": {
+                    "type": "string",
+                    "enum": [
+                        "SYSTEM_ADMIN",
+                        "CORNER_OPERATOR"
+                    ]
+                },
+                "username": {
+                    "type": "string"
                 }
             }
         },

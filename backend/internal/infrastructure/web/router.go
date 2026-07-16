@@ -5,18 +5,19 @@ import (
 )
 
 type Handlers struct {
-	Auth    *AuthHandler
-	Device  *DeviceHandler
-	Camp    *CampHandler
-	Corner  *CornerHandler
-	Track   *TrackHandler
-	Group   *GroupHandler
-	Badge   *BadgeHandler
-	Visit   *VisitHandler
-	Event   *EventHandler
-	Message *MessageHandler
-	Report  *ReportHandler
-	Audit   *AuditHandler
+	Auth            *AuthHandler
+	Device          *DeviceHandler
+	Camp            *CampHandler
+	Corner          *CornerHandler
+	Track           *TrackHandler
+	Group           *GroupHandler
+	Badge           *BadgeHandler
+	Visit           *VisitHandler
+	Event           *EventHandler
+	Message         *MessageHandler
+	Report          *ReportHandler
+	Audit           *AuditHandler
+	AdminManagement *AdminManagementHandler
 }
 
 func RegisterRoutes(e *echo.Echo, h *Handlers, adminAuth AuthAdminUsecase, trackAuth AuthFacilitatorUsecase) {
@@ -40,6 +41,11 @@ func RegisterRoutes(e *echo.Echo, h *Handlers, adminAuth AuthAdminUsecase, track
 	admin.POST("/auth/admin/logout", h.Auth.AdminLogout)
 	admin.GET("/auth/admin/sessions", h.Auth.ListAdminSessions)
 	admin.POST("/auth/admin/sessions/:id/revoke", h.Auth.RevokeAdminSession)
+	if h.AdminManagement != nil {
+		admin.POST("/admins", h.AdminManagement.CreateAdmin)
+		admin.PATCH("/admins/:id/password", h.AdminManagement.ChangeAdminPassword)
+		admin.DELETE("/admins/:id", h.AdminManagement.DeleteAdmin)
+	}
 	admin.POST("/auth/track/:trackId/force-logout", h.Auth.ForceTrackLogout)
 	admin.POST("/auth/track/lockout/:deviceId/release", h.Auth.ReleaseLockout)
 	admin.GET("/auth/track/sessions", h.Auth.ListActiveFacilitatorSessions)
