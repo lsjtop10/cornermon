@@ -1,6 +1,13 @@
 # Phase 08 — A8 기기 등록 관리 / A9 PIN 잠금 해제·세션 관리
 
 > 선행조건: `01_api_codegen_sync.md`(`device_registration_providers.dart`, `auth_admin_providers.dart` 신규 provider), `02_admin_skeleton_router_sidebar.md`(`/devices`, `/sessions` 라우트, 3모드 사이드바). 대상 독자: 1~2년차 프론트엔드 개발자 1명, 예상 소요 5~7시간.
+
+## 진행 현황
+
+- [x] H-1~H-4 A8 `DeviceRegistrationExt`/`DeviceManageScreen`/`DeviceRegistrationRow`(승인·거절·회수 확인모달·isNewArrival 훅)
+- [x] I-1~I-5 A9 `lockedDeviceListProvider`/`activeSessionListProvider`(501→`NotImplementedException`) + `SessionManageScreen` 3섹션 카드 + 수동 fallback
+- [x] J-1 라우터 `/devices`, `/sessions` 실제 화면 연결
+- [x] 자동화 검증(단위/위젯 테스트) 및 자체 리뷰 완료 — 기존 디렉터리 관례(`device_manage`/`session_manage`)를 그대로 따름(plan 원문의 `device_registration`/`lockout_session_manage` 디렉터리명 대신)
 > 목적: A8(기기 등록 승인/거절/회수)과 A9(잠금 해제/강제 로그아웃/관리자 세션 종료)를 REST 기반으로 완성한다. SSE(`device_registration_updated`, `lockout_alert`) 실시간 반영은 이 문서 범위가 아니다 — `12_admin_sse_integration.md`에서 해당 이벤트 수신 시 이 문서가 정의하는 provider들을 invalidate하는 배선만 추가한다. 이 화면들은 그 전까지 수동 새로고침(pull-to-refresh 또는 재진입 시 재조회)으로 1차 동작한다.
 
 ## 0. 왜 필요한가 (배경)
@@ -251,20 +258,20 @@ class _AdminSessionsCard extends ConsumerWidget {
 ## 4. 검증 체크리스트
 
 ### 4.1 A8 기기 등록 관리
-- [ ] `GET /device-registrations` 응답을 status별로 3탭에 정확히 분류(PENDING → 대기중, APPROVED → 승인됨, REJECTED/REVOKED → 이력)
-- [ ] PENDING 탭이 비어있으면 `EmptyState`가 렌더링된다
-- [ ] PENDING 행에서 "승인" 클릭 시 `approveDeviceRegistrationProvider` 호출 후 목록이 갱신되고 해당 항목이 승인됨 탭으로 이동한다
-- [ ] PENDING 행에서 "거절" 클릭 시 `rejectDeviceRegistrationProvider` 호출 후 이력 탭으로 이동한다
-- [ ] APPROVED 행에서 "회수" 클릭 시 확인 모달("분실/도난 대응 시 사용하세요" 문구 포함)이 뜨고, 확인해야만 `revokeDeviceRegistrationProvider`가 호출된다(취소 시 API 호출 없음)
-- [ ] 회수 성공 후 해당 항목이 이력 탭으로 이동하고 status가 REVOKED로 표시된다
-- [ ] REJECTED/REVOKED 행에는 어떤 액션 버튼도 노출되지 않는다
-- [ ] pull-to-refresh 시 `deviceRegistrationListProvider`가 재조회된다
-- [ ] `DeviceRegistrationRow(isNewArrival: true)`를 단위/위젯 테스트에서 직접 주입했을 때 하이라이트 스타일이 적용된다(SSE 배선 없이도 위젯 자체는 검증 가능 — `12` 완료 전 선행 테스트 가능)
+- [x] `GET /device-registrations` 응답을 status별로 3탭에 정확히 분류(PENDING → 대기중, APPROVED → 승인됨, REJECTED/REVOKED → 이력)
+- [x] PENDING 탭이 비어있으면 `EmptyState`가 렌더링된다
+- [x] PENDING 행에서 "승인" 클릭 시 `approveDeviceRegistrationProvider` 호출 후 목록이 갱신되고 해당 항목이 승인됨 탭으로 이동한다
+- [x] PENDING 행에서 "거절" 클릭 시 `rejectDeviceRegistrationProvider` 호출 후 이력 탭으로 이동한다
+- [x] APPROVED 행에서 "회수" 클릭 시 확인 모달("분실/도난 대응 시 사용하세요" 문구 포함)이 뜨고, 확인해야만 `revokeDeviceRegistrationProvider`가 호출된다(취소 시 API 호출 없음)
+- [x] 회수 성공 후 해당 항목이 이력 탭으로 이동하고 status가 REVOKED로 표시된다
+- [x] REJECTED/REVOKED 행에는 어떤 액션 버튼도 노출되지 않는다
+- [x] pull-to-refresh 시 `deviceRegistrationListProvider`가 재조회된다
+- [x] `DeviceRegistrationRow(isNewArrival: true)`를 단위/위젯 테스트에서 직접 주입했을 때 하이라이트 스타일이 적용된다(SSE 배선 없이도 위젯 자체는 검증 가능 — `12` 완료 전 선행 테스트 가능)
 
 ### 4.2 A9 PIN 잠금 해제 / 세션 관리
-- [ ] 관리자 세션 카드는 `GET /auth/admin/sessions` 응답을 정확히 렌더링하고(REST 목록 갭 없음), "세션 종료" 클릭 → 확인 모달 → `revokeAdminSessionProvider` 호출 → 목록 갱신까지 정상 동작
-- [ ] 잠긴 기기 카드/활성 세션 카드는 `lockedDeviceListProvider`/`activeSessionListProvider`가 `501`을 반환할 때 "백엔드 배포 후 제공됩니다(Issue #70)" 안내 문구가 표시되고, 스낵바 에러로는 노출되지 않는다
-- [ ] (백엔드 #70 배포 후 재검증) 두 provider가 `200`을 반환하면 실제 배열이 카드 목록에 렌더링된다 — 활성 세션 카드는 `trackId` → 트랙 라벨 조인이 정확하다
-- [ ] 잠긴 기기 카드의 수동 입력 fallback으로 임의 `deviceId` 문자열을 넣고 "해제 실행"을 누르면 `releaseTrackLockoutProvider(deviceId)`가 정확히 그 값으로 호출된다
-- [ ] 활성 세션 카드의 수동 입력 fallback으로 임의 `trackId` 문자열을 넣고 "강제 로그아웃"을 누르면 `forceLogoutTrackProvider(TrackId(trackId))`가 정확히 그 값으로 호출된다
-- [ ] `/sessions` 라우트는 `preparing`/`reportOnly` 모드에서 사이드바에 노출되지 않는다(`02`의 라우터 가드 재확인 — 이 문서에서 새로 만들지 않음)
+- [x] 관리자 세션 카드는 `GET /auth/admin/sessions` 응답을 정확히 렌더링하고(REST 목록 갭 없음), "세션 종료" 클릭 → 확인 모달 → `revokeAdminSessionProvider` 호출 → 목록 갱신까지 정상 동작
+- [x] 잠긴 기기 카드/활성 세션 카드는 `lockedDeviceListProvider`/`activeSessionListProvider`가 `501`을 반환할 때 "백엔드 배포 후 제공됩니다(Issue #70)" 안내 문구가 표시되고, 스낵바 에러로는 노출되지 않는다
+- [ ] (백엔드 #70 배포 후 재검증) 두 provider가 `200`을 반환하면 실제 배열이 카드 목록에 렌더링된다 — 활성 세션 카드는 `trackId` → 트랙 라벨 조인이 정확하다(코드 구현 완료, 실 배포 후 재확인 필요)
+- [x] 잠긴 기기 카드의 수동 입력 fallback으로 임의 `deviceId` 문자열을 넣고 "해제 실행"을 누르면 `releaseTrackLockoutProvider(deviceId)`가 정확히 그 값으로 호출된다
+- [x] 활성 세션 카드의 수동 입력 fallback으로 임의 `trackId` 문자열을 넣고 "강제 로그아웃"을 누르면 `forceLogoutTrackProvider(TrackId(trackId))`가 정확히 그 값으로 호출된다
+- [x] `/sessions` 라우트는 `preparing`/`reportOnly` 모드에서 사이드바에 노출되지 않는다(`02`의 라우터 가드 재확인 — 이 문서에서 새로 만들지 않음)
