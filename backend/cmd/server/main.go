@@ -15,6 +15,7 @@ import (
 	"cornermon/backend/internal/infrastructure/web"
 	"cornermon/backend/internal/usecase"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
@@ -77,6 +78,9 @@ func main() {
 
 	// Initialize Repositories
 	adminRepo := postgres.NewAdminRepository(pool)
+	if err := usecase.BootstrapAdmin(ctx, adminRepo, os.Getenv("ADMIN_BOOTSTRAP_USERNAME"), os.Getenv("ADMIN_BOOTSTRAP_PASSWORD"), uuid.NewString); err != nil {
+		log.Fatalf("Unable to bootstrap initial administrator: %v\n", err)
+	}
 	adminSessionRepo := postgres.NewAdminSessionRepository(pool)
 	auditLogRepo := postgres.NewAuditLogRepository(pool)
 	badgeRepo := postgres.NewBadgeRepository(pool)
@@ -127,20 +131,22 @@ func main() {
 	messageHandler := web.NewMessageHandler(messageService, announcementService)
 	reportHandler := web.NewReportHandler(reportService, reportQuerier, campRepo)
 	auditHandler := web.NewAuditHandler(auditLogRepo)
+	adminManagementHandler := web.NewAdminManagementHandler(authAdminService)
 
 	handlers := &web.Handlers{
-		Auth:    authHandler,
-		Device:  deviceHandler,
-		Camp:    campHandler,
-		Corner:  cornerHandler,
-		Track:   trackHandler,
-		Group:   groupHandler,
-		Badge:   badgeHandler,
-		Visit:   visitHandler,
-		Event:   eventHandler,
-		Message: messageHandler,
-		Report:  reportHandler,
-		Audit:   auditHandler,
+		Auth:            authHandler,
+		Device:          deviceHandler,
+		Camp:            campHandler,
+		Corner:          cornerHandler,
+		Track:           trackHandler,
+		Group:           groupHandler,
+		Badge:           badgeHandler,
+		Visit:           visitHandler,
+		Event:           eventHandler,
+		Message:         messageHandler,
+		Report:          reportHandler,
+		Audit:           auditHandler,
+		AdminManagement: adminManagementHandler,
 	}
 
 	e := echo.New()

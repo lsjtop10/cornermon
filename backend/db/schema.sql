@@ -152,12 +152,14 @@ COMMENT ON COLUMN facilitator_sessions.revoked_at IS '세션이 무효화(로그
 CREATE TABLE admins (
     id VARCHAR(50) PRIMARY KEY,
     username VARCHAR(255) NOT NULL UNIQUE,
-    password_hash VARCHAR(255) NOT NULL
+    password_hash VARCHAR(255) NOT NULL,
+    role VARCHAR(30) NOT NULL DEFAULT 'CORNER_OPERATOR'
 );
 COMMENT ON TABLE admins IS '시스템 관리자 계정을 관리하는 테이블';
 COMMENT ON COLUMN admins.id IS '관리자 고유 식별자';
 COMMENT ON COLUMN admins.username IS '관리자 로그인 아이디';
 COMMENT ON COLUMN admins.password_hash IS '비밀번호 해시';
+COMMENT ON COLUMN admins.role IS '관리자 역할 (SYSTEM_ADMIN, CORNER_OPERATOR)';
 
 -- 관리자 세션 테이블
 CREATE TABLE admin_sessions (

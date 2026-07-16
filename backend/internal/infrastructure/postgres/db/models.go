@@ -16,6 +16,8 @@ type Admin struct {
 	Username string `json:"username"`
 	// 비밀번호 해시
 	PasswordHash string `json:"password_hash"`
+	// 관리자 역할 (SYSTEM_ADMIN, CORNER_OPERATOR)
+	Role string `json:"role"`
 }
 
 // 관리자의 인증 토큰(Access) 세션을 관리하는 테이블
