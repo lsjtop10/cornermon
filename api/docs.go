@@ -1960,6 +1960,26 @@ const docTemplate = `{
                 }
             }
         },
+        "/health": {
+            "get": {
+                "description": "서버가 정상적으로 응답하는지 확인한다. 인증이 필요하지 않다.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Health"
+                ],
+                "summary": "헬스체크",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/HealthResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/messages/broadcast/{id}/read": {
             "post": {
                 "security": [
@@ -2023,6 +2043,32 @@ const docTemplate = `{
                             "items": {
                                 "$ref": "#/definitions/BroadcastReceiptResponse"
                             }
+                        }
+                    }
+                }
+            }
+        },
+        "/ready": {
+            "get": {
+                "description": "서버가 데이터베이스 등 필수 의존성에 연결되어 트래픽을 받을 준비가 되었는지 확인한다. 인증이 필요하지 않다.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Health"
+                ],
+                "summary": "레디니스 체크",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/HealthResponse"
+                        }
+                    },
+                    "503": {
+                        "description": "Service Unavailable",
+                        "schema": {
+                            "$ref": "#/definitions/HealthResponse"
                         }
                     }
                 }
@@ -3405,6 +3451,15 @@ const docTemplate = `{
                 },
                 "totalDurationSeconds": {
                     "type": "integer"
+                }
+            }
+        },
+        "HealthResponse": {
+            "type": "object",
+            "properties": {
+                "status": {
+                    "type": "string",
+                    "example": "ok"
                 }
             }
         },

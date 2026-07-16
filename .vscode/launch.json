@@ -5,23 +5,55 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "frontend",
-            "cwd": "frontend",
-            "request": "launch",
-            "type": "dart"
-        },
-        {
-            "name": "frontend (profile mode)",
+            "name": "frontend (admin)",
             "cwd": "frontend",
             "request": "launch",
             "type": "dart",
+            "program": "lib/main_admin.dart",
+            "args": ["--flavor", "admin"]
+        },
+        {
+            "name": "frontend (facilitator)",
+            "cwd": "frontend",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main_facilitator.dart",
+            "args": ["--flavor", "facilitator"]
+        },
+        {
+            "name": "frontend (admin, profile mode)",
+            "cwd": "frontend",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main_admin.dart",
+            "args": ["--flavor", "admin"],
             "flutterMode": "profile"
         },
         {
-            "name": "frontend (release mode)",
+            "name": "frontend (admin, release mode)",
             "cwd": "frontend",
             "request": "launch",
             "type": "dart",
+            "program": "lib/main_admin.dart",
+            "args": ["--flavor", "admin"],
+            "flutterMode": "release"
+        },
+        {
+            "name": "frontend (facilitator, profile mode)",
+            "cwd": "frontend",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main_facilitator.dart",
+            "args": ["--flavor", "facilitator"],
+            "flutterMode": "profile"
+        },
+        {
+            "name": "frontend (facilitator, release mode)",
+            "cwd": "frontend",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main_facilitator.dart",
+            "args": ["--flavor", "facilitator"],
             "flutterMode": "release"
         }
     ]
