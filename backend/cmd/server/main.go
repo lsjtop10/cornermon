@@ -24,10 +24,28 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+func stringToLevel(logLevelString string) slog.Leveler {
+	switch logLevelString {
+	case "debug":
+		return slog.LevelDebug
+	case "info":
+		return slog.LevelInfo
+	}
+
+	return slog.LevelInfo
+}
+
 func main() {
+
+	var logLevel slog.Leveler
+	logLevelString := os.Getenv("LOGLEVEL")
+	if logLevelString != "" {
+		logLevel = stringToLevel(logLevelString)
+	}
+
 	// Initialize structured logging (slog JSON format + AppError handler)
 	jsonHandler := slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
-		Level: slog.LevelInfo,
+		Level: logLevel,
 	})
 	logger := slog.New(errs.NewSlogWrappedHandler(jsonHandler))
 	slog.SetDefault(logger)
