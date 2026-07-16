@@ -178,4 +178,3 @@ class _$BroadcastReceiptResponseSerializer implements PrimitiveSerializer<Broadc
     return result.build();
   }
 }
-

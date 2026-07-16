@@ -265,4 +265,3 @@ class MessageResponseSenderRoleEnum extends EnumClass {
   static BuiltSet<MessageResponseSenderRoleEnum> get values => _$messageResponseSenderRoleEnumValues;
   static MessageResponseSenderRoleEnum valueOf(String name) => _$messageResponseSenderRoleEnumValueOf(name);
 }
-

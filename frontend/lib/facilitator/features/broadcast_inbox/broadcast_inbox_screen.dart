@@ -10,7 +10,7 @@ import 'package:cornermon/shared/design_system/tokens/spacing.dart';
 import 'package:cornermon/shared/design_system/tokens/typography.dart';
 import 'package:cornermon/shared/design_system/widgets/empty_state.dart';
 import 'package:cornermon/facilitator/session/facilitator_broadcast_provider.dart';
-import 'package:cornermon/facilitator/widgets/local_time_label.dart';
+import 'package:cornermon/shared/widgets/local_time_label.dart';
 
 /// B6 공지함 — 진입 시 안읽은 공지를 자동 읽음 처리한다(screen-spec-facilitator.md B6).
 class BroadcastInboxScreen extends ConsumerStatefulWidget {

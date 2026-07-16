@@ -253,4 +253,3 @@ class CornerResponseStatusEnum extends EnumClass {
   static BuiltSet<CornerResponseStatusEnum> get values => _$cornerResponseStatusEnumValues;
   static CornerResponseStatusEnum valueOf(String name) => _$cornerResponseStatusEnumValueOf(name);
 }
-

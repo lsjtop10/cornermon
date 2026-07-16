@@ -159,4 +159,3 @@ class AdminResponseRoleEnum extends EnumClass {
   static BuiltSet<AdminResponseRoleEnum> get values => _$adminResponseRoleEnumValues;
   static AdminResponseRoleEnum valueOf(String name) => _$adminResponseRoleEnumValueOf(name);
 }
-

@@ -106,4 +106,3 @@ class _$ChangeAdminPasswordRequestSerializer implements PrimitiveSerializer<Chan
     return result.build();
   }
 }
-

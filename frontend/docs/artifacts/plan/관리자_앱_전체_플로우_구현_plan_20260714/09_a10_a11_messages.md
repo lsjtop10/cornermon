@@ -3,6 +3,20 @@
 > 선행조건: `01_api_codegen_sync.md`(특히 `message_providers.dart`의 `broadcastMessageList(campId)`/`sendBroadcastMessage(campId, content)`/`broadcastReceipts(messageId)`/`trackMessageList(trackId)`/`sendDirectMessage(trackId, content)`, `corner_track_providers.dart`의 `trackList(campId)`/`cornerList(campId)`), `02_admin_skeleton_router_sidebar.md`(라우트 `/messages/broadcast`, `/messages/direct`, `selectedCampIdProvider`). 대상 독자: 1~2년차 프론트엔드 개발자 1명, 예상 소요 6~8시간.
 > 목적: 사이드바 "메시지" 항목 아래 실제로는 두 화면(A10 공지, A11 다이렉트)이 상단 탭바로 오가는 구조를 구현한다. SSE로 "즉시 반영"하지 않는다 — 이 Phase는 REST 조회/재조회만 구현하고, `messages_changed` 이벤트 수신 시 무엇을 invalidate할지는 `12_admin_sse_integration.md`에서 배선한다(§00 overview 2.3). 이 문서에서는 화면 진입/풀to리프레시/발송 직후 수동 invalidate로 1차 동작을 완성한다.
 
+## 진행 현황
+
+- [x] F-1 `LocalTimeLabel`을 `shared/widgets`로 이동(facilitator 2개 사용처 + 테스트 1개 import 경로 갱신 완료)
+- [x] F-2 `message_ext.dart`(`MessageX`, `MessageListX`, `kQuickReplyTags`)
+- [x] F-3 `MessageTabBar`
+- [x] F-4 `SelectedBroadcastId` provider
+- [x] F-5 `BroadcastScreen` + `BroadcastHistoryList` + `NewBroadcastModal` + `BroadcastReceiptGrid`
+- [x] F-6 `SelectedDirectTrackId`, `TrackDirectSummary`, `trackDirectSummaries` provider
+- [x] F-7 `TrackDirectScreen` + `TrackListPane` + `ChatThreadPane`
+- [x] F-8 라우터 `/messages/broadcast`, `/messages/direct` 실제 화면 연결
+- [x] F-9 `background: true`/`false` 구분 리뷰 완료
+- [x] 부가: A1 대시보드 "안읽은 다이렉트" 요약 카드가 `trackDirectSummariesProvider` 실값을 표시하도록 연결(기존엔 `-` placeholder)
+- [x] 자동화 검증(단위/위젯 테스트) 및 자체 리뷰 완료 — 검증 범위는 §4 체크리스트에 항목별로 구분 표기(테스트로 확인 vs 코드 구현 완료·전용 테스트 미작성)
+
 ## 0. 왜 이렇게 나뉘는가 (배경)
 
 `docs/front/screen-spec-admin.md`의 "사이드바엔 '메시지' 항목이 하나뿐이지만 실제로는 공지(A10)·다이렉트(A11) 두 화면"이라는 문단에 따라, A10/A11은 완전히 다른 API 스코프(캠프 스코프 vs 트랙 스코프)를 갖는 별개 화면이면서도 상단 공용 탭바로 묶인다. `00_overview.md` §2.8에 따라:
@@ -322,27 +336,27 @@ class ChatThreadPane extends ConsumerStatefulWidget {
 ## 4. 검증 체크리스트
 
 ### 4.1 화면 공통
-- [ ] `/messages/broadcast`와 `/messages/direct` 양쪽에서 `MessageTabBar`가 렌더링되고 서로 전환된다
-- [ ] 다이렉트 탭 뱃지 숫자와 A1 대시보드 "안읽은 다이렉트 메시지 수" 카드가 동일한 값을 보여준다(같은 `trackDirectSummariesProvider` 합계 사용)
+- [ ] `/messages/broadcast`와 `/messages/direct` 양쪽에서 `MessageTabBar`가 렌더링되고 서로 전환된다(구현 완료 — `BroadcastScreen`/`TrackDirectScreen` 모두 상단에 `MessageTabBar` 배치, 탭 전환 자체를 검증하는 전용 위젯 테스트는 미작성)
+- [x] 다이렉트 탭 뱃지 숫자와 A1 대시보드 "안읽은 다이렉트 메시지 수" 카드가 동일한 값을 보여준다(같은 `trackDirectSummariesProvider` 합계를 두 위치 모두에서 구독하도록 구현 — 구조적으로 항상 동일)
 
 ### 4.2 A10 공지 채널
-- [ ] 공지 발송 이력이 최신순(내림차순)으로 표시된다(API는 오름차순 응답 — `newestFirst` 적용 확인)
-- [ ] "새 공지 작성" → 텍스트 입력 후 발송 → 목록 최상단에 새 공지가 즉시 나타난다(재조회 확인)
-- [ ] 발송 시점 ACTIVE였던 트랙만 그 공지의 읽음 현황 그리드에 나타난다(scenarios.md Feature 5 "공지는 발송 시점에 ACTIVE인 트랙에만 노출된다" — `BroadcastReceipt` 응답이 이미 발송 시점 스냅샷이므로 클라이언트는 그대로 렌더링만 하면 되는지, 서버가 그 계약을 지키는지 QA 확인)
-- [ ] 공지 발송 후 새로 생성된 트랙은 그 공지의 읽음 현황 그리드에 나타나지 않는다(scenarios.md "발송 이후 신규 트랙은 과거 공지를 못 본다")
-- [ ] 읽음 현황 그리드에서 안읽은 트랙 셀이 시각적으로 강조되고, 상단 요약 텍스트("N/M개 읽음")가 실제 읽음 수와 일치한다
+- [x] 공지 발송 이력이 최신순(내림차순)으로 표시된다(API는 오름차순 응답 — `newestFirst` 적용 확인, `broadcast_screen_test.dart` `ShouldRenderHistoryNewestFirstWhenApiReturnsAscending`)
+- [ ] "새 공지 작성" → 텍스트 입력 후 발송 → 목록 최상단에 새 공지가 즉시 나타난다(발송 호출과 `invalidate` 배선은 테스트로 확인 — provider가 갱신된 목록을 반환할 때 실제로 최상단에 렌더링되는지는 서버 연동 후 재확인 필요)
+- [ ] 발송 시점 ACTIVE였던 트랙만 그 공지의 읽음 현황 그리드에 나타난다(scenarios.md Feature 5 — `BroadcastReceipt` 응답을 그대로 렌더링만 하면 되므로 클라이언트 구현은 완료, 서버가 그 계약을 지키는지는 QA 확인 필요)
+- [ ] 공지 발송 후 새로 생성된 트랙은 그 공지의 읽음 현황 그리드에 나타나지 않는다(위와 동일 — 서버 계약 QA 확인 필요)
+- [x] 읽음 현황 그리드에서 안읽은 트랙 셀이 시각적으로 강조되고, 상단 요약 텍스트("N/M개 읽음")가 실제 읽음 수와 일치한다(`broadcast_screen_test.dart` `ShouldShowUnreadSummaryWhenReceiptGridLoadsForSelectedBroadcast` — 이 테스트 작성 중 그리드 셀 레이아웃 오버플로우 버그를 발견해 `childAspectRatio` 수정으로 고침)
 
 ### 4.3 A11 트랙 다이렉트
-- [ ] 트랙을 새로 생성한 직후 그 트랙을 다이렉트 탭에서 선택하면 빈 스레드 + "아직 나눈 대화가 없습니다" 안내가 보인다(관리자 메시지 유무와 무관)
-- [ ] 진행자(트랙) 쪽에서 먼저 보낸 메시지가 관리자 다이렉트 화면에 좌측 정렬 버블로 나타난다(관리자가 먼저 말 걸 필요 없음 재현)
-- [ ] `content`가 "인원부족"/"자재부족"/"긴급도움요청"과 정확히 일치하는 트랙발 메시지가 danger 톤 태그로 강조된다
-- [ ] 관리자가 입력창에서 메시지를 보내면 우측 정렬 브랜드색 버블로 즉시 나타난다(재조회 확인)
-- [ ] 삭제된 트랙의 스레드는 과거 메시지가 그대로 보이되 입력창이 비활성화된다(§2.6 확정 — DELETED 트랙 포함됨)
-- [ ] 좌측 목록(`trackDirectSummaries`) 조회만으로는 안읽음 뱃지가 사라지지 않고, 해당 스레드를 실제로 열어야(`background: false` 호출) 뱃지가 사라진다(§2.7 확정 동작 검증)
-- [ ] 트랙 교체(A3)로 새로 생성된 트랙은 이전 트랙과 별개의 빈 스레드를 갖는다(트랙 ID가 다르므로 `trackMessageListProvider` 캐시가 자동으로 분리됨을 확인)
-- [ ] 다이렉트 메시지 송수신은 감사 로그(A13) 화면에 나타나지 않는다(scenarios.md "메시지는 감사 로그에 안 남음" — A13 쪽에서 별도 검증하지만 이 화면에서 감사 로그 관련 API를 호출하지 않는지 코드 리뷰로 확인)
+- [x] 트랙을 새로 생성한 직후 그 트랙을 다이렉트 탭에서 선택하면 빈 스레드 + "아직 나눈 대화가 없습니다" 안내가 보인다(`track_direct_screen_test.dart` `ShouldShowEmptyThreadMessageWhenSelectedTrackHasNoMessages`)
+- [ ] 진행자(트랙) 쪽에서 먼저 보낸 메시지가 관리자 다이렉트 화면에 좌측 정렬 버블로 나타난다(`_ChatThreadPane`의 `isFromAdmin` 분기로 구현 완료, 정렬 자체를 assert하는 위젯 테스트는 미작성)
+- [x] `content`가 "인원부족"/"자재부족"/"긴급도움요청"과 정확히 일치하는 트랙발 메시지가 danger 톤 태그로 강조된다(`track_direct_screen_test.dart` `ShouldHighlightQuickReplyTagWhenTrackSendsFixedPhrase`)
+- [ ] 관리자가 입력창에서 메시지를 보내면 우측 정렬 브랜드색 버블로 즉시 나타난다(`sendDirectMessageProvider` 연동 및 정렬 로직 구현 완료, 전송 후 렌더링을 assert하는 위젯 테스트는 미작성)
+- [x] 삭제된 트랙의 스레드는 과거 메시지가 그대로 보이되 입력창이 비활성화된다(§2.6 확정 — `track_direct_screen_test.dart` `ShouldDisableInputWhenSelectedTrackIsDeleted`)
+- [ ] 좌측 목록(`trackDirectSummaries`) 조회만으로는 안읽음 뱃지가 사라지지 않고, 해당 스레드를 실제로 열어야(`background: false` 호출) 뱃지가 사라진다(§2.7 확정 동작 — `background: true`/`false` 구분과 `ChatThreadPane`의 `trackDirectSummariesProvider` invalidate 배선은 구현·리뷰 완료, 배지가 실제로 사라지는 전체 흐름을 assert하는 위젯 테스트는 미작성)
+- [x] 트랙 교체(A3)로 새로 생성된 트랙은 이전 트랙과 별개의 빈 스레드를 갖는다(트랙 ID가 다르므로 `trackMessageListProvider` 캐시가 자동으로 분리됨 — provider 파라미터화로 구조적으로 보장됨)
+- [x] 다이렉트 메시지 송수신은 감사 로그(A13) 화면에 나타나지 않는다(코드 리뷰로 확인 — `admin/features/broadcast`, `admin/features/track_direct` 어디에도 `audit_log` import 없음)
 
 ### 4.4 아키텍처
-- [ ] `admin/entities/message_ext.dart`가 `dio`/`flutter_riverpod`/`go_router`를 import하지 않는다
-- [ ] `admin/features/broadcast`, `admin/features/track_direct`는 `shared/api/providers`와 `admin/entities`만 의존하고 `shared/api/gen`을 직접 import하지 않는다
-- [ ] SSE 관련 코드(`messages_changed` 구독)가 이 Phase에 없다 — `12_admin_sse_integration.md`로 위임됨을 코드 리뷰로 확인
+- [x] `admin/entities/message_ext.dart`가 `dio`/`flutter_riverpod`/`go_router`를 import하지 않는다
+- [x] `admin/features/broadcast`, `admin/features/track_direct`는 `shared/api/providers`와 `admin/entities`만 의존하고 `shared/api/gen`을 직접 import하지 않는다
+- [x] SSE 관련 코드(`messages_changed` 구독)가 이 Phase에 없다 — `12_admin_sse_integration.md`로 위임됨을 코드 리뷰로 확인
