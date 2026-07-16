@@ -55,21 +55,19 @@ void main() {
       },
     );
 
-    test('creates camp, dates, corners, and tracks in sequence', () async {
+    test('creates camp, corners, and tracks in sequence', () async {
       final calls = <String>[];
       final start = DateTime(2026, 7, 20);
       final end = DateTime(2026, 7, 21);
       final campId = CampId('camp-1');
       final container = ProviderContainer(
         overrides: [
-          createCampProvider('여름 캠프').overrideWith((ref) async {
+          createCampProvider(
+            '여름 캠프',
+            startAt: start,
+            endAt: end,
+          ).overrideWith((ref) async {
             calls.add('camp');
-            return CampResponse((b) => b..id = campId.value);
-          }),
-          updateCampProvider(campId, startAt: start, endAt: end).overrideWith((
-            ref,
-          ) async {
-            calls.add('dates');
             return CampResponse((b) => b..id = campId.value);
           }),
           createCornerProvider(campId, '1코너', 10).overrideWith((ref) async {
@@ -106,7 +104,6 @@ void main() {
       expect(await wizard.submit(), isTrue);
       expect(calls, [
         'camp',
-        'dates',
         'corner:1',
         'tracks:1',
         'corner:2',
@@ -117,16 +114,22 @@ void main() {
 
     test('creates a camp successfully without corners', () async {
       final campId = CampId('camp-only');
+      final start = DateTime(2026, 7, 20);
+      final end = DateTime(2026, 7, 21);
       final container = ProviderContainer(
         overrides: [
-          createCampProvider('빈 캠프').overrideWith(
+          createCampProvider(
+            '빈 캠프',
+            startAt: start,
+            endAt: end,
+          ).overrideWith(
             (ref) async => CampResponse((b) => b..id = campId.value),
           ),
         ],
       );
       addTearDown(container.dispose);
       final wizard = container.read(setupWizardProvider.notifier);
-      wizard.setCampInfo('빈 캠프', null, null);
+      wizard.setCampInfo('빈 캠프', start, end);
 
       expect(await wizard.submit(), isTrue);
       expect(container.read(selectedCampIdProvider), campId);
@@ -138,9 +141,15 @@ void main() {
         var secondCornerAttempts = 0;
         var firstCornerAttempts = 0;
         final campId = CampId('camp-1');
+        final start = DateTime(2026, 7, 20);
+        final end = DateTime(2026, 7, 21);
         final container = ProviderContainer(
           overrides: [
-            createCampProvider('캠프').overrideWith(
+            createCampProvider(
+              '캠프',
+              startAt: start,
+              endAt: end,
+            ).overrideWith(
               (ref) async => CampResponse((b) => b..id = campId.value),
             ),
             createCornerProvider(campId, '1코너', 10).overrideWith((ref) async {
@@ -166,7 +175,7 @@ void main() {
         );
         addTearDown(container.dispose);
         final wizard = container.read(setupWizardProvider.notifier);
-        wizard.setCampInfo('캠프', null, null);
+        wizard.setCampInfo('캠프', start, end);
         wizard.parseCornerNames('1코너\n2코너');
 
         expect(await wizard.submit(), isFalse);

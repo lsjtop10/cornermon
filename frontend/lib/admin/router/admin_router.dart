@@ -21,7 +21,6 @@ import 'package:cornermon/admin/session/selected_camp_provider.dart';
 import 'package:cornermon/admin/widgets/admin_scaffold.dart';
 import 'package:cornermon/shared/api/domain_aliases.dart';
 import 'package:cornermon/shared/api/ids.dart';
-import 'package:cornermon/shared/api/providers/camp_providers.dart';
 
 const _campIndependentLocations = {
   '/login',
@@ -118,11 +117,7 @@ String? _redirect(Ref ref, String location) {
     return location == '/login' ? null : '/login';
   }
   if (location == '/login') {
-    return ref
-        .read(campListProvider)
-        .whenOrNull(
-          data: (camps) => camps.isEmpty ? '/setup-wizard' : '/camps',
-        );
+    return '/camps';
   }
   if (_campIndependentLocations.contains(location)) return null;
   if (ref.read(selectedCampIdProvider) == null) return '/camps';
@@ -145,7 +140,6 @@ class _AdminRouterRefresh extends ChangeNotifier {
       ref.listen(adminSessionProvider, (_, _) => notifyListeners()),
       ref.listen(selectedCampIdProvider, (_, _) => notifyListeners()),
       ref.listen(selectedCampProvider, (_, _) => notifyListeners()),
-      ref.listen(campListProvider, (_, _) => notifyListeners()),
     ];
   }
 

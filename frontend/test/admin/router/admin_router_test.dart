@@ -87,7 +87,7 @@ void main() {
     expect(find.text('코너학습 관리자'), findsOneWidget);
   });
 
-  testWidgets('ShouldRedirectLoginToSetupOrCampListByCampCount', (
+  testWidgets('ShouldRedirectLoginToCampListRegardlessOfCampCount', (
     tester,
   ) async {
     // arrange
@@ -101,7 +101,7 @@ void main() {
 
     // act & assert
     await _pumpApp(tester, emptyContainer);
-    expect(find.text('초기 설정'), findsOneWidget);
+    expect(find.text('캠프 목록'), findsOneWidget);
     await tester.pumpWidget(const SizedBox());
     await _pumpApp(tester, campContainer);
     expect(find.text('캠프 목록'), findsOneWidget);

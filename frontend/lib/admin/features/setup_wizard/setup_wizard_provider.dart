@@ -164,11 +164,7 @@ class SetupWizard extends _$SetupWizard {
       throw StateError('캠프 시작일/종료일이 설정되지 않았습니다.');
     }
     final camp = await ref.read(
-      createCampProvider(
-        state.campName,
-        startAt: startAt,
-        endAt: endAt,
-      ).future,
+      createCampProvider(state.campName, startAt: startAt, endAt: endAt).future,
     );
     final id = camp.id;
     if (id == null) throw StateError('생성된 캠프 ID가 없습니다.');

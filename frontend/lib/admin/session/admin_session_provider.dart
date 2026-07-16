@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:cornermon/shared/api/providers/auth_device_trust_providers.dart';
+import 'package:cornermon/shared/api/providers/camp_providers.dart';
 import 'package:cornermon/shared/auth/secure_token_store.dart';
 
 const _accessTokenKey = 'admin_access_token';
@@ -46,9 +47,10 @@ class AdminSession extends Notifier<AdminSessionState> {
     final store = ref.read(secureTokenStoreProvider);
     final accessToken = await store.read(_accessTokenKey);
     if (accessToken == null) return;
+    final adminId = await store.read(_adminIdKey) ?? '';
     state = AdminSessionAuthenticated(
       accessToken: accessToken,
-      adminId: await store.read(_adminIdKey) ?? '',
+      adminId: adminId,
     );
   }
 
@@ -68,6 +70,7 @@ class AdminSession extends Notifier<AdminSessionState> {
       accessToken: accessToken,
       adminId: loginId,
     );
+    ref.invalidate(campListProvider);
   }
 
   /// 슬라이딩 세션: 서버가 인증된 요청마다 만료를 자동 연장하므로 별도 refresh 호출이 없다.

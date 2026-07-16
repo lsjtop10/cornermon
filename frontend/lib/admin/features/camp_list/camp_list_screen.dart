@@ -30,7 +30,7 @@ class CampListScreen extends ConsumerWidget {
             icon: const Icon(Icons.add),
             label: const Text('새 캠프 시작'),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 18),
         ],
       ),
       body: camps.when(
