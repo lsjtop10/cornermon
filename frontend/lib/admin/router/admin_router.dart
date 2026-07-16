@@ -4,6 +4,9 @@ import 'package:go_router/go_router.dart';
 
 import 'package:cornermon/admin/features/admin_stub_screen.dart';
 import 'package:cornermon/admin/features/login/login_screen.dart';
+import 'package:cornermon/admin/features/camp_list/camp_list_screen.dart';
+import 'package:cornermon/admin/features/badge_precreate/badge_precreate_screen.dart';
+import 'package:cornermon/admin/features/dashboard/dashboard_screen.dart';
 import 'package:cornermon/admin/features/setup_wizard/setup_wizard_screen.dart';
 import 'package:cornermon/admin/session/admin_session_provider.dart';
 import 'package:cornermon/admin/session/selected_camp_provider.dart';
@@ -37,10 +40,13 @@ final adminRouterProvider = Provider<GoRouter>((ref) {
         path: '/setup-wizard',
         builder: (_, _) => const SetupWizardScreen(),
       ),
-      _plainRoute('/camps', 'A0-c 캠프 목록'),
+      GoRoute(path: '/camps', builder: (_, _) => const CampListScreen()),
       _plainRoute('/camps/start', 'A0-e 코너학습 시작'),
-      _plainRoute('/badges', 'A0-d QR 배지'),
-      _screenRoute('/dashboard', 'A1 대시보드'),
+      GoRoute(path: '/badges', builder: (_, _) => const BadgePrecreateScreen()),
+      GoRoute(
+        path: '/dashboard',
+        builder: (_, _) => const AdminScaffold(body: DashboardScreen()),
+      ),
       _screenRoute('/corners/:cornerId', 'A2 코너 상세'),
       _screenRoute('/corner-track-manage', 'A2B 코너·트랙 관리'),
       _screenRoute('/groups', 'A5 조 현황'),
