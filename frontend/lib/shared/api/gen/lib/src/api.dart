@@ -1,4 +1,3 @@
-// @dart=2.18
 //
 // AUTO-GENERATED FILE, DO NOT MODIFY!
 //
@@ -18,6 +17,7 @@ import 'package:cornermon_api_gen/src/api/d_report_api.dart';
 import 'package:cornermon_api_gen/src/api/e_message_api.dart';
 import 'package:cornermon_api_gen/src/api/f_events_sse_api.dart';
 import 'package:cornermon_api_gen/src/api/g_audit_logs_api.dart';
+import 'package:cornermon_api_gen/src/api/health_api.dart';
 
 class CornermonApiGen {
   static const String basePath = r'/api/v1';
@@ -159,5 +159,11 @@ class CornermonApiGen {
   /// by doing that all interceptors will not be executed
   GAuditLogsApi getGAuditLogsApi() {
     return GAuditLogsApi(dio, serializers);
+  }
+
+  /// Get HealthApi instance, base route and serializer can be overridden by a given but be careful,
+  /// by doing that all interceptors will not be executed
+  HealthApi getHealthApi() {
+    return HealthApi(dio, serializers);
   }
 }

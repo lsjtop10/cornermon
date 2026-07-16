@@ -1,4 +1,3 @@
-// @dart=2.18
 //
 // AUTO-GENERATED FILE, DO NOT MODIFY!
 //
@@ -301,3 +300,4 @@ class VisitSummaryResponseStatusEnum extends EnumClass {
   static BuiltSet<VisitSummaryResponseStatusEnum> get values => _$visitSummaryResponseStatusEnumValues;
   static VisitSummaryResponseStatusEnum valueOf(String name) => _$visitSummaryResponseStatusEnumValueOf(name);
 }
+

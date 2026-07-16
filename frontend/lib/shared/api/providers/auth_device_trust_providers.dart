@@ -9,7 +9,7 @@ part 'auth_device_trust_providers.g.dart';
 @riverpod
 AAuthDeviceTrustApi authDeviceTrustApi(Ref ref) {
   final dio = ref.watch(apiClientProvider);
-  return AAuthDeviceTrustApi(dio, serializers);
+  return AAuthDeviceTrustApi(dio, standardSerializers);
 }
 
 @riverpod
@@ -33,17 +33,6 @@ Future<AdminLoginResponse> adminLogin(Ref ref, String id, String password) async
 Future<void> adminLogout(Ref ref) async {
   final apiInstance = ref.watch(authDeviceTrustApiProvider);
   await apiInstance.authAdminLogoutPost();
-}
-
-@riverpod
-Future<AdminRefreshResponse> adminRefresh(Ref ref) async {
-  final apiInstance = ref.watch(authDeviceTrustApiProvider);
-  final response = await apiInstance.authAdminRefreshPost();
-  final data = response.data;
-  if (data == null) {
-    throw Exception('Admin refresh response was empty');
-  }
-  return data;
 }
 
 @riverpod

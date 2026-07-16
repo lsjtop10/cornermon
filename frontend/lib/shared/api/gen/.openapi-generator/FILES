@@ -4,7 +4,7 @@ analysis_options.yaml
 doc/AAuthDeviceTrustApi.md
 doc/AdminLoginRequest.md
 doc/AdminLoginResponse.md
-doc/AdminRefreshResponse.md
+doc/AdminResponse.md
 doc/AdminSessionResponse.md
 doc/AssignBadgeRequest.md
 doc/AuditLogPageResponse.md
@@ -23,10 +23,12 @@ doc/CVisitScanFlowApi.md
 doc/CampReportResponse.md
 doc/CampResponse.md
 doc/CampSummaryStatsResponse.md
+doc/ChangeAdminPasswordRequest.md
 doc/CornerMetricResponse.md
 doc/CornerProgressResponse.md
 doc/CornerResponse.md
 doc/CornerStatsResponse.md
+doc/CreateAdminRequest.md
 doc/CreateCampRequest.md
 doc/CreateCornerRequest.md
 doc/CreateTracksRequest.md
@@ -45,6 +47,8 @@ doc/FacilitatorSessionResponse.md
 doc/GAuditLogsApi.md
 doc/GroupResponse.md
 doc/GroupStatsResponse.md
+doc/HealthApi.md
+doc/HealthResponse.md
 doc/MessageResponse.md
 doc/ReplaceTrackRequest.md
 doc/SSENotification.md
@@ -71,6 +75,7 @@ lib/src/api/d_report_api.dart
 lib/src/api/e_message_api.dart
 lib/src/api/f_events_sse_api.dart
 lib/src/api/g_audit_logs_api.dart
+lib/src/api/health_api.dart
 lib/src/api_util.dart
 lib/src/auth/api_key_auth.dart
 lib/src/auth/auth.dart
@@ -80,7 +85,7 @@ lib/src/auth/oauth.dart
 lib/src/date_serializer.dart
 lib/src/model/admin_login_request.dart
 lib/src/model/admin_login_response.dart
-lib/src/model/admin_refresh_response.dart
+lib/src/model/admin_response.dart
 lib/src/model/admin_session_response.dart
 lib/src/model/assign_badge_request.dart
 lib/src/model/audit_log_page_response.dart
@@ -96,10 +101,12 @@ lib/src/model/bulk_update_corners_request_corners_inner.dart
 lib/src/model/camp_report_response.dart
 lib/src/model/camp_response.dart
 lib/src/model/camp_summary_stats_response.dart
+lib/src/model/change_admin_password_request.dart
 lib/src/model/corner_metric_response.dart
 lib/src/model/corner_progress_response.dart
 lib/src/model/corner_response.dart
 lib/src/model/corner_stats_response.dart
+lib/src/model/create_admin_request.dart
 lib/src/model/create_camp_request.dart
 lib/src/model/create_corner_request.dart
 lib/src/model/create_tracks_request.dart
@@ -115,6 +122,7 @@ lib/src/model/export_tracks_response.dart
 lib/src/model/facilitator_session_response.dart
 lib/src/model/group_response.dart
 lib/src/model/group_stats_response.dart
+lib/src/model/health_response.dart
 lib/src/model/message_response.dart
 lib/src/model/replace_track_request.dart
 lib/src/model/scan_assign_badge_request.dart

@@ -9,7 +9,7 @@ part 'message_providers.g.dart';
 @riverpod
 EMessageApi messageApi(Ref ref) {
   final dio = ref.watch(apiClientProvider);
-  return EMessageApi(dio, serializers);
+  return EMessageApi(dio, standardSerializers);
 }
 
 @riverpod

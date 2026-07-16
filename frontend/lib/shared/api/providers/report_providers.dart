@@ -9,7 +9,7 @@ part 'report_providers.g.dart';
 @riverpod
 DReportApi reportApi(Ref ref) {
   final dio = ref.watch(apiClientProvider);
-  return DReportApi(dio, serializers);
+  return DReportApi(dio, standardSerializers);
 }
 
 @riverpod

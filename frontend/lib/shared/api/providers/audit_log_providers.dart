@@ -8,7 +8,7 @@ part 'audit_log_providers.g.dart';
 @riverpod
 GAuditLogsApi auditLogApi(Ref ref) {
   final dio = ref.watch(apiClientProvider);
-  return GAuditLogsApi(dio, serializers);
+  return GAuditLogsApi(dio, standardSerializers);
 }
 
 @riverpod

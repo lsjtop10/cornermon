@@ -1,4 +1,3 @@
-// @dart=2.18
 //
 // AUTO-GENERATED FILE, DO NOT MODIFY!
 //
@@ -178,3 +177,4 @@ class _$BroadcastReceiptResponseSerializer implements PrimitiveSerializer<Broadc
     return result.build();
   }
 }
+

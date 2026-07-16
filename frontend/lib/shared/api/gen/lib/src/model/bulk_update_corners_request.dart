@@ -1,4 +1,3 @@
-// @dart=2.18
 //
 // AUTO-GENERATED FILE, DO NOT MODIFY!
 //
@@ -108,3 +107,4 @@ class _$BulkUpdateCornersRequestSerializer implements PrimitiveSerializer<BulkUp
     return result.build();
   }
 }
+

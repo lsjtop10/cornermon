@@ -1,4 +1,3 @@
-// @dart=2.18
 //
 // AUTO-GENERATED FILE, DO NOT MODIFY!
 //
@@ -195,3 +194,4 @@ class BadgeResponseStatusEnum extends EnumClass {
   static BuiltSet<BadgeResponseStatusEnum> get values => _$badgeResponseStatusEnumValues;
   static BadgeResponseStatusEnum valueOf(String name) => _$badgeResponseStatusEnumValueOf(name);
 }
+

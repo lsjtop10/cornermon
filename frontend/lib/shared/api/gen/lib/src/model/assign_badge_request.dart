@@ -1,4 +1,3 @@
-// @dart=2.18
 //
 // AUTO-GENERATED FILE, DO NOT MODIFY!
 //
@@ -106,3 +105,4 @@ class _$AssignBadgeRequestSerializer implements PrimitiveSerializer<AssignBadgeR
     return result.build();
   }
 }
+

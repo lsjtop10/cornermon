@@ -1,4 +1,3 @@
-// @dart=2.18
 //
 // AUTO-GENERATED FILE, DO NOT MODIFY!
 //
@@ -125,3 +124,4 @@ class _$TrackPinResponseSerializer implements PrimitiveSerializer<TrackPinRespon
     return result.build();
   }
 }
+

@@ -1,4 +1,3 @@
-// @dart=2.18
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
 part of 'admin_login_response.dart';
@@ -12,16 +11,12 @@ class _$AdminLoginResponse extends AdminLoginResponse {
   final String? accessToken;
   @override
   final int? expiresInSeconds;
-  @override
-  final String? refreshToken;
 
   factory _$AdminLoginResponse(
           [void Function(AdminLoginResponseBuilder)? updates]) =>
       (AdminLoginResponseBuilder()..update(updates))._build();
 
-  _$AdminLoginResponse._(
-      {this.accessToken, this.expiresInSeconds, this.refreshToken})
-      : super._();
+  _$AdminLoginResponse._({this.accessToken, this.expiresInSeconds}) : super._();
   @override
   AdminLoginResponse rebuild(
           void Function(AdminLoginResponseBuilder) updates) =>
@@ -36,8 +31,7 @@ class _$AdminLoginResponse extends AdminLoginResponse {
     if (identical(other, this)) return true;
     return other is AdminLoginResponse &&
         accessToken == other.accessToken &&
-        expiresInSeconds == other.expiresInSeconds &&
-        refreshToken == other.refreshToken;
+        expiresInSeconds == other.expiresInSeconds;
   }
 
   @override
@@ -45,7 +39,6 @@ class _$AdminLoginResponse extends AdminLoginResponse {
     var _$hash = 0;
     _$hash = $jc(_$hash, accessToken.hashCode);
     _$hash = $jc(_$hash, expiresInSeconds.hashCode);
-    _$hash = $jc(_$hash, refreshToken.hashCode);
     _$hash = $jf(_$hash);
     return _$hash;
   }
@@ -54,8 +47,7 @@ class _$AdminLoginResponse extends AdminLoginResponse {
   String toString() {
     return (newBuiltValueToStringHelper(r'AdminLoginResponse')
           ..add('accessToken', accessToken)
-          ..add('expiresInSeconds', expiresInSeconds)
-          ..add('refreshToken', refreshToken))
+          ..add('expiresInSeconds', expiresInSeconds))
         .toString();
   }
 }
@@ -73,10 +65,6 @@ class AdminLoginResponseBuilder
   set expiresInSeconds(int? expiresInSeconds) =>
       _$this._expiresInSeconds = expiresInSeconds;
 
-  String? _refreshToken;
-  String? get refreshToken => _$this._refreshToken;
-  set refreshToken(String? refreshToken) => _$this._refreshToken = refreshToken;
-
   AdminLoginResponseBuilder() {
     AdminLoginResponse._defaults(this);
   }
@@ -86,7 +74,6 @@ class AdminLoginResponseBuilder
     if ($v != null) {
       _accessToken = $v.accessToken;
       _expiresInSeconds = $v.expiresInSeconds;
-      _refreshToken = $v.refreshToken;
       _$v = null;
     }
     return this;
@@ -110,7 +97,6 @@ class AdminLoginResponseBuilder
         _$AdminLoginResponse._(
           accessToken: accessToken,
           expiresInSeconds: expiresInSeconds,
-          refreshToken: refreshToken,
         );
     replace(_$result);
     return _$result;

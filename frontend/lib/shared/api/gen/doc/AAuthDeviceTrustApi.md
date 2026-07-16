@@ -9,9 +9,11 @@ All URIs are relative to */api/v1*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
+[**adminsIdDelete**](AAuthDeviceTrustApi.md#adminsiddelete) | **DELETE** /admins/{id} | 관리자 삭제
+[**adminsIdPasswordPatch**](AAuthDeviceTrustApi.md#adminsidpasswordpatch) | **PATCH** /admins/{id}/password | 관리자 비밀번호 변경
+[**adminsPost**](AAuthDeviceTrustApi.md#adminspost) | **POST** /admins | 관리자 생성
 [**authAdminLoginPost**](AAuthDeviceTrustApi.md#authadminloginpost) | **POST** /auth/admin/login | 관리자 로그인
 [**authAdminLogoutPost**](AAuthDeviceTrustApi.md#authadminlogoutpost) | **POST** /auth/admin/logout | 관리자 로그아웃
-[**authAdminRefreshPost**](AAuthDeviceTrustApi.md#authadminrefreshpost) | **POST** /auth/admin/refresh | 관리자 액세스 토큰 재발급
 [**authAdminSessionsGet**](AAuthDeviceTrustApi.md#authadminsessionsget) | **GET** /auth/admin/sessions | 관리자 세션 목록 조회
 [**authAdminSessionsIdRevokePost**](AAuthDeviceTrustApi.md#authadminsessionsidrevokepost) | **POST** /auth/admin/sessions/{id}/revoke | 관리자 세션 강제 종료
 [**authTrackLockoutDeviceIdReleasePost**](AAuthDeviceTrustApi.md#authtracklockoutdeviceidreleasepost) | **POST** /auth/track/lockout/{deviceId}/release | 디바이스 락아웃 해제
@@ -28,12 +30,153 @@ Method | HTTP request | Description
 [**deviceRegistrationsPost**](AAuthDeviceTrustApi.md#deviceregistrationspost) | **POST** /device-registrations | 기기 등록 요청 (최초 앱 실행 시)
 
 
+# **adminsIdDelete**
+> adminsIdDelete(id)
+
+관리자 삭제
+
+SYSTEM_ADMIN만 호출할 수 있습니다. 자기 자신은 삭제할 수 없으므로 마지막 SYSTEM_ADMIN 삭제 요청은 성립하지 않습니다. 삭제 시 admin_sessions는 DB foreign key cascade로 함께 제거됩니다.
+
+### Example
+```dart
+import 'package:cornermon_api_gen/api.dart';
+// TODO Configure API key authorization: AdminAuth
+//defaultApiClient.getAuthentication<ApiKeyAuth>('AdminAuth').apiKey = 'YOUR_API_KEY';
+// uncomment below to setup prefix (e.g. Bearer) for API key, if needed
+//defaultApiClient.getAuthentication<ApiKeyAuth>('AdminAuth').apiKeyPrefix = 'Bearer';
+
+final api = CornermonApiGen().getAAuthDeviceTrustApi();
+final String id = id_example; // String | 관리자 ID
+
+try {
+    api.adminsIdDelete(id);
+} on DioException catch (e) {
+    print('Exception when calling AAuthDeviceTrustApi->adminsIdDelete: $e\n');
+}
+```
+
+### Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **id** | **String**| 관리자 ID | 
+
+### Return type
+
+void (empty response body)
+
+### Authorization
+
+[AdminAuth](../README.md#AdminAuth)
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: */*
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **adminsIdPasswordPatch**
+> adminsIdPasswordPatch(id, request)
+
+관리자 비밀번호 변경
+
+대상 관리자 본인 또는 SYSTEM_ADMIN만 호출할 수 있습니다. 비밀번호 변경은 기존 세션을 즉시 무효화하지 않으며, 현재 access token은 기존 TTL까지 유효합니다.
+
+### Example
+```dart
+import 'package:cornermon_api_gen/api.dart';
+// TODO Configure API key authorization: AdminAuth
+//defaultApiClient.getAuthentication<ApiKeyAuth>('AdminAuth').apiKey = 'YOUR_API_KEY';
+// uncomment below to setup prefix (e.g. Bearer) for API key, if needed
+//defaultApiClient.getAuthentication<ApiKeyAuth>('AdminAuth').apiKeyPrefix = 'Bearer';
+
+final api = CornermonApiGen().getAAuthDeviceTrustApi();
+final String id = id_example; // String | 관리자 ID
+final ChangeAdminPasswordRequest request = ; // ChangeAdminPasswordRequest | 새 비밀번호
+
+try {
+    api.adminsIdPasswordPatch(id, request);
+} on DioException catch (e) {
+    print('Exception when calling AAuthDeviceTrustApi->adminsIdPasswordPatch: $e\n');
+}
+```
+
+### Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **id** | **String**| 관리자 ID | 
+ **request** | [**ChangeAdminPasswordRequest**](ChangeAdminPasswordRequest.md)| 새 비밀번호 | 
+
+### Return type
+
+void (empty response body)
+
+### Authorization
+
+[AdminAuth](../README.md#AdminAuth)
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: */*
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **adminsPost**
+> AdminResponse adminsPost(request)
+
+관리자 생성
+
+SYSTEM_ADMIN만 호출할 수 있습니다. 생성할 역할은 CORNER_OPERATOR로 고정되며, SYSTEM_ADMIN은 다른 SYSTEM_ADMIN을 생성할 수 없습니다. 동일한 username은 생성할 수 없습니다.
+
+### Example
+```dart
+import 'package:cornermon_api_gen/api.dart';
+// TODO Configure API key authorization: AdminAuth
+//defaultApiClient.getAuthentication<ApiKeyAuth>('AdminAuth').apiKey = 'YOUR_API_KEY';
+// uncomment below to setup prefix (e.g. Bearer) for API key, if needed
+//defaultApiClient.getAuthentication<ApiKeyAuth>('AdminAuth').apiKeyPrefix = 'Bearer';
+
+final api = CornermonApiGen().getAAuthDeviceTrustApi();
+final CreateAdminRequest request = ; // CreateAdminRequest | 생성할 관리자
+
+try {
+    final response = api.adminsPost(request);
+    print(response);
+} on DioException catch (e) {
+    print('Exception when calling AAuthDeviceTrustApi->adminsPost: $e\n');
+}
+```
+
+### Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **request** | [**CreateAdminRequest**](CreateAdminRequest.md)| 생성할 관리자 | 
+
+### Return type
+
+[**AdminResponse**](AdminResponse.md)
+
+### Authorization
+
+[AdminAuth](../README.md#AdminAuth)
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
 # **authAdminLoginPost**
 > AdminLoginResponse authAdminLoginPost(request)
 
 관리자 로그인
 
-관리자 ID/비밀번호로 로그인하여 액세스 토큰과 리프레시 토큰을 발급받는다.
+관리자 ID/비밀번호로 로그인하여 액세스 토큰을 발급받는다. 토큰은 슬라이딩 세션으로 활동이 있으면 만료가 연장된다.
 
 ### Example
 ```dart
@@ -105,49 +248,6 @@ void (empty response body)
 ### Authorization
 
 [AdminAuth](../README.md#AdminAuth)
-
-### HTTP request headers
-
- - **Content-Type**: Not defined
- - **Accept**: application/json
-
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-
-# **authAdminRefreshPost**
-> AdminRefreshResponse authAdminRefreshPost()
-
-관리자 액세스 토큰 재발급
-
-리프레시 토큰으로 새 액세스 토큰을 발급한다.
-
-### Example
-```dart
-import 'package:cornermon_api_gen/api.dart';
-// TODO Configure API key authorization: AdminRefreshAuth
-//defaultApiClient.getAuthentication<ApiKeyAuth>('AdminRefreshAuth').apiKey = 'YOUR_API_KEY';
-// uncomment below to setup prefix (e.g. Bearer) for API key, if needed
-//defaultApiClient.getAuthentication<ApiKeyAuth>('AdminRefreshAuth').apiKeyPrefix = 'Bearer';
-
-final api = CornermonApiGen().getAAuthDeviceTrustApi();
-
-try {
-    final response = api.authAdminRefreshPost();
-    print(response);
-} on DioException catch (e) {
-    print('Exception when calling AAuthDeviceTrustApi->authAdminRefreshPost: $e\n');
-}
-```
-
-### Parameters
-This endpoint does not need any parameter.
-
-### Return type
-
-[**AdminRefreshResponse**](AdminRefreshResponse.md)
-
-### Authorization
-
-[AdminRefreshAuth](../README.md#AdminRefreshAuth)
 
 ### HTTP request headers
 

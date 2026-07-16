@@ -1,4 +1,3 @@
-// @dart=2.18
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
 part of 'device_registration_created_response.dart';

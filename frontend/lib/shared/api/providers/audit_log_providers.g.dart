@@ -48,7 +48,7 @@ final class AuditLogApiProvider
   }
 }
 
-String _$auditLogApiHash() => r'18b7a25f1b5da08bb78c39d55a71ca88a705e595';
+String _$auditLogApiHash() => r'46f8bccb1a2d7df04714979386a8f463036699b3';
 
 @ProviderFor(auditLogList)
 final auditLogListProvider = AuditLogListFamily._();

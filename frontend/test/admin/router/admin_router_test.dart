@@ -67,7 +67,6 @@ Future<void> _pumpApp(WidgetTester tester, ProviderContainer container) async {
 void main() {
   const authenticated = AdminSessionAuthenticated(
     accessToken: 'access',
-    refreshToken: 'refresh',
     adminId: 'admin-1',
   );
 

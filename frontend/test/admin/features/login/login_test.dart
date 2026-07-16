@@ -53,9 +53,7 @@ void main() {
         secureTokenStoreProvider.overrideWithValue(store),
         adminLoginProvider('admin', 'password').overrideWith(
           (ref) async => AdminLoginResponse(
-            (builder) => builder
-              ..accessToken = 'access'
-              ..refreshToken = 'refresh',
+            (builder) => builder..accessToken = 'access',
           ),
         ),
       ],
@@ -70,7 +68,7 @@ void main() {
       container.read(adminSessionProvider),
       isA<AdminSessionAuthenticated>(),
     );
-    expect(store.values['admin_refresh_token'], 'refresh');
+    expect(store.values['admin_access_token'], 'access');
   });
 
   test('maps 401 and other failures to distinct login UI errors', () async {

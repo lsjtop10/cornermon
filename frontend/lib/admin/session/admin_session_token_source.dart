@@ -14,5 +14,5 @@ class AdminSessionTokenSource implements SessionTokenSource {
 
   @override
   Future<void> onUnauthorized() =>
-      ref.read(adminSessionProvider.notifier).refreshSession();
+      ref.read(adminSessionProvider.notifier).invalidate();
 }
