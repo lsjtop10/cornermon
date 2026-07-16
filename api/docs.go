@@ -3194,8 +3194,16 @@ const docTemplate = `{
         "CreateCampRequest": {
             "type": "object",
             "properties": {
+                "endAt": {
+                    "type": "string",
+                    "format": "date-time"
+                },
                 "name": {
                     "type": "string"
+                },
+                "startAt": {
+                    "type": "string",
+                    "format": "date-time"
                 }
             }
         },

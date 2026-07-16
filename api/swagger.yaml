@@ -318,7 +318,13 @@ definitions:
     type: object
   CreateCampRequest:
     properties:
+      endAt:
+        format: date-time
+        type: string
       name:
+        type: string
+      startAt:
+        format: date-time
         type: string
     type: object
   CreateCornerRequest:
