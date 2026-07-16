@@ -1,3 +1,4 @@
+import 'package:cornermon/admin/features/track_direct/track_direct_providers.dart';
 import 'package:cornermon/admin/router/admin_router.dart';
 import 'package:cornermon/admin/session/admin_session_provider.dart';
 import 'package:cornermon/admin/session/selected_camp_provider.dart';
@@ -181,6 +182,7 @@ void main() {
         liveSummaryProvider(
           campId,
         ).overrideWith((ref) async => CampSummaryStats()),
+        trackDirectSummariesProvider(campId).overrideWith((ref) async => []),
       ],
     );
     addTearDown(container.dispose);
@@ -221,6 +223,7 @@ void main() {
         liveSummaryProvider(
           campId,
         ).overrideWith((ref) async => CampSummaryStats()),
+        trackDirectSummariesProvider(campId).overrideWith((ref) async => []),
       ],
     );
     addTearDown(container.dispose);
