@@ -125,7 +125,9 @@ func (h *CampHandler) ListCamps(c echo.Context) error {
 }
 
 type CreateCampRequest struct {
-	Name string `json:"name"`
+	Name    string    `json:"name"`
+	StartAt time.Time `json:"startAt" format:"date-time"`
+	EndAt   time.Time `json:"endAt" format:"date-time"`
 } // @name CreateCampRequest
 
 // @Summary      새 캠프 생성
@@ -144,8 +146,11 @@ func (h *CampHandler) CreateCamp(c echo.Context) error {
 	if err := c.Bind(&req); err != nil {
 		return c.JSON(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: "Invalid request body"})
 	}
-	camp, err := h.svc.OpenNewCamp(c.Request().Context(), req.Name)
+	camp, err := h.svc.OpenNewCamp(c.Request().Context(), req.Name, req.StartAt, req.EndAt)
 	if err != nil {
+		if err == domain.ErrCampInvalidSettings {
+			return c.JSON(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: err.Error()})
+		}
 		return c.JSON(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_ERROR", Message: err.Error()})
 	}
 	return c.JSON(http.StatusCreated, mapDomainCampToDTO(camp))
