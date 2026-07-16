@@ -1,4 +1,7 @@
-.PHONY: build run test clean docker-build swag
+.PHONY: build run test clean docker-build swag start-postgres reset-postgres stop-postgres
+
+MAKEFILE_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
+POSTGRES_COMPOSE_FILE := $(MAKEFILE_DIR)db/docker-compose.yml
 
 # Local Environment Setup
 # Load .env file if it exists
@@ -24,3 +27,14 @@ docker-build:
 
 swag:
 	swag init -g internal/infrastructure/web/doc.go -d . -o ../api --parseDependency --parseInternal
+
+start-postgres:
+	docker compose --file "$(POSTGRES_COMPOSE_FILE)" up
+
+reset-postgres:
+	docker compose --file "$(POSTGRES_COMPOSE_FILE)" down -v
+	docker compose --file "$(POSTGRES_COMPOSE_FILE)"  up --build 
+
+
+stop-postgres:
+	docker compose --file "$(POSTGRES_COMPOSE_FILE)" down

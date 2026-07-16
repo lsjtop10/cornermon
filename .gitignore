@@ -1,3 +1,6 @@
 /worktrees/
 .env
 backend/.env
+backend/bin
+
+.env.docker
