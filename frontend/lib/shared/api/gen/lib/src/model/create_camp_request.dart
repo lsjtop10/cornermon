@@ -142,4 +142,3 @@ class _$CreateCampRequestSerializer implements PrimitiveSerializer<CreateCampReq
     return result.build();
   }
 }
-

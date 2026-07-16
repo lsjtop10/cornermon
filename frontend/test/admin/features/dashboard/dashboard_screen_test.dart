@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:cornermon/admin/features/dashboard/dashboard_screen.dart';
+import 'package:cornermon/admin/features/track_direct/track_direct_providers.dart';
 import 'package:cornermon/admin/session/selected_camp_provider.dart';
 import 'package:cornermon/shared/api/ids.dart';
 import 'package:cornermon/shared/api/providers/corner_track_providers.dart';
@@ -86,6 +87,7 @@ Future<void> _pumpDashboard(
         liveSummaryProvider(
           campId,
         ).overrideWith((ref) async => summary ?? _summary()),
+        trackDirectSummariesProvider(campId).overrideWith((ref) async => []),
       ],
       child: MaterialApp.router(routerConfig: router),
     ),
@@ -285,6 +287,7 @@ void main() {
             selectedCampIdProvider.overrideWith(() => _SelectedCampId(campId)),
             cornerListProvider(campId).overrideWith((ref) => completer.future),
             liveSummaryProvider(campId).overrideWith((ref) async => _summary()),
+            trackDirectSummariesProvider(campId).overrideWith((ref) async => []),
           ],
           child: const MaterialApp(home: DashboardScreen()),
         ),
@@ -381,6 +384,7 @@ void main() {
               summaryCalls++;
               return _summary();
             }),
+            trackDirectSummariesProvider(campId).overrideWith((ref) async => []),
           ],
           child: const MaterialApp(home: DashboardScreen()),
         ),

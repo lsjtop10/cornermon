@@ -216,4 +216,3 @@ class GroupResponseStatusEnum extends EnumClass {
   static BuiltSet<GroupResponseStatusEnum> get values => _$groupResponseStatusEnumValues;
   static GroupResponseStatusEnum valueOf(String name) => _$groupResponseStatusEnumValueOf(name);
 }
-

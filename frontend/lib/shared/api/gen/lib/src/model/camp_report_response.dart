@@ -238,4 +238,3 @@ class _$CampReportResponseSerializer implements PrimitiveSerializer<CampReportRe
     return result.build();
   }
 }
-

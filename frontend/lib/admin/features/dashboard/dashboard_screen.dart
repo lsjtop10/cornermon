@@ -1,3 +1,4 @@
+import 'package:cornermon/admin/features/track_direct/track_direct_providers.dart';
 import 'package:cornermon/admin/session/selected_camp_provider.dart';
 import 'package:cornermon/shared/api/domain_aliases.dart' as api;
 import 'package:cornermon/shared/api/providers/corner_track_providers.dart';
@@ -121,6 +122,11 @@ class DashboardScreen extends ConsumerWidget {
     }
     final corners = ref.watch(cornerListProvider(id));
     final summary = ref.watch(liveSummaryProvider(id));
+    final directSummaries = ref.watch(trackDirectSummariesProvider(id));
+    final unreadDirectCount = directSummaries.maybeWhen(
+      data: (items) => items.fold<int>(0, (sum, s) => sum + s.unreadCount),
+      orElse: () => 0,
+    );
     return Scaffold(
       body: RefreshIndicator(
         onRefresh: () async {
@@ -135,7 +141,7 @@ class DashboardScreen extends ConsumerWidget {
           padding: const EdgeInsets.all(24),
           children: [
             const ConnectionBanner(state: ConnectionBannerState.hidden),
-            _SummaryBar(summary: summary),
+            _SummaryBar(summary: summary, unreadDirectCount: unreadDirectCount),
             const SizedBox(height: 20),
             _Controls(),
             const SizedBox(height: 12),
@@ -209,8 +215,9 @@ class DashboardScreen extends ConsumerWidget {
 }
 
 class _SummaryBar extends StatelessWidget {
-  const _SummaryBar({required this.summary});
+  const _SummaryBar({required this.summary, required this.unreadDirectCount});
   final AsyncValue<api.CampSummaryStats> summary;
+  final int unreadDirectCount;
 
   @override
   Widget build(BuildContext context) => summary.when(
@@ -227,7 +234,7 @@ class _SummaryBar extends StatelessWidget {
           '경과시간',
           '${(item.programDurationSeconds ?? 0) ~/ 3600}시간 ${((item.programDurationSeconds ?? 0) % 3600) ~/ 60}분',
         ),
-        ('안읽은 다이렉트', '-'),
+        ('안읽은 다이렉트', '$unreadDirectCount'),
       ];
       return Wrap(
         spacing: 12,

@@ -108,4 +108,3 @@ class _$ExportBadgesResponseSerializer implements PrimitiveSerializer<ExportBadg
     return result.build();
   }
 }
-

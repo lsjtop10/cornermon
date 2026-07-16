@@ -10,7 +10,7 @@ import 'package:cornermon/shared/design_system/tokens/typography.dart';
 import 'package:cornermon/shared/design_system/widgets/app_button.dart';
 import 'package:cornermon/shared/design_system/widgets/empty_state.dart';
 import 'package:cornermon/facilitator/session/track_session_provider.dart';
-import 'package:cornermon/facilitator/widgets/local_time_label.dart';
+import 'package:cornermon/shared/widgets/local_time_label.dart';
 import 'track_direct_actions_provider.dart';
 
 const _quickReplies = ['인원부족', '자재부족', '긴급도움요청'];
