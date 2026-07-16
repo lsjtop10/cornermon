@@ -102,11 +102,7 @@ String? _redirect(Ref ref, String location) {
     return location == '/login' ? null : '/login';
   }
   if (location == '/login') {
-    return ref
-        .read(campListProvider)
-        .whenOrNull(
-          data: (camps) => camps.isEmpty ? '/setup-wizard' : '/camps',
-        );
+    return '/camps';
   }
   if (_campIndependentLocations.contains(location)) return null;
   if (ref.read(selectedCampIdProvider) == null) return '/camps';
