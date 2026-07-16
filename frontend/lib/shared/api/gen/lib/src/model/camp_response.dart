@@ -1,3 +1,4 @@
+// @dart=2.18
 //
 // AUTO-GENERATED FILE, DO NOT MODIFY!
 //
@@ -232,4 +233,3 @@ class CampResponseStatusEnum extends EnumClass {
   static BuiltSet<CampResponseStatusEnum> get values => _$campResponseStatusEnumValues;
   static CampResponseStatusEnum valueOf(String name) => _$campResponseStatusEnumValueOf(name);
 }
-

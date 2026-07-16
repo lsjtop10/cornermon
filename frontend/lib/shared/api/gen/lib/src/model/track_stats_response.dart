@@ -1,3 +1,4 @@
+// @dart=2.18
 //
 // AUTO-GENERATED FILE, DO NOT MODIFY!
 //
@@ -177,4 +178,3 @@ class _$TrackStatsResponseSerializer implements PrimitiveSerializer<TrackStatsRe
     return result.build();
   }
 }
-

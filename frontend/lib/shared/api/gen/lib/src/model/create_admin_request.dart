@@ -1,3 +1,4 @@
+// @dart=2.18
 //
 // AUTO-GENERATED FILE, DO NOT MODIFY!
 //
@@ -156,4 +157,3 @@ class CreateAdminRequestRoleEnum extends EnumClass {
   static BuiltSet<CreateAdminRequestRoleEnum> get values => _$createAdminRequestRoleEnumValues;
   static CreateAdminRequestRoleEnum valueOf(String name) => _$createAdminRequestRoleEnumValueOf(name);
 }
-

@@ -1,3 +1,4 @@
+// @dart=2.18
 //
 // AUTO-GENERATED FILE, DO NOT MODIFY!
 //
@@ -75,4 +76,3 @@ export 'package:cornermon_api_gen/src/model/unvisited_group_response.dart';
 export 'package:cornermon_api_gen/src/model/update_camp_request.dart';
 export 'package:cornermon_api_gen/src/model/visit_start_request.dart';
 export 'package:cornermon_api_gen/src/model/visit_summary_response.dart';
-

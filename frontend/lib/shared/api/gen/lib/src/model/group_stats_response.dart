@@ -1,3 +1,4 @@
+// @dart=2.18
 //
 // AUTO-GENERATED FILE, DO NOT MODIFY!
 //
@@ -159,4 +160,3 @@ class _$GroupStatsResponseSerializer implements PrimitiveSerializer<GroupStatsRe
     return result.build();
   }
 }
-

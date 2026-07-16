@@ -1,3 +1,4 @@
+// @dart=2.18
 //
 // AUTO-GENERATED FILE, DO NOT MODIFY!
 //
@@ -105,4 +106,3 @@ class _$BroadcastMessageRequestSerializer implements PrimitiveSerializer<Broadca
     return result.build();
   }
 }
-

@@ -1,3 +1,4 @@
+// @dart=2.18
 //
 // AUTO-GENERATED FILE, DO NOT MODIFY!
 //
@@ -215,4 +216,3 @@ class GroupResponseStatusEnum extends EnumClass {
   static BuiltSet<GroupResponseStatusEnum> get values => _$groupResponseStatusEnumValues;
   static GroupResponseStatusEnum valueOf(String name) => _$groupResponseStatusEnumValueOf(name);
 }
-

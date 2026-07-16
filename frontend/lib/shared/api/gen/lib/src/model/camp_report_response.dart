@@ -1,3 +1,4 @@
+// @dart=2.18
 //
 // AUTO-GENERATED FILE, DO NOT MODIFY!
 //
@@ -237,4 +238,3 @@ class _$CampReportResponseSerializer implements PrimitiveSerializer<CampReportRe
     return result.build();
   }
 }
-

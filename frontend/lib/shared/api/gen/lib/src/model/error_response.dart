@@ -1,3 +1,4 @@
+// @dart=2.18
 //
 // AUTO-GENERATED FILE, DO NOT MODIFY!
 //
@@ -143,4 +144,3 @@ class _$ErrorResponseSerializer implements PrimitiveSerializer<ErrorResponse> {
     return result.build();
   }
 }
-

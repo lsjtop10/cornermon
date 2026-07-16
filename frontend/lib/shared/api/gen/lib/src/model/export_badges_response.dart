@@ -1,3 +1,4 @@
+// @dart=2.18
 //
 // AUTO-GENERATED FILE, DO NOT MODIFY!
 //
@@ -107,4 +108,3 @@ class _$ExportBadgesResponseSerializer implements PrimitiveSerializer<ExportBadg
     return result.build();
   }
 }
-

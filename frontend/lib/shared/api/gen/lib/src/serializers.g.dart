@@ -1,3 +1,4 @@
+// @dart=2.18
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
 part of 'serializers.dart';

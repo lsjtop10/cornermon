@@ -1,3 +1,4 @@
+// @dart=2.18
 //
 // AUTO-GENERATED FILE, DO NOT MODIFY!
 //
@@ -234,4 +235,3 @@ class DeviceRegistrationResponseStatusEnum extends EnumClass {
   static BuiltSet<DeviceRegistrationResponseStatusEnum> get values => _$deviceRegistrationResponseStatusEnumValues;
   static DeviceRegistrationResponseStatusEnum valueOf(String name) => _$deviceRegistrationResponseStatusEnumValueOf(name);
 }
-

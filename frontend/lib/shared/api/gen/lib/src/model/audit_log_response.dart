@@ -1,3 +1,4 @@
+// @dart=2.18
 //
 // AUTO-GENERATED FILE, DO NOT MODIFY!
 //
@@ -215,4 +216,3 @@ class _$AuditLogResponseSerializer implements PrimitiveSerializer<AuditLogRespon
     return result.build();
   }
 }
-

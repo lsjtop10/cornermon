@@ -1,3 +1,4 @@
+// @dart=2.18
 //
 // AUTO-GENERATED FILE, DO NOT MODIFY!
 //
@@ -140,4 +141,3 @@ class SSEScopeKindEnum extends EnumClass {
   static BuiltSet<SSEScopeKindEnum> get values => _$sSEScopeKindEnumValues;
   static SSEScopeKindEnum valueOf(String name) => _$sSEScopeKindEnumValueOf(name);
 }
-
