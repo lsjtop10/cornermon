@@ -1,3 +1,5 @@
+import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import 'package:cornermon/admin/features/setup_wizard/setup_wizard_state.dart';
@@ -87,6 +89,7 @@ class SetupWizard extends _$SetupWizard {
 
   Future<bool> submit() async {
     if (state.isSubmitting) return false;
+
     state = state.copyWith(isSubmitting: true, clearSubmitError: true);
     CampId campId;
     try {
@@ -94,7 +97,12 @@ class SetupWizard extends _$SetupWizard {
       if (state.createdCampId == null) {
         state = state.copyWith(createdCampId: campId);
       }
-    } catch (_) {
+    } catch (error, stackTrace) {
+      debugPrint(
+        '[setup_wizard] _createCamp failed: '
+        '${error is DioException ? 'DioException type=${error.type} statusCode=${error.response?.statusCode} message=${error.message} error=${error.error}' : '${error.runtimeType} $error'}'
+        '\n$stackTrace',
+      );
       state = state.copyWith(
         isSubmitting: false,
         submitError: '캠프를 만들지 못했습니다. 다시 시도해주세요.',
@@ -127,7 +135,8 @@ class SetupWizard extends _$SetupWizard {
           row.trackCount,
         );
         ref.invalidate(tracksProvider);
-        await ref.read(tracksProvider.future);
+        final tracksSub = ref.listen(tracksProvider, (_, _) {});
+        await ref.read(tracksProvider.future).whenComplete(tracksSub.close);
         _replaceRow(
           index,
           row.copyWith(
@@ -136,7 +145,12 @@ class SetupWizard extends _$SetupWizard {
             clearErrorMessage: true,
           ),
         );
-      } catch (_) {
+      } catch (error, stackTrace) {
+        debugPrint(
+          '[setup_wizard] corner "${row.name}" failed: '
+          '${error is DioException ? 'DioException type=${error.type} statusCode=${error.response?.statusCode} message=${error.message} error=${error.error}' : '${error.runtimeType} $error'}'
+          '\n$stackTrace',
+        );
         _replaceRow(
           index,
           row.copyWith(
@@ -163,9 +177,13 @@ class SetupWizard extends _$SetupWizard {
     if (startAt == null || endAt == null) {
       throw StateError('캠프 시작일/종료일이 설정되지 않았습니다.');
     }
-    final camp = await ref.read(
-      createCampProvider(state.campName, startAt: startAt, endAt: endAt).future,
+    final provider = createCampProvider(
+      state.campName,
+      startAt: startAt,
+      endAt: endAt,
     );
+    final sub = ref.listen(provider, (_, _) {});
+    final camp = await ref.read(provider.future).whenComplete(sub.close);
     final id = camp.id;
     if (id == null) throw StateError('생성된 캠프 ID가 없습니다.');
     return CampId(id);
@@ -177,7 +195,8 @@ class SetupWizard extends _$SetupWizard {
   ) async {
     final provider = createCornerProvider(campId, row.name, row.targetMinutes);
     ref.invalidate(provider);
-    final corner = await ref.read(provider.future);
+    final sub = ref.listen(provider, (_, _) {});
+    final corner = await ref.read(provider.future).whenComplete(sub.close);
     final id = corner.id;
     if (id == null) throw StateError('생성된 코너 ID가 없습니다.');
     return CornerId(id);

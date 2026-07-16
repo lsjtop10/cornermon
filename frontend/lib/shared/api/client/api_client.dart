@@ -6,7 +6,7 @@ import 'auth_interceptor.dart';
 
 part 'api_client.g.dart';
 
-@riverpod
+@Riverpod(keepAlive: true)
 Dio apiClient(Ref ref) {
   final dio = Dio(
     BaseOptions(

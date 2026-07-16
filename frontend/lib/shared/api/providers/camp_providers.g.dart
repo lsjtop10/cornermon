@@ -173,7 +173,7 @@ final class CreateCampProvider
     required CreateCampFamily super.from,
     required (String, {DateTime startAt, DateTime endAt}) super.argument,
   }) : super(
-         retry: null,
+         retry: noRetry,
          name: r'createCampProvider',
          isAutoDispose: true,
          dependencies: null,
@@ -218,7 +218,7 @@ final class CreateCampProvider
   }
 }
 
-String _$createCampHash() => r'0a7e551d2f1cf3a5cb2ce81895876b8de7e4e354';
+String _$createCampHash() => r'd9cba82c11cf27bd2d7571aac14d1df80f4f3b0b';
 
 final class CreateCampFamily extends $Family
     with
@@ -228,7 +228,7 @@ final class CreateCampFamily extends $Family
         > {
   CreateCampFamily._()
     : super(
-        retry: null,
+        retry: noRetry,
         name: r'createCampProvider',
         dependencies: null,
         $allTransitiveDependencies: null,
@@ -322,7 +322,7 @@ final class UpdateCampProvider
   }
 }
 
-String _$updateCampHash() => r'b6b318daf7e4675709bb08e36544e6418e93d7bd';
+String _$updateCampHash() => r'f8fc1e4c8f31638a5fdf6176f89238674d5d5106';
 
 final class UpdateCampFamily extends $Family
     with

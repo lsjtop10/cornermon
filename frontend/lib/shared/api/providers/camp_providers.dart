@@ -3,6 +3,7 @@ import 'package:cornermon_api_gen/cornermon_api_gen.dart';
 import '../client/api_client.dart';
 import '../domain_aliases.dart';
 import '../ids.dart';
+import 'no_retry.dart';
 
 part 'camp_providers.g.dart';
 
@@ -30,7 +31,7 @@ Future<Camp> campDetail(Ref ref, CampId id) async {
   return data;
 }
 
-@riverpod
+@Riverpod(retry: noRetry)
 Future<Camp> createCamp(
   Ref ref,
   String name, {
@@ -41,8 +42,8 @@ Future<Camp> createCamp(
   final response = await apiInstance.campsPost(
     request: CreateCampRequest((b) => b
       ..name = name
-      ..startAt = startAt
-      ..endAt = endAt),
+      ..startAt = startAt.toUtc()
+      ..endAt = endAt.toUtc()),
   );
   final data = response.data;
   if (data == null) {
@@ -68,8 +69,8 @@ Future<Camp> updateCamp(
       b.name = name;
       b.bottleneckMinSamples = bottleneckMinSamples;
       b.bottleneckRatioPct = bottleneckRatioPct;
-      b.startAt = startAt;
-      b.endAt = endAt;
+      b.startAt = startAt?.toUtc();
+      b.endAt = endAt?.toUtc();
     }),
   );
   final data = response.data;
