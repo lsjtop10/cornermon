@@ -146,7 +146,10 @@ func (s *AdminAuthService) CreateAdmin(
 	if _, err := s.authorizeSystemAdmin(ctx, actorAdminID); err != nil {
 		return nil, err
 	}
-	if role != domain.AdminRoleSystemAdmin && role != domain.AdminRoleCornerOperator {
+	if role != domain.AdminRoleCornerOperator {
+		if role == domain.AdminRoleSystemAdmin {
+			return nil, domain.ErrAdminForbidden
+		}
 		return nil, domain.ErrAdminInvalidRole
 	}
 	existing, err := s.admins.GetByUsername(ctx, username)

@@ -14,6 +14,18 @@ definitions:
       expiresInSeconds:
         type: integer
     type: object
+  AdminResponse:
+    properties:
+      id:
+        type: string
+      role:
+        enum:
+        - SYSTEM_ADMIN
+        - CORNER_OPERATOR
+        type: string
+      username:
+        type: string
+    type: object
   AdminSessionResponse:
     properties:
       adminId:
@@ -222,6 +234,11 @@ definitions:
       visitCompletionRate:
         type: number
     type: object
+  ChangeAdminPasswordRequest:
+    properties:
+      password:
+        type: string
+    type: object
   CornerMetricResponse:
     properties:
       avgDurationSeconds:
@@ -287,6 +304,17 @@ definitions:
         items:
           $ref: '#/definitions/UnvisitedGroupResponse'
         type: array
+    type: object
+  CreateAdminRequest:
+    properties:
+      password:
+        type: string
+      role:
+        enum:
+        - CORNER_OPERATOR
+        type: string
+      username:
+        type: string
     type: object
   CreateCampRequest:
     properties:
@@ -710,6 +738,103 @@ info:
   title: Cornermon API
   version: 1.0.0
 paths:
+  /admins:
+    post:
+      consumes:
+      - application/json
+      description: SYSTEM_ADMIN만 호출할 수 있습니다. 생성할 역할은 CORNER_OPERATOR로 고정되며, SYSTEM_ADMIN은
+        다른 SYSTEM_ADMIN을 생성할 수 없습니다. 동일한 username은 생성할 수 없습니다.
+      parameters:
+      - description: 생성할 관리자
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/CreateAdminRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/AdminResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+      - AdminAuth: []
+      summary: 관리자 생성
+      tags:
+      - A. Auth & Device Trust
+  /admins/{id}:
+    delete:
+      description: SYSTEM_ADMIN만 호출할 수 있습니다. 자기 자신은 삭제할 수 없으므로 마지막 SYSTEM_ADMIN 삭제
+        요청은 성립하지 않습니다. 삭제 시 admin_sessions는 DB foreign key cascade로 함께 제거됩니다.
+      parameters:
+      - description: 관리자 ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+      - AdminAuth: []
+      summary: 관리자 삭제
+      tags:
+      - A. Auth & Device Trust
+  /admins/{id}/password:
+    patch:
+      consumes:
+      - application/json
+      description: 대상 관리자 본인 또는 SYSTEM_ADMIN만 호출할 수 있습니다. 비밀번호 변경은 기존 세션을 즉시 무효화하지
+        않으며, 현재 access token은 기존 TTL까지 유효합니다.
+      parameters:
+      - description: 관리자 ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: 새 비밀번호
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/ChangeAdminPasswordRequest'
+      responses:
+        "204":
+          description: No Content
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+      - AdminAuth: []
+      summary: 관리자 비밀번호 변경
+      tags:
+      - A. Auth & Device Trust
   /api/v1/camps/{campId}/events/admin:
     get:
       description: 관리자용 실시간 변경 알림 스트림입니다. 각 event의 data는 SSENotification JSON이며 예시는
