@@ -7,6 +7,7 @@ import (
 	"log"
 	"log/slog"
 	"os"
+	"time"
 
 	"cornermon/backend/internal/errs"
 	trackcrypto "cornermon/backend/internal/infrastructure/crypto"
@@ -15,11 +16,12 @@ import (
 	"cornermon/backend/internal/infrastructure/web"
 	"cornermon/backend/internal/usecase"
 
+	"net/url"
+
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
-	"net/url"
 )
 
 func main() {
@@ -43,7 +45,7 @@ func main() {
 		log.Fatalf("Unable to initialize track PIN encryption: %v\n", err)
 	}
 
-	ctx := context.Background()
+	backgroundCtx := context.Background()
 	dbURL := os.Getenv("DATABASE_URL")
 	dbPass := os.Getenv("DATABASE_PASSWORD")
 
@@ -69,16 +71,29 @@ func main() {
 		}
 	}
 
+	dbctx, cancel := context.WithTimeout(backgroundCtx, 1000*time.Millisecond)
+	defer cancel()
 	// Initialize Database Pool
-	pool, err := pgxpool.New(ctx, dbURL)
+	pool, err := pgxpool.New(dbctx, dbURL)
 	if err != nil {
+		cancel()
 		log.Fatalf("Unable to connect to database: %v\n", err)
 	}
+
+	err = pool.Ping(dbctx)
+	if err != nil {
+		cancel()
+		log.Fatalf("Unable to connect to database: %v\n", err)
+	}
+
 	defer pool.Close()
 
 	// Initialize Repositories
 	adminRepo := postgres.NewAdminRepository(pool)
-	if err := usecase.BootstrapAdmin(ctx, adminRepo, os.Getenv("ADMIN_BOOTSTRAP_USERNAME"), os.Getenv("ADMIN_BOOTSTRAP_PASSWORD"), uuid.NewString); err != nil {
+	adminCtx, cancel := context.WithTimeout(backgroundCtx, 5000*time.Millisecond)
+	defer cancel()
+	if err := usecase.BootstrapAdmin(adminCtx, adminRepo, os.Getenv("ADMIN_BOOTSTRAP_USERNAME"), os.Getenv("ADMIN_BOOTSTRAP_PASSWORD"), uuid.NewString); err != nil {
+		cancel()
 		log.Fatalf("Unable to bootstrap initial administrator: %v\n", err)
 	}
 	adminSessionRepo := postgres.NewAdminSessionRepository(pool)
