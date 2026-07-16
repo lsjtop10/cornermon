@@ -29,13 +29,12 @@ func (r *pgAdminSessionRepository) queries(ctx context.Context) *db.Queries {
 
 func mapAdminSession(row db.AdminSession) *domain.AdminSession {
 	s := &domain.AdminSession{
-		ID:               domain.AdminSessionID(row.ID),
-		AdminID:          domain.AdminID(row.AdminID),
-		AccessTokenHash:  row.AccessTokenHash,
-		RefreshTokenHash: row.RefreshTokenHash,
-		DeviceInfo:       row.DeviceInfo,
-		CreatedAt:        row.CreatedAt.Time,
-		LastUsedAt:       row.LastUsedAt.Time,
+		ID:              domain.AdminSessionID(row.ID),
+		AdminID:         domain.AdminID(row.AdminID),
+		AccessTokenHash: row.AccessTokenHash,
+		DeviceInfo:      row.DeviceInfo,
+		CreatedAt:       row.CreatedAt.Time,
+		LastUsedAt:      row.LastUsedAt.Time,
 	}
 
 	if row.RevokedAt.Valid {
@@ -69,26 +68,14 @@ func (r *pgAdminSessionRepository) GetByAccessTokenHash(ctx context.Context, has
 	return mapAdminSession(row), nil
 }
 
-func (r *pgAdminSessionRepository) GetByRefreshTokenHash(ctx context.Context, hash string) (*domain.AdminSession, error) {
-	row, err := r.queries(ctx).GetAdminSessionByRefreshTokenHash(ctx, hash)
-	if err != nil {
-		if err == pgx.ErrNoRows {
-			return nil, nil
-		}
-		return nil, errs.Wrap(ctx, err)
-	}
-	return mapAdminSession(row), nil
-}
-
 func (r *pgAdminSessionRepository) Save(ctx context.Context, session *domain.AdminSession) error {
 	params := db.SaveAdminSessionParams{
-		ID:               string(session.ID),
-		AdminID:          string(session.AdminID),
-		AccessTokenHash:  session.AccessTokenHash,
-		RefreshTokenHash: session.RefreshTokenHash,
-		DeviceInfo:       session.DeviceInfo,
-		CreatedAt:        pgtype.Timestamptz{Time: session.CreatedAt, Valid: !session.CreatedAt.IsZero()},
-		LastUsedAt:       pgtype.Timestamptz{Time: session.LastUsedAt, Valid: !session.LastUsedAt.IsZero()},
+		ID:              string(session.ID),
+		AdminID:         string(session.AdminID),
+		AccessTokenHash: session.AccessTokenHash,
+		DeviceInfo:      session.DeviceInfo,
+		CreatedAt:       pgtype.Timestamptz{Time: session.CreatedAt, Valid: !session.CreatedAt.IsZero()},
+		LastUsedAt:      pgtype.Timestamptz{Time: session.LastUsedAt, Valid: !session.LastUsedAt.IsZero()},
 	}
 
 	if val, ok := session.RevokedAt.Value(); ok {

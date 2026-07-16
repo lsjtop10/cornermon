@@ -224,12 +224,9 @@ SELECT * FROM admin_sessions WHERE id = $1;
 -- name: GetAdminSessionByAccessTokenHash :one
 SELECT * FROM admin_sessions WHERE access_token_hash = $1;
 
--- name: GetAdminSessionByRefreshTokenHash :one
-SELECT * FROM admin_sessions WHERE refresh_token_hash = $1;
-
 -- name: SaveAdminSession :exec
-INSERT INTO admin_sessions (id, admin_id, access_token_hash, refresh_token_hash, device_info, created_at, last_used_at, revoked_at)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+INSERT INTO admin_sessions (id, admin_id, access_token_hash, device_info, created_at, last_used_at, revoked_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7)
 ON CONFLICT (id) DO UPDATE SET
     last_used_at = EXCLUDED.last_used_at,
     revoked_at = EXCLUDED.revoked_at;

@@ -18,7 +18,7 @@ type Admin struct {
 	PasswordHash string `json:"password_hash"`
 }
 
-// 관리자의 인증 토큰(Access/Refresh) 세션을 관리하는 테이블
+// 관리자의 인증 토큰(Access) 세션을 관리하는 테이블
 type AdminSession struct {
 	// 세션 고유 식별자
 	ID string `json:"id"`
@@ -26,8 +26,6 @@ type AdminSession struct {
 	AdminID string `json:"admin_id"`
 	// Access Token 해시
 	AccessTokenHash string `json:"access_token_hash"`
-	// Refresh Token 해시
-	RefreshTokenHash string `json:"refresh_token_hash"`
 	// 로그인 환경(User-Agent 등) 정보
 	DeviceInfo string `json:"device_info"`
 	// 세션 생성 시간

@@ -11,18 +11,17 @@ type Admin struct {
 }
 
 type AdminSession struct {
-	ID               AdminSessionID
-	AdminID          AdminID
-	AccessTokenHash  string
-	RefreshTokenHash string
-	DeviceInfo       string
-	CreatedAt        time.Time
-	LastUsedAt       time.Time
-	RevokedAt        Optional[time.Time]
+	ID              AdminSessionID
+	AdminID         AdminID
+	AccessTokenHash string
+	DeviceInfo      string
+	CreatedAt       time.Time
+	LastUsedAt      time.Time
+	RevokedAt       Optional[time.Time]
 }
 
-// TouchRefresh는 세션의 마지막 사용 시각을 갱신하여 슬라이딩 만료 처리를 수행합니다.
-func (s *AdminSession) TouchRefresh(now time.Time) {
+// TouchActivity는 세션의 마지막 사용 시각을 갱신하여 슬라이딩 만료 처리를 수행합니다.
+func (s *AdminSession) TouchActivity(now time.Time) {
 	s.LastUsedAt = now
 }
 
@@ -35,8 +34,8 @@ func (s *AdminSession) Revoke(now time.Time) error {
 	return nil
 }
 
-// IsRefreshExpired는 리프레시 세션이 비활성 만료 시간(idleTTL) 또는 취소 여부에 의해 만료되었는지 확인합니다.
-func (s *AdminSession) IsRefreshExpired(now time.Time, idleTTL time.Duration) bool {
+// IsExpired는 세션이 비활성 만료 시간(idleTTL) 또는 취소 여부에 의해 만료되었는지 확인합니다.
+func (s *AdminSession) IsExpired(now time.Time, idleTTL time.Duration) bool {
 	if s.RevokedAt.IsSet() {
 		return true
 	}

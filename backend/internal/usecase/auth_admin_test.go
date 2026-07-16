@@ -31,14 +31,14 @@ func TestAdminAuthService_Login(t *testing.T) {
 		s.uuidFn = func() string { return "session-uuid" }
 
 		// Act
-		access, refresh, session, err := s.Login(context.Background(), "admin-1", "admin-password", "PC")
+		access, session, err := s.Login(context.Background(), "admin-1", "admin-password", "PC")
 
 		// Assert
 		if err != nil {
 			t.Fatalf("expected no error, got %v", err)
 		}
-		if access == "" || refresh == "" {
-			t.Fatal("expected non-empty tokens")
+		if access == "" {
+			t.Fatal("expected non-empty token")
 		}
 		if session.ID != "session-uuid" {
 			t.Errorf("expected session ID 'session-uuid', got '%s'", session.ID)
@@ -63,7 +63,7 @@ func TestAdminAuthService_Login(t *testing.T) {
 		s := NewAdminAuthService(admins, sessions, facSessions, tracks, corners, broadcaster, auditLogs, tx)
 
 		// Act
-		_, _, _, err := s.Login(context.Background(), "admin-1", "wrong-password", "PC")
+		_, _, err := s.Login(context.Background(), "admin-1", "wrong-password", "PC")
 
 		// Assert
 		if err == nil {
@@ -72,34 +72,57 @@ func TestAdminAuthService_Login(t *testing.T) {
 	})
 }
 
-func TestAdminAuthService_RefreshToken(t *testing.T) {
-	t.Run("ShouldRefreshTokenSuccessfullyWhenNotExpired", func(t *testing.T) {
+func TestAdminAuthService_ValidateAccessToken(t *testing.T) {
+	t.Run("ShouldSlideExpirationWhenAccessTokenIsValid", func(t *testing.T) {
 		// Arrange
 		now := time.Now()
 		sessions := NewMockAdminSessionRepository()
 		session := &domain.AdminSession{
-			ID:               "session-1",
-			AdminID:          "admin-1",
-			AccessTokenHash:  "access-hash-1",
-			RefreshTokenHash: hashSHA256("refresh-token-1"),
-			CreatedAt:        now.Add(-1 * time.Hour),
-			LastUsedAt:       now.Add(-10 * time.Minute),
+			ID:              "session-1",
+			AdminID:         "admin-1",
+			AccessTokenHash: hashSHA256("access-token-1"),
+			CreatedAt:       now.Add(-1 * time.Hour),
+			LastUsedAt:      now.Add(-10 * time.Minute),
 		}
 		sessions.Sessions["session-1"] = session
 
 		s := NewAdminAuthService(nil, sessions, nil, nil, nil, nil, nil, &MockTxManager{})
-
 		s.nowFn = func() time.Time { return now }
 
 		// Act
-		newAccess, err := s.RefreshToken(context.Background(), "refresh-token-1")
+		got, err := s.ValidateAccessToken(context.Background(), "access-token-1")
 
 		// Assert
 		if err != nil {
 			t.Fatalf("expected no error, got %v", err)
 		}
-		if newAccess == "" {
-			t.Fatal("expected non-empty access token")
+		if !got.LastUsedAt.Equal(now) {
+			t.Errorf("expected LastUsedAt to slide to %v, got %v", now, got.LastUsedAt)
+		}
+	})
+
+	t.Run("ShouldFailWhenAccessTokenIdleExpired", func(t *testing.T) {
+		// Arrange
+		now := time.Now()
+		sessions := NewMockAdminSessionRepository()
+		session := &domain.AdminSession{
+			ID:              "session-1",
+			AdminID:         "admin-1",
+			AccessTokenHash: hashSHA256("access-token-1"),
+			CreatedAt:       now.Add(-13 * time.Hour),
+			LastUsedAt:      now.Add(-13 * time.Hour),
+		}
+		sessions.Sessions["session-1"] = session
+
+		s := NewAdminAuthService(nil, sessions, nil, nil, nil, nil, nil, &MockTxManager{})
+		s.nowFn = func() time.Time { return now }
+
+		// Act
+		_, err := s.ValidateAccessToken(context.Background(), "access-token-1")
+
+		// Assert
+		if err == nil {
+			t.Fatal("expected error, got nil")
 		}
 	})
 }
