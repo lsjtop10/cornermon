@@ -1,4 +1,3 @@
-//go:build ignore
 
 package domain_test
 
@@ -23,11 +22,11 @@ func TestDeviceRegistration_ApproveRejectRevoke(t *testing.T) {
 			t.Fatalf("expected no error, got %v", err)
 		}
 
-		if device.Status != domain.DeviceApproved {
-			t.Errorf("expected APPROVED, got %v", device.Status)
+		if device.Status() != domain.DeviceApproved {
+			t.Errorf("expected APPROVED, got %v", device.Status())
 		}
 
-		approvedAt, ok := device.ApprovedAt.Value()
+		approvedAt, ok := device.ApprovedAt().Value()
 		if !ok || !approvedAt.Equal(now) {
 			t.Errorf("expected ApprovedAt to be %v, got %v", now, approvedAt)
 		}
@@ -54,8 +53,8 @@ func TestDeviceRegistration_ApproveRejectRevoke(t *testing.T) {
 			t.Fatalf("expected no error, got %v", err)
 		}
 
-		if device.Status != domain.DeviceRejected {
-			t.Errorf("expected REJECTED, got %v", device.Status)
+		if device.Status() != domain.DeviceRejected {
+			t.Errorf("expected REJECTED, got %v", device.Status())
 		}
 	})
 
@@ -80,8 +79,8 @@ func TestDeviceRegistration_ApproveRejectRevoke(t *testing.T) {
 			t.Fatalf("expected no error, got %v", err)
 		}
 
-		if device.Status != domain.DeviceRevoked {
-			t.Errorf("expected REVOKED, got %v", device.Status)
+		if device.Status() != domain.DeviceRevoked {
+			t.Errorf("expected REVOKED, got %v", device.Status())
 		}
 	})
 
@@ -160,8 +159,8 @@ func TestDeviceRegistration_PinFailuresLockPolicies(t *testing.T) {
 
 		// Reset failures
 		device.ResetPinFailures()
-		if device.FailedPinAttempts != 0 {
-			t.Errorf("expected 0 attempts, got %d", device.FailedPinAttempts)
+		if device.FailedPinAttempts() != 0 {
+			t.Errorf("expected 0 attempts, got %d", device.FailedPinAttempts())
 		}
 		if device.IsLocked(now) {
 			t.Error("expected unlocked after reset")

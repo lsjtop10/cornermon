@@ -1,4 +1,3 @@
-//go:build ignore
 
 package usecase
 
@@ -42,11 +41,11 @@ func TestTrackService_CreateTrack(t *testing.T) {
 		if track == nil {
 			t.Fatal("expected track, got nil")
 		}
-		if track.ID != "track-uuid-1" {
-			t.Errorf("expected track ID to be 'track-uuid-1', got '%s'", track.ID)
+		if track.ID() != "track-uuid-1" {
+			t.Errorf("expected track ID to be 'track-uuid-1', got '%s'", track.ID())
 		}
-		if track.TrackNo != 1 {
-			t.Errorf("expected track no to be 1, got %d", track.TrackNo)
+		if track.TrackNo() != 1 {
+			t.Errorf("expected track no to be 1, got %d", track.TrackNo())
 		}
 		if len(plainPIN) != 6 {
 			t.Errorf("expected 6-digit plain PIN, got length %d", len(plainPIN))
@@ -132,8 +131,8 @@ func TestTrackService_DeleteTrack(t *testing.T) {
 		}
 
 		updatedTrack, _ := tracks.Get(context.Background(), "track-1")
-		if updatedTrack.Status != domain.TrackDeleted {
-			t.Errorf("expected track status to be Deleted, got %s", updatedTrack.Status)
+		if updatedTrack.Status() != domain.TrackDeleted {
+			t.Errorf("expected track status to be Deleted, got %s", updatedTrack.Status())
 		}
 
 		updatedSession, _ := sessions.GetByTokenHash(context.Background(), "hash-1")
@@ -201,11 +200,11 @@ func TestReplaceTrackShoudMigrateSessionAndBroadcastAfterSuccess(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if track.ID != "track-new" || track.CornerID != "corner-new" || len(pin) != 6 {
+	if track.ID() != "track-new" || track.CornerID() != "corner-new" || len(pin) != 6 {
 		t.Fatalf("unexpected replacement result: track=%+v pin=%q", track, pin)
 	}
 	migrated, _ := sessions.Get(context.Background(), "session-1")
-	target, ok := migrated.MigrationTargetTrackID.Value()
+	target, ok := migrated.MigrationTargetTrackID().Value()
 	if !ok || target != "track-new" || !migrated.IsActive() {
 		t.Fatalf("session was not migrated while active: %+v", migrated)
 	}
@@ -232,7 +231,7 @@ func TestReplaceTrackShoudRejectDifferentCampBeforeMutation(t *testing.T) {
 	if err != domain.ErrTrackCampMismatch {
 		t.Fatalf("expected ErrTrackCampMismatch, got %v", err)
 	}
-	if original.Status != domain.TrackActive || len(broadcaster.Broadcasts) != 0 {
+	if original.Status() != domain.TrackActive || len(broadcaster.Broadcasts) != 0 {
 		t.Fatalf("replacement mutated state before rejecting: track=%+v broadcasts=%+v", original, broadcaster.Broadcasts)
 	}
 }
@@ -254,7 +253,7 @@ func TestReplaceTrackShoudPreserveBusyTrackWhenRejected(t *testing.T) {
 	if err != domain.ErrTrackDeleteBlocked {
 		t.Fatalf("expected ErrTrackDeleteBlocked, got %v", err)
 	}
-	if original.Status != domain.TrackActive {
+	if original.Status() != domain.TrackActive {
 		t.Fatalf("busy track was changed: %+v", original)
 	}
 }

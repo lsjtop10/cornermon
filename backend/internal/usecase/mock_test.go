@@ -1,4 +1,3 @@
-//go:build ignore
 
 package usecase
 
@@ -37,7 +36,7 @@ func (r *MockCampRepository) Get(ctx context.Context, id domain.CampID) (*domain
 
 func (r *MockCampRepository) GetByRegistrationCode(ctx context.Context, code string) (*domain.Camp, error) {
 	for _, camp := range r.Camps {
-		if camp.RegistrationCode == code {
+		if camp.RegistrationCode() == code {
 			return camp, nil
 		}
 	}
@@ -45,7 +44,7 @@ func (r *MockCampRepository) GetByRegistrationCode(ctx context.Context, code str
 }
 
 func (r *MockCampRepository) Save(ctx context.Context, camp *domain.Camp) error {
-	r.Camps[camp.ID] = camp
+	r.Camps[camp.ID()] = camp
 	return nil
 }
 
@@ -77,7 +76,7 @@ func (r *MockCornerRepository) Get(ctx context.Context, id domain.CornerID) (*do
 func (r *MockCornerRepository) ListByCamp(ctx context.Context, campID domain.CampID) ([]*domain.Corner, error) {
 	var list []*domain.Corner
 	for _, c := range r.Corners {
-		if c.CampID == campID {
+		if c.CampID() == campID {
 			list = append(list, c)
 		}
 	}
@@ -85,7 +84,7 @@ func (r *MockCornerRepository) ListByCamp(ctx context.Context, campID domain.Cam
 }
 
 func (r *MockCornerRepository) Save(ctx context.Context, corner *domain.Corner) error {
-	r.Corners[corner.ID] = corner
+	r.Corners[corner.ID()] = corner
 	return nil
 }
 
@@ -114,7 +113,7 @@ func (r *MockTrackRepository) Get(ctx context.Context, id domain.TrackID) (*doma
 func (r *MockTrackRepository) ListByCorner(ctx context.Context, cornerID domain.CornerID) ([]*domain.Track, error) {
 	var list []*domain.Track
 	for _, t := range r.Tracks {
-		if t.CornerID == cornerID {
+		if t.CornerID() == cornerID {
 			list = append(list, t)
 		}
 	}
@@ -125,7 +124,7 @@ func (r *MockTrackRepository) ListActiveByCamp(ctx context.Context, campID domai
 	// 코너 목록에서 CampID 필터 후 트랙 조회
 	var list []*domain.Track
 	for _, t := range r.Tracks {
-		if t.Status == domain.TrackActive {
+		if t.Status() == domain.TrackActive {
 			list = append(list, t)
 		}
 	}
@@ -133,16 +132,16 @@ func (r *MockTrackRepository) ListActiveByCamp(ctx context.Context, campID domai
 }
 
 func (r *MockTrackRepository) Save(ctx context.Context, track *domain.Track) error {
-	r.Tracks[track.ID] = track
+	r.Tracks[track.ID()] = track
 	return nil
 }
 
 func (r *MockTrackRepository) IncrementUnreadCount(ctx context.Context, trackID domain.TrackID, recipient domain.SenderRole) error {
 	track := r.Tracks[trackID]
 	if recipient == domain.RoleAdmin {
-		track.UnreadByAdminCount++
+		track.IncrementUnreadByAdmin()
 	} else {
-		track.UnreadByTrackCount++
+		track.IncrementUnreadByTrack()
 	}
 	return nil
 }
@@ -150,9 +149,9 @@ func (r *MockTrackRepository) IncrementUnreadCount(ctx context.Context, trackID 
 func (r *MockTrackRepository) ResetUnreadCount(ctx context.Context, trackID domain.TrackID, reader domain.SenderRole) error {
 	track := r.Tracks[trackID]
 	if reader == domain.RoleAdmin {
-		track.UnreadByAdminCount = 0
+		track.ResetUnreadByAdmin()
 	} else {
-		track.UnreadByTrackCount = 0
+		track.ResetUnreadByTrack()
 	}
 	return nil
 }
@@ -184,7 +183,7 @@ func (r *MockVisitRepository) Get(ctx context.Context, id domain.VisitID) (*doma
 
 func (r *MockVisitRepository) GetInProgressByTrack(ctx context.Context, trackID domain.TrackID) (*domain.Visit, error) {
 	for _, v := range r.Visits {
-		if v.TrackID == trackID && v.Status == domain.VisitStatusInProgress {
+		if v.TrackID() == trackID && v.Status() == domain.VisitStatusInProgress {
 			return v, nil
 		}
 	}
@@ -193,7 +192,7 @@ func (r *MockVisitRepository) GetInProgressByTrack(ctx context.Context, trackID 
 
 func (r *MockVisitRepository) GetCompletedByGroupAndCorner(ctx context.Context, groupID domain.GroupID, cornerID domain.CornerID) (*domain.Visit, error) {
 	for _, v := range r.Visits {
-		if v.GroupID == groupID && v.CornerID == cornerID && v.Status == domain.VisitStatusCompleted {
+		if v.GroupID() == groupID && v.CornerID() == cornerID && v.Status() == domain.VisitStatusCompleted {
 			return v, nil
 		}
 	}
@@ -201,14 +200,14 @@ func (r *MockVisitRepository) GetCompletedByGroupAndCorner(ctx context.Context, 
 }
 
 func (r *MockVisitRepository) Save(ctx context.Context, visit *domain.Visit) error {
-	r.Visits[visit.ID] = visit
+	r.Visits[visit.ID()] = visit
 	return nil
 }
 
 func (r *MockVisitRepository) ListByGroup(ctx context.Context, groupID domain.GroupID) ([]*domain.Visit, error) {
 	var list []*domain.Visit
 	for _, v := range r.Visits {
-		if v.GroupID == groupID {
+		if v.GroupID() == groupID {
 			list = append(list, v)
 		}
 	}
@@ -234,7 +233,7 @@ func (r *MockGroupRepository) Get(ctx context.Context, id domain.GroupID) (*doma
 
 func (r *MockGroupRepository) GetByBadge(ctx context.Context, campID domain.CampID, badgeID domain.BadgeID) (*domain.Group, error) {
 	for _, g := range r.Groups {
-		if g.CampID == campID && g.BadgeID == badgeID {
+		if g.CampID() == campID && g.BadgeID() == badgeID {
 			return g, nil
 		}
 	}
@@ -244,7 +243,7 @@ func (r *MockGroupRepository) GetByBadge(ctx context.Context, campID domain.Camp
 func (r *MockGroupRepository) ListByCamp(ctx context.Context, campID domain.CampID) ([]*domain.Group, error) {
 	var list []*domain.Group
 	for _, g := range r.Groups {
-		if g.CampID == campID {
+		if g.CampID() == campID {
 			list = append(list, g)
 		}
 	}
@@ -252,7 +251,7 @@ func (r *MockGroupRepository) ListByCamp(ctx context.Context, campID domain.Camp
 }
 
 func (r *MockGroupRepository) Save(ctx context.Context, group *domain.Group) error {
-	r.Groups[group.ID] = group
+	r.Groups[group.ID()] = group
 	return nil
 }
 
@@ -275,7 +274,7 @@ func (r *MockBadgeRepository) Get(ctx context.Context, id domain.BadgeID) (*doma
 
 func (r *MockBadgeRepository) GetByQRPayload(ctx context.Context, payload string) (*domain.Badge, error) {
 	for _, b := range r.Badges {
-		if b.QRPayload == payload {
+		if b.QRPayload() == payload {
 			return b, nil
 		}
 	}
@@ -283,7 +282,7 @@ func (r *MockBadgeRepository) GetByQRPayload(ctx context.Context, payload string
 }
 
 func (r *MockBadgeRepository) Save(ctx context.Context, badge *domain.Badge) error {
-	r.Badges[badge.ID] = badge
+	r.Badges[badge.ID()] = badge
 	return nil
 }
 
@@ -297,7 +296,7 @@ func (r *MockBadgeRepository) ListAll(ctx context.Context) ([]*domain.Badge, err
 
 func (r *MockBadgeRepository) SaveBulk(ctx context.Context, badges []*domain.Badge) error {
 	for _, b := range badges {
-		r.Badges[b.ID] = b
+		r.Badges[b.ID()] = b
 	}
 	return nil
 }
@@ -321,7 +320,7 @@ func (r *MockDeviceRegistrationRepository) Get(ctx context.Context, id domain.De
 
 func (r *MockDeviceRegistrationRepository) GetByTokenHash(ctx context.Context, hash string) (*domain.DeviceRegistration, error) {
 	for _, d := range r.Devices {
-		if d.TokenHash == hash {
+		if d.TokenHash() == hash {
 			return d, nil
 		}
 	}
@@ -332,7 +331,7 @@ func (r *MockDeviceRegistrationRepository) ListPendingByCamp(ctx context.Context
 	var list []*domain.DeviceRegistration
 	// Simple mock: returns all pending
 	for _, d := range r.Devices {
-		if d.Status == domain.DevicePending {
+		if d.Status() == domain.DevicePending {
 			list = append(list, d)
 		}
 	}
@@ -340,14 +339,14 @@ func (r *MockDeviceRegistrationRepository) ListPendingByCamp(ctx context.Context
 }
 
 func (r *MockDeviceRegistrationRepository) Save(ctx context.Context, reg *domain.DeviceRegistration) error {
-	r.Devices[reg.ID] = reg
+	r.Devices[reg.ID()] = reg
 	return nil
 }
 
 func (r *MockDeviceRegistrationRepository) ListByCampAndStatus(ctx context.Context, campID domain.CampID, status *domain.DeviceRegistrationStatus) ([]*domain.DeviceRegistration, error) {
 	var list []*domain.DeviceRegistration
 	for _, d := range r.Devices {
-		if d.CampID == campID && (status == nil || d.Status == *status) {
+		if d.CampID() == campID && (status == nil || d.Status() == *status) {
 			list = append(list, d)
 		}
 	}
@@ -369,7 +368,7 @@ func NewMockFacilitatorSessionRepository() *MockFacilitatorSessionRepository {
 
 func (r *MockFacilitatorSessionRepository) Get(ctx context.Context, id domain.FacilitatorSessionID) (*domain.FacilitatorSession, error) {
 	for _, s := range r.Sessions {
-		if s.ID == id {
+		if s.ID() == id {
 			return s, nil
 		}
 	}
@@ -387,7 +386,7 @@ func (r *MockFacilitatorSessionRepository) GetByTokenHash(ctx context.Context, h
 func (r *MockFacilitatorSessionRepository) ListActiveByTrack(ctx context.Context, trackID domain.TrackID) ([]*domain.FacilitatorSession, error) {
 	var list []*domain.FacilitatorSession
 	for _, s := range r.Sessions {
-		if s.TrackID == trackID && s.IsActive() {
+		if s.TrackID() == trackID && s.IsActive() {
 			list = append(list, s)
 		}
 	}
@@ -397,7 +396,7 @@ func (r *MockFacilitatorSessionRepository) ListActiveByTrack(ctx context.Context
 func (r *MockFacilitatorSessionRepository) ListActiveByCamp(ctx context.Context, campID domain.CampID) ([]*domain.FacilitatorSession, error) {
 	var list []*domain.FacilitatorSession
 	for _, s := range r.Sessions {
-		if s.IsActive() && (len(r.TrackCampIDs) == 0 || r.TrackCampIDs[s.TrackID] == campID) {
+		if s.IsActive() && (len(r.TrackCampIDs) == 0 || r.TrackCampIDs[s.TrackID()] == campID) {
 			list = append(list, s)
 		}
 	}
@@ -405,7 +404,7 @@ func (r *MockFacilitatorSessionRepository) ListActiveByCamp(ctx context.Context,
 }
 
 func (r *MockFacilitatorSessionRepository) Save(ctx context.Context, session *domain.FacilitatorSession) error {
-	r.Sessions[session.TokenHash] = session
+	r.Sessions[session.TokenHash()] = session
 	return nil
 }
 
@@ -428,7 +427,7 @@ func (r *MockAdminRepository) Get(ctx context.Context, id domain.AdminID) (*doma
 
 func (r *MockAdminRepository) GetByUsername(ctx context.Context, username string) (*domain.Admin, error) {
 	for _, a := range r.Admins {
-		if a.Username == username || string(a.ID) == username {
+		if a.Username() == username || string(a.ID()) == username {
 			return a, nil
 		}
 	}
@@ -436,7 +435,7 @@ func (r *MockAdminRepository) GetByUsername(ctx context.Context, username string
 }
 
 func (r *MockAdminRepository) Save(ctx context.Context, admin *domain.Admin) error {
-	r.Admins[admin.ID] = admin
+	r.Admins[admin.ID()] = admin
 	return nil
 }
 
@@ -452,7 +451,7 @@ func (r *MockAdminRepository) Count(ctx context.Context) (int, error) {
 func (r *MockAdminRepository) CountByRole(ctx context.Context, role domain.AdminRole) (int, error) {
 	count := 0
 	for _, admin := range r.Admins {
-		if admin.Role == role {
+		if admin.Role() == role {
 			count++
 		}
 	}
@@ -478,7 +477,7 @@ func (r *MockAdminSessionRepository) Get(ctx context.Context, id domain.AdminSes
 
 func (r *MockAdminSessionRepository) GetByAccessTokenHash(ctx context.Context, hash string) (*domain.AdminSession, error) {
 	for _, s := range r.Sessions {
-		if s.AccessTokenHash == hash {
+		if s.AccessTokenHash() == hash {
 			return s, nil
 		}
 	}
@@ -486,14 +485,14 @@ func (r *MockAdminSessionRepository) GetByAccessTokenHash(ctx context.Context, h
 }
 
 func (r *MockAdminSessionRepository) Save(ctx context.Context, session *domain.AdminSession) error {
-	r.Sessions[session.ID] = session
+	r.Sessions[session.ID()] = session
 	return nil
 }
 
 func (r *MockAdminSessionRepository) ListByAdmin(ctx context.Context, adminID domain.AdminID) ([]*domain.AdminSession, error) {
 	var list []*domain.AdminSession
 	for _, s := range r.Sessions {
-		if s.AdminID == adminID && !s.RevokedAt.IsSet() {
+		if s.AdminID() == adminID && !s.RevokedAt().IsSet() {
 			list = append(list, s)
 		}
 	}
@@ -510,15 +509,15 @@ func NewMockMessageRepository() *MockMessageRepository {
 }
 
 func (r *MockMessageRepository) Save(ctx context.Context, msg *domain.Message) error {
-	r.Messages[msg.ID] = msg
+	r.Messages[msg.ID()] = msg
 	return nil
 }
 
 func (r *MockMessageRepository) ListDirectByTrack(ctx context.Context, trackID domain.TrackID) ([]*domain.Message, error) {
 	var list []*domain.Message
 	for _, m := range r.Messages {
-		if m.ChannelType == domain.MessageDirect {
-			if m.TrackID == trackID {
+		if m.ChannelType() == domain.MessageDirect {
+			if m.TrackID() == trackID {
 				list = append(list, m)
 			}
 		}
@@ -535,7 +534,7 @@ func (r *MockMessageRepository) ListMessageByTrackAfter(ctx context.Context, tra
 	if value, ok := after.Value(); ok {
 		filtered := messages[:0]
 		for _, message := range messages {
-			if message.SentAt.After(value) {
+			if message.SentAt().After(value) {
 				filtered = append(filtered, message)
 			}
 		}
@@ -546,7 +545,7 @@ func (r *MockMessageRepository) ListMessageByTrackAfter(ctx context.Context, tra
 
 func (r *MockMessageRepository) MarkAllReadByRecipient(ctx context.Context, trackID domain.TrackID, recipient domain.SenderRole, readAt time.Time) error {
 	for _, message := range r.Messages {
-		if message.TrackID == trackID && message.SenderRole != recipient {
+		if message.TrackID() == trackID && message.SenderRole() != recipient {
 			_ = message.MarkRead(readAt)
 		}
 	}
@@ -561,17 +560,17 @@ func NewMockAnnouncementRepository() *MockAnnouncementRepository {
 	return &MockAnnouncementRepository{Announcements: make(map[domain.AnnouncementID]*domain.Announcement)}
 }
 func (r *MockAnnouncementRepository) Save(_ context.Context, a *domain.Announcement) error {
-	r.Announcements[a.ID] = a
+	r.Announcements[a.ID()] = a
 	return nil
 }
 func (r *MockAnnouncementRepository) ListNoticeByCamp(_ context.Context, campID domain.CampID) ([]*domain.Announcement, error) {
 	var out []*domain.Announcement
 	for _, a := range r.Announcements {
-		if a.CampID == campID {
+		if a.CampID() == campID {
 			out = append(out, a)
 		}
 	}
-	sort.Slice(out, func(i, j int) bool { return out[i].SentAt.Before(out[j].SentAt) })
+	sort.Slice(out, func(i, j int) bool { return out[i].SentAt().Before(out[j].SentAt()) })
 	return out, nil
 }
 
@@ -586,7 +585,7 @@ func (r *MockAnnouncementReceiptRepository) Save(_ context.Context, x *domain.An
 }
 func (r *MockAnnouncementReceiptRepository) GetByMessageAndTrack(_ context.Context, id domain.AnnouncementID, trackID domain.TrackID) (*domain.AnnouncementReceipt, error) {
 	for _, x := range r.Receipts {
-		if x.NoticeID == id && x.TrackID == trackID {
+		if x.NoticeID() == id && x.TrackID() == trackID {
 			return x, nil
 		}
 	}
@@ -595,7 +594,7 @@ func (r *MockAnnouncementReceiptRepository) GetByMessageAndTrack(_ context.Conte
 func (r *MockAnnouncementReceiptRepository) ListByMessage(_ context.Context, id domain.AnnouncementID) ([]*domain.AnnouncementReceipt, error) {
 	var out []*domain.AnnouncementReceipt
 	for _, x := range r.Receipts {
-		if x.NoticeID == id {
+		if x.NoticeID() == id {
 			out = append(out, x)
 		}
 	}

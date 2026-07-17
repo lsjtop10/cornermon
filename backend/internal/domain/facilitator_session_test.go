@@ -1,4 +1,3 @@
-//go:build ignore
 
 package domain_test
 
@@ -35,7 +34,7 @@ func TestFacilitatorSession_Lifecycle(t *testing.T) {
 			t.Error("expected session to be inactive")
 		}
 
-		revokedAt, ok := session.RevokedAt.Value()
+		revokedAt, ok := session.RevokedAt().Value()
 		if !ok || !revokedAt.Equal(now) {
 			t.Errorf("expected RevokedAt to be %v, got %v", now, revokedAt)
 		}

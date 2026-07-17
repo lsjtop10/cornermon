@@ -1,4 +1,3 @@
-//go:build ignore
 
 package web
 
@@ -24,7 +23,7 @@ func (s *campRepositoryStub) Get(_ context.Context, id domain.CampID) (*domain.C
 
 func (s *campRepositoryStub) GetByRegistrationCode(_ context.Context, code string) (*domain.Camp, error) {
 	for _, camp := range s.camps {
-		if camp.RegistrationCode == code {
+		if camp.RegistrationCode() == code {
 			return camp, nil
 		}
 	}
@@ -49,8 +48,8 @@ func (s *reportQuerierSpy) QueryCampReport(_ context.Context, campID domain.Camp
 func TestGetCurrentReportShoudKeepCampScopeWhenRequestsRunConcurrently(t *testing.T) {
 	// Arrange
 	camps := &campRepositoryStub{camps: map[domain.CampID]*domain.Camp{
-		"camp-a": {ID: "camp-a", Status: domain.CampActive},
-		"camp-b": {ID: "camp-b", Status: domain.CampEnded},
+		"camp-a": domain.NewCampFromProps(domain.CampProps{ID: "camp-a", Status: domain.CampActive}),
+		"camp-b": domain.NewCampFromProps(domain.CampProps{ID: "camp-b", Status: domain.CampEnded}),
 	}}
 	querier := &reportQuerierSpy{queried: make(map[domain.CampID]int)}
 	handler := NewReportHandler(usecase.NewReportService(camps, querier), querier, camps)

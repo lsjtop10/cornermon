@@ -190,3 +190,19 @@ func NewTrackValFromProps(p TrackProps) Track {
 func (t *Track) SetPINCiphertext(hash string) {
 	t.pINCiphertext = hash
 }
+
+func (tr *Track) IncrementUnreadByAdmin() {
+	tr.unreadByAdminCount++
+}
+
+func (tr *Track) IncrementUnreadByTrack() {
+	tr.unreadByTrackCount++
+}
+
+func (tr *Track) ResetUnreadByAdmin() {
+	tr.unreadByAdminCount = 0
+}
+
+func (tr *Track) ResetUnreadByTrack() {
+	tr.unreadByTrackCount = 0
+}

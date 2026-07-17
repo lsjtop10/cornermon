@@ -1,4 +1,3 @@
-//go:build ignore
 
 package usecase
 
@@ -49,8 +48,8 @@ func TestSnapshotService_GetSnapshot(t *testing.T) {
 		if len(cornerSnap.Tracks) != 1 {
 			t.Errorf("expected 1 active track, got %d", len(cornerSnap.Tracks))
 		}
-		if cornerSnap.Tracks[0].ID != "track-1" {
-			t.Errorf("expected active track ID to be 'track-1', got '%s'", cornerSnap.Tracks[0].ID)
+		if cornerSnap.Tracks[0].ID() != "track-1" {
+			t.Errorf("expected active track ID to be 'track-1', got '%s'", cornerSnap.Tracks[0].ID())
 		}
 	})
 }

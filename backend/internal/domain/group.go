@@ -1,5 +1,7 @@
 package domain
 
+import "encoding/json"
+
 type GroupStatus string
 
 const (
@@ -15,6 +17,29 @@ const (
 	VisitInProgress VisitStatusPerCorner = "IN_PROGRESS"
 	VisitCompleted  VisitStatusPerCorner = "COMPLETED"
 )
+
+func (cp *CornerProgress) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		CornerID CornerID               `json:"CornerID"`
+		Status   VisitStatusPerCorner   `json:"Status"`
+	}{
+		CornerID: cp.cornerID,
+		Status:   cp.status,
+	})
+}
+
+func (cp *CornerProgress) UnmarshalJSON(data []byte) error {
+	var aux struct {
+		CornerID CornerID               `json:"CornerID"`
+		Status   VisitStatusPerCorner   `json:"Status"`
+	}
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+	cp.cornerID = aux.CornerID
+	cp.status = aux.Status
+	return nil
+}
 
 type CornerProgress struct {
 	cornerID CornerID

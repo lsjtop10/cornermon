@@ -1,4 +1,3 @@
-//go:build ignore
 
 package postgres
 
@@ -28,6 +27,6 @@ func TestShouldPreserveCreatedAtWhenMappingDeviceRegistrationRow(t *testing.T) {
 
 	// Assert
 	if !got.CreatedAt().Equal(createdAt) {
-		t.Fatalf("expected CreatedAt %v, got %v", createdAt, got.CreatedAt)
+		t.Fatalf("expected CreatedAt %v, got %v", createdAt, got.CreatedAt())
 	}
 }

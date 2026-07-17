@@ -1,4 +1,3 @@
-//go:build ignore
 
 package web
 
@@ -30,7 +29,7 @@ func TestListAuditLogsShoudApplyFiltersAndCursorWhenValid(t *testing.T) {
 	e := echo.New()
 	cursor := usecase.AuditLogCursor{OccurredAt: time.Date(2026, 7, 13, 10, 0, 0, 0, time.UTC), ID: "audit-2"}
 	stub := &auditLogQuerierStub{page: &usecase.AuditLogPage{
-		Logs: []*domain.AuditLog{{ID: "audit-1", Actor: "admin-1", Action: "UPDATE_CAMP", Success: true}},
+		Logs: []*domain.AuditLog{domain.NewAuditLogFromProps(domain.AuditLogProps{ID: "audit-1", Actor: "admin-1", Action: "UPDATE_CAMP", Success: true})},
 		NextCursor: domain.Some(cursor),
 	}}
 	req := httptest.NewRequest(http.MethodGet, "/audit-logs?actor=admin&action=UPDATE_CAMP&result=success&limit=25&before="+encodeAuditLogCursor(cursor), nil)

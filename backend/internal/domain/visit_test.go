@@ -1,4 +1,3 @@
-//go:build ignore
 
 package domain_test
 
@@ -23,10 +22,10 @@ func TestVisit_LifecycleAndCalculations(t *testing.T) {
 			startedAt,
 		)
 
-		if visit.Status != domain.VisitStatusInProgress {
-			t.Errorf("expected VisitStatusInProgress, got %v", visit.Status)
+		if visit.Status() != domain.VisitStatusInProgress {
+			t.Errorf("expected VisitStatusInProgress, got %v", visit.Status())
 		}
-		if visit.EndedAt.IsSet() {
+		if visit.EndedAt().IsSet() {
 			t.Error("expected EndedAt to be unset")
 		}
 
@@ -62,11 +61,11 @@ func TestVisit_LifecycleAndCalculations(t *testing.T) {
 			t.Fatalf("unexpected error: %v", err)
 		}
 
-		if visit.Status != domain.VisitStatusCompleted {
-			t.Errorf("expected status to be VisitStatusCompleted, got %v", visit.Status)
+		if visit.Status() != domain.VisitStatusCompleted {
+			t.Errorf("expected status to be VisitStatusCompleted, got %v", visit.Status())
 		}
 
-		endedTime, ok := visit.EndedAt.Value()
+		endedTime, ok := visit.EndedAt().Value()
 		if !ok || !endedTime.Equal(endedAt) {
 			t.Errorf("expected EndedAt to be %v, got %v", endedAt, endedTime)
 		}

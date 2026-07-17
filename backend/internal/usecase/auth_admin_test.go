@@ -1,4 +1,3 @@
-//go:build ignore
 
 package usecase
 
@@ -43,7 +42,7 @@ func TestAdminAuthService_Login(t *testing.T) {
 			t.Fatal("expected non-empty token")
 		}
 		if session.ID() != "session-uuid" {
-			t.Errorf("expected session ID 'session-uuid', got '%s'", session.ID)
+			t.Errorf("expected session ID 'session-uuid', got '%s'", session.ID())
 		}
 	})
 
@@ -98,7 +97,7 @@ func TestAdminAuthService_ValidateAccessToken(t *testing.T) {
 			t.Fatalf("expected no error, got %v", err)
 		}
 		if !got.LastUsedAt().Equal(now) {
-			t.Errorf("expected LastUsedAt to slide to %v, got %v", now, got.LastUsedAt)
+			t.Errorf("expected LastUsedAt to slide to %v, got %v", now, got.LastUsedAt())
 		}
 	})
 

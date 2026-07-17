@@ -1,4 +1,3 @@
-//go:build ignore
 
 package usecase
 
@@ -43,7 +42,7 @@ func TestVisitService_StartVisitByQR(t *testing.T) {
 			CampID:  "camp-1",
 			BadgeID: "badge-1",
 			Itinerary: []domain.CornerProgress{
-				{CornerID: "corner-1", Status: domain.VisitNotVisited},
+				domain.NewCornerProgressValFromProps(domain.CornerProgressProps{CornerID: "corner-1", Status: domain.VisitNotVisited}),
 			},
 		})
 		groups.Save(context.Background(), group)
@@ -77,22 +76,22 @@ func TestVisitService_StartVisitByQR(t *testing.T) {
 		if visit == nil {
 			t.Fatal("expected visit, got nil")
 		}
-		if visit.ID != "visit-1" {
-			t.Errorf("expected visit ID to be 'visit-1', got '%s'", visit.ID)
+		if visit.ID() != "visit-1" {
+			t.Errorf("expected visit ID to be 'visit-1', got '%s'", visit.ID())
 		}
-		if visit.Status != domain.VisitStatusInProgress {
-			t.Errorf("expected visit status to be InProgress, got %s", visit.Status)
+		if visit.Status() != domain.VisitStatusInProgress {
+			t.Errorf("expected visit status to be InProgress, got %s", visit.Status())
 		}
 
 		// Verify side effects
 		updatedTrack, _ := tracks.Get(context.Background(), "track-1")
-		currVisitVal, ok := updatedTrack.CurrentVisitID.Value()
+		currVisitVal, ok := updatedTrack.CurrentVisitID().Value()
 		if !ok || currVisitVal != "visit-1" {
 			t.Errorf("expected track to have current visit 'visit-1'")
 		}
 
 		updatedGroup, _ := groups.Get(context.Background(), "group-1")
-		if updatedGroup.Itinerary[0].Status != domain.VisitInProgress {
+		if updatedGroup.Itinerary()[0].Status() != domain.VisitInProgress {
 			t.Errorf("expected group itinerary status to be InProgress")
 		}
 
@@ -106,7 +105,7 @@ func TestVisitService_StartVisitByQR(t *testing.T) {
 			t.Errorf("expected corners, groups, tracks, track alerts, got %v", broadcaster.Broadcasts)
 		}
 
-		if len(auditLogs.Logs) != 1 || !auditLogs.Logs[0].Success {
+		if len(auditLogs.Logs) != 1 || !auditLogs.Logs[0].Success() {
 			t.Errorf("expected successful audit log to be recorded")
 		}
 	})
@@ -175,7 +174,7 @@ func TestVisitService_StartVisitByQR(t *testing.T) {
 			CampID:  "camp-1",
 			BadgeID: "badge-1",
 			Itinerary: []domain.CornerProgress{
-				{CornerID: "corner-1", Status: domain.VisitNotVisited},
+				domain.NewCornerProgressValFromProps(domain.CornerProgressProps{CornerID: "corner-1", Status: domain.VisitNotVisited}),
 			},
 		})
 		groups.Save(context.Background(), group)
@@ -225,7 +224,7 @@ func TestVisitService_CompleteVisit(t *testing.T) {
 		group := domain.NewGroupFromProps(domain.GroupProps{ID:     "group-1",
 			CampID: "camp-1",
 			Itinerary: []domain.CornerProgress{
-				{CornerID: "corner-1", Status: domain.VisitInProgress},
+				domain.NewCornerProgressValFromProps(domain.CornerProgressProps{CornerID: "corner-1", Status: domain.VisitInProgress}),
 			},
 		})
 		groups.Save(context.Background(), group)
@@ -262,17 +261,17 @@ func TestVisitService_CompleteVisit(t *testing.T) {
 		if completedVisit == nil {
 			t.Fatal("expected visit, got nil")
 		}
-		if completedVisit.Status != domain.VisitStatusCompleted {
-			t.Errorf("expected visit status Completed, got %s", completedVisit.Status)
+		if completedVisit.Status() != domain.VisitStatusCompleted {
+			t.Errorf("expected visit status Completed, got %s", completedVisit.Status())
 		}
 
 		updatedTrack, _ := tracks.Get(context.Background(), "track-1")
-		if updatedTrack.CurrentVisitID.IsSet() {
+		if updatedTrack.CurrentVisitID().IsSet() {
 			t.Errorf("expected track CurrentVisitID to be cleared")
 		}
 
 		updatedGroup, _ := groups.Get(context.Background(), "group-1")
-		if updatedGroup.Itinerary[0].Status != domain.VisitCompleted {
+		if updatedGroup.Itinerary()[0].Status() != domain.VisitCompleted {
 			t.Errorf("expected group itinerary to be completed")
 		}
 

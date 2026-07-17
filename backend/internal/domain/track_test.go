@@ -1,4 +1,3 @@
-//go:build ignore
 
 package domain_test
 
@@ -22,7 +21,7 @@ func TestTrack_StartVisit(t *testing.T) {
 			t.Fatalf("expected no error, got %v", err)
 		}
 
-		visitID, ok := track.CurrentVisitID.Value()
+		visitID, ok := track.CurrentVisitID().Value()
 		if !ok {
 			t.Error("expected CurrentVisitID to be set")
 		}
@@ -70,15 +69,15 @@ func TestTrack_CompleteVisit(t *testing.T) {
 			t.Fatalf("expected no error, got %v", err)
 		}
 
-		if track.CurrentVisitID.IsSet() {
+		if track.CurrentVisitID().IsSet() {
 			t.Error("expected CurrentVisitID to be cleared")
 		}
 
-		if event.TrackID != track.ID {
-			t.Errorf("expected event TrackID to be %q, got %q", track.ID, event.TrackID)
+		if event.TrackID() != track.ID() {
+			t.Errorf("expected event TrackID to be %q, got %q", track.ID(), event.TrackID())
 		}
-		if !event.OccurredAt.Equal(now) {
-			t.Errorf("expected event OccurredAt to be %v, got %v", now, event.OccurredAt)
+		if !event.OccurredAt().Equal(now) {
+			t.Errorf("expected event OccurredAt to be %v, got %v", now, event.OccurredAt())
 		}
 	})
 
@@ -137,11 +136,11 @@ func TestTrack_Delete(t *testing.T) {
 			t.Fatalf("expected no error, got %v", err)
 		}
 
-		if track.Status != domain.TrackDeleted {
-			t.Errorf("expected status to be DELETED, got %v", track.Status)
+		if track.Status() != domain.TrackDeleted {
+			t.Errorf("expected status to be DELETED, got %v", track.Status())
 		}
 
-		deletedAt, ok := track.DeletedAt.Value()
+		deletedAt, ok := track.DeletedAt().Value()
 		if !ok {
 			t.Error("expected DeletedAt to be set")
 		}
@@ -149,11 +148,11 @@ func TestTrack_Delete(t *testing.T) {
 			t.Errorf("expected DeletedAt to be %v, got %v", now, deletedAt)
 		}
 
-		if event.TrackID != track.ID {
-			t.Errorf("expected event TrackID to be %q, got %q", track.ID, event.TrackID)
+		if event.TrackID() != track.ID() {
+			t.Errorf("expected event TrackID to be %q, got %q", track.ID(), event.TrackID())
 		}
-		if !event.OccurredAt.Equal(now) {
-			t.Errorf("expected event OccurredAt to be %v, got %v", now, event.OccurredAt)
+		if !event.OccurredAt().Equal(now) {
+			t.Errorf("expected event OccurredAt to be %v, got %v", now, event.OccurredAt())
 		}
 	})
 
@@ -195,15 +194,15 @@ func TestTrack_RegeneratePIN(t *testing.T) {
 			t.Fatalf("expected no error, got %v", err)
 		}
 
-		if track.PINHash != "new-hash" {
-			t.Errorf("expected PINHash to be 'new-hash', got %q", track.PINHash)
+		if track.PINHash() != "new-hash" {
+			t.Errorf("expected PINHash to be 'new-hash', got %q", track.PINHash())
 		}
 
-		if event.TrackID != track.ID {
-			t.Errorf("expected event TrackID to be %q, got %q", track.ID, event.TrackID)
+		if event.TrackID() != track.ID() {
+			t.Errorf("expected event TrackID to be %q, got %q", track.ID(), event.TrackID())
 		}
-		if !event.OccurredAt.Equal(now) {
-			t.Errorf("expected event OccurredAt to be %v, got %v", now, event.OccurredAt)
+		if !event.OccurredAt().Equal(now) {
+			t.Errorf("expected event OccurredAt to be %v, got %v", now, event.OccurredAt())
 		}
 	})
 

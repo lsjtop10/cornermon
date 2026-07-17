@@ -1,4 +1,3 @@
-//go:build ignore
 
 package web
 
@@ -66,7 +65,7 @@ func TestMessageRoutesShoudAuthenticateAdminAndTrackWithoutDuplicateRouteRegistr
 
 func TestListBroadcastsRouteShoudAuthenticateBothAdminAndTrackSessions(t *testing.T) {
 	// Arrange
-	announcementUC := &announcementUsecaseForHandler{notices: []*domain.Announcement{{ID: "notice-1", CampID: "camp-1", Content: "hello"}}}
+	announcementUC := &announcementUsecaseForHandler{notices: []*domain.Announcement{domain.NewAnnouncementFromProps(domain.AnnouncementProps{ID: "notice-1", CampID: "camp-1", Content: "hello"})}}
 	e := echo.New()
 	RegisterRoutes(e, &Handlers{Auth: &AuthHandler{}, Device: &DeviceHandler{}, Message: NewMessageHandler(&messageUsecaseForHandler{}, announcementUC)}, adminAuthForMessageRoutes{}, trackAuthForMessageRoutes{})
 

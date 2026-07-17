@@ -1,4 +1,3 @@
-//go:build ignore
 
 package domain_test
 
@@ -41,7 +40,7 @@ func TestAdminSession_Lifecycle(t *testing.T) {
 
 		// 4. TouchActivity updates LastUsedAt
 		if !session.LastUsedAt().Equal(now.Add(10 * time.Minute)) {
-			t.Errorf("expected LastUsedAt to be touched, got %v", session.LastUsedAt)
+			t.Errorf("expected LastUsedAt to be touched, got %v", session.LastUsedAt())
 		}
 	})
 

@@ -1,4 +1,3 @@
-//go:build ignore
 
 package web
 
@@ -59,7 +58,7 @@ func (a *announcementUsecaseForHandler) MarkNoticeRead(context.Context, string, 
 
 func TestListBroadcastsShoudReturnNoticesWhenAdminSessionPresent(t *testing.T) {
 	// Arrange
-	uc := &announcementUsecaseForHandler{notices: []*domain.Announcement{{ID: "notice-1", CampID: "camp-1", Content: "hello"}}}
+	uc := &announcementUsecaseForHandler{notices: []*domain.Announcement{domain.NewAnnouncementFromProps(domain.AnnouncementProps{ID: "notice-1", CampID: "camp-1", Content: "hello"})}}
 	e := echo.New()
 	req := httptest.NewRequest(http.MethodGet, "/camps/camp-1/messages/broadcast", nil)
 	rec := httptest.NewRecorder()
@@ -82,7 +81,7 @@ func TestListBroadcastsShoudReturnNoticesWhenAdminSessionPresent(t *testing.T) {
 
 func TestListBroadcastsShoudReturnNoticesWhenFacilitatorSessionPresent(t *testing.T) {
 	// Arrange
-	uc := &announcementUsecaseForHandler{notices: []*domain.Announcement{{ID: "notice-1", CampID: "camp-1", Content: "hello"}}}
+	uc := &announcementUsecaseForHandler{notices: []*domain.Announcement{domain.NewAnnouncementFromProps(domain.AnnouncementProps{ID: "notice-1", CampID: "camp-1", Content: "hello"})}}
 	e := echo.New()
 	req := httptest.NewRequest(http.MethodGet, "/camps/camp-1/messages/broadcast", nil)
 	rec := httptest.NewRecorder()

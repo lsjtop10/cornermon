@@ -1,4 +1,3 @@
-//go:build ignore
 
 package usecase
 
@@ -53,10 +52,10 @@ func TestGroupService_RegisterBadge(t *testing.T) {
 			t.Fatal("expected group, got nil")
 		}
 		if group.ID() != "group-uuid" {
-			t.Errorf("expected group ID 'group-uuid', got '%s'", group.ID)
+			t.Errorf("expected group ID 'group-uuid', got '%s'", group.ID())
 		}
-		if len(group.Itinerary) != 2 {
-			t.Errorf("expected itinerary size 2, got %d", len(group.Itinerary))
+		if len(group.Itinerary()) != 2 {
+			t.Errorf("expected itinerary size 2, got %d", len(group.Itinerary()))
 		}
 
 		updatedBadge, _ := badges.Get(context.Background(), "badge-1")
@@ -113,7 +112,7 @@ func TestListGroupsByTrackShoudReturnOnlyDerivedCampGroupsWhenTrackExists(t *tes
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if len(result) != 1 || result[0].ID != "group-1" {
+	if len(result) != 1 || result[0].ID() != "group-1" {
 		t.Fatalf("track camp scope leaked groups: %+v", result)
 	}
 }

@@ -1,4 +1,3 @@
-//go:build ignore
 
 package usecase
 
@@ -84,7 +83,7 @@ func TestAdminAuthService_AdminManagement(t *testing.T) {
 		err := newAdminManagementService(admins).ChangeAdminPassword(context.Background(), "operator", "operator", "new")
 
 		// Assert
-		if err != nil || verifyPassword(admins.Admins["operator"].PasswordHash, "new") != nil {
+		if err != nil || verifyPassword(admins.Admins["operator"].PasswordHash(), "new") != nil {
 			t.Fatalf("expected own password change, got %v", err)
 		}
 	})

@@ -1,4 +1,3 @@
-//go:build ignore
 
 package usecase
 
@@ -28,7 +27,7 @@ func TestShouldListOnlyCurrentlyLockedApprovedDevicesWhenCampIsRequested(t *test
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
-	if len(got) != 1 || got[0].ID != "locked" {
+	if len(got) != 1 || got[0].ID() != "locked" {
 		t.Fatalf("expected only locked device, got %#v", got)
 	}
 }
@@ -50,7 +49,7 @@ func TestShouldListOnlyActiveFacilitatorSessionsWhenCampIsRequested(t *testing.T
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
-	if len(got) != 1 || got[0].ID != "active" {
+	if len(got) != 1 || got[0].ID() != "active" {
 		t.Fatalf("expected only active session, got %#v", got)
 	}
 }

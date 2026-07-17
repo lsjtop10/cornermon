@@ -1,4 +1,3 @@
-//go:build ignore
 
 package web
 
@@ -73,7 +72,7 @@ func TestShouldReturnLockedDeviceResponseWhenCampIDIsProvided(t *testing.T) {
 	// Arrange
 	e := echo.New()
 	lockedUntil := time.Date(2026, 7, 15, 12, 0, 0, 0, time.UTC)
-	handler := NewDeviceHandler(&listDeviceTrustStub{devices: []*domain.DeviceRegistration{{ID: "device-1", DeviceName: "iPad", Status: domain.DeviceApproved, FailedPinAttempts: 5, LockedUntil: domain.Some(lockedUntil)}}})
+	handler := NewDeviceHandler(&listDeviceTrustStub{devices: []*domain.DeviceRegistration{domain.NewDeviceRegistrationFromProps(domain.DeviceRegistrationProps{ID: "device-1", DeviceName: "iPad", Status: domain.DeviceApproved, FailedPinAttempts: 5, LockedUntil: domain.Some(lockedUntil)})}})
 	req := httptest.NewRequest(http.MethodGet, "/device-registrations/locked?campId=camp-1", nil)
 	rec := httptest.NewRecorder()
 
@@ -97,7 +96,7 @@ func TestShouldReturnActiveSessionResponseWhenCampIDIsProvided(t *testing.T) {
 	// Arrange
 	e := echo.New()
 	createdAt := time.Date(2026, 7, 15, 10, 0, 0, 0, time.UTC)
-	handler := NewAuthHandler(nil, &listFacilitatorAuthStub{sessions: []*domain.FacilitatorSession{{ID: "session-1", TrackID: "track-1", CreatedAt: createdAt}}}, nil)
+	handler := NewAuthHandler(nil, &listFacilitatorAuthStub{sessions: []*domain.FacilitatorSession{domain.NewFacilitatorSessionFromProps(domain.FacilitatorSessionProps{ID: "session-1", TrackID: "track-1", CreatedAt: createdAt})}}, nil)
 	req := httptest.NewRequest(http.MethodGet, "/auth/track/sessions?campId=camp-1", nil)
 	rec := httptest.NewRecorder()
 

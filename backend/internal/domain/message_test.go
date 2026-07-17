@@ -1,4 +1,3 @@
-//go:build ignore
 
 package domain_test
 
@@ -25,7 +24,7 @@ func TestMessage_MarkRead(t *testing.T) {
 			t.Fatalf("unexpected error: %v", err)
 		}
 
-		readAt, ok := msg.ReadAt.Value()
+		readAt, ok := msg.ReadAt().Value()
 		if !ok || !readAt.Equal(now) {
 			t.Errorf("expected ReadAt to be %v, got %v", now, readAt)
 		}
@@ -37,7 +36,7 @@ func TestMessage_MarkRead(t *testing.T) {
 			t.Fatalf("unexpected error: %v", err)
 		}
 
-		readAt2, ok2 := msg.ReadAt.Value()
+		readAt2, ok2 := msg.ReadAt().Value()
 		if !ok2 || !readAt2.Equal(now) {
 			t.Errorf("expected ReadAt to remain %v, got %v", now, readAt2)
 		}

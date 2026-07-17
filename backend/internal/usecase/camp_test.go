@@ -1,4 +1,3 @@
-//go:build ignore
 
 package usecase
 
@@ -93,7 +92,7 @@ func TestCampService_ActivateCamp(t *testing.T) {
 
 		updated, _ := camps.Get(context.Background(), "camp-1")
 		if updated.Status() != domain.CampActive {
-			t.Errorf("expected status 'ACTIVE', got %s", updated.Status)
+			t.Errorf("expected status 'ACTIVE', got %s", updated.Status())
 		}
 
 		if len(broadcaster.Broadcasts) != 1 || broadcaster.Broadcasts[0].Event != EventCampUpdated || broadcaster.Broadcasts[0].Scope != CampScope() {
@@ -136,7 +135,7 @@ func TestCampService_EndCamp(t *testing.T) {
 
 		updatedCamp, _ := camps.Get(context.Background(), "camp-1")
 		if updatedCamp.Status() != domain.CampEnded {
-			t.Errorf("expected status 'ENDED', got %s", updatedCamp.Status)
+			t.Errorf("expected status 'ENDED', got %s", updatedCamp.Status())
 		}
 
 		updatedSession, _ := sessions.GetByTokenHash(context.Background(), "token-hash-1")
@@ -169,7 +168,7 @@ func TestUpdateCampSettingsShoudAuditAndBroadcastWhenSaveSucceeds(t *testing.T) 
 	if err != nil || updated.Name() != "Updated" {
 		t.Fatalf("unexpected result: camp=%+v err=%v", updated, err)
 	}
-	if len(audits.Logs) != 1 || !audits.Logs[0].Success || audits.Logs[0].Actor != "admin-1" {
+	if len(audits.Logs) != 1 || !audits.Logs[0].Success() || audits.Logs[0].Actor() != "admin-1" {
 		t.Fatalf("success audit missing: %+v", audits.Logs)
 	}
 	if len(broadcaster.Broadcasts) != 1 || broadcaster.Broadcasts[0].Event != EventCampUpdated {
@@ -194,7 +193,7 @@ func TestUpdateCampSettingsShoudAuditFailureWithoutBroadcastWhenTransactionFails
 	if !errors.Is(err, txErr) {
 		t.Fatalf("expected transaction error, got %v", err)
 	}
-	if len(audits.Logs) != 1 || audits.Logs[0].Success {
+	if len(audits.Logs) != 1 || audits.Logs[0].Success() {
 		t.Fatalf("failure audit missing: %+v", audits.Logs)
 	}
 	if len(broadcaster.Broadcasts) != 0 {

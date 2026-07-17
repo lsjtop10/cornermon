@@ -1,4 +1,3 @@
-//go:build ignore
 
 package domain_test
 
@@ -21,7 +20,7 @@ func TestBadge_AssignTo(t *testing.T) {
 		}
 
 		if badge.Status() != domain.BadgeAssigned {
-			t.Errorf("expected status to be ASSIGNED, got %v", badge.Status)
+			t.Errorf("expected status to be ASSIGNED, got %v", badge.Status())
 		}
 
 		groupID, ok := badge.AssignedGroupID().Value()
@@ -65,7 +64,7 @@ func TestBadge_Release(t *testing.T) {
 		}
 
 		if badge.Status() != domain.BadgeUnassigned {
-			t.Errorf("expected status to be UNASSIGNED, got %v", badge.Status)
+			t.Errorf("expected status to be UNASSIGNED, got %v", badge.Status())
 		}
 
 		if badge.AssignedGroupID().IsSet() {

@@ -1,4 +1,3 @@
-//go:build ignore
 
 package web
 
@@ -84,7 +83,7 @@ func TestShouldReturnActualCreatedAtWhenListingRegistrations(t *testing.T) {
 	// Arrange
 	e := echo.New()
 	createdAt := time.Date(2026, 7, 14, 9, 0, 0, 0, time.UTC)
-	stub := &listDeviceTrustStub{reviewedDevices: []*domain.DeviceRegistration{{ID: "device-1", Status: domain.DevicePending, CreatedAt: createdAt}}}
+	stub := &listDeviceTrustStub{reviewedDevices: []*domain.DeviceRegistration{domain.NewDeviceRegistrationFromProps(domain.DeviceRegistrationProps{ID: "device-1", Status: domain.DevicePending, CreatedAt: createdAt})}}
 	handler := NewDeviceHandler(stub)
 	req := httptest.NewRequest(http.MethodGet, "/device-registrations?campId=camp-1", nil)
 	rec := httptest.NewRecorder()

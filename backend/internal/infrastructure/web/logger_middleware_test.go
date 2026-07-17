@@ -1,4 +1,3 @@
-//go:build ignore
 
 package web_test
 

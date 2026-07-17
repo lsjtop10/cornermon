@@ -1,4 +1,3 @@
-//go:build ignore
 
 package domain_test
 
@@ -110,11 +109,11 @@ func TestCamp_End(t *testing.T) {
 			}
 
 			if tt.expectEvent {
-				if event.CampID != camp.ID {
-					t.Errorf("expected event CampID to be %q, got %q", camp.ID, event.CampID)
+				if event.CampID() != camp.ID() {
+					t.Errorf("expected event CampID to be %q, got %q", camp.ID(), event.CampID())
 				}
 				if !event.OccurredAt().Equal(now) {
-					t.Errorf("expected event OccurredAt to be %v, got %v", now, event.OccurredAt)
+					t.Errorf("expected event OccurredAt to be %v, got %v", now, event.OccurredAt())
 				}
 				endedAt, ok := camp.EndedAt().Value()
 				if !ok {
@@ -211,7 +210,7 @@ func TestNewCampShoudCreatePendingCampWhenValid(t *testing.T) {
 		t.Fatalf("unexpected defaults: %+v", camp)
 	}
 	if camp.RegistrationCode() != domain.GenerateRegistrationCode("camp-1") {
-		t.Fatalf("expected deterministic registration code, got %q", camp.RegistrationCode)
+		t.Fatalf("expected deterministic registration code, got %q", camp.RegistrationCode())
 	}
 }
 

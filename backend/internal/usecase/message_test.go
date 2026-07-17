@@ -1,4 +1,3 @@
-//go:build ignore
 
 package usecase
 
@@ -73,10 +72,10 @@ func TestMessageService_SendDirect(t *testing.T) {
 			t.Fatal("expected message, got nil")
 		}
 		if msg.ID() != "msg-uuid" {
-			t.Errorf("expected message ID 'msg-uuid', got '%s'", msg.ID)
+			t.Errorf("expected message ID 'msg-uuid', got '%s'", msg.ID())
 		}
 		if track.UnreadByTrackCount() != 1 {
-			t.Fatalf("expected one unread message for track, got %d", track.UnreadByTrackCount)
+			t.Fatalf("expected one unread message for track, got %d", track.UnreadByTrackCount())
 		}
 
 		if len(broadcaster.Broadcasts) != 1 ||
@@ -118,7 +117,7 @@ func TestShouldMarkOnlyOppositeMessagesWhenBackgroundIsTrue(t *testing.T) {
 		t.Fatalf("expected admin message read at %v, got %v", now, value)
 	}
 	if track, _ := tracks.Get(context.Background(), "track-1"); track.UnreadByTrackCount() != 0 {
-		t.Fatalf("expected unread count to reset after background read, got %d", track.UnreadByTrackCount)
+		t.Fatalf("expected unread count to reset after background read, got %d", track.UnreadByTrackCount())
 	}
 }
 
@@ -139,7 +138,7 @@ func TestListDirectMessagesShoudReturnOnlyMessagesAfterBoundaryWhenAfterIsSet(t 
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if len(got) != 1 || got[0].ID != "after-boundary" {
+	if len(got) != 1 || got[0].ID() != "after-boundary" {
 		t.Fatalf("expected only message after boundary, got %#v", got)
 	}
 }

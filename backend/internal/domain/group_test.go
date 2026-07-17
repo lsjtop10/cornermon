@@ -1,4 +1,3 @@
-//go:build ignore
 
 package domain_test
 
@@ -26,8 +25,8 @@ func TestGroup_IsFinishedAndStatus(t *testing.T) {
 	t.Run("Status and Finish progress progression", func(t *testing.T) {
 		g := domain.NewGroupFromProps(domain.GroupProps{ID: domain.GroupID("group-1"),
 			Itinerary: []domain.CornerProgress{
-				{CornerID: domain.CornerID("corner-1"), Status: domain.VisitNotVisited},
-				{CornerID: domain.CornerID("corner-2"), Status: domain.VisitNotVisited},
+				domain.NewCornerProgressValFromProps(domain.CornerProgressProps{CornerID: domain.CornerID("corner-1"), Status: domain.VisitNotVisited}),
+				domain.NewCornerProgressValFromProps(domain.CornerProgressProps{CornerID: domain.CornerID("corner-2"), Status: domain.VisitNotVisited}),
 			},
 		})
 
@@ -90,8 +89,8 @@ func TestGroup_MarkVisitStarted_Constraints(t *testing.T) {
 	t.Run("Cannot start if another corner is in progress (ErrGroupBusy)", func(t *testing.T) {
 		g := domain.NewGroupFromProps(domain.GroupProps{ID: domain.GroupID("group-1"),
 			Itinerary: []domain.CornerProgress{
-				{CornerID: domain.CornerID("corner-1"), Status: domain.VisitInProgress},
-				{CornerID: domain.CornerID("corner-2"), Status: domain.VisitNotVisited},
+				domain.NewCornerProgressValFromProps(domain.CornerProgressProps{CornerID: domain.CornerID("corner-1"), Status: domain.VisitInProgress}),
+				domain.NewCornerProgressValFromProps(domain.CornerProgressProps{CornerID: domain.CornerID("corner-2"), Status: domain.VisitNotVisited}),
 			},
 		})
 
@@ -104,8 +103,8 @@ func TestGroup_MarkVisitStarted_Constraints(t *testing.T) {
 	t.Run("Cannot start if corner is already completed (ErrDuplicateVisit)", func(t *testing.T) {
 		g := domain.NewGroupFromProps(domain.GroupProps{ID: domain.GroupID("group-1"),
 			Itinerary: []domain.CornerProgress{
-				{CornerID: domain.CornerID("corner-1"), Status: domain.VisitCompleted},
-				{CornerID: domain.CornerID("corner-2"), Status: domain.VisitNotVisited},
+				domain.NewCornerProgressValFromProps(domain.CornerProgressProps{CornerID: domain.CornerID("corner-1"), Status: domain.VisitCompleted}),
+				domain.NewCornerProgressValFromProps(domain.CornerProgressProps{CornerID: domain.CornerID("corner-2"), Status: domain.VisitNotVisited}),
 			},
 		})
 
@@ -118,7 +117,7 @@ func TestGroup_MarkVisitStarted_Constraints(t *testing.T) {
 	t.Run("Cannot start if corner does not exist in itinerary", func(t *testing.T) {
 		g := domain.NewGroupFromProps(domain.GroupProps{ID: domain.GroupID("group-1"),
 			Itinerary: []domain.CornerProgress{
-				{CornerID: domain.CornerID("corner-1"), Status: domain.VisitNotVisited},
+				domain.NewCornerProgressValFromProps(domain.CornerProgressProps{CornerID: domain.CornerID("corner-1"), Status: domain.VisitNotVisited}),
 			},
 		})
 
@@ -133,7 +132,7 @@ func TestGroup_MarkVisitCompleted_Constraints(t *testing.T) {
 	t.Run("Cannot complete if corner is not in progress", func(t *testing.T) {
 		g := domain.NewGroupFromProps(domain.GroupProps{ID: domain.GroupID("group-1"),
 			Itinerary: []domain.CornerProgress{
-				{CornerID: domain.CornerID("corner-1"), Status: domain.VisitNotVisited},
+				domain.NewCornerProgressValFromProps(domain.CornerProgressProps{CornerID: domain.CornerID("corner-1"), Status: domain.VisitNotVisited}),
 			},
 		})
 
@@ -146,7 +145,7 @@ func TestGroup_MarkVisitCompleted_Constraints(t *testing.T) {
 	t.Run("Cannot complete if corner does not exist in itinerary", func(t *testing.T) {
 		g := domain.NewGroupFromProps(domain.GroupProps{ID: domain.GroupID("group-1"),
 			Itinerary: []domain.CornerProgress{
-				{CornerID: domain.CornerID("corner-1"), Status: domain.VisitInProgress},
+				domain.NewCornerProgressValFromProps(domain.CornerProgressProps{CornerID: domain.CornerID("corner-1"), Status: domain.VisitInProgress}),
 			},
 		})
 

@@ -1,4 +1,3 @@
-//go:build ignore
 
 package usecase
 
@@ -68,13 +67,13 @@ func TestFacilitatorAuthService_Login(t *testing.T) {
 			t.Fatal("expected track, got nil")
 		}
 		if res.Track.ID() != "track-1" {
-			t.Errorf("expected track ID to be 'track-1', got '%s'", res.Track.ID)
+			t.Errorf("expected track ID to be 'track-1', got '%s'", res.Track.ID())
 		}
 		if res.Corner == nil {
 			t.Fatal("expected corner, got nil")
 		}
 		if res.Corner.ID() != "corner-1" {
-			t.Errorf("expected corner ID to be 'corner-1', got '%s'", res.Corner.ID)
+			t.Errorf("expected corner ID to be 'corner-1', got '%s'", res.Corner.ID())
 		}
 	})
 
