@@ -84,13 +84,13 @@ func (h *MessageHandler) SendBroadcast(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: "invalid request"})
 	}
 
-	announcement, err := h.announcement.SendAnnouncement(c.Request().Context(), campID, req.Content, session.AdminID)
+	announcement, err := h.announcement.SendAnnouncement(c.Request().Context(), campID, req.Content, session.AdminID())
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()})
 	}
 
 	return c.JSON(http.StatusCreated, MessageResponse{
-		ID: string(announcement.ID), ChannelType: string(domain.MessageBroadcast), SenderRole: string(announcement.SenderRole), Content: announcement.Content, SentAt: announcement.SentAt,
+		ID: string(announcement.ID()), ChannelType: string(domain.MessageBroadcast), SenderRole: string(announcement.SenderRole()), Content: announcement.Content(), SentAt: announcement.SentAt(),
 	})
 }
 
@@ -119,7 +119,7 @@ func (h *MessageHandler) ListBroadcasts(c echo.Context) error {
 	res := make([]MessageResponse, len(announcements))
 	for i, announcement := range announcements {
 		res[i] = MessageResponse{
-			ID: string(announcement.ID), ChannelType: string(domain.MessageBroadcast), SenderRole: string(announcement.SenderRole), Content: announcement.Content, SentAt: announcement.SentAt,
+			ID: string(announcement.ID()), ChannelType: string(domain.MessageBroadcast), SenderRole: string(announcement.SenderRole()), Content: announcement.Content(), SentAt: announcement.SentAt(),
 		}
 	}
 
@@ -228,18 +228,18 @@ func (h *MessageHandler) SendDirect(c echo.Context) error {
 	}
 
 	var tID *string
-	if msg.TrackID != "" {
-		valStr := string(msg.TrackID)
+	if msg.TrackID() != "" {
+		valStr := string(msg.TrackID())
 		tID = &valStr
 	}
 
 	return c.JSON(http.StatusCreated, MessageResponse{
-		ID:          string(msg.ID),
-		ChannelType: string(msg.ChannelType),
+		ID:          string(msg.ID()),
+		ChannelType: string(msg.ChannelType()),
 		TrackID:     tID,
-		SenderRole:  string(msg.SenderRole),
-		Content:     msg.Content,
-		SentAt:      msg.SentAt,
+		SenderRole:  string(msg.SenderRole()),
+		Content:     msg.Content(),
+		SentAt:      msg.SentAt(),
 	})
 }
 
@@ -315,7 +315,7 @@ func requireFacilitatorTrackScope(c echo.Context, trackID domain.TrackID) error 
 	if !ok {
 		return echo.NewHTTPError(http.StatusUnauthorized, "unauthorized")
 	}
-	if session.TrackID != trackID {
+	if session.TrackID() != trackID {
 		return domain.ErrTrackScopeForbidden
 	}
 	return nil
@@ -347,12 +347,12 @@ func mapMessages(msgs []*domain.Message) []MessageResponse {
 	res := make([]MessageResponse, len(msgs))
 	for i, msg := range msgs {
 		var trackID *string
-		if msg.TrackID != "" {
-			value := string(msg.TrackID)
+		if msg.TrackID() != "" {
+			value := string(msg.TrackID())
 			trackID = &value
 		}
-		res[i] = MessageResponse{ID: string(msg.ID), ChannelType: string(msg.ChannelType), TrackID: trackID, SenderRole: string(msg.SenderRole), Content: msg.Content, SentAt: msg.SentAt, IsRead: msg.ReadAt.IsSet()}
-		if readAt, ok := msg.ReadAt.Value(); ok {
+		res[i] = MessageResponse{ID: string(msg.ID()), ChannelType: string(msg.ChannelType()), TrackID: trackID, SenderRole: string(msg.SenderRole()), Content: msg.Content(), SentAt: msg.SentAt(), IsRead: msg.ReadAt().IsSet()}
+		if readAt, ok := msg.ReadAt().Value(); ok {
 			res[i].ReadAt = &readAt
 		}
 	}

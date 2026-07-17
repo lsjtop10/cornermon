@@ -46,10 +46,10 @@ func mapDomainTrackToDTO(track *domain.Track) TrackResponse {
 	}
 	return TrackResponse{
 		TrackSummaryResponse: TrackSummaryResponse{
-			ID:                string(track.ID),
-			CornerID:          string(track.CornerID),
-			TrackNo:           track.TrackNo,
-			Status:            string(track.Status),
+			ID:                string(track.ID()),
+			CornerID:          string(track.CornerID()),
+			TrackNo:           track.TrackNo(),
+			Status:            string(track.Status()),
 			OperationalStatus: string(track.OperationalStatus()),
 		},
 	}

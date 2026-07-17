@@ -48,11 +48,11 @@ func (s *CornerService) AddLearningCorner(ctx context.Context, campID domain.Cam
 		return nil, domain.ErrCampInvalidTransition
 	}
 
-	corner := &domain.Corner{
+	corner := domain.NewCornerFromProps(domain.CornerProps{
 		ID:     domain.CornerID(s.uuidFn()),
 		CampID: campID,
 		Name:   name,
-	}
+	})
 
 	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
 		return s.corners.Save(ctx, corner)
@@ -63,7 +63,7 @@ func (s *CornerService) AddLearningCorner(ctx context.Context, campID domain.Cam
 		return nil, err
 	}
 
-	s.recordAuditLog(ctx, "admin", "CORNER_CREATE", string(corner.ID), true, map[string]any{"campID": string(campID), "name": name})
+	s.recordAuditLog(ctx, "admin", "CORNER_CREATE", string(corner.ID()), true, map[string]any{"campID": string(campID), "name": name})
 	_ = s.broadcaster.Broadcast(ctx, campID, EventCornersUpdated, CampScope())
 
 	return corner, nil
@@ -96,7 +96,7 @@ func (s *CornerService) ModifyCornerSpecification(ctx context.Context, id domain
 		return nil, domain.ErrCornerNotInItinerary
 	}
 
-	corner.Name = name // assuming Name is modifiable
+	corner.SetName(name) // assuming Name is modifiable
 
 	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
 		return s.corners.Save(ctx, corner)
@@ -108,7 +108,7 @@ func (s *CornerService) ModifyCornerSpecification(ctx context.Context, id domain
 	}
 
 	s.recordAuditLog(ctx, "admin", "CORNER_UPDATE", string(id), true, map[string]any{"name": name})
-	_ = s.broadcaster.Broadcast(ctx, corner.CampID, EventCornersUpdated, CampScope())
+	_ = s.broadcaster.Broadcast(ctx, corner.CampID(), EventCornersUpdated, CampScope())
 
 	return corner, nil
 }
@@ -133,7 +133,7 @@ func (s *CornerService) RemoveCornerFromCamp(ctx context.Context, id domain.Corn
 	}
 
 	s.recordAuditLog(ctx, "admin", "CORNER_DELETE", string(id), true, nil)
-	_ = s.broadcaster.Broadcast(ctx, corner.CampID, EventCornersUpdated, CampScope())
+	_ = s.broadcaster.Broadcast(ctx, corner.CampID(), EventCornersUpdated, CampScope())
 
 	return nil
 }

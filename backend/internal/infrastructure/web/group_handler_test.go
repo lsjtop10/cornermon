@@ -61,8 +61,8 @@ func TestListGroupsByTrackShoudReturnGroupsWhenSessionTrackMatchesPath(t *testin
 	// Arrange
 	service := usecase.NewGroupService(
 		nil,
-		cornerRepoForGroupHandler{corner: &domain.Corner{ID: "corner-1", CampID: "camp-1"}},
-		trackRepoForGroupHandler{track: &domain.Track{ID: "track-1", CornerID: "corner-1"}},
+		cornerRepoForGroupHandler{corner: domain.NewCornerFromProps(domain.CornerProps{ID: "corner-1", CampID: "camp-1"})},
+		trackRepoForGroupHandler{track: domain.NewTrackFromProps(domain.TrackProps{ID: "track-1", CornerID: "corner-1"})},
 		groupRepoForGroupHandler{groups: []*domain.Group{{ID: "group-1", CampID: "camp-1", Name: "1조"}}},
 		nil, nil, nil, nil,
 	)
@@ -72,7 +72,7 @@ func TestListGroupsByTrackShoudReturnGroupsWhenSessionTrackMatchesPath(t *testin
 	c := e.NewContext(req, rec)
 	c.SetParamNames("trackId")
 	c.SetParamValues("track-1")
-	c.Set("facilitatorSession", &domain.FacilitatorSession{TrackID: "track-1"})
+	c.Set("facilitatorSession", domain.NewFacilitatorSessionFromProps(domain.FacilitatorSessionProps{TrackID: "track-1"}))
 
 	// Act
 	err := NewGroupHandler(service).ListGroupsByTrack(c)
@@ -94,7 +94,7 @@ func TestListGroupsByTrackShoudRejectRequestWhenSessionTrackDiffers(t *testing.T
 	c := e.NewContext(req, rec)
 	c.SetParamNames("trackId")
 	c.SetParamValues("track-2")
-	c.Set("facilitatorSession", &domain.FacilitatorSession{TrackID: "track-1"})
+	c.Set("facilitatorSession", domain.NewFacilitatorSessionFromProps(domain.FacilitatorSessionProps{TrackID: "track-1"}))
 
 	// Act
 	err := NewGroupHandler(nil).ListGroupsByTrack(c)

@@ -10,9 +10,9 @@ import (
 func TestAnnouncementService_SendAnnouncement(t *testing.T) {
 	// Arrange
 	camps := NewMockCampRepository()
-	_ = camps.Save(context.Background(), &domain.Camp{ID: "camp-1", Status: domain.CampActive})
+	_ = camps.Save(context.Background(), domain.NewCampFromProps(domain.CampProps{ID: "camp-1", Status: domain.CampActive}))
 	tracks := NewMockTrackRepository()
-	_ = tracks.Save(context.Background(), &domain.Track{ID: "track-1", Status: domain.TrackActive})
+	_ = tracks.Save(context.Background(), domain.NewTrackFromProps(domain.TrackProps{ID: "track-1", Status: domain.TrackActive}))
 	repo := NewMockAnnouncementRepository()
 	receipts := NewMockAnnouncementReceiptRepository()
 	broadcaster := &MockBroadcaster{}

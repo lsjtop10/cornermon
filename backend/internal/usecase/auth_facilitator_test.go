@@ -14,32 +14,30 @@ func TestFacilitatorAuthService_Login(t *testing.T) {
 		// Arrange
 		now := time.Now()
 		camps := NewMockCampRepository()
-		camp := &domain.Camp{ID: "camp-1", Status: domain.CampActive}
+		camp := domain.NewCampFromProps(domain.CampProps{ID: "camp-1", Status: domain.CampActive})
 		camps.Save(context.Background(), camp)
 
 		corners := NewMockCornerRepository()
-		corner := &domain.Corner{ID: "corner-1", CampID: "camp-1", Name: "Corner 1"}
+		corner := domain.NewCornerFromProps(domain.CornerProps{ID: "corner-1", CampID: "camp-1", Name: "Corner 1"})
 		corners.Save(context.Background(), corner)
 
 		tracks := NewMockTrackRepository()
 		pinHash, _ := hashPassword("123456")
-		track := &domain.Track{
-			ID:       "track-1",
+		track := domain.NewTrackFromProps(domain.TrackProps{ID:       "track-1",
 			CornerID: "corner-1",
 			Status:   domain.TrackActive,
 			PINHash:  pinHash,
-		}
+		})
 		tracks.Save(context.Background(), track)
 
 		devices := NewMockDeviceRegistrationRepository()
 		deviceToken := "device-token-1"
 		deviceTokenHash := hashSHA256(deviceToken)
-		device := &domain.DeviceRegistration{
-			ID:        "device-1",
+		device := domain.NewDeviceRegistrationFromProps(domain.DeviceRegistrationProps{ID:        "device-1",
 			CampID:    "camp-1",
 			Status:    domain.DeviceApproved,
 			TokenHash: deviceTokenHash,
-		}
+		})
 		devices.Save(context.Background(), device)
 
 		sessions := NewMockFacilitatorSessionRepository()
@@ -82,30 +80,28 @@ func TestFacilitatorAuthService_Login(t *testing.T) {
 		// Arrange
 		now := time.Now()
 		camps := NewMockCampRepository()
-		camp := &domain.Camp{ID: "camp-1", Status: domain.CampActive}
+		camp := domain.NewCampFromProps(domain.CampProps{ID: "camp-1", Status: domain.CampActive})
 		camps.Save(context.Background(), camp)
 
 		corners := NewMockCornerRepository()
 
 		tracks := NewMockTrackRepository()
 		pinHash, _ := hashPassword("123456")
-		track := &domain.Track{
-			ID:       "track-1",
+		track := domain.NewTrackFromProps(domain.TrackProps{ID:       "track-1",
 			CornerID: "corner-1",
 			Status:   domain.TrackActive,
 			PINHash:  pinHash,
-		}
+		})
 		tracks.Save(context.Background(), track)
 
 		devices := NewMockDeviceRegistrationRepository()
 		deviceToken := "device-token-1"
 		deviceTokenHash := hashSHA256(deviceToken)
-		device := &domain.DeviceRegistration{
-			ID:        "device-1",
+		device := domain.NewDeviceRegistrationFromProps(domain.DeviceRegistrationProps{ID:        "device-1",
 			CampID:    "camp-1",
 			Status:    domain.DevicePending,
 			TokenHash: deviceTokenHash,
-		}
+		})
 		devices.Save(context.Background(), device)
 
 		sessions := NewMockFacilitatorSessionRepository()
@@ -129,31 +125,29 @@ func TestFacilitatorAuthService_Login(t *testing.T) {
 		// Arrange
 		now := time.Now()
 		camps := NewMockCampRepository()
-		camp := &domain.Camp{ID: "camp-1", Status: domain.CampActive}
+		camp := domain.NewCampFromProps(domain.CampProps{ID: "camp-1", Status: domain.CampActive})
 		camps.Save(context.Background(), camp)
 
 		corners := NewMockCornerRepository()
 
 		tracks := NewMockTrackRepository()
 		pinHash, _ := hashPassword("123456")
-		track := &domain.Track{
-			ID:       "track-1",
+		track := domain.NewTrackFromProps(domain.TrackProps{ID:       "track-1",
 			CornerID: "corner-1",
 			Status:   domain.TrackActive,
 			PINHash:  pinHash,
-		}
+		})
 		tracks.Save(context.Background(), track)
 
 		devices := NewMockDeviceRegistrationRepository()
 		deviceToken := "device-token-1"
 		deviceTokenHash := hashSHA256(deviceToken)
-		device := &domain.DeviceRegistration{
-			ID:          "device-1",
+		device := domain.NewDeviceRegistrationFromProps(domain.DeviceRegistrationProps{ID:          "device-1",
 			CampID:      "camp-1",
 			Status:      domain.DeviceApproved,
 			TokenHash:   deviceTokenHash,
 			LockedUntil: domain.Some(now.Add(5 * time.Minute)),
-		}
+		})
 		devices.Save(context.Background(), device)
 
 		sessions := NewMockFacilitatorSessionRepository()
@@ -177,31 +171,29 @@ func TestFacilitatorAuthService_Login(t *testing.T) {
 		// Arrange
 		now := time.Now()
 		camps := NewMockCampRepository()
-		camp := &domain.Camp{ID: "camp-1", Status: domain.CampActive}
+		camp := domain.NewCampFromProps(domain.CampProps{ID: "camp-1", Status: domain.CampActive})
 		camps.Save(context.Background(), camp)
 
 		corners := NewMockCornerRepository()
 
 		tracks := NewMockTrackRepository()
 		pinHash, _ := hashPassword("123456")
-		track := &domain.Track{
-			ID:       "track-1",
+		track := domain.NewTrackFromProps(domain.TrackProps{ID:       "track-1",
 			CornerID: "corner-1",
 			Status:   domain.TrackActive,
 			PINHash:  pinHash,
-		}
+		})
 		tracks.Save(context.Background(), track)
 
 		devices := NewMockDeviceRegistrationRepository()
 		deviceToken := "device-token-1"
 		deviceTokenHash := hashSHA256(deviceToken)
-		device := &domain.DeviceRegistration{
-			ID:                "device-1",
+		device := domain.NewDeviceRegistrationFromProps(domain.DeviceRegistrationProps{ID:                "device-1",
 			CampID:            "camp-1",
 			Status:            domain.DeviceApproved,
 			TokenHash:         deviceTokenHash,
 			FailedPinAttempts: 4, // 5번째 실패 유도
-		}
+		})
 		devices.Save(context.Background(), device)
 
 		sessions := NewMockFacilitatorSessionRepository()

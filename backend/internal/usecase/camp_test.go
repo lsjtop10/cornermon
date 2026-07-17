@@ -69,7 +69,7 @@ func TestCampService_ActivateCamp(t *testing.T) {
 		// Arrange
 		now := time.Now()
 		camps := NewMockCampRepository()
-		camp := &domain.Camp{ID: "camp-1", Status: domain.CampPending}
+		camp := domain.NewCampFromProps(domain.CampProps{ID: "camp-1", Status: domain.CampPending})
 		camps.Save(context.Background(), camp)
 
 		sessions := NewMockFacilitatorSessionRepository()
@@ -105,16 +105,15 @@ func TestCampService_EndCamp(t *testing.T) {
 		// Arrange
 		now := time.Now()
 		camps := NewMockCampRepository()
-		camp := &domain.Camp{ID: "camp-1", Status: domain.CampActive}
+		camp := domain.NewCampFromProps(domain.CampProps{ID: "camp-1", Status: domain.CampActive})
 		camps.Save(context.Background(), camp)
 
 		sessions := NewMockFacilitatorSessionRepository()
-		session := &domain.FacilitatorSession{
-			ID:        "session-1",
+		session := domain.NewFacilitatorSessionFromProps(domain.FacilitatorSessionProps{ID:        "session-1",
 			TrackID:   "track-1",
 			TokenHash: "token-hash-1",
 			CreatedAt: now,
-		}
+		})
 		sessions.Save(context.Background(), session)
 
 		auditLogs := &MockAuditLogRepository{}
@@ -154,7 +153,7 @@ func TestCampService_EndCamp(t *testing.T) {
 func TestUpdateCampSettingsShoudAuditAndBroadcastWhenSaveSucceeds(t *testing.T) {
 	// Arrange
 	camps := NewMockCampRepository()
-	camp := &domain.Camp{ID: "camp-1", Name: "Original", Status: domain.CampActive, BottleneckMinSamples: 3, BottleneckRatioPct: 20}
+	camp := domain.NewCampFromProps(domain.CampProps{ID: "camp-1", Name: "Original", Status: domain.CampActive, BottleneckMinSamples: 3, BottleneckRatioPct: 20})
 	_ = camps.Save(context.Background(), camp)
 	audits := &MockAuditLogRepository{}
 	broadcaster := &MockBroadcaster{}
@@ -162,7 +161,7 @@ func TestUpdateCampSettingsShoudAuditAndBroadcastWhenSaveSucceeds(t *testing.T) 
 	service.uuidFn = func() string { return "audit-1" }
 
 	// Act
-	updated, err := service.UpdateCampSettings(context.Background(), "camp-1", "admin-1", domain.CampSettingsPatch{Name: domain.Some("Updated")})
+	updated, err := service.UpdateCampSettings(context.Background(), "camp-1", "admin-1", domain.NewCampSettingsPatchValFromProps(domain.CampSettingsPatchProps{Name: domain.Some("Updated")}))
 
 	// Assert
 	if err != nil || updated.Name != "Updated" {
@@ -179,7 +178,7 @@ func TestUpdateCampSettingsShoudAuditAndBroadcastWhenSaveSucceeds(t *testing.T) 
 func TestUpdateCampSettingsShoudAuditFailureWithoutBroadcastWhenTransactionFails(t *testing.T) {
 	// Arrange
 	camps := NewMockCampRepository()
-	_ = camps.Save(context.Background(), &domain.Camp{ID: "camp-1", Name: "Original", Status: domain.CampActive, BottleneckMinSamples: 3, BottleneckRatioPct: 20})
+	_ = camps.Save(context.Background(), domain.NewCampFromProps(domain.CampProps{ID: "camp-1", Name: "Original", Status: domain.CampActive, BottleneckMinSamples: 3, BottleneckRatioPct: 20}))
 	audits := &MockAuditLogRepository{}
 	broadcaster := &MockBroadcaster{}
 	txErr := errors.New("save failed")
@@ -187,7 +186,7 @@ func TestUpdateCampSettingsShoudAuditFailureWithoutBroadcastWhenTransactionFails
 	service.uuidFn = func() string { return "audit-1" }
 
 	// Act
-	_, err := service.UpdateCampSettings(context.Background(), "camp-1", "admin-1", domain.CampSettingsPatch{Name: domain.Some("Updated")})
+	_, err := service.UpdateCampSettings(context.Background(), "camp-1", "admin-1", domain.NewCampSettingsPatchValFromProps(domain.CampSettingsPatchProps{Name: domain.Some("Updated")}))
 
 	// Assert
 	if !errors.Is(err, txErr) {

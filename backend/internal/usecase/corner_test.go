@@ -10,7 +10,7 @@ import (
 func TestCornerServiceCommandRegression(t *testing.T) {
 	ctx := context.Background()
 	camps := NewMockCampRepository()
-	_ = camps.Save(ctx, &domain.Camp{ID: "camp-1", Status: domain.CampPending})
+	_ = camps.Save(ctx, domain.NewCampFromProps(domain.CampProps{ID: "camp-1", Status: domain.CampPending}))
 	corners := NewMockCornerRepository()
 	service := NewCornerService(camps, corners, &MockAuditLogRepository{}, &MockBroadcaster{}, &MockTxManager{})
 	service.uuidFn = func() string { return "corner-1" }

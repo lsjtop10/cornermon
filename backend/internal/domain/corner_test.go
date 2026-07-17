@@ -7,10 +7,9 @@ import (
 )
 
 func TestCorner_OperationalStatus(t *testing.T) {
-	corner := &domain.Corner{
-		ID:            domain.CornerID("corner-1"),
+	corner := domain.NewCornerFromProps(domain.CornerProps{ID:            domain.CornerID("corner-1"),
 		TargetMinutes: 10,
-	}
+	})
 
 	t.Run("INACTIVE status if no tracks provided", func(t *testing.T) {
 		status := corner.OperationalStatus([]*domain.Track{})
@@ -86,13 +85,12 @@ func TestCorner_OperationalStatus(t *testing.T) {
 }
 
 func TestCorner_EffectiveTargetMinutes(t *testing.T) {
-	corner := &domain.Corner{
-		ID:            domain.CornerID("corner-1"),
+	corner := domain.NewCornerFromProps(domain.CornerProps{ID:            domain.CornerID("corner-1"),
 		TargetMinutes: 12,
-	}
+	})
 
 	t.Run("Returns TargetMinutes regardless of track input", func(t *testing.T) {
-		track := &domain.Track{ID: domain.TrackID("track-1")}
+		track := domain.NewTrackFromProps(domain.TrackProps{ID: domain.TrackID("track-1")})
 		minutes := corner.EffectiveTargetMinutes(track)
 		if minutes != 12 {
 			t.Errorf("expected minutes to be 12, got %d", minutes)

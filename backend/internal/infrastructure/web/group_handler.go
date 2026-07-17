@@ -35,17 +35,17 @@ func NewGroupHandler(groupUC *usecase.GroupService) *GroupHandler {
 
 func mapGroupToDTO(g *domain.Group) GroupResponse {
 	res := GroupResponse{
-		ID:         string(g.ID),
-		Name:       g.Name,
-		BadgeID:    string(g.BadgeID),
+		ID:         string(g.ID()),
+		Name:       g.Name(),
+		BadgeID:    string(g.BadgeID()),
 		Status:     string(g.Status()),
 		IsFinished: g.IsFinished(),
-		Itinerary:  make([]CornerProgressResponse, 0, len(g.Itinerary)),
+		Itinerary:  make([]CornerProgressResponse, 0, len(g.Itinerary())),
 	}
-	for _, c := range g.Itinerary {
+	for _, c := range g.Itinerary() {
 		res.Itinerary = append(res.Itinerary, CornerProgressResponse{
-			CornerID: string(c.CornerID),
-			Status:   string(c.Status),
+			CornerID: string(c.CornerID()),
+			Status:   string(c.Status()),
 		})
 	}
 	return res
@@ -90,7 +90,7 @@ func (h *GroupHandler) ListGroupsByTrack(c echo.Context) error {
 	}
 
 	trackID := domain.TrackID(c.Param("trackId"))
-	if session.TrackID != trackID {
+	if session.TrackID() != trackID {
 		return domain.ErrTrackScopeForbidden
 	}
 
@@ -146,10 +146,10 @@ func (h *GroupHandler) ListGroupVisits(c echo.Context) error {
 		c := d.Corner
 
 		durationOpt := v.DurationSeconds()
-		deviationOpt := v.DeviationSeconds(c.TargetMinutes)
+		deviationOpt := v.DeviationSeconds(c.TargetMinutes())
 
 		var endedAt *time.Time
-		if val, ok := v.EndedAt.Value(); ok {
+		if val, ok := v.EndedAt().Value(); ok {
 			endedAt = &val
 		}
 
@@ -162,13 +162,13 @@ func (h *GroupHandler) ListGroupVisits(c echo.Context) error {
 		}
 
 		res[i] = VisitSummaryResponse{
-			ID:               string(v.ID),
-			GroupID:          string(v.GroupID),
-			CornerID:         string(v.CornerID),
-			TrackID:          string(v.TrackID),
-			Status:           string(v.Status),
-			InputMethod:      string(v.InputMethod),
-			StartedAt:        v.StartedAt,
+			ID:               string(v.ID()),
+			GroupID:          string(v.GroupID()),
+			CornerID:         string(v.CornerID()),
+			TrackID:          string(v.TrackID()),
+			Status:           string(v.Status()),
+			InputMethod:      string(v.InputMethod()),
+			StartedAt:        v.StartedAt(),
 			EndedAt:          endedAt,
 			DurationSeconds:  duration,
 			DeviationSeconds: deviation,

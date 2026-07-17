@@ -26,12 +26,12 @@ func (r *pgAdminRepository) queries(ctx context.Context) *db.Queries {
 }
 
 func mapAdmin(row db.Admin) *domain.Admin {
-	return &domain.Admin{
+	return domain.NewAdminFromProps(domain.AdminProps{
 		ID:           domain.AdminID(row.ID),
 		Username:     row.Username,
 		PasswordHash: row.PasswordHash,
 		Role:         domain.AdminRole(row.Role),
-	}
+	})
 }
 
 func (r *pgAdminRepository) Get(ctx context.Context, id domain.AdminID) (*domain.Admin, error) {
@@ -58,10 +58,10 @@ func (r *pgAdminRepository) GetByUsername(ctx context.Context, username string) 
 
 func (r *pgAdminRepository) Save(ctx context.Context, admin *domain.Admin) error {
 	return r.queries(ctx).SaveAdmin(ctx, db.SaveAdminParams{
-		ID:           string(admin.ID),
-		Username:     admin.Username,
-		PasswordHash: admin.PasswordHash,
-		Role:         string(admin.Role),
+		ID:           string(admin.ID()),
+		Username:     admin.Username(),
+		PasswordHash: admin.PasswordHash(),
+		Role:         string(admin.Role()),
 	})
 }
 

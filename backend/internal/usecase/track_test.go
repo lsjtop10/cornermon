@@ -13,11 +13,11 @@ func TestTrackService_CreateTrack(t *testing.T) {
 		// Arrange
 		now := time.Now()
 		camps := NewMockCampRepository()
-		camp := &domain.Camp{ID: "camp-1", Status: domain.CampActive}
+		camp := domain.NewCampFromProps(domain.CampProps{ID: "camp-1", Status: domain.CampActive})
 		camps.Save(context.Background(), camp)
 
 		corners := NewMockCornerRepository()
-		corner := &domain.Corner{ID: "corner-1", CampID: "camp-1"}
+		corner := domain.NewCornerFromProps(domain.CornerProps{ID: "corner-1", CampID: "camp-1"})
 		corners.Save(context.Background(), corner)
 
 		tracks := NewMockTrackRepository()
@@ -60,11 +60,11 @@ func TestTrackService_CreateTrack(t *testing.T) {
 	t.Run("ShouldFailCreateTrackWhenCampIsEnded", func(t *testing.T) {
 		// Arrange
 		camps := NewMockCampRepository()
-		camp := &domain.Camp{ID: "camp-1", Status: domain.CampEnded}
+		camp := domain.NewCampFromProps(domain.CampProps{ID: "camp-1", Status: domain.CampEnded})
 		camps.Save(context.Background(), camp)
 
 		corners := NewMockCornerRepository()
-		corner := &domain.Corner{ID: "corner-1", CampID: "camp-1"}
+		corner := domain.NewCornerFromProps(domain.CornerProps{ID: "corner-1", CampID: "camp-1"})
 		corners.Save(context.Background(), corner)
 
 		tracks := NewMockTrackRepository()
@@ -91,25 +91,23 @@ func TestTrackService_DeleteTrack(t *testing.T) {
 		now := time.Now()
 		camps := NewMockCampRepository()
 		corners := NewMockCornerRepository()
-		corner := &domain.Corner{ID: "corner-1", CampID: "camp-1"}
+		corner := domain.NewCornerFromProps(domain.CornerProps{ID: "corner-1", CampID: "camp-1"})
 		corners.Save(context.Background(), corner)
 
 		tracks := NewMockTrackRepository()
-		track := &domain.Track{
-			ID:             "track-1",
+		track := domain.NewTrackFromProps(domain.TrackProps{ID:             "track-1",
 			CornerID:       "corner-1",
 			Status:         domain.TrackActive,
 			CurrentVisitID: domain.None[domain.VisitID](),
-		}
+		})
 		tracks.Save(context.Background(), track)
 
 		sessions := NewMockFacilitatorSessionRepository()
-		session := &domain.FacilitatorSession{
-			ID:        "session-1",
+		session := domain.NewFacilitatorSessionFromProps(domain.FacilitatorSessionProps{ID:        "session-1",
 			TrackID:   "track-1",
 			TokenHash: "hash-1",
 			CreatedAt: now,
-		}
+		})
 		sessions.Save(context.Background(), session)
 
 		auditLogs := &MockAuditLogRepository{}
@@ -154,12 +152,11 @@ func TestTrackService_DeleteTrack(t *testing.T) {
 		camps := NewMockCampRepository()
 		corners := NewMockCornerRepository()
 		tracks := NewMockTrackRepository()
-		track := &domain.Track{
-			ID:             "track-1",
+		track := domain.NewTrackFromProps(domain.TrackProps{ID:             "track-1",
 			CornerID:       "corner-1",
 			Status:         domain.TrackActive,
 			CurrentVisitID: domain.Some[domain.VisitID]("visit-1"),
-		}
+		})
 		tracks.Save(context.Background(), track)
 
 		sessions := NewMockFacilitatorSessionRepository()
@@ -184,12 +181,12 @@ func TestReplaceTrackShoudMigrateSessionAndBroadcastAfterSuccess(t *testing.T) {
 	// Arrange
 	now := time.Date(2026, 7, 13, 10, 0, 0, 0, time.UTC)
 	corners := NewMockCornerRepository()
-	_ = corners.Save(context.Background(), &domain.Corner{ID: "corner-old", CampID: "camp-1"})
-	_ = corners.Save(context.Background(), &domain.Corner{ID: "corner-new", CampID: "camp-1"})
+	_ = corners.Save(context.Background(), domain.NewCornerFromProps(domain.CornerProps{ID: "corner-old", CampID: "camp-1"}))
+	_ = corners.Save(context.Background(), domain.NewCornerFromProps(domain.CornerProps{ID: "corner-new", CampID: "camp-1"}))
 	tracks := NewMockTrackRepository()
-	_ = tracks.Save(context.Background(), &domain.Track{ID: "track-old", CornerID: "corner-old", Status: domain.TrackActive})
+	_ = tracks.Save(context.Background(), domain.NewTrackFromProps(domain.TrackProps{ID: "track-old", CornerID: "corner-old", Status: domain.TrackActive}))
 	sessions := NewMockFacilitatorSessionRepository()
-	_ = sessions.Save(context.Background(), &domain.FacilitatorSession{ID: "session-1", TrackID: "track-old", CreatedAt: now})
+	_ = sessions.Save(context.Background(), domain.NewFacilitatorSessionFromProps(domain.FacilitatorSessionProps{ID: "session-1", TrackID: "track-old", CreatedAt: now}))
 	broadcaster := &MockBroadcaster{}
 	service := NewTrackService(NewMockCampRepository(), corners, tracks, sessions, &MockAuditLogRepository{}, broadcaster, &MockTxManager{})
 	service.nowFn = func() time.Time { return now }
@@ -218,10 +215,10 @@ func TestReplaceTrackShoudMigrateSessionAndBroadcastAfterSuccess(t *testing.T) {
 func TestReplaceTrackShoudRejectDifferentCampBeforeMutation(t *testing.T) {
 	// Arrange
 	corners := NewMockCornerRepository()
-	_ = corners.Save(context.Background(), &domain.Corner{ID: "corner-old", CampID: "camp-a"})
-	_ = corners.Save(context.Background(), &domain.Corner{ID: "corner-new", CampID: "camp-b"})
+	_ = corners.Save(context.Background(), domain.NewCornerFromProps(domain.CornerProps{ID: "corner-old", CampID: "camp-a"}))
+	_ = corners.Save(context.Background(), domain.NewCornerFromProps(domain.CornerProps{ID: "corner-new", CampID: "camp-b"}))
 	tracks := NewMockTrackRepository()
-	original := &domain.Track{ID: "track-old", CornerID: "corner-old", Status: domain.TrackActive}
+	original := domain.NewTrackFromProps(domain.TrackProps{ID: "track-old", CornerID: "corner-old", Status: domain.TrackActive})
 	_ = tracks.Save(context.Background(), original)
 	broadcaster := &MockBroadcaster{}
 	service := NewTrackService(NewMockCampRepository(), corners, tracks, NewMockFacilitatorSessionRepository(), &MockAuditLogRepository{}, broadcaster, &MockTxManager{})
@@ -241,10 +238,10 @@ func TestReplaceTrackShoudRejectDifferentCampBeforeMutation(t *testing.T) {
 func TestReplaceTrackShoudPreserveBusyTrackWhenRejected(t *testing.T) {
 	// Arrange
 	corners := NewMockCornerRepository()
-	_ = corners.Save(context.Background(), &domain.Corner{ID: "corner-old", CampID: "camp-1"})
-	_ = corners.Save(context.Background(), &domain.Corner{ID: "corner-new", CampID: "camp-1"})
+	_ = corners.Save(context.Background(), domain.NewCornerFromProps(domain.CornerProps{ID: "corner-old", CampID: "camp-1"}))
+	_ = corners.Save(context.Background(), domain.NewCornerFromProps(domain.CornerProps{ID: "corner-new", CampID: "camp-1"}))
 	tracks := NewMockTrackRepository()
-	original := &domain.Track{ID: "track-old", CornerID: "corner-old", Status: domain.TrackActive, CurrentVisitID: domain.Some[domain.VisitID]("visit-1")}
+	original := domain.NewTrackFromProps(domain.TrackProps{ID: "track-old", CornerID: "corner-old", Status: domain.TrackActive, CurrentVisitID: domain.Some[domain.VisitID]("visit-1")})
 	_ = tracks.Save(context.Background(), original)
 	service := NewTrackService(NewMockCampRepository(), corners, tracks, NewMockFacilitatorSessionRepository(), &MockAuditLogRepository{}, &MockBroadcaster{}, &MockTxManager{})
 

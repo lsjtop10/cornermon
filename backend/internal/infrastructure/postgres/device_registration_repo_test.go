@@ -25,7 +25,7 @@ func TestShouldPreserveCreatedAtWhenMappingDeviceRegistrationRow(t *testing.T) {
 	got := mapDeviceRegistration(row)
 
 	// Assert
-	if !got.CreatedAt.Equal(createdAt) {
+	if !got.CreatedAt().Equal(createdAt) {
 		t.Fatalf("expected CreatedAt %v, got %v", createdAt, got.CreatedAt)
 	}
 }

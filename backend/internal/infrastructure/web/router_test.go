@@ -25,7 +25,7 @@ type trackAuthForMessageRoutes struct{}
 
 func (trackAuthForMessageRoutes) ValidateSession(_ context.Context, token string) (*domain.FacilitatorSession, error) {
 	if token == "track-token" {
-		return &domain.FacilitatorSession{TrackID: "track-1"}, nil
+		return domain.NewFacilitatorSessionFromProps(domain.FacilitatorSessionProps{TrackID: "track-1"}), nil
 	}
 	return nil, errors.New("invalid track token")
 }

@@ -13,7 +13,7 @@ func TestDeviceTrustService_RequestRegistration(t *testing.T) {
 		// Arrange
 		now := time.Now()
 		camps := NewMockCampRepository()
-		camp := &domain.Camp{ID: "camp-1", RegistrationCode: "REGCODE1", Status: domain.CampActive}
+		camp := domain.NewCampFromProps(domain.CampProps{ID: "camp-1", RegistrationCode: "REGCODE1", Status: domain.CampActive})
 		camps.Save(context.Background(), camp)
 
 		devices := NewMockDeviceRegistrationRepository()
@@ -80,7 +80,7 @@ func TestDeviceTrustService_RequestRegistration(t *testing.T) {
 	t.Run("ShouldReturnInvalidTransitionWhenCampIsNotActive", func(t *testing.T) {
 		// Arrange
 		camps := NewMockCampRepository()
-		camp := &domain.Camp{ID: "camp-1", RegistrationCode: "REGCODE1", Status: domain.CampPending}
+		camp := domain.NewCampFromProps(domain.CampProps{ID: "camp-1", RegistrationCode: "REGCODE1", Status: domain.CampPending})
 		camps.Save(context.Background(), camp)
 
 		devices := NewMockDeviceRegistrationRepository()
@@ -106,11 +106,10 @@ func TestDeviceTrustService_ApproveDevice(t *testing.T) {
 		now := time.Now()
 		camps := NewMockCampRepository()
 		devices := NewMockDeviceRegistrationRepository()
-		device := &domain.DeviceRegistration{
-			ID:     "device-1",
+		device := domain.NewDeviceRegistrationFromProps(domain.DeviceRegistrationProps{ID:     "device-1",
 			CampID: "camp-1",
 			Status: domain.DevicePending,
-		}
+		})
 		devices.Devices["device-1"] = device
 
 		auditLogs := &MockAuditLogRepository{}
@@ -148,7 +147,7 @@ func TestDeviceTrustService_GetMyRegistrationStatus(t *testing.T) {
 		// Arrange
 		now := time.Now()
 		camps := NewMockCampRepository()
-		camp := &domain.Camp{ID: "camp-1", RegistrationCode: "REGCODE1", Status: domain.CampActive}
+		camp := domain.NewCampFromProps(domain.CampProps{ID: "camp-1", RegistrationCode: "REGCODE1", Status: domain.CampActive})
 		camps.Save(context.Background(), camp)
 
 		devices := NewMockDeviceRegistrationRepository()

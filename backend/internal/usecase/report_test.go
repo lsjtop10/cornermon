@@ -11,7 +11,7 @@ func TestReportService_GenerateCampReport(t *testing.T) {
 	t.Run("ShouldGenerateReportSuccessfullyWhenCampIsEnded", func(t *testing.T) {
 		// Arrange
 		camps := NewMockCampRepository()
-		camp := &domain.Camp{ID: "camp-1", Status: domain.CampEnded}
+		camp := domain.NewCampFromProps(domain.CampProps{ID: "camp-1", Status: domain.CampEnded})
 		camps.Save(context.Background(), camp)
 
 		querier := &MockReportQuerier{
@@ -41,7 +41,7 @@ func TestReportService_GenerateCampReport(t *testing.T) {
 	t.Run("ShouldFailGenerateReportWhenCampIsActive", func(t *testing.T) {
 		// Arrange
 		camps := NewMockCampRepository()
-		camp := &domain.Camp{ID: "camp-1", Status: domain.CampActive}
+		camp := domain.NewCampFromProps(domain.CampProps{ID: "camp-1", Status: domain.CampActive})
 		camps.Save(context.Background(), camp)
 
 		s := NewReportService(camps, &MockReportQuerier{})
@@ -62,7 +62,7 @@ func TestGetCampReportShoudQueryExplicitCampWhenAnyState(t *testing.T) {
 		t.Run(string(state), func(t *testing.T) {
 			// Arrange
 			camps := NewMockCampRepository()
-			camps.Camps["camp-selected"] = &domain.Camp{ID: "camp-selected", Status: state}
+			camps.Camps["camp-selected"] = domain.NewCampFromProps(domain.CampProps{ID: "camp-selected", Status: state})
 			querier := &MockReportQuerier{ReportToReturn: &CampReport{CampID: "camp-selected"}}
 			service := NewReportService(camps, querier)
 

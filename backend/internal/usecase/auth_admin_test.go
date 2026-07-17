@@ -14,7 +14,7 @@ func TestAdminAuthService_Login(t *testing.T) {
 		now := time.Now()
 		admins := NewMockAdminRepository()
 		passwordHash, _ := hashPassword("admin-password")
-		admin := &domain.Admin{ID: "admin-1", PasswordHash: passwordHash}
+		admin := domain.NewAdminFromProps(domain.AdminProps{ID: "admin-1", PasswordHash: passwordHash})
 		admins.Admins["admin-1"] = admin
 
 		sessions := NewMockAdminSessionRepository()
@@ -49,7 +49,7 @@ func TestAdminAuthService_Login(t *testing.T) {
 		// Arrange
 		admins := NewMockAdminRepository()
 		passwordHash, _ := hashPassword("admin-password")
-		admin := &domain.Admin{ID: "admin-1", PasswordHash: passwordHash}
+		admin := domain.NewAdminFromProps(domain.AdminProps{ID: "admin-1", PasswordHash: passwordHash})
 		admins.Admins["admin-1"] = admin
 
 		sessions := NewMockAdminSessionRepository()
@@ -77,13 +77,12 @@ func TestAdminAuthService_ValidateAccessToken(t *testing.T) {
 		// Arrange
 		now := time.Now()
 		sessions := NewMockAdminSessionRepository()
-		session := &domain.AdminSession{
-			ID:              "session-1",
+		session := domain.NewAdminSessionFromProps(domain.AdminSessionProps{ID:              "session-1",
 			AdminID:         "admin-1",
 			AccessTokenHash: hashSHA256("access-token-1"),
 			CreatedAt:       now.Add(-1 * time.Hour),
 			LastUsedAt:      now.Add(-10 * time.Minute),
-		}
+		})
 		sessions.Sessions["session-1"] = session
 
 		s := NewAdminAuthService(nil, sessions, nil, nil, nil, nil, nil, &MockTxManager{})
@@ -105,13 +104,12 @@ func TestAdminAuthService_ValidateAccessToken(t *testing.T) {
 		// Arrange
 		now := time.Now()
 		sessions := NewMockAdminSessionRepository()
-		session := &domain.AdminSession{
-			ID:              "session-1",
+		session := domain.NewAdminSessionFromProps(domain.AdminSessionProps{ID:              "session-1",
 			AdminID:         "admin-1",
 			AccessTokenHash: hashSHA256("access-token-1"),
 			CreatedAt:       now.Add(-13 * time.Hour),
 			LastUsedAt:      now.Add(-13 * time.Hour),
-		}
+		})
 		sessions.Sessions["session-1"] = session
 
 		s := NewAdminAuthService(nil, sessions, nil, nil, nil, nil, nil, &MockTxManager{})

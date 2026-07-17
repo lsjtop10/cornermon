@@ -39,10 +39,9 @@ func TestCamp_Activate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			camp := &domain.Camp{
-				ID:     domain.CampID("camp-1"),
+			camp := domain.NewCampFromProps(domain.CampProps{ID:     domain.CampID("camp-1"),
 				Status: tt.initialStatus,
-			}
+			})
 
 			err := camp.Activate(now)
 
@@ -98,10 +97,9 @@ func TestCamp_End(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			camp := &domain.Camp{
-				ID:     domain.CampID("camp-1"),
+			camp := domain.NewCampFromProps(domain.CampProps{ID:     domain.CampID("camp-1"),
 				Status: tt.initialStatus,
-			}
+			})
 
 			event, err := camp.End(now)
 
@@ -140,13 +138,12 @@ func TestUpdateSettingsShoudPatchOnlySpecifiedFieldsWhenValid(t *testing.T) {
 	start := time.Date(2026, 7, 13, 9, 0, 0, 0, time.UTC)
 	end := start.Add(8 * time.Hour)
 	activated := start.Add(time.Hour)
-	camp := &domain.Camp{
-		Name: "Original", StartAt: start, EndAt: end, Status: domain.CampActive,
+	camp := domain.NewCampFromProps(domain.CampProps{Name: "Original", StartAt: start, EndAt: end, Status: domain.CampActive,
 		ActivatedAt: domain.Some(activated), BottleneckMinSamples: 3, BottleneckRatioPct: 20,
-	}
+	})
 
 	// Act
-	err := camp.UpdateSettings(domain.CampSettingsPatch{Name: domain.Some("  Updated  "), BottleneckRatioPct: domain.Some(35)})
+	err := camp.UpdateSettings(domain.NewCampSettingsPatchValFromProps(domain.CampSettingsPatchProps{Name: domain.Some("  Updated  "), BottleneckRatioPct: domain.Some(35)}))
 
 	// Assert
 	if err != nil {
@@ -167,16 +164,16 @@ func TestUpdateSettingsShoudRejectInvalidPatchWithoutMutation(t *testing.T) {
 		name  string
 		patch domain.CampSettingsPatch
 	}{
-		{name: "blank name", patch: domain.CampSettingsPatch{Name: domain.Some("  ")}},
-		{name: "invalid period", patch: domain.CampSettingsPatch{StartAt: domain.Some(start.Add(2 * time.Hour)), EndAt: domain.Some(start)}},
-		{name: "non-positive samples", patch: domain.CampSettingsPatch{BottleneckMinSamples: domain.Some(0)}},
-		{name: "ratio below range", patch: domain.CampSettingsPatch{BottleneckRatioPct: domain.Some(-1)}},
-		{name: "ratio above range", patch: domain.CampSettingsPatch{BottleneckRatioPct: domain.Some(101)}},
+		{name: "blank name", patch: domain.NewCampSettingsPatchValFromProps(domain.CampSettingsPatchProps{Name: domain.Some("  ")})},
+		{name: "invalid period", patch: domain.NewCampSettingsPatchValFromProps(domain.CampSettingsPatchProps{StartAt: domain.Some(start.Add(2 * time.Hour)), EndAt: domain.Some(start)})},
+		{name: "non-positive samples", patch: domain.NewCampSettingsPatchValFromProps(domain.CampSettingsPatchProps{BottleneckMinSamples: domain.Some(0)})},
+		{name: "ratio below range", patch: domain.NewCampSettingsPatchValFromProps(domain.CampSettingsPatchProps{BottleneckRatioPct: domain.Some(-1)})},
+		{name: "ratio above range", patch: domain.NewCampSettingsPatchValFromProps(domain.CampSettingsPatchProps{BottleneckRatioPct: domain.Some(101)})},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			// Arrange
-			camp := &domain.Camp{Name: "Original", StartAt: start, EndAt: start.Add(time.Hour), Status: domain.CampPending, BottleneckMinSamples: 3, BottleneckRatioPct: 20}
+			camp := domain.NewCampFromProps(domain.CampProps{Name: "Original", StartAt: start, EndAt: start.Add(time.Hour), Status: domain.CampPending, BottleneckMinSamples: 3, BottleneckRatioPct: 20})
 			before := *camp
 
 			// Act
@@ -247,10 +244,10 @@ func TestNewCampShoudRejectInvalidInputWithoutCreatingCamp(t *testing.T) {
 
 func TestUpdateSettingsShoudReturnConflictErrorWhenCampEnded(t *testing.T) {
 	// Arrange
-	camp := &domain.Camp{Status: domain.CampEnded}
+	camp := domain.NewCampFromProps(domain.CampProps{Status: domain.CampEnded})
 
 	// Act
-	err := camp.UpdateSettings(domain.CampSettingsPatch{Name: domain.Some("Updated")})
+	err := camp.UpdateSettings(domain.NewCampSettingsPatchValFromProps(domain.CampSettingsPatchProps{Name: domain.Some("Updated")}))
 
 	// Assert
 	if err != domain.ErrCampSettingsLocked {

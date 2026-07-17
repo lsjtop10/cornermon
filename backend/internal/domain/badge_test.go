@@ -9,10 +9,9 @@ import (
 
 func TestBadge_AssignTo(t *testing.T) {
 	t.Run("AssignTo on UNASSIGNED badge succeeds", func(t *testing.T) {
-		badge := &domain.Badge{
-			ID:     domain.BadgeID("badge-1"),
+		badge := domain.NewBadgeFromProps(domain.BadgeProps{ID:     domain.BadgeID("badge-1"),
 			Status: domain.BadgeUnassigned,
-		}
+		})
 
 		err := badge.AssignTo(domain.GroupID("group-1"))
 		if err != nil {
@@ -33,11 +32,10 @@ func TestBadge_AssignTo(t *testing.T) {
 	})
 
 	t.Run("AssignTo on ASSIGNED badge fails with ErrBadgeAlreadyAssigned", func(t *testing.T) {
-		badge := &domain.Badge{
-			ID:              domain.BadgeID("badge-1"),
+		badge := domain.NewBadgeFromProps(domain.BadgeProps{ID:              domain.BadgeID("badge-1"),
 			Status:          domain.BadgeAssigned,
 			AssignedGroupID: domain.Some(domain.GroupID("group-1")),
-		}
+		})
 
 		err := badge.AssignTo(domain.GroupID("group-2"))
 		if !errors.Is(err, domain.ErrBadgeAlreadyAssigned) {
@@ -54,11 +52,10 @@ func TestBadge_AssignTo(t *testing.T) {
 
 func TestBadge_Release(t *testing.T) {
 	t.Run("Release on ASSIGNED badge succeeds", func(t *testing.T) {
-		badge := &domain.Badge{
-			ID:              domain.BadgeID("badge-1"),
+		badge := domain.NewBadgeFromProps(domain.BadgeProps{ID:              domain.BadgeID("badge-1"),
 			Status:          domain.BadgeAssigned,
 			AssignedGroupID: domain.Some(domain.GroupID("group-1")),
-		}
+		})
 
 		err := badge.Release()
 		if err != nil {
@@ -75,10 +72,9 @@ func TestBadge_Release(t *testing.T) {
 	})
 
 	t.Run("Release on UNASSIGNED badge fails with ErrBadgeNotAssigned", func(t *testing.T) {
-		badge := &domain.Badge{
-			ID:     domain.BadgeID("badge-1"),
+		badge := domain.NewBadgeFromProps(domain.BadgeProps{ID:     domain.BadgeID("badge-1"),
 			Status: domain.BadgeUnassigned,
-		}
+		})
 
 		err := badge.Release()
 		if !errors.Is(err, domain.ErrBadgeNotAssigned) {

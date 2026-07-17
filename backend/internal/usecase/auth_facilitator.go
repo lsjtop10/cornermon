@@ -72,18 +72,18 @@ func (s *FacilitatorAuthService) Login(
 	if err != nil {
 		return nil, err
 	}
-	if device == nil || device.Status != domain.DeviceApproved {
+	if device == nil || device.Status() != domain.DeviceApproved {
 		s.recordAuditLog(ctx, "anonymous", "FACILITATOR_LOGIN", "", false, map[string]any{"error": domain.ErrDeviceNotApproved.Error()})
 		return nil, domain.ErrDeviceNotApproved
 	}
 
 	if device.IsLocked(now) {
 		s.recordAuditLog(ctx, "anonymous", "FACILITATOR_LOGIN", "", false, map[string]any{"error": domain.ErrDeviceLocked.Error()})
-		lockedUntil, _ := device.LockedUntil.Value()
-		return nil, &domain.DeviceLockedError{LockedUntil: lockedUntil}
+		lockedUntil, _ := device.LockedUntil().Value()
+		return nil, domain.NewDeviceLockedErrorFromProps(domain.DeviceLockedErrorProps{LockedUntil: lockedUntil})
 	}
 
-	campID := device.CampID
+	campID := device.CampID()
 
 	// 2. 캠프 정보 조회 및 검증
 	camp, err := s.camps.Get(ctx, campID)
@@ -103,7 +103,7 @@ func (s *FacilitatorAuthService) Login(
 
 	var track *domain.Track
 	for _, t := range activeTracks {
-		if err := verifyPassword(t.PINHash, pin); err == nil {
+		if err := verifyPassword(t.PINHash(), pin); err == nil {
 			track = t
 			break
 		}
@@ -115,25 +115,25 @@ func (s *FacilitatorAuthService) Login(
 		_ = s.devices.Save(ctx, device)
 
 		if needsAdminAlert {
-			_ = s.broadcaster.Broadcast(ctx, device.CampID, EventLockoutAlert, CampScope())
+			_ = s.broadcaster.Broadcast(ctx, device.CampID(), EventLockoutAlert, CampScope())
 		}
 
-		s.recordAuditLog(ctx, "anonymous", "FACILITATOR_LOGIN", "", false, map[string]any{"error": "invalid pin", "device_failures": device.FailedPinAttempts})
+		s.recordAuditLog(ctx, "anonymous", "FACILITATOR_LOGIN", "", false, map[string]any{"error": "invalid pin", "device_failures": device.FailedPinAttempts()})
 
 		var optLocked domain.Optional[time.Time]
 		if delay > 0 {
-			lockedUntil, _ := device.LockedUntil.Value()
+			lockedUntil, _ := device.LockedUntil().Value()
 			optLocked = domain.Some(lockedUntil)
 		} else {
 			optLocked = domain.None[time.Time]()
 		}
-		return nil, &domain.InvalidPinError{LockedUntil: optLocked}
+		return nil, domain.NewInvalidPinErrorFromProps(domain.InvalidPinErrorProps{LockedUntil: optLocked})
 	}
 
-	trackID := track.ID
+	trackID := track.ID()
 
 	// 4. 코너 정보 조회
-	corner, err := s.corners.Get(ctx, track.CornerID)
+	corner, err := s.corners.Get(ctx, track.CornerID())
 	if err != nil {
 		return nil, err
 	}
@@ -151,13 +151,13 @@ func (s *FacilitatorAuthService) Login(
 	}
 
 	sessionID := domain.FacilitatorSessionID(s.uuidFn())
-	session := &domain.FacilitatorSession{
+	session := domain.NewFacilitatorSessionFromProps(domain.FacilitatorSessionProps{
 		ID:        sessionID,
 		TrackID:   trackID,
 		TokenHash: sessionTokenHash,
 		CreatedAt: now,
 		RevokedAt: domain.None[time.Time](),
-	}
+	})
 
 	// 6. DB 트랜잭션 내에서 기기 상태 및 세션 정보 저장
 	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
@@ -172,7 +172,7 @@ func (s *FacilitatorAuthService) Login(
 		return nil, err
 	}
 
-	s.recordAuditLog(ctx, string(trackID), "FACILITATOR_LOGIN", string(session.ID), true, nil)
+	s.recordAuditLog(ctx, string(trackID), "FACILITATOR_LOGIN", string(session.ID()), true, nil)
 	return &TrackLoginResult{
 		TrackToken: plainToken,
 		Track:      track,
@@ -198,10 +198,10 @@ func (s *FacilitatorAuthService) MigrateSession(
 	}
 
 	// 2. 승계 대상 트랙 확인
-	if !oldSession.MigrationTargetTrackID.IsSet() {
+	if !oldSession.MigrationTargetTrackID().IsSet() {
 		return nil, errors.New("no migration target for this session")
 	}
-	newTrackID, _ := oldSession.MigrationTargetTrackID.Value()
+	newTrackID, _ := oldSession.MigrationTargetTrackID().Value()
 
 	// 3. 새 트랙 및 코너 조회
 	newTrack, err := s.tracks.Get(ctx, newTrackID)
@@ -212,7 +212,7 @@ func (s *FacilitatorAuthService) MigrateSession(
 		return nil, errors.New("migration target track not found")
 	}
 
-	corner, err := s.corners.Get(ctx, newTrack.CornerID)
+	corner, err := s.corners.Get(ctx, newTrack.CornerID())
 	if err != nil {
 		return nil, err
 	}
@@ -227,14 +227,14 @@ func (s *FacilitatorAuthService) MigrateSession(
 	}
 
 	sessionID := domain.FacilitatorSessionID(s.uuidFn())
-	newSession := &domain.FacilitatorSession{
+	newSession := domain.NewFacilitatorSessionFromProps(domain.FacilitatorSessionProps{
 		ID:                     sessionID,
 		TrackID:                newTrackID,
 		TokenHash:              sessionTokenHash,
 		CreatedAt:              now,
 		RevokedAt:              domain.None[time.Time](),
 		MigrationTargetTrackID: domain.None[domain.TrackID](),
-	}
+	})
 
 	// 5. DB 트랜잭션 내에서 기존 세션 만료 및 신규 세션 저장
 	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
@@ -246,11 +246,11 @@ func (s *FacilitatorAuthService) MigrateSession(
 	})
 
 	if err != nil {
-		s.recordAuditLog(ctx, string(oldSession.TrackID), "SESSION_MIGRATE", string(newTrackID), false, map[string]any{"error": err.Error()})
+		s.recordAuditLog(ctx, string(oldSession.TrackID()), "SESSION_MIGRATE", string(newTrackID), false, map[string]any{"error": err.Error()})
 		return nil, err
 	}
 
-	s.recordAuditLog(ctx, string(oldSession.TrackID), "SESSION_MIGRATE", string(newSession.ID), true, nil)
+	s.recordAuditLog(ctx, string(oldSession.TrackID()), "SESSION_MIGRATE", string(newSession.ID()), true, nil)
 	return &TrackLoginResult{
 		TrackToken: plainToken,
 		Track:      newTrack,
@@ -299,11 +299,11 @@ func (s *FacilitatorAuthService) Logout(
 	})
 
 	if err != nil {
-		s.recordAuditLog(ctx, string(session.TrackID), "FACILITATOR_LOGOUT", string(sessionID), false, map[string]any{"error": err.Error()})
+		s.recordAuditLog(ctx, string(session.TrackID()), "FACILITATOR_LOGOUT", string(sessionID), false, map[string]any{"error": err.Error()})
 		return err
 	}
 
-	s.recordAuditLog(ctx, string(session.TrackID), "FACILITATOR_LOGOUT", string(sessionID), true, nil)
+	s.recordAuditLog(ctx, string(session.TrackID()), "FACILITATOR_LOGOUT", string(sessionID), true, nil)
 	return nil
 }
 

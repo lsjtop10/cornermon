@@ -27,17 +27,17 @@ func (r *pgBadgeRepository) queries(ctx context.Context) *db.Queries {
 }
 
 func mapBadge(row db.Badge) *domain.Badge {
-	b := &domain.Badge{
+	b := domain.NewBadgeFromProps(domain.BadgeProps{
 		ID:        domain.BadgeID(row.ID),
 		ShortID:   row.ShortID,
 		QRPayload: row.QrPayload,
 		Status:    domain.BadgeStatus(row.Status),
-	}
+	})
 
 	if row.AssignedGroupID.Valid {
-		b.AssignedGroupID = domain.Some(domain.GroupID(row.AssignedGroupID.String))
+		b.SetAssignedGroupID(domain.Some(domain.GroupID(row.AssignedGroupID.String)))
 	} else {
-		b.AssignedGroupID = domain.None[domain.GroupID]()
+		b.SetAssignedGroupID(domain.None[domain.GroupID]())
 	}
 
 	return b
@@ -67,13 +67,13 @@ func (r *pgBadgeRepository) GetByQRPayload(ctx context.Context, payload string) 
 
 func (r *pgBadgeRepository) Save(ctx context.Context, badge *domain.Badge) error {
 	params := db.SaveBadgeParams{
-		ID:        string(badge.ID),
-		ShortID:   badge.ShortID,
-		QrPayload: badge.QRPayload,
-		Status:    string(badge.Status),
+		ID:        string(badge.ID()),
+		ShortID:   badge.ShortID(),
+		QrPayload: badge.QRPayload(),
+		Status:    string(badge.Status()),
 	}
 
-	if val, ok := badge.AssignedGroupID.Value(); ok {
+	if val, ok := badge.AssignedGroupID().Value(); ok {
 		params.AssignedGroupID = pgtype.Text{String: string(val), Valid: true}
 	}
 

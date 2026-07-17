@@ -26,13 +26,13 @@ func (r *pgCornerRepository) queries(ctx context.Context) *db.Queries {
 }
 
 func mapCorner(row db.Corner) *domain.Corner {
-	return &domain.Corner{
+	return domain.NewCornerFromProps(domain.CornerProps{
 		ID:            domain.CornerID(row.ID),
 		CampID:        domain.CampID(row.CampID),
 		Name:          row.Name,
 		TargetMinutes: int(row.TargetMinutes),
 		IsMandatory:   row.IsMandatory,
-	}
+	})
 }
 
 func (r *pgCornerRepository) Get(ctx context.Context, id domain.CornerID) (*domain.Corner, error) {
@@ -61,11 +61,11 @@ func (r *pgCornerRepository) ListByCamp(ctx context.Context, campID domain.CampI
 
 func (r *pgCornerRepository) Save(ctx context.Context, corner *domain.Corner) error {
 	err := r.queries(ctx).SaveCorner(ctx, db.SaveCornerParams{
-		ID:            string(corner.ID),
-		CampID:        string(corner.CampID),
-		Name:          corner.Name,
-		TargetMinutes: int32(corner.TargetMinutes),
-		IsMandatory:   corner.IsMandatory,
+		ID:            string(corner.ID()),
+		CampID:        string(corner.CampID()),
+		Name:          corner.Name(),
+		TargetMinutes: int32(corner.TargetMinutes()),
+		IsMandatory:   corner.IsMandatory(),
 	})
 	if err != nil {
 		return errs.Wrap(ctx, err)

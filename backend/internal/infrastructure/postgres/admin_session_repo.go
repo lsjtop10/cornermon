@@ -28,20 +28,22 @@ func (r *pgAdminSessionRepository) queries(ctx context.Context) *db.Queries {
 }
 
 func mapAdminSession(row db.AdminSession) *domain.AdminSession {
-	s := &domain.AdminSession{
+	var revokedAt domain.Optional[time.Time]
+	if row.RevokedAt.Valid {
+		revokedAt = domain.Some(row.RevokedAt.Time)
+	} else {
+		revokedAt = domain.None[time.Time]()
+	}
+
+	s := domain.NewAdminSessionFromProps(domain.AdminSessionProps{
 		ID:              domain.AdminSessionID(row.ID),
 		AdminID:         domain.AdminID(row.AdminID),
 		AccessTokenHash: row.AccessTokenHash,
 		DeviceInfo:      row.DeviceInfo,
 		CreatedAt:       row.CreatedAt.Time,
 		LastUsedAt:      row.LastUsedAt.Time,
-	}
-
-	if row.RevokedAt.Valid {
-		s.RevokedAt = domain.Some(row.RevokedAt.Time)
-	} else {
-		s.RevokedAt = domain.None[time.Time]()
-	}
+		RevokedAt:       revokedAt,
+	})
 
 	return s
 }
@@ -70,15 +72,15 @@ func (r *pgAdminSessionRepository) GetByAccessTokenHash(ctx context.Context, has
 
 func (r *pgAdminSessionRepository) Save(ctx context.Context, session *domain.AdminSession) error {
 	params := db.SaveAdminSessionParams{
-		ID:              string(session.ID),
-		AdminID:         string(session.AdminID),
-		AccessTokenHash: session.AccessTokenHash,
-		DeviceInfo:      session.DeviceInfo,
-		CreatedAt:       pgtype.Timestamptz{Time: session.CreatedAt, Valid: !session.CreatedAt.IsZero()},
-		LastUsedAt:      pgtype.Timestamptz{Time: session.LastUsedAt, Valid: !session.LastUsedAt.IsZero()},
+		ID:              string(session.ID()),
+		AdminID:         string(session.AdminID()),
+		AccessTokenHash: session.AccessTokenHash(),
+		DeviceInfo:      session.DeviceInfo(),
+		CreatedAt:       pgtype.Timestamptz{Time: session.CreatedAt(), Valid: !session.CreatedAt().IsZero()},
+		LastUsedAt:      pgtype.Timestamptz{Time: session.LastUsedAt(), Valid: !session.LastUsedAt().IsZero()},
 	}
 
-	if val, ok := session.RevokedAt.Value(); ok {
+	if val, ok := session.RevokedAt().Value(); ok {
 		params.RevokedAt = pgtype.Timestamptz{Time: val, Valid: true}
 	}
 

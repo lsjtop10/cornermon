@@ -13,14 +13,13 @@ func TestAdminSession_Lifecycle(t *testing.T) {
 	idleTTL := 30 * time.Minute
 
 	t.Run("Session touch sliding expiration and expiry verification", func(t *testing.T) {
-		session := &domain.AdminSession{
-			ID:              domain.AdminSessionID("session-1"),
+		session := domain.NewAdminSessionFromProps(domain.AdminSessionProps{ID:              domain.AdminSessionID("session-1"),
 			AdminID:         domain.AdminID("admin-1"),
 			AccessTokenHash: "access-hash",
 			CreatedAt:       now,
 			LastUsedAt:      now,
 			RevokedAt:       domain.None[time.Time](),
-		}
+		})
 
 		// 1. Initially not expired
 		if session.IsExpired(now.Add(10*time.Minute), idleTTL) {
@@ -39,17 +38,16 @@ func TestAdminSession_Lifecycle(t *testing.T) {
 		}
 
 		// 4. TouchActivity updates LastUsedAt
-		if !session.LastUsedAt.Equal(now.Add(10 * time.Minute)) {
+		if !session.LastUsedAt().Equal(now.Add(10 * time.Minute)) {
 			t.Errorf("expected LastUsedAt to be touched, got %v", session.LastUsedAt)
 		}
 	})
 
 	t.Run("Revoke and revoked session check", func(t *testing.T) {
-		session := &domain.AdminSession{
-			ID:         domain.AdminSessionID("session-2"),
+		session := domain.NewAdminSessionFromProps(domain.AdminSessionProps{ID:         domain.AdminSessionID("session-2"),
 			LastUsedAt: now,
 			RevokedAt:  domain.None[time.Time](),
-		}
+		})
 
 		err := session.Revoke(now)
 		if err != nil {

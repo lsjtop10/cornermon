@@ -68,8 +68,8 @@ func calculateCampReport(campID domain.CampID, dbGroups []db.Group, dbCorners []
 		}
 
 		groupReports = append(groupReports, usecase.GroupReport{
-			GroupID:        g.ID,
-			GroupName:      g.Name,
+			GroupID:        g.ID(),
+			GroupName:      g.Name(),
 			IsFinished:     isFinished,
 			CompletedCount: 0,
 			VisitDetails:   []usecase.VisitDetail{},

@@ -17,7 +17,7 @@ func TestShouldReturnActualCreatedAtWhenDeviceRegistrationRequested(t *testing.T
 	// Arrange
 	e := echo.New()
 	createdAt := time.Date(2026, 7, 15, 8, 0, 0, 0, time.UTC)
-	stub := &listDeviceTrustStub{requestedReg: &domain.DeviceRegistration{ID: "device-1", Status: domain.DevicePending, CreatedAt: createdAt}}
+	stub := &listDeviceTrustStub{requestedReg: domain.NewDeviceRegistrationFromProps(domain.DeviceRegistrationProps{ID: "device-1", Status: domain.DevicePending, CreatedAt: createdAt})}
 	handler := NewDeviceHandler(stub)
 	body := bytes.NewBufferString(`{"registrationCode":"7ZQK3M2X","deviceName":"iPad","deviceModel":"iPad Pro 11 2022","displayName":"1번 태블릿"}`)
 	req := httptest.NewRequest(http.MethodPost, "/device-registrations", body)

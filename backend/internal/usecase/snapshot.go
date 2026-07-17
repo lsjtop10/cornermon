@@ -64,14 +64,14 @@ func (s *SnapshotService) GetSnapshot(
 
 	var cornerSnapshots []CornerSnapshot
 	for _, c := range corners {
-		allTracks, err := s.tracks.ListByCorner(ctx, c.ID)
+		allTracks, err := s.tracks.ListByCorner(ctx, c.ID())
 		if err != nil {
 			return nil, err
 		}
 
 		var activeTracks []*domain.Track
 		for _, t := range allTracks {
-			if t.Status == domain.TrackActive {
+			if t.Status() == domain.TrackActive {
 				activeTracks = append(activeTracks, t)
 			}
 		}

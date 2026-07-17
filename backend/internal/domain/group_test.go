@@ -9,10 +9,9 @@ import (
 
 func TestGroup_IsFinishedAndStatus(t *testing.T) {
 	t.Run("Empty itinerary is not finished and status is IDLE_MOVING", func(t *testing.T) {
-		g := &domain.Group{
-			ID:        domain.GroupID("group-1"),
+		g := domain.NewGroupFromProps(domain.GroupProps{ID:        domain.GroupID("group-1"),
 			Itinerary: []domain.CornerProgress{},
-		}
+		})
 
 		if g.IsFinished() {
 			t.Error("expected empty itinerary not to be finished")
@@ -23,13 +22,12 @@ func TestGroup_IsFinishedAndStatus(t *testing.T) {
 	})
 
 	t.Run("Status and Finish progress progression", func(t *testing.T) {
-		g := &domain.Group{
-			ID: domain.GroupID("group-1"),
+		g := domain.NewGroupFromProps(domain.GroupProps{ID: domain.GroupID("group-1"),
 			Itinerary: []domain.CornerProgress{
 				{CornerID: domain.CornerID("corner-1"), Status: domain.VisitNotVisited},
 				{CornerID: domain.CornerID("corner-2"), Status: domain.VisitNotVisited},
 			},
-		}
+		})
 
 		// Initial: IDLE_MOVING
 		if g.IsFinished() {
@@ -88,13 +86,12 @@ func TestGroup_IsFinishedAndStatus(t *testing.T) {
 
 func TestGroup_MarkVisitStarted_Constraints(t *testing.T) {
 	t.Run("Cannot start if another corner is in progress (ErrGroupBusy)", func(t *testing.T) {
-		g := &domain.Group{
-			ID: domain.GroupID("group-1"),
+		g := domain.NewGroupFromProps(domain.GroupProps{ID: domain.GroupID("group-1"),
 			Itinerary: []domain.CornerProgress{
 				{CornerID: domain.CornerID("corner-1"), Status: domain.VisitInProgress},
 				{CornerID: domain.CornerID("corner-2"), Status: domain.VisitNotVisited},
 			},
-		}
+		})
 
 		err := g.MarkVisitStarted(domain.CornerID("corner-2"))
 		if !errors.Is(err, domain.ErrGroupBusy) {
@@ -103,13 +100,12 @@ func TestGroup_MarkVisitStarted_Constraints(t *testing.T) {
 	})
 
 	t.Run("Cannot start if corner is already completed (ErrDuplicateVisit)", func(t *testing.T) {
-		g := &domain.Group{
-			ID: domain.GroupID("group-1"),
+		g := domain.NewGroupFromProps(domain.GroupProps{ID: domain.GroupID("group-1"),
 			Itinerary: []domain.CornerProgress{
 				{CornerID: domain.CornerID("corner-1"), Status: domain.VisitCompleted},
 				{CornerID: domain.CornerID("corner-2"), Status: domain.VisitNotVisited},
 			},
-		}
+		})
 
 		err := g.MarkVisitStarted(domain.CornerID("corner-1"))
 		if !errors.Is(err, domain.ErrDuplicateVisit) {
@@ -118,12 +114,11 @@ func TestGroup_MarkVisitStarted_Constraints(t *testing.T) {
 	})
 
 	t.Run("Cannot start if corner does not exist in itinerary", func(t *testing.T) {
-		g := &domain.Group{
-			ID: domain.GroupID("group-1"),
+		g := domain.NewGroupFromProps(domain.GroupProps{ID: domain.GroupID("group-1"),
 			Itinerary: []domain.CornerProgress{
 				{CornerID: domain.CornerID("corner-1"), Status: domain.VisitNotVisited},
 			},
-		}
+		})
 
 		err := g.MarkVisitStarted(domain.CornerID("corner-unknown"))
 		if !errors.Is(err, domain.ErrCornerNotInItinerary) {
@@ -134,12 +129,11 @@ func TestGroup_MarkVisitStarted_Constraints(t *testing.T) {
 
 func TestGroup_MarkVisitCompleted_Constraints(t *testing.T) {
 	t.Run("Cannot complete if corner is not in progress", func(t *testing.T) {
-		g := &domain.Group{
-			ID: domain.GroupID("group-1"),
+		g := domain.NewGroupFromProps(domain.GroupProps{ID: domain.GroupID("group-1"),
 			Itinerary: []domain.CornerProgress{
 				{CornerID: domain.CornerID("corner-1"), Status: domain.VisitNotVisited},
 			},
-		}
+		})
 
 		err := g.MarkVisitCompleted(domain.CornerID("corner-1"))
 		if !errors.Is(err, domain.ErrVisitNotInProgress) {
@@ -148,12 +142,11 @@ func TestGroup_MarkVisitCompleted_Constraints(t *testing.T) {
 	})
 
 	t.Run("Cannot complete if corner does not exist in itinerary", func(t *testing.T) {
-		g := &domain.Group{
-			ID: domain.GroupID("group-1"),
+		g := domain.NewGroupFromProps(domain.GroupProps{ID: domain.GroupID("group-1"),
 			Itinerary: []domain.CornerProgress{
 				{CornerID: domain.CornerID("corner-1"), Status: domain.VisitInProgress},
 			},
-		}
+		})
 
 		err := g.MarkVisitCompleted(domain.CornerID("corner-unknown"))
 		if !errors.Is(err, domain.ErrCornerNotInItinerary) {
