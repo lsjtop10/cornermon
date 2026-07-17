@@ -13,6 +13,7 @@ class StartCampButton extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) => AppButton(
     variant: AppButtonVariant.primary,
+    size: AppButtonSize.compact,
     icon: Icons.play_arrow,
     label: '코너학습 시작',
     onPressed: () => showDialog<void>(
@@ -99,6 +100,7 @@ class _StartCampConfirmDialogState
         ),
         AppButton(
           variant: AppButtonVariant.primary,
+          size: AppButtonSize.compact,
           label: _submitting ? '시작 확정 중…' : '시작 확정',
           onPressed: _submitting ? null : _confirm,
         ),

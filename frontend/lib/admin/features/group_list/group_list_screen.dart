@@ -299,6 +299,7 @@ class _RegisterGroupDialogState extends ConsumerState<_RegisterGroupDialog> {
         ),
         AppButton(
           variant: AppButtonVariant.primary,
+          size: AppButtonSize.compact,
           label: '등록 확정',
           onPressed: _busy || _payload.text.isEmpty || _name.text.isEmpty
               ? null

@@ -115,6 +115,7 @@ class _CornerBody extends ConsumerWidget {
           Text('트랙', style: Theme.of(context).textTheme.titleLarge),
           AppButton(
             variant: AppButtonVariant.primary,
+            size: AppButtonSize.compact,
             icon: Icons.add,
             label: '트랙 추가',
             onPressed: () => _addTrack(ref),
@@ -180,6 +181,7 @@ class _CornerEditorState extends State<_CornerEditor> {
           const SizedBox(height: 12),
           AppButton(
             variant: AppButtonVariant.primary,
+            size: AppButtonSize.compact,
             label: '변경 저장',
             onPressed: () async {
               final minutes = int.tryParse(_minutes.text);
@@ -443,6 +445,7 @@ class _ReplaceTrackDialogState extends State<_ReplaceTrackDialog> {
       ),
       AppButton(
         variant: AppButtonVariant.primary,
+        size: AppButtonSize.compact,
         label: '교체 실행',
         onPressed: _corner == null
             ? null

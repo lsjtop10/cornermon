@@ -69,6 +69,7 @@ class _TrackBulkManageScreenState extends ConsumerState<TrackBulkManageScreen> {
           ),
           AppButton(
             variant: AppButtonVariant.primary,
+            size: AppButtonSize.compact,
             label: '적용',
             onPressed: () =>
                 Navigator.pop(context, int.tryParse(controller.text)),
@@ -112,6 +113,7 @@ class _TrackBulkManageScreenState extends ConsumerState<TrackBulkManageScreen> {
           ),
           AppButton(
             variant: AppButtonVariant.destructive,
+            size: AppButtonSize.compact,
             label: '삭제',
             onPressed: () => Navigator.pop(context, true),
           ),
@@ -150,6 +152,7 @@ class _TrackBulkManageScreenState extends ConsumerState<TrackBulkManageScreen> {
             padding: const EdgeInsets.only(right: 12),
             child: AppButton(
               variant: AppButtonVariant.secondary,
+              size: AppButtonSize.compact,
               icon: Icons.download_outlined,
               label: '전체 PIN 내보내기',
               onPressed: () => _exportCsv(
@@ -233,6 +236,7 @@ class _TrackBulkManageScreenState extends ConsumerState<TrackBulkManageScreen> {
                       const SizedBox(width: 8),
                       AppButton(
                         variant: AppButtonVariant.secondary,
+                        size: AppButtonSize.compact,
                         label: '목표시간 변경',
                         onPressed: _selectedIds.isEmpty
                             ? null
@@ -241,6 +245,7 @@ class _TrackBulkManageScreenState extends ConsumerState<TrackBulkManageScreen> {
                       const SizedBox(width: 8),
                       AppButton(
                         variant: AppButtonVariant.destructive,
+                        size: AppButtonSize.compact,
                         label: '선택 삭제',
                         disabledReason: blocked
                             ? '진행 중인 방문이 있어 삭제할 수 없습니다'

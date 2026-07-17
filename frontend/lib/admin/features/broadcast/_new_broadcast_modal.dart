@@ -33,9 +33,7 @@ class _NewBroadcastModalState extends ConsumerState<NewBroadcastModal> {
       _errorText = null;
     });
     try {
-      await ref.read(
-        sendBroadcastMessageProvider(widget.campId, text).future,
-      );
+      await ref.read(sendBroadcastMessageProvider(widget.campId, text).future);
       ref.invalidate(broadcastMessageListProvider(widget.campId));
       if (mounted) Navigator.pop(context);
     } catch (_) {
@@ -74,6 +72,7 @@ class _NewBroadcastModalState extends ConsumerState<NewBroadcastModal> {
         ),
         AppButton(
           variant: AppButtonVariant.primary,
+          size: AppButtonSize.compact,
           label: '발송',
           onPressed: _busy || _content.text.trim().isEmpty ? null : _submit,
         ),

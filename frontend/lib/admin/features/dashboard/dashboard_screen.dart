@@ -202,13 +202,12 @@ class DashboardScreen extends ConsumerWidget {
                 return GridView.builder(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
-                  gridDelegate:
-                      const SliverGridDelegateWithMaxCrossAxisExtent(
-                        maxCrossAxisExtent: 260,
-                        mainAxisExtent: 220,
-                        crossAxisSpacing: 12,
-                        mainAxisSpacing: 12,
-                      ),
+                  gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                    maxCrossAxisExtent: 260,
+                    mainAxisExtent: 220,
+                    crossAxisSpacing: 12,
+                    mainAxisSpacing: 12,
+                  ),
                   itemCount: visible.length,
                   itemBuilder: (context, index) {
                     final entry = visible[index];
@@ -342,12 +341,14 @@ class _Controls extends ConsumerWidget {
         children: [
           AppButton(
             variant: AppButtonVariant.secondary,
+            size: AppButtonSize.compact,
             label: '트랙 일괄 관리 →',
             onPressed: () => context.go('/corner-track-manage'),
           ),
           if (isActive)
             AppButton(
               variant: AppButtonVariant.primary,
+              size: AppButtonSize.compact,
               label: '공지 발송',
               onPressed: () => context.go('/messages/broadcast'),
             ),
