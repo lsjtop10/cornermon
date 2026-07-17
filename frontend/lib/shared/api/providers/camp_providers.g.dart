@@ -448,7 +448,7 @@ final class EndCampProvider
     required EndCampFamily super.from,
     required CampId super.argument,
   }) : super(
-         retry: null,
+         retry: noRetry,
          name: r'endCampProvider',
          isAutoDispose: true,
          dependencies: null,
@@ -487,13 +487,13 @@ final class EndCampProvider
   }
 }
 
-String _$endCampHash() => r'ec080dfe26e119187472818f1e6695886a8bd248';
+String _$endCampHash() => r'c22d14f0bbe56455945902abe50fb1407d70190c';
 
 final class EndCampFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<Camp>, CampId> {
   EndCampFamily._()
     : super(
-        retry: null,
+        retry: noRetry,
         name: r'endCampProvider',
         dependencies: null,
         $allTransitiveDependencies: null,

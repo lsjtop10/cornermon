@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:cornermon/admin/router/admin_router.dart';
 import 'package:cornermon/admin/theme/admin_theme_mode_provider.dart';
+import 'package:cornermon/admin/widgets/admin_scaffold_messenger_key.dart';
 import 'package:cornermon/shared/design_system/theme/admin_theme.dart';
 
 class AdminApp extends ConsumerWidget {
@@ -12,6 +13,7 @@ class AdminApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return MaterialApp.router(
+      scaffoldMessengerKey: adminScaffoldMessengerKey,
       theme: AdminTheme.lightTheme,
       darkTheme: AdminTheme.darkTheme,
       themeMode: ref.watch(adminThemeModeProvider),
