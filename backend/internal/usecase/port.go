@@ -22,6 +22,7 @@ type TrackPINProtector interface {
 // CampRepository는 캠프 엔티티의 지속성을 담당하는 포트입니다.
 type CampRepository interface {
 	Get(ctx context.Context, id domain.CampID) (*domain.Camp, error)
+	GetByRegistrationCode(ctx context.Context, code string) (*domain.Camp, error)
 	List(ctx context.Context) ([]*domain.Camp, error)
 	Save(ctx context.Context, camp *domain.Camp) error
 }

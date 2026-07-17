@@ -172,7 +172,7 @@ func (q *Queries) GetBadgeByQRPayload(ctx context.Context, qrPayload string) (Ba
 }
 
 const getCamp = `-- name: GetCamp :one
-SELECT id, name, start_at, end_at, activated_at, ended_at, status, bottleneck_min_samples, bottleneck_ratio_pct FROM camps WHERE id = $1
+SELECT id, name, start_at, end_at, activated_at, ended_at, status, bottleneck_min_samples, bottleneck_ratio_pct, registration_code FROM camps WHERE id = $1
 `
 
 func (q *Queries) GetCamp(ctx context.Context, id string) (Camp, error) {
@@ -188,6 +188,29 @@ func (q *Queries) GetCamp(ctx context.Context, id string) (Camp, error) {
 		&i.Status,
 		&i.BottleneckMinSamples,
 		&i.BottleneckRatioPct,
+		&i.RegistrationCode,
+	)
+	return i, err
+}
+
+const getCampByRegistrationCode = `-- name: GetCampByRegistrationCode :one
+SELECT id, name, start_at, end_at, activated_at, ended_at, status, bottleneck_min_samples, bottleneck_ratio_pct, registration_code FROM camps WHERE registration_code = $1
+`
+
+func (q *Queries) GetCampByRegistrationCode(ctx context.Context, registrationCode string) (Camp, error) {
+	row := q.db.QueryRow(ctx, getCampByRegistrationCode, registrationCode)
+	var i Camp
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.StartAt,
+		&i.EndAt,
+		&i.ActivatedAt,
+		&i.EndedAt,
+		&i.Status,
+		&i.BottleneckMinSamples,
+		&i.BottleneckRatioPct,
+		&i.RegistrationCode,
 	)
 	return i, err
 }
@@ -294,7 +317,7 @@ func (q *Queries) GetCornerView(ctx context.Context, id string) (GetCornerViewRo
 }
 
 const getDeviceRegistration = `-- name: GetDeviceRegistration :one
-SELECT id, camp_id, device_name, status, token_hash, failed_pin_attempts, locked_until, approved_at, created_at FROM device_registrations WHERE id = $1
+SELECT id, camp_id, device_name, device_model, display_name, status, token_hash, failed_pin_attempts, locked_until, approved_at, created_at FROM device_registrations WHERE id = $1
 `
 
 func (q *Queries) GetDeviceRegistration(ctx context.Context, id string) (DeviceRegistration, error) {
@@ -304,6 +327,8 @@ func (q *Queries) GetDeviceRegistration(ctx context.Context, id string) (DeviceR
 		&i.ID,
 		&i.CampID,
 		&i.DeviceName,
+		&i.DeviceModel,
+		&i.DisplayName,
 		&i.Status,
 		&i.TokenHash,
 		&i.FailedPinAttempts,
@@ -315,7 +340,7 @@ func (q *Queries) GetDeviceRegistration(ctx context.Context, id string) (DeviceR
 }
 
 const getDeviceRegistrationByTokenHash = `-- name: GetDeviceRegistrationByTokenHash :one
-SELECT id, camp_id, device_name, status, token_hash, failed_pin_attempts, locked_until, approved_at, created_at FROM device_registrations WHERE token_hash = $1
+SELECT id, camp_id, device_name, device_model, display_name, status, token_hash, failed_pin_attempts, locked_until, approved_at, created_at FROM device_registrations WHERE token_hash = $1
 `
 
 func (q *Queries) GetDeviceRegistrationByTokenHash(ctx context.Context, tokenHash string) (DeviceRegistration, error) {
@@ -325,6 +350,8 @@ func (q *Queries) GetDeviceRegistrationByTokenHash(ctx context.Context, tokenHas
 		&i.ID,
 		&i.CampID,
 		&i.DeviceName,
+		&i.DeviceModel,
+		&i.DisplayName,
 		&i.Status,
 		&i.TokenHash,
 		&i.FailedPinAttempts,
@@ -762,7 +789,7 @@ func (q *Queries) ListAuditLogs(ctx context.Context, arg ListAuditLogsParams) ([
 }
 
 const listCamps = `-- name: ListCamps :many
-SELECT id, name, start_at, end_at, activated_at, ended_at, status, bottleneck_min_samples, bottleneck_ratio_pct FROM camps
+SELECT id, name, start_at, end_at, activated_at, ended_at, status, bottleneck_min_samples, bottleneck_ratio_pct, registration_code FROM camps
 `
 
 func (q *Queries) ListCamps(ctx context.Context) ([]Camp, error) {
@@ -784,6 +811,7 @@ func (q *Queries) ListCamps(ctx context.Context) ([]Camp, error) {
 			&i.Status,
 			&i.BottleneckMinSamples,
 			&i.BottleneckRatioPct,
+			&i.RegistrationCode,
 		); err != nil {
 			return nil, err
 		}
@@ -899,7 +927,7 @@ func (q *Queries) ListCornersByCamp(ctx context.Context, campID string) ([]Corne
 }
 
 const listDeviceRegistrationsByCampAndStatus = `-- name: ListDeviceRegistrationsByCampAndStatus :many
-SELECT id, camp_id, device_name, status, token_hash, failed_pin_attempts, locked_until, approved_at, created_at FROM device_registrations
+SELECT id, camp_id, device_name, device_model, display_name, status, token_hash, failed_pin_attempts, locked_until, approved_at, created_at FROM device_registrations
 WHERE camp_id = $1 AND ($2::VARCHAR IS NULL OR status = $2)
 `
 
@@ -921,6 +949,8 @@ func (q *Queries) ListDeviceRegistrationsByCampAndStatus(ctx context.Context, ar
 			&i.ID,
 			&i.CampID,
 			&i.DeviceName,
+			&i.DeviceModel,
+			&i.DisplayName,
 			&i.Status,
 			&i.TokenHash,
 			&i.FailedPinAttempts,
@@ -1039,7 +1069,7 @@ func (q *Queries) ListMessagesByTrackAfter(ctx context.Context, arg ListMessages
 }
 
 const listPendingDeviceRegistrationsByCamp = `-- name: ListPendingDeviceRegistrationsByCamp :many
-SELECT id, camp_id, device_name, status, token_hash, failed_pin_attempts, locked_until, approved_at, created_at FROM device_registrations WHERE camp_id = $1 AND status = 'PENDING'
+SELECT id, camp_id, device_name, device_model, display_name, status, token_hash, failed_pin_attempts, locked_until, approved_at, created_at FROM device_registrations WHERE camp_id = $1 AND status = 'PENDING'
 `
 
 func (q *Queries) ListPendingDeviceRegistrationsByCamp(ctx context.Context, campID string) ([]DeviceRegistration, error) {
@@ -1055,6 +1085,8 @@ func (q *Queries) ListPendingDeviceRegistrationsByCamp(ctx context.Context, camp
 			&i.ID,
 			&i.CampID,
 			&i.DeviceName,
+			&i.DeviceModel,
+			&i.DisplayName,
 			&i.Status,
 			&i.TokenHash,
 			&i.FailedPinAttempts,
@@ -1419,8 +1451,8 @@ func (q *Queries) SaveBadge(ctx context.Context, arg SaveBadgeParams) error {
 }
 
 const saveCamp = `-- name: SaveCamp :exec
-INSERT INTO camps (id, name, start_at, end_at, activated_at, ended_at, status, bottleneck_min_samples, bottleneck_ratio_pct)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+INSERT INTO camps (id, name, start_at, end_at, activated_at, ended_at, status, bottleneck_min_samples, bottleneck_ratio_pct, registration_code)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 ON CONFLICT (id) DO UPDATE SET
     name = EXCLUDED.name,
     start_at = EXCLUDED.start_at,
@@ -1442,6 +1474,7 @@ type SaveCampParams struct {
 	Status               string             `json:"status"`
 	BottleneckMinSamples int32              `json:"bottleneck_min_samples"`
 	BottleneckRatioPct   int32              `json:"bottleneck_ratio_pct"`
+	RegistrationCode     string             `json:"registration_code"`
 }
 
 func (q *Queries) SaveCamp(ctx context.Context, arg SaveCampParams) error {
@@ -1455,6 +1488,7 @@ func (q *Queries) SaveCamp(ctx context.Context, arg SaveCampParams) error {
 		arg.Status,
 		arg.BottleneckMinSamples,
 		arg.BottleneckRatioPct,
+		arg.RegistrationCode,
 	)
 	return err
 }
@@ -1488,8 +1522,8 @@ func (q *Queries) SaveCorner(ctx context.Context, arg SaveCornerParams) error {
 }
 
 const saveDeviceRegistration = `-- name: SaveDeviceRegistration :exec
-INSERT INTO device_registrations (id, camp_id, device_name, status, token_hash, failed_pin_attempts, locked_until, approved_at, created_at)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+INSERT INTO device_registrations (id, camp_id, device_name, device_model, display_name, status, token_hash, failed_pin_attempts, locked_until, approved_at, created_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
 ON CONFLICT (id) DO UPDATE SET
     status = EXCLUDED.status,
     failed_pin_attempts = EXCLUDED.failed_pin_attempts,
@@ -1501,6 +1535,8 @@ type SaveDeviceRegistrationParams struct {
 	ID                string             `json:"id"`
 	CampID            string             `json:"camp_id"`
 	DeviceName        string             `json:"device_name"`
+	DeviceModel       string             `json:"device_model"`
+	DisplayName       string             `json:"display_name"`
 	Status            string             `json:"status"`
 	TokenHash         string             `json:"token_hash"`
 	FailedPinAttempts int32              `json:"failed_pin_attempts"`
@@ -1514,6 +1550,8 @@ func (q *Queries) SaveDeviceRegistration(ctx context.Context, arg SaveDeviceRegi
 		arg.ID,
 		arg.CampID,
 		arg.DeviceName,
+		arg.DeviceModel,
+		arg.DisplayName,
 		arg.Status,
 		arg.TokenHash,
 		arg.FailedPinAttempts,

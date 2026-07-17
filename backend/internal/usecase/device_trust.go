@@ -41,16 +41,20 @@ func NewDeviceTrustService(
 // RequestRegistration - UC-8
 func (s *DeviceTrustService) RequestRegistration(
 	ctx context.Context,
-	campID domain.CampID,
-	deviceName string,
+	registrationCode string,
+	deviceName, deviceModel, displayName string,
 ) (string, *domain.DeviceRegistration, error) {
-	camp, err := s.camps.Get(ctx, campID)
+	camp, err := s.camps.GetByRegistrationCode(ctx, registrationCode)
 	if err != nil {
 		return "", nil, err
 	}
-	if camp == nil || !camp.IsActive() {
+	if camp == nil {
+		return "", nil, domain.ErrCampNotFound
+	}
+	if !camp.IsActive() {
 		return "", nil, domain.ErrCampInvalidTransition
 	}
+	campID := camp.ID
 
 	plainToken, tokenHash, err := generateOpaqueToken()
 	if err != nil {
@@ -62,6 +66,8 @@ func (s *DeviceTrustService) RequestRegistration(
 		ID:                regID,
 		CampID:            campID,
 		DeviceName:        deviceName,
+		DeviceModel:       deviceModel,
+		DisplayName:       displayName,
 		Status:            domain.DevicePending,
 		TokenHash:         tokenHash,
 		FailedPinAttempts: 0,

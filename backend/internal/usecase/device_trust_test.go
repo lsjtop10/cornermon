@@ -13,7 +13,7 @@ func TestDeviceTrustService_RequestRegistration(t *testing.T) {
 		// Arrange
 		now := time.Now()
 		camps := NewMockCampRepository()
-		camp := &domain.Camp{ID: "camp-1", Status: domain.CampActive}
+		camp := &domain.Camp{ID: "camp-1", RegistrationCode: "REGCODE1", Status: domain.CampActive}
 		camps.Save(context.Background(), camp)
 
 		devices := NewMockDeviceRegistrationRepository()
@@ -26,7 +26,7 @@ func TestDeviceTrustService_RequestRegistration(t *testing.T) {
 		s.uuidFn = func() string { return "device-uuid" }
 
 		// Act
-		plainToken, reg, err := s.RequestRegistration(context.Background(), "camp-1", "iPad-1")
+		plainToken, reg, err := s.RequestRegistration(context.Background(), "REGCODE1", "iPad-1", "iPad Pro 11 2022", "1번 태블릿")
 
 		// Assert
 		if err != nil {
@@ -37,6 +37,12 @@ func TestDeviceTrustService_RequestRegistration(t *testing.T) {
 		}
 		if reg.ID != "device-uuid" {
 			t.Errorf("expected device ID 'device-uuid', got '%s'", reg.ID)
+		}
+		if reg.CampID != "camp-1" {
+			t.Errorf("expected campID resolved to 'camp-1', got '%s'", reg.CampID)
+		}
+		if reg.DeviceModel != "iPad Pro 11 2022" || reg.DisplayName != "1번 태블릿" {
+			t.Errorf("expected deviceModel/displayName to be stored, got %+v", reg)
 		}
 		if reg.Status != domain.DevicePending {
 			t.Errorf("expected status 'PENDING', got %s", reg.Status)
@@ -49,6 +55,47 @@ func TestDeviceTrustService_RequestRegistration(t *testing.T) {
 			broadcaster.Broadcasts[0].Event != EventDeviceRegistrationUpdated ||
 			broadcaster.Broadcasts[0].Scope != CampScope() {
 			t.Errorf("expected EventDeviceRegistrationUpdated broadcast, got %v", broadcaster.Broadcasts)
+		}
+	})
+
+	t.Run("ShouldReturnCampNotFoundWhenRegistrationCodeDoesNotMatchAnyCamp", func(t *testing.T) {
+		// Arrange
+		camps := NewMockCampRepository()
+		devices := NewMockDeviceRegistrationRepository()
+		auditLogs := &MockAuditLogRepository{}
+		broadcaster := &MockBroadcaster{}
+		tx := &MockTxManager{}
+
+		s := NewDeviceTrustService(camps, devices, auditLogs, broadcaster, tx)
+
+		// Act
+		_, _, err := s.RequestRegistration(context.Background(), "UNKNOWN1", "iPad-1", "iPad Pro", "1번 태블릿")
+
+		// Assert
+		if err != domain.ErrCampNotFound {
+			t.Fatalf("expected ErrCampNotFound, got %v", err)
+		}
+	})
+
+	t.Run("ShouldReturnInvalidTransitionWhenCampIsNotActive", func(t *testing.T) {
+		// Arrange
+		camps := NewMockCampRepository()
+		camp := &domain.Camp{ID: "camp-1", RegistrationCode: "REGCODE1", Status: domain.CampPending}
+		camps.Save(context.Background(), camp)
+
+		devices := NewMockDeviceRegistrationRepository()
+		auditLogs := &MockAuditLogRepository{}
+		broadcaster := &MockBroadcaster{}
+		tx := &MockTxManager{}
+
+		s := NewDeviceTrustService(camps, devices, auditLogs, broadcaster, tx)
+
+		// Act
+		_, _, err := s.RequestRegistration(context.Background(), "REGCODE1", "iPad-1", "iPad Pro", "1번 태블릿")
+
+		// Assert
+		if err != domain.ErrCampInvalidTransition {
+			t.Fatalf("expected ErrCampInvalidTransition, got %v", err)
 		}
 	})
 }
@@ -101,7 +148,7 @@ func TestDeviceTrustService_GetMyRegistrationStatus(t *testing.T) {
 		// Arrange
 		now := time.Now()
 		camps := NewMockCampRepository()
-		camp := &domain.Camp{ID: "camp-1", Status: domain.CampActive}
+		camp := &domain.Camp{ID: "camp-1", RegistrationCode: "REGCODE1", Status: domain.CampActive}
 		camps.Save(context.Background(), camp)
 
 		devices := NewMockDeviceRegistrationRepository()
@@ -113,7 +160,7 @@ func TestDeviceTrustService_GetMyRegistrationStatus(t *testing.T) {
 		s.nowFn = func() time.Time { return now }
 		s.uuidFn = func() string { return "device-uuid" }
 
-		plainToken, _, err := s.RequestRegistration(context.Background(), "camp-1", "iPad-1")
+		plainToken, _, err := s.RequestRegistration(context.Background(), "REGCODE1", "iPad-1", "iPad Pro", "1번 태블릿")
 		if err != nil {
 			t.Fatalf("expected no error, got %v", err)
 		}

@@ -38,6 +38,42 @@ func (r *pgCampRepository) Get(ctx context.Context, id domain.CampID) (*domain.C
 
 	camp := &domain.Camp{
 		ID:                   domain.CampID(row.ID),
+		RegistrationCode:     row.RegistrationCode,
+		Name:                 row.Name,
+		StartAt:              row.StartAt.Time,
+		EndAt:                row.EndAt.Time,
+		Status:               domain.CampStatus(row.Status),
+		BottleneckMinSamples: int(row.BottleneckMinSamples),
+		BottleneckRatioPct:   int(row.BottleneckRatioPct),
+	}
+
+	if row.ActivatedAt.Valid {
+		camp.ActivatedAt = domain.Some(row.ActivatedAt.Time)
+	} else {
+		camp.ActivatedAt = domain.None[time.Time]()
+	}
+
+	if row.EndedAt.Valid {
+		camp.EndedAt = domain.Some(row.EndedAt.Time)
+	} else {
+		camp.EndedAt = domain.None[time.Time]()
+	}
+
+	return camp, nil
+}
+
+func (r *pgCampRepository) GetByRegistrationCode(ctx context.Context, code string) (*domain.Camp, error) {
+	row, err := r.queries(ctx).GetCampByRegistrationCode(ctx, code)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, nil
+		}
+		return nil, errs.Wrap(ctx, err)
+	}
+
+	camp := &domain.Camp{
+		ID:                   domain.CampID(row.ID),
+		RegistrationCode:     row.RegistrationCode,
 		Name:                 row.Name,
 		StartAt:              row.StartAt.Time,
 		EndAt:                row.EndAt.Time,
@@ -64,6 +100,7 @@ func (r *pgCampRepository) Get(ctx context.Context, id domain.CampID) (*domain.C
 func (r *pgCampRepository) Save(ctx context.Context, camp *domain.Camp) error {
 	params := db.SaveCampParams{
 		ID:                   string(camp.ID),
+		RegistrationCode:     camp.RegistrationCode,
 		Name:                 camp.Name,
 		StartAt:              pgtype.Timestamptz{Time: camp.StartAt, Valid: !camp.StartAt.IsZero()},
 		EndAt:                pgtype.Timestamptz{Time: camp.EndAt, Valid: !camp.EndAt.IsZero()},
@@ -97,6 +134,7 @@ func (r *pgCampRepository) List(ctx context.Context) ([]*domain.Camp, error) {
 	for i, row := range rows {
 		camp := &domain.Camp{
 			ID:                   domain.CampID(row.ID),
+			RegistrationCode:     row.RegistrationCode,
 			Name:                 row.Name,
 			StartAt:              row.StartAt.Time,
 			EndAt:                row.EndAt.Time,

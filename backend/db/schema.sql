@@ -8,7 +8,8 @@ CREATE TABLE camps (
     ended_at TIMESTAMP WITH TIME ZONE,
     status VARCHAR(50) NOT NULL,
     bottleneck_min_samples INT NOT NULL DEFAULT 3,
-    bottleneck_ratio_pct INT NOT NULL DEFAULT 20
+    bottleneck_ratio_pct INT NOT NULL DEFAULT 20,
+    registration_code VARCHAR(20) NOT NULL UNIQUE
 );
 COMMENT ON TABLE camps IS '캠프(행사) 전체의 기본 정보 및 병목 판단 기준을 관리하는 테이블';
 COMMENT ON COLUMN camps.id IS '캠프 고유 식별자';
@@ -20,6 +21,7 @@ COMMENT ON COLUMN camps.ended_at IS '실제 캠프가 종료된 시간';
 COMMENT ON COLUMN camps.status IS '캠프 상태 (PENDING, ACTIVE, ENDED 등)';
 COMMENT ON COLUMN camps.bottleneck_min_samples IS '병목 판단을 위한 최소 방문 기록 샘플 수';
 COMMENT ON COLUMN camps.bottleneck_ratio_pct IS '목표 시간 대비 지연 비율(%) 임계값';
+COMMENT ON COLUMN camps.registration_code IS '기기 등록 코드 (campId 해시, Crockford Base32, 진행자에게 공유)';
 
 -- 코너(부스/프로그램) 테이블
 CREATE TABLE corners (
@@ -115,6 +117,8 @@ CREATE TABLE device_registrations (
     id VARCHAR(50) PRIMARY KEY,
     camp_id VARCHAR(50) NOT NULL REFERENCES camps(id) ON DELETE CASCADE,
     device_name VARCHAR(255) NOT NULL,
+    device_model VARCHAR(255) NOT NULL,
+    display_name VARCHAR(255) NOT NULL,
     status VARCHAR(50) NOT NULL,
     token_hash VARCHAR(255) NOT NULL UNIQUE,
     failed_pin_attempts INT NOT NULL DEFAULT 0,
@@ -126,6 +130,8 @@ COMMENT ON TABLE device_registrations IS '진행자 기기의 등록 요청 및 
 COMMENT ON COLUMN device_registrations.id IS '기기 등록 요청 고유 식별자';
 COMMENT ON COLUMN device_registrations.camp_id IS '요청된 캠프 식별자';
 COMMENT ON COLUMN device_registrations.device_name IS '기기 식별을 위한 기기명 (사용자 입력)';
+COMMENT ON COLUMN device_registrations.device_model IS '기기 기종(모델명)';
+COMMENT ON COLUMN device_registrations.display_name IS '관리자 화면 표시용 이름 (진행자 입력)';
 COMMENT ON COLUMN device_registrations.status IS '등록 상태 (PENDING, APPROVED, REJECTED, REVOKED)';
 COMMENT ON COLUMN device_registrations.token_hash IS '기기를 인증하기 위한 토큰 해시';
 COMMENT ON COLUMN device_registrations.failed_pin_attempts IS '트랙 PIN 입력 실패 횟수';
