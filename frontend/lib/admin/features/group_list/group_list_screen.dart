@@ -80,11 +80,12 @@ class _GroupListScreenState extends ConsumerState<GroupListScreen> {
           return RefreshIndicator(
             onRefresh: () async =>
                 ref.refresh(groupListProvider(campId).future),
-            child: Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
                     children: [
                       for (final filter in GroupStatusFilter.values)
                         Padding(
@@ -103,47 +104,59 @@ class _GroupListScreenState extends ConsumerState<GroupListScreen> {
                       Text('${visible.length}/${items.length}건'),
                     ],
                   ),
-                ),
-                Expanded(
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: DataTable(
-                      sortColumnIndex: _sortColumn.index,
-                      sortAscending: _ascending,
-                      columns: [
-                        DataColumn(
-                          label: const Text('조'),
-                          onSort: (_, _) => _sortBy(GroupSortColumn.name),
-                        ),
-                        DataColumn(
-                          label: const Text('상태'),
-                          onSort: (_, _) => _sortBy(GroupSortColumn.status),
-                        ),
-                        DataColumn(
-                          label: const Text('완료 코너 수'),
-                          numeric: true,
-                          onSort: (_, _) =>
-                              _sortBy(GroupSortColumn.completedCount),
-                        ),
-                      ],
-                      rows: [
-                        for (final group in visible)
-                          DataRow(
-                            onSelectChanged: (_) =>
-                                context.go('/groups/${group.id}'),
-                            cells: [
-                              DataCell(Text(group.name ?? '이름 없는 조')),
-                              DataCell(
-                                Text(group.isFinished == true ? '완주' : '부분완주'),
+                  const SizedBox(height: 12),
+                  Expanded(
+                    child: Card(
+                      clipBehavior: Clip.antiAlias,
+                      margin: EdgeInsets.zero,
+                      child: SingleChildScrollView(
+                        child: SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: DataTable(
+                            sortColumnIndex: _sortColumn.index,
+                            sortAscending: _ascending,
+                            columns: [
+                              DataColumn(
+                                label: const Text('조'),
+                                onSort: (_, _) => _sortBy(GroupSortColumn.name),
                               ),
-                              DataCell(Text(group.completedCountLabel)),
+                              DataColumn(
+                                label: const Text('상태'),
+                                onSort: (_, _) =>
+                                    _sortBy(GroupSortColumn.status),
+                              ),
+                              DataColumn(
+                                label: const Text('완료 코너 수'),
+                                numeric: true,
+                                onSort: (_, _) =>
+                                    _sortBy(GroupSortColumn.completedCount),
+                              ),
+                            ],
+                            rows: [
+                              for (final group in visible)
+                                DataRow(
+                                  onSelectChanged: (_) =>
+                                      context.go('/groups/${group.id}'),
+                                  cells: [
+                                    DataCell(Text(group.name ?? '이름 없는 조')),
+                                    DataCell(
+                                      Text(
+                                        group.isFinished == true
+                                            ? '완주'
+                                            : '부분완주',
+                                      ),
+                                    ),
+                                    DataCell(Text(group.completedCountLabel)),
+                                  ],
+                                ),
                             ],
                           ),
-                      ],
+                        ),
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           );
         },

@@ -55,67 +55,66 @@ void main() {
       ]);
 
       // assert
-      expect(find.text('대기중 (2)'), findsOneWidget);
+      expect(find.text('대기중'), findsOneWidget);
+      expect(find.text('2'), findsOneWidget);
     });
 
-    testWidgets(
-      'ShouldApproveAndRefreshListWhenApproveButtonTapped',
-      (tester) async {
-        // arrange
-        var approveCalls = 0;
-        await _pump(
-          tester,
-          [_reg('1', DeviceRegistrationResponseStatusEnum.PENDING)],
-          extraOverrides: [
-            approveDeviceRegistrationProvider(
-              DeviceRegistrationId('1'),
-            ).overrideWith((ref) async {
-              approveCalls++;
-              return _reg('1', DeviceRegistrationResponseStatusEnum.APPROVED);
-            }),
-          ],
-        );
+    testWidgets('ShouldApproveAndRefreshListWhenApproveButtonTapped', (
+      tester,
+    ) async {
+      // arrange
+      var approveCalls = 0;
+      await _pump(
+        tester,
+        [_reg('1', DeviceRegistrationResponseStatusEnum.PENDING)],
+        extraOverrides: [
+          approveDeviceRegistrationProvider(
+            DeviceRegistrationId('1'),
+          ).overrideWith((ref) async {
+            approveCalls++;
+            return _reg('1', DeviceRegistrationResponseStatusEnum.APPROVED);
+          }),
+        ],
+      );
 
-        // act
-        await tester.tap(find.text('승인'));
-        await tester.pumpAndSettle();
+      // act
+      await tester.tap(find.text('승인'));
+      await tester.pumpAndSettle();
 
-        // assert
-        expect(approveCalls, 1);
-      },
-    );
+      // assert
+      expect(approveCalls, 1);
+    });
 
-    testWidgets(
-      'ShouldRequireConfirmationBeforeRevokingApprovedDevice',
-      (tester) async {
-        // arrange
-        var revokeCalls = 0;
-        await _pump(
-          tester,
-          [_reg('1', DeviceRegistrationResponseStatusEnum.APPROVED)],
-          extraOverrides: [
-            revokeDeviceRegistrationProvider(
-              DeviceRegistrationId('1'),
-            ).overrideWith((ref) async {
-              revokeCalls++;
-              return _reg('1', DeviceRegistrationResponseStatusEnum.REVOKED);
-            }),
-          ],
-        );
-        await tester.tap(find.text('승인됨'));
-        await tester.pumpAndSettle();
+    testWidgets('ShouldRequireConfirmationBeforeRevokingApprovedDevice', (
+      tester,
+    ) async {
+      // arrange
+      var revokeCalls = 0;
+      await _pump(
+        tester,
+        [_reg('1', DeviceRegistrationResponseStatusEnum.APPROVED)],
+        extraOverrides: [
+          revokeDeviceRegistrationProvider(
+            DeviceRegistrationId('1'),
+          ).overrideWith((ref) async {
+            revokeCalls++;
+            return _reg('1', DeviceRegistrationResponseStatusEnum.REVOKED);
+          }),
+        ],
+      );
+      await tester.tap(find.text('승인됨'));
+      await tester.pumpAndSettle();
 
-        // act: tap revoke, then cancel — must not call API
-        await tester.tap(find.text('회수'));
-        await tester.pumpAndSettle();
-        expect(find.text('기기를 회수하시겠습니까?'), findsOneWidget);
-        await tester.tap(find.text('취소'));
-        await tester.pumpAndSettle();
+      // act: tap revoke, then cancel — must not call API
+      await tester.tap(find.text('회수'));
+      await tester.pumpAndSettle();
+      expect(find.text('기기를 회수하시겠습니까?'), findsOneWidget);
+      await tester.tap(find.text('취소'));
+      await tester.pumpAndSettle();
 
-        // assert
-        expect(revokeCalls, 0);
-      },
-    );
+      // assert
+      expect(revokeCalls, 0);
+    });
 
     testWidgets('ShouldShowNoActionButtonsForHistoryTab', (tester) async {
       // arrange

@@ -81,38 +81,46 @@ class GroupDetailScreen extends ConsumerWidget {
                       b.startedAt ?? DateTime(0),
                     ),
                   );
-                return SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: DataTable(
-                    columns: const [
-                      DataColumn(label: Text('코너')),
-                      DataColumn(label: Text('트랙')),
-                      DataColumn(label: Text('시작')),
-                      DataColumn(label: Text('종료')),
-                      DataColumn(label: Text('소요시간')),
-                      DataColumn(label: Text('편차')),
-                      DataColumn(label: Text('입력')),
-                    ],
-                    rows: [
-                      for (final visit in sorted)
-                        DataRow(
-                          cells: [
-                            DataCell(Text(cornerNames[visit.cornerId] ?? '-')),
-                            DataCell(
-                              Text(
-                                trackNumbers[visit.trackId] == null
-                                    ? '-'
-                                    : '트랙 ${trackNumbers[visit.trackId]}',
+                return Card(
+                  clipBehavior: Clip.antiAlias,
+                  margin: const EdgeInsets.only(top: 8),
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: DataTable(
+                      columns: const [
+                        DataColumn(label: Text('코너')),
+                        DataColumn(label: Text('트랙')),
+                        DataColumn(label: Text('시작')),
+                        DataColumn(label: Text('종료')),
+                        DataColumn(label: Text('소요시간')),
+                        DataColumn(label: Text('편차')),
+                        DataColumn(label: Text('입력')),
+                      ],
+                      rows: [
+                        for (final visit in sorted)
+                          DataRow(
+                            cells: [
+                              DataCell(
+                                Text(cornerNames[visit.cornerId] ?? '-'),
                               ),
-                            ),
-                            DataCell(Text(_time(visit.startedAt))),
-                            DataCell(Text(_time(visit.endedAt))),
-                            DataCell(Text(_duration(visit.durationSeconds))),
-                            DataCell(Text(_deviation(visit.deviationSeconds))),
-                            DataCell(Text(visit.inputMethod?.name ?? '-')),
-                          ],
-                        ),
-                    ],
+                              DataCell(
+                                Text(
+                                  trackNumbers[visit.trackId] == null
+                                      ? '-'
+                                      : '트랙 ${trackNumbers[visit.trackId]}',
+                                ),
+                              ),
+                              DataCell(Text(_time(visit.startedAt))),
+                              DataCell(Text(_time(visit.endedAt))),
+                              DataCell(Text(_duration(visit.durationSeconds))),
+                              DataCell(
+                                Text(_deviation(visit.deviationSeconds)),
+                              ),
+                              DataCell(Text(visit.inputMethod?.name ?? '-')),
+                            ],
+                          ),
+                      ],
+                    ),
                   ),
                 );
               },

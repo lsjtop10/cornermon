@@ -43,57 +43,51 @@ final adminRouterProvider = Provider<GoRouter>((ref) {
     refreshListenable: refresh,
     redirect: (_, state) => _redirect(ref, state.matchedLocation),
     routes: [
-      GoRoute(path: '/login', builder: (_, _) => const LoginScreen()),
-      GoRoute(
-        path: '/setup-wizard',
-        builder: (_, _) => const SetupWizardScreen(),
-      ),
-      GoRoute(path: '/camps', builder: (_, _) => const CampListScreen()),
+      _route('/login', (_, _) => const LoginScreen()),
+      _route('/setup-wizard', (_, _) => const SetupWizardScreen()),
+      _route('/camps', (_, _) => const CampListScreen()),
       _plainRoute('/camps/start', 'A0-e 코너학습 시작'),
-      GoRoute(path: '/badges', builder: (_, _) => const BadgePrecreateScreen()),
-      GoRoute(
-        path: '/dashboard',
-        builder: (_, _) => const AdminScaffold(body: DashboardScreen()),
+      _route('/badges', (_, _) => const BadgePrecreateScreen()),
+      _route(
+        '/dashboard',
+        (_, _) => const AdminScaffold(body: DashboardScreen()),
       ),
-      GoRoute(
-        path: '/dashboard/corners/:cornerId',
-        builder: (_, state) => AdminScaffold(
+      _route(
+        '/dashboard/corners/:cornerId',
+        (_, state) => AdminScaffold(
           body: CornerDetailScreen(
             cornerId: CornerId(state.pathParameters['cornerId']!),
           ),
         ),
       ),
-      GoRoute(
-        path: '/corner-track-manage',
-        builder: (_, _) => const AdminScaffold(body: TrackBulkManageScreen()),
+      _route(
+        '/corner-track-manage',
+        (_, _) => const AdminScaffold(body: TrackBulkManageScreen()),
       ),
-      GoRoute(
-        path: '/groups',
-        builder: (_, _) => const AdminScaffold(body: GroupListScreen()),
-      ),
-      GoRoute(
-        path: '/groups/:groupId',
-        builder: (_, state) => AdminScaffold(
+      _route('/groups', (_, _) => const AdminScaffold(body: GroupListScreen())),
+      _route(
+        '/groups/:groupId',
+        (_, state) => AdminScaffold(
           body: GroupDetailScreen(
             groupId: GroupId(state.pathParameters['groupId']!),
           ),
         ),
       ),
-      GoRoute(
-        path: '/devices',
-        builder: (_, _) => const AdminScaffold(body: DeviceManageScreen()),
+      _route(
+        '/devices',
+        (_, _) => const AdminScaffold(body: DeviceManageScreen()),
       ),
-      GoRoute(
-        path: '/sessions',
-        builder: (_, _) => const AdminScaffold(body: SessionManageScreen()),
+      _route(
+        '/sessions',
+        (_, _) => const AdminScaffold(body: SessionManageScreen()),
       ),
-      GoRoute(
-        path: '/messages/broadcast',
-        builder: (_, _) => const AdminScaffold(body: BroadcastScreen()),
+      _route(
+        '/messages/broadcast',
+        (_, _) => const AdminScaffold(body: BroadcastScreen()),
       ),
-      GoRoute(
-        path: '/messages/direct',
-        builder: (_, _) => const AdminScaffold(body: TrackDirectScreen()),
+      _route(
+        '/messages/direct',
+        (_, _) => const AdminScaffold(body: TrackDirectScreen()),
       ),
       _screenRoute('/report', 'A12 리포트'),
       _screenRoute('/audit-log', 'A13 감사 로그'),
@@ -102,15 +96,20 @@ final adminRouterProvider = Provider<GoRouter>((ref) {
   );
 });
 
-GoRoute _plainRoute(String path, String title) => GoRoute(
+typedef _PageBuilder = Widget Function(BuildContext, GoRouterState);
+
+/// 메뉴 전환 시 슬라이드/페이드 전환 없이 즉시 전환한다.
+GoRoute _route(String path, _PageBuilder builder) => GoRoute(
   path: path,
-  builder: (_, _) => AdminStubScreen(title: title),
+  pageBuilder: (context, state) =>
+      NoTransitionPage(key: state.pageKey, child: builder(context, state)),
 );
 
-GoRoute _screenRoute(String path, String title) => GoRoute(
-  path: path,
-  builder: (_, _) => AdminScaffold(body: AdminStubScreen(title: title)),
-);
+GoRoute _plainRoute(String path, String title) =>
+    _route(path, (_, _) => AdminStubScreen(title: title));
+
+GoRoute _screenRoute(String path, String title) =>
+    _route(path, (_, _) => AdminScaffold(body: AdminStubScreen(title: title)));
 
 String? _redirect(Ref ref, String location) {
   if (ref.read(adminSessionProvider) is AdminSessionUnauthenticated) {
@@ -127,7 +126,10 @@ String? _redirect(Ref ref, String location) {
   if (camp?.status == null) return null;
   return switch (camp!.status!) {
     CampStatus.PENDING =>
-      _preparingLocations.contains(location) ? null : '/corner-track-manage',
+      _preparingLocations.contains(location) ||
+              location.startsWith('/dashboard/corners/')
+          ? null
+          : '/corner-track-manage',
     CampStatus.ACTIVE => null,
     CampStatus.ENDED => location == '/report' ? null : '/report',
     _ => '/camps',

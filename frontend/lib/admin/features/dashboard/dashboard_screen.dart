@@ -4,6 +4,7 @@ import 'package:cornermon/shared/api/domain_aliases.dart' as api;
 import 'package:cornermon/shared/api/providers/corner_track_providers.dart';
 import 'package:cornermon/shared/api/providers/report_providers.dart';
 import 'package:cornermon/shared/design_system/tokens/colors.dart';
+import 'package:cornermon/shared/design_system/tokens/typography.dart';
 import 'package:cornermon/shared/design_system/widgets/empty_state.dart';
 import 'package:cornermon/shared/design_system/widgets/connection_banner.dart';
 import 'package:flutter/material.dart';
@@ -236,6 +237,9 @@ class _SummaryBar extends StatelessWidget {
         ),
         ('안읽은 다이렉트', '$unreadDirectCount'),
       ];
+      final colors = Theme.of(context).brightness == Brightness.dark
+          ? AppColors.dark
+          : AppColors.light;
       return Wrap(
         spacing: 12,
         runSpacing: 12,
@@ -249,14 +253,25 @@ class _SummaryBar extends StatelessWidget {
                       ? () => context.go('/messages/direct')
                       : null,
                   child: Padding(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(tile.$1),
+                        Text(
+                          tile.$1,
+                          style: AppTypography.label.copyWith(
+                            color: colors.textSecondary,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
                         Text(
                           tile.$2,
-                          style: Theme.of(context).textTheme.headlineSmall,
+                          style: AppTypography.display.copyWith(
+                            color: colors.textPrimary,
+                          ),
                         ),
                       ],
                     ),
@@ -392,13 +407,15 @@ class CornerStatusCard extends StatelessWidget {
               ),
             ),
           ),
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 12),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 entry.corner.name ?? '코너',
-                style: Theme.of(context).textTheme.titleMedium,
+                style: AppTypography.bodyEmphasis.copyWith(
+                  color: colors.textPrimary,
+                ),
               ),
               const Spacer(),
               _CornerStatusPill(
@@ -406,13 +423,24 @@ class CornerStatusCard extends StatelessWidget {
                 icon: presentation.icon,
                 label: presentation.label,
               ),
-              Text('활성 ${tracks.length}트랙 중 $busyTrackCount BUSY'),
-              Text('목표 ${entry.corner.targetMinutes ?? 0}분'),
+              const SizedBox(height: 4),
+              Text(
+                '활성 ${tracks.length}트랙 중 $busyTrackCount BUSY · 목표 ${entry.corner.targetMinutes ?? 0}분',
+                style: AppTypography.caption.copyWith(
+                  color: colors.textSecondary,
+                ),
+              ),
               Text(
                 formatCornerCardSubtitle(
                   avgDurationSeconds: metric?.avgDurationSeconds ?? 0,
                   sampleCount: metric?.sampleCount ?? 0,
                   avgDeviationSeconds: entry.avgDeviationSeconds,
+                ),
+                style: AppTypography.caption.copyWith(
+                  color: entry.corner.isBottleneck ?? false
+                      ? colors.statusAlert
+                      : colors.textSecondary,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
               if (entry.inactive && onCreateTrack != null)

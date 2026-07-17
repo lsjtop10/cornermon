@@ -123,7 +123,7 @@ class _BadgePrecreateScreenState extends ConsumerState<BadgePrecreateScreen> {
               error: (_, _) => const <api.Group>[],
             );
             return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Wrap(
                   spacing: 12,
@@ -187,39 +187,43 @@ class BadgeTable extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final groupNames = {for (final group in groups) group.id: group.name};
-    return SingleChildScrollView(
-      child: DataTable(
-        columns: const [
-          DataColumn(label: Text('배지 ID')),
-          DataColumn(label: Text('상태')),
-          DataColumn(label: Text('등록된 조')),
-        ],
-        rows: [
-          for (final badge in badges)
-            DataRow(
-              cells: [
-                DataCell(Text(badge.shortId ?? badge.id ?? '-')),
-                DataCell(
-                  AppTag(
-                    label: badge.status == api.BadgeStatus.ASSIGNED
-                        ? '배정됨'
-                        : '미배정',
-                    tone: badge.status == api.BadgeStatus.ASSIGNED
-                        ? AppTagTone.success
-                        : AppTagTone.neutral,
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      margin: EdgeInsets.zero,
+      child: SingleChildScrollView(
+        child: DataTable(
+          columns: const [
+            DataColumn(label: Text('배지 ID')),
+            DataColumn(label: Text('상태')),
+            DataColumn(label: Text('등록된 조')),
+          ],
+          rows: [
+            for (final badge in badges)
+              DataRow(
+                cells: [
+                  DataCell(Text(badge.shortId ?? badge.id ?? '-')),
+                  DataCell(
+                    AppTag(
+                      label: badge.status == api.BadgeStatus.ASSIGNED
+                          ? '배정됨'
+                          : '미배정',
+                      tone: badge.status == api.BadgeStatus.ASSIGNED
+                          ? AppTagTone.success
+                          : AppTagTone.neutral,
+                    ),
                   ),
-                ),
-                DataCell(
-                  Text(
-                    groupNames[badge.assignedGroupId] ??
-                        (badge.status == api.BadgeStatus.ASSIGNED
-                            ? '배정됨'
-                            : '-'),
+                  DataCell(
+                    Text(
+                      groupNames[badge.assignedGroupId] ??
+                          (badge.status == api.BadgeStatus.ASSIGNED
+                              ? '배정됨'
+                              : '-'),
+                    ),
                   ),
-                ),
-              ],
-            ),
-        ],
+                ],
+              ),
+          ],
+        ),
       ),
     );
   }

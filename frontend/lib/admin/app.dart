@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:cornermon/admin/router/admin_router.dart';
@@ -15,6 +16,13 @@ class AdminApp extends ConsumerWidget {
       darkTheme: AdminTheme.darkTheme,
       themeMode: ref.watch(adminThemeModeProvider),
       routerConfig: ref.watch(adminRouterProvider),
+      locale: const Locale('ko', 'KR'),
+      supportedLocales: const [Locale('ko', 'KR')],
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
     );
   }
 }
