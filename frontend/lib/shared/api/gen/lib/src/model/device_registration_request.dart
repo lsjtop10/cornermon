@@ -13,17 +13,24 @@ part 'device_registration_request.g.dart';
 /// DeviceRegistrationRequest
 ///
 /// Properties:
-/// * [campId] - Using campId because RequestRegistration expects a campID
+/// * [deviceModel] 
 /// * [deviceName] 
+/// * [displayName] 
+/// * [registrationCode] 
 /// * [role] 
 @BuiltValue()
 abstract class DeviceRegistrationRequest implements Built<DeviceRegistrationRequest, DeviceRegistrationRequestBuilder> {
-  /// Using campId because RequestRegistration expects a campID
-  @BuiltValueField(wireName: r'campId')
-  String? get campId;
+  @BuiltValueField(wireName: r'deviceModel')
+  String? get deviceModel;
 
   @BuiltValueField(wireName: r'deviceName')
   String? get deviceName;
+
+  @BuiltValueField(wireName: r'displayName')
+  String? get displayName;
+
+  @BuiltValueField(wireName: r'registrationCode')
+  String? get registrationCode;
 
   @BuiltValueField(wireName: r'role')
   DeviceRegistrationRequestRoleEnum? get role;
@@ -52,10 +59,10 @@ class _$DeviceRegistrationRequestSerializer implements PrimitiveSerializer<Devic
     DeviceRegistrationRequest object, {
     FullType specifiedType = FullType.unspecified,
   }) sync* {
-    if (object.campId != null) {
-      yield r'campId';
+    if (object.deviceModel != null) {
+      yield r'deviceModel';
       yield serializers.serialize(
-        object.campId,
+        object.deviceModel,
         specifiedType: const FullType(String),
       );
     }
@@ -63,6 +70,20 @@ class _$DeviceRegistrationRequestSerializer implements PrimitiveSerializer<Devic
       yield r'deviceName';
       yield serializers.serialize(
         object.deviceName,
+        specifiedType: const FullType(String),
+      );
+    }
+    if (object.displayName != null) {
+      yield r'displayName';
+      yield serializers.serialize(
+        object.displayName,
+        specifiedType: const FullType(String),
+      );
+    }
+    if (object.registrationCode != null) {
+      yield r'registrationCode';
+      yield serializers.serialize(
+        object.registrationCode,
         specifiedType: const FullType(String),
       );
     }
@@ -96,12 +117,12 @@ class _$DeviceRegistrationRequestSerializer implements PrimitiveSerializer<Devic
       final key = serializedList[i] as String;
       final value = serializedList[i + 1];
       switch (key) {
-        case r'campId':
+        case r'deviceModel':
           final valueDes = serializers.deserialize(
             value,
             specifiedType: const FullType(String),
           ) as String;
-          result.campId = valueDes;
+          result.deviceModel = valueDes;
           break;
         case r'deviceName':
           final valueDes = serializers.deserialize(
@@ -109,6 +130,20 @@ class _$DeviceRegistrationRequestSerializer implements PrimitiveSerializer<Devic
             specifiedType: const FullType(String),
           ) as String;
           result.deviceName = valueDes;
+          break;
+        case r'displayName':
+          final valueDes = serializers.deserialize(
+            value,
+            specifiedType: const FullType(String),
+          ) as String;
+          result.displayName = valueDes;
+          break;
+        case r'registrationCode':
+          final valueDes = serializers.deserialize(
+            value,
+            specifiedType: const FullType(String),
+          ) as String;
+          result.registrationCode = valueDes;
           break;
         case r'role':
           final valueDes = serializers.deserialize(

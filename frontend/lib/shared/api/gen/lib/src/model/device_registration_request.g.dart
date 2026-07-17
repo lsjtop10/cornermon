@@ -69,9 +69,13 @@ class _$DeviceRegistrationRequestRoleEnumSerializer
 
 class _$DeviceRegistrationRequest extends DeviceRegistrationRequest {
   @override
-  final String? campId;
+  final String? deviceModel;
   @override
   final String? deviceName;
+  @override
+  final String? displayName;
+  @override
+  final String? registrationCode;
   @override
   final DeviceRegistrationRequestRoleEnum? role;
 
@@ -79,7 +83,12 @@ class _$DeviceRegistrationRequest extends DeviceRegistrationRequest {
           [void Function(DeviceRegistrationRequestBuilder)? updates]) =>
       (DeviceRegistrationRequestBuilder()..update(updates))._build();
 
-  _$DeviceRegistrationRequest._({this.campId, this.deviceName, this.role})
+  _$DeviceRegistrationRequest._(
+      {this.deviceModel,
+      this.deviceName,
+      this.displayName,
+      this.registrationCode,
+      this.role})
       : super._();
   @override
   DeviceRegistrationRequest rebuild(
@@ -94,16 +103,20 @@ class _$DeviceRegistrationRequest extends DeviceRegistrationRequest {
   bool operator ==(Object other) {
     if (identical(other, this)) return true;
     return other is DeviceRegistrationRequest &&
-        campId == other.campId &&
+        deviceModel == other.deviceModel &&
         deviceName == other.deviceName &&
+        displayName == other.displayName &&
+        registrationCode == other.registrationCode &&
         role == other.role;
   }
 
   @override
   int get hashCode {
     var _$hash = 0;
-    _$hash = $jc(_$hash, campId.hashCode);
+    _$hash = $jc(_$hash, deviceModel.hashCode);
     _$hash = $jc(_$hash, deviceName.hashCode);
+    _$hash = $jc(_$hash, displayName.hashCode);
+    _$hash = $jc(_$hash, registrationCode.hashCode);
     _$hash = $jc(_$hash, role.hashCode);
     _$hash = $jf(_$hash);
     return _$hash;
@@ -112,8 +125,10 @@ class _$DeviceRegistrationRequest extends DeviceRegistrationRequest {
   @override
   String toString() {
     return (newBuiltValueToStringHelper(r'DeviceRegistrationRequest')
-          ..add('campId', campId)
+          ..add('deviceModel', deviceModel)
           ..add('deviceName', deviceName)
+          ..add('displayName', displayName)
+          ..add('registrationCode', registrationCode)
           ..add('role', role))
         .toString();
   }
@@ -124,13 +139,22 @@ class DeviceRegistrationRequestBuilder
         Builder<DeviceRegistrationRequest, DeviceRegistrationRequestBuilder> {
   _$DeviceRegistrationRequest? _$v;
 
-  String? _campId;
-  String? get campId => _$this._campId;
-  set campId(String? campId) => _$this._campId = campId;
+  String? _deviceModel;
+  String? get deviceModel => _$this._deviceModel;
+  set deviceModel(String? deviceModel) => _$this._deviceModel = deviceModel;
 
   String? _deviceName;
   String? get deviceName => _$this._deviceName;
   set deviceName(String? deviceName) => _$this._deviceName = deviceName;
+
+  String? _displayName;
+  String? get displayName => _$this._displayName;
+  set displayName(String? displayName) => _$this._displayName = displayName;
+
+  String? _registrationCode;
+  String? get registrationCode => _$this._registrationCode;
+  set registrationCode(String? registrationCode) =>
+      _$this._registrationCode = registrationCode;
 
   DeviceRegistrationRequestRoleEnum? _role;
   DeviceRegistrationRequestRoleEnum? get role => _$this._role;
@@ -143,8 +167,10 @@ class DeviceRegistrationRequestBuilder
   DeviceRegistrationRequestBuilder get _$this {
     final $v = _$v;
     if ($v != null) {
-      _campId = $v.campId;
+      _deviceModel = $v.deviceModel;
       _deviceName = $v.deviceName;
+      _displayName = $v.displayName;
+      _registrationCode = $v.registrationCode;
       _role = $v.role;
       _$v = null;
     }
@@ -167,8 +193,10 @@ class DeviceRegistrationRequestBuilder
   _$DeviceRegistrationRequest _build() {
     final _$result = _$v ??
         _$DeviceRegistrationRequest._(
-          campId: campId,
+          deviceModel: deviceModel,
           deviceName: deviceName,
+          displayName: displayName,
+          registrationCode: registrationCode,
           role: role,
         );
     replace(_$result);

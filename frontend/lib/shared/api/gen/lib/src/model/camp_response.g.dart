@@ -79,6 +79,8 @@ class _$CampResponse extends CampResponse {
   @override
   final String? name;
   @override
+  final String? registrationCode;
+  @override
   final DateTime? startAt;
   @override
   final CampResponseStatusEnum? status;
@@ -92,6 +94,7 @@ class _$CampResponse extends CampResponse {
       this.endAt,
       this.id,
       this.name,
+      this.registrationCode,
       this.startAt,
       this.status})
       : super._();
@@ -111,6 +114,7 @@ class _$CampResponse extends CampResponse {
         endAt == other.endAt &&
         id == other.id &&
         name == other.name &&
+        registrationCode == other.registrationCode &&
         startAt == other.startAt &&
         status == other.status;
   }
@@ -123,6 +127,7 @@ class _$CampResponse extends CampResponse {
     _$hash = $jc(_$hash, endAt.hashCode);
     _$hash = $jc(_$hash, id.hashCode);
     _$hash = $jc(_$hash, name.hashCode);
+    _$hash = $jc(_$hash, registrationCode.hashCode);
     _$hash = $jc(_$hash, startAt.hashCode);
     _$hash = $jc(_$hash, status.hashCode);
     _$hash = $jf(_$hash);
@@ -137,6 +142,7 @@ class _$CampResponse extends CampResponse {
           ..add('endAt', endAt)
           ..add('id', id)
           ..add('name', name)
+          ..add('registrationCode', registrationCode)
           ..add('startAt', startAt)
           ..add('status', status))
         .toString();
@@ -169,6 +175,11 @@ class CampResponseBuilder
   String? get name => _$this._name;
   set name(String? name) => _$this._name = name;
 
+  String? _registrationCode;
+  String? get registrationCode => _$this._registrationCode;
+  set registrationCode(String? registrationCode) =>
+      _$this._registrationCode = registrationCode;
+
   DateTime? _startAt;
   DateTime? get startAt => _$this._startAt;
   set startAt(DateTime? startAt) => _$this._startAt = startAt;
@@ -189,6 +200,7 @@ class CampResponseBuilder
       _endAt = $v.endAt;
       _id = $v.id;
       _name = $v.name;
+      _registrationCode = $v.registrationCode;
       _startAt = $v.startAt;
       _status = $v.status;
       _$v = null;
@@ -217,6 +229,7 @@ class CampResponseBuilder
           endAt: endAt,
           id: id,
           name: name,
+          registrationCode: registrationCode,
           startAt: startAt,
           status: status,
         );

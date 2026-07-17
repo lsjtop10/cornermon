@@ -91,7 +91,11 @@ class _$DeviceRegistrationResponse extends DeviceRegistrationResponse {
   @override
   final DateTime? createdAt;
   @override
+  final String? deviceModel;
+  @override
   final String? deviceName;
+  @override
+  final String? displayName;
   @override
   final int? failedPinAttempts;
   @override
@@ -108,7 +112,9 @@ class _$DeviceRegistrationResponse extends DeviceRegistrationResponse {
   _$DeviceRegistrationResponse._(
       {this.approvedAt,
       this.createdAt,
+      this.deviceModel,
       this.deviceName,
+      this.displayName,
       this.failedPinAttempts,
       this.id,
       this.lockedUntil,
@@ -129,7 +135,9 @@ class _$DeviceRegistrationResponse extends DeviceRegistrationResponse {
     return other is DeviceRegistrationResponse &&
         approvedAt == other.approvedAt &&
         createdAt == other.createdAt &&
+        deviceModel == other.deviceModel &&
         deviceName == other.deviceName &&
+        displayName == other.displayName &&
         failedPinAttempts == other.failedPinAttempts &&
         id == other.id &&
         lockedUntil == other.lockedUntil &&
@@ -141,7 +149,9 @@ class _$DeviceRegistrationResponse extends DeviceRegistrationResponse {
     var _$hash = 0;
     _$hash = $jc(_$hash, approvedAt.hashCode);
     _$hash = $jc(_$hash, createdAt.hashCode);
+    _$hash = $jc(_$hash, deviceModel.hashCode);
     _$hash = $jc(_$hash, deviceName.hashCode);
+    _$hash = $jc(_$hash, displayName.hashCode);
     _$hash = $jc(_$hash, failedPinAttempts.hashCode);
     _$hash = $jc(_$hash, id.hashCode);
     _$hash = $jc(_$hash, lockedUntil.hashCode);
@@ -155,7 +165,9 @@ class _$DeviceRegistrationResponse extends DeviceRegistrationResponse {
     return (newBuiltValueToStringHelper(r'DeviceRegistrationResponse')
           ..add('approvedAt', approvedAt)
           ..add('createdAt', createdAt)
+          ..add('deviceModel', deviceModel)
           ..add('deviceName', deviceName)
+          ..add('displayName', displayName)
           ..add('failedPinAttempts', failedPinAttempts)
           ..add('id', id)
           ..add('lockedUntil', lockedUntil)
@@ -177,9 +189,17 @@ class DeviceRegistrationResponseBuilder
   DateTime? get createdAt => _$this._createdAt;
   set createdAt(DateTime? createdAt) => _$this._createdAt = createdAt;
 
+  String? _deviceModel;
+  String? get deviceModel => _$this._deviceModel;
+  set deviceModel(String? deviceModel) => _$this._deviceModel = deviceModel;
+
   String? _deviceName;
   String? get deviceName => _$this._deviceName;
   set deviceName(String? deviceName) => _$this._deviceName = deviceName;
+
+  String? _displayName;
+  String? get displayName => _$this._displayName;
+  set displayName(String? displayName) => _$this._displayName = displayName;
 
   int? _failedPinAttempts;
   int? get failedPinAttempts => _$this._failedPinAttempts;
@@ -208,7 +228,9 @@ class DeviceRegistrationResponseBuilder
     if ($v != null) {
       _approvedAt = $v.approvedAt;
       _createdAt = $v.createdAt;
+      _deviceModel = $v.deviceModel;
       _deviceName = $v.deviceName;
+      _displayName = $v.displayName;
       _failedPinAttempts = $v.failedPinAttempts;
       _id = $v.id;
       _lockedUntil = $v.lockedUntil;
@@ -236,7 +258,9 @@ class DeviceRegistrationResponseBuilder
         _$DeviceRegistrationResponse._(
           approvedAt: approvedAt,
           createdAt: createdAt,
+          deviceModel: deviceModel,
           deviceName: deviceName,
+          displayName: displayName,
           failedPinAttempts: failedPinAttempts,
           id: id,
           lockedUntil: lockedUntil,
