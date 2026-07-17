@@ -1,9 +1,12 @@
 -- name: GetCamp :one
 SELECT * FROM camps WHERE id = $1;
 
+-- name: GetCampByRegistrationCode :one
+SELECT * FROM camps WHERE registration_code = $1;
+
 -- name: SaveCamp :exec
-INSERT INTO camps (id, name, start_at, end_at, activated_at, ended_at, status, bottleneck_min_samples, bottleneck_ratio_pct)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+INSERT INTO camps (id, name, start_at, end_at, activated_at, ended_at, status, bottleneck_min_samples, bottleneck_ratio_pct, registration_code)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 ON CONFLICT (id) DO UPDATE SET
     name = EXCLUDED.name,
     start_at = EXCLUDED.start_at,
@@ -186,8 +189,8 @@ SELECT * FROM device_registrations WHERE token_hash = $1;
 SELECT * FROM device_registrations WHERE camp_id = $1 AND status = 'PENDING';
 
 -- name: SaveDeviceRegistration :exec
-INSERT INTO device_registrations (id, camp_id, device_name, status, token_hash, failed_pin_attempts, locked_until, approved_at, created_at)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+INSERT INTO device_registrations (id, camp_id, device_name, device_model, display_name, status, token_hash, failed_pin_attempts, locked_until, approved_at, created_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
 ON CONFLICT (id) DO UPDATE SET
     status = EXCLUDED.status,
     failed_pin_attempts = EXCLUDED.failed_pin_attempts,

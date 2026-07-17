@@ -21,6 +21,7 @@ type Querier interface {
 	GetBadge(ctx context.Context, id string) (Badge, error)
 	GetBadgeByQRPayload(ctx context.Context, qrPayload string) (Badge, error)
 	GetCamp(ctx context.Context, id string) (Camp, error)
+	GetCampByRegistrationCode(ctx context.Context, registrationCode string) (Camp, error)
 	GetCompletedVisitByGroupAndCorner(ctx context.Context, arg GetCompletedVisitByGroupAndCornerParams) (Visit, error)
 	GetCorner(ctx context.Context, id string) (Corner, error)
 	GetCornerView(ctx context.Context, id string) (GetCornerViewRow, error)

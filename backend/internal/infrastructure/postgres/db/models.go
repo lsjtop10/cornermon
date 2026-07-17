@@ -105,6 +105,8 @@ type Camp struct {
 	BottleneckMinSamples int32 `json:"bottleneck_min_samples"`
 	// 목표 시간 대비 지연 비율(%) 임계값
 	BottleneckRatioPct int32 `json:"bottleneck_ratio_pct"`
+	// 기기 등록 코드 (campId 해시, Crockford Base32, 진행자에게 공유)
+	RegistrationCode string `json:"registration_code"`
 }
 
 // 캠프 내의 각 코너(부스/프로그램)를 정의하는 테이블
@@ -129,6 +131,10 @@ type DeviceRegistration struct {
 	CampID string `json:"camp_id"`
 	// 기기 식별을 위한 기기명 (사용자 입력)
 	DeviceName string `json:"device_name"`
+	// 기기 기종(모델명)
+	DeviceModel string `json:"device_model"`
+	// 관리자 화면 표시용 이름 (진행자 입력)
+	DisplayName string `json:"display_name"`
 	// 등록 상태 (PENDING, APPROVED, REJECTED, REVOKED)
 	Status string `json:"status"`
 	// 기기를 인증하기 위한 토큰 해시

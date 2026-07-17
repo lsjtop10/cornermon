@@ -19,7 +19,7 @@ func TestShouldReturnActualCreatedAtWhenDeviceRegistrationRequested(t *testing.T
 	createdAt := time.Date(2026, 7, 15, 8, 0, 0, 0, time.UTC)
 	stub := &listDeviceTrustStub{requestedReg: &domain.DeviceRegistration{ID: "device-1", Status: domain.DevicePending, CreatedAt: createdAt}}
 	handler := NewDeviceHandler(stub)
-	body := bytes.NewBufferString(`{"campId":"camp-1","deviceName":"iPad"}`)
+	body := bytes.NewBufferString(`{"registrationCode":"7ZQK3M2X","deviceName":"iPad","deviceModel":"iPad Pro 11 2022","displayName":"1번 태블릿"}`)
 	req := httptest.NewRequest(http.MethodPost, "/device-registrations", body)
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
@@ -37,6 +37,44 @@ func TestShouldReturnActualCreatedAtWhenDeviceRegistrationRequested(t *testing.T
 	}
 	if !response.CreatedAt.Equal(createdAt) {
 		t.Fatalf("expected CreatedAt %v, got %v", createdAt, response.CreatedAt)
+	}
+}
+
+func TestShouldReturnNotFoundWhenRegistrationCodeDoesNotMatchAnyCamp(t *testing.T) {
+	// Arrange
+	e := echo.New()
+	stub := &listDeviceTrustStub{requestErr: domain.ErrCampNotFound}
+	handler := NewDeviceHandler(stub)
+	body := bytes.NewBufferString(`{"registrationCode":"UNKNOWN1","deviceName":"iPad"}`)
+	req := httptest.NewRequest(http.MethodPost, "/device-registrations", body)
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+
+	// Act
+	err := handler.RequestRegistration(e.NewContext(req, rec))
+
+	// Assert
+	if err != nil || rec.Code != http.StatusNotFound {
+		t.Fatalf("expected 404 response, code=%d err=%v", rec.Code, err)
+	}
+}
+
+func TestShouldReturnBadRequestWhenCampIsNotActiveForRegistration(t *testing.T) {
+	// Arrange
+	e := echo.New()
+	stub := &listDeviceTrustStub{requestErr: domain.ErrCampInvalidTransition}
+	handler := NewDeviceHandler(stub)
+	body := bytes.NewBufferString(`{"registrationCode":"7ZQK3M2X","deviceName":"iPad"}`)
+	req := httptest.NewRequest(http.MethodPost, "/device-registrations", body)
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+
+	// Act
+	err := handler.RequestRegistration(e.NewContext(req, rec))
+
+	// Assert
+	if err != nil || rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400 response, code=%d err=%v", rec.Code, err)
 	}
 }
 

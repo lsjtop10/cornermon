@@ -90,6 +90,12 @@
 
 #### 2.4-b 기기 신뢰 모델 (Device Trust)
 - **신뢰 장치 게이트**: 신뢰 토큰(서버 발급)이 없는 미등록 기기는 PIN 입력 화면에 도달할 수 없다.
+- **등록 코드(campId 해시)**: 진행자는 campId 원문을 알 수 없다. `Camp` 생성 시점에 campId를
+  SHA-256으로 해싱한 뒤 앞 40비트를 Crockford Base32(`0123456789ABCDEFGHJKMNPQRSTVWXYZ`, I/L/O/U
+  제외)로 인코딩한 8자 `registrationCode`를 결정적으로 생성해 캠프 레코드에 함께 저장한다.
+  관리자는 이 코드를 관리자 화면에서 확인해 진행자에게 구두/메신저 등으로 전달하고, 진행자는
+  기기 등록 시 이 코드를 입력한다. 서버는 `registrationCode`로 campId를 O(1) 역참조한다(매 요청
+  재해싱 없음).
 - **토큰 상태 관리**: 토큰은 `PENDING` -> `APPROVED` 또는 `REJECTED`로 상태가 관리되며, 분실 시 `REVOKED`로 신뢰를 철회할 수 있다.
 - **지연 정책**: 이미 승인된 신뢰 기기에서 PIN 입력이 연속 실패하는 경우에만 점증형 지연(스로틀링) 정책이 적용된다. (구체적 시나리오는 `scenarios.md` Feature 3-b 참고)
 

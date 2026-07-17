@@ -15,6 +15,7 @@ const (
 
 type Camp struct {
 	ID                   CampID
+	RegistrationCode     string
 	Name                 string
 	StartAt              time.Time
 	EndAt                time.Time
@@ -33,6 +34,7 @@ func NewCamp(id CampID, name string, startAt, endAt time.Time) (*Camp, error) {
 	}
 	return &Camp{
 		ID:                   id,
+		RegistrationCode:     GenerateRegistrationCode(id),
 		Name:                 name,
 		StartAt:              startAt,
 		EndAt:                endAt,

@@ -3013,6 +3013,10 @@ const docTemplate = `{
                     "type": "string",
                     "example": "2026 여름 코너학습"
                 },
+                "registrationCode": {
+                    "type": "string",
+                    "example": "7ZQK3M2X"
+                },
                 "startAt": {
                     "type": "string",
                     "format": "date-time"
@@ -3246,6 +3250,10 @@ const docTemplate = `{
                     "type": "string",
                     "format": "date-time"
                 },
+                "deviceModel": {
+                    "type": "string",
+                    "example": "iPad Pro 11 2022"
+                },
                 "deviceName": {
                     "type": "string",
                     "example": "iPad Pro #3"
@@ -3253,6 +3261,10 @@ const docTemplate = `{
                 "deviceToken": {
                     "type": "string",
                     "example": "a1b2c3..."
+                },
+                "displayName": {
+                    "type": "string",
+                    "example": "1번 태블릿"
                 },
                 "failedPinAttempts": {
                     "type": "integer"
@@ -3279,12 +3291,20 @@ const docTemplate = `{
         "DeviceRegistrationRequest": {
             "type": "object",
             "properties": {
-                "campId": {
-                    "description": "Using campId because RequestRegistration expects a campID",
-                    "type": "string"
+                "deviceModel": {
+                    "type": "string",
+                    "example": "iPad Pro 11 2022"
                 },
                 "deviceName": {
                     "type": "string"
+                },
+                "displayName": {
+                    "type": "string",
+                    "example": "1번 태블릿"
+                },
+                "registrationCode": {
+                    "type": "string",
+                    "example": "7ZQK3M2X"
                 },
                 "role": {
                     "type": "string",
@@ -3306,9 +3326,17 @@ const docTemplate = `{
                     "type": "string",
                     "format": "date-time"
                 },
+                "deviceModel": {
+                    "type": "string",
+                    "example": "iPad Pro 11 2022"
+                },
                 "deviceName": {
                     "type": "string",
                     "example": "iPad Pro #3"
+                },
+                "displayName": {
+                    "type": "string",
+                    "example": "1번 태블릿"
                 },
                 "failedPinAttempts": {
                     "type": "integer"
