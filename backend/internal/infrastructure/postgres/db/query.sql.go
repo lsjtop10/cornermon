@@ -242,7 +242,7 @@ SELECT
     c.camp_id,
     metrics.sample_count,
     metrics.avg_duration_seconds,
-    active_tracks.active_tracks
+    active_tracks.active_tracks::jsonb AS active_tracks
 FROM corners c
 JOIN LATERAL (
     SELECT
@@ -269,13 +269,13 @@ WHERE c.id = $1
 `
 
 type GetCornerViewRow struct {
-	ID                 string      `json:"id"`
-	Name               string      `json:"name"`
-	TargetMinutes      int32       `json:"target_minutes"`
-	CampID             string      `json:"camp_id"`
-	SampleCount        int64       `json:"sample_count"`
-	AvgDurationSeconds float64     `json:"avg_duration_seconds"`
-	ActiveTracks       interface{} `json:"active_tracks"`
+	ID                 string  `json:"id"`
+	Name               string  `json:"name"`
+	TargetMinutes      int32   `json:"target_minutes"`
+	CampID             string  `json:"camp_id"`
+	SampleCount        int64   `json:"sample_count"`
+	AvgDurationSeconds float64 `json:"avg_duration_seconds"`
+	ActiveTracks       []byte  `json:"active_tracks"`
 }
 
 func (q *Queries) GetCornerView(ctx context.Context, id string) (GetCornerViewRow, error) {
@@ -803,7 +803,7 @@ SELECT
     c.target_minutes,
     metrics.sample_count,
     metrics.avg_duration_seconds,
-    active_tracks.active_tracks
+    active_tracks.active_tracks::jsonb AS active_tracks
 FROM corners c
 JOIN LATERAL (
     SELECT
@@ -831,13 +831,13 @@ ORDER BY c.id
 `
 
 type ListCornerViewsByCampRow struct {
-	ID                 string      `json:"id"`
-	Name               string      `json:"name"`
-	CampID             string      `json:"camp_id"`
-	TargetMinutes      int32       `json:"target_minutes"`
-	SampleCount        int64       `json:"sample_count"`
-	AvgDurationSeconds float64     `json:"avg_duration_seconds"`
-	ActiveTracks       interface{} `json:"active_tracks"`
+	ID                 string  `json:"id"`
+	Name               string  `json:"name"`
+	CampID             string  `json:"camp_id"`
+	TargetMinutes      int32   `json:"target_minutes"`
+	SampleCount        int64   `json:"sample_count"`
+	AvgDurationSeconds float64 `json:"avg_duration_seconds"`
+	ActiveTracks       []byte  `json:"active_tracks"`
 }
 
 func (q *Queries) ListCornerViewsByCamp(ctx context.Context, campID string) ([]ListCornerViewsByCampRow, error) {

@@ -28,7 +28,7 @@ SELECT
     c.target_minutes,
     metrics.sample_count,
     metrics.avg_duration_seconds,
-    active_tracks.active_tracks
+    active_tracks.active_tracks::jsonb AS active_tracks
 FROM corners c
 JOIN LATERAL (
     SELECT
@@ -62,7 +62,7 @@ SELECT
     c.camp_id,
     metrics.sample_count,
     metrics.avg_duration_seconds,
-    active_tracks.active_tracks
+    active_tracks.active_tracks::jsonb AS active_tracks
 FROM corners c
 JOIN LATERAL (
     SELECT
