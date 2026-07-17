@@ -43,26 +43,24 @@ class TrackConfirmScreen extends ConsumerWidget {
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: AppSpacing.space8),
-                SizedBox(
-                  width: double.infinity,
-                  child: AppButton(
-                    variant: AppButtonVariant.primary,
-                    label: '예, 맞습니다',
-                    onPressed: () => ref
-                        .read(trackSessionProvider.notifier)
-                        .confirmAssignment(),
-                  ),
+                AppButton(
+                  variant: AppButtonVariant.primary,
+                  size: AppButtonSize.comfortable,
+                  width: AppButtonWidth.fill,
+                  label: '예, 맞습니다',
+                  onPressed: () => ref
+                      .read(trackSessionProvider.notifier)
+                      .confirmAssignment(),
                 ),
                 const SizedBox(height: AppSpacing.space3),
-                SizedBox(
-                  width: double.infinity,
-                  child: AppButton(
-                    variant: AppButtonVariant.secondary,
-                    label: '아니요, 다시 로그인',
-                    onPressed: () => ref
-                        .read(trackSessionProvider.notifier)
-                        .rejectAssignment(),
-                  ),
+                AppButton(
+                  variant: AppButtonVariant.secondary,
+                  size: AppButtonSize.comfortable,
+                  width: AppButtonWidth.fill,
+                  label: '아니요, 다시 로그인',
+                  onPressed: () => ref
+                      .read(trackSessionProvider.notifier)
+                      .rejectAssignment(),
                 ),
               ],
             ),

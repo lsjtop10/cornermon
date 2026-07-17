@@ -83,6 +83,14 @@ Future<void> _pumpDashboard(
     ProviderScope(
       overrides: [
         selectedCampIdProvider.overrideWith(() => _SelectedCampId(campId)),
+        selectedCampProvider.overrideWith(
+          (ref) async => CampResponse(
+            (b) => b
+              ..id = campId.value
+              ..name = '테스트 캠프'
+              ..status = CampResponseStatusEnum.ACTIVE,
+          ),
+        ),
         cornerListProvider(campId).overrideWith((ref) async => corners),
         liveSummaryProvider(
           campId,
@@ -260,7 +268,7 @@ void main() {
       );
 
       // assert
-      expect(find.textContaining('유휴'), findsOneWidget);
+      expect(find.text('○  유휴'), findsOneWidget);
       expect(find.text('✕  미가동'), findsOneWidget);
       expect(find.text('트랙 생성'), findsOneWidget);
       expect(
@@ -285,9 +293,19 @@ void main() {
         ProviderScope(
           overrides: [
             selectedCampIdProvider.overrideWith(() => _SelectedCampId(campId)),
+            selectedCampProvider.overrideWith(
+              (ref) async => CampResponse(
+                (b) => b
+                  ..id = campId.value
+                  ..name = '테스트 캠프'
+                  ..status = CampResponseStatusEnum.ACTIVE,
+              ),
+            ),
             cornerListProvider(campId).overrideWith((ref) => completer.future),
             liveSummaryProvider(campId).overrideWith((ref) async => _summary()),
-            trackDirectSummariesProvider(campId).overrideWith((ref) async => []),
+            trackDirectSummariesProvider(
+              campId,
+            ).overrideWith((ref) async => []),
           ],
           child: const MaterialApp(home: DashboardScreen()),
         ),
@@ -384,7 +402,9 @@ void main() {
               summaryCalls++;
               return _summary();
             }),
-            trackDirectSummariesProvider(campId).overrideWith((ref) async => []),
+            trackDirectSummariesProvider(
+              campId,
+            ).overrideWith((ref) async => []),
           ],
           child: const MaterialApp(home: DashboardScreen()),
         ),

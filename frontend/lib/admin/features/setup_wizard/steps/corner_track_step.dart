@@ -57,6 +57,7 @@ class _CornerTrackStepState extends ConsumerState<CornerTrackStep> {
             ),
             AppButton(
               variant: AppButtonVariant.secondary,
+              size: AppButtonSize.compact,
               label: '예시 10개로 빠르게 시작',
               onPressed: () {
                 _pasteController.text = kSetupWizardExampleCornerNames.join(

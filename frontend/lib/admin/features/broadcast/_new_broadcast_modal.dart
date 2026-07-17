@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:cornermon/shared/api/ids.dart';
 import 'package:cornermon/shared/api/providers/message_providers.dart';
+import 'package:cornermon/shared/design_system/widgets/app_button.dart';
 
 class NewBroadcastModal extends ConsumerStatefulWidget {
   const NewBroadcastModal({required this.campId, super.key});
@@ -32,9 +33,7 @@ class _NewBroadcastModalState extends ConsumerState<NewBroadcastModal> {
       _errorText = null;
     });
     try {
-      await ref.read(
-        sendBroadcastMessageProvider(widget.campId, text).future,
-      );
+      await ref.read(sendBroadcastMessageProvider(widget.campId, text).future);
       ref.invalidate(broadcastMessageListProvider(widget.campId));
       if (mounted) Navigator.pop(context);
     } catch (_) {
@@ -71,9 +70,11 @@ class _NewBroadcastModalState extends ConsumerState<NewBroadcastModal> {
           onPressed: _busy ? null : () => Navigator.pop(context),
           child: const Text('취소'),
         ),
-        FilledButton(
+        AppButton(
+          variant: AppButtonVariant.primary,
+          size: AppButtonSize.compact,
+          label: '발송',
           onPressed: _busy || _content.text.trim().isEmpty ? null : _submit,
-          child: const Text('발송'),
         ),
       ],
     );

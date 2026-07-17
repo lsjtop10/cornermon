@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import 'package:cornermon/shared/design_system/tokens/colors.dart';
+import 'package:cornermon/shared/design_system/tokens/dimensions.dart';
 import 'package:cornermon/shared/design_system/tokens/typography.dart';
 import 'package:cornermon/shared/design_system/widgets/app_button.dart';
 
@@ -58,25 +59,31 @@ class _DoubleTapConfirmButtonState extends State<DoubleTapConfirmButton> {
     if (!_armed) {
       return AppButton(
         variant: AppButtonVariant.primary,
+        size: AppButtonSize.comfortable,
+        width: AppButtonWidth.fill,
         label: widget.label,
         onPressed: _handleTap,
       );
     }
 
-    // AppButton에 warning variant가 없어 무장 상태는 별도로 스타일링.
+    // AppButton에 warning variant가 없어 무장 상태는 별도로 스타일링 — 크기는 comfortable 토큰에 맞춘다.
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final colors = isDark ? AppColors.dark : AppColors.light;
 
     return Material(
       color: colors.warning,
-      borderRadius: BorderRadius.circular(12.0),
+      borderRadius: BorderRadius.circular(
+        AppDimensions.controlRadiusComfortable,
+      ),
       child: InkWell(
         onTap: _handleTap,
-        borderRadius: BorderRadius.circular(12.0),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+        borderRadius: BorderRadius.circular(
+          AppDimensions.controlRadiusComfortable,
+        ),
+        child: SizedBox(
+          height: AppDimensions.controlHeightComfortable,
+          width: double.infinity,
           child: Center(
-            widthFactor: 1.0,
             child: Text(
               widget.armedLabel,
               style: AppTypography.bodyEmphasis.copyWith(color: colors.quiet),

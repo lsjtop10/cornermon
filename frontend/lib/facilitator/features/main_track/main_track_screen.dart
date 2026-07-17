@@ -83,13 +83,12 @@ class _MainTrackScreenState extends ConsumerState<MainTrackScreen> {
                 if (isIdle)
                   Padding(
                     padding: const EdgeInsets.all(AppSpacing.space4),
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: AppButton(
-                        variant: AppButtonVariant.secondary,
-                        label: '수동으로 처리',
-                        onPressed: () => context.go('/main/manual'),
-                      ),
+                    child: AppButton(
+                      variant: AppButtonVariant.secondary,
+                      size: AppButtonSize.comfortable,
+                      width: AppButtonWidth.fill,
+                      label: '수동으로 처리',
+                      onPressed: () => context.go('/main/manual'),
                     ),
                   ),
               ],

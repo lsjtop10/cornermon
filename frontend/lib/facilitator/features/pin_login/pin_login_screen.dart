@@ -174,6 +174,7 @@ class _PinLoginBodyState extends State<_PinLoginBody> {
             const SizedBox(height: AppSpacing.space4),
             AppButton(
               variant: AppButtonVariant.secondary,
+              size: AppButtonSize.comfortable,
               label: '기기 등록 화면으로',
               onPressed: () => context.go('/device-pending'),
             ),

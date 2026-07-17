@@ -76,14 +76,14 @@ class _ChatThreadPaneState extends ConsumerState<ChatThreadPane> {
       trackMessageListProvider(widget.trackId, background: false),
     );
 
-    ref.listen(
-      trackMessageListProvider(widget.trackId, background: false),
-      (previous, next) {
-        if (next.hasValue) {
-          ref.invalidate(trackDirectSummariesProvider(widget.campId));
-        }
-      },
-    );
+    ref.listen(trackMessageListProvider(widget.trackId, background: false), (
+      previous,
+      next,
+    ) {
+      if (next.hasValue) {
+        ref.invalidate(trackDirectSummariesProvider(widget.campId));
+      }
+    });
 
     return Column(
       children: [
@@ -125,6 +125,7 @@ class _ChatThreadPaneState extends ConsumerState<ChatThreadPane> {
                     const SizedBox(width: AppSpacing.space2),
                     AppButton(
                       variant: AppButtonVariant.iconOnly,
+                      size: AppButtonSize.compact,
                       label: '전송',
                       icon: Icons.send_rounded,
                       onPressed: _send,
@@ -152,14 +153,18 @@ class _MessageBubble extends StatelessWidget {
     return Align(
       alignment: isAdmin ? Alignment.centerRight : Alignment.centerLeft,
       child: Column(
-        crossAxisAlignment:
-            isAdmin ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+        crossAxisAlignment: isAdmin
+            ? CrossAxisAlignment.end
+            : CrossAxisAlignment.start,
         children: [
           if (message.isQuickReplyTag)
             Padding(
               padding: const EdgeInsets.only(bottom: 2),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: colors.danger.withValues(alpha: .12),
                   borderRadius: BorderRadius.circular(100),

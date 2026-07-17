@@ -140,3 +140,55 @@ Future<Camp> createCamp(Ref ref, String name, {...}) async { ... }
 `DioExceptionType.unknown`으로 잡히고 `statusCode`는 실제 HTTP 상태(200/201)를 그대로
 보여주므로, "서버는 성공(2xx)이라는데 클라이언트는 실패로 본다"는 신호가 보이면 응답
 DTO의 enum/필수 필드가 실제로 채워지고 있는지 백엔드 핸들러부터 확인한다.
+
+## 4. `AppButton` — 관리자/진행자 크기·폭 축
+
+관리자(태블릿·데스크톱)와 진행자(스마트폰) 목업의 실측 버튼 스타일이 서로 다르다(관리자
+34px/9px 라운드/12.5px·700, 진행자 52px/12px 라운드/16px·600). `AppButton`
+(`lib/shared/design_system/widgets/app_button.dart`)은 이 둘을 `size`/`width` 두 축으로
+분리해서 하나의 위젯으로 공유한다. `AppDimensions`(`lib/shared/design_system/tokens/dimensions.dart`)에
+크기 토큰이 정의돼 있고, `AppDropdown` 등 다른 컨트롤도 같은 토큰을 재사용한다.
+
+### 4.1 `size`는 필수 — 화면이 아니라 밀도로 고른다
+
+```dart
+enum AppButtonSize { compact, comfortable }
+```
+
+`variant`처럼 기본값이 없다 — 호출부가 명시적으로 골라야 한다.
+
+| | `AppButtonSize.compact` | `AppButtonSize.comfortable` |
+|---|---|---|
+| 실측 근거 | 관리자 `.btn` (34px/9px/12.5px·700) | 진행자 `.btn` (52px/12px/16px·600) |
+| 언제 쓰나 | `lib/admin/**`의 모든 버튼 (테이블 액션, 다이얼로그, 툴바) | `lib/facilitator/**`의 모든 버튼 (터치 타깃) |
+| 이름의 기준 | 플랫폼이 아니라 **밀도** — 관리자·진행자가 공유하는 다이얼로그(`confirm_modal.dart`)처럼 양쪽에서 다 쓰이는 위젯은 파라미터로 노출해 호출부가 고르게 한다 | (동일) |
+
+`EmptyState.actionButtonSize`, `showConfirmModal(buttonSize: ...)`처럼 관리자·진행자 양쪽에서
+쓰이는 공유 위젯은 크기를 하드코딩하지 말고 파라미터로 노출한다. 기본값을 둘 때는 실제
+호출부 대부분이 어느 쪽인지 확인 후 그쪽으로 맞추고, 반대쪽 호출부는 명시적으로 다른 값을
+넘기게 한다.
+
+### 4.2 `width`는 세 가지 전략 — 기본은 `hug`
+
+```dart
+enum AppButtonWidth { hug, fill, fixed }
+```
+
+| 전략 | 동작 | 주로 쓰는 곳 |
+|---|---|---|
+| `hug` (기본값) | 글자 길이만큼, 좌우 최소 패딩 | 관리자 툴바/테이블 액션, 텍스트 링크형 버튼 |
+| `fill` | `width: double.infinity` | 로그인/등록 폼 제출 버튼, 진행자 하단 고정 버튼 |
+| `fixed` | `fixedWidth`로 고정 | 다이얼로그의 대칭 확인/취소 쌍둥이 버튼 (아직 실제 호출부는 없음, capability만 제공) |
+
+`fill`을 쓸 때 바깥에서 `SizedBox(width: double.infinity, child: AppButton(...))`로 다시
+감싸지 않는다 — `AppButton`이 이미 처리한다.
+
+```dart
+AppButton(
+  variant: AppButtonVariant.primary,
+  size: AppButtonSize.comfortable, // 진행자 화면
+  width: AppButtonWidth.fill,      // 폼 제출 버튼
+  label: '등록 요청',
+  onPressed: canSubmit ? _submit : null,
+);
+```

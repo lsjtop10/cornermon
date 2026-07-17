@@ -3,6 +3,8 @@ import 'package:cornermon/admin/session/selected_camp_provider.dart';
 import 'package:cornermon/shared/api/domain_aliases.dart' as api;
 import 'package:cornermon/shared/api/ids.dart';
 import 'package:cornermon/shared/api/providers/corner_track_providers.dart';
+import 'package:cornermon/shared/design_system/widgets/app_button.dart';
+import 'package:cornermon/shared/design_system/widgets/app_dropdown.dart';
 import 'package:cornermon/shared/design_system/widgets/status_badge.dart';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
@@ -65,10 +67,12 @@ class _TrackBulkManageScreenState extends ConsumerState<TrackBulkManageScreen> {
             onPressed: () => Navigator.pop(context),
             child: const Text('취소'),
           ),
-          FilledButton(
+          AppButton(
+            variant: AppButtonVariant.primary,
+            size: AppButtonSize.compact,
+            label: '적용',
             onPressed: () =>
                 Navigator.pop(context, int.tryParse(controller.text)),
-            child: const Text('적용'),
           ),
         ],
       ),
@@ -107,9 +111,11 @@ class _TrackBulkManageScreenState extends ConsumerState<TrackBulkManageScreen> {
             onPressed: () => Navigator.pop(context, false),
             child: const Text('취소'),
           ),
-          FilledButton(
+          AppButton(
+            variant: AppButtonVariant.destructive,
+            size: AppButtonSize.compact,
+            label: '삭제',
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('삭제'),
           ),
         ],
       ),
@@ -142,208 +148,264 @@ class _TrackBulkManageScreenState extends ConsumerState<TrackBulkManageScreen> {
             : null,
         title: const Text('코너·트랙 관리'),
         actions: [
-          IconButton(
-            tooltip: '전체 PIN CSV 다운로드',
-            onPressed: () => _exportCsv(
-              campId,
-              session is AdminSessionAuthenticated ? session.adminId : '관리자',
+          Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: AppButton(
+              variant: AppButtonVariant.secondary,
+              size: AppButtonSize.compact,
+              icon: Icons.download_outlined,
+              label: '전체 PIN 내보내기',
+              onPressed: () => _exportCsv(
+                campId,
+                session is AdminSessionAuthenticated ? session.adminId : '관리자',
+              ),
             ),
-            icon: const Icon(Icons.download),
           ),
         ],
       ),
-      body: tracks.when(
+      body: corners.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) => Center(child: Text('트랙을 불러오지 못했습니다.\n$error')),
-        data: (items) {
-          final cornerNames = corners.asData?.value == null
-              ? const <String, String>{}
-              : {
-                  for (final corner in corners.asData!.value)
-                    corner.id!: corner.name ?? corner.id!,
-                };
-          final visible =
-              items
-                  .where(
-                    (track) =>
-                        track.status == api.TrackStatus.ACTIVE &&
-                        (_filter == null || track.operationalStatus == _filter),
-                  )
-                  .toList()
-                ..sort((left, right) {
-                  final compare = switch (_sortColumn) {
-                    1 =>
-                      (cornerNames[left.cornerId] ?? left.cornerId ?? '')
-                          .compareTo(
-                            cornerNames[right.cornerId] ?? right.cornerId ?? '',
+        error: (error, _) => Center(child: Text('코너를 불러오지 못했습니다.\n$error')),
+        data: (cornerItems) => tracks.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (error, _) => Center(child: Text('트랙을 불러오지 못했습니다.\n$error')),
+          data: (items) {
+            final cornerNames = {
+              for (final corner in cornerItems)
+                corner.id!: corner.name ?? corner.id!,
+            };
+            final visible =
+                items
+                    .where(
+                      (track) =>
+                          track.status == api.TrackStatus.ACTIVE &&
+                          (_filter == null ||
+                              track.operationalStatus == _filter),
+                    )
+                    .toList()
+                  ..sort((left, right) {
+                    final compare = switch (_sortColumn) {
+                      1 =>
+                        (cornerNames[left.cornerId] ?? left.cornerId ?? '')
+                            .compareTo(
+                              cornerNames[right.cornerId] ??
+                                  right.cornerId ??
+                                  '',
+                            ),
+                      2 => (left.trackNo ?? 0).compareTo(right.trackNo ?? 0),
+                      _ => (left.operationalStatus?.name ?? '').compareTo(
+                        right.operationalStatus?.name ?? '',
+                      ),
+                    };
+                    return _ascending ? compare : -compare;
+                  });
+            final selected = items
+                .where((track) => _selectedIds.contains(track.id))
+                .toList();
+            final blocked = selected.any(
+              (track) =>
+                  track.operationalStatus == api.TrackOperationalStatus.BUSY,
+            );
+            return Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    children: [
+                      AppDropdown<api.TrackOperationalStatus?>(
+                        value: _filter,
+                        hint: '전체 상태',
+                        items: const [
+                          DropdownMenuItem(value: null, child: Text('전체')),
+                          DropdownMenuItem(
+                            value: api.TrackOperationalStatus.IDLE,
+                            child: Text('IDLE만'),
                           ),
-                    2 => (left.trackNo ?? 0).compareTo(right.trackNo ?? 0),
-                    _ => (left.operationalStatus?.name ?? '').compareTo(
-                      right.operationalStatus?.name ?? '',
-                    ),
-                  };
-                  return _ascending ? compare : -compare;
-                });
-          final selected = items
-              .where((track) => _selectedIds.contains(track.id))
-              .toList();
-          final blocked = selected.any(
-            (track) =>
-                track.operationalStatus == api.TrackOperationalStatus.BUSY,
-          );
-          return Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Row(
-                  children: [
-                    DropdownButton<api.TrackOperationalStatus?>(
-                      value: _filter,
-                      hint: const Text('전체 상태'),
-                      items: const [
-                        DropdownMenuItem(value: null, child: Text('전체')),
-                        DropdownMenuItem(
-                          value: api.TrackOperationalStatus.IDLE,
-                          child: Text('IDLE만'),
-                        ),
-                        DropdownMenuItem(
-                          value: api.TrackOperationalStatus.BUSY,
-                          child: Text('BUSY만'),
-                        ),
-                      ],
-                      onChanged: (value) => setState(() => _filter = value),
-                    ),
-                    const SizedBox(width: 16),
-                    Text('${_selectedIds.length}개 선택됨'),
-                    const Spacer(),
-                    if (blocked) const Text('진행 중인 방문이 있어 삭제할 수 없습니다'),
-                    const SizedBox(width: 8),
-                    FilledButton.tonal(
-                      onPressed: _selectedIds.isEmpty
-                          ? null
-                          : () => _applyTargetTime(campId, selected),
-                      child: const Text('목표시간 변경'),
-                    ),
-                    const SizedBox(width: 8),
-                    FilledButton.tonal(
-                      onPressed: _selectedIds.isEmpty || blocked
-                          ? null
-                          : () => _delete(campId, selected),
-                      child: const Text('선택 삭제'),
-                    ),
-                  ],
-                ),
-              ),
-              if (_exports.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text('최근 내보내기: ${_exports.first}'),
-                  ),
-                ),
-              Expanded(
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: DataTable(
-                    sortColumnIndex: _sortColumn,
-                    sortAscending: _ascending,
-                    columns: [
-                      DataColumn(
-                        label: Checkbox(
-                          value:
-                              visible.isNotEmpty &&
-                              visible.every(
-                                (track) => _selectedIds.contains(track.id),
-                              ),
-                          tristate: true,
-                          onChanged: (checked) => setState(() {
-                            if (checked == true) {
-                              _selectedIds.addAll(
-                                visible.map((track) => track.id!).toSet(),
-                              );
-                            } else {
-                              _selectedIds.removeAll(
-                                visible.map((track) => track.id),
-                              );
-                            }
-                          }),
-                        ),
+                          DropdownMenuItem(
+                            value: api.TrackOperationalStatus.BUSY,
+                            child: Text('BUSY만'),
+                          ),
+                        ],
+                        onChanged: (value) => setState(() => _filter = value),
                       ),
-                      DataColumn(
-                        label: const Text('코너'),
-                        onSort: (index, ascending) => setState(() {
-                          _sortColumn = index;
-                          _ascending = ascending;
-                        }),
+                      const SizedBox(width: 16),
+                      Text('${_selectedIds.length}개 선택됨'),
+                      const Spacer(),
+                      if (blocked) const Text('진행 중인 방문이 있어 삭제할 수 없습니다'),
+                      const SizedBox(width: 8),
+                      AppButton(
+                        variant: AppButtonVariant.secondary,
+                        size: AppButtonSize.compact,
+                        label: '목표시간 변경',
+                        onPressed: _selectedIds.isEmpty
+                            ? null
+                            : () => _applyTargetTime(campId, selected),
                       ),
-                      DataColumn(
-                        label: const Text('트랙'),
-                        numeric: true,
-                        onSort: (index, ascending) => setState(() {
-                          _sortColumn = index;
-                          _ascending = ascending;
-                        }),
+                      const SizedBox(width: 8),
+                      AppButton(
+                        variant: AppButtonVariant.destructive,
+                        size: AppButtonSize.compact,
+                        label: '선택 삭제',
+                        disabledReason: blocked
+                            ? '진행 중인 방문이 있어 삭제할 수 없습니다'
+                            : null,
+                        onPressed: _selectedIds.isEmpty || blocked
+                            ? null
+                            : () => _delete(campId, selected),
                       ),
-                      DataColumn(
-                        label: const Text('상태'),
-                        onSort: (index, ascending) => setState(() {
-                          _sortColumn = index;
-                          _ascending = ascending;
-                        }),
-                      ),
-                      const DataColumn(label: Text('PIN')),
-                    ],
-                    rows: [
-                      for (final track in visible)
-                        DataRow(
-                          selected: _selectedIds.contains(track.id),
-                          onSelectChanged: (checked) => setState(() {
-                            if (checked == true) {
-                              _selectedIds.add(track.id!);
-                            } else {
-                              _selectedIds.remove(track.id);
-                            }
-                          }),
-                          cells: [
-                            DataCell(
-                              Checkbox(
-                                value: _selectedIds.contains(track.id),
-                                onChanged: null,
-                              ),
-                            ),
-                            DataCell(
-                              Text(
-                                cornerNames[track.cornerId] ??
-                                    track.cornerId ??
-                                    '-',
-                              ),
-                            ),
-                            DataCell(Text('${track.trackNo ?? '-'}번')),
-                            DataCell(
-                              StatusBadge(
-                                status:
-                                    track.operationalStatus ==
-                                        api.TrackOperationalStatus.BUSY
-                                    ? TrackVisualStatus.busy
-                                    : TrackVisualStatus.idle,
-                                label:
-                                    track.operationalStatus ==
-                                        api.TrackOperationalStatus.BUSY
-                                    ? 'BUSY'
-                                    : 'IDLE',
-                              ),
-                            ),
-                            const DataCell(Text('••••••')),
-                          ],
-                        ),
                     ],
                   ),
-                ),
+                  const SizedBox(height: 12),
+                  if (_exports.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text('최근 내보내기: ${_exports.first}'),
+                      ),
+                    ),
+                  Expanded(
+                    child: Card(
+                      clipBehavior: Clip.antiAlias,
+                      margin: EdgeInsets.zero,
+                      child: SingleChildScrollView(
+                        child: SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: DataTable(
+                            sortColumnIndex: _sortColumn,
+                            sortAscending: _ascending,
+                            columns: [
+                              DataColumn(
+                                label: Checkbox(
+                                  value:
+                                      visible.isNotEmpty &&
+                                      visible.every(
+                                        (track) =>
+                                            _selectedIds.contains(track.id),
+                                      ),
+                                  tristate: true,
+                                  onChanged: (checked) => setState(() {
+                                    if (checked == true) {
+                                      _selectedIds.addAll(
+                                        visible
+                                            .map((track) => track.id!)
+                                            .toSet(),
+                                      );
+                                    } else {
+                                      _selectedIds.removeAll(
+                                        visible.map((track) => track.id),
+                                      );
+                                    }
+                                  }),
+                                ),
+                              ),
+                              DataColumn(
+                                label: const Text('코너'),
+                                onSort: (index, ascending) => setState(() {
+                                  _sortColumn = index;
+                                  _ascending = ascending;
+                                }),
+                              ),
+                              DataColumn(
+                                label: const Text('트랙'),
+                                numeric: true,
+                                onSort: (index, ascending) => setState(() {
+                                  _sortColumn = index;
+                                  _ascending = ascending;
+                                }),
+                              ),
+                              DataColumn(
+                                label: const Text('상태'),
+                                onSort: (index, ascending) => setState(() {
+                                  _sortColumn = index;
+                                  _ascending = ascending;
+                                }),
+                              ),
+                              const DataColumn(label: Text('PIN')),
+                            ],
+                            rows: [
+                              for (final track in visible)
+                                DataRow(
+                                  selected: _selectedIds.contains(track.id),
+                                  onSelectChanged: (checked) => setState(() {
+                                    if (checked == true) {
+                                      _selectedIds.add(track.id!);
+                                    } else {
+                                      _selectedIds.remove(track.id);
+                                    }
+                                  }),
+                                  cells: [
+                                    DataCell(
+                                      Checkbox(
+                                        value: _selectedIds.contains(track.id),
+                                        onChanged: null,
+                                      ),
+                                    ),
+                                    DataCell(
+                                      Align(
+                                        alignment: Alignment.centerLeft,
+                                        child: Material(
+                                          color: Colors.transparent,
+                                          child: InkWell(
+                                            borderRadius: BorderRadius.circular(
+                                              6,
+                                            ),
+                                            onTap: track.cornerId == null
+                                                ? null
+                                                : () => context.go(
+                                                    '/dashboard/corners/${track.cornerId}',
+                                                  ),
+                                            child: Padding(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 4,
+                                                    vertical: 2,
+                                                  ),
+                                              child: Text(
+                                                cornerNames[track.cornerId] ??
+                                                    track.cornerId ??
+                                                    '-',
+                                                style: TextStyle(
+                                                  color: Theme.of(
+                                                    context,
+                                                  ).colorScheme.primary,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    DataCell(Text('${track.trackNo ?? '-'}번')),
+                                    DataCell(
+                                      StatusBadge(
+                                        status:
+                                            track.operationalStatus ==
+                                                api.TrackOperationalStatus.BUSY
+                                            ? TrackVisualStatus.busy
+                                            : TrackVisualStatus.idle,
+                                        label:
+                                            track.operationalStatus ==
+                                                api.TrackOperationalStatus.BUSY
+                                            ? 'BUSY'
+                                            : 'IDLE',
+                                      ),
+                                    ),
+                                    const DataCell(Text('••••••')),
+                                  ],
+                                ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ],
-          );
-        },
+            );
+          },
+        ),
       ),
     );
   }

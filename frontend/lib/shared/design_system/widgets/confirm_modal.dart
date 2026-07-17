@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../tokens/colors.dart';
 import '../tokens/typography.dart';
+import 'app_button.dart';
 
 enum ConfirmModalKind { hardBlock, softConfirm, singleAckOnly }
 
@@ -9,10 +10,12 @@ Future<bool> showConfirmModal(
   required ConfirmModalKind kind,
   required String title,
   String? body,
+  AppButtonSize buttonSize = AppButtonSize.compact,
 }) async {
   final result = await showDialog<bool>(
     context: context,
-    barrierDismissible: kind != ConfirmModalKind.hardBlock, // 하드 블록은 바깥 탭으로 닫기 불가능
+    barrierDismissible:
+        kind != ConfirmModalKind.hardBlock, // 하드 블록은 바깥 탭으로 닫기 불가능
     builder: (BuildContext context) {
       final isDark = Theme.of(context).brightness == Brightness.dark;
       final colors = isDark ? AppColors.dark : AppColors.light;
@@ -30,7 +33,9 @@ Future<bool> showConfirmModal(
               onPressed: () => Navigator.of(context).pop(true),
               child: Text(
                 '확인',
-                style: AppTypography.bodyEmphasis.copyWith(color: colors.brandPrimary),
+                style: AppTypography.bodyEmphasis.copyWith(
+                  color: colors.brandPrimary,
+                ),
               ),
             ),
           ];
@@ -46,21 +51,11 @@ Future<bool> showConfirmModal(
                 style: AppTypography.body.copyWith(color: colors.textSecondary),
               ),
             ),
-            ElevatedButton(
+            AppButton(
+              variant: AppButtonVariant.destructive,
+              size: buttonSize,
+              label: '진행',
               onPressed: () => Navigator.of(context).pop(true),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: colors.danger,
-                foregroundColor: colors.bgSurface,
-                elevation: 0.0,
-                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8.0),
-                ),
-              ),
-              child: const Text(
-                '진행',
-                style: AppTypography.bodyEmphasis,
-              ),
             ),
           ];
           break;
@@ -72,7 +67,9 @@ Future<bool> showConfirmModal(
               onPressed: () => Navigator.of(context).pop(true),
               child: Text(
                 '확인',
-                style: AppTypography.bodyEmphasis.copyWith(color: colors.brandPrimary),
+                style: AppTypography.bodyEmphasis.copyWith(
+                  color: colors.brandPrimary,
+                ),
               ),
             ),
           ];
