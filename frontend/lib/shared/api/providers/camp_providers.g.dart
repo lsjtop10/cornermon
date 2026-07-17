@@ -266,7 +266,7 @@ final class UpdateCampProvider
     })
     super.argument,
   }) : super(
-         retry: null,
+         retry: noRetry,
          name: r'updateCampProvider',
          isAutoDispose: true,
          dependencies: null,
@@ -322,7 +322,7 @@ final class UpdateCampProvider
   }
 }
 
-String _$updateCampHash() => r'f8fc1e4c8f31638a5fdf6176f89238674d5d5106';
+String _$updateCampHash() => r'3299f01f8639f0884741051ce9f516740afa1bb2';
 
 final class UpdateCampFamily extends $Family
     with
@@ -339,7 +339,7 @@ final class UpdateCampFamily extends $Family
         > {
   UpdateCampFamily._()
     : super(
-        retry: null,
+        retry: noRetry,
         name: r'updateCampProvider',
         dependencies: null,
         $allTransitiveDependencies: null,

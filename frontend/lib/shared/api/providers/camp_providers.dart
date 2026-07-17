@@ -52,7 +52,10 @@ Future<Camp> createCamp(
   return data;
 }
 
-@riverpod
+// PATCH이지만 서버 400(예: 병목 기준 0 이하) 등 재시도해도 동일하게 실패하는 응답을
+// 무한 재시도(§DEVELOPER_GUIDE.md 2.3, 컨테이너 기본 정책)로 감추지 않기 위해
+// retry: noRetry를 명시한다 — A15 설정 화면의 인라인 에러 표시가 이 정책에 의존한다.
+@Riverpod(retry: noRetry)
 Future<Camp> updateCamp(
   Ref ref,
   CampId id, {

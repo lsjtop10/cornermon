@@ -7,7 +7,7 @@
 
 - **A13**: `GET /audit-logs?actor=&action=&result=&limit=&before=`. `api/swagger.yaml`의 `/audit-logs` GET에는 `sort`/`order` 파라미터가 **없다**(§00 overview §2.7 확인, swagger.yaml 691~734행 재확인 완료 — 파라미터는 `actor`(부분 일치)/`action`(정확 일치)/`result`(`success`|`failure`)/`limit`(기본 50)/`before`(커서 문자열)뿐). 응답은 `AuditLogPageResponse{logs: List<AuditLogResponse>, nextCursor: string?}` — **번호 페이지네이션이 아니라 커서 페이지네이션**이다. `AuditLogResponse` 필드: `id`(uuid), `actor`(string), `action`(string), `target`(string), `success`(bool), `occurredAt`(date-time), `metadata`(object, 자유형식).
 - **A14**: `POST /camps/{id}/end` → `200 CampResponse`(상태가 `ENDED`로 바뀐 캠프), `400`/`409`(이미 종료됨 등). swagger 설명(1369~1397행)은 "캠프를 ENDED 상태로 변경한다. 이후 데이터 수정이 불가하다"뿐이고 리포트 생성에 대한 언급이 전혀 없다. 리포트는 별도 엔드포인트 `POST /camps/{campId}/reports/generate`(1239~1259행, "캠프가 종료될 때 최종 리포트를 생성하여 저장소에 보관한다")로 명시적으로 분리되어 있다. **확인 필요 — 해소함**: screen-spec-admin.md A14 원문("종료 즉시 `POST /reports/generate` 자동 트리거")은 "서버가 알아서 트리거한다"로 읽힐 여지가 있으나, swagger의 `/end` 응답 설명에 리포트 관련 언급이 전혀 없고 `reports/generate`가 독립된 `AdminAuth` 엔드포인트로 분리되어 있으므로, **클라이언트가 `endCamp` 성공 직후 `generateReport`를 이어서 명시적으로 호출**하는 것으로 확정한다. 두 호출을 순차 실행하되, `generateReport` 실패가 "코너학습 종료" 자체의 실패로 취급되지 않도록 `endCamp` 성공 후에는 무조건 캠프 목록으로 이동하고(§screen-spec/scenarios 요구사항), `generateReport` 실패는 별도 스낵바 경고로만 알린다(리포트는 A12에서 재생성 트리거가 있으므로 완전한 실패 상태가 아님 — `10_a12_report.md`의 `POST /reports/generate` 버튼과 동일 API 재사용).
-- **A15**: `GET /camps/{id}`(기존 `campDetailProvider` 재사용), `PATCH /camps/{id}`(`UpdateCampRequest`). **확인 필요 — 필드명 정정**: `01_api_codegen_sync.md` §2.2가 제시한 `updateCamp(Ref ref, CampId id, {String? name, int? bottleneckMinSamples, double? bottleneckDeviationRatio})` 시그니처는 필드명이 실제 계약과 다르다. `api/swagger.yaml`의 `UpdateCampRequest`(572~586행)와 `CampResponse`(178~204행)를 직접 확인한 결과 실제 필드는 `bottleneckMinSamples: integer`, **`bottleneckRatioPct: integer`**(비율을 %의 정수로 표현 — `double` 아니고 `0~100` 정수, screen-spec 예시 "20%"·scenarios.md "20%→30%"와 일치)이다. 이 문서는 `bottleneckRatioPct`를 정본으로 삼는다 — `01`의 provider 코드를 그대로 복붙하지 말고 아래 §3.2 시그니처로 구현할 것(구현 중 `01`의 실제 생성 코드가 이미 `bottleneckRatioPct`로 맞게 나와 있는지 재확인). `UpdateCampRequest`에는 `endAt`/`startAt`도 있어 캠프 기간(시작일/종료일) 수정도 같은 엔드포인트로 처리한다(§00 overview §2.2가 이미 확정한 바 — 코너 목표시간의 `PUT /corners/bulk-update`와는 무관한 별개 개념).
+- **A15**: `GET /camps/{id}`(기존 `campDetailProvider` 재사용), `PATCH /camps/{id}`(`UpdateCampRequest`). **확인 필요 — 필드명 정정 — 확인 완료(2026-07-17)**: `frontend/lib/shared/api/providers/camp_providers.dart`를 직접 재확인한 결과 `updateCamp(Ref ref, CampId id, {String? name, int? bottleneckMinSamples, int? bottleneckRatioPct, DateTime? startAt, DateTime? endAt})`가 이미 이 문서가 정본으로 삼은 시그니처(정수 `bottleneckRatioPct`)로 정확히 구현되어 있었다 — 수정할 것이 없었으므로 시그니처 자체는 그대로 재사용했다. 다만 구현 중 별도 문제를 하나 발견해 고쳤다: 이 provider가 `@riverpod`(retry 미지정)이라 컨테이너 기본 정책인 "무제한 재시도"를 그대로 상속하고 있었는데(`frontend/docs/DEVELOPER_GUIDE.md` §2.3에 문서화된 함정과 동일), PATCH 400(예: 병목 기준 0 이하) 응답도 계속 재시도하느라 `ref.read(provider.future)`가 영영 완료되지 않아 "PATCH가 400을 반환하면 인라인 에러가 표시된다"는 §6 체크리스트 항목이 실제로 무한 대기로 깨지는 것을 위젯 테스트로 재현했다. `@Riverpod(retry: noRetry)`를 추가해 해결(`createCamp`가 이미 쓰던 것과 동일 패턴) — `bottleneckRatioPct` 필드명 자체는 변경하지 않았다.
 
 ---
 
@@ -194,11 +194,12 @@ class EndCampConfirmDialog extends ConsumerWidget {
 ### 4.1 디렉터리
 `frontend/lib/admin/features/settings/`
 
-### 4.2 객체 정의
+### 4.2 객체 정의 — 실제 구현(2026-07-17)
 
 ```dart
-// lib/shared/api/providers/camp_providers.dart (01에서 정의, §0 필드명 정정 반영)
-@riverpod
+// lib/shared/api/providers/camp_providers.dart (01에서 정의, §0 필드명 정정 반영 — 확인 결과 시그니처는
+// 이미 올바랐고, retry: noRetry만 새로 추가했다. §0 참고)
+@Riverpod(retry: noRetry)
 Future<Camp> updateCamp(
   Ref ref,
   CampId id, {
@@ -206,11 +207,39 @@ Future<Camp> updateCamp(
   DateTime? startAt,
   DateTime? endAt,
   int? bottleneckMinSamples,
-  int? bottleneckRatioPct,   // 01의 double bottleneckDeviationRatio 아님 — §0 확인 필요 항목 참고
+  int? bottleneckRatioPct,
 });
 ```
 
+계획 당시엔 각 섹션 위젯이 `updateCampProvider(...).future`를 직접 `ref.read`하고 그 직전에
+`ref.listen`을 거는 §DEVELOPER_GUIDE 2.2 패턴을 쓰는 것으로 설계했으나, 실제 구현하며
+`ConsumerState`의 `ref`(`WidgetRef`)의 `listen()`은 `Ref.listen()`과 달리 **`void`를 반환하고
+`build()` 중에만 호출 가능**해 이 패턴을 위젯에서 그대로 쓸 수 없다는 게 드러났다(`dart analyze`가
+`use_of_void_result`로 즉시 잡아냄). `start_camp_controller.dart`와 동일하게 저장 액션을
+`AsyncNotifier`(컨트롤러)로 옮겨 해결했다:
+
 ```dart
+// lib/admin/features/settings/update_camp_controller.dart (신규 — 계획에 없던 파일)
+final updateCampControllerProvider =
+    AsyncNotifierProvider<UpdateCampController, void>(UpdateCampController.new);
+
+class UpdateCampController extends AsyncNotifier<void> {
+  @override
+  FutureOr<void> build() {}
+
+  Future<void> save(
+    CampId id, {
+    String? name,
+    DateTime? startAt,
+    DateTime? endAt,
+    int? bottleneckMinSamples,
+    int? bottleneckRatioPct,
+  }) async {
+    // ref.listen(provider, (_, _) {}) 직전 구독 → ref.read(provider.future) → 성공 시
+    // selectedCampSnapshotProvider.notifier.replace(camp) (start_camp_controller.dart와 동일 패턴)
+  }
+}
+
 // lib/admin/features/settings/settings_screen.dart
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -226,8 +255,11 @@ class CampInfoSection extends ConsumerStatefulWidget {
   const CampInfoSection({required this.camp, super.key});
   final Camp camp;
   // TextEditingController(name), 시작일/종료일 DatePicker 2개
-  // "저장" 버튼 → ref.read(updateCampProvider(camp.id, name: ..., startAt: ..., endAt: ...).future)
-  // 성공 시 SnackBar 토스트 + ref.invalidate(campDetailProvider(camp.id)) (사이드바 상단 캠프명 갱신용 — selectedCampProvider가 campDetailProvider를 watch하므로 자동 갱신됨, §02 2.3 참고)
+  // "저장" 버튼 → ref.read(updateCampControllerProvider.notifier).save(CampId(camp.id!), name: ..., startAt: ..., endAt: ...)
+  // 성공 시 SnackBar 토스트(컨트롤러가 이미 selectedCampSnapshotProvider를 갱신함)
+  //   — §확인: 계획은 "사이드바 상단 캠프명 갱신용"이라 적었으나 실제 AdminSidebar(lib/admin/widgets/sidebar/admin_sidebar.dart)에는
+  //   캠프명을 표시하는 라벨 자체가 없다(사이드바는 고정 메뉴 아이콘만 나열). selectedCampProvider 캐시는 요구사항대로
+  //   재조회 없이 즉시 갱신되며(update_camp_controller_test.dart로 검증), 이를 소비하는 위젯이 생기면 자동으로 최신값을 받는다 — A15 범위에서 추가로 할 일 없음.
 }
 
 // lib/admin/features/settings/widgets/bottleneck_threshold_section.dart
@@ -237,12 +269,11 @@ class BottleneckThresholdSection extends ConsumerStatefulWidget {
   // TextEditingController(minSamples), TextEditingController(ratioPct)
   // 클라이언트 검증: int.tryParse(text)가 null이거나 <= 0이면 "저장" 비활성화 + 인라인 에러 텍스트
   //   (scenarios.md Feature 2-f "0 이하 값을 입력하면 저장되지 않고 이전 값이 그대로 유지된다" — 서버 400 응답을 기다리지 않고 클라이언트에서 선제 차단)
-  // "저장" 버튼 → ref.read(updateCampProvider(camp.id, bottleneckMinSamples: ..., bottleneckRatioPct: ...).future)
+  // "저장" 버튼 → ref.read(updateCampControllerProvider.notifier).save(CampId(camp.id!), bottleneckMinSamples: ..., bottleneckRatioPct: ...)
   // 성공 시:
   //   1. SnackBar 토스트
-  //   2. updateCamp 응답(Camp)으로 campDetailProvider(camp.id) 캐시를 직접 덮어씀(ref.read(campDetailProvider(camp.id).notifier).state = AsyncData(response))
-  //      — "재조회 없이 즉시 반영"(scenarios.md) 요구사항을 만족시키려면 invalidate만으로는 부족하다(재조회 왕복 지연 발생) — updateCamp가 반환한 최신 Camp로 캐시를 직접 채운다(§02 검증 체크리스트의 startCamp 낙관적 갱신과 동일 패턴)
-  //   3. 대시보드(A1)의 병목 카드 좌측 보더는 CornerResponse.isBottleneck을 그대로 렌더링하므로, 이 저장만으로는 코너 목록 자체가 최신 병목 여부로 안 바뀐다 — §확인 필요: isBottleneck은 서버가 코너 조회 시점에 캠프의 최신 기준으로 재계산해 내려주는 값이라는 전제(CornerResponse 스키마상 클라이언트가 직접 계산하는 필드가 아님)이므로, 설정 저장 후 사용자가 대시보드로 이동하면 그 시점의 GET /camps/{campId}/corners 호출이 새 기준을 반영한 isBottleneck을 내려준다 — 별도 캐시 무효화 불필요. 단, 대시보드에 "머무른 채" 저장했다면(설정이 별도 라우트이므로 이 케이스는 발생하지 않음 — 설정 화면 이동 자체가 대시보드를 벗어남) 문제되지 않는다.
+  //   2. 컨트롤러가 updateCamp 응답(Camp)으로 selectedCampSnapshotProvider를 직접 replace() — "재조회 없이 즉시 반영"(scenarios.md) 요구사항 충족(계획의 campDetailProvider.notifier.state 직접 대입 방식 대신, 이미 구현되어 있던 selectedCampSnapshotProvider 패턴 재사용 — §확인 필요 항목의 "핵심 참고 패턴"으로 지시받음)
+  //   3. 대시보드(A1)의 병목 카드 좌측 보더는 CornerResponse.isBottleneck을 그대로 렌더링하므로, 이 저장만으로는 코너 목록 자체가 최신 병목 여부로 안 바뀐다 — 확인 완료: cornerListProvider(lib/shared/api/providers/corner_track_providers.dart)는 기본 `@riverpod`(autoDispose)라 대시보드를 벗어나면(=설정 화면으로 이동하면) dispose되고, 대시보드로 복귀 시 새 GET이 나가 새 기준을 반영한 isBottleneck을 내려준다 — 별도 캐시 무효화 불필요, 실제 코드로 확인함.
 }
 ```
 
@@ -264,8 +295,8 @@ class BottleneckThresholdSection extends ConsumerStatefulWidget {
 | K-5 | `AuditLogScreen`을 `02`의 `/audit-log` 라우트 스텁에 배선 | `frontend/lib/admin/router/admin_router.dart` |
 | L-1 | `EndCampBarButton`, `EndCampConfirmDialog` | `frontend/lib/admin/features/end_camp/**` |
 | L-2 | 운영 모드 공용 셸(있으면 확장, 없으면 신규)에 `EndCampBarButton` 삽입 | `frontend/lib/admin/widgets/shell/admin_operating_shell.dart`(또는 `02`가 만든 기존 셸 파일) |
-| M-1 | `updateCamp` provider가 `bottleneckRatioPct`(정수) 시그니처로 되어 있는지 확인·수정(`01` 산출물 재검증) | `frontend/lib/shared/api/providers/camp_providers.dart` |
-| M-2 | `SettingsScreen`, `CampInfoSection`, `BottleneckThresholdSection` | `frontend/lib/admin/features/settings/**` |
+| M-1 | ~~`updateCamp` provider가 `bottleneckRatioPct`(정수) 시그니처로 되어 있는지 확인·수정~~ → **확인 완료(2026-07-17) — 시그니처는 이미 올바름, 수정 불필요.** 대신 `retry: noRetry` 누락을 발견해 추가(§0 참고) | `frontend/lib/shared/api/providers/camp_providers.dart` |
+| M-2 | `SettingsScreen`, `CampInfoSection`, `BottleneckThresholdSection` + (계획에 없던) `UpdateCampController` 신규 추가(§4.2 참고) | `frontend/lib/admin/features/settings/**` |
 | M-3 | `SettingsScreen`을 `02`의 `/settings` 라우트 스텁에 배선 | `frontend/lib/admin/router/admin_router.dart` |
 
 ---
@@ -294,14 +325,14 @@ class BottleneckThresholdSection extends ConsumerStatefulWidget {
 - [ ] `endCamp` 자체가 실패(400/409)하면 모달이 닫히지 않고 에러가 인라인 표시되며 캠프 목록으로 이동하지 않는다
 
 ### A15 설정
-- [ ] `/settings` 진입 시 뒤로가기 버튼이 없다(사이드바 최상위 항목)
-- [ ] 캠프 정보 섹션에 현재 이름/시작일/종료일이 미리 채워져 있다
-- [ ] 이름을 바꾸고 저장하면 토스트가 뜨고, 사이드바 상단 캠프명이 재조회 없이(또는 즉시) 갱신된다
-- [ ] 병목 기준 섹션에 현재 `bottleneckMinSamples`/`bottleneckRatioPct`가 미리 채워져 있다
-- [ ] 최소 표본에 "0" 또는 음수를 입력하면 저장 버튼이 비활성화되거나 클릭 시 서버 호출 없이 에러 텍스트만 뜨고, 필드 값은 되돌아가지 않되 실제로 저장은 발생하지 않는다(값 자체를 강제로 리셋하지 않아도 무방 — 핵심은 API 호출 차단)
-- [ ] 유효한 값으로 병목 기준을 저장하면 토스트가 뜨고, 곧바로 대시보드(A1)로 이동했을 때 새 기준을 반영한 `isBottleneck` 값이 코너 카드에 표시된다(별도 캐시 무효화 없이 GET 재호출 결과 그대로)
-- [ ] `PATCH /camps/{id}`가 400을 반환하면(예: 서버측 추가 검증 실패) 인라인 에러가 표시되고 이전 값이 화면에 남아있다
+- [x] `/settings` 진입 시 뒤로가기 버튼이 없다(사이드바 최상위 항목) — `SettingsScreen`은 자체 `Scaffold(appBar: AppBar(title: Text('설정')))`만 두고 `leading`을 지정하지 않는다. `/settings`는 `context.go()`로만 도달하는 최상위 라우트라 `Navigator.canPop()`이 항상 false라 자동 back 화살표가 생기지 않는다 — 같은 패턴(자체 AppBar, leading 미지정)인 `group_list_screen.dart`(조 현황, 사이드바 최상위 항목)와 동일 구조로 확인.
+- [x] 캠프 정보 섹션에 현재 이름/시작일/종료일이 미리 채워져 있다 — `camp_info_section_test.dart` `ShoudPrefillNameAndDatesWhenBuilt`로 검증.
+- [x] 이름을 바꾸고 저장하면 토스트가 뜨고, 사이드바 상단 캠프명이 재조회 없이(또는 즉시) 갱신된다 — **범위 조정**: 실제 `AdminSidebar`(`lib/admin/widgets/sidebar/admin_sidebar.dart`)에는 캠프명을 표시하는 UI 자체가 없음을 확인(고정 메뉴 아이콘만 나열). 캐시 계약(핵심 요구사항)은 검증됨 — 저장 성공 시 `selectedCampSnapshotProvider`가 `updateCamp` 응답으로 즉시 갱신되고 재조회가 발생하지 않는다(`update_camp_controller_test.dart` `ShoudReplaceSelectedCampSnapshotWhenSaveSucceeds`). 향후 사이드바에 캠프명이 추가되면 이 캐시를 그대로 소비하면 되므로 A15 쪽에서 추가로 할 일 없음.
+- [x] 병목 기준 섹션에 현재 `bottleneckMinSamples`/`bottleneckRatioPct`가 미리 채워져 있다 — `BottleneckThresholdSection`의 `TextEditingController` 초기값이 `widget.camp.bottleneckMinSamples`/`bottleneckRatioPct`; 위젯 테스트들의 override 값과 일치하는 것으로 간접 검증(저장 액션 테스트가 사전 채움 위에서 편집하는 방식이라 성공 자체가 사전 채움을 전제).
+- [x] 최소 표본에 "0" 또는 음수를 입력하면 저장 버튼이 비활성화되거나 클릭 시 서버 호출 없이 에러 텍스트만 뜨고, 필드 값은 되돌아가지 않되 실제로 저장은 발생하지 않는다 — `bottleneck_threshold_section_test.dart` `ShoudDisableSaveAndNotCallServerWhenMinSamplesIsZero`/`ShoudDisableSaveAndNotCallServerWhenRatioPctIsNegative`로 검증(override provider의 `calls` 카운터가 0으로 유지됨을 확인).
+- [x] 유효한 값으로 병목 기준을 저장하면 토스트가 뜨고, 곧바로 대시보드(A1)로 이동했을 때 새 기준을 반영한 `isBottleneck` 값이 코너 카드에 표시된다(별도 캐시 무효화 없이 GET 재호출 결과 그대로) — `cornerListProvider`(`lib/shared/api/providers/corner_track_providers.dart`)가 기본 `@riverpod`(autoDispose)로 선언돼 있어 대시보드를 벗어나면(설정 화면 이동) dispose되고 복귀 시 새 GET이 나가는 것을 코드로 확인 — A15 쪽 추가 작업 불필요. 저장 자체의 토스트/캐시 갱신은 `ShoudShowToastWhenValidValuesSaved`로 검증.
+- [x] `PATCH /camps/{id}`가 400을 반환하면(예: 서버측 추가 검증 실패) 인라인 에러가 표시되고 이전 값이 화면에 남아있다 — `camp_info_section_test.dart` `ShoudShowInlineErrorAndKeepPreviousValueWhenSaveFails`로 검증. 구현 중 `updateCampProvider`에 `retry: noRetry`가 빠져 있어 400도 무한 재시도되며 이 케이스가 영원히 멈추는 버그를 이 테스트로 처음 발견 → §0/§5 M-1 기록대로 수정.
 
 ### 공통
-- [ ] `flutter analyze`가 `frontend/lib/admin/features/{audit_log,end_camp,settings}/**`에서 0 에러
-- [ ] 세 화면 모두 `admin/entities`와 `shared/api/providers`에만 의존하고 `dio`/`cornermon_api_gen`을 직접 import하지 않는다(`grep -rn "package:cornermon_api_gen" frontend/lib/admin/features/{audit_log,end_camp,settings}`가 위젯 파일이 아니라 provider 파일에서만 걸려야 함 — 실제로는 위젯이 provider가 반환하는 DTO 타입만 참조하므로 import 없이도 타입 사용 가능한지 확인, 필요하면 `admin/entities`에 얇은 typedef 추가)
+- [x]（settings 범위）`dart analyze lib/`가 저장소 전체 기준 0 에러(`frontend/lib/admin/features/settings/**`, `admin_router.dart`, `camp_providers.dart` 포함). A13(`audit_log`)·A14(`end_camp`)는 별도 worktree에서 병렬 구현 중이라 이 항목은 A15 몫만 확인 완료로 표시 — 세 화면 전체 완료는 병합 후 별도 확인 필요.
+- [x]（settings 범위）`settings/**`는 `admin/entities`·`shared/api/providers`(및 그 위에 새로 얹은 `update_camp_controller.dart`)에만 의존하고 `dio`/`cornermon_api_gen`을 직접 import하지 않는다 — `grep -rn "package:cornermon_api_gen\|package:dio" frontend/lib/admin/features/settings` 결과 0건(위젯·컨트롤러 어디서도 안 걸림, provider 파일 쪽에서도 재노출 없이 `camp_providers.dart` 자체를 통해서만 접근). A13/A14는 해당 worktree에서 별도 확인 필요.
