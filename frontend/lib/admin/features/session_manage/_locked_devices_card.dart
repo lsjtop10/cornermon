@@ -46,53 +46,77 @@ class _LockedDevicesCardState extends ConsumerState<LockedDevicesCard> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('① 잠긴 기기 목록', style: AppTypography.title3.copyWith(color: colors.textPrimary)),
+            Text(
+              '① 잠긴 기기 목록',
+              style: AppTypography.title3.copyWith(color: colors.textPrimary),
+            ),
             const SizedBox(height: AppSpacing.space3),
             locked.when(
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (error, _) {
                 if (error is NotImplementedException) {
-                  return const EmptyState(message: '기기 잠금 조회는 백엔드 배포 후 제공됩니다(Issue #70)');
+                  return const EmptyState(
+                    message: '기기 잠금 조회는 백엔드 배포 후 제공됩니다(Issue #70)',
+                  );
                 }
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('잠긴 기기 목록을 불러오지 못했습니다', style: AppTypography.body.copyWith(color: colors.danger)),
+                    Text(
+                      '잠긴 기기 목록을 불러오지 못했습니다',
+                      style: AppTypography.body.copyWith(color: colors.danger),
+                    ),
                     const SizedBox(height: AppSpacing.space2),
                     AppButton(
                       variant: AppButtonVariant.secondary,
+                      size: AppButtonSize.compact,
                       label: '재시도',
-                      onPressed: () => ref.invalidate(lockedDeviceListProvider(widget.campId)),
+                      onPressed: () => ref.invalidate(
+                        lockedDeviceListProvider(widget.campId),
+                      ),
                     ),
                   ],
                 );
               },
               data: (items) {
                 if (items.isEmpty) {
-                  return const EmptyState(message: '잠긴 기기가 없습니다', icon: Icons.lock_open);
+                  return const EmptyState(
+                    message: '잠긴 기기가 없습니다',
+                    icon: Icons.lock_open,
+                  );
                 }
                 return Column(
                   children: [
                     for (final device in items)
                       Padding(
-                        padding: const EdgeInsets.symmetric(vertical: AppSpacing.space2),
+                        padding: const EdgeInsets.symmetric(
+                          vertical: AppSpacing.space2,
+                        ),
                         child: Row(
                           children: [
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(device.deviceName ?? '기기 이름 없음', style: AppTypography.bodyEmphasis.copyWith(color: colors.textPrimary)),
+                                  Text(
+                                    device.deviceName ?? '기기 이름 없음',
+                                    style: AppTypography.bodyEmphasis.copyWith(
+                                      color: colors.textPrimary,
+                                    ),
+                                  ),
                                   Text(
                                     '실패 ${device.failedPinAttempts ?? 0}회'
                                     '${device.lockedUntil != null ? ' · ${device.lockedUntil!.difference(DateTime.now()).inMinutes.clamp(0, 999)}분 남음' : ''}',
-                                    style: AppTypography.caption.copyWith(color: colors.textSecondary),
+                                    style: AppTypography.caption.copyWith(
+                                      color: colors.textSecondary,
+                                    ),
                                   ),
                                 ],
                               ),
                             ),
                             AppButton(
                               variant: AppButtonVariant.primary,
+                              size: AppButtonSize.compact,
                               label: '잠금 해제',
                               onPressed: () => _release(device.id ?? ''),
                             ),
@@ -104,7 +128,12 @@ class _LockedDevicesCardState extends ConsumerState<LockedDevicesCard> {
               },
             ),
             const Divider(height: AppSpacing.space6),
-            Text('ID/PIN으로 직접 해제', style: AppTypography.caption.copyWith(color: colors.textSecondary)),
+            Text(
+              'ID/PIN으로 직접 해제',
+              style: AppTypography.caption.copyWith(
+                color: colors.textSecondary,
+              ),
+            ),
             const SizedBox(height: AppSpacing.space2),
             Row(
               children: [
@@ -117,6 +146,7 @@ class _LockedDevicesCardState extends ConsumerState<LockedDevicesCard> {
                 const SizedBox(width: AppSpacing.space2),
                 AppButton(
                   variant: AppButtonVariant.secondary,
+                  size: AppButtonSize.compact,
                   label: '해제 실행',
                   onPressed: () => _release(_manualDeviceId.text),
                 ),

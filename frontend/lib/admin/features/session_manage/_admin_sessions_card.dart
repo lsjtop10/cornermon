@@ -57,6 +57,7 @@ class AdminSessionsCard extends ConsumerWidget {
                   const SizedBox(height: AppSpacing.space2),
                   AppButton(
                     variant: AppButtonVariant.secondary,
+                    size: AppButtonSize.compact,
                     label: '재시도',
                     onPressed: () => ref.invalidate(adminSessionListProvider),
                   ),
@@ -113,6 +114,7 @@ class AdminSessionsCard extends ConsumerWidget {
                             ),
                             AppButton(
                               variant: AppButtonVariant.destructive,
+                              size: AppButtonSize.compact,
                               label: '세션 종료',
                               onPressed: () => revoke(session.id ?? ''),
                             ),

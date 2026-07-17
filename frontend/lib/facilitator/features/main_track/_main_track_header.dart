@@ -67,6 +67,7 @@ class MainTrackHeader extends ConsumerWidget {
                   ),
                   AppButton(
                     variant: AppButtonVariant.iconOnly,
+                    size: AppButtonSize.comfortable,
                     label: '다이렉트 메시지',
                     icon: Icons.chat_bubble_outline,
                     onPressed: () => context.go('/main/direct'),
@@ -103,6 +104,7 @@ class _IconWithBadge extends StatelessWidget {
       children: [
         AppButton(
           variant: AppButtonVariant.iconOnly,
+          size: AppButtonSize.comfortable,
           label: '공지',
           icon: icon,
           onPressed: onPressed,

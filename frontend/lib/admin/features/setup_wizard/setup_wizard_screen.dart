@@ -240,6 +240,7 @@ class _WizardFooter extends ConsumerWidget {
           maintainState: true,
           child: AppButton(
             variant: AppButtonVariant.secondary,
+            size: AppButtonSize.compact,
             label: '이전',
             onPressed: onPrev,
           ),
@@ -249,6 +250,7 @@ class _WizardFooter extends ConsumerWidget {
           children: [
             AppButton(
               variant: AppButtonVariant.primary,
+              size: AppButtonSize.compact,
               label: nextLabel,
               onPressed: onNext,
             ),

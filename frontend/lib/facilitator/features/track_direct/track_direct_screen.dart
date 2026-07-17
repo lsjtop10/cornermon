@@ -226,6 +226,7 @@ class _MessageInputRow extends ConsumerWidget {
           const SizedBox(width: AppSpacing.space2),
           AppButton(
             variant: AppButtonVariant.iconOnly,
+            size: AppButtonSize.comfortable,
             label: '전송',
             icon: Icons.send_rounded,
             onPressed: submit,

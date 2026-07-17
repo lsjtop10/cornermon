@@ -73,13 +73,12 @@ class _PendingView extends StatelessWidget {
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: AppSpacing.space8),
-        SizedBox(
-          width: double.infinity,
-          child: AppButton(
-            variant: AppButtonVariant.secondary,
-            label: '승인받으셨다면 계속하기',
-            onPressed: () => context.go('/pin-login'),
-          ),
+        AppButton(
+          variant: AppButtonVariant.secondary,
+          size: AppButtonSize.comfortable,
+          width: AppButtonWidth.fill,
+          label: '승인받으셨다면 계속하기',
+          onPressed: () => context.go('/pin-login'),
         ),
       ],
     );
@@ -189,13 +188,12 @@ class _RegistrationFormState extends ConsumerState<_RegistrationForm> {
           ),
         ],
         const SizedBox(height: AppSpacing.space6),
-        SizedBox(
-          width: double.infinity,
-          child: AppButton(
-            variant: AppButtonVariant.primary,
-            label: '등록 요청',
-            onPressed: canSubmit ? _submit : null,
-          ),
+        AppButton(
+          variant: AppButtonVariant.primary,
+          size: AppButtonSize.comfortable,
+          width: AppButtonWidth.fill,
+          label: '등록 요청',
+          onPressed: canSubmit ? _submit : null,
         ),
       ],
     );
