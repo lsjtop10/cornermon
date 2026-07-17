@@ -29,6 +29,7 @@ const _campIndependentLocations = {
   '/badges',
 };
 const _preparingLocations = {
+  '/dashboard',
   '/corner-track-manage',
   '/groups',
   '/devices',
@@ -115,21 +116,24 @@ String? _redirect(Ref ref, String location) {
   if (ref.read(adminSessionProvider) is AdminSessionUnauthenticated) {
     return location == '/login' ? null : '/login';
   }
+
   if (location == '/login') {
     return '/camps';
   }
+  
   if (_campIndependentLocations.contains(location)) return null;
   if (ref.read(selectedCampIdProvider) == null) return '/camps';
 
   final selectedCamp = ref.read(selectedCampProvider);
   final camp = selectedCamp.hasValue ? selectedCamp.value : null;
   if (camp?.status == null) return null;
+
   return switch (camp!.status!) {
     CampStatus.PENDING =>
       _preparingLocations.contains(location) ||
               location.startsWith('/dashboard/corners/')
           ? null
-          : '/corner-track-manage',
+          : '/dashboard',
     CampStatus.ACTIVE => null,
     CampStatus.ENDED => location == '/report' ? null : '/report',
     _ => '/camps',

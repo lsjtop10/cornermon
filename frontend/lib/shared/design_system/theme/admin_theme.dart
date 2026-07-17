@@ -32,6 +32,22 @@ class AdminTheme {
         onSurface: colors.textPrimary,
       ),
       dividerTheme: DividerThemeData(color: colors.border, thickness: 1.0),
+      appBarTheme: AppBarTheme(
+        backgroundColor: colors.bgSurface,
+        foregroundColor: colors.textPrimary,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        surfaceTintColor: Colors.transparent,
+        centerTitle: false,
+        toolbarHeight: 56,
+        titleTextStyle: TextStyle(
+          fontSize: 19,
+          fontWeight: FontWeight.w700,
+          color: colors.textPrimary,
+        ),
+        iconTheme: IconThemeData(color: colors.textSecondary),
+        shape: Border(bottom: BorderSide(color: colors.border)),
+      ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           minimumSize: const Size(44, 44),

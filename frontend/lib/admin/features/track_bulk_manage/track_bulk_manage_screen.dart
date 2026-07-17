@@ -3,8 +3,8 @@ import 'package:cornermon/admin/session/selected_camp_provider.dart';
 import 'package:cornermon/shared/api/domain_aliases.dart' as api;
 import 'package:cornermon/shared/api/ids.dart';
 import 'package:cornermon/shared/api/providers/corner_track_providers.dart';
-import 'package:cornermon/shared/design_system/tokens/colors.dart';
 import 'package:cornermon/shared/design_system/widgets/app_button.dart';
+import 'package:cornermon/shared/design_system/widgets/app_dropdown.dart';
 import 'package:cornermon/shared/design_system/widgets/status_badge.dart';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
@@ -67,10 +67,11 @@ class _TrackBulkManageScreenState extends ConsumerState<TrackBulkManageScreen> {
             onPressed: () => Navigator.pop(context),
             child: const Text('취소'),
           ),
-          FilledButton(
+          AppButton(
+            variant: AppButtonVariant.primary,
+            label: '적용',
             onPressed: () =>
                 Navigator.pop(context, int.tryParse(controller.text)),
-            child: const Text('적용'),
           ),
         ],
       ),
@@ -109,9 +110,10 @@ class _TrackBulkManageScreenState extends ConsumerState<TrackBulkManageScreen> {
             onPressed: () => Navigator.pop(context, false),
             child: const Text('취소'),
           ),
-          FilledButton(
+          AppButton(
+            variant: AppButtonVariant.destructive,
+            label: '삭제',
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('삭제'),
           ),
         ],
       ),
@@ -134,9 +136,6 @@ class _TrackBulkManageScreenState extends ConsumerState<TrackBulkManageScreen> {
     final selectedCamp = ref.watch(selectedCampProvider).asData?.value;
     final tracks = ref.watch(trackListProvider(campId));
     final corners = ref.watch(cornerListProvider(campId));
-    final colors = Theme.of(context).brightness == Brightness.dark
-        ? AppColors.dark
-        : AppColors.light;
     return Scaffold(
       appBar: AppBar(
         leading: selectedCamp?.status == api.CampStatus.ACTIVE
@@ -149,20 +148,14 @@ class _TrackBulkManageScreenState extends ConsumerState<TrackBulkManageScreen> {
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 12),
-            child: TextButton.icon(
-              style: TextButton.styleFrom(
-                backgroundColor: colors.brandPrimary.withValues(alpha: .10),
-                foregroundColor: colors.brandPrimary,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(9),
-                ),
-              ),
+            child: AppButton(
+              variant: AppButtonVariant.secondary,
+              icon: Icons.download_outlined,
+              label: '전체 PIN 내보내기',
               onPressed: () => _exportCsv(
                 campId,
                 session is AdminSessionAuthenticated ? session.adminId : '관리자',
               ),
-              icon: const Icon(Icons.download_outlined),
-              label: const Text('전체 PIN 내보내기'),
             ),
           ),
         ],
@@ -217,9 +210,9 @@ class _TrackBulkManageScreenState extends ConsumerState<TrackBulkManageScreen> {
                 children: [
                   Row(
                     children: [
-                      DropdownButton<api.TrackOperationalStatus?>(
+                      AppDropdown<api.TrackOperationalStatus?>(
                         value: _filter,
-                        hint: const Text('전체 상태'),
+                        hint: '전체 상태',
                         items: const [
                           DropdownMenuItem(value: null, child: Text('전체')),
                           DropdownMenuItem(
@@ -345,22 +338,36 @@ class _TrackBulkManageScreenState extends ConsumerState<TrackBulkManageScreen> {
                                       ),
                                     ),
                                     DataCell(
-                                      InkWell(
-                                        onTap: track.cornerId == null
-                                            ? null
-                                            : () => context.go(
-                                                '/dashboard/corners/${track.cornerId}',
+                                      Align(
+                                        alignment: Alignment.centerLeft,
+                                        child: Material(
+                                          color: Colors.transparent,
+                                          child: InkWell(
+                                            borderRadius: BorderRadius.circular(
+                                              6,
+                                            ),
+                                            onTap: track.cornerId == null
+                                                ? null
+                                                : () => context.go(
+                                                    '/dashboard/corners/${track.cornerId}',
+                                                  ),
+                                            child: Padding(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 4,
+                                                    vertical: 2,
+                                                  ),
+                                              child: Text(
+                                                cornerNames[track.cornerId] ??
+                                                    track.cornerId ??
+                                                    '-',
+                                                style: TextStyle(
+                                                  color: Theme.of(
+                                                    context,
+                                                  ).colorScheme.primary,
+                                                ),
                                               ),
-                                        child: Text(
-                                          cornerNames[track.cornerId] ??
-                                              track.cornerId ??
-                                              '-',
-                                          style: TextStyle(
-                                            color: Theme.of(
-                                              context,
-                                            ).colorScheme.primary,
-                                            decoration:
-                                                TextDecoration.underline,
+                                            ),
                                           ),
                                         ),
                                       ),

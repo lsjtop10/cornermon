@@ -2,6 +2,7 @@ import 'package:cornermon/admin/session/selected_camp_provider.dart';
 import 'package:cornermon/shared/api/domain_aliases.dart' as api;
 import 'package:cornermon/shared/api/ids.dart';
 import 'package:cornermon/shared/api/providers/corner_track_providers.dart';
+import 'package:cornermon/shared/design_system/widgets/app_button.dart';
 import 'package:cornermon/shared/design_system/widgets/empty_state.dart';
 import 'package:cornermon/shared/design_system/widgets/confirm_modal.dart';
 import 'package:cornermon/shared/design_system/widgets/status_badge.dart';
@@ -112,10 +113,11 @@ class _CornerBody extends ConsumerWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text('트랙', style: Theme.of(context).textTheme.titleLarge),
-          FilledButton.icon(
+          AppButton(
+            variant: AppButtonVariant.primary,
+            icon: Icons.add,
+            label: '트랙 추가',
             onPressed: () => _addTrack(ref),
-            icon: const Icon(Icons.add),
-            label: const Text('트랙 추가'),
           ),
         ],
       ),
@@ -176,7 +178,9 @@ class _CornerEditorState extends State<_CornerEditor> {
             decoration: const InputDecoration(labelText: '목표시간(분)'),
           ),
           const SizedBox(height: 12),
-          FilledButton(
+          AppButton(
+            variant: AppButtonVariant.primary,
+            label: '변경 저장',
             onPressed: () async {
               final minutes = int.tryParse(_minutes.text);
               if (minutes == null || minutes < 1) return;
@@ -186,7 +190,6 @@ class _CornerEditorState extends State<_CornerEditor> {
               );
               if (confirmed) await widget.onSave(_name.text.trim(), minutes);
             },
-            child: const Text('변경 저장'),
           ),
         ],
       ),
@@ -438,11 +441,12 @@ class _ReplaceTrackDialogState extends State<_ReplaceTrackDialog> {
         onPressed: () => Navigator.pop(context),
         child: const Text('취소'),
       ),
-      FilledButton(
+      AppButton(
+        variant: AppButtonVariant.primary,
+        label: '교체 실행',
         onPressed: _corner == null
             ? null
             : () => Navigator.pop(context, _corner),
-        child: const Text('교체 실행'),
       ),
     ],
   );

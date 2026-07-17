@@ -38,7 +38,7 @@ class AdminSidebar extends ConsumerWidget {
         ('설정', Icons.settings_outlined, '/settings'),
       ],
       SidebarMode.preparing => const [
-        ('코너·트랙', Icons.account_tree_outlined, '/corner-track-manage'),
+        ('대시보드', Icons.dashboard_outlined, '/dashboard'),
         ('조 현황', Icons.groups_outlined, '/groups'),
         ('기기 관리', Icons.devices_outlined, '/devices'),
         ('설정', Icons.settings_outlined, '/settings'),

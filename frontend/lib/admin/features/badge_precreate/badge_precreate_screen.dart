@@ -3,6 +3,7 @@ import 'package:cornermon/admin/session/selected_camp_provider.dart';
 import 'package:cornermon/shared/api/domain_aliases.dart' as api;
 import 'package:cornermon/shared/api/providers/badge_providers.dart';
 import 'package:cornermon/shared/api/providers/group_providers.dart';
+import 'package:cornermon/shared/design_system/widgets/app_button.dart';
 import 'package:cornermon/shared/design_system/widgets/empty_state.dart';
 import 'package:cornermon/shared/design_system/widgets/app_tag.dart';
 import 'package:flutter/material.dart';
@@ -138,22 +139,19 @@ class _BadgePrecreateScreenState extends ConsumerState<BadgePrecreateScreen> {
                         decoration: const InputDecoration(labelText: '생성 수량'),
                       ),
                     ),
-                    _count == null
-                        ? const Tooltip(
-                            message: '생성 수량은 1 이상이어야 합니다.',
-                            child: FilledButton(
-                              onPressed: null,
-                              child: Text('배지 생성'),
-                            ),
-                          )
-                        : FilledButton(
-                            onPressed: _busy ? null : _generate,
-                            child: const Text('배지 생성'),
-                          ),
-                    OutlinedButton.icon(
+                    AppButton(
+                      variant: AppButtonVariant.primary,
+                      label: '배지 생성',
+                      disabledReason: _count == null
+                          ? '생성 수량은 1 이상이어야 합니다.'
+                          : null,
+                      onPressed: _count == null || _busy ? null : _generate,
+                    ),
+                    AppButton(
+                      variant: AppButtonVariant.secondary,
+                      icon: Icons.ios_share,
+                      label: '스티커 PDF로 내보내기',
                       onPressed: _busy ? null : _export,
-                      icon: const Icon(Icons.ios_share),
-                      label: const Text('스티커 PDF로 내보내기'),
                     ),
                   ],
                 ),
