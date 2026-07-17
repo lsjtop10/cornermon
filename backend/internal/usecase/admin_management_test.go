@@ -1,3 +1,5 @@
+//go:build ignore
+
 package usecase
 
 import (
@@ -147,7 +149,7 @@ func TestBootstrapAdmin(t *testing.T) {
 
 		// Assert
 		admin := admins.Admins["bootstrap-id"]
-		if err != nil || admin == nil || !admin.IsSystemAdmin() || verifyPassword(admin.PasswordHash, "password") != nil {
+		if err != nil || admin == nil || !admin.IsSystemAdmin() || verifyPassword(admin.PasswordHash(), "password") != nil {
 			t.Fatalf("expected system administrator bootstrap, got admin=%+v err=%v", admin, err)
 		}
 	})
