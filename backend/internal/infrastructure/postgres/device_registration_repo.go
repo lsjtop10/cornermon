@@ -28,7 +28,7 @@ func (r *pgDeviceRegistrationRepository) queries(ctx context.Context) *db.Querie
 }
 
 func mapDeviceRegistration(row db.DeviceRegistration) *domain.DeviceRegistration {
-	d := &domain.DeviceRegistration{
+	d := domain.NewDeviceRegistrationFromProps(domain.DeviceRegistrationProps{
 		ID:                domain.DeviceRegistrationID(row.ID),
 		CampID:            domain.CampID(row.CampID),
 		DeviceName:        row.DeviceName,
@@ -38,18 +38,18 @@ func mapDeviceRegistration(row db.DeviceRegistration) *domain.DeviceRegistration
 		TokenHash:         row.TokenHash,
 		FailedPinAttempts: int(row.FailedPinAttempts),
 		CreatedAt:         row.CreatedAt.Time,
-	}
+	})
 
 	if row.LockedUntil.Valid {
-		d.LockedUntil = domain.Some(row.LockedUntil.Time)
+		d.SetLockedUntil(domain.Some(row.LockedUntil.Time))
 	} else {
-		d.LockedUntil = domain.None[time.Time]()
+		d.SetLockedUntil(domain.None[time.Time]())
 	}
 
 	if row.ApprovedAt.Valid {
-		d.ApprovedAt = domain.Some(row.ApprovedAt.Time)
+		d.SetApprovedAt(domain.Some(row.ApprovedAt.Time))
 	} else {
-		d.ApprovedAt = domain.None[time.Time]()
+		d.SetApprovedAt(domain.None[time.Time]())
 	}
 
 	return d
@@ -92,22 +92,22 @@ func (r *pgDeviceRegistrationRepository) ListPendingByCamp(ctx context.Context, 
 
 func (r *pgDeviceRegistrationRepository) Save(ctx context.Context, reg *domain.DeviceRegistration) error {
 	params := db.SaveDeviceRegistrationParams{
-		ID:                string(reg.ID),
-		CampID:            string(reg.CampID),
-		DeviceName:        reg.DeviceName,
-		DeviceModel:       reg.DeviceModel,
-		DisplayName:       reg.DisplayName,
-		Status:            string(reg.Status),
-		TokenHash:         reg.TokenHash,
-		FailedPinAttempts: int32(reg.FailedPinAttempts),
-		CreatedAt:         pgtype.Timestamptz{Time: reg.CreatedAt, Valid: true},
+		ID:                string(reg.ID()),
+		CampID:            string(reg.CampID()),
+		DeviceName:        reg.DeviceName(),
+		DeviceModel:       reg.DeviceModel(),
+		DisplayName:       reg.DisplayName(),
+		Status:            string(reg.Status()),
+		TokenHash:         reg.TokenHash(),
+		FailedPinAttempts: int32(reg.FailedPinAttempts()),
+		CreatedAt:         pgtype.Timestamptz{Time: reg.CreatedAt(), Valid: true},
 	}
 
-	if val, ok := reg.LockedUntil.Value(); ok {
+	if val, ok := reg.LockedUntil().Value(); ok {
 		params.LockedUntil = pgtype.Timestamptz{Time: val, Valid: true}
 	}
 
-	if val, ok := reg.ApprovedAt.Value(); ok {
+	if val, ok := reg.ApprovedAt().Value(); ok {
 		params.ApprovedAt = pgtype.Timestamptz{Time: val, Valid: true}
 	}
 

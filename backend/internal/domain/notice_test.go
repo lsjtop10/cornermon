@@ -1,3 +1,4 @@
+
 package domain_test
 
 import (
@@ -11,11 +12,7 @@ func TestAnnouncementReceipt_MarkRead(t *testing.T) {
 	now := time.Date(2026, 7, 9, 15, 0, 0, 0, time.UTC)
 
 	t.Run("MarkRead sets read time on first call and keeps it on subsequent calls", func(t *testing.T) {
-		receipt := &domain.NoteceReceipt{
-			NoticeID: domain.NoticeID("msg-1"),
-			TrackID:  domain.TrackID("track-1"),
-			ReadAt:   domain.None[time.Time](),
-		}
+		receipt := domain.NewNoteceReceiptFromProps(domain.NoteceReceiptProps{NoticeID: domain.NoticeID("msg-1"), TrackID: domain.TrackID("track-1"), ReadAt: domain.None[time.Time]()})
 
 		// First call
 		err := receipt.MarkRead(now)
@@ -23,7 +20,7 @@ func TestAnnouncementReceipt_MarkRead(t *testing.T) {
 			t.Fatalf("unexpected error: %v", err)
 		}
 
-		readAt, ok := receipt.ReadAt.Value()
+		readAt, ok := receipt.ReadAt().Value()
 		if !ok || !readAt.Equal(now) {
 			t.Errorf("expected ReadAt to be %v, got %v", now, readAt)
 		}
@@ -35,7 +32,7 @@ func TestAnnouncementReceipt_MarkRead(t *testing.T) {
 			t.Fatalf("unexpected error: %v", err)
 		}
 
-		readAt2, ok2 := receipt.ReadAt.Value()
+		readAt2, ok2 := receipt.ReadAt().Value()
 		if !ok2 || !readAt2.Equal(now) {
 			t.Errorf("expected ReadAt to remain %v, got %v", now, readAt2)
 		}

@@ -95,13 +95,13 @@ func (h *AuditHandler) ListAuditLogs(c echo.Context) error {
 	dtos := make([]AuditLogResponse, len(page.Logs))
 	for i, log := range page.Logs {
 		dtos[i] = AuditLogResponse{
-			ID:         string(log.ID),
-			Actor:      log.Actor,
-			Action:     log.Action,
-			Target:     log.Target,
-			Success:    log.Success,
-			OccurredAt: log.OccurredAt,
-			Metadata:   log.Metadata,
+			ID:         string(log.ID()),
+			Actor:      log.Actor(),
+			Action:     log.Action(),
+			Target:     log.Target(),
+			Success:    log.Success(),
+			OccurredAt: log.OccurredAt(),
+			Metadata:   log.Metadata(),
 		}
 	}
 

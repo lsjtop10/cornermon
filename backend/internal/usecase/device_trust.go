@@ -62,9 +62,9 @@ func (s *DeviceTrustService) RequestRegistration(
 	}
 
 	regID := domain.DeviceRegistrationID(s.uuidFn())
-	reg := &domain.DeviceRegistration{
+	reg := domain.NewDeviceRegistrationFromProps(domain.DeviceRegistrationProps{
 		ID:                regID,
-		CampID:            campID,
+		CampID:            campID(),
 		DeviceName:        deviceName,
 		DeviceModel:       deviceModel,
 		DisplayName:       displayName,
@@ -74,7 +74,7 @@ func (s *DeviceTrustService) RequestRegistration(
 		LockedUntil:       domain.None[time.Time](),
 		ApprovedAt:        domain.None[time.Time](),
 		CreatedAt:         s.nowFn(),
-	}
+	})
 
 	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
 		return s.devices.Save(ctx, reg)
@@ -85,8 +85,8 @@ func (s *DeviceTrustService) RequestRegistration(
 		return "", nil, err
 	}
 
-	s.recordAuditLog(ctx, "anonymous", "DEVICE_REQUEST", string(reg.ID), true, map[string]any{"campID": string(campID)})
-	_ = s.broadcaster.Broadcast(ctx, campID, EventDeviceRegistrationUpdated, CampScope())
+	s.recordAuditLog(ctx, "anonymous", "DEVICE_REQUEST", string(reg.ID()), true, map[string]any{"campID()": string(campID())})
+	_ = s.broadcaster.Broadcast(ctx, campID(), EventDeviceRegistrationUpdated, CampScope())
 	return plainToken, reg, nil
 }
 
@@ -103,7 +103,8 @@ func (s *DeviceTrustService) GetMyRegistrationStatus(
 	if device == nil {
 		return nil, domain.ErrDeviceNotApproved // 혹은 NotFound 처리
 	}
-	return &device.Status, nil
+	status := device.Status()
+	return &status, nil
 }
 
 // ApproveDevice - UC-14 (승인)
@@ -135,7 +136,7 @@ func (s *DeviceTrustService) ApproveDevice(
 	}
 
 	s.recordAuditLog(ctx, string(actorAdminID), "DEVICE_APPROVED", string(regID), true, nil)
-	_ = s.broadcaster.Broadcast(ctx, device.CampID, EventDeviceRegistrationUpdated, CampScope())
+	_ = s.broadcaster.Broadcast(ctx, device.CampID(), EventDeviceRegistrationUpdated, CampScope())
 	return nil
 }
 
@@ -167,7 +168,7 @@ func (s *DeviceTrustService) RejectDevice(
 	}
 
 	s.recordAuditLog(ctx, string(actorAdminID), "DEVICE_REJECTED", string(regID), true, nil)
-	_ = s.broadcaster.Broadcast(ctx, device.CampID, EventDeviceRegistrationUpdated, CampScope())
+	_ = s.broadcaster.Broadcast(ctx, device.CampID(), EventDeviceRegistrationUpdated, CampScope())
 	return nil
 }
 
@@ -199,7 +200,7 @@ func (s *DeviceTrustService) RevokeDevice(
 	}
 
 	s.recordAuditLog(ctx, string(actorAdminID), "DEVICE_REVOKED", string(regID), true, nil)
-	_ = s.broadcaster.Broadcast(ctx, device.CampID, EventDeviceRegistrationUpdated, CampScope())
+	_ = s.broadcaster.Broadcast(ctx, device.CampID(), EventDeviceRegistrationUpdated, CampScope())
 	return nil
 }
 
@@ -229,7 +230,7 @@ func (s *DeviceTrustService) ResetPinFailures(
 	}
 
 	s.recordAuditLog(ctx, string(actorAdminID), "PIN_LOCK_RESET", string(regID), true, nil)
-	_ = s.broadcaster.Broadcast(ctx, device.CampID, EventDeviceRegistrationUpdated, CampScope())
+	_ = s.broadcaster.Broadcast(ctx, device.CampID(), EventDeviceRegistrationUpdated, CampScope())
 	return nil
 }
 

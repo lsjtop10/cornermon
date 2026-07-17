@@ -68,7 +68,7 @@ func (s *AdminAuthService) Login(
 		return "", nil, errors.New("invalid username or password")
 	}
 
-	if err := verifyPassword(admin.PasswordHash, password); err != nil {
+	if err := verifyPassword(admin.PasswordHash(), password); err != nil {
 		s.recordAuditLog(ctx, "anonymous", "ADMIN_LOGIN", username, false, map[string]any{"error": "invalid password"})
 		return "", nil, errors.New("invalid username or password")
 	}
@@ -79,15 +79,15 @@ func (s *AdminAuthService) Login(
 	}
 
 	sessionID := domain.AdminSessionID(s.uuidFn())
-	session := &domain.AdminSession{
+	session := domain.NewAdminSessionFromProps(domain.AdminSessionProps{
 		ID:              sessionID,
-		AdminID:         admin.ID,
+		AdminID:         admin.ID(),
 		AccessTokenHash: accessHash,
 		DeviceInfo:      deviceInfo,
 		CreatedAt:       now,
 		LastUsedAt:      now,
 		RevokedAt:       domain.None[time.Time](),
-	}
+	})
 
 	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
 		return s.sessions.Save(ctx, session)
@@ -98,7 +98,7 @@ func (s *AdminAuthService) Login(
 		return "", nil, err
 	}
 
-	s.recordAuditLog(ctx, string(admin.ID), "ADMIN_LOGIN", string(session.ID), true, nil)
+	s.recordAuditLog(ctx, string(admin.ID()), "ADMIN_LOGIN", string(session.ID()), true, nil)
 	return plainAccess, session, nil
 }
 
@@ -119,7 +119,7 @@ func (s *AdminAuthService) ValidateAccessToken(
 	}
 
 	if session.IsExpired(now, AdminAccessTokenTTL) {
-		if session.RevokedAt.IsSet() {
+		if session.RevokedAt().IsSet() {
 			return nil, domain.ErrSessionRevoked
 		}
 		return nil, errors.New("access token expired")
@@ -163,19 +163,19 @@ func (s *AdminAuthService) CreateAdmin(
 	if err != nil {
 		return nil, err
 	}
-	admin := &domain.Admin{
+	admin := domain.NewAdminFromProps(domain.AdminProps{
 		ID:           domain.AdminID(s.uuidFn()),
 		Username:     username,
 		PasswordHash: passwordHash,
 		Role:         role,
-	}
+	})
 	if err := s.tx.RunInTx(ctx, func(ctx context.Context) error {
 		return s.admins.Save(ctx, admin)
 	}); err != nil {
 		s.recordAuditLog(ctx, string(actorAdminID), "ADMIN_CREATE", username, false, map[string]any{"error": err.Error()})
 		return nil, err
 	}
-	s.recordAuditLog(ctx, string(actorAdminID), "ADMIN_CREATE", string(admin.ID), true, map[string]any{"role": string(role)})
+	s.recordAuditLog(ctx, string(actorAdminID), "ADMIN_CREATE", string(admin.ID()), true, map[string]any{"role": string(role)})
 	return admin, nil
 }
 
@@ -199,7 +199,7 @@ func (s *AdminAuthService) ChangeAdminPassword(
 	if err != nil {
 		return err
 	}
-	admin.PasswordHash = passwordHash
+	admin.SetPasswordHash(passwordHash)
 	if err := s.tx.RunInTx(ctx, func(ctx context.Context) error {
 		return s.admins.Save(ctx, admin)
 	}); err != nil {
@@ -330,7 +330,7 @@ func (s *AdminAuthService) ForceTrackLogout(ctx context.Context, trackID domain.
 		return errors.New("track not found")
 	}
 
-	corner, err := s.corners.Get(ctx, track.CornerID)
+	corner, err := s.corners.Get(ctx, track.CornerID())
 	if err != nil {
 		return err
 	}
@@ -361,6 +361,6 @@ func (s *AdminAuthService) ForceTrackLogout(ctx context.Context, trackID domain.
 	}
 
 	s.recordAuditLog(ctx, string(actorAdminID), "TRACK_FORCE_LOGOUT", string(trackID), true, nil)
-	_ = s.broadcaster.Broadcast(ctx, corner.CampID, EventSessionRevoked, TrackScope(trackID))
+	_ = s.broadcaster.Broadcast(ctx, corner.CampID(), EventSessionRevoked, TrackScope(trackID))
 	return nil
 }

@@ -73,20 +73,20 @@ func (s *VisitService) StartVisitByQR(
 		return nil, domain.ErrSessionRevoked
 	}
 
-	actor := string(session.TrackID)
+	actor := string(session.TrackID())
 
 	var visit *domain.Visit
 	var groupCampID domain.CampID
 
 	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
-		track, err := s.tracks.Get(ctx, session.TrackID)
+		track, err := s.tracks.Get(ctx, session.TrackID())
 		if err != nil {
 			return err
 		}
-		if track == nil || track.Status != domain.TrackActive {
+		if track == nil || track.Status() != domain.TrackActive {
 			return domain.ErrTrackNotActive
 		}
-		if track.CurrentVisitID.IsSet() {
+		if track.CurrentVisitID().IsSet() {
 			return domain.ErrTrackBusy
 		}
 
@@ -97,19 +97,19 @@ func (s *VisitService) StartVisitByQR(
 		if badge == nil {
 			return domain.ErrBadgeNotAssigned
 		}
-		groupID, ok := badge.AssignedGroupID.Value()
-		if !ok || badge.Status != domain.BadgeAssigned {
+		assignedGroupID, ok := badge.AssignedGroupID().Value()
+		if !ok || badge.Status() != domain.BadgeAssigned {
 			return domain.ErrBadgeNotAssigned
 		}
 
-		group, err := s.groups.Get(ctx, groupID)
+		group, err := s.groups.Get(ctx, assignedGroupID)
 		if err != nil {
 			return err
 		}
 		if group == nil {
 			return domain.ErrCornerNotInItinerary
 		}
-		groupCampID = group.CampID
+		groupCampID = group.CampID()
 
 		// 캠프가 ACTIVE 상태인지 검사
 		camp, err := s.camps.Get(ctx, groupCampID)
@@ -120,12 +120,12 @@ func (s *VisitService) StartVisitByQR(
 			return domain.ErrCampInvalidTransition // 캠프가 활성화되어 있지 않음
 		}
 
-		if err := group.MarkVisitStarted(track.CornerID); err != nil {
+		if err = group.MarkVisitStarted(track.CornerID()); err != nil {
 			return err
 		}
 
 		visitID := domain.VisitID(s.uuidFn())
-		visit = domain.NewVisit(visitID, group.ID, track.CornerID, track.ID, domain.VisitQRScan, now)
+		visit = domain.NewVisit(visitID, group.ID(), track.CornerID(), track.ID(), domain.VisitQRScan, now)
 
 		if err := track.StartVisit(visitID); err != nil {
 			return err
@@ -149,11 +149,11 @@ func (s *VisitService) StartVisitByQR(
 		return nil, err
 	}
 
-	s.recordAuditLog(ctx, actor, "VISIT_START", string(visit.ID), true, map[string]any{"method": string(domain.VisitQRScan), "groupID": string(visit.GroupID)})
+	s.recordAuditLog(ctx, actor, "VISIT_START", string(visit.ID()), true, map[string]any{"method": string(domain.VisitQRScan), "groupID": string(visit.GroupID())})
 	_ = s.broadcaster.Broadcast(ctx, groupCampID, EventCornersUpdated, CampScope())
 	_ = s.broadcaster.Broadcast(ctx, groupCampID, EventGroupsUpdated, CampScope())
 	_ = s.broadcaster.Broadcast(ctx, groupCampID, EventTracksUpdated, CampScope())
-	_ = s.broadcaster.Broadcast(ctx, groupCampID, EventTrackUpdated, TrackScope(session.TrackID))
+	_ = s.broadcaster.Broadcast(ctx, groupCampID, EventTrackUpdated, TrackScope(session.TrackID()))
 
 	return visit, nil
 }
@@ -177,19 +177,19 @@ func (s *VisitService) StartVisitManual(
 		return nil, domain.ErrSessionRevoked
 	}
 
-	actor := string(session.TrackID)
+	actor := string(session.TrackID())
 	var visit *domain.Visit
 	var groupCampID domain.CampID
 
 	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
-		track, err := s.tracks.Get(ctx, session.TrackID)
+		track, err := s.tracks.Get(ctx, session.TrackID())
 		if err != nil {
 			return err
 		}
-		if track == nil || track.Status != domain.TrackActive {
+		if track == nil || track.Status() != domain.TrackActive {
 			return domain.ErrTrackNotActive
 		}
-		if track.CurrentVisitID.IsSet() {
+		if track.CurrentVisitID().IsSet() {
 			return domain.ErrTrackBusy
 		}
 
@@ -200,7 +200,7 @@ func (s *VisitService) StartVisitManual(
 		if group == nil {
 			return domain.ErrCornerNotInItinerary
 		}
-		groupCampID = group.CampID
+		groupCampID = group.CampID()
 
 		// 캠프가 ACTIVE 상태인지 검사
 		camp, err := s.camps.Get(ctx, groupCampID)
@@ -211,12 +211,12 @@ func (s *VisitService) StartVisitManual(
 			return domain.ErrCampInvalidTransition
 		}
 
-		if err := group.MarkVisitStarted(track.CornerID); err != nil {
+		if err := group.MarkVisitStarted(track.CornerID()); err != nil {
 			return err
 		}
 
 		visitID := domain.VisitID(s.uuidFn())
-		visit = domain.NewVisit(visitID, group.ID, track.CornerID, track.ID, domain.VisitManual, now)
+		visit = domain.NewVisit(visitID, group.ID(), track.CornerID(), track.ID(), domain.VisitManual, now)
 
 		if err := track.StartVisit(visitID); err != nil {
 			return err
@@ -240,11 +240,11 @@ func (s *VisitService) StartVisitManual(
 		return nil, err
 	}
 
-	s.recordAuditLog(ctx, actor, "VISIT_START", string(visit.ID), true, map[string]any{"method": string(domain.VisitManual), "groupID": string(visit.GroupID)})
+	s.recordAuditLog(ctx, actor, "VISIT_START", string(visit.ID()), true, map[string]any{"method": string(domain.VisitManual), "groupID": string(visit.GroupID())})
 	_ = s.broadcaster.Broadcast(ctx, groupCampID, EventCornersUpdated, CampScope())
 	_ = s.broadcaster.Broadcast(ctx, groupCampID, EventGroupsUpdated, CampScope())
 	_ = s.broadcaster.Broadcast(ctx, groupCampID, EventTracksUpdated, CampScope())
-	_ = s.broadcaster.Broadcast(ctx, groupCampID, EventTrackUpdated, TrackScope(session.TrackID))
+	_ = s.broadcaster.Broadcast(ctx, groupCampID, EventTrackUpdated, TrackScope(session.TrackID()))
 
 	return visit, nil
 }
@@ -267,25 +267,25 @@ func (s *VisitService) CompleteVisit(
 		return nil, domain.ErrSessionRevoked
 	}
 
-	actor := string(session.TrackID)
+	actor := string(session.TrackID())
 	var visit *domain.Visit
 	var groupCampID domain.CampID
 
 	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
-		track, err := s.tracks.Get(ctx, session.TrackID)
+		track, err := s.tracks.Get(ctx, session.TrackID())
 		if err != nil {
 			return err
 		}
-		if track == nil || track.Status != domain.TrackActive {
+		if track == nil || track.Status() != domain.TrackActive {
 			return domain.ErrTrackNotActive
 		}
 
-		currentVisitID, ok := track.CurrentVisitID.Value()
+		activeVisitID, ok := track.CurrentVisitID().Value()
 		if !ok {
 			return domain.ErrTrackNotBusy
 		}
 
-		visit, err = s.visits.Get(ctx, currentVisitID)
+		visit, err = s.visits.Get(ctx, activeVisitID)
 		if err != nil {
 			return err
 		}
@@ -293,14 +293,14 @@ func (s *VisitService) CompleteVisit(
 			return domain.ErrTrackNotBusy
 		}
 
-		group, err := s.groups.Get(ctx, visit.GroupID)
+		group, err := s.groups.Get(ctx, visit.GroupID())
 		if err != nil {
 			return err
 		}
 		if group == nil {
 			return domain.ErrCornerNotInItinerary
 		}
-		groupCampID = group.CampID
+		groupCampID = group.CampID()
 
 		if err := visit.Complete(now); err != nil {
 			return err
@@ -310,7 +310,7 @@ func (s *VisitService) CompleteVisit(
 			return err
 		}
 
-		if err := group.MarkVisitCompleted(visit.CornerID); err != nil {
+		if err := group.MarkVisitCompleted(visit.CornerID()); err != nil {
 			return err
 		}
 
@@ -332,11 +332,11 @@ func (s *VisitService) CompleteVisit(
 		return nil, err
 	}
 
-	s.recordAuditLog(ctx, actor, "VISIT_COMPLETE", string(visit.ID), true, map[string]any{"groupID": string(visit.GroupID)})
+	s.recordAuditLog(ctx, actor, "VISIT_COMPLETE", string(visit.ID()), true, map[string]any{"groupID": string(visit.GroupID())})
 	_ = s.broadcaster.Broadcast(ctx, groupCampID, EventCornersUpdated, CampScope())
 	_ = s.broadcaster.Broadcast(ctx, groupCampID, EventGroupsUpdated, CampScope())
 	_ = s.broadcaster.Broadcast(ctx, groupCampID, EventTracksUpdated, CampScope())
-	_ = s.broadcaster.Broadcast(ctx, groupCampID, EventTrackUpdated, TrackScope(session.TrackID))
+	_ = s.broadcaster.Broadcast(ctx, groupCampID, EventTrackUpdated, TrackScope(session.TrackID()))
 
 	return visit, nil
 }
@@ -356,7 +356,7 @@ func (s *VisitService) GetCurrentVisit(
 		return nil, domain.ErrSessionRevoked
 	}
 
-	return s.visits.GetInProgressByTrack(ctx, session.TrackID)
+	return s.visits.GetInProgressByTrack(ctx, session.TrackID())
 }
 
 func (s *VisitService) recordAuditLog(ctx context.Context, actor, action, target string, success bool, metadata map[string]any) {

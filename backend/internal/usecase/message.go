@@ -29,10 +29,10 @@ func (s *MessageService) SendDirect(ctx context.Context, trackID domain.TrackID,
 	if err != nil {
 		return nil, err
 	}
-	if track == nil || track.Status != domain.TrackActive {
+	if track == nil || track.Status() != domain.TrackActive {
 		return nil, domain.ErrTrackNotActive
 	}
-	msg := &domain.Message{ID: domain.MessageID(s.uuidFn()), ChannelType: domain.MessageDirect, TrackID: trackID, SenderRole: senderRole, Content: content, SentAt: s.nowFn()}
+	msg := domain.NewMessageFromProps(domain.MessageProps{ID: domain.MessageID(s.uuidFn()), ChannelType: domain.MessageDirect, TrackID: trackID, SenderRole: senderRole, Content: content, SentAt: s.nowFn()})
 	if err := s.tx.RunInTx(ctx, func(ctx context.Context) error {
 		// IncrementUnreadCount locks the track row. Every direct-message write
 		// acquires this lock before inserting the message, so it is serialized
@@ -46,7 +46,7 @@ func (s *MessageService) SendDirect(ctx context.Context, trackID domain.TrackID,
 		return nil, err
 	}
 
-	corner, err := s.corners.Get(ctx, track.CornerID)
+	corner, err := s.corners.Get(ctx, track.CornerID())
 	if err != nil {
 		return nil, err
 	}
@@ -54,8 +54,8 @@ func (s *MessageService) SendDirect(ctx context.Context, trackID domain.TrackID,
 		return nil, domain.ErrCornerNotInItinerary
 	}
 
-	s.recordAuditLog(ctx, string(trackID), "MESSAGE_DIRECT", string(msg.ID), true, map[string]any{"trackID": string(trackID)})
-	_ = s.broadcaster.Broadcast(ctx, corner.CampID, EventMessagesChanged, TrackScope(trackID))
+	s.recordAuditLog(ctx, string(trackID), "MESSAGE_DIRECT", string(msg.ID()), true, map[string]any{"trackID": string(trackID)})
+	_ = s.broadcaster.Broadcast(ctx, corner.CampID(), EventMessagesChanged, TrackScope(trackID))
 	return msg, nil
 }
 
@@ -83,7 +83,7 @@ func (s *MessageService) ListDirectMessages(ctx context.Context, trackID domain.
 	}
 	if markRead {
 		for _, message := range messages {
-			if message.SenderRole == oppositeRole(viewerRole) {
+			if message.SenderRole() == oppositeRole(viewerRole) {
 				_ = message.MarkRead(readAt)
 			}
 		}
@@ -100,9 +100,9 @@ func (s *MessageService) GetUnreadCount(ctx context.Context, trackID domain.Trac
 		return 0, domain.ErrTrackNotFound
 	}
 	if viewerRole == domain.RoleAdmin {
-		return track.UnreadByAdminCount, nil
+		return track.UnreadByAdminCount(), nil
 	}
-	return track.UnreadByTrackCount, nil
+	return track.UnreadByTrackCount(), nil
 }
 
 func oppositeRole(role domain.SenderRole) domain.SenderRole {

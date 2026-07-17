@@ -27,17 +27,19 @@ func (r *pgGroupRepository) queries(ctx context.Context) *db.Queries {
 }
 
 func mapGroup(row db.Group) (*domain.Group, error) {
-	g := &domain.Group{
+	g := domain.NewGroupFromProps(domain.GroupProps{
 		ID:      domain.GroupID(row.ID),
 		CampID:  domain.CampID(row.CampID),
 		Name:    row.Name,
 		BadgeID: domain.BadgeID(row.BadgeID),
-	}
+	})
 
 	if len(row.Itinerary) > 0 {
-		if err := json.Unmarshal(row.Itinerary, &g.Itinerary); err != nil {
+		var itinerary []domain.CornerProgress
+		if err := json.Unmarshal(row.Itinerary, &itinerary); err != nil {
 			return nil, err
 		}
+		g.SetItinerary(itinerary)
 	}
 
 	return g, nil
@@ -92,10 +94,10 @@ func (r *pgGroupRepository) Save(ctx context.Context, group *domain.Group) error
 	}
 
 	err = r.queries(ctx).SaveGroup(ctx, db.SaveGroupParams{
-		ID:        string(group.ID),
-		CampID:    string(group.CampID),
-		Name:      group.Name,
-		BadgeID:   string(group.BadgeID),
+		ID:        string(group.ID()),
+		CampID:    string(group.CampID()),
+		Name:      group.Name(),
+		BadgeID:   string(group.BadgeID()),
 		Itinerary: itineraryJSON,
 	})
 	if err != nil {

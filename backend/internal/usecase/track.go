@@ -63,7 +63,7 @@ func (s *TrackService) CreateTrack(
 		return nil, "", err
 	}
 
-	if camp == nil {
+	if camp == nil || camp.Status() != domain.CampActive {
 		return nil, "", domain.ErrCampInvalidTransition
 	}
 
@@ -93,12 +93,12 @@ func (s *TrackService) CreateTrack(
 
 		nextTrackNo := 1
 		for _, t := range existingTracks {
-			if t.TrackNo >= nextTrackNo {
-				nextTrackNo = t.TrackNo + 1
+			if t.TrackNo() >= nextTrackNo {
+				nextTrackNo = t.TrackNo() + 1
 			}
 		}
 
-		track = &domain.Track{
+		track = domain.NewTrackFromProps(domain.TrackProps{
 			ID:             domain.TrackID(s.uuidFn()),
 			CornerID:       cornerID,
 			TrackNo:        nextTrackNo,
@@ -106,7 +106,7 @@ func (s *TrackService) CreateTrack(
 			PINHash:        hashPIN,
 			PINCiphertext:  pinCiphertext,
 			CurrentVisitID: domain.None[domain.VisitID](),
-		}
+		})
 
 		return s.tracks.Save(ctx, track)
 	})
@@ -116,7 +116,7 @@ func (s *TrackService) CreateTrack(
 		return nil, "", err
 	}
 
-	s.recordAuditLog(ctx, "admin", "TRACK_CREATE", string(track.ID), true, map[string]any{"campID": string(campID), "cornerID": string(cornerID)})
+	s.recordAuditLog(ctx, "admin", "TRACK_CREATE", string(track.ID()), true, map[string]any{"campID": string(campID), "cornerID": string(cornerID)})
 	_ = s.broadcaster.Broadcast(ctx, campID, EventTracksUpdated, CampScope())
 
 	return track, plainPIN, nil
@@ -146,26 +146,26 @@ func (s *TrackService) DeleteTrack(
 		}
 
 		// 마지막 트랙인지 여부 확인
-		allTracks, err := s.tracks.ListByCorner(ctx, track.CornerID)
+		allTracks, err := s.tracks.ListByCorner(ctx, track.CornerID())
 		if err != nil {
 			return err
 		}
 
 		activeCount := 0
 		for _, t := range allTracks {
-			if t.ID != trackID && t.Status == domain.TrackActive {
+			if t.ID() != trackID && t.Status() == domain.TrackActive {
 				activeCount++
 			}
 		}
 		isLastTrack = (activeCount == 0)
 
 		// 캠프 ID 확인을 위해 코너 정보 조회
-		corner, err := s.corners.Get(ctx, track.CornerID)
+		corner, err := s.corners.Get(ctx, track.CornerID())
 		if err != nil {
 			return err
 		}
 		if corner != nil {
-			cornerCampID = corner.CampID
+			cornerCampID = corner.CampID()
 		}
 
 		// 세션 일괄 Revoke
@@ -220,14 +220,14 @@ func (s *TrackService) ReplaceTrack(
 	if newCorner == nil {
 		return nil, "", domain.ErrCornerNotFound
 	}
-	oldCorner, err := s.corners.Get(ctx, oldTrack.CornerID)
+	oldCorner, err := s.corners.Get(ctx, oldTrack.CornerID())
 	if err != nil {
 		return nil, "", err
 	}
 	if oldCorner == nil {
 		return nil, "", domain.ErrCornerNotFound
 	}
-	if oldCorner.CampID != newCorner.CampID {
+	if oldCorner.CampID() != newCorner.CampID() {
 		return nil, "", domain.ErrTrackCampMismatch
 	}
 
@@ -260,13 +260,13 @@ func (s *TrackService) ReplaceTrack(
 
 		nextTrackNo := 1
 		for _, t := range existingTracks {
-			if t.TrackNo >= nextTrackNo {
-				nextTrackNo = t.TrackNo + 1
+			if t.TrackNo() >= nextTrackNo {
+				nextTrackNo = t.TrackNo() + 1
 			}
 		}
 
 		newTrackID := domain.TrackID(s.uuidFn())
-		newTrack = &domain.Track{
+		newTrack = domain.NewTrackFromProps(domain.TrackProps{
 			ID:             newTrackID,
 			CornerID:       newCornerID,
 			TrackNo:        nextTrackNo,
@@ -274,7 +274,7 @@ func (s *TrackService) ReplaceTrack(
 			PINHash:        hashPIN,
 			PINCiphertext:  pinCiphertext,
 			CurrentVisitID: domain.None[domain.VisitID](),
-		}
+		})
 
 		if err := s.tracks.Save(ctx, newTrack); err != nil {
 			return err
@@ -300,9 +300,9 @@ func (s *TrackService) ReplaceTrack(
 		return nil, "", err
 	}
 
-	s.recordAuditLog(ctx, "admin", "TRACK_REPLACE", string(newTrack.ID), true, map[string]any{"oldTrackID": string(oldTrackID)})
-	_ = s.broadcaster.Broadcast(ctx, newCorner.CampID, EventTracksUpdated, CampScope())
-	_ = s.broadcaster.Broadcast(ctx, newCorner.CampID, EventTrackReplaced, TrackScope(oldTrackID))
+	s.recordAuditLog(ctx, "admin", "TRACK_REPLACE", string(newTrack.ID()), true, map[string]any{"oldTrackID": string(oldTrackID)})
+	_ = s.broadcaster.Broadcast(ctx, newCorner.CampID(), EventTracksUpdated, CampScope())
+	_ = s.broadcaster.Broadcast(ctx, newCorner.CampID(), EventTrackReplaced, TrackScope(oldTrackID))
 
 	return newTrack, plainPIN, nil
 }
@@ -317,7 +317,7 @@ func (s *TrackService) RegeneratePIN(
 	if err != nil {
 		return nil, "", err
 	}
-	if track == nil || track.Status != domain.TrackActive {
+	if track == nil || track.Status() != domain.TrackActive {
 		return nil, "", domain.ErrTrackNotActive
 	}
 
@@ -336,15 +336,15 @@ func (s *TrackService) RegeneratePIN(
 		if _, err := track.RegeneratePIN(hashPIN, now); err != nil {
 			return err
 		}
-		track.PINCiphertext = pinCiphertext
+		track.SetPINCiphertext(pinCiphertext)
 
 		// 코너 정보 조회를 통해 캠프 ID 획득
-		corner, err := s.corners.Get(ctx, track.CornerID)
+		corner, err := s.corners.Get(ctx, track.CornerID())
 		if err != nil {
 			return err
 		}
 		if corner != nil {
-			cornerCampID = corner.CampID
+			cornerCampID = corner.CampID()
 		}
 
 		// 세션 일괄 Revoke
@@ -391,13 +391,13 @@ func (s *TrackService) ListTracksByCamp(ctx context.Context, campID domain.CampI
 
 func (s *TrackService) ExportTrackPIN(ctx context.Context, trackID domain.TrackID) (*domain.Track, string, error) {
 	track, err := s.tracks.Get(ctx, trackID)
-	if err != nil || track == nil || track.Status != domain.TrackActive {
+	if err != nil || track == nil || track.Status() != domain.TrackActive {
 		return nil, "", err
 	}
-	if track.PINCiphertext == "" || s.pinProtector == nil {
+	if track.PINCiphertext() == "" || s.pinProtector == nil {
 		return nil, "", fmt.Errorf("track PIN must be regenerated before export")
 	}
-	pin, err := s.pinProtector.Decrypt(ctx, track.PINCiphertext)
+	pin, err := s.pinProtector.Decrypt(ctx, track.PINCiphertext())
 	return track, pin, err
 }
 
@@ -408,10 +408,10 @@ func (s *TrackService) ExportTrackPINs(ctx context.Context, campID domain.CampID
 	}
 	pins := make([]string, len(tracks))
 	for i, track := range tracks {
-		if track.PINCiphertext == "" {
+		if track.PINCiphertext() == "" {
 			return nil, nil, fmt.Errorf("track PIN must be regenerated before export")
 		}
-		if pins[i], err = s.pinProtector.Decrypt(ctx, track.PINCiphertext); err != nil {
+		if pins[i], err = s.pinProtector.Decrypt(ctx, track.PINCiphertext()); err != nil {
 			return nil, nil, err
 		}
 	}

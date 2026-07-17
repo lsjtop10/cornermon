@@ -52,21 +52,21 @@ func (h *CampHandler) UpdateCamp(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "invalid request body")
 	}
 
-	patch := domain.CampSettingsPatch{}
+	patch := domain.NewCampSettingsPatchValFromProps(domain.CampSettingsPatchProps{})
 	if req.Name != nil {
-		patch.Name = domain.Some(*req.Name)
+		patch.SetName(domain.Some(*req.Name))
 	}
 	if req.StartAt != nil {
-		patch.StartAt = domain.Some(*req.StartAt)
+		patch.SetStartAt(domain.Some(*req.StartAt))
 	}
 	if req.EndAt != nil {
-		patch.EndAt = domain.Some(*req.EndAt)
+		patch.SetEndAt(domain.Some(*req.EndAt))
 	}
 	if req.BottleneckMinSamples != nil {
-		patch.BottleneckMinSamples = domain.Some(*req.BottleneckMinSamples)
+		patch.SetBottleneckMinSamples(domain.Some(*req.BottleneckMinSamples))
 	}
 	if req.BottleneckRatioPct != nil {
-		patch.BottleneckRatioPct = domain.Some(*req.BottleneckRatioPct)
+		patch.SetBottleneckRatioPct(domain.Some(*req.BottleneckRatioPct))
 	}
 
 	camp, err := h.svc.UpdateCampSettings(c.Request().Context(), domain.CampID(c.Param("id")), getAdminID(c), patch)
@@ -95,14 +95,14 @@ func mapDomainCampToDTO(camp *domain.Camp) CampResponse {
 		return CampResponse{}
 	}
 	return CampResponse{
-		ID:                   string(camp.ID),
-		RegistrationCode:     camp.RegistrationCode,
-		Name:                 camp.Name,
-		StartAt:              camp.StartAt,
-		EndAt:                camp.EndAt,
-		Status:               string(camp.Status),
-		BottleneckMinSamples: camp.BottleneckMinSamples,
-		BottleneckRatioPct:   camp.BottleneckRatioPct,
+		ID:                   string(camp.ID()),
+		RegistrationCode:     camp.RegistrationCode(),
+		Name:                 camp.Name(),
+		StartAt:              camp.StartAt(),
+		EndAt:                camp.EndAt(),
+		Status:               string(camp.Status()),
+		BottleneckMinSamples: camp.BottleneckMinSamples(),
+		BottleneckRatioPct:   camp.BottleneckRatioPct(),
 	}
 }
 

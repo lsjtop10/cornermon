@@ -43,7 +43,7 @@ func (h *BadgeHandler) getActiveCamp(ctx context.Context) (*domain.Camp, error) 
 		return nil, err
 	}
 	for _, camp := range camps {
-		if camp.Status == domain.CampActive {
+		if camp.Status() == domain.CampActive {
 			return camp, nil
 		}
 	}
@@ -52,12 +52,12 @@ func (h *BadgeHandler) getActiveCamp(ctx context.Context) (*domain.Camp, error) 
 
 func mapBadgeToDTO(b *domain.Badge) BadgeResponse {
 	res := BadgeResponse{
-		ID:        string(b.ID),
-		ShortID:   b.ShortID,
-		QRPayload: b.QRPayload,
-		Status:    string(b.Status),
+		ID:        string(b.ID()),
+		ShortID:   b.ShortID(),
+		QRPayload: b.QRPayload(),
+		Status:    string(b.Status()),
 	}
-	if gid, ok := b.AssignedGroupID.Value(); ok {
+	if gid, ok := b.AssignedGroupID().Value(); ok {
 		s := string(gid)
 		res.AssignedGroupID = &s
 	}
@@ -174,8 +174,8 @@ func (h *BadgeHandler) AssignBadge(c echo.Context) error {
 	}
 	var qrPayload string
 	for _, b := range badges {
-		if b.ID == id {
-			qrPayload = b.QRPayload
+		if b.ID() == id {
+			qrPayload = b.QRPayload()
 			break
 		}
 	}
@@ -183,7 +183,7 @@ func (h *BadgeHandler) AssignBadge(c echo.Context) error {
 		return echo.ErrNotFound
 	}
 
-	group, err := h.groupUC.RegisterBadge(c.Request().Context(), camp.ID, qrPayload, req.GroupName)
+	group, err := h.groupUC.RegisterBadge(c.Request().Context(), camp.ID(), qrPayload, req.GroupName)
 	if err != nil {
 		return err
 	}
@@ -219,7 +219,7 @@ func (h *BadgeHandler) ScanAssignBadge(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusNotFound, "active camp not found")
 	}
 
-	group, err := h.groupUC.RegisterBadge(c.Request().Context(), camp.ID, req.QRPayload, req.GroupName)
+	group, err := h.groupUC.RegisterBadge(c.Request().Context(), camp.ID(), req.QRPayload, req.GroupName)
 	if err != nil {
 		return err
 	}

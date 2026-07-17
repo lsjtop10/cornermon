@@ -1,3 +1,4 @@
+
 package postgres
 
 import (
@@ -17,12 +18,12 @@ func TestCalculateCampReport(t *testing.T) {
 		campID := domain.CampID("camp-1")
 
 		iti1, _ := json.Marshal([]domain.CornerProgress{
-			{CornerID: "corner-1", Status: domain.VisitCompleted},
-			{CornerID: "corner-2", Status: domain.VisitCompleted},
+			domain.NewCornerProgressValFromProps(domain.CornerProgressProps{CornerID: "corner-1", Status: domain.VisitCompleted}),
+			domain.NewCornerProgressValFromProps(domain.CornerProgressProps{CornerID: "corner-2", Status: domain.VisitCompleted}),
 		})
 		iti2, _ := json.Marshal([]domain.CornerProgress{
-			{CornerID: "corner-1", Status: domain.VisitCompleted},
-			{CornerID: "corner-2", Status: domain.VisitInProgress},
+			domain.NewCornerProgressValFromProps(domain.CornerProgressProps{CornerID: "corner-1", Status: domain.VisitCompleted}),
+			domain.NewCornerProgressValFromProps(domain.CornerProgressProps{CornerID: "corner-2", Status: domain.VisitInProgress}),
 		})
 
 		dbGroups := []db.Group{

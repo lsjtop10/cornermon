@@ -59,10 +59,10 @@ func mapDomainCornerToDTO(corner *domain.Corner) CornerResponse {
 		return CornerResponse{}
 	}
 	return CornerResponse{
-		ID:            string(corner.ID),
-		CampID:        string(corner.CampID),
-		Name:          corner.Name,
-		TargetMinutes: corner.TargetMinutes,
+		ID:            string(corner.ID()),
+		CampID:        string(corner.CampID()),
+		Name:          corner.Name(),
+		TargetMinutes: corner.TargetMinutes(),
 		Status:        string(corner.OperationalStatus(nil)),
 	}
 }

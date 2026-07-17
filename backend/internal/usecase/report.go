@@ -51,7 +51,7 @@ func (s *ReportService) GenerateCampReport(
 		return nil, domain.ErrCampNotFound
 	}
 
-	if camp.Status != domain.CampEnded {
+	if camp.Status() != domain.CampEnded {
 		return nil, domain.ErrCampInvalidTransition
 	}
 

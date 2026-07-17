@@ -54,7 +54,7 @@ func (s *CampService) OpenNewCamp(ctx context.Context, name string, startAt, end
 		s.recordAuditLog(ctx, "admin", "CAMP_CREATE", "", false, map[string]any{"error": err.Error()})
 		return nil, err
 	}
-	s.recordAuditLog(ctx, "admin", "CAMP_CREATE", string(camp.ID), true, map[string]any{"name": name})
+	s.recordAuditLog(ctx, "admin", "CAMP_CREATE", string(camp.ID()), true, map[string]any{"name": name})
 	return camp, nil
 }
 

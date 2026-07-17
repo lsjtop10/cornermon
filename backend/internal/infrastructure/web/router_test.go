@@ -1,3 +1,4 @@
+
 package web
 
 import (
@@ -25,7 +26,7 @@ type trackAuthForMessageRoutes struct{}
 
 func (trackAuthForMessageRoutes) ValidateSession(_ context.Context, token string) (*domain.FacilitatorSession, error) {
 	if token == "track-token" {
-		return &domain.FacilitatorSession{TrackID: "track-1"}, nil
+		return domain.NewFacilitatorSessionFromProps(domain.FacilitatorSessionProps{TrackID: "track-1"}), nil
 	}
 	return nil, errors.New("invalid track token")
 }
@@ -64,7 +65,7 @@ func TestMessageRoutesShoudAuthenticateAdminAndTrackWithoutDuplicateRouteRegistr
 
 func TestListBroadcastsRouteShoudAuthenticateBothAdminAndTrackSessions(t *testing.T) {
 	// Arrange
-	announcementUC := &announcementUsecaseForHandler{notices: []*domain.Announcement{{ID: "notice-1", CampID: "camp-1", Content: "hello"}}}
+	announcementUC := &announcementUsecaseForHandler{notices: []*domain.Announcement{domain.NewAnnouncementFromProps(domain.AnnouncementProps{ID: "notice-1", CampID: "camp-1", Content: "hello"})}}
 	e := echo.New()
 	RegisterRoutes(e, &Handlers{Auth: &AuthHandler{}, Device: &DeviceHandler{}, Message: NewMessageHandler(&messageUsecaseForHandler{}, announcementUC)}, adminAuthForMessageRoutes{}, trackAuthForMessageRoutes{})
 

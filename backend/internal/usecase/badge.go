@@ -40,13 +40,13 @@ func (s *BadgeService) IssueInitialBadges(ctx context.Context, count int) ([]*do
 	var badges []*domain.Badge
 	for i := 0; i < count; i++ {
 		uid := s.uuidFn()
-		badges = append(badges, &domain.Badge{
+		badges = append(badges, domain.NewBadgeFromProps(domain.BadgeProps{
 			ID:              domain.BadgeID(uid),
 			ShortID:         uid[:8],
 			QRPayload:       "qr-" + uid[:8],
 			Status:          domain.BadgeUnassigned,
 			AssignedGroupID: domain.None[domain.GroupID](),
-		})
+		}))
 	}
 
 	err := s.tx.RunInTx(ctx, func(ctx context.Context) error {
@@ -77,7 +77,7 @@ func (s *BadgeService) ExportBadges(ctx context.Context) ([]*domain.Badge, error
 
 	var unassigned []*domain.Badge
 	for _, b := range badges {
-		if b.Status == domain.BadgeUnassigned {
+		if b.Status() == domain.BadgeUnassigned {
 			unassigned = append(unassigned, b)
 		}
 	}
@@ -125,13 +125,13 @@ func (s *BadgeService) assignBadgeInternal(
 			return domain.ErrBadgeNotAssigned // map to not found
 		}
 
-		if targetBadge.Status == domain.BadgeAssigned {
+		if targetBadge.Status() == domain.BadgeAssigned {
 			return domain.ErrBadgeAlreadyAssigned
 		}
 
 		// Release old badge if group already has one
-		if string(group.BadgeID) != "" && string(group.BadgeID) != string(targetBadge.ID) {
-			oldBadge, err := s.badges.Get(ctx, group.BadgeID)
+		if string(group.BadgeID()) != "" && string(group.BadgeID()) != string(targetBadge.ID()) {
+			oldBadge, err := s.badges.Get(ctx, group.BadgeID())
 			if err != nil {
 				return err
 			}
@@ -146,7 +146,7 @@ func (s *BadgeService) assignBadgeInternal(
 		if err := targetBadge.AssignTo(groupID); err != nil {
 			return err
 		}
-		group.BadgeID = targetBadge.ID
+		group.SetBadgeID(targetBadge.ID())
 
 		if err := s.badges.Save(ctx, targetBadge); err != nil {
 			return err
@@ -163,7 +163,7 @@ func (s *BadgeService) assignBadgeInternal(
 		return nil, err
 	}
 
-	s.recordAuditLog(ctx, "admin", "BADGE_ASSIGN", string(targetBadge.ID), true, map[string]any{"groupID": string(groupID)})
+	s.recordAuditLog(ctx, "admin", "BADGE_ASSIGN", string(targetBadge.ID()), true, map[string]any{"groupID": string(groupID)})
 
 	return targetBadge, nil
 }

@@ -58,7 +58,7 @@ func (s *GroupService) RegisterBadge(
 	if err != nil {
 		return nil, err
 	}
-	if camp == nil || camp.Status == domain.CampEnded {
+	if camp == nil || camp.Status() == domain.CampEnded {
 		return nil, domain.ErrCampInvalidTransition
 	}
 
@@ -69,7 +69,7 @@ func (s *GroupService) RegisterBadge(
 	if badge == nil {
 		return nil, domain.ErrBadgeNotAssigned
 	}
-	if badge.Status == domain.BadgeAssigned {
+	if badge.Status() == domain.BadgeAssigned {
 		return nil, domain.ErrBadgeAlreadyAssigned
 	}
 
@@ -80,20 +80,20 @@ func (s *GroupService) RegisterBadge(
 
 	var itinerary []domain.CornerProgress
 	for _, c := range corners {
-		itinerary = append(itinerary, domain.CornerProgress{
-			CornerID: c.ID,
+		itinerary = append(itinerary, domain.NewCornerProgressValFromProps(domain.CornerProgressProps{
+			CornerID: c.ID(),
 			Status:   domain.VisitNotVisited,
-		})
+		}))
 	}
 
 	groupID := domain.GroupID(s.uuidFn())
-	group := &domain.Group{
+	group := domain.NewGroupFromProps(domain.GroupProps{
 		ID:        groupID,
 		CampID:    campID,
 		Name:      groupName,
-		BadgeID:   badge.ID,
+		BadgeID:   badge.ID(),
 		Itinerary: itinerary,
-	}
+	})
 
 	if err := badge.AssignTo(groupID); err != nil {
 		return nil, err
@@ -111,7 +111,7 @@ func (s *GroupService) RegisterBadge(
 		return nil, err
 	}
 
-	s.recordAuditLog(ctx, "admin", "GROUP_CREATE", string(groupID), true, map[string]any{"campID": string(campID), "badgeID": string(badge.ID)})
+	s.recordAuditLog(ctx, "admin", "GROUP_CREATE", string(groupID), true, map[string]any{"campID": string(campID), "badgeID": string(badge.ID())})
 	return group, nil
 }
 
@@ -137,7 +137,7 @@ func (s *GroupService) ListGroupsByTrack(
 		return nil, domain.ErrTrackNotFound
 	}
 
-	corner, err := s.corners.Get(ctx, track.CornerID)
+	corner, err := s.corners.Get(ctx, track.CornerID())
 	if err != nil {
 		return nil, err
 	}
@@ -145,7 +145,7 @@ func (s *GroupService) ListGroupsByTrack(
 		return nil, domain.ErrCornerNotFound
 	}
 
-	return s.groups.ListByCamp(ctx, corner.CampID)
+	return s.groups.ListByCamp(ctx, corner.CampID())
 }
 
 // RetrieveGroupRotationSchedule
@@ -173,19 +173,19 @@ func (s *GroupService) ListGroupVisitDetails(ctx context.Context, groupID domain
 		return nil, err
 	}
 
-	corners, err := s.corners.ListByCamp(ctx, group.CampID)
+	corners, err := s.corners.ListByCamp(ctx, group.CampID())
 	if err != nil {
 		return nil, err
 	}
 
 	cornerMap := make(map[domain.CornerID]*domain.Corner)
 	for _, c := range corners {
-		cornerMap[c.ID] = c
+		cornerMap[c.ID()] = c
 	}
 
 	var details []GroupVisitDetail
 	for _, v := range visits {
-		c, ok := cornerMap[v.CornerID]
+		c, ok := cornerMap[v.CornerID()]
 		if ok {
 			details = append(details, GroupVisitDetail{
 				Visit:  v,

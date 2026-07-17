@@ -40,7 +40,7 @@ func ErrorHandler() echo.HTTPErrorHandler {
 
 			if errors.As(err, &lockedErr) {
 				now := time.Now()
-				sec := int(math.Ceil(lockedErr.LockedUntil.Sub(now).Seconds()))
+				sec := int(math.Ceil(lockedErr.LockedUntil().Sub(now).Seconds()))
 				if sec < 1 {
 					sec = 1
 				}
@@ -48,7 +48,7 @@ func ErrorHandler() echo.HTTPErrorHandler {
 					"retryAfterSeconds": sec,
 				}
 			} else if errors.As(err, &invalidPinErr) {
-				if lockedUntil, ok := invalidPinErr.LockedUntil.Value(); ok {
+				if lockedUntil, ok := invalidPinErr.LockedUntil().Value(); ok {
 					now := time.Now()
 					sec := int(math.Ceil(lockedUntil.Sub(now).Seconds()))
 					if sec < 1 {

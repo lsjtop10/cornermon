@@ -1,3 +1,4 @@
+
 package usecase
 
 import (
@@ -18,13 +19,13 @@ func TestAdminAuthService_AdminManagement(t *testing.T) {
 	t.Run("ShouldCreateAdminWhenActorIsSystemAdmin", func(t *testing.T) {
 		// Arrange
 		admins := NewMockAdminRepository()
-		admins.Admins["system"] = &domain.Admin{ID: "system", Username: "system", Role: domain.AdminRoleSystemAdmin}
+		admins.Admins["system"] = domain.NewAdminFromProps(domain.AdminProps{ID: "system", Username: "system", Role: domain.AdminRoleSystemAdmin})
 
 		// Act
 		created, err := newAdminManagementService(admins).CreateAdmin(context.Background(), "system", "new", "password", domain.AdminRoleCornerOperator)
 
 		// Assert
-		if err != nil || created.Role != domain.AdminRoleCornerOperator {
+		if err != nil || created.Role() != domain.AdminRoleCornerOperator {
 			t.Fatalf("expected corner operator creation, got admin=%+v err=%v", created, err)
 		}
 	})
@@ -32,7 +33,7 @@ func TestAdminAuthService_AdminManagement(t *testing.T) {
 	t.Run("ShouldReturnForbiddenWhenSystemAdminCreatesAnotherSystemAdmin", func(t *testing.T) {
 		// Arrange
 		admins := NewMockAdminRepository()
-		admins.Admins["system"] = &domain.Admin{ID: "system", Role: domain.AdminRoleSystemAdmin}
+		admins.Admins["system"] = domain.NewAdminFromProps(domain.AdminProps{ID: "system", Role: domain.AdminRoleSystemAdmin})
 
 		// Act
 		_, err := newAdminManagementService(admins).CreateAdmin(context.Background(), "system", "new-system", "password", domain.AdminRoleSystemAdmin)
@@ -46,7 +47,7 @@ func TestAdminAuthService_AdminManagement(t *testing.T) {
 	t.Run("ShouldReturnForbiddenWhenActorIsCornerOperator", func(t *testing.T) {
 		// Arrange
 		admins := NewMockAdminRepository()
-		admins.Admins["operator"] = &domain.Admin{ID: "operator", Role: domain.AdminRoleCornerOperator}
+		admins.Admins["operator"] = domain.NewAdminFromProps(domain.AdminProps{ID: "operator", Role: domain.AdminRoleCornerOperator})
 
 		// Act
 		_, err := newAdminManagementService(admins).CreateAdmin(context.Background(), "operator", "new", "password", domain.AdminRoleCornerOperator)
@@ -60,8 +61,8 @@ func TestAdminAuthService_AdminManagement(t *testing.T) {
 	t.Run("ShouldReturnConflictWhenUsernameTaken", func(t *testing.T) {
 		// Arrange
 		admins := NewMockAdminRepository()
-		admins.Admins["system"] = &domain.Admin{ID: "system", Role: domain.AdminRoleSystemAdmin}
-		admins.Admins["existing"] = &domain.Admin{ID: "existing", Username: "taken", Role: domain.AdminRoleCornerOperator}
+		admins.Admins["system"] = domain.NewAdminFromProps(domain.AdminProps{ID: "system", Role: domain.AdminRoleSystemAdmin})
+		admins.Admins["existing"] = domain.NewAdminFromProps(domain.AdminProps{ID: "existing", Username: "taken", Role: domain.AdminRoleCornerOperator})
 
 		// Act
 		_, err := newAdminManagementService(admins).CreateAdmin(context.Background(), "system", "taken", "password", domain.AdminRoleCornerOperator)
@@ -76,13 +77,13 @@ func TestAdminAuthService_AdminManagement(t *testing.T) {
 		// Arrange
 		admins := NewMockAdminRepository()
 		oldHash, _ := hashPassword("old")
-		admins.Admins["operator"] = &domain.Admin{ID: "operator", PasswordHash: oldHash, Role: domain.AdminRoleCornerOperator}
+		admins.Admins["operator"] = domain.NewAdminFromProps(domain.AdminProps{ID: "operator", PasswordHash: oldHash, Role: domain.AdminRoleCornerOperator})
 
 		// Act
 		err := newAdminManagementService(admins).ChangeAdminPassword(context.Background(), "operator", "operator", "new")
 
 		// Assert
-		if err != nil || verifyPassword(admins.Admins["operator"].PasswordHash, "new") != nil {
+		if err != nil || verifyPassword(admins.Admins["operator"].PasswordHash(), "new") != nil {
 			t.Fatalf("expected own password change, got %v", err)
 		}
 	})
@@ -91,8 +92,8 @@ func TestAdminAuthService_AdminManagement(t *testing.T) {
 		// Arrange
 		admins := NewMockAdminRepository()
 		oldHash, _ := hashPassword("old")
-		admins.Admins["system"] = &domain.Admin{ID: "system", Role: domain.AdminRoleSystemAdmin}
-		admins.Admins["operator"] = &domain.Admin{ID: "operator", Username: "operator", PasswordHash: oldHash, Role: domain.AdminRoleCornerOperator}
+		admins.Admins["system"] = domain.NewAdminFromProps(domain.AdminProps{ID: "system", Role: domain.AdminRoleSystemAdmin})
+		admins.Admins["operator"] = domain.NewAdminFromProps(domain.AdminProps{ID: "operator", Username: "operator", PasswordHash: oldHash, Role: domain.AdminRoleCornerOperator})
 		service := newAdminManagementService(admins)
 
 		// Act
@@ -108,8 +109,8 @@ func TestAdminAuthService_AdminManagement(t *testing.T) {
 	t.Run("ShouldReturnForbiddenWhenCornerOperatorChangesAnothersPassword", func(t *testing.T) {
 		// Arrange
 		admins := NewMockAdminRepository()
-		admins.Admins["operator"] = &domain.Admin{ID: "operator", Role: domain.AdminRoleCornerOperator}
-		admins.Admins["other"] = &domain.Admin{ID: "other", Role: domain.AdminRoleCornerOperator}
+		admins.Admins["operator"] = domain.NewAdminFromProps(domain.AdminProps{ID: "operator", Role: domain.AdminRoleCornerOperator})
+		admins.Admins["other"] = domain.NewAdminFromProps(domain.AdminProps{ID: "other", Role: domain.AdminRoleCornerOperator})
 
 		// Act
 		err := newAdminManagementService(admins).ChangeAdminPassword(context.Background(), "operator", "other", "new")
@@ -123,11 +124,11 @@ func TestAdminAuthService_AdminManagement(t *testing.T) {
 	t.Run("ShouldPreventDeletingSelfAndAllowDeletingAnotherSystemAdmin", func(t *testing.T) {
 		// Arrange
 		admins := NewMockAdminRepository()
-		admins.Admins["system"] = &domain.Admin{ID: "system", Role: domain.AdminRoleSystemAdmin}
+		admins.Admins["system"] = domain.NewAdminFromProps(domain.AdminProps{ID: "system", Role: domain.AdminRoleSystemAdmin})
 		service := newAdminManagementService(admins)
 
 		// Act & Assert
-		admins.Admins["other-system"] = &domain.Admin{ID: "other-system", Role: domain.AdminRoleSystemAdmin}
+		admins.Admins["other-system"] = domain.NewAdminFromProps(domain.AdminProps{ID: "other-system", Role: domain.AdminRoleSystemAdmin})
 		if err := service.DeleteAdmin(context.Background(), "system", "other-system"); err != nil {
 			t.Fatalf("expected deleting non-last system admin, got %v", err)
 		}
@@ -147,7 +148,7 @@ func TestBootstrapAdmin(t *testing.T) {
 
 		// Assert
 		admin := admins.Admins["bootstrap-id"]
-		if err != nil || admin == nil || !admin.IsSystemAdmin() || verifyPassword(admin.PasswordHash, "password") != nil {
+		if err != nil || admin == nil || !admin.IsSystemAdmin() || verifyPassword(admin.PasswordHash(), "password") != nil {
 			t.Fatalf("expected system administrator bootstrap, got admin=%+v err=%v", admin, err)
 		}
 	})
@@ -155,7 +156,7 @@ func TestBootstrapAdmin(t *testing.T) {
 	t.Run("ShouldSkipWhenAdminExists", func(t *testing.T) {
 		// Arrange
 		admins := NewMockAdminRepository()
-		admins.Admins["existing"] = &domain.Admin{ID: "existing", Role: domain.AdminRoleSystemAdmin}
+		admins.Admins["existing"] = domain.NewAdminFromProps(domain.AdminProps{ID: "existing", Role: domain.AdminRoleSystemAdmin})
 
 		// Act
 		err := BootstrapAdmin(context.Background(), admins, "bootstrap", "password", func() string { return "new" })
