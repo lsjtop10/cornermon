@@ -10,7 +10,9 @@ Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **approvedAt** | [**DateTime**](DateTime.md) |  | [optional] 
 **createdAt** | [**DateTime**](DateTime.md) |  | [optional] 
+**deviceModel** | **String** |  | [optional] 
 **deviceName** | **String** |  | [optional] 
+**displayName** | **String** |  | [optional] 
 **failedPinAttempts** | **int** |  | [optional] 
 **id** | **String** |  | [optional] 
 **lockedUntil** | [**DateTime**](DateTime.md) |  | [optional] 

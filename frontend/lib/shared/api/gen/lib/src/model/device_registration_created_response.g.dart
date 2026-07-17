@@ -1,5 +1,5 @@
-// @dart=2.18
 // GENERATED CODE - DO NOT MODIFY BY HAND
+// @dart=2.18
 
 part of 'device_registration_created_response.dart';
 
@@ -93,9 +93,13 @@ class _$DeviceRegistrationCreatedResponse
   @override
   final DateTime? createdAt;
   @override
+  final String? deviceModel;
+  @override
   final String? deviceName;
   @override
   final String? deviceToken;
+  @override
+  final String? displayName;
   @override
   final int? failedPinAttempts;
   @override
@@ -112,8 +116,10 @@ class _$DeviceRegistrationCreatedResponse
   _$DeviceRegistrationCreatedResponse._(
       {this.approvedAt,
       this.createdAt,
+      this.deviceModel,
       this.deviceName,
       this.deviceToken,
+      this.displayName,
       this.failedPinAttempts,
       this.id,
       this.lockedUntil,
@@ -134,8 +140,10 @@ class _$DeviceRegistrationCreatedResponse
     return other is DeviceRegistrationCreatedResponse &&
         approvedAt == other.approvedAt &&
         createdAt == other.createdAt &&
+        deviceModel == other.deviceModel &&
         deviceName == other.deviceName &&
         deviceToken == other.deviceToken &&
+        displayName == other.displayName &&
         failedPinAttempts == other.failedPinAttempts &&
         id == other.id &&
         lockedUntil == other.lockedUntil &&
@@ -147,8 +155,10 @@ class _$DeviceRegistrationCreatedResponse
     var _$hash = 0;
     _$hash = $jc(_$hash, approvedAt.hashCode);
     _$hash = $jc(_$hash, createdAt.hashCode);
+    _$hash = $jc(_$hash, deviceModel.hashCode);
     _$hash = $jc(_$hash, deviceName.hashCode);
     _$hash = $jc(_$hash, deviceToken.hashCode);
+    _$hash = $jc(_$hash, displayName.hashCode);
     _$hash = $jc(_$hash, failedPinAttempts.hashCode);
     _$hash = $jc(_$hash, id.hashCode);
     _$hash = $jc(_$hash, lockedUntil.hashCode);
@@ -162,8 +172,10 @@ class _$DeviceRegistrationCreatedResponse
     return (newBuiltValueToStringHelper(r'DeviceRegistrationCreatedResponse')
           ..add('approvedAt', approvedAt)
           ..add('createdAt', createdAt)
+          ..add('deviceModel', deviceModel)
           ..add('deviceName', deviceName)
           ..add('deviceToken', deviceToken)
+          ..add('displayName', displayName)
           ..add('failedPinAttempts', failedPinAttempts)
           ..add('id', id)
           ..add('lockedUntil', lockedUntil)
@@ -186,6 +198,10 @@ class DeviceRegistrationCreatedResponseBuilder
   DateTime? get createdAt => _$this._createdAt;
   set createdAt(DateTime? createdAt) => _$this._createdAt = createdAt;
 
+  String? _deviceModel;
+  String? get deviceModel => _$this._deviceModel;
+  set deviceModel(String? deviceModel) => _$this._deviceModel = deviceModel;
+
   String? _deviceName;
   String? get deviceName => _$this._deviceName;
   set deviceName(String? deviceName) => _$this._deviceName = deviceName;
@@ -193,6 +209,10 @@ class DeviceRegistrationCreatedResponseBuilder
   String? _deviceToken;
   String? get deviceToken => _$this._deviceToken;
   set deviceToken(String? deviceToken) => _$this._deviceToken = deviceToken;
+
+  String? _displayName;
+  String? get displayName => _$this._displayName;
+  set displayName(String? displayName) => _$this._displayName = displayName;
 
   int? _failedPinAttempts;
   int? get failedPinAttempts => _$this._failedPinAttempts;
@@ -221,8 +241,10 @@ class DeviceRegistrationCreatedResponseBuilder
     if ($v != null) {
       _approvedAt = $v.approvedAt;
       _createdAt = $v.createdAt;
+      _deviceModel = $v.deviceModel;
       _deviceName = $v.deviceName;
       _deviceToken = $v.deviceToken;
+      _displayName = $v.displayName;
       _failedPinAttempts = $v.failedPinAttempts;
       _id = $v.id;
       _lockedUntil = $v.lockedUntil;
@@ -251,8 +273,10 @@ class DeviceRegistrationCreatedResponseBuilder
         _$DeviceRegistrationCreatedResponse._(
           approvedAt: approvedAt,
           createdAt: createdAt,
+          deviceModel: deviceModel,
           deviceName: deviceName,
           deviceToken: deviceToken,
+          displayName: displayName,
           failedPinAttempts: failedPinAttempts,
           id: id,
           lockedUntil: lockedUntil,

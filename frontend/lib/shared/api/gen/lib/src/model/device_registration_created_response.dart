@@ -15,8 +15,10 @@ part 'device_registration_created_response.g.dart';
 /// Properties:
 /// * [approvedAt] 
 /// * [createdAt] 
+/// * [deviceModel] 
 /// * [deviceName] 
 /// * [deviceToken] 
+/// * [displayName] 
 /// * [failedPinAttempts] 
 /// * [id] 
 /// * [lockedUntil] 
@@ -29,11 +31,17 @@ abstract class DeviceRegistrationCreatedResponse implements Built<DeviceRegistra
   @BuiltValueField(wireName: r'createdAt')
   DateTime? get createdAt;
 
+  @BuiltValueField(wireName: r'deviceModel')
+  String? get deviceModel;
+
   @BuiltValueField(wireName: r'deviceName')
   String? get deviceName;
 
   @BuiltValueField(wireName: r'deviceToken')
   String? get deviceToken;
+
+  @BuiltValueField(wireName: r'displayName')
+  String? get displayName;
 
   @BuiltValueField(wireName: r'failedPinAttempts')
   int? get failedPinAttempts;
@@ -85,6 +93,13 @@ class _$DeviceRegistrationCreatedResponseSerializer implements PrimitiveSerializ
         specifiedType: const FullType(DateTime),
       );
     }
+    if (object.deviceModel != null) {
+      yield r'deviceModel';
+      yield serializers.serialize(
+        object.deviceModel,
+        specifiedType: const FullType(String),
+      );
+    }
     if (object.deviceName != null) {
       yield r'deviceName';
       yield serializers.serialize(
@@ -96,6 +111,13 @@ class _$DeviceRegistrationCreatedResponseSerializer implements PrimitiveSerializ
       yield r'deviceToken';
       yield serializers.serialize(
         object.deviceToken,
+        specifiedType: const FullType(String),
+      );
+    }
+    if (object.displayName != null) {
+      yield r'displayName';
+      yield serializers.serialize(
+        object.displayName,
         specifiedType: const FullType(String),
       );
     }
@@ -164,6 +186,13 @@ class _$DeviceRegistrationCreatedResponseSerializer implements PrimitiveSerializ
           ) as DateTime;
           result.createdAt = valueDes;
           break;
+        case r'deviceModel':
+          final valueDes = serializers.deserialize(
+            value,
+            specifiedType: const FullType(String),
+          ) as String;
+          result.deviceModel = valueDes;
+          break;
         case r'deviceName':
           final valueDes = serializers.deserialize(
             value,
@@ -177,6 +206,13 @@ class _$DeviceRegistrationCreatedResponseSerializer implements PrimitiveSerializ
             specifiedType: const FullType(String),
           ) as String;
           result.deviceToken = valueDes;
+          break;
+        case r'displayName':
+          final valueDes = serializers.deserialize(
+            value,
+            specifiedType: const FullType(String),
+          ) as String;
+          result.displayName = valueDes;
           break;
         case r'failedPinAttempts':
           final valueDes = serializers.deserialize(
