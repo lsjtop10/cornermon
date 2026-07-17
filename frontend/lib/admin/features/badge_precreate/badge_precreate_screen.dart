@@ -141,6 +141,7 @@ class _BadgePrecreateScreenState extends ConsumerState<BadgePrecreateScreen> {
                     ),
                     AppButton(
                       variant: AppButtonVariant.primary,
+                      size: AppButtonSize.compact,
                       label: '배지 생성',
                       disabledReason: _count == null
                           ? '생성 수량은 1 이상이어야 합니다.'
@@ -149,6 +150,7 @@ class _BadgePrecreateScreenState extends ConsumerState<BadgePrecreateScreen> {
                     ),
                     AppButton(
                       variant: AppButtonVariant.secondary,
+                      size: AppButtonSize.compact,
                       icon: Icons.ios_share,
                       label: '스티커 PDF로 내보내기',
                       onPressed: _busy ? null : _export,

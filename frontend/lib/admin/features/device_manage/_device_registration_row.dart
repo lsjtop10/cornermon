@@ -89,12 +89,14 @@ class DeviceRegistrationRow extends ConsumerWidget {
               children: [
                 AppButton(
                   variant: AppButtonVariant.primary,
+                  size: AppButtonSize.compact,
                   label: '승인',
                   onPressed: approve,
                 ),
                 const SizedBox(width: AppSpacing.space2),
                 AppButton(
                   variant: AppButtonVariant.secondary,
+                  size: AppButtonSize.compact,
                   label: '거절',
                   onPressed: reject,
                 ),
@@ -102,6 +104,7 @@ class DeviceRegistrationRow extends ConsumerWidget {
             ),
             DeviceRegistrationTab.approved => AppButton(
               variant: AppButtonVariant.destructive,
+              size: AppButtonSize.compact,
               label: '회수',
               onPressed: revoke,
             ),

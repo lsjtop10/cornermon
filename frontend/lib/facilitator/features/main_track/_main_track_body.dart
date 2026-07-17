@@ -80,13 +80,12 @@ class _IdleBody extends StatelessWidget {
               ),
             ),
             const SizedBox(height: AppSpacing.space10),
-            SizedBox(
-              width: double.infinity,
-              child: AppButton(
-                variant: AppButtonVariant.primary,
-                label: '스캔 시작',
-                onPressed: () => context.go('/main/scan'),
-              ),
+            AppButton(
+              variant: AppButtonVariant.primary,
+              size: AppButtonSize.comfortable,
+              width: AppButtonWidth.fill,
+              label: '스캔 시작',
+              onPressed: () => context.go('/main/scan'),
             ),
           ],
         ),
@@ -224,13 +223,10 @@ class _BusyBodyState extends ConsumerState<_BusyBody> {
             ),
           ),
           const SizedBox(height: AppSpacing.space8),
-          SizedBox(
-            width: double.infinity,
-            child: DoubleTapConfirmButton(
-              label: '종료 확인',
-              armedLabel: '다시 탭해 확인',
-              onConfirmed: () => unawaited(_endCurrent()),
-            ),
+          DoubleTapConfirmButton(
+            label: '종료 확인',
+            armedLabel: '다시 탭해 확인',
+            onConfirmed: () => unawaited(_endCurrent()),
           ),
         ],
       ),

@@ -18,8 +18,7 @@ class ActiveSessionsCard extends ConsumerStatefulWidget {
   final CampId campId;
 
   @override
-  ConsumerState<ActiveSessionsCard> createState() =>
-      _ActiveSessionsCardState();
+  ConsumerState<ActiveSessionsCard> createState() => _ActiveSessionsCardState();
 }
 
 class _ActiveSessionsCardState extends ConsumerState<ActiveSessionsCard> {
@@ -80,9 +79,11 @@ class _ActiveSessionsCardState extends ConsumerState<ActiveSessionsCard> {
                     const SizedBox(height: AppSpacing.space2),
                     AppButton(
                       variant: AppButtonVariant.secondary,
+                      size: AppButtonSize.compact,
                       label: '재시도',
-                      onPressed: () =>
-                          ref.invalidate(activeSessionListProvider(widget.campId)),
+                      onPressed: () => ref.invalidate(
+                        activeSessionListProvider(widget.campId),
+                      ),
                     ),
                   ],
                 );
@@ -116,6 +117,7 @@ class _ActiveSessionsCardState extends ConsumerState<ActiveSessionsCard> {
                             ),
                             AppButton(
                               variant: AppButtonVariant.destructive,
+                              size: AppButtonSize.compact,
                               label: '강제 로그아웃',
                               onPressed: () =>
                                   _forceLogout(session.trackId ?? ''),
@@ -130,7 +132,9 @@ class _ActiveSessionsCardState extends ConsumerState<ActiveSessionsCard> {
             const Divider(height: AppSpacing.space6),
             Text(
               '트랙 ID로 직접 강제 로그아웃',
-              style: AppTypography.caption.copyWith(color: colors.textSecondary),
+              style: AppTypography.caption.copyWith(
+                color: colors.textSecondary,
+              ),
             ),
             const SizedBox(height: AppSpacing.space2),
             Row(
@@ -144,6 +148,7 @@ class _ActiveSessionsCardState extends ConsumerState<ActiveSessionsCard> {
                 const SizedBox(width: AppSpacing.space2),
                 AppButton(
                   variant: AppButtonVariant.secondary,
+                  size: AppButtonSize.compact,
                   label: '강제 로그아웃',
                   onPressed: () => _forceLogout(_manualTrackId.text),
                 ),

@@ -117,14 +117,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     Stack(
                       alignment: Alignment.center,
                       children: [
-                        SizedBox(
-                          width: double.infinity,
-                          child: AppButton(
-                            variant: AppButtonVariant.primary,
-                            label: '로그인',
-                            disabledReason: 'ID와 비밀번호를 모두 입력하면 로그인할 수 있습니다.',
-                            onPressed: canSubmit ? _submit : null,
-                          ),
+                        AppButton(
+                          variant: AppButtonVariant.primary,
+                          size: AppButtonSize.compact,
+                          width: AppButtonWidth.fill,
+                          label: '로그인',
+                          disabledReason: 'ID와 비밀번호를 모두 입력하면 로그인할 수 있습니다.',
+                          onPressed: canSubmit ? _submit : null,
                         ),
 
                         if (_isSubmitting)

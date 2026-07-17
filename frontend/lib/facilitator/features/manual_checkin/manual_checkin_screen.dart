@@ -10,6 +10,7 @@ import 'package:cornermon/shared/api/providers/visit_providers.dart';
 import 'package:cornermon/shared/design_system/tokens/colors.dart';
 import 'package:cornermon/shared/design_system/tokens/spacing.dart';
 import 'package:cornermon/shared/design_system/tokens/typography.dart';
+import 'package:cornermon/shared/design_system/widgets/app_button.dart';
 import 'package:cornermon/shared/design_system/widgets/confirm_modal.dart';
 import 'package:cornermon/shared/design_system/widgets/empty_state.dart';
 import 'package:cornermon/facilitator/session/track_session_provider.dart';
@@ -99,8 +100,7 @@ class _ManualCheckinScreenState extends ConsumerState<ManualCheckinScreen> {
                     ? groups
                     : groups
                           .where(
-                            (g) =>
-                                (g.name ?? '').toLowerCase().contains(query),
+                            (g) => (g.name ?? '').toLowerCase().contains(query),
                           )
                           .toList();
 
@@ -156,6 +156,7 @@ class _ManualCheckinScreenState extends ConsumerState<ManualCheckinScreen> {
       context,
       kind: ConfirmModalKind.softConfirm,
       title: '${group.name}을(를) 시작 처리하시겠습니까?',
+      buttonSize: AppButtonSize.comfortable,
     );
     if (!confirmed || !mounted) return;
 

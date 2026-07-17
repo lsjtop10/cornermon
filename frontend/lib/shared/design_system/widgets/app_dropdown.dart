@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../tokens/colors.dart';
+import '../tokens/dimensions.dart';
 import '../tokens/typography.dart';
 
 /// 툴바에 얹는 정렬/필터용 드롭다운 — design-system.md §4.5-b "드롭다운 정렬"
@@ -25,11 +26,11 @@ class AppDropdown<T> extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final colors = isDark ? AppColors.dark : AppColors.light;
     return Container(
-      height: 36,
+      height: AppDimensions.controlHeightCompact,
       padding: const EdgeInsets.symmetric(horizontal: 10),
       decoration: BoxDecoration(
         border: Border.all(color: colors.border),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(AppDimensions.controlRadiusCompact),
         color: colors.bgSurface,
       ),
       child: DropdownButtonHideUnderline(

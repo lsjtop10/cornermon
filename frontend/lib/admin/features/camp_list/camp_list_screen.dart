@@ -28,6 +28,7 @@ class CampListScreen extends ConsumerWidget {
           const SizedBox(width: 8),
           AppButton(
             variant: AppButtonVariant.primary,
+            size: AppButtonSize.compact,
             icon: Icons.add,
             label: '새 캠프 시작',
             onPressed: () => context.go('/setup-wizard'),

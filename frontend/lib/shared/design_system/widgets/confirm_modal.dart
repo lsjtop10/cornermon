@@ -10,10 +10,12 @@ Future<bool> showConfirmModal(
   required ConfirmModalKind kind,
   required String title,
   String? body,
+  AppButtonSize buttonSize = AppButtonSize.compact,
 }) async {
   final result = await showDialog<bool>(
     context: context,
-    barrierDismissible: kind != ConfirmModalKind.hardBlock, // 하드 블록은 바깥 탭으로 닫기 불가능
+    barrierDismissible:
+        kind != ConfirmModalKind.hardBlock, // 하드 블록은 바깥 탭으로 닫기 불가능
     builder: (BuildContext context) {
       final isDark = Theme.of(context).brightness == Brightness.dark;
       final colors = isDark ? AppColors.dark : AppColors.light;
@@ -31,7 +33,9 @@ Future<bool> showConfirmModal(
               onPressed: () => Navigator.of(context).pop(true),
               child: Text(
                 '확인',
-                style: AppTypography.bodyEmphasis.copyWith(color: colors.brandPrimary),
+                style: AppTypography.bodyEmphasis.copyWith(
+                  color: colors.brandPrimary,
+                ),
               ),
             ),
           ];
@@ -49,6 +53,7 @@ Future<bool> showConfirmModal(
             ),
             AppButton(
               variant: AppButtonVariant.destructive,
+              size: buttonSize,
               label: '진행',
               onPressed: () => Navigator.of(context).pop(true),
             ),
@@ -62,7 +67,9 @@ Future<bool> showConfirmModal(
               onPressed: () => Navigator.of(context).pop(true),
               child: Text(
                 '확인',
-                style: AppTypography.bodyEmphasis.copyWith(color: colors.brandPrimary),
+                style: AppTypography.bodyEmphasis.copyWith(
+                  color: colors.brandPrimary,
+                ),
               ),
             ),
           ];

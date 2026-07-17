@@ -112,13 +112,12 @@ class _QrScanScreenState extends ConsumerState<QrScanScreen> {
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: AppSpacing.space6),
-                SizedBox(
-                  width: double.infinity,
-                  child: AppButton(
-                    variant: AppButtonVariant.primary,
-                    label: '확인',
-                    onPressed: () => Navigator.of(sheetContext).pop(),
-                  ),
+                AppButton(
+                  variant: AppButtonVariant.primary,
+                  size: AppButtonSize.comfortable,
+                  width: AppButtonWidth.fill,
+                  label: '확인',
+                  onPressed: () => Navigator.of(sheetContext).pop(),
                 ),
               ],
             ),

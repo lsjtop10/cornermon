@@ -9,6 +9,7 @@ class EmptyState extends StatelessWidget {
     this.icon,
     this.actionLabel,
     this.onAction,
+    this.actionButtonSize = AppButtonSize.compact,
     super.key,
   });
 
@@ -16,6 +17,10 @@ class EmptyState extends StatelessWidget {
   final IconData? icon;
   final String? actionLabel;
   final VoidCallback? onAction;
+
+  /// actionLabel/onAction이 있을 때만 쓰인다. 현재 호출부가 모두 관리자 화면이라
+  /// compact가 기본값 — 진행자 화면에서 쓰게 되면 comfortable을 명시적으로 넘긴다.
+  final AppButtonSize actionButtonSize;
 
   @override
   Widget build(BuildContext context) {
@@ -30,11 +35,7 @@ class EmptyState extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             if (icon != null) ...[
-              Icon(
-                icon,
-                size: 64.0,
-                color: colors.textDisabled,
-              ),
+              Icon(icon, size: 64.0, color: colors.textDisabled),
               const SizedBox(height: 16.0),
             ],
             Text(
@@ -46,6 +47,7 @@ class EmptyState extends StatelessWidget {
               const SizedBox(height: 24.0),
               AppButton(
                 variant: AppButtonVariant.primary,
+                size: actionButtonSize,
                 label: actionLabel!,
                 onPressed: onAction!,
               ),
