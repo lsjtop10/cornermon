@@ -17,6 +17,8 @@ type DeviceRegistration struct {
 	ID                DeviceRegistrationID
 	CampID            CampID
 	DeviceName        string
+	DeviceModel       string
+	DisplayName       string
 	Status            DeviceRegistrationStatus
 	TokenHash         string
 	FailedPinAttempts int

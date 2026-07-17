@@ -20,6 +20,15 @@ func (s *campRepositoryStub) Get(_ context.Context, id domain.CampID) (*domain.C
 	return s.camps[id], nil
 }
 
+func (s *campRepositoryStub) GetByRegistrationCode(_ context.Context, code string) (*domain.Camp, error) {
+	for _, camp := range s.camps {
+		if camp.RegistrationCode == code {
+			return camp, nil
+		}
+	}
+	return nil, nil
+}
+
 func (s *campRepositoryStub) List(context.Context) ([]*domain.Camp, error) { return nil, nil }
 func (s *campRepositoryStub) Save(context.Context, *domain.Camp) error     { return nil }
 

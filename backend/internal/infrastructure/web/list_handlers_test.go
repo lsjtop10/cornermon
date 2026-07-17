@@ -17,13 +17,17 @@ import (
 type listDeviceTrustStub struct {
 	devices         []*domain.DeviceRegistration
 	requestedReg    *domain.DeviceRegistration
+	requestErr      error
 	reviewedDevices []*domain.DeviceRegistration
 }
 
 func (s *listDeviceTrustStub) GetMyRegistrationStatus(context.Context, string) (*domain.DeviceRegistrationStatus, error) {
 	return nil, nil
 }
-func (s *listDeviceTrustStub) RequestRegistration(context.Context, domain.CampID, string) (string, *domain.DeviceRegistration, error) {
+func (s *listDeviceTrustStub) RequestRegistration(context.Context, string, string, string, string) (string, *domain.DeviceRegistration, error) {
+	if s.requestErr != nil {
+		return "", nil, s.requestErr
+	}
 	return "token", s.requestedReg, nil
 }
 func (s *listDeviceTrustStub) ApproveDevice(context.Context, domain.DeviceRegistrationID, domain.AdminID) error {

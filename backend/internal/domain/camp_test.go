@@ -211,6 +211,9 @@ func TestNewCampShoudCreatePendingCampWhenValid(t *testing.T) {
 	if camp.Status != domain.CampPending || camp.BottleneckMinSamples != 3 || camp.BottleneckRatioPct != 20 {
 		t.Fatalf("unexpected defaults: %+v", camp)
 	}
+	if camp.RegistrationCode != domain.GenerateRegistrationCode("camp-1") {
+		t.Fatalf("expected deterministic registration code, got %q", camp.RegistrationCode)
+	}
 }
 
 func TestNewCampShoudRejectInvalidInputWithoutCreatingCamp(t *testing.T) {

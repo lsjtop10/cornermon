@@ -16,6 +16,7 @@ type CampHandler struct {
 
 type CampResponse struct {
 	ID                   string    `json:"id" format:"uuid"`
+	RegistrationCode     string    `json:"registrationCode" example:"7ZQK3M2X"`
 	Name                 string    `json:"name" example:"2026 여름 코너학습"`
 	StartAt              time.Time `json:"startAt" format:"date-time"`
 	EndAt                time.Time `json:"endAt" format:"date-time"`
@@ -95,6 +96,7 @@ func mapDomainCampToDTO(camp *domain.Camp) CampResponse {
 	}
 	return CampResponse{
 		ID:                   string(camp.ID),
+		RegistrationCode:     camp.RegistrationCode,
 		Name:                 camp.Name,
 		StartAt:              camp.StartAt,
 		EndAt:                camp.EndAt,

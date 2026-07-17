@@ -195,6 +195,9 @@ definitions:
       name:
         example: 2026 여름 코너학습
         type: string
+      registrationCode:
+        example: 7ZQK3M2X
+        type: string
       startAt:
         format: date-time
         type: string
@@ -353,11 +356,17 @@ definitions:
       createdAt:
         format: date-time
         type: string
+      deviceModel:
+        example: iPad Pro 11 2022
+        type: string
       deviceName:
         example: 'iPad Pro #3'
         type: string
       deviceToken:
         example: a1b2c3...
+        type: string
+      displayName:
+        example: 1번 태블릿
         type: string
       failedPinAttempts:
         type: integer
@@ -377,10 +386,16 @@ definitions:
     type: object
   DeviceRegistrationRequest:
     properties:
-      campId:
-        description: Using campId because RequestRegistration expects a campID
+      deviceModel:
+        example: iPad Pro 11 2022
         type: string
       deviceName:
+        type: string
+      displayName:
+        example: 1번 태블릿
+        type: string
+      registrationCode:
+        example: 7ZQK3M2X
         type: string
       role:
         enum:
@@ -396,8 +411,14 @@ definitions:
       createdAt:
         format: date-time
         type: string
+      deviceModel:
+        example: iPad Pro 11 2022
+        type: string
       deviceName:
         example: 'iPad Pro #3'
+        type: string
+      displayName:
+        example: 1번 태블릿
         type: string
       failedPinAttempts:
         type: integer

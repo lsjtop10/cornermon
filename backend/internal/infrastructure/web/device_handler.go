@@ -2,6 +2,7 @@ package web
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"time"
 
@@ -12,7 +13,7 @@ import (
 
 type DeviceTrustUsecase interface {
 	GetMyRegistrationStatus(ctx context.Context, deviceToken string) (*domain.DeviceRegistrationStatus, error)
-	RequestRegistration(ctx context.Context, campID domain.CampID, deviceName string) (string, *domain.DeviceRegistration, error)
+	RequestRegistration(ctx context.Context, registrationCode string, deviceName, deviceModel, displayName string) (string, *domain.DeviceRegistration, error)
 	ApproveDevice(ctx context.Context, regID domain.DeviceRegistrationID, actorAdminID domain.AdminID) error
 	RejectDevice(ctx context.Context, regID domain.DeviceRegistrationID, actorAdminID domain.AdminID) error
 	RevokeDevice(ctx context.Context, regID domain.DeviceRegistrationID, actorAdminID domain.AdminID) error
@@ -31,6 +32,8 @@ type DeviceStatusResponse struct {
 type DeviceRegistrationResponse struct {
 	ID                string     `json:"id" format:"uuid"`
 	DeviceName        string     `json:"deviceName" example:"iPad Pro #3"`
+	DeviceModel       string     `json:"deviceModel" example:"iPad Pro 11 2022"`
+	DisplayName       string     `json:"displayName" example:"1번 태블릿"`
 	Status            string     `json:"status" enums:"PENDING,APPROVED,REJECTED,REVOKED"`
 	CreatedAt         time.Time  `json:"createdAt" format:"date-time"`
 	ApprovedAt        *time.Time `json:"approvedAt,omitempty" format:"date-time"`
@@ -50,9 +53,11 @@ func NewDeviceHandler(deviceTrust DeviceTrustUsecase) *DeviceHandler {
 }
 
 type DeviceRegistrationRequest struct {
-	CampID     string `json:"campId"` // Using campId because RequestRegistration expects a campID
-	DeviceName string `json:"deviceName"`
-	Role       string `json:"role" enums:"ADMIN,FACILITATOR"`
+	RegistrationCode string `json:"registrationCode" example:"7ZQK3M2X"`
+	DeviceName       string `json:"deviceName"`
+	DeviceModel      string `json:"deviceModel" example:"iPad Pro 11 2022"`
+	DisplayName      string `json:"displayName" example:"1번 태블릿"`
+	Role             string `json:"role" enums:"ADMIN,FACILITATOR"`
 } // @name DeviceRegistrationRequest
 
 // @Summary      내 기기 등록 상태 자체 조회
@@ -95,8 +100,14 @@ func (h *DeviceHandler) RequestRegistration(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: "invalid request"})
 	}
 
-	token, reg, err := h.deviceTrust.RequestRegistration(c.Request().Context(), domain.CampID(req.CampID), req.DeviceName)
+	token, reg, err := h.deviceTrust.RequestRegistration(c.Request().Context(), req.RegistrationCode, req.DeviceName, req.DeviceModel, req.DisplayName)
 	if err != nil {
+		if errors.Is(err, domain.ErrCampNotFound) {
+			return c.JSON(http.StatusNotFound, ErrorResponse{Code: "CAMP_NOT_FOUND", Message: err.Error()})
+		}
+		if errors.Is(err, domain.ErrCampInvalidTransition) {
+			return c.JSON(http.StatusBadRequest, ErrorResponse{Code: "INVALID_TRANSITION", Message: err.Error()})
+		}
 		return c.JSON(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()})
 	}
 
@@ -110,6 +121,8 @@ func (h *DeviceHandler) RequestRegistration(c echo.Context) error {
 		DeviceRegistrationResponse: DeviceRegistrationResponse{
 			ID:                string(reg.ID),
 			DeviceName:        reg.DeviceName,
+			DeviceModel:       reg.DeviceModel,
+			DisplayName:       reg.DisplayName,
 			Status:            string(reg.Status),
 			CreatedAt:         reg.CreatedAt,
 			ApprovedAt:        approvedAt,
@@ -159,6 +172,8 @@ func (h *DeviceHandler) ListRegistrations(c echo.Context) error {
 		res[i] = DeviceRegistrationResponse{
 			ID:                string(d.ID),
 			DeviceName:        d.DeviceName,
+			DeviceModel:       d.DeviceModel,
+			DisplayName:       d.DisplayName,
 			Status:            string(d.Status),
 			CreatedAt:         d.CreatedAt,
 			ApprovedAt:        approvedAt,
@@ -196,7 +211,7 @@ func (h *DeviceHandler) ListLockedDevices(c echo.Context) error {
 }
 
 func mapDeviceRegistration(device *domain.DeviceRegistration) DeviceRegistrationResponse {
-	response := DeviceRegistrationResponse{ID: string(device.ID), DeviceName: device.DeviceName, Status: string(device.Status), CreatedAt: device.CreatedAt, FailedPinAttempts: device.FailedPinAttempts}
+	response := DeviceRegistrationResponse{ID: string(device.ID), DeviceName: device.DeviceName, DeviceModel: device.DeviceModel, DisplayName: device.DisplayName, Status: string(device.Status), CreatedAt: device.CreatedAt, FailedPinAttempts: device.FailedPinAttempts}
 	if value, ok := device.ApprovedAt.Value(); ok {
 		response.ApprovedAt = &value
 	}
