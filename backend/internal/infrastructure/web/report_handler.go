@@ -31,6 +31,7 @@ type CornerStatsResponse struct {
 	CornerID            string                   `json:"cornerId" format:"uuid"`
 	CornerName          string                   `json:"cornerName"`
 	CompletedVisitCount int                      `json:"completedVisitCount"`
+	OverDeviationRatio  float32                  `json:"overDeviationRatio"`
 	UnvisitedGroups     []UnvisitedGroupResponse `json:"unvisitedGroups"`
 } // @name CornerStatsResponse
 
@@ -124,6 +125,7 @@ func mapReport(r *usecase.CampReport) CampReportResponse {
 			CornerID:            string(cr.CornerID),
 			CornerName:          cr.CornerName,
 			CompletedVisitCount: cr.CompletedCount,
+			OverDeviationRatio:  float32(cr.PositiveDeviationRatio),
 		})
 	}
 	for _, gr := range r.GroupReports {
