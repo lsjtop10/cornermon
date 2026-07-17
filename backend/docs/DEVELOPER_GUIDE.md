@@ -245,10 +245,19 @@ gofmt -w . && go vet ./...                       # 커밋 전
 8. `api/openapi.yaml` 갱신 (`workflow/Collaborate.md` 프로토콜).
 9. domain 단위 테스트 + usecase 테스트 작성, `go test ./...` 통과 확인.
 
-## 8. 객체 캡슐화 원칙
+## 8. 객체 캡슐화 및 불변성 원칙
 
-특별한 이유가 없으면 객체의 필드는 private로 합니다.
+특별한 이유가 없으면 도메인 모델(Entity, Value Object)의 모든 필드는 private(소문자)로 선언하여 외부 패키지에서의 직접 접근을 철저히 차단합니다. 이를 통해 도메인 모델의 불변성(Immutability)과 캡슐화(Encapsulation)를 보장해야 합니다.
 
+### 8.1 팩토리 함수와 Props 패턴
+
+- 객체 생성 시 직접 구조체 리터럴(`domain.Group{ id: ... }`)을 사용하여 초기화할 수 없도록 합니다.
+- 대신 `[Entity]Props` 구조체를 파라미터로 받는 `New[Entity]FromProps` 팩토리 함수를 반드시 제공하고, 이를 통해서만 객체를 생성해야 합니다.
+
+### 8.2 접근자(Getter) 및 상태 전이 메서드 사용
+
+- 필드에 접근해야 할 때는 직접 참조(`entity.Status`) 대신 반드시 Getter 메서드(`entity.Status()`)를 사용합니다.
+- 상태 변경 로직은 Usecase나 Handler 등 외부에서 직접 필드 값을 조작해서는 안 되며, 도메인 내부에 캡슐화된 상태 전이 메서드(예: `StartVisit()`, `Complete()`)를 통해서만 변경해야 합니다.
 ### 5. 재시도 전략 (Dual-Layer Retry)
 
 재시도 로직은 **발생 계층**에 따라 분리합니다.
