@@ -3,6 +3,7 @@ import 'package:cornermon/admin/session/selected_camp_provider.dart';
 import 'package:cornermon/shared/api/ids.dart';
 import 'package:cornermon/shared/api/providers/badge_providers.dart';
 import 'package:cornermon/shared/api/providers/group_providers.dart';
+import 'package:cornermon/shared/design_system/widgets/app_button.dart';
 import 'package:cornermon_api_gen/cornermon_api_gen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -46,8 +47,8 @@ void main() {
     for (final value in ['', '0', '-1', 'abc']) {
       await tester.enterText(find.byType(TextField), value);
       await tester.pump();
-      final button = tester.widget<FilledButton>(
-        find.widgetWithText(FilledButton, '배지 생성'),
+      final button = tester.widget<AppButton>(
+        find.widgetWithText(AppButton, '배지 생성'),
       );
       expect(button.onPressed, isNull);
     }

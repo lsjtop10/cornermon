@@ -5,6 +5,7 @@ import 'package:cornermon/admin/session/selected_camp_provider.dart';
 import 'package:cornermon/admin/widgets/admin_scaffold.dart';
 import 'package:cornermon/shared/api/ids.dart';
 import 'package:cornermon/shared/api/providers/camp_providers.dart';
+import 'package:cornermon/shared/design_system/widgets/app_button.dart';
 import 'package:cornermon_api_gen/cornermon_api_gen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -114,7 +115,7 @@ void main() {
 
     // assert
     expect(calls, 1);
-    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    expect(find.text('시작 확정 중…'), findsOneWidget);
     expect(
       tester
           .widget<TextButton>(find.widgetWithText(TextButton, '취소'))
@@ -122,7 +123,9 @@ void main() {
       isNull,
     );
     expect(
-      tester.widget<FilledButton>(find.byType(FilledButton).last).onPressed,
+      tester
+          .widget<AppButton>(find.widgetWithText(AppButton, '시작 확정 중…'))
+          .onPressed,
       isNull,
     );
 
@@ -151,7 +154,9 @@ void main() {
     await tester.tap(find.text('코너학습 시작'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('시작 확정'));
-    await tester.pumpAndSettle();
+    for (var i = 0; i < 60; i++) {
+      await tester.pump(const Duration(seconds: 1));
+    }
 
     // assert
     expect(find.text('코너학습을 시작할까요?'), findsOneWidget);

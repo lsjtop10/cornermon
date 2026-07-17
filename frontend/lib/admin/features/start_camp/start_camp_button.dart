@@ -5,18 +5,20 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cornermon/shared/design_system/tokens/colors.dart';
 import 'package:cornermon/shared/design_system/tokens/spacing.dart';
 import 'package:cornermon/shared/design_system/tokens/typography.dart';
+import 'package:cornermon/shared/design_system/widgets/app_button.dart';
 
 class StartCampButton extends ConsumerWidget {
   const StartCampButton({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) => FilledButton.icon(
+  Widget build(BuildContext context, WidgetRef ref) => AppButton(
+    variant: AppButtonVariant.primary,
+    icon: Icons.play_arrow,
+    label: '코너학습 시작',
     onPressed: () => showDialog<void>(
       context: context,
       builder: (_) => const StartCampConfirmDialog(),
     ),
-    icon: const Icon(Icons.play_arrow),
-    label: const Text('코너학습 시작'),
   );
 }
 
@@ -95,14 +97,10 @@ class _StartCampConfirmDialogState
           onPressed: _submitting ? null : () => Navigator.pop(context),
           child: const Text('취소'),
         ),
-        FilledButton(
+        AppButton(
+          variant: AppButtonVariant.primary,
+          label: _submitting ? '시작 확정 중…' : '시작 확정',
           onPressed: _submitting ? null : _confirm,
-          child: _submitting
-              ? const SizedBox.square(
-                  dimension: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : const Text('시작 확정'),
         ),
       ],
     );

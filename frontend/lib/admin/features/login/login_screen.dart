@@ -111,7 +111,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         ),
                       ),
                     ],
+
                     const SizedBox(height: AppSpacing.space5),
+
                     Stack(
                       alignment: Alignment.center,
                       children: [
@@ -123,6 +125,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           disabledReason: 'ID와 비밀번호를 모두 입력하면 로그인할 수 있습니다.',
                           onPressed: canSubmit ? _submit : null,
                         ),
+
                         if (_isSubmitting)
                           const SizedBox(
                             width: 16,

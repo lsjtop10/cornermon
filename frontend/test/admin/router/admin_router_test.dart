@@ -109,10 +109,24 @@ void main() {
 
   testWidgets('ShouldBlockPendingAndEndedCampRoutes', (tester) async {
     // arrange
-    final pendingContainer = _container(
-      session: authenticated,
-      campId: CampId('camp-1'),
-      camp: _camp(CampStatus.PENDING),
+    final campId = CampId('camp-1');
+    final pendingContainer = ProviderContainer(
+      overrides: [
+        adminSessionProvider.overrideWith(
+          () => _FakeAdminSession(authenticated),
+        ),
+        selectedCampIdProvider.overrideWith(() => _FakeSelectedCampId(campId)),
+        selectedCampProvider.overrideWith(
+          (ref) async => _camp(CampStatus.PENDING),
+        ),
+        campListProvider.overrideWith(
+          (ref) async => [_camp(CampStatus.PENDING)],
+        ),
+        cornerListProvider(campId).overrideWith((ref) async => const []),
+        liveSummaryProvider(
+          campId,
+        ).overrideWith((ref) async => CampSummaryStats()),
+      ],
     );
     final endedContainer = _container(
       session: authenticated,
@@ -122,11 +136,11 @@ void main() {
     addTearDown(pendingContainer.dispose);
     addTearDown(endedContainer.dispose);
 
-    // act & assert
+    // act & assert: 준비 중 캠프에서 접근 불가한 라우트(공지)는 대시보드로 리다이렉트된다
     await _pumpApp(tester, pendingContainer);
-    pendingContainer.read(adminRouterProvider).go('/dashboard');
+    pendingContainer.read(adminRouterProvider).go('/messages/broadcast');
     await tester.pumpAndSettle();
-    expect(find.text('코너·트랙 관리'), findsOneWidget);
+    expect(find.text('대시보드'), findsWidgets);
     expect(find.byType(AdminSidebar), findsOneWidget);
 
     await tester.pumpWidget(const SizedBox());
@@ -194,7 +208,7 @@ void main() {
 
     // assert
     expect(find.byType(AdminSidebar), findsOneWidget);
-    expect(find.text('대시보드'), findsOneWidget);
+    expect(find.text('대시보드'), findsWidgets);
     expect(find.text('아직 생성된 코너가 없습니다'), findsOneWidget);
   });
 

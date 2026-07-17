@@ -127,8 +127,8 @@ class AppButton extends StatelessWidget {
           break;
         case AppButtonVariant.secondary:
           bgColor = Colors.transparent;
-          textColor = colors.brandPrimary;
-          borderSide = BorderSide(color: colors.brandPrimary, width: 1.0);
+          textColor = colors.textPrimary;
+          borderSide = BorderSide(color: colors.border, width: 1.0);
           break;
         case AppButtonVariant.destructive:
           bgColor = colors.danger;

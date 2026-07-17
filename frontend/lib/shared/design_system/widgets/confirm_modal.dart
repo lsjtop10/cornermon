@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../tokens/colors.dart';
 import '../tokens/typography.dart';
+import 'app_button.dart';
 
 enum ConfirmModalKind { hardBlock, softConfirm, singleAckOnly }
 
@@ -46,21 +47,10 @@ Future<bool> showConfirmModal(
                 style: AppTypography.body.copyWith(color: colors.textSecondary),
               ),
             ),
-            ElevatedButton(
+            AppButton(
+              variant: AppButtonVariant.destructive,
+              label: '진행',
               onPressed: () => Navigator.of(context).pop(true),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: colors.danger,
-                foregroundColor: colors.bgSurface,
-                elevation: 0.0,
-                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8.0),
-                ),
-              ),
-              child: const Text(
-                '진행',
-                style: AppTypography.bodyEmphasis,
-              ),
             ),
           ];
           break;

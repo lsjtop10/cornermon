@@ -3,6 +3,7 @@ import 'package:cornermon/admin/session/selected_camp_provider.dart';
 import 'package:cornermon/shared/api/domain_aliases.dart' as api;
 import 'package:cornermon/shared/api/providers/badge_providers.dart';
 import 'package:cornermon/shared/api/providers/group_providers.dart';
+import 'package:cornermon/shared/design_system/widgets/app_button.dart';
 import 'package:cornermon/shared/design_system/widgets/empty_state.dart';
 import 'package:cornermon/shared/design_system/widgets/app_tag.dart';
 import 'package:flutter/material.dart';
@@ -123,7 +124,7 @@ class _BadgePrecreateScreenState extends ConsumerState<BadgePrecreateScreen> {
               error: (_, _) => const <api.Group>[],
             );
             return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Wrap(
                   spacing: 12,
@@ -138,22 +139,19 @@ class _BadgePrecreateScreenState extends ConsumerState<BadgePrecreateScreen> {
                         decoration: const InputDecoration(labelText: '생성 수량'),
                       ),
                     ),
-                    _count == null
-                        ? const Tooltip(
-                            message: '생성 수량은 1 이상이어야 합니다.',
-                            child: FilledButton(
-                              onPressed: null,
-                              child: Text('배지 생성'),
-                            ),
-                          )
-                        : FilledButton(
-                            onPressed: _busy ? null : _generate,
-                            child: const Text('배지 생성'),
-                          ),
-                    OutlinedButton.icon(
+                    AppButton(
+                      variant: AppButtonVariant.primary,
+                      label: '배지 생성',
+                      disabledReason: _count == null
+                          ? '생성 수량은 1 이상이어야 합니다.'
+                          : null,
+                      onPressed: _count == null || _busy ? null : _generate,
+                    ),
+                    AppButton(
+                      variant: AppButtonVariant.secondary,
+                      icon: Icons.ios_share,
+                      label: '스티커 PDF로 내보내기',
                       onPressed: _busy ? null : _export,
-                      icon: const Icon(Icons.ios_share),
-                      label: const Text('스티커 PDF로 내보내기'),
                     ),
                   ],
                 ),
@@ -187,39 +185,43 @@ class BadgeTable extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final groupNames = {for (final group in groups) group.id: group.name};
-    return SingleChildScrollView(
-      child: DataTable(
-        columns: const [
-          DataColumn(label: Text('배지 ID')),
-          DataColumn(label: Text('상태')),
-          DataColumn(label: Text('등록된 조')),
-        ],
-        rows: [
-          for (final badge in badges)
-            DataRow(
-              cells: [
-                DataCell(Text(badge.shortId ?? badge.id ?? '-')),
-                DataCell(
-                  AppTag(
-                    label: badge.status == api.BadgeStatus.ASSIGNED
-                        ? '배정됨'
-                        : '미배정',
-                    tone: badge.status == api.BadgeStatus.ASSIGNED
-                        ? AppTagTone.success
-                        : AppTagTone.neutral,
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      margin: EdgeInsets.zero,
+      child: SingleChildScrollView(
+        child: DataTable(
+          columns: const [
+            DataColumn(label: Text('배지 ID')),
+            DataColumn(label: Text('상태')),
+            DataColumn(label: Text('등록된 조')),
+          ],
+          rows: [
+            for (final badge in badges)
+              DataRow(
+                cells: [
+                  DataCell(Text(badge.shortId ?? badge.id ?? '-')),
+                  DataCell(
+                    AppTag(
+                      label: badge.status == api.BadgeStatus.ASSIGNED
+                          ? '배정됨'
+                          : '미배정',
+                      tone: badge.status == api.BadgeStatus.ASSIGNED
+                          ? AppTagTone.success
+                          : AppTagTone.neutral,
+                    ),
                   ),
-                ),
-                DataCell(
-                  Text(
-                    groupNames[badge.assignedGroupId] ??
-                        (badge.status == api.BadgeStatus.ASSIGNED
-                            ? '배정됨'
-                            : '-'),
+                  DataCell(
+                    Text(
+                      groupNames[badge.assignedGroupId] ??
+                          (badge.status == api.BadgeStatus.ASSIGNED
+                              ? '배정됨'
+                              : '-'),
+                    ),
                   ),
-                ),
-              ],
-            ),
-        ],
+                ],
+              ),
+          ],
+        ),
       ),
     );
   }
