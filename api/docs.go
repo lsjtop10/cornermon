@@ -3170,6 +3170,9 @@ const docTemplate = `{
                 "cornerName": {
                     "type": "string"
                 },
+                "overDeviationRatio": {
+                    "type": "number"
+                },
                 "unvisitedGroups": {
                     "type": "array",
                     "items": {

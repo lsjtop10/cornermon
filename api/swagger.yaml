@@ -303,6 +303,8 @@ definitions:
         type: string
       cornerName:
         type: string
+      overDeviationRatio:
+        type: number
       unvisitedGroups:
         items:
           $ref: '#/definitions/UnvisitedGroupResponse'
