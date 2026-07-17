@@ -5,6 +5,7 @@ import 'package:cornermon/admin/features/setup_wizard/setup_wizard_provider.dart
 import 'package:cornermon/shared/design_system/tokens/colors.dart';
 import 'package:cornermon/shared/design_system/tokens/spacing.dart';
 import 'package:cornermon/shared/design_system/tokens/typography.dart';
+import 'package:cornermon/shared/design_system/widgets/korean_date_picker.dart';
 
 class CampInfoStep extends ConsumerStatefulWidget {
   const CampInfoStep({super.key});
@@ -44,9 +45,9 @@ class _CampInfoStepState extends ConsumerState<CampInfoStep> {
   Future<void> _selectDate(bool isStart) async {
     final state = ref.read(setupWizardProvider);
     final current = isStart ? state.startAt : state.endAt;
-    final selected = await showDatePicker(
+    final selected = await showKoreanDatePicker(
       context: context,
-      initialDate: current ?? DateTime.now(),
+      initialDate: current,
       firstDate: DateTime(2020),
       lastDate: DateTime(2100),
     );

@@ -44,7 +44,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           .submit(_idController.text.trim(), _passwordController.text);
       debugPrint('[login] submit() completed without throwing');
     } catch (error, stackTrace) {
-      debugPrint('[login] _submit caught: ${error.runtimeType} $error\n$stackTrace');
+      debugPrint(
+        '[login] _submit caught: ${error.runtimeType} $error\n$stackTrace',
+      );
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
@@ -109,7 +111,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         ),
                       ),
                     ],
+
                     const SizedBox(height: AppSpacing.space5),
+
                     Stack(
                       alignment: Alignment.center,
                       children: [
@@ -122,6 +126,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             onPressed: canSubmit ? _submit : null,
                           ),
                         ),
+
                         if (_isSubmitting)
                           const SizedBox(
                             width: 16,

@@ -32,6 +32,22 @@ class AdminTheme {
         onSurface: colors.textPrimary,
       ),
       dividerTheme: DividerThemeData(color: colors.border, thickness: 1.0),
+      appBarTheme: AppBarTheme(
+        backgroundColor: colors.bgSurface,
+        foregroundColor: colors.textPrimary,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        surfaceTintColor: Colors.transparent,
+        centerTitle: false,
+        toolbarHeight: 56,
+        titleTextStyle: TextStyle(
+          fontSize: 19,
+          fontWeight: FontWeight.w700,
+          color: colors.textPrimary,
+        ),
+        iconTheme: IconThemeData(color: colors.textSecondary),
+        shape: Border(bottom: BorderSide(color: colors.border)),
+      ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           minimumSize: const Size(44, 44),
@@ -45,6 +61,8 @@ class AdminTheme {
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
+          foregroundColor: colors.textPrimary,
+          side: BorderSide(color: colors.border),
           minimumSize: const Size(44, 44),
           padding: const EdgeInsets.symmetric(horizontal: 20),
           disabledForegroundColor: colors.textDisabled,
@@ -61,20 +79,41 @@ class AdminTheme {
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
+          foregroundColor: colors.textPrimary,
           minimumSize: const Size(44, 44),
           disabledForegroundColor: colors.textDisabled,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
       ),
+      navigationRailTheme: NavigationRailThemeData(
+        backgroundColor: colors.bgSurface,
+        selectedLabelTextStyle: const TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+        ).copyWith(color: colors.brandPrimary),
+        unselectedLabelTextStyle: const TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+        ).copyWith(color: colors.textSecondary),
+        selectedIconTheme: IconThemeData(color: colors.brandPrimary, size: 20),
+        unselectedIconTheme: IconThemeData(
+          color: colors.textSecondary,
+          size: 20,
+        ),
+        indicatorColor: colors.brandPrimary.withValues(alpha: .12),
+      ),
       cardTheme: CardThemeData(
         color: colors.bgSurface,
         elevation: colors == AppColors.light ? 1 : 0,
         margin: EdgeInsets.zero,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(color: colors.border),
+        ),
       ),
       dataTableTheme: DataTableThemeData(
         headingTextStyle: AppTypography.label.copyWith(
-          color: colors.textSecondary,
+          color: colors.textDisabled,
         ),
         dataTextStyle: AppTypography.body.copyWith(color: colors.textPrimary),
         dividerThickness: 1,
@@ -110,6 +149,10 @@ class AdminTheme {
           borderSide: BorderSide(color: colors.brandPrimary, width: 2.0),
           borderRadius: BorderRadius.circular(8.0),
         ),
+      ),
+      dialogTheme: DialogThemeData(
+        backgroundColor: colors.bgSurfaceRaised,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
     );
   }
