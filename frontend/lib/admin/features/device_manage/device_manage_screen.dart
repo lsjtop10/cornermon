@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:cornermon/admin/entities/device_registration_ext.dart';
+import 'package:cornermon/admin/session/selected_camp_provider.dart';
 import 'package:cornermon/shared/api/domain_aliases.dart' as api;
 import 'package:cornermon/shared/api/providers/auth_device_trust_providers.dart';
+import 'package:cornermon/shared/design_system/tokens/colors.dart';
+import 'package:cornermon/shared/design_system/tokens/spacing.dart';
+import 'package:cornermon/shared/design_system/tokens/typography.dart';
 import 'package:cornermon/shared/design_system/widgets/empty_state.dart';
 import 'package:cornermon/shared/design_system/widgets/pill_tab_bar.dart';
 import '_device_registration_row.dart';
@@ -31,6 +36,7 @@ class _DeviceManageScreenState extends ConsumerState<DeviceManageScreen> {
       appBar: AppBar(title: const Text('기기 등록 관리')),
       body: Column(
         children: [
+          const _RegistrationCodeCard(),
           PillTabBar(
             selectedIndex: _selectedTab,
             tabs: [
@@ -76,6 +82,75 @@ class _DeviceManageScreenState extends ConsumerState<DeviceManageScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// 현재 선택된 캠프의 registrationCode를 표시하고 탭하면 클립보드로 복사한다.
+class _RegistrationCodeCard extends ConsumerWidget {
+  const _RegistrationCodeCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final camp = ref.watch(selectedCampProvider).value;
+    final registrationCode = camp?.registrationCode;
+    if (registrationCode == null) return const SizedBox.shrink();
+
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colors = isDark ? AppColors.dark : AppColors.light;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.space4,
+        AppSpacing.space4,
+        AppSpacing.space4,
+        0,
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12.0),
+        onTap: () async {
+          await Clipboard.setData(ClipboardData(text: registrationCode));
+          if (!context.mounted) return;
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('복사되었습니다')));
+        },
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(AppSpacing.space4),
+          decoration: BoxDecoration(
+            color: colors.bgSurface,
+            borderRadius: BorderRadius.circular(12.0),
+            border: Border.all(color: colors.border),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '기기 등록 코드',
+                      style: AppTypography.caption.copyWith(
+                        color: colors.textSecondary,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.space1),
+                    Text(
+                      registrationCode,
+                      style: AppTypography.title2.copyWith(
+                        color: colors.textPrimary,
+                        fontFamily: 'monospace',
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(Icons.copy_outlined, color: colors.textSecondary),
+            ],
+          ),
+        ),
       ),
     );
   }
