@@ -255,13 +255,13 @@ class BottleneckThresholdSection extends ConsumerStatefulWidget {
 
 ## 5. 작업 단계
 
-| 순서 | 작업 | 파일 |
-|---|---|---|
-| K-1 | screen-spec-admin.md A13 절에 "서버 정렬 미지원 — 컬럼 정렬 UI 제외" 각주 추가 | `docs/front/screen-spec-admin.md` |
-| K-2 | `AuditLogFilter`, `AuditLogFilterNotifier` | `frontend/lib/admin/features/audit_log/audit_log_filter_state.dart` |
-| K-3 | `AuditLogPageState`, `AuditLogPageNotifier`(커서 누적) | `frontend/lib/admin/features/audit_log/audit_log_page_notifier.dart` |
-| K-4 | `AuditLogScreen`, `AuditLogFilterBar`, `AuditLogTable`, `AuditLogLoadMore` | `frontend/lib/admin/features/audit_log/**` |
-| K-5 | `AuditLogScreen`을 `02`의 `/audit-log` 라우트 스텁에 배선 | `frontend/lib/admin/router/admin_router.dart` |
+| 순서 | 작업 | 파일 | 상태 |
+|---|---|---|---|
+| K-1 | screen-spec-admin.md A13 절에 "서버 정렬 미지원 — 컬럼 정렬 UI 제외" 각주 추가 | `docs/front/screen-spec-admin.md` | ✅ |
+| K-2 | `AuditLogFilter`, `AuditLogFilterNotifier` | `frontend/lib/admin/features/audit_log/audit_log_filter_state.dart` | ✅ |
+| K-3 | `AuditLogPageState`, `AuditLogPageNotifier`(커서 누적) | `frontend/lib/admin/features/audit_log/audit_log_page_notifier.dart` | ✅ |
+| K-4 | `AuditLogScreen`, `AuditLogFilterBar`, `AuditLogTable`, `AuditLogLoadMore` | `frontend/lib/admin/features/audit_log/**` | ✅ |
+| K-5 | `AuditLogScreen`을 `02`의 `/audit-log` 라우트 스텁에 배선 | `frontend/lib/admin/router/admin_router.dart` | ✅ |
 | L-1 | `EndCampBarButton`, `EndCampConfirmDialog` | `frontend/lib/admin/features/end_camp/**` |
 | L-2 | 운영 모드 공용 셸(있으면 확장, 없으면 신규)에 `EndCampBarButton` 삽입 | `frontend/lib/admin/widgets/shell/admin_operating_shell.dart`(또는 `02`가 만든 기존 셸 파일) |
 | M-1 | `updateCamp` provider가 `bottleneckRatioPct`(정수) 시그니처로 되어 있는지 확인·수정(`01` 산출물 재검증) | `frontend/lib/shared/api/providers/camp_providers.dart` |
@@ -273,15 +273,15 @@ class BottleneckThresholdSection extends ConsumerStatefulWidget {
 ## 6. 검증 체크리스트
 
 ### A13 감사 로그
-- [ ] `/audit-log` 진입 시 필터 없이 첫 페이지(기본 `limit=50`)가 로드되고 테이블에 시각/행위자/행위종류/대상/결과 5개 컬럼이 표시된다
-- [ ] 행위자 입력창에 텍스트를 입력하면(디바운스 후) `actor` 쿼리 파라미터로 재조회되고 결과가 줄어든다
-- [ ] 결과 드롭다운을 "실패"로 선택하면 `result=failure`로 재조회되고, 반환된 모든 행의 `success`가 `false`다
-- [ ] "필터 초기화" 버튼이 활성 필터 개수를 `(N)`으로 표시하고, 클릭 시 3개 필터가 모두 해제되며 목록이 처음부터 재조회된다
-- [ ] 실패(`success == false`) 행에 danger 톤 좌측 보더가 렌더링된다
-- [ ] 테이블 헤더에 정렬 아이콘(▲▼/↕)이 없다(§2.2 결정 확인)
-- [ ] "더 보기"를 누르면 이전 로그 아래에 다음 페이지가 append되고, 로드된 총 건수 텍스트가 증가한다
-- [ ] `nextCursor`가 `null`인 마지막 페이지에서는 "더 보기" 버튼이 사라지고 "마지막 로그입니다" 안내가 뜬다
-- [ ] 필터를 바꾸면 누적된 로그가 비워지고 `before` 없이 처음부터 재조회된다(이전 필터의 결과가 남아있지 않음)
+- [x] `/audit-log` 진입 시 필터 없이 첫 페이지(기본 `limit=50`)가 로드되고 테이블에 시각/행위자/행위종류/대상/결과 5개 컬럼이 표시된다 — `ShoudShowFiveColumnsAndLoadedCountWhenFirstPageLoads`
+- [x] 행위자 입력창에 텍스트를 입력하면(디바운스 후) `actor` 쿼리 파라미터로 재조회되고 결과가 줄어든다 — `ShoudRequeryWithActorFilterAfterDebounceWhenTypingActorField`
+- [x] 결과 드롭다운을 "실패"로 선택하면 `result=failure`로 재조회되고, 반환된 모든 행의 `success`가 `false`다 — `ShoudShowActiveCountAndClearFiltersWhenResetButtonTapped`
+- [x] "필터 초기화" 버튼이 활성 필터 개수를 `(N)`으로 표시하고, 클릭 시 3개 필터가 모두 해제되며 목록이 처음부터 재조회된다 — 동일 테스트
+- [x] 실패(`success == false`) 행에 danger 톤 좌측 보더가 렌더링된다 — `ShoudShowDangerBorderAndFailureBadgeWhenRowIsFailure`(보더 색상까지 직접 검증)
+- [x] 테이블 헤더에 정렬 아이콘(▲▼/↕)이 없다(§2.2 결정 확인) — `AuditLogTable`의 `_AuditLogHeaderRow`는 텍스트만 렌더링(코드 검토로 확인)
+- [x] "더 보기"를 누르면 이전 로그 아래에 다음 페이지가 append되고, 로드된 총 건수 텍스트가 증가한다 — `ShoudAppendLogsAndIncreaseCountWhenLoadMoreTapped`, `ShoudAppendNextPageWhenLoadMoreCalled`
+- [x] `nextCursor`가 `null`인 마지막 페이지에서는 "더 보기" 버튼이 사라지고 "마지막 로그입니다" 안내가 뜬다 — 동일 테스트들
+- [x] 필터를 바꾸면 누적된 로그가 비워지고 `before` 없이 처음부터 재조회된다(이전 필터의 결과가 남아있지 않음) — `ShoudResetAccumulationAndRefetchFromScratchWhenFilterChanges`
 
 ### A14 코너학습 종료
 - [ ] ACTIVE 캠프의 운영 모드 어느 화면(대시보드/조현황/설정 등)에 있어도 상단 바에 "코너학습 종료" destructive 버튼이 보인다
