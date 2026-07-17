@@ -5,8 +5,11 @@ import 'package:cornermon/shared/api/providers/corner_track_providers.dart';
 import 'package:cornermon/shared/api/providers/report_providers.dart';
 import 'package:cornermon/shared/design_system/tokens/colors.dart';
 import 'package:cornermon/shared/design_system/tokens/typography.dart';
+import 'package:cornermon/shared/design_system/widgets/app_button.dart';
+import 'package:cornermon/shared/design_system/widgets/app_dropdown.dart';
 import 'package:cornermon/shared/design_system/widgets/empty_state.dart';
 import 'package:cornermon/shared/design_system/widgets/connection_banner.dart';
+import 'package:cornermon/shared/design_system/widgets/pill_tab_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -123,12 +126,17 @@ class DashboardScreen extends ConsumerWidget {
     }
     final corners = ref.watch(cornerListProvider(id));
     final summary = ref.watch(liveSummaryProvider(id));
-    final directSummaries = ref.watch(trackDirectSummariesProvider(id));
-    final unreadDirectCount = directSummaries.maybeWhen(
+    final selectedCamp = ref.watch(selectedCampProvider).asData?.value;
+    final isActive = selectedCamp?.status == api.CampStatus.ACTIVE;
+    final directSummaries = isActive
+        ? ref.watch(trackDirectSummariesProvider(id))
+        : null;
+    final unreadDirectCount = directSummaries?.maybeWhen(
       data: (items) => items.fold<int>(0, (sum, s) => sum + s.unreadCount),
       orElse: () => 0,
     );
     return Scaffold(
+      appBar: AppBar(title: const Text('대시보드')),
       body: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(cornerListProvider(id));
@@ -142,9 +150,13 @@ class DashboardScreen extends ConsumerWidget {
           padding: const EdgeInsets.all(24),
           children: [
             const ConnectionBanner(state: ConnectionBannerState.hidden),
-            _SummaryBar(summary: summary, unreadDirectCount: unreadDirectCount),
+            _SummaryBar(
+              summary: summary,
+              unreadDirectCount: unreadDirectCount,
+              isActive: isActive,
+            ),
             const SizedBox(height: 20),
-            _Controls(),
+            _Controls(isActive: isActive),
             const SizedBox(height: 12),
             _Filters(),
             const SizedBox(height: 16),
@@ -187,24 +199,28 @@ class DashboardScreen extends ConsumerWidget {
                     ),
                   );
                 }
-                return GridView.count(
-                  crossAxisCount: MediaQuery.sizeOf(context).width > 1100
-                      ? 4
-                      : 3,
+                return GridView.builder(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
-                  childAspectRatio: .85,
-                  children: [
-                    for (final entry in visible)
-                      CornerStatusCard(
-                        entry: entry,
-                        onTap: () =>
-                            context.go('/dashboard/corners/${entry.corner.id}'),
-                        onCreateTrack: entry.inactive
-                            ? () => context.go('/corner-track-manage')
-                            : null,
+                  gridDelegate:
+                      const SliverGridDelegateWithMaxCrossAxisExtent(
+                        maxCrossAxisExtent: 260,
+                        mainAxisExtent: 220,
+                        crossAxisSpacing: 12,
+                        mainAxisSpacing: 12,
                       ),
-                  ],
+                  itemCount: visible.length,
+                  itemBuilder: (context, index) {
+                    final entry = visible[index];
+                    return CornerStatusCard(
+                      entry: entry,
+                      onTap: () =>
+                          context.go('/dashboard/corners/${entry.corner.id}'),
+                      onCreateTrack: entry.inactive
+                          ? () => context.go('/corner-track-manage')
+                          : null,
+                    );
+                  },
                 );
               },
             ),
@@ -216,9 +232,14 @@ class DashboardScreen extends ConsumerWidget {
 }
 
 class _SummaryBar extends StatelessWidget {
-  const _SummaryBar({required this.summary, required this.unreadDirectCount});
+  const _SummaryBar({
+    required this.summary,
+    required this.unreadDirectCount,
+    required this.isActive,
+  });
   final AsyncValue<api.CampSummaryStats> summary;
-  final int unreadDirectCount;
+  final int? unreadDirectCount;
+  final bool isActive;
 
   @override
   Widget build(BuildContext context) => summary.when(
@@ -235,21 +256,19 @@ class _SummaryBar extends StatelessWidget {
           '경과시간',
           '${(item.programDurationSeconds ?? 0) ~/ 3600}시간 ${((item.programDurationSeconds ?? 0) % 3600) ~/ 60}분',
         ),
-        ('안읽은 다이렉트', '$unreadDirectCount'),
+        if (isActive) ('안읽은 다이렉트', '$unreadDirectCount'),
       ];
       final colors = Theme.of(context).brightness == Brightness.dark
           ? AppColors.dark
           : AppColors.light;
-      return Wrap(
-        spacing: 12,
-        runSpacing: 12,
+      return Row(
         children: [
-          for (final tile in tiles)
-            SizedBox(
-              width: 160,
+          for (var i = 0; i < tiles.length; i++) ...[
+            if (i > 0) const SizedBox(width: 12),
+            Expanded(
               child: Card(
                 child: InkWell(
-                  onTap: tile.$1 == '안읽은 다이렉트'
+                  onTap: tiles[i].$1 == '안읽은 다이렉트'
                       ? () => context.go('/messages/direct')
                       : null,
                   child: Padding(
@@ -261,14 +280,14 @@ class _SummaryBar extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          tile.$1,
+                          tiles[i].$1,
                           style: AppTypography.label.copyWith(
                             color: colors.textSecondary,
                           ),
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          tile.$2,
+                          tiles[i].$2,
                           style: AppTypography.display.copyWith(
                             color: colors.textPrimary,
                           ),
@@ -279,6 +298,7 @@ class _SummaryBar extends StatelessWidget {
                 ),
               ),
             ),
+          ],
         ],
       );
     },
@@ -286,12 +306,14 @@ class _SummaryBar extends StatelessWidget {
 }
 
 class _Controls extends ConsumerWidget {
+  const _Controls({required this.isActive});
+  final bool isActive;
+
   @override
-  Widget build(BuildContext context, WidgetRef ref) => Wrap(
-    spacing: 12,
-    runSpacing: 8,
+  Widget build(BuildContext context, WidgetRef ref) => Row(
+    mainAxisAlignment: MainAxisAlignment.spaceBetween,
     children: [
-      DropdownButton<CornerSortOption>(
+      AppDropdown<CornerSortOption>(
         value: ref.watch(dashboardSortProvider),
         onChanged: (value) {
           if (value != null) {
@@ -314,40 +336,48 @@ class _Controls extends ConsumerWidget {
           ),
         ],
       ),
-      OutlinedButton(
-        onPressed: () => context.go('/corner-track-manage'),
-        child: const Text('트랙 일괄 관리 →'),
-      ),
-      FilledButton(
-        onPressed: () => context.go('/messages/broadcast'),
-        child: const Text('공지 발송'),
+      Wrap(
+        spacing: 12,
+        runSpacing: 8,
+        children: [
+          AppButton(
+            variant: AppButtonVariant.secondary,
+            label: '트랙 일괄 관리 →',
+            onPressed: () => context.go('/corner-track-manage'),
+          ),
+          if (isActive)
+            AppButton(
+              variant: AppButtonVariant.primary,
+              label: '공지 발송',
+              onPressed: () => context.go('/messages/broadcast'),
+            ),
+        ],
       ),
     ],
   );
 }
 
+const _cornerFilterLabels = {
+  CornerFilterChip.all: '전체',
+  CornerFilterChip.busy: '진행중',
+  CornerFilterChip.idle: '유휴',
+  CornerFilterChip.inactive: '미가동',
+  CornerFilterChip.bottleneckOnly: '병목만',
+};
+
 class _Filters extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    const labels = {
-      CornerFilterChip.all: '전체',
-      CornerFilterChip.busy: 'BUSY',
-      CornerFilterChip.idle: 'IDLE',
-      CornerFilterChip.inactive: '미가동',
-      CornerFilterChip.bottleneckOnly: '병목만',
-    };
     final selected = ref.watch(dashboardFilterProvider);
-    return Wrap(
-      spacing: 8,
-      children: [
+    return PillTabBar(
+      tabs: [
         for (final value in CornerFilterChip.values)
-          FilterChip(
-            label: Text(labels[value]!),
-            selected: selected == value,
-            onSelected: (_) =>
-                ref.read(dashboardFilterProvider.notifier).select(value),
-          ),
+          PillTab(label: _cornerFilterLabels[value]!),
       ],
+      selectedIndex: CornerFilterChip.values.indexOf(selected),
+      onSelected: (index) => ref
+          .read(dashboardFilterProvider.notifier)
+          .select(CornerFilterChip.values[index]),
     );
   }
 }
@@ -410,14 +440,28 @@ class CornerStatusCard extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 12),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                entry.corner.name ?? '코너',
-                style: AppTypography.bodyEmphasis.copyWith(
-                  color: colors.textPrimary,
-                ),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Text(
+                      entry.corner.name ?? '코너',
+                      style: AppTypography.bodyEmphasis.copyWith(
+                        color: colors.textPrimary,
+                      ),
+                    ),
+                  ),
+                  if (entry.corner.isBottleneck ?? false)
+                    _CornerStatusPill(
+                      color: colors.statusAlert,
+                      icon: '▲',
+                      label: '병목',
+                    ),
+                ],
               ),
-              const Spacer(),
+              const SizedBox(height: 8),
               _CornerStatusPill(
                 color: presentation.color,
                 icon: presentation.icon,
@@ -425,7 +469,7 @@ class CornerStatusCard extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                '활성 ${tracks.length}트랙 중 $busyTrackCount BUSY · 목표 ${entry.corner.targetMinutes ?? 0}분',
+                '활성 ${tracks.length}트랙 중 $busyTrackCount 진행중 · 목표 ${entry.corner.targetMinutes ?? 0}분',
                 style: AppTypography.caption.copyWith(
                   color: colors.textSecondary,
                 ),
@@ -447,8 +491,16 @@ class CornerStatusCard extends StatelessWidget {
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton.icon(
+                    style: TextButton.styleFrom(
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                    ),
                     onPressed: onCreateTrack,
-                    icon: const Icon(Icons.add),
+                    icon: const Icon(Icons.add, size: 16),
                     label: const Text('트랙 생성'),
                   ),
                 ),
@@ -468,21 +520,22 @@ class _CornerGridSkeleton extends StatelessWidget {
     final colors = Theme.of(context).brightness == Brightness.dark
         ? AppColors.dark
         : AppColors.light;
-    return GridView.count(
-      crossAxisCount: MediaQuery.sizeOf(context).width > 1100 ? 4 : 3,
+    return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      childAspectRatio: .85,
-      children: [
-        for (var index = 0; index < 10; index++)
-          Container(
-            margin: const EdgeInsets.all(2),
-            decoration: BoxDecoration(
-              color: colors.textDisabled.withValues(alpha: .08),
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
-      ],
+      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+        maxCrossAxisExtent: 260,
+        mainAxisExtent: 220,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+      ),
+      itemCount: 10,
+      itemBuilder: (context, index) => Container(
+        decoration: BoxDecoration(
+          color: colors.textDisabled.withValues(alpha: .08),
+          borderRadius: BorderRadius.circular(12),
+        ),
+      ),
     );
   }
 }
