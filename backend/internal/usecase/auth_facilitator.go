@@ -73,12 +73,12 @@ func (s *FacilitatorAuthService) Login(
 		return nil, err
 	}
 	if device == nil || device.Status() != domain.DeviceApproved {
-		s.recordAuditLog(ctx, "anonymous", "FACILITATOR_LOGIN", "", false, map[string]any{"error": domain.ErrDeviceNotApproved.Error()})
+		s.recordAuditLog(ctx, "anonymous", ActionFacilitatorLogin, "", false, map[string]any{"error": domain.ErrDeviceNotApproved.Error()})
 		return nil, domain.ErrDeviceNotApproved
 	}
 
 	if device.IsLocked(now) {
-		s.recordAuditLog(ctx, "anonymous", "FACILITATOR_LOGIN", "", false, map[string]any{"error": domain.ErrDeviceLocked.Error()})
+		s.recordAuditLog(ctx, "anonymous", ActionFacilitatorLogin, "", false, map[string]any{"error": domain.ErrDeviceLocked.Error()})
 		lockedUntil, _ := device.LockedUntil().Value()
 		return nil, domain.NewDeviceLockedErrorFromProps(domain.DeviceLockedErrorProps{LockedUntil: lockedUntil})
 	}
@@ -91,7 +91,7 @@ func (s *FacilitatorAuthService) Login(
 		return nil, err
 	}
 	if camp == nil || !camp.IsActive() {
-		s.recordAuditLog(ctx, "anonymous", "FACILITATOR_LOGIN", "", false, map[string]any{"error": domain.ErrCampInvalidTransition.Error()})
+		s.recordAuditLog(ctx, "anonymous", ActionFacilitatorLogin, "", false, map[string]any{"error": domain.ErrCampInvalidTransition.Error()})
 		return nil, domain.ErrCampInvalidTransition
 	}
 
@@ -118,7 +118,7 @@ func (s *FacilitatorAuthService) Login(
 			_ = s.broadcaster.Broadcast(ctx, device.CampID(), EventLockoutAlert, CampScope())
 		}
 
-		s.recordAuditLog(ctx, "anonymous", "FACILITATOR_LOGIN", "", false, map[string]any{"error": "invalid pin", "device_failures": device.FailedPinAttempts()})
+		s.recordAuditLog(ctx, "anonymous", ActionFacilitatorLogin, "", false, map[string]any{"error": "invalid pin", "device_failures": device.FailedPinAttempts()})
 
 		var optLocked domain.Optional[time.Time]
 		if delay > 0 {
@@ -168,11 +168,11 @@ func (s *FacilitatorAuthService) Login(
 	})
 
 	if err != nil {
-		s.recordAuditLog(ctx, "anonymous", "FACILITATOR_LOGIN", string(trackID), false, map[string]any{"error": err.Error()})
+		s.recordAuditLog(ctx, "anonymous", ActionFacilitatorLogin, string(trackID), false, map[string]any{"error": err.Error()})
 		return nil, err
 	}
 
-	s.recordAuditLog(ctx, string(trackID), "FACILITATOR_LOGIN", string(session.ID()), true, nil)
+	s.recordAuditLog(ctx, string(trackID), ActionFacilitatorLogin, string(session.ID()), true, nil)
 	return &TrackLoginResult{
 		TrackToken: plainToken,
 		Track:      track,
@@ -246,11 +246,11 @@ func (s *FacilitatorAuthService) MigrateSession(
 	})
 
 	if err != nil {
-		s.recordAuditLog(ctx, string(oldSession.TrackID()), "SESSION_MIGRATE", string(newTrackID), false, map[string]any{"error": err.Error()})
+		s.recordAuditLog(ctx, string(oldSession.TrackID()), ActionSessionMigrate, string(newTrackID), false, map[string]any{"error": err.Error()})
 		return nil, err
 	}
 
-	s.recordAuditLog(ctx, string(oldSession.TrackID()), "SESSION_MIGRATE", string(newSession.ID()), true, nil)
+	s.recordAuditLog(ctx, string(oldSession.TrackID()), ActionSessionMigrate, string(newSession.ID()), true, nil)
 	return &TrackLoginResult{
 		TrackToken: plainToken,
 		Track:      newTrack,
@@ -299,20 +299,20 @@ func (s *FacilitatorAuthService) Logout(
 	})
 
 	if err != nil {
-		s.recordAuditLog(ctx, string(session.TrackID()), "FACILITATOR_LOGOUT", string(sessionID), false, map[string]any{"error": err.Error()})
+		s.recordAuditLog(ctx, string(session.TrackID()), ActionFacilitatorLogout, string(sessionID), false, map[string]any{"error": err.Error()})
 		return err
 	}
 
-	s.recordAuditLog(ctx, string(session.TrackID()), "FACILITATOR_LOGOUT", string(sessionID), true, nil)
+	s.recordAuditLog(ctx, string(session.TrackID()), ActionFacilitatorLogout, string(sessionID), true, nil)
 	return nil
 }
 
-func (s *FacilitatorAuthService) recordAuditLog(ctx context.Context, actor, action, target string, success bool, metadata map[string]any) {
+func (s *FacilitatorAuthService) recordAuditLog(ctx context.Context, actor string, action AuditAction, target string, success bool, metadata map[string]any) {
 
 	log := domain.NewAuditLog(
 		domain.AuditLogID(s.uuidFn()),
 		actor,
-		action,
+		string(action),
 		target,
 		success,
 		s.nowFn(),

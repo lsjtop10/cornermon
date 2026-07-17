@@ -54,11 +54,11 @@ func (s *BadgeService) IssueInitialBadges(ctx context.Context, count int) ([]*do
 	})
 
 	if err != nil {
-		s.recordAuditLog(ctx, "admin", "BADGE_BULK_GENERATE", "", false, map[string]any{"error": err.Error()})
+		s.recordAuditLog(ctx, "admin", ActionBadgeBulkGenerate, "", false, map[string]any{"error": err.Error()})
 		return nil, err
 	}
 
-	s.recordAuditLog(ctx, "admin", "BADGE_BULK_GENERATE", "", true, map[string]any{"count": count})
+	s.recordAuditLog(ctx, "admin", ActionBadgeBulkGenerate, "", true, map[string]any{"count": count})
 
 	return badges, nil
 }
@@ -82,7 +82,7 @@ func (s *BadgeService) ExportBadges(ctx context.Context) ([]*domain.Badge, error
 		}
 	}
 
-	s.recordAuditLog(ctx, "admin", "BADGE_EXPORT", "", true, nil)
+	s.recordAuditLog(ctx, "admin", ActionBadgeExport, "", true, nil)
 
 	return unassigned, nil
 }
@@ -159,20 +159,20 @@ func (s *BadgeService) assignBadgeInternal(
 	})
 
 	if err != nil {
-		s.recordAuditLog(ctx, "admin", "BADGE_ASSIGN", string(groupID), false, map[string]any{"error": err.Error()})
+		s.recordAuditLog(ctx, "admin", ActionBadgeAssign, string(groupID), false, map[string]any{"error": err.Error()})
 		return nil, err
 	}
 
-	s.recordAuditLog(ctx, "admin", "BADGE_ASSIGN", string(targetBadge.ID()), true, map[string]any{"groupID": string(groupID)})
+	s.recordAuditLog(ctx, "admin", ActionBadgeAssign, string(targetBadge.ID()), true, map[string]any{"groupID": string(groupID)})
 
 	return targetBadge, nil
 }
 
-func (s *BadgeService) recordAuditLog(ctx context.Context, actor, action, target string, success bool, metadata map[string]any) {
+func (s *BadgeService) recordAuditLog(ctx context.Context, actor string, action AuditAction, target string, success bool, metadata map[string]any) {
 	log := domain.NewAuditLog(
 		domain.AuditLogID(s.uuidFn()),
 		actor,
-		action,
+		string(action),
 		target,
 		success,
 		s.nowFn(),
