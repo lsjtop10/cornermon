@@ -97,6 +97,7 @@ class _RegistrationForm extends ConsumerStatefulWidget {
 
 class _RegistrationFormState extends ConsumerState<_RegistrationForm> {
   final TextEditingController _codeController = TextEditingController();
+  final TextEditingController _displayNameController = TextEditingController();
   String? _errorText;
   bool _isSubmitting = false;
 
@@ -104,17 +105,20 @@ class _RegistrationFormState extends ConsumerState<_RegistrationForm> {
   void initState() {
     super.initState();
     _codeController.addListener(() => setState(() {}));
+    _displayNameController.addListener(() => setState(() {}));
   }
 
   @override
   void dispose() {
     _codeController.dispose();
+    _displayNameController.dispose();
     super.dispose();
   }
 
   Future<void> _submit() async {
     final code = _codeController.text.trim();
-    if (code.isEmpty || _isSubmitting) return;
+    final displayName = _displayNameController.text.trim();
+    if (code.isEmpty || displayName.isEmpty || _isSubmitting) return;
 
     setState(() {
       _isSubmitting = true;
@@ -122,7 +126,9 @@ class _RegistrationFormState extends ConsumerState<_RegistrationForm> {
     });
 
     try {
-      await ref.read(deviceTrustProvider.notifier).requestRegistration(code);
+      await ref
+          .read(deviceTrustProvider.notifier)
+          .requestRegistration(code, displayName: displayName);
     } catch (_) {
       if (!mounted) return;
       setState(() => _errorText = '유효하지 않은 등록 코드입니다.');
@@ -135,7 +141,10 @@ class _RegistrationFormState extends ConsumerState<_RegistrationForm> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final colors = isDark ? AppColors.dark : AppColors.light;
-    final canSubmit = _codeController.text.trim().isNotEmpty && !_isSubmitting;
+    final canSubmit =
+        _codeController.text.trim().isNotEmpty &&
+        _displayNameController.text.trim().isNotEmpty &&
+        !_isSubmitting;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -172,6 +181,20 @@ class _RegistrationFormState extends ConsumerState<_RegistrationForm> {
           textAlign: TextAlign.center,
           decoration: InputDecoration(
             labelText: '등록 코드',
+            hintText: '예: 7ZQK3M2X',
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12.0),
+            ),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.space4),
+        TextField(
+          controller: _displayNameController,
+          enabled: !_isSubmitting,
+          textAlign: TextAlign.center,
+          decoration: InputDecoration(
+            labelText: '관리자 화면에 표시될 이름',
+            hintText: '예: 1번 태블릿',
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12.0),
             ),
