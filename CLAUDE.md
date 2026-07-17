@@ -69,18 +69,6 @@ developer guide.
 Naming in code must map 1:1 to these ubiquitous language terms (`workflow/implement.md`).
 
 ---
-
-## Planning
-
-Plans go in:
-- `docs/artifacts/plan/` — cross-cutting work
-- `backend/docs/artifacts/plan/` — backend-only work
-- `frontend/docs/artifacts/plan/` — frontend-only work
-
-Filename format: `[작업요약]_plan_[YYYYMMDD].md`
-
-Plans must lead with use cases (P0/P1/P2), include object definitions + method signatures (not implementation bodies), and end with a verification checklist. See `workflow/plan.md` for the full template.
-
 ## scope of work
 
 사용자가 명시하지 않는 이상 백엔드 작업은 백엔드 폴더만 프론트엔드 작업은 프론트엔드 폴더만 수정합니다.
