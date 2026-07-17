@@ -3,6 +3,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../config/app_env.dart';
 import 'auth_interceptor.dart';
+import 'status_fallback_interceptor.dart';
 
 part 'api_client.g.dart';
 
@@ -16,6 +17,7 @@ Dio apiClient(Ref ref) {
     ),
   );
   dio.interceptors.add(AuthInterceptor(ref));
+  dio.interceptors.add(StatusFallbackInterceptor());
 
   return dio;
 }
