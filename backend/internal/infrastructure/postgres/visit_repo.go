@@ -28,7 +28,7 @@ func (r *pgVisitRepository) queries(ctx context.Context) *db.Queries {
 }
 
 func mapVisit(row db.Visit) *domain.Visit {
-	v := &domain.Visit{
+	v := domain.NewVisitFromProps(domain.VisitProps{
 		ID:          domain.VisitID(row.ID),
 		GroupID:     domain.GroupID(row.GroupID),
 		CornerID:    domain.CornerID(row.CornerID),
@@ -36,12 +36,12 @@ func mapVisit(row db.Visit) *domain.Visit {
 		Status:      domain.VisitStatus(row.Status),
 		InputMethod: domain.VisitInputMethod(row.InputMethod),
 		StartedAt:   row.StartedAt.Time,
-	}
+	})
 
 	if row.EndedAt.Valid {
-		v.EndedAt = domain.Some(row.EndedAt.Time)
+		v.SetEndedAt(domain.Some(row.EndedAt.Time))
 	} else {
-		v.EndedAt = domain.None[time.Time]()
+		v.SetEndedAt(domain.None[time.Time]())
 	}
 
 	return v
@@ -85,16 +85,16 @@ func (r *pgVisitRepository) GetCompletedByGroupAndCorner(ctx context.Context, gr
 
 func (r *pgVisitRepository) Save(ctx context.Context, visit *domain.Visit) error {
 	params := db.SaveVisitParams{
-		ID:          string(visit.ID),
-		GroupID:     string(visit.GroupID),
-		CornerID:    string(visit.CornerID),
-		TrackID:     string(visit.TrackID),
-		Status:      string(visit.Status),
-		InputMethod: string(visit.InputMethod),
-		StartedAt:   pgtype.Timestamptz{Time: visit.StartedAt, Valid: !visit.StartedAt.IsZero()},
+		ID:          string(visit.ID()),
+		GroupID:     string(visit.GroupID()),
+		CornerID:    string(visit.CornerID()),
+		TrackID:     string(visit.TrackID()),
+		Status:      string(visit.Status()),
+		InputMethod: string(visit.InputMethod()),
+		StartedAt:   pgtype.Timestamptz{Time: visit.StartedAt(), Valid: !visit.StartedAt().IsZero()},
 	}
 
-	if val, ok := visit.EndedAt.Value(); ok {
+	if val, ok := visit.EndedAt().Value(); ok {
 		params.EndedAt = pgtype.Timestamptz{Time: val, Valid: true}
 	}
 

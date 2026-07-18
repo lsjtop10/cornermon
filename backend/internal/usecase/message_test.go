@@ -1,3 +1,4 @@
+
 package usecase
 
 import (
@@ -44,11 +45,11 @@ func TestMessageService_SendDirect(t *testing.T) {
 		// Arrange
 		now := time.Now()
 		corners := NewMockCornerRepository()
-		corner := &domain.Corner{ID: "corner-1", CampID: "camp-1"}
+		corner := domain.NewCornerFromProps(domain.CornerProps{ID: "corner-1", CampID: "camp-1"})
 		corners.Save(context.Background(), corner)
 
 		tracks := NewMockTrackRepository()
-		track := &domain.Track{ID: "track-1", CornerID: "corner-1", Status: domain.TrackActive}
+		track := domain.NewTrackFromProps(domain.TrackProps{ID: "track-1", CornerID: "corner-1", Status: domain.TrackActive})
 		tracks.Save(context.Background(), track)
 
 		messages := NewMockMessageRepository()
@@ -70,11 +71,11 @@ func TestMessageService_SendDirect(t *testing.T) {
 		if msg == nil {
 			t.Fatal("expected message, got nil")
 		}
-		if msg.ID != "msg-uuid" {
-			t.Errorf("expected message ID 'msg-uuid', got '%s'", msg.ID)
+		if msg.ID() != "msg-uuid" {
+			t.Errorf("expected message ID 'msg-uuid', got '%s'", msg.ID())
 		}
-		if track.UnreadByTrackCount != 1 {
-			t.Fatalf("expected one unread message for track, got %d", track.UnreadByTrackCount)
+		if track.UnreadByTrackCount() != 1 {
+			t.Fatalf("expected one unread message for track, got %d", track.UnreadByTrackCount())
 		}
 
 		if len(broadcaster.Broadcasts) != 1 ||
@@ -89,10 +90,10 @@ func TestMessageService_SendDirect(t *testing.T) {
 func TestShouldMarkOnlyOppositeMessagesWhenBackgroundIsTrue(t *testing.T) {
 	// Arrange
 	tracks := NewMockTrackRepository()
-	tracks.Save(context.Background(), &domain.Track{ID: "track-1", Status: domain.TrackActive})
+	tracks.Save(context.Background(), domain.NewTrackFromProps(domain.TrackProps{ID: "track-1", Status: domain.TrackActive}))
 	messages := NewMockMessageRepository()
-	adminMessage := &domain.Message{ID: "admin-1", TrackID: "track-1", ChannelType: domain.MessageDirect, SenderRole: domain.RoleAdmin, SentAt: time.Unix(1, 0)}
-	trackMessage := &domain.Message{ID: "track-1", TrackID: "track-1", ChannelType: domain.MessageDirect, SenderRole: domain.RoleTrack, SentAt: time.Unix(2, 0)}
+	adminMessage := domain.NewMessageFromProps(domain.MessageProps{ID: "admin-1", TrackID: "track-1", ChannelType: domain.MessageDirect, SenderRole: domain.RoleAdmin, SentAt: time.Unix(1, 0)})
+	trackMessage := domain.NewMessageFromProps(domain.MessageProps{ID: "track-1", TrackID: "track-1", ChannelType: domain.MessageDirect, SenderRole: domain.RoleTrack, SentAt: time.Unix(2, 0)})
 	messages.Save(context.Background(), adminMessage)
 	messages.Save(context.Background(), trackMessage)
 	s := NewMessageService(NewMockCornerRepository(), tracks, messages, &MockAuditLogRepository{}, &MockBroadcaster{}, &MockTxManager{})
@@ -109,25 +110,25 @@ func TestShouldMarkOnlyOppositeMessagesWhenBackgroundIsTrue(t *testing.T) {
 	if len(got) != 2 {
 		t.Fatalf("expected 2 messages, got %d", len(got))
 	}
-	if !adminMessage.ReadAt.IsSet() || trackMessage.ReadAt.IsSet() {
+	if !adminMessage.ReadAt().IsSet() || trackMessage.ReadAt().IsSet() {
 		t.Fatal("expected only the opposite sender message to be marked read")
 	}
-	if value, _ := adminMessage.ReadAt.Value(); !value.Equal(now) {
+	if value, _ := adminMessage.ReadAt().Value(); !value.Equal(now) {
 		t.Fatalf("expected admin message read at %v, got %v", now, value)
 	}
-	if track, _ := tracks.Get(context.Background(), "track-1"); track.UnreadByTrackCount != 0 {
-		t.Fatalf("expected unread count to reset after background read, got %d", track.UnreadByTrackCount)
+	if track, _ := tracks.Get(context.Background(), "track-1"); track.UnreadByTrackCount() != 0 {
+		t.Fatalf("expected unread count to reset after background read, got %d", track.UnreadByTrackCount())
 	}
 }
 
 func TestListDirectMessagesShoudReturnOnlyMessagesAfterBoundaryWhenAfterIsSet(t *testing.T) {
 	// Arrange
 	tracks := NewMockTrackRepository()
-	tracks.Save(context.Background(), &domain.Track{ID: "track-1", Status: domain.TrackActive})
+	tracks.Save(context.Background(), domain.NewTrackFromProps(domain.TrackProps{ID: "track-1", Status: domain.TrackActive}))
 	messages := NewMockMessageRepository()
 	boundary := time.Unix(10, 0)
-	messages.Save(context.Background(), &domain.Message{ID: "at-boundary", TrackID: "track-1", ChannelType: domain.MessageDirect, SenderRole: domain.RoleAdmin, SentAt: boundary})
-	messages.Save(context.Background(), &domain.Message{ID: "after-boundary", TrackID: "track-1", ChannelType: domain.MessageDirect, SenderRole: domain.RoleAdmin, SentAt: boundary.Add(time.Second)})
+	messages.Save(context.Background(), domain.NewMessageFromProps(domain.MessageProps{ID: "at-boundary", TrackID: "track-1", ChannelType: domain.MessageDirect, SenderRole: domain.RoleAdmin, SentAt: boundary}))
+	messages.Save(context.Background(), domain.NewMessageFromProps(domain.MessageProps{ID: "after-boundary", TrackID: "track-1", ChannelType: domain.MessageDirect, SenderRole: domain.RoleAdmin, SentAt: boundary.Add(time.Second)}))
 	service := NewMessageService(NewMockCornerRepository(), tracks, messages, &MockAuditLogRepository{}, &MockBroadcaster{}, &MockTxManager{})
 
 	// Act
@@ -137,7 +138,7 @@ func TestListDirectMessagesShoudReturnOnlyMessagesAfterBoundaryWhenAfterIsSet(t 
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if len(got) != 1 || got[0].ID != "after-boundary" {
+	if len(got) != 1 || got[0].ID() != "after-boundary" {
 		t.Fatalf("expected only message after boundary, got %#v", got)
 	}
 }
@@ -146,13 +147,13 @@ func TestMessageServiceShoudAcquireUnreadCounterLockBeforeMutatingMessages(t *te
 	// Arrange
 	operations := []string{}
 	baseTracks := NewMockTrackRepository()
-	baseTracks.Save(context.Background(), &domain.Track{ID: "track-1", CornerID: "corner-1", Status: domain.TrackActive})
+	baseTracks.Save(context.Background(), domain.NewTrackFromProps(domain.TrackProps{ID: "track-1", CornerID: "corner-1", Status: domain.TrackActive}))
 	tracks := &recordingTrackRepository{MockTrackRepository: baseTracks, operations: &operations}
 	baseMessages := NewMockMessageRepository()
-	baseMessages.Save(context.Background(), &domain.Message{ID: "existing", TrackID: "track-1", ChannelType: domain.MessageDirect, SenderRole: domain.RoleAdmin, SentAt: time.Unix(1, 0)})
+	baseMessages.Save(context.Background(), domain.NewMessageFromProps(domain.MessageProps{ID: "existing", TrackID: "track-1", ChannelType: domain.MessageDirect, SenderRole: domain.RoleAdmin, SentAt: time.Unix(1, 0)}))
 	messages := &recordingMessageRepository{MockMessageRepository: baseMessages, operations: &operations}
 	corners := NewMockCornerRepository()
-	corners.Save(context.Background(), &domain.Corner{ID: "corner-1", CampID: "camp-1"})
+	corners.Save(context.Background(), domain.NewCornerFromProps(domain.CornerProps{ID: "corner-1", CampID: "camp-1"}))
 	service := NewMessageService(corners, tracks, messages, &MockAuditLogRepository{}, &MockBroadcaster{}, &MockTxManager{})
 
 	// Act
@@ -174,7 +175,7 @@ func TestMessageServiceShoudAcquireUnreadCounterLockBeforeMutatingMessages(t *te
 func TestShouldReturnRoleSpecificUnreadCountWhenTrackHasUnreadMessages(t *testing.T) {
 	// Arrange
 	tracks := NewMockTrackRepository()
-	tracks.Save(context.Background(), &domain.Track{ID: "track-1", Status: domain.TrackActive, UnreadByAdminCount: 2, UnreadByTrackCount: 3})
+	tracks.Save(context.Background(), domain.NewTrackFromProps(domain.TrackProps{ID: "track-1", Status: domain.TrackActive, UnreadByAdminCount: 2, UnreadByTrackCount: 3}))
 	s := NewMessageService(NewMockCornerRepository(), tracks, NewMockMessageRepository(), &MockAuditLogRepository{}, &MockBroadcaster{}, &MockTxManager{})
 
 	// Act

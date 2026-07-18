@@ -57,11 +57,11 @@ func (h *AdminManagementHandler) CreateAdmin(c echo.Context) error {
 	if err := c.Bind(&req); err != nil || req.Username == "" || req.Password == "" {
 		return c.JSON(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: "username and password are required"})
 	}
-	admin, err := h.admins.CreateAdmin(c.Request().Context(), actor.AdminID, req.Username, req.Password, domain.AdminRole(req.Role))
+	admin, err := h.admins.CreateAdmin(c.Request().Context(), actor.AdminID(), req.Username, req.Password, domain.AdminRole(req.Role))
 	if err != nil {
 		return adminManagementError(c, err)
 	}
-	return c.JSON(http.StatusCreated, AdminResponse{ID: string(admin.ID), Username: admin.Username, Role: string(admin.Role)})
+	return c.JSON(http.StatusCreated, AdminResponse{ID: string(admin.ID()), Username: admin.Username(), Role: string(admin.Role())})
 }
 
 // @Summary      관리자 비밀번호 변경
@@ -83,7 +83,7 @@ func (h *AdminManagementHandler) ChangeAdminPassword(c echo.Context) error {
 	if err := c.Bind(&req); err != nil || req.Password == "" {
 		return c.JSON(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: "password is required"})
 	}
-	if err := h.admins.ChangeAdminPassword(c.Request().Context(), actor.AdminID, domain.AdminID(c.Param("id")), req.Password); err != nil {
+	if err := h.admins.ChangeAdminPassword(c.Request().Context(), actor.AdminID(), domain.AdminID(c.Param("id")), req.Password); err != nil {
 		return adminManagementError(c, err)
 	}
 	return c.NoContent(http.StatusNoContent)
@@ -102,7 +102,7 @@ func (h *AdminManagementHandler) DeleteAdmin(c echo.Context) error {
 	if !ok {
 		return c.JSON(http.StatusUnauthorized, ErrorResponse{Code: "UNAUTHORIZED", Message: "unauthorized"})
 	}
-	if err := h.admins.DeleteAdmin(c.Request().Context(), actor.AdminID, domain.AdminID(c.Param("id"))); err != nil {
+	if err := h.admins.DeleteAdmin(c.Request().Context(), actor.AdminID(), domain.AdminID(c.Param("id"))); err != nil {
 		return adminManagementError(c, err)
 	}
 	return c.NoContent(http.StatusNoContent)

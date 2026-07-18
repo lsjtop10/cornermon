@@ -9,11 +9,11 @@ const (
 )
 
 type Corner struct {
-	ID            CornerID
-	CampID        CampID
-	Name          string
-	TargetMinutes int // 기본값 10
-	IsMandatory   bool
+	id            CornerID
+	campID        CampID
+	name          string
+	targetMinutes int // 기본값 10
+	isMandatory   bool
 }
 
 // OperationalStatus는 소속 트랙들의 상태를 조합해 코너의 파생 운영 상태를 계산합니다.
@@ -22,12 +22,12 @@ func (c *Corner) OperationalStatus(tracks []*Track) CornerOperationalStatus {
 	busyCount := 0
 
 	for _, t := range tracks {
-		if t.CornerID != c.ID {
+		if t.CornerID() != c.id {
 			continue
 		}
-		if t.Status == TrackActive {
+		if t.Status() == TrackActive {
 			activeCount++
-			if t.CurrentVisitID.IsSet() {
+			if t.currentVisitID.IsSet() {
 				busyCount++
 			}
 		}
@@ -44,5 +44,55 @@ func (c *Corner) OperationalStatus(tracks []*Track) CornerOperationalStatus {
 
 // EffectiveTargetMinutes는 코너의 목표 소요 시간을 반환합니다.
 func (c *Corner) EffectiveTargetMinutes(track *Track) int {
-	return c.TargetMinutes
+	return c.targetMinutes
+}
+
+func (c *Corner) ID() CornerID {
+	return c.id
+}
+
+func (c *Corner) CampID() CampID {
+	return c.campID
+}
+
+func (c *Corner) Name() string {
+	return c.name
+}
+
+func (c *Corner) SetName(name string) {
+	c.name = name
+}
+
+func (c *Corner) TargetMinutes() int {
+	return c.targetMinutes
+}
+
+func (c *Corner) IsMandatory() bool {
+	return c.isMandatory
+}
+
+type CornerProps struct {
+	ID CornerID
+	CampID CampID
+	Name string
+	TargetMinutes int
+	IsMandatory bool
+}
+func NewCornerFromProps(p CornerProps) *Corner {
+	return &Corner{
+		id: p.ID,
+		campID: p.CampID,
+		name: p.Name,
+		targetMinutes: p.TargetMinutes,
+		isMandatory: p.IsMandatory,
+	}
+}
+func NewCornerValFromProps(p CornerProps) Corner {
+	return Corner{
+		id: p.ID,
+		campID: p.CampID,
+		name: p.Name,
+		targetMinutes: p.TargetMinutes,
+		isMandatory: p.IsMandatory,
+	}
 }

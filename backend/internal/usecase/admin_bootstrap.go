@@ -29,10 +29,10 @@ func BootstrapAdmin(ctx context.Context, admins AdminRepository, username, passw
 	if err != nil {
 		return err
 	}
-	return admins.Save(ctx, &domain.Admin{
+	return admins.Save(ctx, domain.NewAdminFromProps(domain.AdminProps{
 		ID:           domain.AdminID(uuidFn()),
 		Username:     username,
 		PasswordHash: passwordHash,
 		Role:         domain.AdminRoleSystemAdmin,
-	})
+	}))
 }

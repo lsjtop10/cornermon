@@ -1,3 +1,4 @@
+
 package domain_test
 
 import (
@@ -12,13 +13,12 @@ func TestFacilitatorSession_Lifecycle(t *testing.T) {
 	now := time.Date(2026, 7, 9, 15, 0, 0, 0, time.UTC)
 
 	t.Run("New session is active and can be revoked", func(t *testing.T) {
-		session := &domain.FacilitatorSession{
-			ID:        domain.FacilitatorSessionID("session-1"),
+		session := domain.NewFacilitatorSessionFromProps(domain.FacilitatorSessionProps{ID:        domain.FacilitatorSessionID("session-1"),
 			TrackID:   domain.TrackID("track-1"),
 			TokenHash: "token-hash",
 			CreatedAt: now,
 			RevokedAt: domain.None[time.Time](),
-		}
+		})
 
 		if !session.IsActive() {
 			t.Error("expected session to be active")
@@ -34,7 +34,7 @@ func TestFacilitatorSession_Lifecycle(t *testing.T) {
 			t.Error("expected session to be inactive")
 		}
 
-		revokedAt, ok := session.RevokedAt.Value()
+		revokedAt, ok := session.RevokedAt().Value()
 		if !ok || !revokedAt.Equal(now) {
 			t.Errorf("expected RevokedAt to be %v, got %v", now, revokedAt)
 		}

@@ -27,18 +27,18 @@ func (r *pgMessageRepository) queries(ctx context.Context) *db.Queries {
 }
 
 func mapMessage(row db.Message) *domain.Message {
-	m := &domain.Message{
+	m := domain.NewMessageFromProps(domain.MessageProps{
 		ID:          domain.MessageID(row.ID),
 		ChannelType: domain.MessageDirect,
 		TrackID:     domain.TrackID(row.TrackID),
 		SenderRole:  domain.SenderRole(row.SenderRole),
 		Content:     row.Content,
 		SentAt:      row.SentAt.Time,
-	}
+	})
 	if row.ReadAt.Valid {
-		m.ReadAt = domain.Some(row.ReadAt.Time)
+		m.SetReadAt(domain.Some(row.ReadAt.Time))
 	} else {
-		m.ReadAt = domain.None[time.Time]()
+		m.SetReadAt(domain.None[time.Time]())
 	}
 
 	return m
@@ -46,13 +46,13 @@ func mapMessage(row db.Message) *domain.Message {
 
 func (r *pgMessageRepository) Save(ctx context.Context, msg *domain.Message) error {
 	params := db.SaveMessageParams{
-		ID:         string(msg.ID),
-		TrackID:    string(msg.TrackID),
-		SenderRole: string(msg.SenderRole),
-		Content:    msg.Content,
-		SentAt:     pgtype.Timestamptz{Time: msg.SentAt, Valid: !msg.SentAt.IsZero()},
+		ID:         string(msg.ID()),
+		TrackID:    string(msg.TrackID()),
+		SenderRole: string(msg.SenderRole()),
+		Content:    msg.Content(),
+		SentAt:     pgtype.Timestamptz{Time: msg.SentAt(), Valid: !msg.SentAt().IsZero()},
 	}
-	if readAt, ok := msg.ReadAt.Value(); ok {
+	if readAt, ok := msg.ReadAt().Value(); ok {
 		params.ReadAt = pgtype.Timestamptz{Time: readAt, Valid: true}
 	}
 

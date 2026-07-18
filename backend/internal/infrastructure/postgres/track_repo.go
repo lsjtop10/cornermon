@@ -28,7 +28,7 @@ func (r *pgTrackRepository) queries(ctx context.Context) *db.Queries {
 }
 
 func mapTrack(row db.Track) *domain.Track {
-	t := &domain.Track{
+	t := domain.NewTrackFromProps(domain.TrackProps{
 		ID:                 domain.TrackID(row.ID),
 		CornerID:           domain.CornerID(row.CornerID),
 		TrackNo:            int(row.TrackNo),
@@ -37,18 +37,18 @@ func mapTrack(row db.Track) *domain.Track {
 		PINCiphertext:      row.PinCiphertext.String,
 		UnreadByAdminCount: int(row.UnreadByAdminCount),
 		UnreadByTrackCount: int(row.UnreadByTrackCount),
-	}
+	})
 
 	if row.CurrentVisitID.Valid {
-		t.CurrentVisitID = domain.Some(domain.VisitID(row.CurrentVisitID.String))
+		t.SetCurrentVisitID(domain.Some(domain.VisitID(row.CurrentVisitID.String)))
 	} else {
-		t.CurrentVisitID = domain.None[domain.VisitID]()
+		t.SetCurrentVisitID(domain.None[domain.VisitID]())
 	}
 
 	if row.DeletedAt.Valid {
-		t.DeletedAt = domain.Some(row.DeletedAt.Time)
+		t.SetDeletedAt(domain.Some(row.DeletedAt.Time))
 	} else {
-		t.DeletedAt = domain.None[time.Time]()
+		t.SetDeletedAt(domain.None[time.Time]())
 	}
 
 	return t
@@ -93,23 +93,23 @@ func (r *pgTrackRepository) ListActiveByCamp(ctx context.Context, campID domain.
 
 func (r *pgTrackRepository) Save(ctx context.Context, track *domain.Track) error {
 	params := db.SaveTrackParams{
-		ID:            string(track.ID),
-		CornerID:      string(track.CornerID),
-		TrackNo:       int32(track.TrackNo),
-		Status:        string(track.Status),
-		PinHash:       track.PINHash,
-		PinCiphertext: pgtype.Text{String: track.PINCiphertext, Valid: track.PINCiphertext != ""},
+		ID:            string(track.ID()),
+		CornerID:      string(track.CornerID()),
+		TrackNo:       int32(track.TrackNo()),
+		Status:        string(track.Status()),
+		PinHash:       track.PINHash(),
+		PinCiphertext: pgtype.Text{String: track.PINCiphertext(), Valid: track.PINCiphertext() != ""},
 	}
 
-	if val, ok := track.CurrentVisitID.Value(); ok {
+	if val, ok := track.CurrentVisitID().Value(); ok {
 		params.CurrentVisitID = pgtype.Text{String: string(val), Valid: true}
 	}
 
-	if val, ok := track.DeletedAt.Value(); ok {
+	if val, ok := track.DeletedAt().Value(); ok {
 		params.DeletedAt = pgtype.Timestamptz{Time: val, Valid: true}
 	}
-	params.UnreadByAdminCount = int32(track.UnreadByAdminCount)
-	params.UnreadByTrackCount = int32(track.UnreadByTrackCount)
+	params.UnreadByAdminCount = int32(track.UnreadByAdminCount())
+	params.UnreadByTrackCount = int32(track.UnreadByTrackCount())
 
 	err := r.queries(ctx).SaveTrack(ctx, params)
 	if err != nil {

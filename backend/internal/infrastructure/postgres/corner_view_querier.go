@@ -3,7 +3,6 @@ package postgres
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 
 	"cornermon/backend/internal/domain"
 	"cornermon/backend/internal/errs"
@@ -29,7 +28,11 @@ func (r *pgCornerViewQuerier) queries(ctx context.Context) *db.Queries {
 	return db.New(r.pool)
 }
 
-func mapCornerView(id, campID, name string, targetMinutes int32, avgDurationSeconds float64, sampleCount int64, activeTracksValue any) (usecase.CornerView, error) {
+// activeTracksJSON is scanned as raw jsonb bytes rather than usecase.TrackView directly:
+// sqlc/pgx would otherwise auto-decode the jsonb_agg column into native Go values
+// (map[string]interface{}) when the destination isn't a concrete byte slice, so
+// sqlc.yaml overrides jsonb columns to []byte and we unmarshal explicitly here.
+func mapCornerView(id, campID, name string, targetMinutes int32, avgDurationSeconds float64, sampleCount int64, activeTracksJSON []byte) (usecase.CornerView, error) {
 	view := usecase.CornerView{
 		ID:                 domain.CornerID(id),
 		CampID:             domain.CampID(campID),
@@ -37,10 +40,6 @@ func mapCornerView(id, campID, name string, targetMinutes int32, avgDurationSeco
 		TargetMinutes:      int(targetMinutes),
 		AvgDurationSeconds: int(avgDurationSeconds),
 		SampleCount:        int(sampleCount),
-	}
-	activeTracksJSON, ok := activeTracksValue.([]byte)
-	if !ok {
-		return usecase.CornerView{}, fmt.Errorf("unexpected active_tracks type %T", activeTracksValue)
 	}
 	if err := json.Unmarshal(activeTracksJSON, &view.ActiveTracks); err != nil {
 		return usecase.CornerView{}, err

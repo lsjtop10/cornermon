@@ -1,3 +1,4 @@
+
 package web
 
 import (
@@ -42,7 +43,7 @@ func TestAdminManagementHandlerShouldMapDomainErrorsToHTTPStatus(t *testing.T) {
 			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 			rec := httptest.NewRecorder()
 			c := e.NewContext(req, rec)
-			c.Set("adminSession", &domain.AdminSession{AdminID: "actor"})
+			c.Set("adminSession", domain.NewAdminSessionFromProps(domain.AdminSessionProps{AdminID: "actor"}))
 			handler := NewAdminManagementHandler(adminManagementUsecaseStub{err: tc.err})
 
 			// Act

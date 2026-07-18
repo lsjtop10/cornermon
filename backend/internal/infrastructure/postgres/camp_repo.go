@@ -36,7 +36,7 @@ func (r *pgCampRepository) Get(ctx context.Context, id domain.CampID) (*domain.C
 		return nil, errs.Wrap(ctx, err)
 	}
 
-	camp := &domain.Camp{
+	camp := domain.NewCampFromProps(domain.CampProps{
 		ID:                   domain.CampID(row.ID),
 		RegistrationCode:     row.RegistrationCode,
 		Name:                 row.Name,
@@ -45,18 +45,18 @@ func (r *pgCampRepository) Get(ctx context.Context, id domain.CampID) (*domain.C
 		Status:               domain.CampStatus(row.Status),
 		BottleneckMinSamples: int(row.BottleneckMinSamples),
 		BottleneckRatioPct:   int(row.BottleneckRatioPct),
-	}
+	})
 
 	if row.ActivatedAt.Valid {
-		camp.ActivatedAt = domain.Some(row.ActivatedAt.Time)
+		camp.SetActivatedAt(domain.Some(row.ActivatedAt.Time))
 	} else {
-		camp.ActivatedAt = domain.None[time.Time]()
+		camp.SetActivatedAt(domain.None[time.Time]())
 	}
 
 	if row.EndedAt.Valid {
-		camp.EndedAt = domain.Some(row.EndedAt.Time)
+		camp.SetEndedAt(domain.Some(row.EndedAt.Time))
 	} else {
-		camp.EndedAt = domain.None[time.Time]()
+		camp.SetEndedAt(domain.None[time.Time]())
 	}
 
 	return camp, nil
@@ -71,7 +71,7 @@ func (r *pgCampRepository) GetByRegistrationCode(ctx context.Context, code strin
 		return nil, errs.Wrap(ctx, err)
 	}
 
-	camp := &domain.Camp{
+	camp := domain.NewCampFromProps(domain.CampProps{
 		ID:                   domain.CampID(row.ID),
 		RegistrationCode:     row.RegistrationCode,
 		Name:                 row.Name,
@@ -80,18 +80,18 @@ func (r *pgCampRepository) GetByRegistrationCode(ctx context.Context, code strin
 		Status:               domain.CampStatus(row.Status),
 		BottleneckMinSamples: int(row.BottleneckMinSamples),
 		BottleneckRatioPct:   int(row.BottleneckRatioPct),
-	}
+	})
 
 	if row.ActivatedAt.Valid {
-		camp.ActivatedAt = domain.Some(row.ActivatedAt.Time)
+		camp.SetActivatedAt(domain.Some(row.ActivatedAt.Time))
 	} else {
-		camp.ActivatedAt = domain.None[time.Time]()
+		camp.SetActivatedAt(domain.None[time.Time]())
 	}
 
 	if row.EndedAt.Valid {
-		camp.EndedAt = domain.Some(row.EndedAt.Time)
+		camp.SetEndedAt(domain.Some(row.EndedAt.Time))
 	} else {
-		camp.EndedAt = domain.None[time.Time]()
+		camp.SetEndedAt(domain.None[time.Time]())
 	}
 
 	return camp, nil
@@ -99,21 +99,21 @@ func (r *pgCampRepository) GetByRegistrationCode(ctx context.Context, code strin
 
 func (r *pgCampRepository) Save(ctx context.Context, camp *domain.Camp) error {
 	params := db.SaveCampParams{
-		ID:                   string(camp.ID),
-		RegistrationCode:     camp.RegistrationCode,
-		Name:                 camp.Name,
-		StartAt:              pgtype.Timestamptz{Time: camp.StartAt, Valid: !camp.StartAt.IsZero()},
-		EndAt:                pgtype.Timestamptz{Time: camp.EndAt, Valid: !camp.EndAt.IsZero()},
-		Status:               string(camp.Status),
-		BottleneckMinSamples: int32(camp.BottleneckMinSamples),
-		BottleneckRatioPct:   int32(camp.BottleneckRatioPct),
+		ID:                   string(camp.ID()),
+		RegistrationCode:     camp.RegistrationCode(),
+		Name:                 camp.Name(),
+		StartAt:              pgtype.Timestamptz{Time: camp.StartAt(), Valid: !camp.StartAt().IsZero()},
+		EndAt:                pgtype.Timestamptz{Time: camp.EndAt(), Valid: !camp.EndAt().IsZero()},
+		Status:               string(camp.Status()),
+		BottleneckMinSamples: int32(camp.BottleneckMinSamples()),
+		BottleneckRatioPct:   int32(camp.BottleneckRatioPct()),
 	}
 
-	if val, ok := camp.ActivatedAt.Value(); ok {
+	if val, ok := camp.ActivatedAt().Value(); ok {
 		params.ActivatedAt = pgtype.Timestamptz{Time: val, Valid: true}
 	}
 
-	if val, ok := camp.EndedAt.Value(); ok {
+	if val, ok := camp.EndedAt().Value(); ok {
 		params.EndedAt = pgtype.Timestamptz{Time: val, Valid: true}
 	}
 
@@ -132,7 +132,7 @@ func (r *pgCampRepository) List(ctx context.Context) ([]*domain.Camp, error) {
 
 	camps := make([]*domain.Camp, len(rows))
 	for i, row := range rows {
-		camp := &domain.Camp{
+		camp := domain.NewCampFromProps(domain.CampProps{
 			ID:                   domain.CampID(row.ID),
 			RegistrationCode:     row.RegistrationCode,
 			Name:                 row.Name,
@@ -141,18 +141,18 @@ func (r *pgCampRepository) List(ctx context.Context) ([]*domain.Camp, error) {
 			Status:               domain.CampStatus(row.Status),
 			BottleneckMinSamples: int(row.BottleneckMinSamples),
 			BottleneckRatioPct:   int(row.BottleneckRatioPct),
-		}
+		})
 
 		if row.ActivatedAt.Valid {
-			camp.ActivatedAt = domain.Some(row.ActivatedAt.Time)
+			camp.SetActivatedAt(domain.Some(row.ActivatedAt.Time))
 		} else {
-			camp.ActivatedAt = domain.None[time.Time]()
+			camp.SetActivatedAt(domain.None[time.Time]())
 		}
 
 		if row.EndedAt.Valid {
-			camp.EndedAt = domain.Some(row.EndedAt.Time)
+			camp.SetEndedAt(domain.Some(row.EndedAt.Time))
 		} else {
-			camp.EndedAt = domain.None[time.Time]()
+			camp.SetEndedAt(domain.None[time.Time]())
 		}
 
 		camps[i] = camp

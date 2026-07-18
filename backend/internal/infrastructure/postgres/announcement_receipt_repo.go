@@ -23,20 +23,20 @@ func (r *pgAnnouncementReceiptRepository) queries(ctx context.Context) *db.Queri
 	return db.New(r.pool)
 }
 func mapAnnouncementReceipt(row db.AnnouncementReceipt) *domain.AnnouncementReceipt {
-	x := &domain.AnnouncementReceipt{NoticeID: domain.AnnouncementID(row.AnnouncementID), TrackID: domain.TrackID(row.TrackID)}
+	x := domain.NewAnnouncementReceiptFromProps(domain.AnnouncementReceiptProps{NoticeID: domain.AnnouncementID(row.AnnouncementID), TrackID: domain.TrackID(row.TrackID)})
 	if row.ReadAt.Valid {
-		x.ReadAt = domain.Some(row.ReadAt.Time)
+		x.SetReadAt(domain.Some(row.ReadAt.Time))
 	} else {
-		x.ReadAt = domain.None[time.Time]()
+		x.SetReadAt(domain.None[time.Time]())
 	}
 	return x
 }
 func (r *pgAnnouncementReceiptRepository) Save(ctx context.Context, x *domain.AnnouncementReceipt) error {
 	var read pgtype.Timestamptz
-	if v, ok := x.ReadAt.Value(); ok {
+	if v, ok := x.ReadAt().Value(); ok {
 		read = pgtype.Timestamptz{Time: v, Valid: true}
 	}
-	if err := r.queries(ctx).SaveAnnouncementReceipt(ctx, db.SaveAnnouncementReceiptParams{AnnouncementID: string(x.NoticeID), TrackID: string(x.TrackID), ReadAt: read}); err != nil {
+	if err := r.queries(ctx).SaveAnnouncementReceipt(ctx, db.SaveAnnouncementReceiptParams{AnnouncementID: string(x.NoticeID()), TrackID: string(x.TrackID()), ReadAt: read}); err != nil {
 		return errs.Wrap(ctx, err)
 	}
 	return nil

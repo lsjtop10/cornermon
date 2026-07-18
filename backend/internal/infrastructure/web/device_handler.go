@@ -112,21 +112,21 @@ func (h *DeviceHandler) RequestRegistration(c echo.Context) error {
 	}
 
 	var approvedAt *time.Time
-	if reg.ApprovedAt.IsSet() {
-		t, _ := reg.ApprovedAt.Value()
+	if reg.ApprovedAt().IsSet() {
+		t, _ := reg.ApprovedAt().Value()
 		approvedAt = &t
 	}
 
 	return c.JSON(http.StatusCreated, DeviceRegistrationCreatedResponse{
 		DeviceRegistrationResponse: DeviceRegistrationResponse{
-			ID:                string(reg.ID),
-			DeviceName:        reg.DeviceName,
-			DeviceModel:       reg.DeviceModel,
-			DisplayName:       reg.DisplayName,
-			Status:            string(reg.Status),
-			CreatedAt:         reg.CreatedAt,
+			ID:                string(reg.ID()),
+			DeviceName:        reg.DeviceName(),
+			DeviceModel:       reg.DeviceModel(),
+			DisplayName:       reg.DisplayName(),
+			Status:            string(reg.Status()),
+			CreatedAt:         reg.CreatedAt(),
 			ApprovedAt:        approvedAt,
-			FailedPinAttempts: reg.FailedPinAttempts,
+			FailedPinAttempts: reg.FailedPinAttempts(),
 		},
 		DeviceToken: token,
 	})
@@ -160,24 +160,24 @@ func (h *DeviceHandler) ListRegistrations(c echo.Context) error {
 	res := make([]DeviceRegistrationResponse, len(devices))
 	for i, d := range devices {
 		var approvedAt *time.Time
-		if d.ApprovedAt.IsSet() {
-			t, _ := d.ApprovedAt.Value()
+		if d.ApprovedAt().IsSet() {
+			t, _ := d.ApprovedAt().Value()
 			approvedAt = &t
 		}
 		var lockedUntil *time.Time
-		if d.LockedUntil.IsSet() {
-			t, _ := d.LockedUntil.Value()
+		if d.LockedUntil().IsSet() {
+			t, _ := d.LockedUntil().Value()
 			lockedUntil = &t
 		}
 		res[i] = DeviceRegistrationResponse{
-			ID:                string(d.ID),
-			DeviceName:        d.DeviceName,
-			DeviceModel:       d.DeviceModel,
-			DisplayName:       d.DisplayName,
-			Status:            string(d.Status),
-			CreatedAt:         d.CreatedAt,
+			ID:                string(d.ID()),
+			DeviceName:        d.DeviceName(),
+			DeviceModel:       d.DeviceModel(),
+			DisplayName:       d.DisplayName(),
+			Status:            string(d.Status()),
+			CreatedAt:         d.CreatedAt(),
 			ApprovedAt:        approvedAt,
-			FailedPinAttempts: d.FailedPinAttempts,
+			FailedPinAttempts: d.FailedPinAttempts(),
 			LockedUntil:       lockedUntil,
 		}
 	}
@@ -211,11 +211,11 @@ func (h *DeviceHandler) ListLockedDevices(c echo.Context) error {
 }
 
 func mapDeviceRegistration(device *domain.DeviceRegistration) DeviceRegistrationResponse {
-	response := DeviceRegistrationResponse{ID: string(device.ID), DeviceName: device.DeviceName, DeviceModel: device.DeviceModel, DisplayName: device.DisplayName, Status: string(device.Status), CreatedAt: device.CreatedAt, FailedPinAttempts: device.FailedPinAttempts}
-	if value, ok := device.ApprovedAt.Value(); ok {
+	response := DeviceRegistrationResponse{ID: string(device.ID()), DeviceName: device.DeviceName(), DeviceModel: device.DeviceModel(), DisplayName: device.DisplayName(), Status: string(device.Status()), CreatedAt: device.CreatedAt(), FailedPinAttempts: device.FailedPinAttempts()}
+	if value, ok := device.ApprovedAt().Value(); ok {
 		response.ApprovedAt = &value
 	}
-	if value, ok := device.LockedUntil.Value(); ok {
+	if value, ok := device.LockedUntil().Value(); ok {
 		response.LockedUntil = &value
 	}
 	return response
@@ -236,7 +236,7 @@ func (h *DeviceHandler) ApproveDevice(c echo.Context) error {
 	}
 	regID := domain.DeviceRegistrationID(c.Param("id"))
 
-	err := h.deviceTrust.ApproveDevice(c.Request().Context(), regID, session.AdminID)
+	err := h.deviceTrust.ApproveDevice(c.Request().Context(), regID, session.AdminID())
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()})
 	}
@@ -259,7 +259,7 @@ func (h *DeviceHandler) RejectDevice(c echo.Context) error {
 	}
 	regID := domain.DeviceRegistrationID(c.Param("id"))
 
-	err := h.deviceTrust.RejectDevice(c.Request().Context(), regID, session.AdminID)
+	err := h.deviceTrust.RejectDevice(c.Request().Context(), regID, session.AdminID())
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()})
 	}
@@ -282,7 +282,7 @@ func (h *DeviceHandler) RevokeDevice(c echo.Context) error {
 	}
 	regID := domain.DeviceRegistrationID(c.Param("id"))
 
-	err := h.deviceTrust.RevokeDevice(c.Request().Context(), regID, session.AdminID)
+	err := h.deviceTrust.RevokeDevice(c.Request().Context(), regID, session.AdminID())
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()})
 	}

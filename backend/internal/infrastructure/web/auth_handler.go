@@ -116,7 +116,7 @@ func (h *AuthHandler) AdminLogout(c echo.Context) error {
 		return c.JSON(http.StatusUnauthorized, ErrorResponse{Code: "UNAUTHORIZED", Message: "unauthorized"})
 	}
 
-	err := h.adminAuth.RevokeSession(c.Request().Context(), session.ID, session.AdminID)
+	err := h.adminAuth.RevokeSession(c.Request().Context(), session.ID(), session.AdminID())
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()})
 	}
@@ -137,7 +137,7 @@ func (h *AuthHandler) ListAdminSessions(c echo.Context) error {
 		return c.JSON(http.StatusUnauthorized, ErrorResponse{Code: "UNAUTHORIZED", Message: "unauthorized"})
 	}
 
-	sessions, err := h.adminAuth.ListSessions(c.Request().Context(), session.AdminID)
+	sessions, err := h.adminAuth.ListSessions(c.Request().Context(), session.AdminID())
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()})
 	}
@@ -145,15 +145,15 @@ func (h *AuthHandler) ListAdminSessions(c echo.Context) error {
 	var res []AdminSessionResponse
 	for _, s := range sessions {
 		devInfo := ""
-		if s.DeviceInfo != "" {
-			devInfo = s.DeviceInfo
+		if s.DeviceInfo() != "" {
+			devInfo = s.DeviceInfo()
 		}
 		res = append(res, AdminSessionResponse{
-			ID:         string(s.ID),
-			AdminID:    string(s.AdminID),
+			ID:         string(s.ID()),
+			AdminID:    string(s.AdminID()),
 			DeviceInfo: &devInfo,
-			CreatedAt:  s.CreatedAt,
-			LastUsedAt: s.LastUsedAt,
+			CreatedAt:  s.CreatedAt(),
+			LastUsedAt: s.LastUsedAt(),
 		})
 	}
 
@@ -186,7 +186,7 @@ func (h *AuthHandler) ListActiveFacilitatorSessions(c echo.Context) error {
 	}
 	res := make([]FacilitatorSessionResponse, len(sessions))
 	for i, session := range sessions {
-		res[i] = FacilitatorSessionResponse{ID: string(session.ID), TrackID: string(session.TrackID), CreatedAt: session.CreatedAt}
+		res[i] = FacilitatorSessionResponse{ID: string(session.ID()), TrackID: string(session.TrackID()), CreatedAt: session.CreatedAt()}
 	}
 	return c.JSON(http.StatusOK, res)
 }
@@ -206,7 +206,7 @@ func (h *AuthHandler) RevokeAdminSession(c echo.Context) error {
 	}
 	targetID := domain.AdminSessionID(c.Param("id"))
 
-	err := h.adminAuth.RevokeSession(c.Request().Context(), targetID, session.AdminID)
+	err := h.adminAuth.RevokeSession(c.Request().Context(), targetID, session.AdminID())
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()})
 	}
@@ -247,16 +247,16 @@ func (h *AuthHandler) TrackLogin(c echo.Context) error {
 		TrackToken: res.TrackToken,
 		Track: TrackResponse{
 			TrackSummaryResponse: TrackSummaryResponse{
-				ID:       string(res.Track.ID),
-				CornerID: string(res.Track.CornerID),
-				TrackNo:  res.Track.TrackNo,
-				Status:   string(res.Track.Status),
+				ID:       string(res.Track.ID()),
+				CornerID: string(res.Track.CornerID()),
+				TrackNo:  res.Track.TrackNo(),
+				Status:   string(res.Track.Status()),
 			},
 		},
 		Corner: CornerResponse{
-			ID:     string(res.Corner.ID),
-			Name:   res.Corner.Name,
-			CampID: string(res.Corner.CampID),
+			ID:     string(res.Corner.ID()),
+			Name:   res.Corner.Name(),
+			CampID: string(res.Corner.CampID()),
 		},
 	})
 }
@@ -274,7 +274,7 @@ func (h *AuthHandler) TrackLogout(c echo.Context) error {
 		return c.JSON(http.StatusUnauthorized, ErrorResponse{Code: "UNAUTHORIZED", Message: "unauthorized"})
 	}
 
-	err := h.facilitatorAuth.Logout(c.Request().Context(), session.ID)
+	err := h.facilitatorAuth.Logout(c.Request().Context(), session.ID())
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()})
 	}
@@ -297,7 +297,7 @@ func (h *AuthHandler) ForceTrackLogout(c echo.Context) error {
 	}
 	trackID := domain.TrackID(c.Param("trackId"))
 
-	err := h.adminAuth.ForceTrackLogout(c.Request().Context(), trackID, session.AdminID)
+	err := h.adminAuth.ForceTrackLogout(c.Request().Context(), trackID, session.AdminID())
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()})
 	}
@@ -320,7 +320,7 @@ func (h *AuthHandler) ReleaseLockout(c echo.Context) error {
 	}
 	deviceID := domain.DeviceRegistrationID(c.Param("deviceId"))
 
-	err := h.deviceTrust.ResetPinFailures(c.Request().Context(), deviceID, session.AdminID)
+	err := h.deviceTrust.ResetPinFailures(c.Request().Context(), deviceID, session.AdminID())
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()})
 	}
@@ -355,15 +355,15 @@ func (h *AuthHandler) MigrateSession(c echo.Context) error {
 		TrackToken: res.TrackToken,
 		Track: TrackResponse{
 			TrackSummaryResponse: TrackSummaryResponse{
-				ID:       string(res.Track.ID),
-				CornerID: string(res.Track.CornerID),
-				TrackNo:  res.Track.TrackNo,
-				Status:   string(res.Track.Status),
+				ID:       string(res.Track.ID()),
+				CornerID: string(res.Track.CornerID()),
+				TrackNo:  res.Track.TrackNo(),
+				Status:   string(res.Track.Status()),
 			},
 		},
 		Corner: CornerResponse{
-			ID:   string(res.Corner.ID),
-			Name: res.Corner.Name,
+			ID:   string(res.Corner.ID()),
+			Name: res.Corner.Name(),
 		},
 	})
 }

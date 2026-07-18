@@ -40,15 +40,15 @@ type VisitStartRequest struct {
 
 func mapVisitToDTO(v *domain.Visit) VisitSummaryResponse {
 	res := VisitSummaryResponse{
-		ID:          string(v.ID),
-		GroupID:     string(v.GroupID),
-		CornerID:    string(v.CornerID),
-		TrackID:     string(v.TrackID),
-		Status:      string(v.Status),
-		InputMethod: string(v.InputMethod),
-		StartedAt:   v.StartedAt,
+		ID:          string(v.ID()),
+		GroupID:     string(v.GroupID()),
+		CornerID:    string(v.CornerID()),
+		TrackID:     string(v.TrackID()),
+		Status:      string(v.Status()),
+		InputMethod: string(v.InputMethod()),
+		StartedAt:   v.StartedAt(),
 	}
-	if endedAt, ok := v.EndedAt.Value(); ok {
+	if endedAt, ok := v.EndedAt().Value(); ok {
 		res.EndedAt = &endedAt
 	}
 	if dur, ok := v.DurationSeconds().Value(); ok {

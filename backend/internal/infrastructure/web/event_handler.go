@@ -94,7 +94,7 @@ func (h *EventHandler) TrackEvents(c echo.Context) error {
 	if track == nil {
 		return echo.NewHTTPError(http.StatusNotFound, "track not found")
 	}
-	corner, err := h.corners.Get(ctx, track.CornerID)
+	corner, err := h.corners.Get(ctx, track.CornerID())
 	if err != nil {
 		return err
 	}
@@ -102,7 +102,7 @@ func (h *EventHandler) TrackEvents(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusNotFound, "corner not found")
 	}
 
-	ch, err := h.subscriber.SubscribeTrack(ctx, corner.CampID, trackID)
+	ch, err := h.subscriber.SubscribeTrack(ctx, corner.CampID(), trackID)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}

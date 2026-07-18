@@ -1,3 +1,4 @@
+
 package domain_test
 
 import (
@@ -12,31 +13,29 @@ func TestDeviceRegistration_ApproveRejectRevoke(t *testing.T) {
 	now := time.Date(2026, 7, 9, 15, 0, 0, 0, time.UTC)
 
 	t.Run("Approve on PENDING succeeds", func(t *testing.T) {
-		device := &domain.DeviceRegistration{
-			ID:     domain.DeviceRegistrationID("device-1"),
+		device := domain.NewDeviceRegistrationFromProps(domain.DeviceRegistrationProps{ID:     domain.DeviceRegistrationID("device-1"),
 			Status: domain.DevicePending,
-		}
+		})
 
 		err := device.Approve(now)
 		if err != nil {
 			t.Fatalf("expected no error, got %v", err)
 		}
 
-		if device.Status != domain.DeviceApproved {
-			t.Errorf("expected APPROVED, got %v", device.Status)
+		if device.Status() != domain.DeviceApproved {
+			t.Errorf("expected APPROVED, got %v", device.Status())
 		}
 
-		approvedAt, ok := device.ApprovedAt.Value()
+		approvedAt, ok := device.ApprovedAt().Value()
 		if !ok || !approvedAt.Equal(now) {
 			t.Errorf("expected ApprovedAt to be %v, got %v", now, approvedAt)
 		}
 	})
 
 	t.Run("Approve on APPROVED fails with ErrDeviceInvalidTransition", func(t *testing.T) {
-		device := &domain.DeviceRegistration{
-			ID:     domain.DeviceRegistrationID("device-1"),
+		device := domain.NewDeviceRegistrationFromProps(domain.DeviceRegistrationProps{ID:     domain.DeviceRegistrationID("device-1"),
 			Status: domain.DeviceApproved,
-		}
+		})
 
 		err := device.Approve(now)
 		if !errors.Is(err, domain.ErrDeviceInvalidTransition) {
@@ -45,26 +44,24 @@ func TestDeviceRegistration_ApproveRejectRevoke(t *testing.T) {
 	})
 
 	t.Run("Reject on PENDING succeeds", func(t *testing.T) {
-		device := &domain.DeviceRegistration{
-			ID:     domain.DeviceRegistrationID("device-1"),
+		device := domain.NewDeviceRegistrationFromProps(domain.DeviceRegistrationProps{ID:     domain.DeviceRegistrationID("device-1"),
 			Status: domain.DevicePending,
-		}
+		})
 
 		err := device.Reject()
 		if err != nil {
 			t.Fatalf("expected no error, got %v", err)
 		}
 
-		if device.Status != domain.DeviceRejected {
-			t.Errorf("expected REJECTED, got %v", device.Status)
+		if device.Status() != domain.DeviceRejected {
+			t.Errorf("expected REJECTED, got %v", device.Status())
 		}
 	})
 
 	t.Run("Reject on REJECTED fails with ErrDeviceInvalidTransition", func(t *testing.T) {
-		device := &domain.DeviceRegistration{
-			ID:     domain.DeviceRegistrationID("device-1"),
+		device := domain.NewDeviceRegistrationFromProps(domain.DeviceRegistrationProps{ID:     domain.DeviceRegistrationID("device-1"),
 			Status: domain.DeviceRejected,
-		}
+		})
 
 		err := device.Reject()
 		if !errors.Is(err, domain.ErrDeviceInvalidTransition) {
@@ -73,26 +70,24 @@ func TestDeviceRegistration_ApproveRejectRevoke(t *testing.T) {
 	})
 
 	t.Run("Revoke on APPROVED succeeds", func(t *testing.T) {
-		device := &domain.DeviceRegistration{
-			ID:     domain.DeviceRegistrationID("device-1"),
+		device := domain.NewDeviceRegistrationFromProps(domain.DeviceRegistrationProps{ID:     domain.DeviceRegistrationID("device-1"),
 			Status: domain.DeviceApproved,
-		}
+		})
 
 		err := device.Revoke()
 		if err != nil {
 			t.Fatalf("expected no error, got %v", err)
 		}
 
-		if device.Status != domain.DeviceRevoked {
-			t.Errorf("expected REVOKED, got %v", device.Status)
+		if device.Status() != domain.DeviceRevoked {
+			t.Errorf("expected REVOKED, got %v", device.Status())
 		}
 	})
 
 	t.Run("Revoke on PENDING fails with ErrDeviceNotApproved", func(t *testing.T) {
-		device := &domain.DeviceRegistration{
-			ID:     domain.DeviceRegistrationID("device-1"),
+		device := domain.NewDeviceRegistrationFromProps(domain.DeviceRegistrationProps{ID:     domain.DeviceRegistrationID("device-1"),
 			Status: domain.DevicePending,
-		}
+		})
 
 		err := device.Revoke()
 		if !errors.Is(err, domain.ErrDeviceNotApproved) {
@@ -103,10 +98,9 @@ func TestDeviceRegistration_ApproveRejectRevoke(t *testing.T) {
 
 func TestDeviceRegistration_PinFailuresLockPolicies(t *testing.T) {
 	now := time.Date(2026, 7, 9, 15, 0, 0, 0, time.UTC)
-	device := &domain.DeviceRegistration{
-		ID:     domain.DeviceRegistrationID("device-1"),
+	device := domain.NewDeviceRegistrationFromProps(domain.DeviceRegistrationProps{ID:     domain.DeviceRegistrationID("device-1"),
 		Status: domain.DeviceApproved,
-	}
+	})
 
 	t.Run("Progressive failure lock steps", func(t *testing.T) {
 		// 1st failure: 0 delay
@@ -165,8 +159,8 @@ func TestDeviceRegistration_PinFailuresLockPolicies(t *testing.T) {
 
 		// Reset failures
 		device.ResetPinFailures()
-		if device.FailedPinAttempts != 0 {
-			t.Errorf("expected 0 attempts, got %d", device.FailedPinAttempts)
+		if device.FailedPinAttempts() != 0 {
+			t.Errorf("expected 0 attempts, got %d", device.FailedPinAttempts())
 		}
 		if device.IsLocked(now) {
 			t.Error("expected unlocked after reset")

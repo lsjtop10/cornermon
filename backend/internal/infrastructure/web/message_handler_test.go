@@ -1,3 +1,4 @@
+
 package web
 
 import (
@@ -57,14 +58,14 @@ func (a *announcementUsecaseForHandler) MarkNoticeRead(context.Context, string, 
 
 func TestListBroadcastsShoudReturnNoticesWhenAdminSessionPresent(t *testing.T) {
 	// Arrange
-	uc := &announcementUsecaseForHandler{notices: []*domain.Announcement{{ID: "notice-1", CampID: "camp-1", Content: "hello"}}}
+	uc := &announcementUsecaseForHandler{notices: []*domain.Announcement{domain.NewAnnouncementFromProps(domain.AnnouncementProps{ID: "notice-1", CampID: "camp-1", Content: "hello"})}}
 	e := echo.New()
 	req := httptest.NewRequest(http.MethodGet, "/camps/camp-1/messages/broadcast", nil)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
 	c.SetParamNames("campId")
 	c.SetParamValues("camp-1")
-	c.Set("adminSession", &domain.AdminSession{AdminID: "admin-1"})
+	c.Set("adminSession", domain.NewAdminSessionFromProps(domain.AdminSessionProps{AdminID: "admin-1"}))
 
 	// Act
 	err := NewMessageHandler(&messageUsecaseForHandler{}, uc).ListBroadcasts(c)
@@ -80,14 +81,14 @@ func TestListBroadcastsShoudReturnNoticesWhenAdminSessionPresent(t *testing.T) {
 
 func TestListBroadcastsShoudReturnNoticesWhenFacilitatorSessionPresent(t *testing.T) {
 	// Arrange
-	uc := &announcementUsecaseForHandler{notices: []*domain.Announcement{{ID: "notice-1", CampID: "camp-1", Content: "hello"}}}
+	uc := &announcementUsecaseForHandler{notices: []*domain.Announcement{domain.NewAnnouncementFromProps(domain.AnnouncementProps{ID: "notice-1", CampID: "camp-1", Content: "hello"})}}
 	e := echo.New()
 	req := httptest.NewRequest(http.MethodGet, "/camps/camp-1/messages/broadcast", nil)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
 	c.SetParamNames("campId")
 	c.SetParamValues("camp-1")
-	c.Set("facilitatorSession", &domain.FacilitatorSession{TrackID: "track-1"})
+	c.Set("facilitatorSession", domain.NewFacilitatorSessionFromProps(domain.FacilitatorSessionProps{TrackID: "track-1"}))
 
 	// Act
 	err := NewMessageHandler(&messageUsecaseForHandler{}, uc).ListBroadcasts(c)
@@ -109,7 +110,7 @@ func TestListDirectMessagesShoudRejectRequestWhenSessionTrackDiffers(t *testing.
 	c := e.NewContext(req, rec)
 	c.SetParamNames("trackId")
 	c.SetParamValues("track-2")
-	c.Set("facilitatorSession", &domain.FacilitatorSession{TrackID: "track-1"})
+	c.Set("facilitatorSession", domain.NewFacilitatorSessionFromProps(domain.FacilitatorSessionProps{TrackID: "track-1"}))
 
 	// Act
 	err := NewMessageHandler(&messageUsecaseForHandler{}, nil).ListDirectMessages(c)
@@ -128,7 +129,7 @@ func TestGetUnreadCountShoudRejectRequestWhenSessionTrackDiffers(t *testing.T) {
 	c := e.NewContext(req, rec)
 	c.SetParamNames("trackId")
 	c.SetParamValues("track-2")
-	c.Set("facilitatorSession", &domain.FacilitatorSession{TrackID: "track-1"})
+	c.Set("facilitatorSession", domain.NewFacilitatorSessionFromProps(domain.FacilitatorSessionProps{TrackID: "track-1"}))
 
 	// Act
 	err := NewMessageHandler(&messageUsecaseForHandler{}, nil).GetUnreadCount(c)
@@ -148,7 +149,7 @@ func TestSendDirectShoudRejectRequestWhenSessionTrackDiffers(t *testing.T) {
 	c := e.NewContext(req, rec)
 	c.SetParamNames("trackId")
 	c.SetParamValues("track-2")
-	c.Set("facilitatorSession", &domain.FacilitatorSession{TrackID: "track-1"})
+	c.Set("facilitatorSession", domain.NewFacilitatorSessionFromProps(domain.FacilitatorSessionProps{TrackID: "track-1"}))
 
 	// Act
 	err := NewMessageHandler(&messageUsecaseForHandler{}, nil).SendDirect(c)
@@ -168,7 +169,7 @@ func TestListDirectMessagesShoudNotMarkReadWhenBackgroundIsOmitted(t *testing.T)
 	c := e.NewContext(req, rec)
 	c.SetParamNames("trackId")
 	c.SetParamValues("track-1")
-	c.Set("facilitatorSession", &domain.FacilitatorSession{TrackID: "track-1"})
+	c.Set("facilitatorSession", domain.NewFacilitatorSessionFromProps(domain.FacilitatorSessionProps{TrackID: "track-1"}))
 
 	// Act
 	err := NewMessageHandler(uc, nil).ListDirectMessages(c)

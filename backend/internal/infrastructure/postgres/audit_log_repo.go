@@ -34,12 +34,12 @@ func (r *pgAuditLogRepository) Save(ctx context.Context, log *domain.AuditLog) e
 	}
 
 	err = r.queries(ctx).SaveAuditLog(ctx, db.SaveAuditLogParams{
-		ID:         string(log.ID),
-		Actor:      log.Actor,
-		Action:     log.Action,
-		Target:     log.Target,
-		Success:    log.Success,
-		OccurredAt: pgtype.Timestamptz{Time: log.OccurredAt, Valid: !log.OccurredAt.IsZero()},
+		ID:         string(log.ID()),
+		Actor:      log.Actor(),
+		Action:     log.Action(),
+		Target:     log.Target(),
+		Success:    log.Success(),
+		OccurredAt: pgtype.Timestamptz{Time: log.OccurredAt(), Valid: !log.OccurredAt().IsZero()},
 		Metadata:   metaJSON,
 	})
 	if err != nil {
@@ -81,7 +81,7 @@ func (r *pgAuditLogRepository) List(ctx context.Context, query usecase.AuditLogQ
 				return nil, errs.Wrap(ctx, err)
 			}
 		}
-		logs[i] = &domain.AuditLog{
+		logs[i] = domain.NewAuditLogFromProps(domain.AuditLogProps{
 			ID:         domain.AuditLogID(row.ID),
 			Actor:      row.Actor,
 			Action:     row.Action,
@@ -89,12 +89,12 @@ func (r *pgAuditLogRepository) List(ctx context.Context, query usecase.AuditLogQ
 			Success:    row.Success,
 			OccurredAt: row.OccurredAt.Time,
 			Metadata:   metadata,
-		}
+		})
 	}
 	page := &usecase.AuditLogPage{Logs: logs, NextCursor: domain.None[usecase.AuditLogCursor]()}
 	if hasMore && len(logs) > 0 {
 		last := logs[len(logs)-1]
-		page.NextCursor = domain.Some(usecase.AuditLogCursor{OccurredAt: last.OccurredAt, ID: last.ID})
+		page.NextCursor = domain.Some(usecase.AuditLogCursor{OccurredAt: last.OccurredAt(), ID: last.ID()})
 	}
 	return page, nil
 }

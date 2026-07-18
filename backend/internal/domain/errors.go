@@ -40,7 +40,7 @@ var (
 )
 
 type DeviceLockedError struct {
-	LockedUntil time.Time
+	lockedUntil time.Time
 }
 
 func (e *DeviceLockedError) Error() string {
@@ -54,7 +54,7 @@ func (e *DeviceLockedError) Is(target error) bool {
 var ErrInvalidPin = errors.New("auth: invalid pin")
 
 type InvalidPinError struct {
-	LockedUntil Optional[time.Time]
+	lockedUntil Optional[time.Time]
 }
 
 func (e *InvalidPinError) Error() string {
@@ -63,4 +63,40 @@ func (e *InvalidPinError) Error() string {
 
 func (e *InvalidPinError) Is(target error) bool {
 	return target == ErrInvalidPin
+}
+
+func (d *DeviceLockedError) LockedUntil() time.Time {
+	return d.lockedUntil
+}
+
+type DeviceLockedErrorProps struct {
+	LockedUntil time.Time
+}
+func NewDeviceLockedErrorFromProps(p DeviceLockedErrorProps) *DeviceLockedError {
+	return &DeviceLockedError{
+		lockedUntil: p.LockedUntil,
+	}
+}
+func NewDeviceLockedErrorValFromProps(p DeviceLockedErrorProps) DeviceLockedError {
+	return DeviceLockedError{
+		lockedUntil: p.LockedUntil,
+	}
+}
+
+func (i *InvalidPinError) LockedUntil() Optional[time.Time] {
+	return i.lockedUntil
+}
+
+type InvalidPinErrorProps struct {
+	LockedUntil Optional[time.Time]
+}
+func NewInvalidPinErrorFromProps(p InvalidPinErrorProps) *InvalidPinError {
+	return &InvalidPinError{
+		lockedUntil: p.LockedUntil,
+	}
+}
+func NewInvalidPinErrorValFromProps(p InvalidPinErrorProps) InvalidPinError {
+	return InvalidPinError{
+		lockedUntil: p.LockedUntil,
+	}
 }

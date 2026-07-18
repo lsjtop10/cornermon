@@ -28,17 +28,17 @@ func (r *pgFacilitatorSessionRepository) queries(ctx context.Context) *db.Querie
 }
 
 func mapFacilitatorSession(row db.FacilitatorSession) *domain.FacilitatorSession {
-	s := &domain.FacilitatorSession{
+	s := domain.NewFacilitatorSessionFromProps(domain.FacilitatorSessionProps{
 		ID:        domain.FacilitatorSessionID(row.ID),
 		TrackID:   domain.TrackID(row.TrackID),
 		TokenHash: row.TokenHash,
 		CreatedAt: row.CreatedAt.Time,
-	}
+	})
 
 	if row.RevokedAt.Valid {
-		s.RevokedAt = domain.Some(row.RevokedAt.Time)
+		s.SetRevokedAt(domain.Some(row.RevokedAt.Time))
 	} else {
-		s.RevokedAt = domain.None[time.Time]()
+		s.SetRevokedAt(domain.None[time.Time]())
 	}
 
 	return s
@@ -94,13 +94,13 @@ func (r *pgFacilitatorSessionRepository) ListActiveByCamp(ctx context.Context, c
 
 func (r *pgFacilitatorSessionRepository) Save(ctx context.Context, session *domain.FacilitatorSession) error {
 	params := db.SaveFacilitatorSessionParams{
-		ID:        string(session.ID),
-		TrackID:   string(session.TrackID),
-		TokenHash: session.TokenHash,
-		CreatedAt: pgtype.Timestamptz{Time: session.CreatedAt, Valid: !session.CreatedAt.IsZero()},
+		ID:        string(session.ID()),
+		TrackID:   string(session.TrackID()),
+		TokenHash: session.TokenHash(),
+		CreatedAt: pgtype.Timestamptz{Time: session.CreatedAt(), Valid: !session.CreatedAt().IsZero()},
 	}
 
-	if val, ok := session.RevokedAt.Value(); ok {
+	if val, ok := session.RevokedAt().Value(); ok {
 		params.RevokedAt = pgtype.Timestamptz{Time: val, Valid: true}
 	}
 

@@ -59,6 +59,41 @@ definitions:
   AuditLogResponse:
     properties:
       action:
+        enum:
+        - ADMIN_LOGIN
+        - ADMIN_CREATE
+        - ADMIN_PASSWORD_CHANGE
+        - ADMIN_DELETE
+        - ADMIN_SESSION_REVOKE
+        - TRACK_FORCE_LOGOUT
+        - FACILITATOR_LOGIN
+        - SESSION_MIGRATE
+        - FACILITATOR_LOGOUT
+        - BADGE_ASSIGN
+        - BADGE_BULK_GENERATE
+        - BADGE_EXPORT
+        - CAMP_ACTIVATE
+        - CAMP_END
+        - CAMP_CREATE
+        - CAMP_SETTINGS_UPDATE
+        - CORNER_UPDATE
+        - CORNER_DELETE
+        - CORNER_CREATE
+        - DEVICE_APPROVED
+        - DEVICE_REJECTED
+        - DEVICE_REVOKED
+        - PIN_LOCK_RESET
+        - DEVICE_REQUEST
+        - GROUP_CREATE
+        - MESSAGE_DIRECT
+        - MESSAGE_BROADCAST
+        - TRACK_CREATE
+        - TRACK_DELETE
+        - TRACK_REPLACE
+        - PIN_REGENERATE
+        - TRACK_PIN_EXPORT
+        - VISIT_START
+        - VISIT_COMPLETE
         type: string
       actor:
         type: string
@@ -303,6 +338,8 @@ definitions:
         type: string
       cornerName:
         type: string
+      overDeviationRatio:
+        type: number
       unvisitedGroups:
         items:
           $ref: '#/definitions/UnvisitedGroupResponse'
@@ -927,6 +964,41 @@ paths:
         name: actor
         type: string
       - description: 행위 종류 정확히 일치
+        enum:
+        - ADMIN_LOGIN
+        - ADMIN_CREATE
+        - ADMIN_PASSWORD_CHANGE
+        - ADMIN_DELETE
+        - ADMIN_SESSION_REVOKE
+        - TRACK_FORCE_LOGOUT
+        - FACILITATOR_LOGIN
+        - SESSION_MIGRATE
+        - FACILITATOR_LOGOUT
+        - BADGE_ASSIGN
+        - BADGE_BULK_GENERATE
+        - BADGE_EXPORT
+        - CAMP_ACTIVATE
+        - CAMP_END
+        - CAMP_CREATE
+        - CAMP_SETTINGS_UPDATE
+        - CORNER_UPDATE
+        - CORNER_DELETE
+        - CORNER_CREATE
+        - DEVICE_APPROVED
+        - DEVICE_REJECTED
+        - DEVICE_REVOKED
+        - PIN_LOCK_RESET
+        - DEVICE_REQUEST
+        - GROUP_CREATE
+        - MESSAGE_DIRECT
+        - MESSAGE_BROADCAST
+        - TRACK_CREATE
+        - TRACK_DELETE
+        - TRACK_REPLACE
+        - PIN_REGENERATE
+        - TRACK_PIN_EXPORT
+        - VISIT_START
+        - VISIT_COMPLETE
         in: query
         name: action
         type: string

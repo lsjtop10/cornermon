@@ -1,3 +1,4 @@
+
 package usecase
 
 import (
@@ -13,7 +14,7 @@ func TestDeviceTrustService_RequestRegistration(t *testing.T) {
 		// Arrange
 		now := time.Now()
 		camps := NewMockCampRepository()
-		camp := &domain.Camp{ID: "camp-1", RegistrationCode: "REGCODE1", Status: domain.CampActive}
+		camp := domain.NewCampFromProps(domain.CampProps{ID: "camp-1", RegistrationCode: "REGCODE1", Status: domain.CampActive})
 		camps.Save(context.Background(), camp)
 
 		devices := NewMockDeviceRegistrationRepository()
@@ -35,20 +36,20 @@ func TestDeviceTrustService_RequestRegistration(t *testing.T) {
 		if plainToken == "" {
 			t.Fatal("expected plain token, got empty")
 		}
-		if reg.ID != "device-uuid" {
-			t.Errorf("expected device ID 'device-uuid', got '%s'", reg.ID)
+		if reg.ID() != "device-uuid" {
+			t.Errorf("expected device ID 'device-uuid', got '%s'", reg.ID())
 		}
-		if reg.CampID != "camp-1" {
-			t.Errorf("expected campID resolved to 'camp-1', got '%s'", reg.CampID)
+		if reg.CampID() != "camp-1" {
+			t.Errorf("expected campID resolved to 'camp-1', got '%s'", reg.CampID())
 		}
-		if reg.DeviceModel != "iPad Pro 11 2022" || reg.DisplayName != "1번 태블릿" {
+		if reg.DeviceModel() != "iPad Pro 11 2022" || reg.DisplayName() != "1번 태블릿" {
 			t.Errorf("expected deviceModel/displayName to be stored, got %+v", reg)
 		}
-		if reg.Status != domain.DevicePending {
-			t.Errorf("expected status 'PENDING', got %s", reg.Status)
+		if reg.Status() != domain.DevicePending {
+			t.Errorf("expected status 'PENDING', got %s", reg.Status())
 		}
-		if !reg.CreatedAt.Equal(now) {
-			t.Errorf("expected CreatedAt %v, got %v", now, reg.CreatedAt)
+		if !reg.CreatedAt().Equal(now) {
+			t.Errorf("expected CreatedAt %v, got %v", now, reg.CreatedAt())
 		}
 		if len(broadcaster.Broadcasts) != 1 ||
 			broadcaster.Broadcasts[0].CampID != "camp-1" ||
@@ -80,7 +81,7 @@ func TestDeviceTrustService_RequestRegistration(t *testing.T) {
 	t.Run("ShouldReturnInvalidTransitionWhenCampIsNotActive", func(t *testing.T) {
 		// Arrange
 		camps := NewMockCampRepository()
-		camp := &domain.Camp{ID: "camp-1", RegistrationCode: "REGCODE1", Status: domain.CampPending}
+		camp := domain.NewCampFromProps(domain.CampProps{ID: "camp-1", RegistrationCode: "REGCODE1", Status: domain.CampPending})
 		camps.Save(context.Background(), camp)
 
 		devices := NewMockDeviceRegistrationRepository()
@@ -106,11 +107,10 @@ func TestDeviceTrustService_ApproveDevice(t *testing.T) {
 		now := time.Now()
 		camps := NewMockCampRepository()
 		devices := NewMockDeviceRegistrationRepository()
-		device := &domain.DeviceRegistration{
-			ID:     "device-1",
+		device := domain.NewDeviceRegistrationFromProps(domain.DeviceRegistrationProps{ID:     "device-1",
 			CampID: "camp-1",
 			Status: domain.DevicePending,
-		}
+		})
 		devices.Devices["device-1"] = device
 
 		auditLogs := &MockAuditLogRepository{}
@@ -130,8 +130,8 @@ func TestDeviceTrustService_ApproveDevice(t *testing.T) {
 		}
 
 		updated, _ := devices.Get(context.Background(), "device-1")
-		if updated.Status != domain.DeviceApproved {
-			t.Errorf("expected status 'APPROVED', got %s", updated.Status)
+		if updated.Status() != domain.DeviceApproved {
+			t.Errorf("expected status 'APPROVED', got %s", updated.Status())
 		}
 
 		if len(broadcaster.Broadcasts) != 1 ||
@@ -148,7 +148,7 @@ func TestDeviceTrustService_GetMyRegistrationStatus(t *testing.T) {
 		// Arrange
 		now := time.Now()
 		camps := NewMockCampRepository()
-		camp := &domain.Camp{ID: "camp-1", RegistrationCode: "REGCODE1", Status: domain.CampActive}
+		camp := domain.NewCampFromProps(domain.CampProps{ID: "camp-1", RegistrationCode: "REGCODE1", Status: domain.CampActive})
 		camps.Save(context.Background(), camp)
 
 		devices := NewMockDeviceRegistrationRepository()

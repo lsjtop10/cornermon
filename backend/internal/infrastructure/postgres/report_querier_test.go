@@ -17,12 +17,12 @@ func TestCalculateCampReport(t *testing.T) {
 		campID := domain.CampID("camp-1")
 
 		iti1, _ := json.Marshal([]domain.CornerProgress{
-			{CornerID: "corner-1", Status: domain.VisitCompleted},
-			{CornerID: "corner-2", Status: domain.VisitCompleted},
+			domain.NewCornerProgressValFromProps(domain.CornerProgressProps{CornerID: "corner-1", Status: domain.VisitCompleted}),
+			domain.NewCornerProgressValFromProps(domain.CornerProgressProps{CornerID: "corner-2", Status: domain.VisitCompleted}),
 		})
 		iti2, _ := json.Marshal([]domain.CornerProgress{
-			{CornerID: "corner-1", Status: domain.VisitCompleted},
-			{CornerID: "corner-2", Status: domain.VisitInProgress},
+			domain.NewCornerProgressValFromProps(domain.CornerProgressProps{CornerID: "corner-1", Status: domain.VisitCompleted}),
+			domain.NewCornerProgressValFromProps(domain.CornerProgressProps{CornerID: "corner-2", Status: domain.VisitInProgress}),
 		})
 
 		dbGroups := []db.Group{
@@ -117,6 +117,71 @@ func TestCalculateCampReport(t *testing.T) {
 		}
 		if c1Report.AvgDeviationSec != -60 {
 			t.Errorf("expected AvgDeviationSec -60, got %f", c1Report.AvgDeviationSec)
+		}
+		// visit-1 duration 10min == target 10min (deviation 0, not positive),
+		// visit-3 duration 8min < target 10min (deviation negative) -> 0 of 2 positive.
+		if c1Report.PositiveDeviationRatio != 0 {
+			t.Errorf("expected corner-1 PositiveDeviationRatio 0, got %f", c1Report.PositiveDeviationRatio)
+		}
+	})
+
+	t.Run("ShouldCalculateOverDeviationRatioWhenSomeVisitsExceedTarget", func(t *testing.T) {
+		// Arrange
+		campID := domain.CampID("camp-2")
+
+		iti, _ := json.Marshal([]domain.CornerProgress{
+			domain.NewCornerProgressValFromProps(domain.CornerProgressProps{CornerID: "corner-3", Status: domain.VisitCompleted}),
+		})
+		dbGroups := []db.Group{
+			{ID: "group-3", CampID: "camp-2", Name: "조 3", BadgeID: "badge-3", Itinerary: iti},
+		}
+		dbCorners := []db.Corner{
+			{ID: "corner-3", CampID: "camp-2", Name: "코너 3", TargetMinutes: 10},
+		}
+
+		now := time.Now()
+		dbVisits := []db.ListVisitsByCampRow{
+			{
+				ID: "visit-4", GroupID: "group-3", CornerID: "corner-3", TrackID: "track-3",
+				Status: "COMPLETED", InputMethod: "QR_SCAN",
+				StartedAt:     pgtype.Timestamptz{Time: now.Add(-25 * time.Minute), Valid: true},
+				EndedAt:       pgtype.Timestamptz{Time: now.Add(-10 * time.Minute), Valid: true}, // 15min, +5min over target
+				TargetMinutes: 10, CornerName: "코너 3",
+			},
+			{
+				ID: "visit-5", GroupID: "group-3", CornerID: "corner-3", TrackID: "track-3",
+				Status: "COMPLETED", InputMethod: "QR_SCAN",
+				StartedAt:     pgtype.Timestamptz{Time: now.Add(-40 * time.Minute), Valid: true},
+				EndedAt:       pgtype.Timestamptz{Time: now.Add(-28 * time.Minute), Valid: true}, // 12min, +2min over target
+				TargetMinutes: 10, CornerName: "코너 3",
+			},
+			{
+				ID: "visit-6", GroupID: "group-3", CornerID: "corner-3", TrackID: "track-3",
+				Status: "COMPLETED", InputMethod: "QR_SCAN",
+				StartedAt:     pgtype.Timestamptz{Time: now.Add(-10 * time.Minute), Valid: true},
+				EndedAt:       pgtype.Timestamptz{Time: now.Add(-5 * time.Minute), Valid: true}, // 5min, -5min under target
+				TargetMinutes: 10, CornerName: "코너 3",
+			},
+		}
+
+		// Act
+		report, err := calculateCampReport(campID, dbGroups, dbCorners, dbVisits)
+
+		// Assert
+		if err != nil {
+			t.Fatalf("expected no error, got %v", err)
+		}
+		if len(report.CornerReports) != 1 {
+			t.Fatalf("expected 1 corner report, got %d", len(report.CornerReports))
+		}
+		c3Report := report.CornerReports[0]
+		if c3Report.CompletedCount != 3 {
+			t.Errorf("expected corner-3 CompletedCount 3, got %d", c3Report.CompletedCount)
+		}
+		// 2 of 3 visits (visit-4, visit-5) exceeded target -> ratio 2/3.
+		wantRatio := 2.0 / 3.0
+		if c3Report.PositiveDeviationRatio != wantRatio {
+			t.Errorf("expected corner-3 PositiveDeviationRatio %f, got %f", wantRatio, c3Report.PositiveDeviationRatio)
 		}
 	})
 }

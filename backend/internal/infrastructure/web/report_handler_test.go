@@ -22,7 +22,7 @@ func (s *campRepositoryStub) Get(_ context.Context, id domain.CampID) (*domain.C
 
 func (s *campRepositoryStub) GetByRegistrationCode(_ context.Context, code string) (*domain.Camp, error) {
 	for _, camp := range s.camps {
-		if camp.RegistrationCode == code {
+		if camp.RegistrationCode() == code {
 			return camp, nil
 		}
 	}
@@ -44,11 +44,36 @@ func (s *reportQuerierSpy) QueryCampReport(_ context.Context, campID domain.Camp
 	return &usecase.CampReport{CampID: campID}, nil
 }
 
+func TestMapReportShouldMapOverDeviationRatioWhenCornerReportsProvided(t *testing.T) {
+	// Arrange
+	report := &usecase.CampReport{
+		CampID: "camp-1",
+		CornerReports: []usecase.CornerReport{
+			{CornerID: "corner-1", CornerName: "코너 1", CompletedCount: 3, PositiveDeviationRatio: 2.0 / 3.0},
+			{CornerID: "corner-2", CornerName: "코너 2", CompletedCount: 0, PositiveDeviationRatio: 0},
+		},
+	}
+
+	// Act
+	res := mapReport(report)
+
+	// Assert
+	if len(res.CornerStats) != 2 {
+		t.Fatalf("expected 2 corner stats, got %d", len(res.CornerStats))
+	}
+	if got := res.CornerStats[0].OverDeviationRatio; got != float32(2.0/3.0) {
+		t.Errorf("expected corner-1 OverDeviationRatio %f, got %f", float32(2.0/3.0), got)
+	}
+	if got := res.CornerStats[1].OverDeviationRatio; got != 0 {
+		t.Errorf("expected corner-2 OverDeviationRatio 0, got %f", got)
+	}
+}
+
 func TestGetCurrentReportShoudKeepCampScopeWhenRequestsRunConcurrently(t *testing.T) {
 	// Arrange
 	camps := &campRepositoryStub{camps: map[domain.CampID]*domain.Camp{
-		"camp-a": {ID: "camp-a", Status: domain.CampActive},
-		"camp-b": {ID: "camp-b", Status: domain.CampEnded},
+		"camp-a": domain.NewCampFromProps(domain.CampProps{ID: "camp-a", Status: domain.CampActive}),
+		"camp-b": domain.NewCampFromProps(domain.CampProps{ID: "camp-b", Status: domain.CampEnded}),
 	}}
 	querier := &reportQuerierSpy{queried: make(map[domain.CampID]int)}
 	handler := NewReportHandler(usecase.NewReportService(camps, querier), querier, camps)

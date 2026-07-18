@@ -22,7 +22,7 @@ func (r *pgAnnouncementRepository) queries(ctx context.Context) *db.Queries {
 }
 
 func (r *pgAnnouncementRepository) Save(ctx context.Context, a *domain.Announcement) error {
-	err := r.queries(ctx).SaveAnnouncement(ctx, db.SaveAnnouncementParams{ID: string(a.ID), CampID: string(a.CampID), SenderRole: string(a.SenderRole), Content: a.Content, SentAt: pgtype.Timestamptz{Time: a.SentAt, Valid: true}})
+	err := r.queries(ctx).SaveAnnouncement(ctx, db.SaveAnnouncementParams{ID: string(a.ID()), CampID: string(a.CampID()), SenderRole: string(a.SenderRole()), Content: a.Content(), SentAt: pgtype.Timestamptz{Time: a.SentAt(), Valid: true}})
 	if err != nil {
 		return errs.Wrap(ctx, err)
 	}
@@ -36,7 +36,7 @@ func (r *pgAnnouncementRepository) ListNoticeByCamp(ctx context.Context, campID 
 	}
 	result := make([]*domain.Announcement, len(rows))
 	for i, row := range rows {
-		result[i] = &domain.Announcement{ID: domain.AnnouncementID(row.ID), CampID: campID, SenderRole: domain.SenderRole(row.SenderRole), Content: row.Content, SentAt: row.SentAt.Time}
+		result[i] = domain.NewAnnouncementFromProps(domain.AnnouncementProps{ID: domain.AnnouncementID(row.ID), CampID: campID, SenderRole: domain.SenderRole(row.SenderRole), Content: row.Content, SentAt: row.SentAt.Time})
 	}
 	return result, nil
 }
