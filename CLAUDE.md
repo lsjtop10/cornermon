@@ -41,9 +41,6 @@ These constrain the contract between frontend and backend and are non-negotiable
 of which part you're working in. Implementation detail for each lives in the respective
 developer guide.
 
-- **Layered dependency direction** (backend): `domain` imports nothing external; `usecase`
-  declares ports (interfaces); `adapter`/`infrastructure` implements them and is injected at
-  startup. Business invariants live on domain methods, not the usecase layer.
 - **Authentication**: all tokens (facilitator track PIN sessions, device trust tokens, admin
   access/refresh) are **opaque tokens**, not JWT, stored as hashes. This is a finalized
   decision — do not propose JWT.
