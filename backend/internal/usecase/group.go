@@ -107,11 +107,11 @@ func (s *GroupService) RegisterBadge(
 	})
 
 	if err != nil {
-		s.recordAuditLog(ctx, "admin", "GROUP_CREATE", "", false, map[string]any{"error": err.Error()})
+		s.recordAuditLog(ctx, "admin", ActionGroupCreate, "", false, map[string]any{"error": err.Error()})
 		return nil, err
 	}
 
-	s.recordAuditLog(ctx, "admin", "GROUP_CREATE", string(groupID), true, map[string]any{"campID": string(campID), "badgeID": string(badge.ID())})
+	s.recordAuditLog(ctx, "admin", ActionGroupCreate, string(groupID), true, map[string]any{"campID": string(campID), "badgeID": string(badge.ID())})
 	return group, nil
 }
 
@@ -197,11 +197,11 @@ func (s *GroupService) ListGroupVisitDetails(ctx context.Context, groupID domain
 	return details, nil
 }
 
-func (s *GroupService) recordAuditLog(ctx context.Context, actor, action, target string, success bool, metadata map[string]any) {
+func (s *GroupService) recordAuditLog(ctx context.Context, actor string, action AuditAction, target string, success bool, metadata map[string]any) {
 	log := domain.NewAuditLog(
 		domain.AuditLogID(s.uuidFn()),
 		actor,
-		action,
+		string(action),
 		target,
 		success,
 		s.nowFn(),
