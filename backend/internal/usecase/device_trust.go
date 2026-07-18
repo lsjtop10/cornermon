@@ -51,7 +51,7 @@ func (s *DeviceTrustService) RequestRegistration(
 	if camp == nil {
 		return "", nil, domain.ErrCampNotFound
 	}
-	if !camp.IsActive() {
+	if camp.Status() == domain.CampEnded {
 		return "", nil, domain.ErrCampInvalidTransition
 	}
 	campID := camp.ID
