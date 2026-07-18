@@ -1,6 +1,9 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:device_info_plus/device_info_plus.dart';
+import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import 'package:cornermon/shared/api/domain_aliases.dart';
@@ -8,6 +11,10 @@ import 'package:cornermon/shared/api/providers/auth_device_trust_providers.dart'
 import 'package:cornermon/shared/auth/secure_token_store.dart';
 
 part 'device_trust_provider.g.dart';
+
+/// #107에서 확인된 기본값. 승인 대기 화면이 떠 있는 동안만 폴링하므로 서버 부하가
+/// 크지 않다 — 화면 전환/앱 백그라운드 시 ref.onDispose로 반드시 취소된다.
+const _pollInterval = Duration(seconds: 15);
 
 /// §2.4-b. `none`은 아직 등록 요청을 보낸 적 없는 클라이언트 로컬 상태이고,
 /// 나머지 4개는 [DeviceRegistrationStatus](서버)를 그대로 미러링한다.
@@ -26,23 +33,77 @@ DeviceTrustStatus _fromApiStatus(DeviceRegistrationCreatedStatus status) =>
       _ => DeviceTrustStatus.none,
     };
 
+DeviceTrustStatus _fromStatusResponse(DeviceStatusStatus status) =>
+    switch (status) {
+      DeviceStatusStatus.PENDING => DeviceTrustStatus.pending,
+      DeviceStatusStatus.APPROVED => DeviceTrustStatus.approved,
+      DeviceStatusStatus.REJECTED => DeviceTrustStatus.rejected,
+      DeviceStatusStatus.REVOKED => DeviceTrustStatus.revoked,
+      _ => DeviceTrustStatus.none,
+    };
+
 @riverpod
 class DeviceTrust extends _$DeviceTrust {
+  Timer? _pollTimer;
+
   @override
   Future<DeviceTrustStatus> build() async {
+    ref.onDispose(() => _pollTimer?.cancel());
+
     final store = ref.watch(secureTokenStoreProvider);
     final statusName = await store.read(_deviceStatusKey);
-    return DeviceTrustStatus.values.firstWhere(
+    final status = DeviceTrustStatus.values.firstWhere(
       (s) => s.name == statusName,
       orElse: () => DeviceTrustStatus.none,
     );
+    if (status == DeviceTrustStatus.pending) {
+      _schedulePolling();
+    }
+    return status;
   }
 
-  /// POST /device-registrations. 성공 시 PENDING 상태의 기기 신뢰 토큰을 저장한다.
-  ///
-  /// PENDING → APPROVED 전이 감지는 GET /device-registrations/me 폴링으로 가능함이
-  /// 확인됨(#107). 폴링 자체(기본 15초 간격)는 #109 이번 착수분 스코프 밖 — 별도 plan
-  /// 참고.
+  /// PENDING → APPROVED/REJECTED/REVOKED 전이를 GET /device-registrations/me
+  /// 폴링으로 감지한다(#107 확인, #109 스코프 밖으로 미뤄졌던 부분). 전이가
+  /// 감지되면 타이머를 멈추고 상태를 갱신 — 라우터의 refreshListenable이 이를 보고
+  /// 자동으로 화면을 전환한다.
+  void _schedulePolling() {
+    _pollTimer?.cancel();
+    _pollTimer = Timer.periodic(_pollInterval, (_) => _pollOnce());
+  }
+
+  Future<void> _pollOnce() async {
+    final store = ref.read(secureTokenStoreProvider);
+    final deviceToken = await store.read(_deviceTrustTokenKey);
+    if (deviceToken == null) {
+      _pollTimer?.cancel();
+      return;
+    }
+
+    try {
+      final api = ref.read(authDeviceTrustApiProvider);
+      final response = await api.deviceRegistrationsMeGet(
+        xDeviceToken: deviceToken,
+      );
+      final responseStatus = response.data?.status;
+      if (responseStatus == null) return;
+
+      final newStatus = _fromStatusResponse(responseStatus);
+      if (newStatus == DeviceTrustStatus.pending) return;
+
+      _pollTimer?.cancel();
+      await store.write(_deviceStatusKey, newStatus.name);
+      state = AsyncData(newStatus);
+    } on DioException catch (error, stackTrace) {
+      // 일시적 네트워크 오류로 폴링 자체를 멈추지 않는다 — 다음 tick에 재시도.
+      debugPrint(
+        '[device_trust] polling failed: type=${error.type} '
+        'statusCode=${error.response?.statusCode}\n$stackTrace',
+      );
+    }
+  }
+
+  /// POST /device-registrations. 성공 시 PENDING 상태의 기기 신뢰 토큰을 저장하고
+  /// APPROVED 전이 감지를 위한 폴링을 시작한다.
   Future<void> requestRegistration(
     String registrationCode, {
     required String displayName,
@@ -74,6 +135,9 @@ class DeviceTrust extends _$DeviceTrust {
     final status = _fromApiStatus(registration.status!);
     await store.write(_deviceStatusKey, status.name);
     state = AsyncData(status);
+    if (status == DeviceTrustStatus.pending) {
+      _schedulePolling();
+    }
   }
 
   static String _defaultDeviceName() =>
