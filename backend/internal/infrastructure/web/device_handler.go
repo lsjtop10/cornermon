@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"strings"
 	"time"
 
 	"cornermon/backend/internal/domain"
@@ -53,6 +54,7 @@ func NewDeviceHandler(deviceTrust DeviceTrustUsecase) *DeviceHandler {
 }
 
 type DeviceRegistrationRequest struct {
+	// 각 캠프에 유일하게 부여된 등록 코드입니다. 반드시 대문자로 작성합니다.
 	RegistrationCode string `json:"registrationCode" example:"7ZQK3M2X"`
 	DeviceName       string `json:"deviceName"`
 	DeviceModel      string `json:"deviceModel" example:"iPad Pro 11 2022"`
@@ -100,7 +102,7 @@ func (h *DeviceHandler) RequestRegistration(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: "invalid request"}).SetInternal(err)
 	}
 
-	token, reg, err := h.deviceTrust.RequestRegistration(c.Request().Context(), req.RegistrationCode, req.DeviceName, req.DeviceModel, req.DisplayName)
+	token, reg, err := h.deviceTrust.RequestRegistration(c.Request().Context(), strings.ToUpper(req.RegistrationCode), req.DeviceName, req.DeviceModel, req.DisplayName)
 	if err != nil {
 		if errors.Is(err, domain.ErrCampNotFound) {
 			return echo.NewHTTPError(http.StatusNotFound, ErrorResponse{Code: "CAMP_NOT_FOUND", Message: err.Error()}).SetInternal(err)

@@ -45,6 +45,28 @@ func TestShouldReturnActualCreatedAtWhenDeviceRegistrationRequested(t *testing.T
 	}
 }
 
+func TestShouldNormalizeRegistrationCodeWhenDeviceRegistrationRequestedWithLowercaseCode(t *testing.T) {
+	// Arrange
+	e := echo.New()
+	stub := &listDeviceTrustStub{requestedReg: domain.NewDeviceRegistrationFromProps(domain.DeviceRegistrationProps{ID: "device-1", Status: domain.DevicePending})}
+	handler := NewDeviceHandler(stub)
+	body := bytes.NewBufferString(`{"registrationCode":"7Zqk3m2x","deviceName":"iPad","deviceModel":"iPad Pro 11 2022","displayName":"1번 태블릿"}`)
+	req := httptest.NewRequest(http.MethodPost, "/device-registrations", body)
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+
+	// Act
+	err := handler.RequestRegistration(e.NewContext(req, rec))
+
+	// Assert
+	if err != nil || rec.Code != http.StatusCreated {
+		t.Fatalf("expected 201 response, code=%d err=%v", rec.Code, err)
+	}
+	if stub.registrationCode != "7ZQK3M2X" {
+		t.Fatalf("expected uppercased registration code, got %q", stub.registrationCode)
+	}
+}
+
 func TestShouldReturnNotFoundWhenRegistrationCodeDoesNotMatchAnyCamp(t *testing.T) {
 	// Arrange
 	e := echo.New()

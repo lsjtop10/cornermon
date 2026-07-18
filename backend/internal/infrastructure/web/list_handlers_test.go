@@ -15,16 +15,18 @@ import (
 )
 
 type listDeviceTrustStub struct {
-	devices         []*domain.DeviceRegistration
-	requestedReg    *domain.DeviceRegistration
-	requestErr      error
-	reviewedDevices []*domain.DeviceRegistration
+	devices          []*domain.DeviceRegistration
+	requestedReg     *domain.DeviceRegistration
+	registrationCode string
+	requestErr       error
+	reviewedDevices  []*domain.DeviceRegistration
 }
 
 func (s *listDeviceTrustStub) GetMyRegistrationStatus(context.Context, string) (*domain.DeviceRegistrationStatus, error) {
 	return nil, nil
 }
-func (s *listDeviceTrustStub) RequestRegistration(context.Context, string, string, string, string) (string, *domain.DeviceRegistration, error) {
+func (s *listDeviceTrustStub) RequestRegistration(_ context.Context, registrationCode, _, _, _ string) (string, *domain.DeviceRegistration, error) {
+	s.registrationCode = registrationCode
 	if s.requestErr != nil {
 		return "", nil, s.requestErr
 	}
