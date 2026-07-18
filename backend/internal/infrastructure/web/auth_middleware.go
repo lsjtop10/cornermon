@@ -23,12 +23,12 @@ func AdminAuthMiddleware(adminAuth AuthAdminUsecase) echo.MiddlewareFunc {
 		return func(c echo.Context) error {
 			token := extractToken(c.Request().Header.Get("Authorization"))
 			if token == "" {
-				return c.JSON(http.StatusUnauthorized, ErrorResponse{Code: "UNAUTHORIZED", Message: "missing token"})
+				return echo.NewHTTPError(http.StatusUnauthorized, ErrorResponse{Code: "UNAUTHORIZED", Message: "missing token"})
 			}
 
 			session, err := adminAuth.ValidateAccessToken(c.Request().Context(), token)
 			if err != nil {
-				return c.JSON(http.StatusUnauthorized, ErrorResponse{Code: "UNAUTHORIZED", Message: err.Error()})
+				return echo.NewHTTPError(http.StatusUnauthorized, ErrorResponse{Code: "UNAUTHORIZED", Message: err.Error()}).SetInternal(err)
 			}
 
 			c.Set("adminSession", session)
@@ -42,12 +42,12 @@ func TrackAuthMiddleware(trackAuth AuthFacilitatorUsecase) echo.MiddlewareFunc {
 		return func(c echo.Context) error {
 			token := extractToken(c.Request().Header.Get("Authorization"))
 			if token == "" {
-				return c.JSON(http.StatusUnauthorized, ErrorResponse{Code: "UNAUTHORIZED", Message: "missing token"})
+				return echo.NewHTTPError(http.StatusUnauthorized, ErrorResponse{Code: "UNAUTHORIZED", Message: "missing token"})
 			}
 
 			session, err := trackAuth.ValidateSession(c.Request().Context(), token)
 			if err != nil {
-				return c.JSON(http.StatusUnauthorized, ErrorResponse{Code: "UNAUTHORIZED", Message: err.Error()})
+				return echo.NewHTTPError(http.StatusUnauthorized, ErrorResponse{Code: "UNAUTHORIZED", Message: err.Error()}).SetInternal(err)
 			}
 
 			c.Set("facilitatorSession", session)
@@ -65,7 +65,7 @@ func MessageAuthMiddleware(adminAuth AuthAdminUsecase, trackAuth AuthFacilitator
 		return func(c echo.Context) error {
 			token := extractToken(c.Request().Header.Get("Authorization"))
 			if token == "" {
-				return c.JSON(http.StatusUnauthorized, ErrorResponse{Code: "UNAUTHORIZED", Message: "missing token"})
+				return echo.NewHTTPError(http.StatusUnauthorized, ErrorResponse{Code: "UNAUTHORIZED", Message: "missing token"})
 			}
 
 			if session, err := adminAuth.ValidateAccessToken(c.Request().Context(), token); err == nil && session != nil {
@@ -77,7 +77,7 @@ func MessageAuthMiddleware(adminAuth AuthAdminUsecase, trackAuth AuthFacilitator
 				return next(c)
 			}
 
-			return c.JSON(http.StatusUnauthorized, ErrorResponse{Code: "UNAUTHORIZED", Message: "invalid token"})
+			return echo.NewHTTPError(http.StatusUnauthorized, ErrorResponse{Code: "UNAUTHORIZED", Message: "invalid token"})
 		}
 	}
 }
