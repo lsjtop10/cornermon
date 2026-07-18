@@ -92,6 +92,12 @@ class DeviceTrust extends _$DeviceTrust {
 
       _pollTimer?.cancel();
       await store.write(_deviceStatusKey, newStatus.name);
+      if (newStatus == DeviceTrustStatus.revoked) {
+        // 회수된 기기 토큰은 즉시 폐기한다 — 재등록 시 requestRegistration이
+        // 새 토큰으로 덮어쓰므로 남겨둘 이유가 없다. 트랙 세션 말소는
+        // track_session_provider가 이 상태 전이를 직접 구독해 처리한다.
+        await store.delete(_deviceTrustTokenKey);
+      }
       state = AsyncData(newStatus);
     } on DioException catch (error, stackTrace) {
       // 일시적 네트워크 오류로 폴링 자체를 멈추지 않는다 — 다음 tick에 재시도.
