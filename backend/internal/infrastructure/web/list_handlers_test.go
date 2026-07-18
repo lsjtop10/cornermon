@@ -1,4 +1,3 @@
-
 package web
 
 import (
@@ -73,11 +72,15 @@ func TestShouldReturnLockedDeviceResponseWhenCampIDIsProvided(t *testing.T) {
 	e := echo.New()
 	lockedUntil := time.Date(2026, 7, 15, 12, 0, 0, 0, time.UTC)
 	handler := NewDeviceHandler(&listDeviceTrustStub{devices: []*domain.DeviceRegistration{domain.NewDeviceRegistrationFromProps(domain.DeviceRegistrationProps{ID: "device-1", DeviceName: "iPad", Status: domain.DeviceApproved, FailedPinAttempts: 5, LockedUntil: domain.Some(lockedUntil)})}})
-	req := httptest.NewRequest(http.MethodGet, "/device-registrations/locked?campId=camp-1", nil)
+	req := httptest.NewRequest(http.MethodGet, "/camps/camp-1/device-registrations/locked", nil)
 	rec := httptest.NewRecorder()
+	ctx := e.NewContext(req, rec)
+	ctx.SetPath("/camps/:campId/device-registrations/locked")
+	ctx.SetParamNames("campId")
+	ctx.SetParamValues("camp-1")
 
 	// Act
-	err := handler.ListLockedDevices(e.NewContext(req, rec))
+	err := handler.ListLockedDevices(ctx)
 
 	// Assert
 	if err != nil || rec.Code != http.StatusOK {
@@ -146,9 +149,9 @@ func TestShouldRejectListRequestsWhenAdminAuthenticationIsMissing(t *testing.T) 
 	admin := e.Group("")
 	admin.Use(AdminAuthMiddleware(listAdminAuthStub{}))
 	admin.GET("/auth/track/sessions", NewAuthHandler(nil, &listFacilitatorAuthStub{}, nil).ListActiveFacilitatorSessions)
-	admin.GET("/device-registrations/locked", NewDeviceHandler(&listDeviceTrustStub{}).ListLockedDevices)
+	admin.GET("/camps/:campId/device-registrations/locked", NewDeviceHandler(&listDeviceTrustStub{}).ListLockedDevices)
 
-	for _, path := range []string{"/auth/track/sessions?campId=camp-1", "/device-registrations/locked?campId=camp-1"} {
+	for _, path := range []string{"/auth/track/sessions?campId=camp-1", "/camps/camp-1/device-registrations/locked"} {
 		t.Run(path, func(t *testing.T) {
 			// Act
 			rec := httptest.NewRecorder()

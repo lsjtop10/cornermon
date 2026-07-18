@@ -55,11 +55,11 @@ func RegisterRoutes(e *echo.Echo, h *Handlers, adminAuth AuthAdminUsecase, track
 	admin.POST("/auth/track/lockout/:deviceId/release", h.Auth.ReleaseLockout)
 	admin.GET("/auth/track/sessions", h.Auth.ListActiveFacilitatorSessions)
 
-	admin.GET("/device-registrations", h.Device.ListRegistrations)
-	admin.GET("/device-registrations/locked", h.Device.ListLockedDevices)
-	admin.POST("/device-registrations/:id/approve", h.Device.ApproveDevice)
-	admin.POST("/device-registrations/:id/reject", h.Device.RejectDevice)
-	admin.POST("/device-registrations/:id/revoke", h.Device.RevokeDevice)
+	admin.GET("/camps/:campId/device-registrations", h.Device.ListRegistrations)
+	admin.GET("/camps/:campId/device-registrations/locked", h.Device.ListLockedDevices)
+	admin.POST("/camps/:campId/device-registrations/:id/approve", h.Device.ApproveDevice)
+	admin.POST("/camps/:campId/device-registrations/:id/reject", h.Device.RejectDevice)
+	admin.POST("/camps/:campId/device-registrations/:id/revoke", h.Device.RevokeDevice)
 
 	// ── B. Resource Management ──
 	if h.Camp != nil {
