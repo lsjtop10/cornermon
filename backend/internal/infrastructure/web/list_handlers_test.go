@@ -68,8 +68,8 @@ func (listAdminAuthStub) ValidateAccessToken(context.Context, string) (*domain.A
 }
 
 func TestShouldReturnLockedDeviceResponseWhenCampIDIsProvided(t *testing.T) {
-	// Arrange
 	e := echo.New()
+	e.HTTPErrorHandler = ErrorHandler()
 	lockedUntil := time.Date(2026, 7, 15, 12, 0, 0, 0, time.UTC)
 	handler := NewDeviceHandler(&listDeviceTrustStub{devices: []*domain.DeviceRegistration{domain.NewDeviceRegistrationFromProps(domain.DeviceRegistrationProps{ID: "device-1", DeviceName: "iPad", Status: domain.DeviceApproved, FailedPinAttempts: 5, LockedUntil: domain.Some(lockedUntil)})}})
 	req := httptest.NewRequest(http.MethodGet, "/camps/camp-1/device-registrations/locked", nil)
@@ -81,9 +81,12 @@ func TestShouldReturnLockedDeviceResponseWhenCampIDIsProvided(t *testing.T) {
 
 	// Act
 	err := handler.ListLockedDevices(ctx)
+	if err != nil {
+		e.HTTPErrorHandler(err, ctx)
+	}
 
 	// Assert
-	if err != nil || rec.Code != http.StatusOK {
+	if rec.Code != http.StatusOK {
 		t.Fatalf("expected 200 response, code=%d err=%v", rec.Code, err)
 	}
 	var response []DeviceRegistrationResponse
@@ -96,18 +99,22 @@ func TestShouldReturnLockedDeviceResponseWhenCampIDIsProvided(t *testing.T) {
 }
 
 func TestShouldReturnActiveSessionResponseWhenCampIDIsProvided(t *testing.T) {
-	// Arrange
 	e := echo.New()
+	e.HTTPErrorHandler = ErrorHandler()
 	createdAt := time.Date(2026, 7, 15, 10, 0, 0, 0, time.UTC)
 	handler := NewAuthHandler(nil, &listFacilitatorAuthStub{sessions: []*domain.FacilitatorSession{domain.NewFacilitatorSessionFromProps(domain.FacilitatorSessionProps{ID: "session-1", TrackID: "track-1", CreatedAt: createdAt})}}, nil)
 	req := httptest.NewRequest(http.MethodGet, "/auth/track/sessions?campId=camp-1", nil)
 	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
 
 	// Act
-	err := handler.ListActiveFacilitatorSessions(e.NewContext(req, rec))
+	err := handler.ListActiveFacilitatorSessions(c)
+	if err != nil {
+		e.HTTPErrorHandler(err, c)
+	}
 
 	// Assert
-	if err != nil || rec.Code != http.StatusOK {
+	if rec.Code != http.StatusOK {
 		t.Fatalf("expected 200 response, code=%d err=%v", rec.Code, err)
 	}
 	var response []FacilitatorSessionResponse
@@ -129,14 +136,18 @@ func TestShouldRejectListRequestsWhenCampIDIsMissing(t *testing.T) {
 		{"active sessions", NewAuthHandler(nil, &listFacilitatorAuthStub{}, nil).ListActiveFacilitatorSessions, "/auth/track/sessions"},
 	} {
 		t.Run(test.name, func(t *testing.T) {
-			// Arrange
 			e := echo.New()
+			e.HTTPErrorHandler = ErrorHandler()
 			req := httptest.NewRequest(http.MethodGet, test.path, nil)
 			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
 			// Act
-			err := test.handler(e.NewContext(req, rec))
+			err := test.handler(c)
+			if err != nil {
+				e.HTTPErrorHandler(err, c)
+			}
 			// Assert
-			if err != nil || rec.Code != http.StatusBadRequest {
+			if rec.Code != http.StatusBadRequest {
 				t.Fatalf("expected 400 response, code=%d err=%v", rec.Code, err)
 			}
 		})
@@ -144,8 +155,8 @@ func TestShouldRejectListRequestsWhenCampIDIsMissing(t *testing.T) {
 }
 
 func TestShouldRejectListRequestsWhenAdminAuthenticationIsMissing(t *testing.T) {
-	// Arrange
 	e := echo.New()
+	e.HTTPErrorHandler = ErrorHandler()
 	admin := e.Group("")
 	admin.Use(AdminAuthMiddleware(listAdminAuthStub{}))
 	admin.GET("/auth/track/sessions", NewAuthHandler(nil, &listFacilitatorAuthStub{}, nil).ListActiveFacilitatorSessions)

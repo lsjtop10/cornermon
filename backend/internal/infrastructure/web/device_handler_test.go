@@ -16,6 +16,7 @@ import (
 func TestShouldReturnActualCreatedAtWhenDeviceRegistrationRequested(t *testing.T) {
 	// Arrange
 	e := echo.New()
+	e.HTTPErrorHandler = ErrorHandler()
 	createdAt := time.Date(2026, 7, 15, 8, 0, 0, 0, time.UTC)
 	stub := &listDeviceTrustStub{requestedReg: domain.NewDeviceRegistrationFromProps(domain.DeviceRegistrationProps{ID: "device-1", Status: domain.DevicePending, CreatedAt: createdAt})}
 	handler := NewDeviceHandler(stub)
@@ -23,12 +24,16 @@ func TestShouldReturnActualCreatedAtWhenDeviceRegistrationRequested(t *testing.T
 	req := httptest.NewRequest(http.MethodPost, "/device-registrations", body)
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
 
 	// Act
-	err := handler.RequestRegistration(e.NewContext(req, rec))
+	err := handler.RequestRegistration(c)
+	if err != nil {
+		e.HTTPErrorHandler(err, c)
+	}
 
 	// Assert
-	if err != nil || rec.Code != http.StatusCreated {
+	if rec.Code != http.StatusCreated {
 		t.Fatalf("expected 201 response, code=%d err=%v", rec.Code, err)
 	}
 	var response DeviceRegistrationResponse
@@ -43,18 +48,23 @@ func TestShouldReturnActualCreatedAtWhenDeviceRegistrationRequested(t *testing.T
 func TestShouldReturnNotFoundWhenRegistrationCodeDoesNotMatchAnyCamp(t *testing.T) {
 	// Arrange
 	e := echo.New()
+	e.HTTPErrorHandler = ErrorHandler()
 	stub := &listDeviceTrustStub{requestErr: domain.ErrCampNotFound}
 	handler := NewDeviceHandler(stub)
 	body := bytes.NewBufferString(`{"registrationCode":"UNKNOWN1","deviceName":"iPad"}`)
 	req := httptest.NewRequest(http.MethodPost, "/device-registrations", body)
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
 
 	// Act
-	err := handler.RequestRegistration(e.NewContext(req, rec))
+	err := handler.RequestRegistration(c)
+	if err != nil {
+		e.HTTPErrorHandler(err, c)
+	}
 
 	// Assert
-	if err != nil || rec.Code != http.StatusNotFound {
+	if rec.Code != http.StatusNotFound {
 		t.Fatalf("expected 404 response, code=%d err=%v", rec.Code, err)
 	}
 }
@@ -62,18 +72,23 @@ func TestShouldReturnNotFoundWhenRegistrationCodeDoesNotMatchAnyCamp(t *testing.
 func TestShouldReturnBadRequestWhenCampIsNotActiveForRegistration(t *testing.T) {
 	// Arrange
 	e := echo.New()
+	e.HTTPErrorHandler = ErrorHandler()
 	stub := &listDeviceTrustStub{requestErr: domain.ErrCampInvalidTransition}
 	handler := NewDeviceHandler(stub)
 	body := bytes.NewBufferString(`{"registrationCode":"7ZQK3M2X","deviceName":"iPad"}`)
 	req := httptest.NewRequest(http.MethodPost, "/device-registrations", body)
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
 
 	// Act
-	err := handler.RequestRegistration(e.NewContext(req, rec))
+	err := handler.RequestRegistration(c)
+	if err != nil {
+		e.HTTPErrorHandler(err, c)
+	}
 
 	// Assert
-	if err != nil || rec.Code != http.StatusBadRequest {
+	if rec.Code != http.StatusBadRequest {
 		t.Fatalf("expected 400 response, code=%d err=%v", rec.Code, err)
 	}
 }
@@ -81,6 +96,7 @@ func TestShouldReturnBadRequestWhenCampIsNotActiveForRegistration(t *testing.T) 
 func TestShouldReturnActualCreatedAtWhenListingRegistrations(t *testing.T) {
 	// Arrange
 	e := echo.New()
+	e.HTTPErrorHandler = ErrorHandler()
 	createdAt := time.Date(2026, 7, 14, 9, 0, 0, 0, time.UTC)
 	stub := &listDeviceTrustStub{reviewedDevices: []*domain.DeviceRegistration{domain.NewDeviceRegistrationFromProps(domain.DeviceRegistrationProps{ID: "device-1", Status: domain.DevicePending, CreatedAt: createdAt})}}
 	handler := NewDeviceHandler(stub)
@@ -93,9 +109,12 @@ func TestShouldReturnActualCreatedAtWhenListingRegistrations(t *testing.T) {
 
 	// Act
 	err := handler.ListRegistrations(ctx)
+	if err != nil {
+		e.HTTPErrorHandler(err, ctx)
+	}
 
 	// Assert
-	if err != nil || rec.Code != http.StatusOK {
+	if rec.Code != http.StatusOK {
 		t.Fatalf("expected 200 response, code=%d err=%v", rec.Code, err)
 	}
 	var response []DeviceRegistrationResponse
