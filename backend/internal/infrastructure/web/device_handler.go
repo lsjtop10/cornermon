@@ -137,10 +137,13 @@ func (h *DeviceHandler) RequestRegistration(c echo.Context) error {
 // @Tags         A. Auth & Device Trust
 // @Security     AdminAuth
 // @Produce      json
+// @Param        campId path string true "캠프 ID"
+// @Param        status query string false "기기 등록 상태"
 // @Success      200 {array} DeviceRegistrationResponse
-// @Router       /device-registrations [get]
+// @Failure      400 {object} ErrorResponse
+// @Router       /camps/{campId}/device-registrations [get]
 func (h *DeviceHandler) ListRegistrations(c echo.Context) error {
-	campID := c.QueryParam("campId")
+	campID := c.Param("campId")
 	if campID == "" {
 		return c.JSON(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: "missing campId"})
 	}
@@ -190,12 +193,12 @@ func (h *DeviceHandler) ListRegistrations(c echo.Context) error {
 // @Tags         A. Auth & Device Trust
 // @Security     AdminAuth
 // @Produce      json
-// @Param        campId query string true "캠프 ID"
+// @Param        campId path string true "캠프 ID"
 // @Success      200 {array} DeviceRegistrationResponse
 // @Failure      400 {object} ErrorResponse
-// @Router       /device-registrations/locked [get]
+// @Router       /camps/{campId}/device-registrations/locked [get]
 func (h *DeviceHandler) ListLockedDevices(c echo.Context) error {
-	campID := c.QueryParam("campId")
+	campID := c.Param("campId")
 	if campID == "" {
 		return c.JSON(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: "missing campId"})
 	}
@@ -226,9 +229,10 @@ func mapDeviceRegistration(device *domain.DeviceRegistration) DeviceRegistration
 // @Tags         A. Auth & Device Trust
 // @Security     AdminAuth
 // @Produce      json
+// @Param        campId path string true "캠프 ID"
 // @Param        id path string true "기기 등록 ID"
 // @Success      200 {object} DeviceRegistrationResponse
-// @Router       /device-registrations/{id}/approve [post]
+// @Router       /camps/{campId}/device-registrations/{id}/approve [post]
 func (h *DeviceHandler) ApproveDevice(c echo.Context) error {
 	session, ok := c.Get("adminSession").(*domain.AdminSession)
 	if !ok {
@@ -249,9 +253,10 @@ func (h *DeviceHandler) ApproveDevice(c echo.Context) error {
 // @Tags         A. Auth & Device Trust
 // @Security     AdminAuth
 // @Produce      json
+// @Param        campId path string true "캠프 ID"
 // @Param        id path string true "기기 등록 ID"
 // @Success      200 {object} DeviceRegistrationResponse
-// @Router       /device-registrations/{id}/reject [post]
+// @Router       /camps/{campId}/device-registrations/{id}/reject [post]
 func (h *DeviceHandler) RejectDevice(c echo.Context) error {
 	session, ok := c.Get("adminSession").(*domain.AdminSession)
 	if !ok {
@@ -272,9 +277,10 @@ func (h *DeviceHandler) RejectDevice(c echo.Context) error {
 // @Tags         A. Auth & Device Trust
 // @Security     AdminAuth
 // @Produce      json
+// @Param        campId path string true "캠프 ID"
 // @Param        id path string true "기기 등록 ID"
 // @Success      200 {object} DeviceRegistrationResponse
-// @Router       /device-registrations/{id}/revoke [post]
+// @Router       /camps/{campId}/device-registrations/{id}/revoke [post]
 func (h *DeviceHandler) RevokeDevice(c echo.Context) error {
 	session, ok := c.Get("adminSession").(*domain.AdminSession)
 	if !ok {

@@ -1,4 +1,3 @@
-
 package web
 
 import (
@@ -105,5 +104,25 @@ func TestListBroadcastsRouteShoudRejectRequestWithoutSession(t *testing.T) {
 	// Assert
 	if rec.Code != http.StatusUnauthorized {
 		t.Fatalf("expected status 401, got %d: %s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestDeviceRegistrationRoutesShouldBeScopedToCamp(t *testing.T) {
+	// Arrange
+	e := echo.New()
+	RegisterRoutes(e, &Handlers{Auth: &AuthHandler{}, Device: &DeviceHandler{}}, adminAuthForMessageRoutes{}, trackAuthForMessageRoutes{})
+
+	// Act
+	routes := make(map[string]bool)
+	for _, route := range e.Routes() {
+		routes[route.Method+" "+route.Path] = true
+	}
+
+	// Assert
+	if !routes[http.MethodGet+" /api/v1/camps/:campId/device-registrations"] {
+		t.Fatal("expected camp-scoped device registration route to be registered")
+	}
+	if routes[http.MethodGet+" /api/v1/device-registrations"] {
+		t.Fatal("expected legacy device registration route to be absent")
 	}
 }
