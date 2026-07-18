@@ -1,3 +1,4 @@
+// @dart=2.18
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // @dart=2.18
 
@@ -89,6 +90,8 @@ class _$DeviceRegistrationResponse extends DeviceRegistrationResponse {
   @override
   final DateTime? approvedAt;
   @override
+  final String? campId;
+  @override
   final DateTime? createdAt;
   @override
   final String? deviceModel;
@@ -111,6 +114,7 @@ class _$DeviceRegistrationResponse extends DeviceRegistrationResponse {
 
   _$DeviceRegistrationResponse._(
       {this.approvedAt,
+      this.campId,
       this.createdAt,
       this.deviceModel,
       this.deviceName,
@@ -134,6 +138,7 @@ class _$DeviceRegistrationResponse extends DeviceRegistrationResponse {
     if (identical(other, this)) return true;
     return other is DeviceRegistrationResponse &&
         approvedAt == other.approvedAt &&
+        campId == other.campId &&
         createdAt == other.createdAt &&
         deviceModel == other.deviceModel &&
         deviceName == other.deviceName &&
@@ -148,6 +153,7 @@ class _$DeviceRegistrationResponse extends DeviceRegistrationResponse {
   int get hashCode {
     var _$hash = 0;
     _$hash = $jc(_$hash, approvedAt.hashCode);
+    _$hash = $jc(_$hash, campId.hashCode);
     _$hash = $jc(_$hash, createdAt.hashCode);
     _$hash = $jc(_$hash, deviceModel.hashCode);
     _$hash = $jc(_$hash, deviceName.hashCode);
@@ -164,6 +170,7 @@ class _$DeviceRegistrationResponse extends DeviceRegistrationResponse {
   String toString() {
     return (newBuiltValueToStringHelper(r'DeviceRegistrationResponse')
           ..add('approvedAt', approvedAt)
+          ..add('campId', campId)
           ..add('createdAt', createdAt)
           ..add('deviceModel', deviceModel)
           ..add('deviceName', deviceName)
@@ -184,6 +191,10 @@ class DeviceRegistrationResponseBuilder
   DateTime? _approvedAt;
   DateTime? get approvedAt => _$this._approvedAt;
   set approvedAt(DateTime? approvedAt) => _$this._approvedAt = approvedAt;
+
+  String? _campId;
+  String? get campId => _$this._campId;
+  set campId(String? campId) => _$this._campId = campId;
 
   DateTime? _createdAt;
   DateTime? get createdAt => _$this._createdAt;
@@ -227,6 +238,7 @@ class DeviceRegistrationResponseBuilder
     final $v = _$v;
     if ($v != null) {
       _approvedAt = $v.approvedAt;
+      _campId = $v.campId;
       _createdAt = $v.createdAt;
       _deviceModel = $v.deviceModel;
       _deviceName = $v.deviceName;
@@ -257,6 +269,7 @@ class DeviceRegistrationResponseBuilder
     final _$result = _$v ??
         _$DeviceRegistrationResponse._(
           approvedAt: approvedAt,
+          campId: campId,
           createdAt: createdAt,
           deviceModel: deviceModel,
           deviceName: deviceName,

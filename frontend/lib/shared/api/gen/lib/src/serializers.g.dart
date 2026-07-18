@@ -1,3 +1,4 @@
+// @dart=2.18
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // @dart=2.18
 
@@ -16,6 +17,7 @@ Serializers _$serializers = (Serializers().toBuilder()
       ..add(AssignBadgeRequest.serializer)
       ..add(AuditLogPageResponse.serializer)
       ..add(AuditLogResponse.serializer)
+      ..add(AuditLogResponseActionEnum.serializer)
       ..add(BadgeResponse.serializer)
       ..add(BadgeResponseStatusEnum.serializer)
       ..add(BottleneckRankingResponse.serializer)
