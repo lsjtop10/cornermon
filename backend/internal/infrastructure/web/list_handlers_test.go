@@ -20,10 +20,14 @@ type listDeviceTrustStub struct {
 	registrationCode string
 	requestErr       error
 	reviewedDevices  []*domain.DeviceRegistration
+	myRegistration   *domain.DeviceRegistration
+	statusErr        error
+	deviceToken      string
 }
 
-func (s *listDeviceTrustStub) GetMyRegistrationStatus(context.Context, string) (*domain.DeviceRegistrationStatus, error) {
-	return nil, nil
+func (s *listDeviceTrustStub) GetMyRegistrationStatus(_ context.Context, deviceToken string) (*domain.DeviceRegistration, error) {
+	s.deviceToken = deviceToken
+	return s.myRegistration, s.statusErr
 }
 func (s *listDeviceTrustStub) RequestRegistration(_ context.Context, registrationCode, _, _, _ string) (string, *domain.DeviceRegistration, error) {
 	s.registrationCode = registrationCode
