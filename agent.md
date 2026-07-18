@@ -1,6 +1,11 @@
-# agent.md
+# CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+Part-specific implementation patterns (commands, layer structure, known pitfalls) live in
+each part's developer guide — **read the relevant one before working there**:
+- `backend/docs/DEVELOPER_GUIDE.md`
+- `frontend/docs/DEVELOPER_GUIDE.md`
 
 ## Workflow Rules
 
@@ -8,6 +13,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `workflow/implement.md` — implementation constraints
 - `workflow/plan.md` — plan document format and guidelines
 - `workflow/Collaborate.md` — API change protocol
+- `workflow/pr.md` — PR/commit conventions
 - `workflow/repo.md` — monorepo management rules
 
 **After finishing**, verify nothing violates the workflow guidelines.
@@ -16,94 +22,32 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ---
 
-## Commands
-
-### Backend (Go)
-
-```bash
-cd backend
-
-# Run all tests
-go test ./...
-
-# Run tests for a single package
-go test ./internal/domain/...
-
-# Run a single test
-go test ./internal/domain/... -run TestCampActivate
-
-# Run the server
-go run ./cmd/server/main.go
-
-# Format
-gofmt -w .
-
-# Vet
-go vet ./...
-```
-
-No Makefile exists yet — `make gen`, `make dev-server`, `make dev-app` are planned but not implemented.
-
----
-
-## Architecture
-
-### Monorepo Structure
+## Monorepo Structure
 
 ```
 /api/               # OpenAPI 3.0 contract (source of truth for REST API)
-/backend/           # Go backend
-/docs/              # Domain model, technical design, screen specs
+/backend/           # Go backend (see backend/docs/DEVELOPER_GUIDE.md)
+/frontend/          # Flutter app, two entry points: lib/main_admin.dart, lib/main_facilitator.dart
+                     # (see frontend/docs/DEVELOPER_GUIDE.md)
+/docs/               # Domain model, technical design, screen specs
 /workflow/          # Process guidelines (must read before working)
 ```
 
-The frontend (Flutter) directory is not yet created. Per `docs/technical-design.md §0-d`, it will use a single Flutter project with two entry points (`lib/main_admin.dart`, `lib/main_facilitator.dart`).
+---
 
-### Backend Package Layout
+## Global Architecture Principles
 
-```
-backend/
-  cmd/server/main.go
-  internal/
-    domain/         # Pure Go structs + business rules. NO external imports.
-    usecase/        # Application services. Defines ports (interfaces) here.
-    adapter/
-      postgres/     # Repository implementations
-      http/         # REST handlers
-      sse/          # SSE broadcaster (Broadcaster interface impl)
-```
+These constrain the contract between frontend and backend and are non-negotiable regardless
+of which part you're working in. Implementation detail for each lives in the respective
+developer guide.
 
-**Two non-negotiable architecture rules** (`docs/technical-design.md §1.1`):
-1. `domain` package imports nothing external — pure Go types and methods only.
-2. Dependency inversion: `domain`/`usecase` declare interfaces; `adapter` provides implementations injected at startup.
-
-### Domain Layer Pattern
-
-Business invariants are enforced by domain methods, not the usecase layer. The usecase layer owns transaction boundaries and persistence orchestration.
-
-```go
-// Business rule enforcement lives on the struct method
-func (t *Track) StartVisit(group GroupID, now time.Time, method InputMethod) (*Visit, error)
-
-// Usecase owns: begin tx → call domain method → persist → commit → broadcast
-```
-
-All domain sentinel errors are in `backend/internal/domain/errors.go`. Use `errors.Is()` for error checking — do not add string-matching error checks.
-
-### SSE Real-time Push
-
-- State changes → `usecase` emits domain event → `adapter/sse.Broadcaster` pushes to connected clients.
-- **Broadcast only after commit** — never before. Rolled-back changes must never reach clients.
-- Events carry full snapshots (not deltas). On (re)connect, server immediately sends current full state.
-- Clients handle reconnect = resync. Server does stateless broadcast only.
-
-### Authentication
-
-All tokens (facilitator track PIN sessions, device trust tokens, admin access/refresh tokens) are **opaque tokens** (not JWT). Stored as hashes in DB. This is a finalized decision — do not propose JWT.
-
-### API Change Protocol
-
-Per `workflow/Collaborate.md`: frontend opens a PR first, then backend implements and **must update `api/openapi.yaml`** before merging.
+- **Authentication**: all tokens (facilitator track PIN sessions, device trust tokens, admin
+  access/refresh) are **opaque tokens**, not JWT, stored as hashes. This is a finalized
+  decision — do not propose JWT.
+- **SSE real-time push**: broadcast only after commit (rolled-back changes must never reach
+  clients); events carry full snapshots, never deltas; clients treat reconnect as resync.
+- **API Change Protocol**: per `workflow/Collaborate.md`, frontend opens a PR first, then
+  backend implements and **must update `api/openapi.yaml`** before merging.
 
 ---
 
@@ -122,22 +66,10 @@ Per `workflow/Collaborate.md`: frontend opens a PR first, then backend implement
 Naming in code must map 1:1 to these ubiquitous language terms (`workflow/implement.md`).
 
 ---
-
-## Planning
-
-Plans go in:
-- `docs/artifacts/plan/` — cross-cutting work
-- `backend/docs/artifacts/plan/` — backend-only work
-- `frontend/docs/artifacts/plan/` — frontend-only work
-
-Filename format: `[작업요약]_plan_[YYYYMMDD].md`
-
-Plans must lead with use cases (P0/P1/P2), include object definitions + method signatures (not implementation bodies), and end with a verification checklist. See `workflow/plan.md` for the full template.
-
 ## scope of work
 
 사용자가 명시하지 않는 이상 백엔드 작업은 백엔드 폴더만 프론트엔드 작업은 프론트엔드 폴더만 수정합니다.
 
-## 컨텍스트 백업 생활화
+## 보고 필수
 
-- 작업 현황, 중요한 결정 등을 백업하는 임시 파일 생성 및 업데이트를 생활화합니다.
+작업을 시작하기 전 혹은 중간 과정을 사용자에게 간단히 브리핑합니다.
