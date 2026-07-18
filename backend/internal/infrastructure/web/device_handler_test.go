@@ -1,4 +1,3 @@
-
 package web
 
 import (
@@ -85,11 +84,15 @@ func TestShouldReturnActualCreatedAtWhenListingRegistrations(t *testing.T) {
 	createdAt := time.Date(2026, 7, 14, 9, 0, 0, 0, time.UTC)
 	stub := &listDeviceTrustStub{reviewedDevices: []*domain.DeviceRegistration{domain.NewDeviceRegistrationFromProps(domain.DeviceRegistrationProps{ID: "device-1", Status: domain.DevicePending, CreatedAt: createdAt})}}
 	handler := NewDeviceHandler(stub)
-	req := httptest.NewRequest(http.MethodGet, "/device-registrations?campId=camp-1", nil)
+	req := httptest.NewRequest(http.MethodGet, "/camps/camp-1/device-registrations", nil)
 	rec := httptest.NewRecorder()
+	ctx := e.NewContext(req, rec)
+	ctx.SetPath("/camps/:campId/device-registrations")
+	ctx.SetParamNames("campId")
+	ctx.SetParamValues("camp-1")
 
 	// Act
-	err := handler.ListRegistrations(e.NewContext(req, rec))
+	err := handler.ListRegistrations(ctx)
 
 	// Assert
 	if err != nil || rec.Code != http.StatusOK {
