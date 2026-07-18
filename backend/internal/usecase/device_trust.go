@@ -94,7 +94,7 @@ func (s *DeviceTrustService) RequestRegistration(
 func (s *DeviceTrustService) GetMyRegistrationStatus(
 	ctx context.Context,
 	deviceToken string,
-) (*domain.DeviceRegistrationStatus, error) {
+) (*domain.DeviceRegistration, error) {
 	deviceTokenHash := hashSHA256(deviceToken)
 	device, err := s.devices.GetByTokenHash(ctx, deviceTokenHash)
 	if err != nil {
@@ -103,8 +103,7 @@ func (s *DeviceTrustService) GetMyRegistrationStatus(
 	if device == nil {
 		return nil, domain.ErrDeviceNotApproved // 혹은 NotFound 처리
 	}
-	status := device.Status()
-	return &status, nil
+	return device, nil
 }
 
 // ApproveDevice - UC-14 (승인)

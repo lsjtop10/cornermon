@@ -1948,7 +1948,7 @@ const docTemplate = `{
         },
         "/device-registrations/me": {
             "get": {
-                "description": "미승인(PENDING) 기기가 자신의 승인 상태를 확인하기 위해 호출한다.",
+                "description": "기기 등록 시 발급받은 opaque device token을 X-Device-Token 헤더에 넣어, 해당 기기의 승인 상태와 식별자를 조회한다. PENDING 상태에서도 호출할 수 있다.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1959,6 +1959,15 @@ const docTemplate = `{
                     "A. Auth \u0026 Device Trust"
                 ],
                 "summary": "내 기기 등록 상태 자체 조회",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "기기 등록 토큰 (opaque token, POST /device-registrations 응답의 deviceToken 값)",
+                        "name": "X-Device-Token",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -3365,6 +3374,10 @@ const docTemplate = `{
                     "type": "string",
                     "format": "date-time"
                 },
+                "campId": {
+                    "type": "string",
+                    "format": "uuid"
+                },
                 "createdAt": {
                     "type": "string",
                     "format": "date-time"
@@ -3422,6 +3435,7 @@ const docTemplate = `{
                     "example": "1번 태블릿"
                 },
                 "registrationCode": {
+                    "description": "각 캠프에 유일하게 부여된 등록 코드입니다. 반드시 대문자로 작성합니다.",
                     "type": "string",
                     "example": "7ZQK3M2X"
                 },
@@ -3440,6 +3454,10 @@ const docTemplate = `{
                 "approvedAt": {
                     "type": "string",
                     "format": "date-time"
+                },
+                "campId": {
+                    "type": "string",
+                    "format": "uuid"
                 },
                 "createdAt": {
                     "type": "string",
@@ -3482,6 +3500,14 @@ const docTemplate = `{
         "DeviceStatusResponse": {
             "type": "object",
             "properties": {
+                "campId": {
+                    "type": "string",
+                    "format": "uuid"
+                },
+                "id": {
+                    "type": "string",
+                    "format": "uuid"
+                },
                 "status": {
                     "type": "string",
                     "enum": [

@@ -78,7 +78,7 @@ func TestDeviceTrustService_RequestRegistration(t *testing.T) {
 		}
 	})
 
-	t.Run("ShouldReturnInvalidTransitionWhenCampIsNotActive", func(t *testing.T) {
+	t.Run("ShouldCreatePendingRegistrationWhenCampIsPending", func(t *testing.T) {
 		// Arrange
 		camps := NewMockCampRepository()
 		camp := domain.NewCampFromProps(domain.CampProps{ID: "camp-1", RegistrationCode: "REGCODE1", Status: domain.CampPending})
@@ -92,11 +92,14 @@ func TestDeviceTrustService_RequestRegistration(t *testing.T) {
 		s := NewDeviceTrustService(camps, devices, auditLogs, broadcaster, tx)
 
 		// Act
-		_, _, err := s.RequestRegistration(context.Background(), "REGCODE1", "iPad-1", "iPad Pro", "1번 태블릿")
+		_, registration, err := s.RequestRegistration(context.Background(), "REGCODE1", "iPad-1", "iPad Pro", "1번 태블릿")
 
 		// Assert
-		if err != domain.ErrCampInvalidTransition {
-			t.Fatalf("expected ErrCampInvalidTransition, got %v", err)
+		if err != nil {
+			t.Fatalf("expected no error, got %v", err)
+		}
+		if registration == nil || registration.Status() != domain.DevicePending {
+			t.Fatalf("expected pending registration, got %+v", registration)
 		}
 	})
 }
@@ -166,17 +169,17 @@ func TestDeviceTrustService_GetMyRegistrationStatus(t *testing.T) {
 		}
 
 		// Act
-		status, err := s.GetMyRegistrationStatus(context.Background(), plainToken)
+		registration, err := s.GetMyRegistrationStatus(context.Background(), plainToken)
 
 		// Assert
 		if err != nil {
 			t.Fatalf("expected no error, got %v", err)
 		}
-		if status == nil {
-			t.Fatalf("expected status to be not nil")
+		if registration == nil {
+			t.Fatalf("expected registration to be not nil")
 		}
-		if *status != domain.DevicePending {
-			t.Errorf("expected status 'PENDING', got %s", *status)
+		if registration.ID() != "device-uuid" || registration.CampID() != "camp-1" || registration.Status() != domain.DevicePending {
+			t.Errorf("expected pending registration identity, got id=%s campId=%s status=%s", registration.ID(), registration.CampID(), registration.Status())
 		}
 	})
 }
