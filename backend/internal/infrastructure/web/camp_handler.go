@@ -117,7 +117,7 @@ func mapDomainCampToDTO(camp *domain.Camp) CampResponse {
 func (h *CampHandler) ListCamps(c echo.Context) error {
 	camps, err := h.svc.ListCamps(c.Request().Context())
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_ERROR", Message: err.Error()})
+		return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_ERROR", Message: err.Error()}).SetInternal(err)
 	}
 	res := make([]CampResponse, len(camps))
 	for i, cp := range camps {
@@ -146,14 +146,14 @@ type CreateCampRequest struct {
 func (h *CampHandler) CreateCamp(c echo.Context) error {
 	var req CreateCampRequest
 	if err := c.Bind(&req); err != nil {
-		return c.JSON(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: "Invalid request body"})
+		return echo.NewHTTPError(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: "Invalid request body"}).SetInternal(err)
 	}
 	camp, err := h.svc.OpenNewCamp(c.Request().Context(), req.Name, req.StartAt, req.EndAt)
 	if err != nil {
 		if err == domain.ErrCampInvalidSettings {
-			return c.JSON(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: err.Error()})
+			return echo.NewHTTPError(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: err.Error()}).SetInternal(err)
 		}
-		return c.JSON(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_ERROR", Message: err.Error()})
+		return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_ERROR", Message: err.Error()}).SetInternal(err)
 	}
 	return c.JSON(http.StatusCreated, mapDomainCampToDTO(camp))
 }
@@ -171,10 +171,10 @@ func (h *CampHandler) GetCamp(c echo.Context) error {
 	id := domain.CampID(c.Param("id"))
 	camp, err := h.svc.GetCamp(c.Request().Context(), id)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_ERROR", Message: err.Error()})
+		return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_ERROR", Message: err.Error()}).SetInternal(err)
 	}
 	if camp == nil {
-		return c.JSON(http.StatusNotFound, ErrorResponse{Code: "NOT_FOUND", Message: "Camp not found"})
+		return echo.NewHTTPError(http.StatusNotFound, ErrorResponse{Code: "NOT_FOUND", Message: "Camp not found"})
 	}
 	return c.JSON(http.StatusOK, mapDomainCampToDTO(camp))
 }
@@ -195,9 +195,9 @@ func (h *CampHandler) StartCamp(c echo.Context) error {
 	err := h.svc.ActivateCamp(c.Request().Context(), id, adminID)
 	if err != nil {
 		if err == domain.ErrCampInvalidTransition {
-			return c.JSON(http.StatusConflict, ErrorResponse{Code: "CONFLICT", Message: err.Error()})
+			return echo.NewHTTPError(http.StatusConflict, ErrorResponse{Code: "CONFLICT", Message: err.Error()}).SetInternal(err)
 		}
-		return c.JSON(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_ERROR", Message: err.Error()})
+		return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_ERROR", Message: err.Error()}).SetInternal(err)
 	}
 	camp, _ := h.svc.GetCamp(c.Request().Context(), id)
 	return c.JSON(http.StatusOK, mapDomainCampToDTO(camp))
@@ -219,9 +219,9 @@ func (h *CampHandler) EndCamp(c echo.Context) error {
 	err := h.svc.EndCamp(c.Request().Context(), id, adminID)
 	if err != nil {
 		if err == domain.ErrCampInvalidTransition {
-			return c.JSON(http.StatusConflict, ErrorResponse{Code: "CONFLICT", Message: err.Error()})
+			return echo.NewHTTPError(http.StatusConflict, ErrorResponse{Code: "CONFLICT", Message: err.Error()}).SetInternal(err)
 		}
-		return c.JSON(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_ERROR", Message: err.Error()})
+		return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_ERROR", Message: err.Error()}).SetInternal(err)
 	}
 	camp, _ := h.svc.GetCamp(c.Request().Context(), id)
 	return c.JSON(http.StatusOK, mapDomainCampToDTO(camp))

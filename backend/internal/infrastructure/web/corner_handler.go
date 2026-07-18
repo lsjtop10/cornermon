@@ -80,11 +80,11 @@ func mapDomainCornerToDTO(corner *domain.Corner) CornerResponse {
 func (h *CornerHandler) ListCorners(c echo.Context) error {
 	campID := domain.CampID(c.Param("campId"))
 	if campID == "" {
-		return c.JSON(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: "campId is required"})
+		return echo.NewHTTPError(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: "campId is required"})
 	}
 	views, err := h.views.ListCornerViewsByCamp(c.Request().Context(), campID)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_ERROR", Message: err.Error()})
+		return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_ERROR", Message: err.Error()}).SetInternal(err)
 	}
 	res := make([]CornerResponse, len(views))
 	for i, view := range views {
@@ -113,11 +113,11 @@ type CreateCornerRequest struct {
 func (h *CornerHandler) CreateCorner(c echo.Context) error {
 	var req CreateCornerRequest
 	if err := c.Bind(&req); err != nil {
-		return c.JSON(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: "Invalid request body"})
+		return echo.NewHTTPError(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: "Invalid request body"}).SetInternal(err)
 	}
 	corner, err := h.svc.AddLearningCorner(c.Request().Context(), domain.CampID(req.CampID), req.Name)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_ERROR", Message: err.Error()})
+		return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_ERROR", Message: err.Error()}).SetInternal(err)
 	}
 	return c.JSON(http.StatusCreated, mapDomainCornerToDTO(corner))
 }
@@ -157,7 +157,7 @@ func (h *CornerHandler) DeleteCorner(c echo.Context) error {
 	id := domain.CornerID(c.Param("id"))
 	err := h.svc.RemoveCornerFromCamp(c.Request().Context(), id)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_ERROR", Message: err.Error()})
+		return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_ERROR", Message: err.Error()}).SetInternal(err)
 	}
 	return c.NoContent(http.StatusNoContent)
 }
@@ -184,13 +184,13 @@ type BulkUpdateCornersRequest struct {
 func (h *CornerHandler) BulkUpdateCorners(c echo.Context) error {
 	var req BulkUpdateCornersRequest
 	if err := c.Bind(&req); err != nil {
-		return c.JSON(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: "Invalid request body"})
+		return echo.NewHTTPError(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: "Invalid request body"}).SetInternal(err)
 	}
 	res := make([]CornerResponse, len(req.Corners))
 	for i, cr := range req.Corners {
 		updated, err := h.svc.ModifyCornerSpecification(c.Request().Context(), domain.CornerID(cr.ID), cr.Name)
 		if err != nil {
-			return c.JSON(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_ERROR", Message: err.Error()})
+			return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_ERROR", Message: err.Error()}).SetInternal(err)
 		}
 		res[i] = mapDomainCornerToDTO(updated)
 	}
