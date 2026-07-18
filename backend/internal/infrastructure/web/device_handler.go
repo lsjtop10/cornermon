@@ -72,15 +72,15 @@ type DeviceRegistrationRequest struct {
 func (h *DeviceHandler) GetMyRegistrationStatus(c echo.Context) error {
 	token := extractToken(c.Request().Header.Get("Authorization"))
 	if token == "" {
-		return c.JSON(http.StatusUnauthorized, ErrorResponse{Code: "UNAUTHORIZED", Message: "missing token"})
+		return echo.NewHTTPError(http.StatusUnauthorized, ErrorResponse{Code: "UNAUTHORIZED", Message: "missing token"})
 	}
 
 	status, err := h.deviceTrust.GetMyRegistrationStatus(c.Request().Context(), token)
 	if err != nil {
 		if err == domain.ErrDeviceNotApproved {
-			return c.JSON(http.StatusUnauthorized, ErrorResponse{Code: "UNAUTHORIZED", Message: err.Error()})
+			return echo.NewHTTPError(http.StatusUnauthorized, ErrorResponse{Code: "UNAUTHORIZED", Message: err.Error()}).SetInternal(err)
 		}
-		return c.JSON(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_ERROR", Message: err.Error()})
+		return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_ERROR", Message: err.Error()}).SetInternal(err)
 	}
 
 	return c.JSON(http.StatusOK, DeviceStatusResponse{
@@ -99,18 +99,18 @@ func (h *DeviceHandler) GetMyRegistrationStatus(c echo.Context) error {
 func (h *DeviceHandler) RequestRegistration(c echo.Context) error {
 	var req DeviceRegistrationRequest
 	if err := c.Bind(&req); err != nil {
-		return c.JSON(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: "invalid request"})
+		return echo.NewHTTPError(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: "invalid request"}).SetInternal(err)
 	}
 
 	token, reg, err := h.deviceTrust.RequestRegistration(c.Request().Context(), strings.ToUpper(req.RegistrationCode), req.DeviceName, req.DeviceModel, req.DisplayName)
 	if err != nil {
 		if errors.Is(err, domain.ErrCampNotFound) {
-			return c.JSON(http.StatusNotFound, ErrorResponse{Code: "CAMP_NOT_FOUND", Message: err.Error()})
+			return echo.NewHTTPError(http.StatusNotFound, ErrorResponse{Code: "CAMP_NOT_FOUND", Message: err.Error()}).SetInternal(err)
 		}
 		if errors.Is(err, domain.ErrCampInvalidTransition) {
-			return c.JSON(http.StatusBadRequest, ErrorResponse{Code: "INVALID_TRANSITION", Message: err.Error()})
+			return echo.NewHTTPError(http.StatusBadRequest, ErrorResponse{Code: "INVALID_TRANSITION", Message: err.Error()}).SetInternal(err)
 		}
-		return c.JSON(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()})
+		return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()}).SetInternal(err)
 	}
 
 	var approvedAt *time.Time
@@ -147,7 +147,7 @@ func (h *DeviceHandler) RequestRegistration(c echo.Context) error {
 func (h *DeviceHandler) ListRegistrations(c echo.Context) error {
 	campID := c.Param("campId")
 	if campID == "" {
-		return c.JSON(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: "missing campId"})
+		return echo.NewHTTPError(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: "missing campId"})
 	}
 
 	statusStr := c.QueryParam("status")
@@ -159,7 +159,7 @@ func (h *DeviceHandler) ListRegistrations(c echo.Context) error {
 
 	devices, err := h.deviceTrust.ReviewDeviceTrustRequests(c.Request().Context(), domain.CampID(campID), statusPtr)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()})
+		return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()}).SetInternal(err)
 	}
 
 	res := make([]DeviceRegistrationResponse, len(devices))
@@ -202,11 +202,11 @@ func (h *DeviceHandler) ListRegistrations(c echo.Context) error {
 func (h *DeviceHandler) ListLockedDevices(c echo.Context) error {
 	campID := c.Param("campId")
 	if campID == "" {
-		return c.JSON(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: "missing campId"})
+		return echo.NewHTTPError(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: "missing campId"})
 	}
 	devices, err := h.deviceTrust.ListLockedDevices(c.Request().Context(), domain.CampID(campID))
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()})
+		return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()}).SetInternal(err)
 	}
 	res := make([]DeviceRegistrationResponse, len(devices))
 	for i, device := range devices {
@@ -238,13 +238,13 @@ func mapDeviceRegistration(device *domain.DeviceRegistration) DeviceRegistration
 func (h *DeviceHandler) ApproveDevice(c echo.Context) error {
 	session, ok := c.Get("adminSession").(*domain.AdminSession)
 	if !ok {
-		return c.JSON(http.StatusUnauthorized, ErrorResponse{Code: "UNAUTHORIZED", Message: "unauthorized"})
+		return echo.NewHTTPError(http.StatusUnauthorized, ErrorResponse{Code: "UNAUTHORIZED", Message: "unauthorized"})
 	}
 	regID := domain.DeviceRegistrationID(c.Param("id"))
 
 	err := h.deviceTrust.ApproveDevice(c.Request().Context(), regID, session.AdminID())
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()})
+		return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()}).SetInternal(err)
 	}
 
 	return c.NoContent(http.StatusOK)
@@ -262,13 +262,13 @@ func (h *DeviceHandler) ApproveDevice(c echo.Context) error {
 func (h *DeviceHandler) RejectDevice(c echo.Context) error {
 	session, ok := c.Get("adminSession").(*domain.AdminSession)
 	if !ok {
-		return c.JSON(http.StatusUnauthorized, ErrorResponse{Code: "UNAUTHORIZED", Message: "unauthorized"})
+		return echo.NewHTTPError(http.StatusUnauthorized, ErrorResponse{Code: "UNAUTHORIZED", Message: "unauthorized"})
 	}
 	regID := domain.DeviceRegistrationID(c.Param("id"))
 
 	err := h.deviceTrust.RejectDevice(c.Request().Context(), regID, session.AdminID())
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()})
+		return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()}).SetInternal(err)
 	}
 
 	return c.NoContent(http.StatusOK)
@@ -286,13 +286,13 @@ func (h *DeviceHandler) RejectDevice(c echo.Context) error {
 func (h *DeviceHandler) RevokeDevice(c echo.Context) error {
 	session, ok := c.Get("adminSession").(*domain.AdminSession)
 	if !ok {
-		return c.JSON(http.StatusUnauthorized, ErrorResponse{Code: "UNAUTHORIZED", Message: "unauthorized"})
+		return echo.NewHTTPError(http.StatusUnauthorized, ErrorResponse{Code: "UNAUTHORIZED", Message: "unauthorized"})
 	}
 	regID := domain.DeviceRegistrationID(c.Param("id"))
 
 	err := h.deviceTrust.RevokeDevice(c.Request().Context(), regID, session.AdminID())
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()})
+		return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()}).SetInternal(err)
 	}
 
 	return c.NoContent(http.StatusOK)

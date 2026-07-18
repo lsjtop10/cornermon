@@ -72,21 +72,21 @@ type BroadcastMessageRequest struct {
 func (h *MessageHandler) SendBroadcast(c echo.Context) error {
 	session, ok := c.Get("adminSession").(*domain.AdminSession)
 	if !ok {
-		return c.JSON(http.StatusUnauthorized, ErrorResponse{Code: "UNAUTHORIZED", Message: "unauthorized"})
+		return echo.NewHTTPError(http.StatusUnauthorized, ErrorResponse{Code: "UNAUTHORIZED", Message: "unauthorized"})
 	}
 	campID := domain.CampID(c.Param("campId"))
 	if campID == "" {
-		return c.JSON(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: "campId is required"})
+		return echo.NewHTTPError(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: "campId is required"})
 	}
 
 	var req BroadcastMessageRequest
 	if err := c.Bind(&req); err != nil {
-		return c.JSON(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: "invalid request"})
+		return echo.NewHTTPError(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: "invalid request"}).SetInternal(err)
 	}
 
 	announcement, err := h.announcement.SendAnnouncement(c.Request().Context(), campID, req.Content, session.AdminID())
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()})
+		return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()}).SetInternal(err)
 	}
 
 	return c.JSON(http.StatusCreated, MessageResponse{
@@ -108,12 +108,12 @@ func (h *MessageHandler) SendBroadcast(c echo.Context) error {
 func (h *MessageHandler) ListBroadcasts(c echo.Context) error {
 	campID := domain.CampID(c.Param("campId"))
 	if campID == "" {
-		return c.JSON(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: "campId is required"})
+		return echo.NewHTTPError(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: "campId is required"})
 	}
 
 	announcements, err := h.announcement.ListNoticesByCamp(c.Request().Context(), campID)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()})
+		return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()}).SetInternal(err)
 	}
 
 	res := make([]MessageResponse, len(announcements))
@@ -139,7 +139,7 @@ func (h *MessageHandler) GetBroadcastReceipts(c echo.Context) error {
 
 	dtos, err := h.announcement.GetAnnouncementReceipts(c.Request().Context(), announcementID)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()})
+		return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()}).SetInternal(err)
 	}
 
 	receipts := make([]BroadcastReceiptResponse, len(dtos))
@@ -182,7 +182,7 @@ func (h *MessageHandler) ReadBroadcast(c echo.Context) error {
 
 	err := h.announcement.MarkNoticeRead(c.Request().Context(), token, announcementID)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()})
+		return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()}).SetInternal(err)
 	}
 
 	return c.NoContent(http.StatusNoContent)
@@ -207,7 +207,7 @@ func (h *MessageHandler) SendDirect(c echo.Context) error {
 
 	var req DirectMessageRequest
 	if err := c.Bind(&req); err != nil {
-		return c.JSON(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: "invalid request"})
+		return echo.NewHTTPError(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: "invalid request"}).SetInternal(err)
 	}
 
 	var senderRole domain.SenderRole
@@ -219,12 +219,12 @@ func (h *MessageHandler) SendDirect(c echo.Context) error {
 		}
 		senderRole = domain.RoleTrack
 	} else {
-		return c.JSON(http.StatusUnauthorized, ErrorResponse{Code: "UNAUTHORIZED", Message: "unauthorized"})
+		return echo.NewHTTPError(http.StatusUnauthorized, ErrorResponse{Code: "UNAUTHORIZED", Message: "unauthorized"})
 	}
 
 	msg, err := h.message.SendDirect(c.Request().Context(), trackID, req.Content, senderRole)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()})
+		return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()}).SetInternal(err)
 	}
 
 	var tID *string
@@ -266,15 +266,15 @@ func (h *MessageHandler) ListDirectMessages(c echo.Context) error {
 	}
 	background, err := parseBackground(c.QueryParam("background"))
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: err.Error()})
+		return echo.NewHTTPError(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: err.Error()}).SetInternal(err)
 	}
 	after, err := parseAfter(c.QueryParam("after"))
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: "after must be RFC3339"})
+		return echo.NewHTTPError(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: "after must be RFC3339"}).SetInternal(err)
 	}
 	msgs, err := h.message.ListDirectMessages(c.Request().Context(), trackID, viewerRole, after, background)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()})
+		return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()}).SetInternal(err)
 	}
 
 	return c.JSON(http.StatusOK, mapMessages(msgs))
@@ -305,7 +305,7 @@ func (h *MessageHandler) GetUnreadCount(c echo.Context) error {
 	}
 	count, err := h.message.GetUnreadCount(c.Request().Context(), trackID, role)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()})
+		return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()}).SetInternal(err)
 	}
 	return c.JSON(http.StatusOK, UnreadCountResponse{UnreadCount: count})
 }
