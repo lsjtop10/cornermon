@@ -222,7 +222,7 @@ final class RevokeAdminSessionProvider
     required RevokeAdminSessionFamily super.from,
     required String super.argument,
   }) : super(
-         retry: null,
+         retry: noRetry,
          name: r'revokeAdminSessionProvider',
          isAutoDispose: true,
          dependencies: null,
@@ -262,13 +262,13 @@ final class RevokeAdminSessionProvider
 }
 
 String _$revokeAdminSessionHash() =>
-    r'101cea731ed0c6c93a4b14751e0447fb03f4eb20';
+    r'cebb124ebcf1dbaa5224dd6a2cc8ed7b08730fbc';
 
 final class RevokeAdminSessionFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<void>, String> {
   RevokeAdminSessionFamily._()
     : super(
-        retry: null,
+        retry: noRetry,
         name: r'revokeAdminSessionProvider',
         dependencies: null,
         $allTransitiveDependencies: null,
@@ -292,7 +292,7 @@ final class ReleaseTrackLockoutProvider
     required ReleaseTrackLockoutFamily super.from,
     required String super.argument,
   }) : super(
-         retry: null,
+         retry: noRetry,
          name: r'releaseTrackLockoutProvider',
          isAutoDispose: true,
          dependencies: null,
@@ -332,13 +332,13 @@ final class ReleaseTrackLockoutProvider
 }
 
 String _$releaseTrackLockoutHash() =>
-    r'5fcd8ed7433286101d52af951fcb32c8173bb509';
+    r'03faf03f946e7938fa365aa4da5d5e655f1f7490';
 
 final class ReleaseTrackLockoutFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<void>, String> {
   ReleaseTrackLockoutFamily._()
     : super(
-        retry: null,
+        retry: noRetry,
         name: r'releaseTrackLockoutProvider',
         dependencies: null,
         $allTransitiveDependencies: null,
@@ -362,7 +362,7 @@ final class ForceLogoutTrackProvider
     required ForceLogoutTrackFamily super.from,
     required TrackId super.argument,
   }) : super(
-         retry: null,
+         retry: noRetry,
          name: r'forceLogoutTrackProvider',
          isAutoDispose: true,
          dependencies: null,
@@ -401,13 +401,13 @@ final class ForceLogoutTrackProvider
   }
 }
 
-String _$forceLogoutTrackHash() => r'b7db4bb052cf20a113a029ba475527086ea0ce5b';
+String _$forceLogoutTrackHash() => r'ea47c4be1716db98029ac9d61607f04db97832e7';
 
 final class ForceLogoutTrackFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<void>, TrackId> {
   ForceLogoutTrackFamily._()
     : super(
-        retry: null,
+        retry: noRetry,
         name: r'forceLogoutTrackProvider',
         dependencies: null,
         $allTransitiveDependencies: null,
@@ -671,7 +671,7 @@ final class ApproveDeviceRegistrationProvider
     required ApproveDeviceRegistrationFamily super.from,
     required (CampId, DeviceRegistrationId) super.argument,
   }) : super(
-         retry: null,
+         retry: noRetry,
          name: r'approveDeviceRegistrationProvider',
          isAutoDispose: true,
          dependencies: null,
@@ -713,7 +713,7 @@ final class ApproveDeviceRegistrationProvider
 }
 
 String _$approveDeviceRegistrationHash() =>
-    r'1bb1cb76b51e3e3a719b7ee213a4e5b0117978f0';
+    r'4af6564ecd4d513123070a4241bb5e74c93de6b7';
 
 final class ApproveDeviceRegistrationFamily extends $Family
     with
@@ -723,7 +723,7 @@ final class ApproveDeviceRegistrationFamily extends $Family
         > {
   ApproveDeviceRegistrationFamily._()
     : super(
-        retry: null,
+        retry: noRetry,
         name: r'approveDeviceRegistrationProvider',
         dependencies: null,
         $allTransitiveDependencies: null,
@@ -756,7 +756,7 @@ final class RejectDeviceRegistrationProvider
     required RejectDeviceRegistrationFamily super.from,
     required (CampId, DeviceRegistrationId) super.argument,
   }) : super(
-         retry: null,
+         retry: noRetry,
          name: r'rejectDeviceRegistrationProvider',
          isAutoDispose: true,
          dependencies: null,
@@ -798,7 +798,7 @@ final class RejectDeviceRegistrationProvider
 }
 
 String _$rejectDeviceRegistrationHash() =>
-    r'2f40aa8e31d2376849beafedbb0ca67d7abe5aff';
+    r'85766a0e066cf69b1db501e56d3262571c37ebc1';
 
 final class RejectDeviceRegistrationFamily extends $Family
     with
@@ -808,7 +808,7 @@ final class RejectDeviceRegistrationFamily extends $Family
         > {
   RejectDeviceRegistrationFamily._()
     : super(
-        retry: null,
+        retry: noRetry,
         name: r'rejectDeviceRegistrationProvider',
         dependencies: null,
         $allTransitiveDependencies: null,
@@ -841,7 +841,7 @@ final class RevokeDeviceRegistrationProvider
     required RevokeDeviceRegistrationFamily super.from,
     required (CampId, DeviceRegistrationId) super.argument,
   }) : super(
-         retry: null,
+         retry: noRetry,
          name: r'revokeDeviceRegistrationProvider',
          isAutoDispose: true,
          dependencies: null,
@@ -883,7 +883,7 @@ final class RevokeDeviceRegistrationProvider
 }
 
 String _$revokeDeviceRegistrationHash() =>
-    r'cfd8483c2d4df10444d5ca3e2bb4e7534804d530';
+    r'c4b5d07aa6cbebe1d0b55e81ef28bd238f260156';
 
 final class RevokeDeviceRegistrationFamily extends $Family
     with
@@ -893,7 +893,7 @@ final class RevokeDeviceRegistrationFamily extends $Family
         > {
   RevokeDeviceRegistrationFamily._()
     : super(
-        retry: null,
+        retry: noRetry,
         name: r'revokeDeviceRegistrationProvider',
         dependencies: null,
         $allTransitiveDependencies: null,
