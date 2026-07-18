@@ -5,12 +5,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cornermon/admin/entities/device_registration_ext.dart';
 import 'package:cornermon/admin/session/selected_camp_provider.dart';
 import 'package:cornermon/shared/api/domain_aliases.dart' as api;
+import 'package:cornermon/shared/api/ids.dart';
 import 'package:cornermon/shared/api/providers/auth_device_trust_providers.dart';
 import 'package:cornermon/shared/design_system/tokens/colors.dart';
 import 'package:cornermon/shared/design_system/tokens/spacing.dart';
 import 'package:cornermon/shared/design_system/tokens/typography.dart';
+import 'package:cornermon/shared/design_system/widgets/connection_banner.dart';
 import 'package:cornermon/shared/design_system/widgets/empty_state.dart';
 import 'package:cornermon/shared/design_system/widgets/pill_tab_bar.dart';
+import '_device_manage_connection_state.dart';
 import '_device_registration_row.dart';
 
 class DeviceManageScreen extends ConsumerStatefulWidget {
@@ -25,17 +28,28 @@ class _DeviceManageScreenState extends ConsumerState<DeviceManageScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final registrations = ref.watch(deviceRegistrationListProvider);
+    final campId = ref.watch(selectedCampIdProvider);
+    if (campId == null) {
+      return const Scaffold(body: EmptyState(message: '선택된 캠프가 없습니다'));
+    }
+
+    final registrations = ref.watch(deviceRegistrationListProvider(campId));
     final pendingCount =
         registrations.value
             ?.where((r) => r.tab == DeviceRegistrationTab.pending)
             .length ??
         0;
+    final connectionLost = ref.watch(deviceManageConnectionLostProvider);
 
     return Scaffold(
       appBar: AppBar(title: const Text('기기 등록 관리')),
       body: Column(
         children: [
+          ConnectionBanner(
+            state: connectionLost
+                ? ConnectionBannerState.disconnected
+                : ConnectionBannerState.hidden,
+          ),
           const _RegistrationCodeCard(),
           PillTabBar(
             selectedIndex: _selectedTab,
@@ -65,14 +79,17 @@ class _DeviceManageScreenState extends ConsumerState<DeviceManageScreen> {
                   index: _selectedTab,
                   children: [
                     _DeviceRegistrationList(
+                      campId: campId,
                       items: byTab[DeviceRegistrationTab.pending]!,
                       emptyMessage: '대기 중인 등록 요청이 없습니다',
                     ),
                     _DeviceRegistrationList(
+                      campId: campId,
                       items: byTab[DeviceRegistrationTab.approved]!,
                       emptyMessage: '승인된 기기가 없습니다',
                     ),
                     _DeviceRegistrationList(
+                      campId: campId,
                       items: byTab[DeviceRegistrationTab.history]!,
                       emptyMessage: '거절·회수 이력이 없습니다',
                     ),
@@ -158,10 +175,12 @@ class _RegistrationCodeCard extends ConsumerWidget {
 
 class _DeviceRegistrationList extends ConsumerWidget {
   const _DeviceRegistrationList({
+    required this.campId,
     required this.items,
     required this.emptyMessage,
   });
 
+  final CampId campId;
   final List<api.DeviceRegistration> items;
   final String emptyMessage;
 
@@ -172,8 +191,8 @@ class _DeviceRegistrationList extends ConsumerWidget {
     }
     return RefreshIndicator(
       onRefresh: () async {
-        ref.invalidate(deviceRegistrationListProvider);
-        await ref.read(deviceRegistrationListProvider.future);
+        ref.invalidate(deviceRegistrationListProvider(campId));
+        await ref.read(deviceRegistrationListProvider(campId).future);
       },
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -183,8 +202,10 @@ class _DeviceRegistrationList extends ConsumerWidget {
           child: ListView.separated(
             itemCount: items.length,
             separatorBuilder: (_, _) => const Divider(height: 1),
-            itemBuilder: (context, index) =>
-                DeviceRegistrationRow(registration: items[index]),
+            itemBuilder: (context, index) => DeviceRegistrationRow(
+              campId: campId,
+              registration: items[index],
+            ),
           ),
         ),
       ),
