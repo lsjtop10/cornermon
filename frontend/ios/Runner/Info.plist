@@ -27,7 +27,7 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
-	<string>QR 코드를 스캔하려면 카메라 접근 권한이 필요합니다</string>
+	<string>코너몬은 조 배지의 QR 코드를 스캔해 캠프 참가자의 코너 방문을 기록하기 위해 카메라를 사용합니다</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
