@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	"time"
 
 	"cornermon/backend/internal/domain"
@@ -119,7 +120,13 @@ func (h *EventHandler) streamEvents(c echo.Context, ch <-chan usecase.SSEMessage
 	}
 	c.Response().Flush()
 
-	ticker := time.NewTicker(15 * time.Second)
+	heartbeatDuration := 15 * time.Second
+	if envInterval := os.Getenv("SSE_HEARTBEAT_INTERVAL"); envInterval != "" {
+		if d, err := time.ParseDuration(envInterval); err == nil && d > 0 {
+			heartbeatDuration = d
+		}
+	}
+	ticker := time.NewTicker(heartbeatDuration)
 	defer ticker.Stop()
 	for {
 		select {
