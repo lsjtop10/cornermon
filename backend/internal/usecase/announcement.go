@@ -14,7 +14,6 @@ type AnnouncementService struct {
 	receipts      AnnouncementReceiptRepository
 	camps         CampRepository
 	tracks        TrackRepository
-	corners       CornerRepository
 	sessions      FacilitatorSessionRepository
 	tx            TxManager
 	auditLogs     AuditLogRepository
@@ -23,8 +22,8 @@ type AnnouncementService struct {
 	uuidFn        func() string
 }
 
-func NewAnnouncementService(announcements AnnouncementRepository, receipts AnnouncementReceiptRepository, camps CampRepository, corners CornerRepository, tracks TrackRepository, sessions FacilitatorSessionRepository, tx TxManager, auditLogs AuditLogRepository, broadcaster Broadcaster) *AnnouncementService {
-	return &AnnouncementService{announcements: announcements, receipts: receipts, camps: camps, corners: corners, tracks: tracks, sessions: sessions, tx: tx, auditLogs: auditLogs, broadcaster: broadcaster, nowFn: func() time.Time { return time.Now().UTC() }, uuidFn: uuid.NewString}
+func NewAnnouncementService(announcements AnnouncementRepository, receipts AnnouncementReceiptRepository, camps CampRepository, tracks TrackRepository, sessions FacilitatorSessionRepository, tx TxManager, auditLogs AuditLogRepository, broadcaster Broadcaster) *AnnouncementService {
+	return &AnnouncementService{announcements: announcements, receipts: receipts, camps: camps, tracks: tracks, sessions: sessions, tx: tx, auditLogs: auditLogs, broadcaster: broadcaster, nowFn: func() time.Time { return time.Now().UTC() }, uuidFn: uuid.NewString}
 }
 
 func (s *AnnouncementService) SendAnnouncement(ctx context.Context, campID domain.CampID, content string, actorAdminID domain.AdminID) (*domain.Announcement, error) {
@@ -63,10 +62,6 @@ func (s *AnnouncementService) SendAnnouncement(ctx context.Context, campID domai
 	return a, err
 }
 
-func (s *AnnouncementService) ListNoticesByCamp(ctx context.Context, campID domain.CampID) ([]*domain.Announcement, error) {
-	return s.announcements.ListNoticeByCamp(ctx, campID)
-}
-
 func (s *AnnouncementService) MarkNoticeRead(ctx context.Context, facilitatorToken string, noticeID domain.AnnouncementID) error {
 	session, err := s.sessions.GetByTokenHash(ctx, hashSHA256(facilitatorToken))
 	if err != nil {
@@ -85,30 +80,47 @@ func (s *AnnouncementService) MarkNoticeRead(ctx context.Context, facilitatorTok
 	return s.receipts.Save(ctx, r)
 }
 
-func (s *AnnouncementService) GetAnnouncementReceipts(ctx context.Context, announcementID domain.AnnouncementID) ([]BroadcastReceiptDTO, error) {
-	receipts, err := s.receipts.ListByMessage(ctx, announcementID)
+// BroadcastNoticeView combines a broadcast with the authenticated track's
+// receipt state for a read-only response.
+type BroadcastNoticeView struct {
+	Announcement *domain.Announcement
+	ReadAt       domain.Optional[time.Time]
+}
+
+// AnnouncementQueryService owns announcement read use cases and never mutates
+// announcement or receipt state.
+type AnnouncementQueryService struct {
+	announcements AnnouncementQuerier
+	tracks        TrackRepository
+	corners       CornerRepository
+}
+
+func NewAnnouncementQueryService(announcements AnnouncementQuerier, tracks TrackRepository, corners CornerRepository) *AnnouncementQueryService {
+	return &AnnouncementQueryService{announcements: announcements, tracks: tracks, corners: corners}
+}
+
+func (s *AnnouncementQueryService) ListNoticesByCamp(ctx context.Context, campID domain.CampID) ([]*domain.Announcement, error) {
+	return s.announcements.ListNoticesByCamp(ctx, campID)
+}
+
+func (s *AnnouncementQueryService) ListNoticesForTrack(ctx context.Context, campID domain.CampID, trackID domain.TrackID) ([]BroadcastNoticeView, error) {
+	track, err := s.tracks.Get(ctx, trackID)
 	if err != nil {
 		return nil, err
 	}
-	result := make([]BroadcastReceiptDTO, len(receipts))
-	for i, receipt := range receipts {
-		track, err := s.tracks.Get(ctx, receipt.TrackID())
-		if err != nil {
-			return nil, err
-		}
-		var trackNo int
-		var cornerName string
-		if track != nil {
-			trackNo = track.TrackNo()
-			corner, err := s.corners.Get(ctx, track.CornerID())
-			if err != nil {
-				return nil, err
-			}
-			if corner != nil {
-				cornerName = corner.Name()
-			}
-		}
-		result[i] = BroadcastReceiptDTO{TrackID: receipt.TrackID(), TrackNo: trackNo, CornerName: cornerName, IsRead: receipt.ReadAt().IsSet(), ReadAt: receipt.ReadAt()}
+	if track == nil {
+		return nil, domain.ErrTrackScopeForbidden
 	}
-	return result, nil
+	corner, err := s.corners.Get(ctx, track.CornerID())
+	if err != nil {
+		return nil, err
+	}
+	if corner == nil || corner.CampID() != campID {
+		return nil, domain.ErrTrackScopeForbidden
+	}
+	return s.announcements.ListNoticeViewsByCampAndTrack(ctx, campID, trackID)
+}
+
+func (s *AnnouncementQueryService) GetAnnouncementReceipts(ctx context.Context, announcementID domain.AnnouncementID) ([]BroadcastReceiptDTO, error) {
+	return s.announcements.ListAnnouncementReceipts(ctx, announcementID)
 }
