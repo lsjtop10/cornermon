@@ -1230,7 +1230,7 @@ const docTemplate = `{
                         "TrackAuth": []
                     }
                 ],
-                "description": "관리자 또는 진행자가 캠프에 발송된 BROADCAST 메시지들의 목록을 조회한다.",
+                "description": "관리자 또는 진행자가 캠프에 발송된 BROADCAST 메시지들의 목록을 조회한다. TrackAuth 응답의 isRead와 readAt은 현재 트랙의 수신 확인 상태다.",
                 "produces": [
                     "application/json"
                 ],
@@ -2481,6 +2481,58 @@ const docTemplate = `{
                 }
             }
         },
+        "/tracks/{trackId}/corner": {
+            "get": {
+                "security": [
+                    {
+                        "TrackAuth": []
+                    }
+                ],
+                "description": "인증된 진행자(TrackAuth)의 트랙이 속한 코너의 핵심 정보를 조회한다. 세션의 트랙과 path trackId가 일치해야 한다. 다른 트랙의 활성 목록·병목 지표 등 관리자 전용 정보는 포함하지 않는다.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "C. Visit (Scan Flow)"
+                ],
+                "summary": "진행자 코너 조회",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "트랙 ID",
+                        "name": "trackId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/CornerResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "세션 트랙과 요청 트랙 불일치",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "트랙 또는 코너 없음",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/tracks/{trackId}/groups": {
             "get": {
                 "security": [
@@ -3662,9 +3714,11 @@ const docTemplate = `{
                     "format": "uuid"
                 },
                 "isRead": {
+                    "description": "IsRead and ReadAt represent the authenticated track's broadcast receipt on TrackAuth list responses.",
                     "type": "boolean"
                 },
                 "readAt": {
+                    "description": "ReadAt is omitted for unread broadcasts and administrator list responses.",
                     "type": "string",
                     "format": "date-time"
                 },

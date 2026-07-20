@@ -133,6 +133,7 @@ func main() {
 	badgeRepo := postgres.NewBadgeRepository(pool)
 	announcementReceiptRepo := postgres.NewAnnouncementReceiptRepository(pool)
 	announcementRepo := postgres.NewAnnouncementRepository(pool)
+	announcementQuerier := postgres.NewAnnouncementQuerier(pool)
 	campRepo := postgres.NewCampRepository(pool)
 	cornerRepo := postgres.NewCornerRepository(pool)
 	deviceRepo := postgres.NewDeviceRegistrationRepository(pool)
@@ -160,7 +161,8 @@ func main() {
 	reportService := usecase.NewReportService(campRepo, reportQuerier)
 	authFacilitatorService := usecase.NewFacilitatorAuthService(campRepo, cornerRepo, trackRepo, deviceRepo, facilitatorSessionRepo, auditLogRepo, broadcaster, txManager)
 	messageService := usecase.NewMessageService(cornerRepo, trackRepo, messageRepo, auditLogRepo, broadcaster, txManager)
-	announcementService := usecase.NewAnnouncementService(announcementRepo, announcementReceiptRepo, campRepo, cornerRepo, trackRepo, facilitatorSessionRepo, txManager, auditLogRepo, broadcaster)
+	announcementService := usecase.NewAnnouncementService(announcementRepo, announcementReceiptRepo, campRepo, trackRepo, facilitatorSessionRepo, txManager, auditLogRepo, broadcaster)
+	announcementQueryService := usecase.NewAnnouncementQueryService(announcementQuerier, trackRepo, cornerRepo)
 	campService := usecase.NewCampService(campRepo, trackRepo, facilitatorSessionRepo, auditLogRepo, broadcaster, txManager)
 
 	// Initialize Handlers
@@ -175,7 +177,7 @@ func main() {
 
 	eventHandler := web.NewEventHandler(broadcaster, trackRepo, cornerRepo)
 
-	messageHandler := web.NewMessageHandler(messageService, announcementService)
+	messageHandler := web.NewMessageHandler(messageService, announcementService, announcementQueryService)
 	reportHandler := web.NewReportHandler(reportService, reportQuerier, campRepo)
 	auditHandler := web.NewAuditHandler(auditLogRepo)
 	adminManagementHandler := web.NewAdminManagementHandler(authAdminService)

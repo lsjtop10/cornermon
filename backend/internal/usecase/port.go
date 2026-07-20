@@ -142,17 +142,22 @@ type MessageRepository interface {
 	MarkAllReadByRecipient(ctx context.Context, trackID domain.TrackID, recipient domain.SenderRole, readAt time.Time) error
 }
 
-// MessageRepository는 공지사항 엔티티의 지속성을 담당하는 포트입니다.
+// AnnouncementRepository는 공지사항 명령 모델의 지속성을 담당하는 포트입니다.
 type AnnouncementRepository interface {
-	Save(ctx context.Context, msg *domain.Announcement) error
-	ListNoticeByCamp(ctx context.Context, campID domain.CampID) ([]*domain.Announcement, error)
+	Save(ctx context.Context, announcement *domain.Announcement) error
+}
+
+// AnnouncementQuerier는 공지 화면에 필요한 읽기 전용 스냅샷을 제공하는 포트입니다.
+type AnnouncementQuerier interface {
+	ListNoticesByCamp(ctx context.Context, campID domain.CampID) ([]*domain.Announcement, error)
+	ListNoticeViewsByCampAndTrack(ctx context.Context, campID domain.CampID, trackID domain.TrackID) ([]BroadcastNoticeView, error)
+	ListAnnouncementReceipts(ctx context.Context, announcementID domain.AnnouncementID) ([]BroadcastReceiptDTO, error)
 }
 
 // BroadcastReceiptRepository는 공지 수신 확인 엔티티의 지속성을 담당하는 포트입니다.
 type AnnouncementReceiptRepository interface {
 	Save(ctx context.Context, receipt *domain.AnnouncementReceipt) error
 	GetByMessageAndTrack(ctx context.Context, msgID domain.AnnouncementID, trackID domain.TrackID) (*domain.AnnouncementReceipt, error)
-	ListByMessage(ctx context.Context, msgID domain.AnnouncementID) ([]*domain.AnnouncementReceipt, error)
 }
 
 // AuditLogRepository는 감사 로그 엔티티의 지속성을 담당하는 포트입니다.
