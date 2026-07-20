@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../session/device_trust_provider.dart';
 import '../../session/track_session_provider.dart';
 
 part 'pin_login_error_provider.g.dart';
@@ -46,9 +47,17 @@ class PinLoginError extends _$PinLoginError {
       await ref.read(trackSessionProvider.notifier).loginWithPin(pin);
       state = null;
     } on DioException catch (e) {
+      if (_isDeviceNotTrusted(e)) {
+        await ref.read(deviceTrustProvider.notifier).clearRegistration();
+      }
       state = _mapError(e);
     }
   }
+
+  bool _isDeviceNotTrusted(DioException e) =>
+      e.response?.statusCode == 403 &&
+      e.response?.data is Map &&
+      (e.response?.data as Map)['code'] == 'DEVICE_NOT_TRUSTED';
 
   PinLoginUiError _mapError(DioException e) {
     final statusCode = e.response?.statusCode;
@@ -56,7 +65,9 @@ class PinLoginError extends _$PinLoginError {
     final body = data is Map ? data : null;
     final code = body?['code'] as String?;
     final details = body?['details'];
-    final retryAfterSeconds = details is Map ? details['retryAfterSeconds'] as int? : null;
+    final retryAfterSeconds = details is Map
+        ? details['retryAfterSeconds'] as int?
+        : null;
 
     if (statusCode == 400 && code == 'INVALID_PIN') {
       return PinInvalid(retryAfterSeconds: retryAfterSeconds);

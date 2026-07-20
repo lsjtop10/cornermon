@@ -90,14 +90,13 @@ class DeviceTrust extends _$DeviceTrust {
       final newStatus = _fromStatusResponse(responseStatus);
       if (newStatus == DeviceTrustStatus.pending) return;
 
+      if (newStatus == DeviceTrustStatus.revoked) {
+        await clearRegistration();
+        return;
+      }
+
       _pollTimer?.cancel();
       await store.write(_deviceStatusKey, newStatus.name);
-      if (newStatus == DeviceTrustStatus.revoked) {
-        // 회수된 기기 토큰은 즉시 폐기한다 — 재등록 시 requestRegistration이
-        // 새 토큰으로 덮어쓰므로 남겨둘 이유가 없다. 트랙 세션 말소는
-        // track_session_provider가 이 상태 전이를 직접 구독해 처리한다.
-        await store.delete(_deviceTrustTokenKey);
-      }
       state = AsyncData(newStatus);
     } on DioException catch (error, stackTrace) {
       // 일시적 네트워크 오류로 폴링 자체를 멈추지 않는다 — 다음 tick에 재시도.
@@ -144,6 +143,25 @@ class DeviceTrust extends _$DeviceTrust {
     if (status == DeviceTrustStatus.pending) {
       _schedulePolling();
     }
+  }
+
+  /// 이 기기의 로컬 등록 정보를 폐기하고 새 캠프 등록 흐름으로 되돌린다.
+  ///
+  /// 서버의 기기 신뢰 철회 권한은 관리자/캠프 종료에 남겨 둔다. 이 메서드는
+  /// 신뢰 철회가 이미 확인된 경우와 사용자의 수동 초기화 모두에서 로컬 저장소와
+  /// provider 상태를 같은 방식으로 정리하는 단일 경로다.
+  Future<void> clearRegistration() async {
+    _pollTimer?.cancel();
+    final store = ref.read(secureTokenStoreProvider);
+    await Future.wait([
+      store.delete(_deviceRegistrationIdKey),
+      store.delete(_deviceStatusKey),
+      store.delete(_deviceTrustTokenKey),
+    ]);
+    if (!ref.mounted) return;
+    _pollTimer?.cancel();
+    ref.invalidate(deviceTrustTokenProvider);
+    state = const AsyncData(DeviceTrustStatus.none);
   }
 
   static String _defaultDeviceName() =>

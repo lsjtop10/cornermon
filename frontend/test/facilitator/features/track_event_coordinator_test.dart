@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:cornermon/facilitator/features/main_track/track_event_coordinator.dart';
 import 'package:cornermon/facilitator/session/facilitator_broadcast_provider.dart';
+import 'package:cornermon/facilitator/session/device_trust_provider.dart';
 import 'package:cornermon/facilitator/session/track_session_provider.dart';
 import 'package:cornermon/shared/api/domain_aliases.dart';
 import 'package:cornermon/shared/api/ids.dart';
@@ -26,6 +27,19 @@ class FakeTrackSession extends TrackSession {
   }
 }
 
+class FakeDeviceTrust extends DeviceTrust {
+  int clearRegistrationCalls = 0;
+
+  @override
+  Future<DeviceTrustStatus> build() async => DeviceTrustStatus.approved;
+
+  @override
+  Future<void> clearRegistration() async {
+    clearRegistrationCalls++;
+    state = const AsyncData(DeviceTrustStatus.none);
+  }
+}
+
 void main() {
   final trackId = TrackId('track-1');
   final otherTrackId = TrackId('track-2');
@@ -33,6 +47,7 @@ void main() {
   late StreamController<SseEvent> eventController;
   late ProviderContainer container;
   late FakeTrackSession fakeTrackSession;
+  late FakeDeviceTrust fakeDeviceTrust;
   late int currentVisitBuildCount;
   late int broadcastListBuildCount;
   late int trackMessageListBuildCount;
@@ -49,6 +64,7 @@ void main() {
   setUp(() {
     eventController = StreamController<SseEvent>();
     fakeTrackSession = FakeTrackSession();
+    fakeDeviceTrust = FakeDeviceTrust();
     currentVisitBuildCount = 0;
     broadcastListBuildCount = 0;
     trackMessageListBuildCount = 0;
@@ -56,8 +72,11 @@ void main() {
 
     container = ProviderContainer(
       overrides: [
-        trackEventsProvider(trackId).overrideWith((ref) => eventController.stream),
+        trackEventsProvider(
+          trackId,
+        ).overrideWith((ref) => eventController.stream),
         trackSessionProvider.overrideWith(() => fakeTrackSession),
+        deviceTrustProvider.overrideWith(() => fakeDeviceTrust),
         currentVisitProvider(trackId).overrideWith((ref) {
           currentVisitBuildCount++;
           return null;
@@ -88,39 +107,45 @@ void main() {
     container.listen(trackCornerProvider(trackId), (_, _) {});
   });
 
-  test('ShouldInvalidateCurrentVisitWhenTrackUpdatedScopeMatchesOwnTrack', () async {
-    // arrange
-    final baseline = currentVisitBuildCount;
-    final event = SseEvent(
-      (b) => b
-        ..event = SseEventEventEnum.trackUpdated
-        ..scope.kind = SseScopeKind.track
-        ..scope.trackId = trackId.value,
-    );
+  test(
+    'ShouldInvalidateCurrentVisitWhenTrackUpdatedScopeMatchesOwnTrack',
+    () async {
+      // arrange
+      final baseline = currentVisitBuildCount;
+      final event = SseEvent(
+        (b) => b
+          ..event = SseEventEventEnum.trackUpdated
+          ..scope.kind = SseScopeKind.track
+          ..scope.trackId = trackId.value,
+      );
 
-    // act
-    await pushAndSettle(event);
+      // act
+      await pushAndSettle(event);
 
-    // assert
-    expect(currentVisitBuildCount, greaterThan(baseline));
-  });
+      // assert
+      expect(currentVisitBuildCount, greaterThan(baseline));
+    },
+  );
 
-  test('ShouldNotInvalidateCurrentVisitWhenTrackUpdatedScopeIsAnotherTrack', () async {
-    // arrange
-    final baseline = currentVisitBuildCount;
-    final event = SseEvent(
-      (b) => b
-        ..event = SseEventEventEnum.trackUpdated
-        ..scope.kind = SseScopeKind.track
-        ..scope.trackId = otherTrackId.value,
-    );
+  test(
+    'ShouldNotInvalidateCurrentVisitWhenTrackUpdatedScopeIsAnotherTrack',
+    () async {
+      // arrange
+      final baseline = currentVisitBuildCount;
+      final event = SseEvent(
+        (b) => b
+          ..event = SseEventEventEnum.trackUpdated
+          ..scope.kind = SseScopeKind.track
+          ..scope.trackId = otherTrackId.value,
+      );
 
-    // act
-    await pushAndSettle(event);
+      // act
+      await pushAndSettle(event);
 
-    // assert
-    expect(currentVisitBuildCount, baseline);
-  });
+      // assert
+      expect(currentVisitBuildCount, baseline);
+    },
+  );
 
   test('ShouldInvalidateTrackCornerWhenCornersUpdatedScopeIsCamp', () async {
     // arrange
@@ -138,69 +163,93 @@ void main() {
     expect(trackCornerBuildCount, greaterThan(baseline));
   });
 
-  test('ShouldInvalidateBroadcastListWhenMessagesChangedScopeIsBroadcast', () async {
-    // arrange
-    final baseline = broadcastListBuildCount;
-    final event = SseEvent(
-      (b) => b
-        ..event = SseEventEventEnum.messagesChanged
-        ..scope.kind = SseScopeKind.camp,
-    );
+  test(
+    'ShouldInvalidateBroadcastListWhenMessagesChangedScopeIsBroadcast',
+    () async {
+      // arrange
+      final baseline = broadcastListBuildCount;
+      final event = SseEvent(
+        (b) => b
+          ..event = SseEventEventEnum.messagesChanged
+          ..scope.kind = SseScopeKind.camp,
+      );
 
-    // act
-    await pushAndSettle(event);
+      // act
+      await pushAndSettle(event);
 
-    // assert
-    expect(broadcastListBuildCount, greaterThan(baseline));
-  });
+      // assert
+      expect(broadcastListBuildCount, greaterThan(baseline));
+    },
+  );
 
-  test('ShouldInvalidateTrackMessageListWhenMessagesChangedScopeIsOwnTrack', () async {
-    // arrange
-    final baseline = trackMessageListBuildCount;
-    final event = SseEvent(
-      (b) => b
-        ..event = SseEventEventEnum.messagesChanged
-        ..scope.kind = SseScopeKind.track
-        ..scope.trackId = trackId.value,
-    );
+  test(
+    'ShouldInvalidateTrackMessageListWhenMessagesChangedScopeIsOwnTrack',
+    () async {
+      // arrange
+      final baseline = trackMessageListBuildCount;
+      final event = SseEvent(
+        (b) => b
+          ..event = SseEventEventEnum.messagesChanged
+          ..scope.kind = SseScopeKind.track
+          ..scope.trackId = trackId.value,
+      );
 
-    // act
-    await pushAndSettle(event);
+      // act
+      await pushAndSettle(event);
 
-    // assert
-    expect(trackMessageListBuildCount, greaterThan(baseline));
-  });
+      // assert
+      expect(trackMessageListBuildCount, greaterThan(baseline));
+    },
+  );
 
-  test('ShouldCallHandleTerminationTrackDeletedWhenTrackDeletedEventReceived', () async {
-    // arrange
-    final event = SseEvent((b) => b..event = SseEventEventEnum.trackDeleted);
+  test(
+    'ShouldCallHandleTerminationTrackDeletedWhenTrackDeletedEventReceived',
+    () async {
+      // arrange
+      final event = SseEvent((b) => b..event = SseEventEventEnum.trackDeleted);
 
-    // act
-    await pushAndSettle(event);
+      // act
+      await pushAndSettle(event);
 
-    // assert
-    expect(fakeTrackSession.terminationCalls, [TrackSessionTerminationReason.trackDeleted]);
-  });
+      // assert
+      expect(fakeTrackSession.terminationCalls, [
+        TrackSessionTerminationReason.trackDeleted,
+      ]);
+    },
+  );
 
-  test('ShouldCallHandleTerminationForceLogoutWhenSessionRevokedEventReceived', () async {
-    // arrange
-    final event = SseEvent((b) => b..event = SseEventEventEnum.sessionRevoked);
+  test(
+    'ShouldCallHandleTerminationForceLogoutWhenSessionRevokedEventReceived',
+    () async {
+      // arrange
+      final event = SseEvent(
+        (b) => b..event = SseEventEventEnum.sessionRevoked,
+      );
 
-    // act
-    await pushAndSettle(event);
+      // act
+      await pushAndSettle(event);
 
-    // assert
-    expect(fakeTrackSession.terminationCalls, [TrackSessionTerminationReason.forceLogout]);
-  });
+      // assert
+      expect(fakeTrackSession.terminationCalls, [
+        TrackSessionTerminationReason.forceLogout,
+      ]);
+    },
+  );
 
-  test('ShouldCallHandleTerminationCampEndedWhenCampEndedEventReceived', () async {
-    // arrange
-    final event = SseEvent((b) => b..event = SseEventEventEnum.campEnded);
+  test(
+    'ShouldCallHandleTerminationCampEndedWhenCampEndedEventReceived',
+    () async {
+      // arrange
+      final event = SseEvent((b) => b..event = SseEventEventEnum.campEnded);
 
-    // act
-    await pushAndSettle(event);
+      // act
+      await pushAndSettle(event);
 
-    // assert
-    expect(fakeTrackSession.terminationCalls, [TrackSessionTerminationReason.campEnded]);
-  });
+      // assert
+      expect(fakeTrackSession.terminationCalls, [
+        TrackSessionTerminationReason.campEnded,
+      ]);
+      expect(fakeDeviceTrust.clearRegistrationCalls, 1);
+    },
+  );
 }

@@ -8,6 +8,8 @@ import 'package:cornermon/shared/design_system/tokens/colors.dart';
 import 'package:cornermon/shared/design_system/tokens/spacing.dart';
 import 'package:cornermon/shared/design_system/tokens/typography.dart';
 import 'package:cornermon/shared/design_system/widgets/app_button.dart';
+import 'package:cornermon/shared/design_system/widgets/confirm_modal.dart';
+import 'package:cornermon/facilitator/session/device_trust_provider.dart';
 import 'package:cornermon/facilitator/widgets/pin_otp_input.dart';
 import 'pin_login_error_provider.dart';
 
@@ -43,12 +45,32 @@ class PinLoginScreen extends ConsumerWidget {
                   onSubmitted: (pin) =>
                       ref.read(pinLoginErrorProvider.notifier).submit(pin),
                 ),
+                const SizedBox(height: AppSpacing.space8),
+                AppButton(
+                  variant: AppButtonVariant.secondary,
+                  size: AppButtonSize.comfortable,
+                  label: '기기 등록 취소',
+                  onPressed: () => _clearRegistration(context, ref),
+                ),
               ],
             ),
           ),
         ),
       ),
     );
+  }
+
+  Future<void> _clearRegistration(BuildContext context, WidgetRef ref) async {
+    final confirmed = await showConfirmModal(
+      context,
+      kind: ConfirmModalKind.softConfirm,
+      title: '기기 등록을 취소할까요?',
+      body: '이 기기의 저장된 등록 정보와 PIN 로그인 정보가 삭제됩니다.',
+      buttonSize: AppButtonSize.comfortable,
+    );
+    if (!confirmed) return;
+
+    await ref.read(deviceTrustProvider.notifier).clearRegistration();
   }
 }
 

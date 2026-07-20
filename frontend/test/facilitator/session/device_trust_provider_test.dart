@@ -109,16 +109,25 @@ void main() {
       // act & assert: 초기 빌드 직후엔 스토리지에 저장된 PENDING 그대로.
       container.listen(deviceTrustProvider, (_, _) {});
       async.elapse(Duration.zero);
-      expect(container.read(deviceTrustProvider).value, DeviceTrustStatus.pending);
+      expect(
+        container.read(deviceTrustProvider).value,
+        DeviceTrustStatus.pending,
+      );
 
       // 첫 폴링 tick(15초) — 서버가 아직 PENDING이라 상태 유지.
       async.elapse(const Duration(seconds: 15));
-      expect(container.read(deviceTrustProvider).value, DeviceTrustStatus.pending);
+      expect(
+        container.read(deviceTrustProvider).value,
+        DeviceTrustStatus.pending,
+      );
       expect(api.lastDeviceToken, 'fake-device-token');
 
       // 두 번째 폴링 tick — 서버가 APPROVED로 전이됨을 감지해야 한다.
       async.elapse(const Duration(seconds: 15));
-      expect(container.read(deviceTrustProvider).value, DeviceTrustStatus.approved);
+      expect(
+        container.read(deviceTrustProvider).value,
+        DeviceTrustStatus.approved,
+      );
     }),
   );
 
@@ -142,7 +151,10 @@ void main() {
 
       // act: 한 번 승인이 감지된 이후로는 추가 폴링 호출이 없어야 한다(타이머 취소 확인).
       async.elapse(const Duration(seconds: 15));
-      expect(container.read(deviceTrustProvider).value, DeviceTrustStatus.approved);
+      expect(
+        container.read(deviceTrustProvider).value,
+        DeviceTrustStatus.approved,
+      );
       expect(api.callCount, 1);
 
       async.elapse(const Duration(seconds: 60));
@@ -175,15 +187,43 @@ void main() {
       async.elapse(Duration.zero);
 
       // act: 트랙 세션이 정상 복원됐는지 먼저 확인 — 회수 전에는 인증된 상태여야 한다.
-      expect(container.read(trackSessionProvider), isA<TrackSessionAuthenticated>());
+      expect(
+        container.read(trackSessionProvider),
+        isA<TrackSessionAuthenticated>(),
+      );
 
       async.elapse(const Duration(seconds: 15));
 
-      // assert: 회수 감지 → 기기 상태 갱신, 트랙 세션 즉시 말소, 기기 토큰 폐기.
-      expect(container.read(deviceTrustProvider).value, DeviceTrustStatus.revoked);
-      expect(container.read(trackSessionProvider), isA<TrackSessionUnauthenticated>());
+      // assert: 회수 감지 → 로컬 등록 상태 초기화, 트랙 세션 즉시 말소, 기기 토큰 폐기.
+      expect(container.read(deviceTrustProvider).value, DeviceTrustStatus.none);
+      expect(
+        container.read(trackSessionProvider),
+        isA<TrackSessionUnauthenticated>(),
+      );
       expect(store._values['device_trust_token'], isNull);
+      expect(store._values['device_trust_status'], isNull);
       expect(store._values['track_session_login_response'], isNull);
     }),
   );
+
+  test('ShouldClearAllRegistrationKeysWhenRegistrationIsCleared', () async {
+    // arrange
+    final store = _FakePendingTokenStore()
+      .._values['device_trust_registration_id'] = 'registration-1';
+    final container = ProviderContainer(
+      overrides: [secureTokenStoreProvider.overrideWithValue(store)],
+    );
+    addTearDown(container.dispose);
+    container.listen(deviceTrustProvider, (_, _) {});
+    await Future<void>.delayed(Duration.zero);
+
+    // act
+    await container.read(deviceTrustProvider.notifier).clearRegistration();
+
+    // assert
+    expect(container.read(deviceTrustProvider).value, DeviceTrustStatus.none);
+    expect(store._values['device_trust_token'], isNull);
+    expect(store._values['device_trust_status'], isNull);
+    expect(store._values['device_trust_registration_id'], isNull);
+  });
 }

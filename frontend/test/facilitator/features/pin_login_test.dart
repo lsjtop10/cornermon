@@ -59,6 +59,19 @@ class _FixedPinLoginError extends PinLoginError {
   PinLoginUiError? build() => _value;
 }
 
+class _RecordingDeviceTrust extends DeviceTrust {
+  bool clearRegistrationCalled = false;
+
+  @override
+  Future<DeviceTrustStatus> build() async => DeviceTrustStatus.approved;
+
+  @override
+  Future<void> clearRegistration() async {
+    clearRegistrationCalled = true;
+    state = const AsyncData(DeviceTrustStatus.none);
+  }
+}
+
 DioException _loginError({
   required int statusCode,
   required String code,
@@ -70,28 +83,36 @@ DioException _loginError({
     response: Response<Object?>(
       requestOptions: RequestOptions(path: path),
       statusCode: statusCode,
-      data: <String, dynamic>{
-        'code': code,
-        'details': ?details,
-      },
+      data: <String, dynamic>{'code': code, 'details': ?details},
     ),
   );
 }
 
-ProviderContainer _buildContainer(DioException exception) => ProviderContainer(
-      overrides: [
-        authDeviceTrustApiProvider.overrideWithValue(_FakeAuthDeviceTrustApi(exception)),
-        secureTokenStoreProvider.overrideWithValue(_FakeSecureTokenStore()),
-        // 신뢰기기 토큰이 있어야 loginWithPin이 실제 API 호출(및 그 실패)까지 도달한다.
-        deviceTrustTokenProvider.overrideWith((ref) async => 'fake-device-token'),
-      ],
-    );
+ProviderContainer _buildContainer(
+  DioException exception, {
+  DeviceTrust? deviceTrust,
+}) => ProviderContainer(
+  overrides: [
+    authDeviceTrustApiProvider.overrideWithValue(
+      _FakeAuthDeviceTrustApi(exception),
+    ),
+    secureTokenStoreProvider.overrideWithValue(_FakeSecureTokenStore()),
+    if (deviceTrust != null)
+      deviceTrustProvider.overrideWith(() => deviceTrust),
+    // 신뢰기기 토큰이 있어야 loginWithPin이 실제 API 호출(및 그 실패)까지 도달한다.
+    deviceTrustTokenProvider.overrideWith((ref) async => 'fake-device-token'),
+  ],
+);
 
 void main() {
   test('ShouldMapInvalidPinErrorCode', () async {
     // arrange
     final container = _buildContainer(
-      _loginError(statusCode: 400, code: 'INVALID_PIN', details: {'retryAfterSeconds': 5}),
+      _loginError(
+        statusCode: 400,
+        code: 'INVALID_PIN',
+        details: {'retryAfterSeconds': 5},
+      ),
     );
     addTearDown(container.dispose);
 
@@ -107,7 +128,11 @@ void main() {
   test('ShouldMapPinLockedErrorCode', () async {
     // arrange
     final container = _buildContainer(
-      _loginError(statusCode: 429, code: 'PIN_LOCKED', details: {'retryAfterSeconds': 120}),
+      _loginError(
+        statusCode: 429,
+        code: 'PIN_LOCKED',
+        details: {'retryAfterSeconds': 120},
+      ),
     );
     addTearDown(container.dispose);
 
@@ -134,6 +159,22 @@ void main() {
     expect(container.read(pinLoginErrorProvider), isA<DeviceNotTrustedYet>());
   });
 
+  test('ShouldClearRegistrationWhenDeviceNotTrustedErrorCode', () async {
+    // arrange
+    final deviceTrust = _RecordingDeviceTrust();
+    final container = _buildContainer(
+      _loginError(statusCode: 403, code: 'DEVICE_NOT_TRUSTED'),
+      deviceTrust: deviceTrust,
+    );
+    addTearDown(container.dispose);
+
+    // act
+    await container.read(pinLoginErrorProvider.notifier).submit('000000');
+
+    // assert
+    expect(deviceTrust.clearRegistrationCalled, isTrue);
+  });
+
   test('ShouldMapCampNotActiveErrorCode', () async {
     // arrange
     final container = _buildContainer(
@@ -150,13 +191,16 @@ void main() {
 
   testWidgets('ShouldDisableInputWhenPinLocked', (tester) async {
     // arrange
-    await tester.pumpWidget(buildTestable(
-      const PinLoginScreen(),
-      overrides: [
-        pinLoginErrorProvider
-            .overrideWith(() => _FixedPinLoginError(const PinLocked(retryAfterSeconds: 30))),
-      ],
-    ));
+    await tester.pumpWidget(
+      buildTestable(
+        const PinLoginScreen(),
+        overrides: [
+          pinLoginErrorProvider.overrideWith(
+            () => _FixedPinLoginError(const PinLocked(retryAfterSeconds: 30)),
+          ),
+        ],
+      ),
+    );
     await tester.pump();
 
     // act
@@ -168,5 +212,55 @@ void main() {
     // PIN_LOCKED 카운트다운의 Timer.periodic이 살아있으면 테스트 종료 후 pending timer 에러가
     // 나므로, 위젯을 교체해 dispose()가 타이머를 취소하도록 정리한다.
     await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('ShouldClearRegistrationWhenUserConfirmsCancellation', (
+    tester,
+  ) async {
+    // arrange
+    final store = _FakeSecureTokenStore();
+    await store.write('device_trust_token', 'device-token');
+    await store.write('device_trust_status', 'approved');
+    await store.write('device_trust_registration_id', 'registration-1');
+    await tester.pumpWidget(
+      buildTestable(
+        const PinLoginScreen(),
+        overrides: [secureTokenStoreProvider.overrideWithValue(store)],
+      ),
+    );
+
+    // act
+    await tester.tap(find.text('기기 등록 취소'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('진행'));
+    await tester.pumpAndSettle();
+
+    // assert
+    expect(await store.read('device_trust_token'), isNull);
+    expect(await store.read('device_trust_status'), isNull);
+    expect(await store.read('device_trust_registration_id'), isNull);
+  });
+
+  testWidgets('ShouldKeepRegistrationWhenUserCancelsCancellation', (
+    tester,
+  ) async {
+    // arrange
+    final store = _FakeSecureTokenStore();
+    await store.write('device_trust_token', 'device-token');
+    await tester.pumpWidget(
+      buildTestable(
+        const PinLoginScreen(),
+        overrides: [secureTokenStoreProvider.overrideWithValue(store)],
+      ),
+    );
+
+    // act
+    await tester.tap(find.text('기기 등록 취소'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('취소'));
+    await tester.pumpAndSettle();
+
+    // assert
+    expect(await store.read('device_trust_token'), 'device-token');
   });
 }
