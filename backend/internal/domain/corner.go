@@ -72,27 +72,28 @@ func (c *Corner) IsMandatory() bool {
 }
 
 type CornerProps struct {
-	ID CornerID
-	CampID CampID
-	Name string
+	ID            CornerID
+	CampID        CampID
+	Name          string
 	TargetMinutes int
-	IsMandatory bool
+	IsMandatory   bool
 }
+
 func NewCornerFromProps(p CornerProps) *Corner {
 	return &Corner{
-		id: p.ID,
-		campID: p.CampID,
-		name: p.Name,
+		id:            p.ID,
+		campID:        p.CampID,
+		name:          p.Name,
 		targetMinutes: p.TargetMinutes,
-		isMandatory: p.IsMandatory,
+		isMandatory:   p.IsMandatory,
 	}
 }
 func NewCornerValFromProps(p CornerProps) Corner {
 	return Corner{
-		id: p.ID,
-		campID: p.CampID,
-		name: p.Name,
+		id:            p.ID,
+		campID:        p.CampID,
+		name:          p.Name,
 		targetMinutes: p.TargetMinutes,
-		isMandatory: p.IsMandatory,
+		isMandatory:   p.IsMandatory,
 	}
 }

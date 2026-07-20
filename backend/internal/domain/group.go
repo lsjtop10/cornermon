@@ -20,8 +20,8 @@ const (
 
 func (cp *CornerProgress) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
-		CornerID CornerID               `json:"CornerID"`
-		Status   VisitStatusPerCorner   `json:"Status"`
+		CornerID CornerID             `json:"CornerID"`
+		Status   VisitStatusPerCorner `json:"Status"`
 	}{
 		CornerID: cp.cornerID,
 		Status:   cp.status,
@@ -30,8 +30,8 @@ func (cp *CornerProgress) MarshalJSON() ([]byte, error) {
 
 func (cp *CornerProgress) UnmarshalJSON(data []byte) error {
 	var aux struct {
-		CornerID CornerID               `json:"CornerID"`
-		Status   VisitStatusPerCorner   `json:"Status"`
+		CornerID CornerID             `json:"CornerID"`
+		Status   VisitStatusPerCorner `json:"Status"`
 	}
 	if err := json.Unmarshal(data, &aux); err != nil {
 		return err
@@ -136,18 +136,19 @@ func (c *CornerProgress) Status() VisitStatusPerCorner {
 
 type CornerProgressProps struct {
 	CornerID CornerID
-	Status VisitStatusPerCorner
+	Status   VisitStatusPerCorner
 }
+
 func NewCornerProgressFromProps(p CornerProgressProps) *CornerProgress {
 	return &CornerProgress{
 		cornerID: p.CornerID,
-		status: p.Status,
+		status:   p.Status,
 	}
 }
 func NewCornerProgressValFromProps(p CornerProgressProps) CornerProgress {
 	return CornerProgress{
 		cornerID: p.CornerID,
-		status: p.Status,
+		status:   p.Status,
 	}
 }
 
@@ -176,27 +177,28 @@ func (g *Group) SetItinerary(itinerary []CornerProgress) {
 }
 
 type GroupProps struct {
-	ID GroupID
-	CampID CampID
-	Name string
-	BadgeID BadgeID
+	ID        GroupID
+	CampID    CampID
+	Name      string
+	BadgeID   BadgeID
 	Itinerary []CornerProgress
 }
+
 func NewGroupFromProps(p GroupProps) *Group {
 	return &Group{
-		id: p.ID,
-		campID: p.CampID,
-		name: p.Name,
-		badgeID: p.BadgeID,
+		id:        p.ID,
+		campID:    p.CampID,
+		name:      p.Name,
+		badgeID:   p.BadgeID,
 		itinerary: p.Itinerary,
 	}
 }
 func NewGroupValFromProps(p GroupProps) Group {
 	return Group{
-		id: p.ID,
-		campID: p.CampID,
-		name: p.Name,
-		badgeID: p.BadgeID,
+		id:        p.ID,
+		campID:    p.CampID,
+		name:      p.Name,
+		badgeID:   p.BadgeID,
 		itinerary: p.Itinerary,
 	}
 }

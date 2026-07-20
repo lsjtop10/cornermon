@@ -72,6 +72,7 @@ func (d *DeviceLockedError) LockedUntil() time.Time {
 type DeviceLockedErrorProps struct {
 	LockedUntil time.Time
 }
+
 func NewDeviceLockedErrorFromProps(p DeviceLockedErrorProps) *DeviceLockedError {
 	return &DeviceLockedError{
 		lockedUntil: p.LockedUntil,
@@ -90,6 +91,7 @@ func (i *InvalidPinError) LockedUntil() Optional[time.Time] {
 type InvalidPinErrorProps struct {
 	LockedUntil Optional[time.Time]
 }
+
 func NewInvalidPinErrorFromProps(p InvalidPinErrorProps) *InvalidPinError {
 	return &InvalidPinError{
 		lockedUntil: p.LockedUntil,

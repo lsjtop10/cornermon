@@ -172,43 +172,44 @@ func (c *Camp) BottleneckRatioPct() int {
 }
 
 type CampProps struct {
-	ID CampID
-	RegistrationCode string
-	Name string
-	StartAt time.Time
-	EndAt time.Time
-	ActivatedAt Optional[time.Time]
-	EndedAt Optional[time.Time]
-	Status CampStatus
+	ID                   CampID
+	RegistrationCode     string
+	Name                 string
+	StartAt              time.Time
+	EndAt                time.Time
+	ActivatedAt          Optional[time.Time]
+	EndedAt              Optional[time.Time]
+	Status               CampStatus
 	BottleneckMinSamples int
-	BottleneckRatioPct int
+	BottleneckRatioPct   int
 }
+
 func NewCampFromProps(p CampProps) *Camp {
 	return &Camp{
-		id: p.ID,
-		registrationCode: p.RegistrationCode,
-		name: p.Name,
-		startAt: p.StartAt,
-		endAt: p.EndAt,
-		activatedAt: p.ActivatedAt,
-		endedAt: p.EndedAt,
-		status: p.Status,
+		id:                   p.ID,
+		registrationCode:     p.RegistrationCode,
+		name:                 p.Name,
+		startAt:              p.StartAt,
+		endAt:                p.EndAt,
+		activatedAt:          p.ActivatedAt,
+		endedAt:              p.EndedAt,
+		status:               p.Status,
 		bottleneckMinSamples: p.BottleneckMinSamples,
-		bottleneckRatioPct: p.BottleneckRatioPct,
+		bottleneckRatioPct:   p.BottleneckRatioPct,
 	}
 }
 func NewCampValFromProps(p CampProps) Camp {
 	return Camp{
-		id: p.ID,
-		registrationCode: p.RegistrationCode,
-		name: p.Name,
-		startAt: p.StartAt,
-		endAt: p.EndAt,
-		activatedAt: p.ActivatedAt,
-		endedAt: p.EndedAt,
-		status: p.Status,
+		id:                   p.ID,
+		registrationCode:     p.RegistrationCode,
+		name:                 p.Name,
+		startAt:              p.StartAt,
+		endAt:                p.EndAt,
+		activatedAt:          p.ActivatedAt,
+		endedAt:              p.EndedAt,
+		status:               p.Status,
 		bottleneckMinSamples: p.BottleneckMinSamples,
-		bottleneckRatioPct: p.BottleneckRatioPct,
+		bottleneckRatioPct:   p.BottleneckRatioPct,
 	}
 }
 
@@ -248,27 +249,28 @@ func (c *CampSettingsPatch) SetBottleneckRatioPct(n Optional[int]) {
 }
 
 type CampSettingsPatchProps struct {
-	Name Optional[string]
-	StartAt Optional[time.Time]
-	EndAt Optional[time.Time]
+	Name                 Optional[string]
+	StartAt              Optional[time.Time]
+	EndAt                Optional[time.Time]
 	BottleneckMinSamples Optional[int]
-	BottleneckRatioPct Optional[int]
+	BottleneckRatioPct   Optional[int]
 }
+
 func NewCampSettingsPatchFromProps(p CampSettingsPatchProps) *CampSettingsPatch {
 	return &CampSettingsPatch{
-		name: p.Name,
-		startAt: p.StartAt,
-		endAt: p.EndAt,
+		name:                 p.Name,
+		startAt:              p.StartAt,
+		endAt:                p.EndAt,
 		bottleneckMinSamples: p.BottleneckMinSamples,
-		bottleneckRatioPct: p.BottleneckRatioPct,
+		bottleneckRatioPct:   p.BottleneckRatioPct,
 	}
 }
 func NewCampSettingsPatchValFromProps(p CampSettingsPatchProps) CampSettingsPatch {
 	return CampSettingsPatch{
-		name: p.Name,
-		startAt: p.StartAt,
-		endAt: p.EndAt,
+		name:                 p.Name,
+		startAt:              p.StartAt,
+		endAt:                p.EndAt,
 		bottleneckMinSamples: p.BottleneckMinSamples,
-		bottleneckRatioPct: p.BottleneckRatioPct,
+		bottleneckRatioPct:   p.BottleneckRatioPct,
 	}
 }

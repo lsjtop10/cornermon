@@ -147,41 +147,42 @@ func (tr *Track) UnreadByTrackCount() int {
 }
 
 type TrackProps struct {
-	ID TrackID
-	CornerID CornerID
-	TrackNo int
-	Status TrackStatus
-	PINHash string
-	PINCiphertext string
-	CurrentVisitID Optional[VisitID]
-	DeletedAt Optional[time.Time]
+	ID                 TrackID
+	CornerID           CornerID
+	TrackNo            int
+	Status             TrackStatus
+	PINHash            string
+	PINCiphertext      string
+	CurrentVisitID     Optional[VisitID]
+	DeletedAt          Optional[time.Time]
 	UnreadByAdminCount int
 	UnreadByTrackCount int
 }
+
 func NewTrackFromProps(p TrackProps) *Track {
 	return &Track{
-		id: p.ID,
-		cornerID: p.CornerID,
-		trackNo: p.TrackNo,
-		status: p.Status,
-		pINHash: p.PINHash,
-		pINCiphertext: p.PINCiphertext,
-		currentVisitID: p.CurrentVisitID,
-		deletedAt: p.DeletedAt,
+		id:                 p.ID,
+		cornerID:           p.CornerID,
+		trackNo:            p.TrackNo,
+		status:             p.Status,
+		pINHash:            p.PINHash,
+		pINCiphertext:      p.PINCiphertext,
+		currentVisitID:     p.CurrentVisitID,
+		deletedAt:          p.DeletedAt,
 		unreadByAdminCount: p.UnreadByAdminCount,
 		unreadByTrackCount: p.UnreadByTrackCount,
 	}
 }
 func NewTrackValFromProps(p TrackProps) Track {
 	return Track{
-		id: p.ID,
-		cornerID: p.CornerID,
-		trackNo: p.TrackNo,
-		status: p.Status,
-		pINHash: p.PINHash,
-		pINCiphertext: p.PINCiphertext,
-		currentVisitID: p.CurrentVisitID,
-		deletedAt: p.DeletedAt,
+		id:                 p.ID,
+		cornerID:           p.CornerID,
+		trackNo:            p.TrackNo,
+		status:             p.Status,
+		pINHash:            p.PINHash,
+		pINCiphertext:      p.PINCiphertext,
+		currentVisitID:     p.CurrentVisitID,
+		deletedAt:          p.DeletedAt,
 		unreadByAdminCount: p.UnreadByAdminCount,
 		unreadByTrackCount: p.UnreadByTrackCount,
 	}
