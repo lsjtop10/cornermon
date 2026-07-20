@@ -51,7 +51,7 @@ func (s *DeviceTrustService) RequestRegistration(
 	if camp == nil {
 		return "", nil, domain.ErrCampNotFound
 	}
-	if !camp.IsActive() {
+	if camp.Status() == domain.CampEnded {
 		return "", nil, domain.ErrCampInvalidTransition
 	}
 	campID := camp.ID
@@ -81,11 +81,11 @@ func (s *DeviceTrustService) RequestRegistration(
 	})
 
 	if err != nil {
-		s.recordAuditLog(ctx, "anonymous", "DEVICE_REQUEST", "", false, map[string]any{"error": err.Error()})
+		s.recordAuditLog(ctx, "anonymous", ActionDeviceRequest, "", false, map[string]any{"error": err.Error()})
 		return "", nil, err
 	}
 
-	s.recordAuditLog(ctx, "anonymous", "DEVICE_REQUEST", string(reg.ID()), true, map[string]any{"campID()": string(campID())})
+	s.recordAuditLog(ctx, "anonymous", ActionDeviceRequest, string(reg.ID()), true, map[string]any{"campID()": string(campID())})
 	_ = s.broadcaster.Broadcast(ctx, campID(), EventDeviceRegistrationUpdated, CampScope())
 	return plainToken, reg, nil
 }
@@ -94,7 +94,7 @@ func (s *DeviceTrustService) RequestRegistration(
 func (s *DeviceTrustService) GetMyRegistrationStatus(
 	ctx context.Context,
 	deviceToken string,
-) (*domain.DeviceRegistrationStatus, error) {
+) (*domain.DeviceRegistration, error) {
 	deviceTokenHash := hashSHA256(deviceToken)
 	device, err := s.devices.GetByTokenHash(ctx, deviceTokenHash)
 	if err != nil {
@@ -103,8 +103,7 @@ func (s *DeviceTrustService) GetMyRegistrationStatus(
 	if device == nil {
 		return nil, domain.ErrDeviceNotApproved // 혹은 NotFound 처리
 	}
-	status := device.Status()
-	return &status, nil
+	return device, nil
 }
 
 // ApproveDevice - UC-14 (승인)
@@ -131,11 +130,11 @@ func (s *DeviceTrustService) ApproveDevice(
 	})
 
 	if err != nil {
-		s.recordAuditLog(ctx, string(actorAdminID), "DEVICE_APPROVED", string(regID), false, map[string]any{"error": err.Error()})
+		s.recordAuditLog(ctx, string(actorAdminID), ActionDeviceApproved, string(regID), false, map[string]any{"error": err.Error()})
 		return err
 	}
 
-	s.recordAuditLog(ctx, string(actorAdminID), "DEVICE_APPROVED", string(regID), true, nil)
+	s.recordAuditLog(ctx, string(actorAdminID), ActionDeviceApproved, string(regID), true, nil)
 	_ = s.broadcaster.Broadcast(ctx, device.CampID(), EventDeviceRegistrationUpdated, CampScope())
 	return nil
 }
@@ -163,11 +162,11 @@ func (s *DeviceTrustService) RejectDevice(
 	})
 
 	if err != nil {
-		s.recordAuditLog(ctx, string(actorAdminID), "DEVICE_REJECTED", string(regID), false, map[string]any{"error": err.Error()})
+		s.recordAuditLog(ctx, string(actorAdminID), ActionDeviceRejected, string(regID), false, map[string]any{"error": err.Error()})
 		return err
 	}
 
-	s.recordAuditLog(ctx, string(actorAdminID), "DEVICE_REJECTED", string(regID), true, nil)
+	s.recordAuditLog(ctx, string(actorAdminID), ActionDeviceRejected, string(regID), true, nil)
 	_ = s.broadcaster.Broadcast(ctx, device.CampID(), EventDeviceRegistrationUpdated, CampScope())
 	return nil
 }
@@ -195,11 +194,11 @@ func (s *DeviceTrustService) RevokeDevice(
 	})
 
 	if err != nil {
-		s.recordAuditLog(ctx, string(actorAdminID), "DEVICE_REVOKED", string(regID), false, map[string]any{"error": err.Error()})
+		s.recordAuditLog(ctx, string(actorAdminID), ActionDeviceRevoked, string(regID), false, map[string]any{"error": err.Error()})
 		return err
 	}
 
-	s.recordAuditLog(ctx, string(actorAdminID), "DEVICE_REVOKED", string(regID), true, nil)
+	s.recordAuditLog(ctx, string(actorAdminID), ActionDeviceRevoked, string(regID), true, nil)
 	_ = s.broadcaster.Broadcast(ctx, device.CampID(), EventDeviceRegistrationUpdated, CampScope())
 	return nil
 }
@@ -225,11 +224,11 @@ func (s *DeviceTrustService) ResetPinFailures(
 	})
 
 	if err != nil {
-		s.recordAuditLog(ctx, string(actorAdminID), "PIN_LOCK_RESET", string(regID), false, map[string]any{"error": err.Error()})
+		s.recordAuditLog(ctx, string(actorAdminID), ActionPinLockReset, string(regID), false, map[string]any{"error": err.Error()})
 		return err
 	}
 
-	s.recordAuditLog(ctx, string(actorAdminID), "PIN_LOCK_RESET", string(regID), true, nil)
+	s.recordAuditLog(ctx, string(actorAdminID), ActionPinLockReset, string(regID), true, nil)
 	_ = s.broadcaster.Broadcast(ctx, device.CampID(), EventDeviceRegistrationUpdated, CampScope())
 	return nil
 }
@@ -272,11 +271,11 @@ func (s *DeviceTrustService) ListLockedDevices(ctx context.Context, campID domai
 	return locked, nil
 }
 
-func (s *DeviceTrustService) recordAuditLog(ctx context.Context, actor, action, target string, success bool, metadata map[string]any) {
+func (s *DeviceTrustService) recordAuditLog(ctx context.Context, actor string, action AuditAction, target string, success bool, metadata map[string]any) {
 	log := domain.NewAuditLog(
 		domain.AuditLogID(s.uuidFn()),
 		actor,
-		action,
+		string(action),
 		target,
 		success,
 		s.nowFn(),

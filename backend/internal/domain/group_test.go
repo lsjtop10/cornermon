@@ -1,4 +1,3 @@
-
 package domain_test
 
 import (
@@ -10,7 +9,7 @@ import (
 
 func TestGroup_IsFinishedAndStatus(t *testing.T) {
 	t.Run("Empty itinerary is not finished and status is IDLE_MOVING", func(t *testing.T) {
-		g := domain.NewGroupFromProps(domain.GroupProps{ID:        domain.GroupID("group-1"),
+		g := domain.NewGroupFromProps(domain.GroupProps{ID: domain.GroupID("group-1"),
 			Itinerary: []domain.CornerProgress{},
 		})
 

@@ -3,11 +3,8 @@ package web
 import (
 	"errors"
 	"log/slog"
-	"math"
 	"net/http"
 	"time"
-
-	"cornermon/backend/internal/domain"
 
 	"github.com/labstack/echo/v4"
 )
@@ -28,37 +25,23 @@ func ErrorHandler() echo.HTTPErrorHandler {
 		var he *echo.HTTPError
 		if errors.As(err, &he) {
 			code = he.Code
-			errCode = "HTTP_ERROR"
-			if m, ok := he.Message.(string); ok {
+			if er, ok := he.Message.(ErrorResponse); ok {
+				errCode = er.Code
+				message = er.Message
+				details = er.Details
+			} else if erPtr, ok := he.Message.(*ErrorResponse); ok {
+				errCode = erPtr.Code
+				message = erPtr.Message
+				details = erPtr.Details
+			} else if m, ok := he.Message.(string); ok {
+				errCode = "HTTP_ERROR"
 				message = m
+			} else {
+				errCode = "HTTP_ERROR"
 			}
 		} else {
-			code, errCode = mapDomainError(err)
-
-			var lockedErr *domain.DeviceLockedError
-			var invalidPinErr *domain.InvalidPinError
-
-			if errors.As(err, &lockedErr) {
-				now := time.Now()
-				sec := int(math.Ceil(lockedErr.LockedUntil().Sub(now).Seconds()))
-				if sec < 1 {
-					sec = 1
-				}
-				details = map[string]interface{}{
-					"retryAfterSeconds": sec,
-				}
-			} else if errors.As(err, &invalidPinErr) {
-				if lockedUntil, ok := invalidPinErr.LockedUntil().Value(); ok {
-					now := time.Now()
-					sec := int(math.Ceil(lockedUntil.Sub(now).Seconds()))
-					if sec < 1 {
-						sec = 1
-					}
-					details = map[string]interface{}{
-						"retryAfterSeconds": sec,
-					}
-				}
-			}
+			code = http.StatusInternalServerError
+			errCode = "INTERNAL_SERVER_ERROR"
 		}
 
 		var durationMsAttr slog.Attr
@@ -90,64 +73,5 @@ func ErrorHandler() echo.HTTPErrorHandler {
 			Message: message,
 			Details: details,
 		})
-	}
-}
-
-func mapDomainError(err error) (int, string) {
-	switch {
-	case errors.Is(err, domain.ErrCampInvalidTransition):
-		return http.StatusBadRequest, "INVALID_TRANSITION"
-	case errors.Is(err, domain.ErrGroupBusy):
-		return http.StatusConflict, "GROUP_BUSY"
-	case errors.Is(err, domain.ErrDuplicateVisit):
-		return http.StatusConflict, "DUPLICATE_VISIT"
-	case errors.Is(err, domain.ErrTrackNotActive):
-		return http.StatusForbidden, "TRACK_NOT_ACTIVE"
-	case errors.Is(err, domain.ErrTrackScopeForbidden):
-		return http.StatusForbidden, "TRACK_SCOPE_FORBIDDEN"
-	case errors.Is(err, domain.ErrTrackNotFound):
-		return http.StatusNotFound, "TRACK_NOT_FOUND"
-	case errors.Is(err, domain.ErrTrackBusy):
-		return http.StatusConflict, "TRACK_BUSY"
-	case errors.Is(err, domain.ErrTrackDeleteBlocked):
-		return http.StatusConflict, "TRACK_DELETE_BLOCKED"
-	case errors.Is(err, domain.ErrVisitAlreadyCompleted):
-		return http.StatusConflict, "VISIT_ALREADY_COMPLETED"
-	case errors.Is(err, domain.ErrBadgeAlreadyAssigned):
-		return http.StatusConflict, "BADGE_ALREADY_ASSIGNED"
-	case errors.Is(err, domain.ErrBadgeNotAssigned):
-		return http.StatusBadRequest, "BADGE_NOT_ASSIGNED"
-	case errors.Is(err, domain.ErrDeviceNotApproved):
-		return http.StatusForbidden, "DEVICE_NOT_APPROVED"
-	case errors.Is(err, domain.ErrDeviceLocked):
-		return http.StatusTooManyRequests, "PIN_LOCKED"
-	case errors.Is(err, domain.ErrInvalidPin):
-		return http.StatusBadRequest, "INVALID_PIN"
-	case errors.Is(err, domain.ErrSessionRevoked):
-		return http.StatusUnauthorized, "SESSION_REVOKED"
-	case errors.Is(err, domain.ErrCornerNotInItinerary):
-		return http.StatusBadRequest, "CORNER_NOT_IN_ITINERARY"
-	case errors.Is(err, domain.ErrVisitNotInProgress):
-		return http.StatusBadRequest, "VISIT_NOT_IN_PROGRESS"
-	case errors.Is(err, domain.ErrTrackAlreadyDeleted):
-		return http.StatusConflict, "TRACK_ALREADY_DELETED"
-	case errors.Is(err, domain.ErrTrackNotBusy):
-		return http.StatusBadRequest, "TRACK_NOT_BUSY"
-	case errors.Is(err, domain.ErrVisitEndBeforeStart):
-		return http.StatusBadRequest, "VISIT_END_BEFORE_START"
-	case errors.Is(err, domain.ErrDeviceInvalidTransition):
-		return http.StatusBadRequest, "INVALID_TRANSITION"
-	case errors.Is(err, domain.ErrCornerNotFound):
-		return http.StatusNotFound, "CORNER_NOT_FOUND"
-	case errors.Is(err, domain.ErrCampNotFound):
-		return http.StatusNotFound, "CAMP_NOT_FOUND"
-	case errors.Is(err, domain.ErrCampInvalidSettings):
-		return http.StatusBadRequest, "INVALID_CAMP_SETTINGS"
-	case errors.Is(err, domain.ErrCampSettingsLocked):
-		return http.StatusConflict, "CAMP_SETTINGS_LOCKED"
-	case errors.Is(err, domain.ErrTrackCampMismatch):
-		return http.StatusConflict, "TRACK_CAMP_MISMATCH"
-	default:
-		return http.StatusInternalServerError, "INTERNAL_ERROR"
 	}
 }

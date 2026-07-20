@@ -1,4 +1,3 @@
-
 package usecase
 
 import (
@@ -22,7 +21,7 @@ func TestVisitService_StartVisitByQR(t *testing.T) {
 		corners.Save(context.Background(), corner)
 
 		tracks := NewMockTrackRepository()
-		track := domain.NewTrackFromProps(domain.TrackProps{ID:             "track-1",
+		track := domain.NewTrackFromProps(domain.TrackProps{ID: "track-1",
 			CornerID:       "corner-1",
 			Status:         domain.TrackActive,
 			CurrentVisitID: domain.None[domain.VisitID](),
@@ -30,7 +29,7 @@ func TestVisitService_StartVisitByQR(t *testing.T) {
 		tracks.Save(context.Background(), track)
 
 		badges := NewMockBadgeRepository()
-		badge := domain.NewBadgeFromProps(domain.BadgeProps{ID:              "badge-1",
+		badge := domain.NewBadgeFromProps(domain.BadgeProps{ID: "badge-1",
 			QRPayload:       "qr-payload-1",
 			Status:          domain.BadgeAssigned,
 			AssignedGroupID: domain.Some[domain.GroupID]("group-1"),
@@ -38,7 +37,7 @@ func TestVisitService_StartVisitByQR(t *testing.T) {
 		badges.Save(context.Background(), badge)
 
 		groups := NewMockGroupRepository()
-		group := domain.NewGroupFromProps(domain.GroupProps{ID:      "group-1",
+		group := domain.NewGroupFromProps(domain.GroupProps{ID: "group-1",
 			CampID:  "camp-1",
 			BadgeID: "badge-1",
 			Itinerary: []domain.CornerProgress{
@@ -50,7 +49,7 @@ func TestVisitService_StartVisitByQR(t *testing.T) {
 		sessions := NewMockFacilitatorSessionRepository()
 		sessionToken := "session-token-1"
 		tokenHash := hashSHA256(sessionToken)
-		session := domain.NewFacilitatorSessionFromProps(domain.FacilitatorSessionProps{ID:        "session-1",
+		session := domain.NewFacilitatorSessionFromProps(domain.FacilitatorSessionProps{ID: "session-1",
 			TrackID:   "track-1",
 			TokenHash: tokenHash,
 			CreatedAt: now,
@@ -121,7 +120,7 @@ func TestVisitService_StartVisitByQR(t *testing.T) {
 		sessions := NewMockFacilitatorSessionRepository()
 		sessionToken := "session-token-2"
 		tokenHash := hashSHA256(sessionToken)
-		session := domain.NewFacilitatorSessionFromProps(domain.FacilitatorSessionProps{ID:        "session-2",
+		session := domain.NewFacilitatorSessionFromProps(domain.FacilitatorSessionProps{ID: "session-2",
 			TrackID:   "track-1",
 			TokenHash: tokenHash,
 			CreatedAt: now,
@@ -154,7 +153,7 @@ func TestVisitService_StartVisitByQR(t *testing.T) {
 
 		corners := NewMockCornerRepository()
 		tracks := NewMockTrackRepository()
-		track := domain.NewTrackFromProps(domain.TrackProps{ID:             "track-1",
+		track := domain.NewTrackFromProps(domain.TrackProps{ID: "track-1",
 			CornerID:       "corner-1",
 			Status:         domain.TrackActive,
 			CurrentVisitID: domain.Some[domain.VisitID]("visit-0"),
@@ -162,7 +161,7 @@ func TestVisitService_StartVisitByQR(t *testing.T) {
 		tracks.Save(context.Background(), track)
 
 		badges := NewMockBadgeRepository()
-		badge := domain.NewBadgeFromProps(domain.BadgeProps{ID:              "badge-1",
+		badge := domain.NewBadgeFromProps(domain.BadgeProps{ID: "badge-1",
 			QRPayload:       "qr-payload-1",
 			Status:          domain.BadgeAssigned,
 			AssignedGroupID: domain.Some[domain.GroupID]("group-1"),
@@ -170,7 +169,7 @@ func TestVisitService_StartVisitByQR(t *testing.T) {
 		badges.Save(context.Background(), badge)
 
 		groups := NewMockGroupRepository()
-		group := domain.NewGroupFromProps(domain.GroupProps{ID:      "group-1",
+		group := domain.NewGroupFromProps(domain.GroupProps{ID: "group-1",
 			CampID:  "camp-1",
 			BadgeID: "badge-1",
 			Itinerary: []domain.CornerProgress{
@@ -182,7 +181,7 @@ func TestVisitService_StartVisitByQR(t *testing.T) {
 		sessions := NewMockFacilitatorSessionRepository()
 		sessionToken := "session-token-3"
 		tokenHash := hashSHA256(sessionToken)
-		session := domain.NewFacilitatorSessionFromProps(domain.FacilitatorSessionProps{ID:        "session-3",
+		session := domain.NewFacilitatorSessionFromProps(domain.FacilitatorSessionProps{ID: "session-3",
 			TrackID:   "track-1",
 			TokenHash: tokenHash,
 			CreatedAt: now,
@@ -213,7 +212,7 @@ func TestVisitService_CompleteVisit(t *testing.T) {
 		camps := NewMockCampRepository()
 		corners := NewMockCornerRepository()
 		tracks := NewMockTrackRepository()
-		track := domain.NewTrackFromProps(domain.TrackProps{ID:             "track-1",
+		track := domain.NewTrackFromProps(domain.TrackProps{ID: "track-1",
 			CornerID:       "corner-1",
 			Status:         domain.TrackActive,
 			CurrentVisitID: domain.Some[domain.VisitID]("visit-1"),
@@ -221,7 +220,7 @@ func TestVisitService_CompleteVisit(t *testing.T) {
 		tracks.Save(context.Background(), track)
 
 		groups := NewMockGroupRepository()
-		group := domain.NewGroupFromProps(domain.GroupProps{ID:     "group-1",
+		group := domain.NewGroupFromProps(domain.GroupProps{ID: "group-1",
 			CampID: "camp-1",
 			Itinerary: []domain.CornerProgress{
 				domain.NewCornerProgressValFromProps(domain.CornerProgressProps{CornerID: "corner-1", Status: domain.VisitInProgress}),
@@ -236,7 +235,7 @@ func TestVisitService_CompleteVisit(t *testing.T) {
 		sessions := NewMockFacilitatorSessionRepository()
 		sessionToken := "session-token-1"
 		tokenHash := hashSHA256(sessionToken)
-		session := domain.NewFacilitatorSessionFromProps(domain.FacilitatorSessionProps{ID:        "session-1",
+		session := domain.NewFacilitatorSessionFromProps(domain.FacilitatorSessionProps{ID: "session-1",
 			TrackID:   "track-1",
 			TokenHash: tokenHash,
 			CreatedAt: now,
@@ -292,7 +291,7 @@ func TestVisitService_CompleteVisit(t *testing.T) {
 		camps := NewMockCampRepository()
 		corners := NewMockCornerRepository()
 		tracks := NewMockTrackRepository()
-		track := domain.NewTrackFromProps(domain.TrackProps{ID:             "track-1",
+		track := domain.NewTrackFromProps(domain.TrackProps{ID: "track-1",
 			CornerID:       "corner-1",
 			Status:         domain.TrackActive,
 			CurrentVisitID: domain.None[domain.VisitID](),
@@ -302,7 +301,7 @@ func TestVisitService_CompleteVisit(t *testing.T) {
 		sessions := NewMockFacilitatorSessionRepository()
 		sessionToken := "session-token-1"
 		tokenHash := hashSHA256(sessionToken)
-		session := domain.NewFacilitatorSessionFromProps(domain.FacilitatorSessionProps{ID:        "session-1",
+		session := domain.NewFacilitatorSessionFromProps(domain.FacilitatorSessionProps{ID: "session-1",
 			TrackID:   "track-1",
 			TokenHash: tokenHash,
 			CreatedAt: now,

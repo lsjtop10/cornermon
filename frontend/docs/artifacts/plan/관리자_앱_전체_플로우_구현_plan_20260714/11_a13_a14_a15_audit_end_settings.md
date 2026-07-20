@@ -255,15 +255,15 @@ class BottleneckThresholdSection extends ConsumerStatefulWidget {
 
 ## 5. 작업 단계
 
-| 순서 | 작업 | 파일 | 상태 |
-|---|---|---|---|
-| K-1 | screen-spec-admin.md A13 절에 "서버 정렬 미지원 — 컬럼 정렬 UI 제외" 각주 추가 | `docs/front/screen-spec-admin.md` | ✅ |
-| K-2 | `AuditLogFilter`, `AuditLogFilterNotifier` | `frontend/lib/admin/features/audit_log/audit_log_filter_state.dart` | ✅ |
-| K-3 | `AuditLogPageState`, `AuditLogPageNotifier`(커서 누적) | `frontend/lib/admin/features/audit_log/audit_log_page_notifier.dart` | ✅ |
-| K-4 | `AuditLogScreen`, `AuditLogFilterBar`, `AuditLogTable`, `AuditLogLoadMore` | `frontend/lib/admin/features/audit_log/**` | ✅ |
-| K-5 | `AuditLogScreen`을 `02`의 `/audit-log` 라우트 스텁에 배선 | `frontend/lib/admin/router/admin_router.dart` | ✅ |
-| L-1 | `EndCampBarButton`, `EndCampConfirmDialog` | `frontend/lib/admin/features/end_camp/**` |
-| L-2 | 운영 모드 공용 셸(있으면 확장, 없으면 신규)에 `EndCampBarButton` 삽입 | `frontend/lib/admin/widgets/shell/admin_operating_shell.dart`(또는 `02`가 만든 기존 셸 파일) |
+| 순서 | 작업 | 파일 |
+|---|---|---|
+| K-1 | screen-spec-admin.md A13 절에 "서버 정렬 미지원 — 컬럼 정렬 UI 제외" 각주 추가 | `docs/front/screen-spec-admin.md` |
+| K-2 | `AuditLogFilter`, `AuditLogFilterNotifier` | `frontend/lib/admin/features/audit_log/audit_log_filter_state.dart` |
+| K-3 | `AuditLogPageState`, `AuditLogPageNotifier`(커서 누적) | `frontend/lib/admin/features/audit_log/audit_log_page_notifier.dart` |
+| K-4 | `AuditLogScreen`, `AuditLogFilterBar`, `AuditLogTable`, `AuditLogLoadMore` | `frontend/lib/admin/features/audit_log/**` |
+| K-5 | `AuditLogScreen`을 `02`의 `/audit-log` 라우트 스텁에 배선 | `frontend/lib/admin/router/admin_router.dart` |
+| L-1 | `EndCampBarButton`, `EndCampConfirmDialog`, `EndCampController` | `frontend/lib/admin/features/end_camp/**` — 완료 |
+| L-2 | 운영 모드 공용 셸에 `EndCampBarButton` 삽입 — `02`에서 이미 `AdminScaffold`가 그 역할을 하고 있어(35~42행 `StartCampButton` 배치 참고) 새 셸 파일을 만들지 않고 기존 `AdminScaffold`를 확장함(operating 모드 분기 추가) | `frontend/lib/admin/widgets/admin_scaffold.dart` — 완료 |
 | M-1 | `updateCamp` provider가 `bottleneckRatioPct`(정수) 시그니처로 되어 있는지 확인·수정(`01` 산출물 재검증) | `frontend/lib/shared/api/providers/camp_providers.dart` |
 | M-2 | `SettingsScreen`, `CampInfoSection`, `BottleneckThresholdSection` | `frontend/lib/admin/features/settings/**` |
 | M-3 | `SettingsScreen`을 `02`의 `/settings` 라우트 스텁에 배선 | `frontend/lib/admin/router/admin_router.dart` |
@@ -284,14 +284,28 @@ class BottleneckThresholdSection extends ConsumerStatefulWidget {
 - [x] 필터를 바꾸면 누적된 로그가 비워지고 `before` 없이 처음부터 재조회된다(이전 필터의 결과가 남아있지 않음) — `ShoudResetAccumulationAndRefetchFromScratchWhenFilterChanges`
 
 ### A14 코너학습 종료
-- [ ] ACTIVE 캠프의 운영 모드 어느 화면(대시보드/조현황/설정 등)에 있어도 상단 바에 "코너학습 종료" destructive 버튼이 보인다
-- [ ] PENDING/ENDED 캠프에서는 이 버튼이 보이지 않는다(준비 모드엔 "코너학습 시작"이 같은 자리에 대신 나타남)
-- [ ] 버튼 클릭 시 뜨는 확인 모달에 현재 완주/부분완주(근사) 조 수 요약이 표시된다
-- [ ] "종료 선언" 클릭 시 `POST /camps/{id}/end`가 먼저 호출되고, 성공하면 이어서 `POST /camps/{campId}/reports/generate`가 호출된다(네트워크 탭/로그로 순서 확인)
-- [ ] 종료 처리 완료 후 캠프의 대시보드(A1)로 남지 않고 캠프 목록(A0-c) 화면으로 이동한다
-- [ ] 캠프 목록에서 방금 종료한 캠프가 "종료됨" 배지로 표시된다
-- [ ] `reports/generate` 호출이 실패하도록 목업했을 때도 `/end` 성공이면 캠프 목록으로는 정상 이동하고, 경고 스낵바가 별도로 뜬다(종료 자체가 실패로 처리되지 않음)
-- [ ] `endCamp` 자체가 실패(400/409)하면 모달이 닫히지 않고 에러가 인라인 표시되며 캠프 목록으로 이동하지 않는다
+
+> **구현 노트(신규)**: `endCamp`/`generateReport` provider가 `retry: noRetry` 없이 plain `@riverpod`로
+> 정의돼 있었다(`createCamp`만 이미 `retry: noRetry`였음 — §2.3 DEVELOPER_GUIDE 기준 기존 코드베이스의
+> 누락). 실패 시 Riverpod 기본 정책(무제한 횟수, 지수 백오프 최대 6.4초, 실시간)이 적용되어
+> `endCampControllerProvider.confirm()`의 에러 처리·리포트 실패 폴백 경로가 즉시 반영되지 않고 최대
+> 수십 초 지연 후에야(또는 컨트롤러 자체가 async gap 중 dispose되어) 반영되는 문제를 실제로
+> 재현했다(`test/admin/features/end_camp/end_camp_controller_test.dart` 작성 중 발견, plain `test()`가
+> 실시간으로 재시도 backoff를 기다리다 30초 타임아웃). A14의 "실패 시 인라인 에러 즉시 표시",
+> "reports/generate 실패는 무시하고 즉시 다음 단계로 진행" 요구사항과 직접 충돌하므로
+> `frontend/lib/shared/api/providers/camp_providers.dart`의 `endCamp`와
+> `frontend/lib/shared/api/providers/report_providers.dart`의 `generateReport`에
+> `@Riverpod(retry: noRetry)`를 추가하고 `build_runner`로 재생성했다(다른 화면의 `startCamp`/`updateCamp`는
+> A14 범위 밖이라 손대지 않음 — 각 소유 worktree가 필요 시 동일 패턴 적용 필요).
+
+- [x] ACTIVE 캠프의 운영 모드 어느 화면(대시보드/조현황/설정 등)에 있어도 상단 바에 "코너학습 종료" destructive 버튼이 보인다 — `end_camp_bar_button_test.dart`의 `ShoudShowEndButtonWhenAdminScaffoldIsOperating`
+- [x] PENDING/ENDED 캠프에서는 이 버튼이 보이지 않는다(준비 모드엔 "코너학습 시작"이 같은 자리에 대신 나타남) — `ShoudHideEndButtonWhenAdminScaffoldIsPreparing`, `ShoudHideEndButtonWhenAdminScaffoldIsReportOnly`
+- [x] 버튼 클릭 시 뜨는 확인 모달에 현재 완주/부분완주(근사) 조 수 요약이 표시된다 — `ShoudShowLiveSummaryWhenConfirmDialogOpened`
+- [x] "종료 선언" 클릭 시 `POST /camps/{id}/end`가 먼저 호출되고, 성공하면 이어서 `POST /camps/{campId}/reports/generate`가 호출된다(네트워크 탭/로그로 순서 확인) — `end_camp_controller_test.dart`의 `ShoudCallEndCampBeforeGenerateReport`(호출 순서 배열로 검증)
+- [x] 종료 처리 완료 후 캠프의 대시보드(A1)로 남지 않고 캠프 목록(A0-c) 화면으로 이동한다 — `ShoudNavigateToCampsWithoutSnackbarWhenEndAndReportBothSucceed` 등에서 `context.go('/camps')` 확인
+- [x] 캠프 목록에서 방금 종료한 캠프가 "종료됨" 배지로 표시된다 — A0-c(`camp_list_screen.dart`)에 이미 구현되어 있음을 코드로 재확인(A14가 새로 만들 필요 없음)
+- [x] `reports/generate` 호출이 실패하도록 목업했을 때도 `/end` 성공이면 캠프 목록으로는 정상 이동하고, 경고 스낵바가 별도로 뜬다(종료 자체가 실패로 처리되지 않음) — `ShoudNavigateToCampsAndShowWarningSnackbarWhenReportGenerationFailsButEndSucceeds`
+- [x] `endCamp` 자체가 실패(400/409)하면 모달이 닫히지 않고 에러가 인라인 표시되며 캠프 목록으로 이동하지 않는다 — `ShoudKeepDialogOpenAndShowServerMessageWhenEndFails`, `end_camp_controller_test.dart`의 `ShoudThrowAndKeepSelectedCampIdWhenEndCampFails`
 
 ### A15 설정
 - [ ] `/settings` 진입 시 뒤로가기 버튼이 없다(사이드바 최상위 항목)

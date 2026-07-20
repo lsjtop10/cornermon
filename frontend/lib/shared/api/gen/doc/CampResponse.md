@@ -13,6 +13,7 @@ Name | Type | Description | Notes
 **endAt** | [**DateTime**](DateTime.md) |  | [optional] 
 **id** | **String** |  | [optional] 
 **name** | **String** |  | [optional] 
+**registrationCode** | **String** |  | [optional] 
 **startAt** | [**DateTime**](DateTime.md) |  | [optional] 
 **status** | **String** |  | [optional] 
 

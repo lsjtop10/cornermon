@@ -1,4 +1,3 @@
-
 package usecase
 
 import (
@@ -24,7 +23,7 @@ func TestFacilitatorAuthService_Login(t *testing.T) {
 
 		tracks := NewMockTrackRepository()
 		pinHash, _ := hashPassword("123456")
-		track := domain.NewTrackFromProps(domain.TrackProps{ID:       "track-1",
+		track := domain.NewTrackFromProps(domain.TrackProps{ID: "track-1",
 			CornerID: "corner-1",
 			Status:   domain.TrackActive,
 			PINHash:  pinHash,
@@ -34,7 +33,7 @@ func TestFacilitatorAuthService_Login(t *testing.T) {
 		devices := NewMockDeviceRegistrationRepository()
 		deviceToken := "device-token-1"
 		deviceTokenHash := hashSHA256(deviceToken)
-		device := domain.NewDeviceRegistrationFromProps(domain.DeviceRegistrationProps{ID:        "device-1",
+		device := domain.NewDeviceRegistrationFromProps(domain.DeviceRegistrationProps{ID: "device-1",
 			CampID:    "camp-1",
 			Status:    domain.DeviceApproved,
 			TokenHash: deviceTokenHash,
@@ -88,7 +87,7 @@ func TestFacilitatorAuthService_Login(t *testing.T) {
 
 		tracks := NewMockTrackRepository()
 		pinHash, _ := hashPassword("123456")
-		track := domain.NewTrackFromProps(domain.TrackProps{ID:       "track-1",
+		track := domain.NewTrackFromProps(domain.TrackProps{ID: "track-1",
 			CornerID: "corner-1",
 			Status:   domain.TrackActive,
 			PINHash:  pinHash,
@@ -98,7 +97,7 @@ func TestFacilitatorAuthService_Login(t *testing.T) {
 		devices := NewMockDeviceRegistrationRepository()
 		deviceToken := "device-token-1"
 		deviceTokenHash := hashSHA256(deviceToken)
-		device := domain.NewDeviceRegistrationFromProps(domain.DeviceRegistrationProps{ID:        "device-1",
+		device := domain.NewDeviceRegistrationFromProps(domain.DeviceRegistrationProps{ID: "device-1",
 			CampID:    "camp-1",
 			Status:    domain.DevicePending,
 			TokenHash: deviceTokenHash,
@@ -133,7 +132,7 @@ func TestFacilitatorAuthService_Login(t *testing.T) {
 
 		tracks := NewMockTrackRepository()
 		pinHash, _ := hashPassword("123456")
-		track := domain.NewTrackFromProps(domain.TrackProps{ID:       "track-1",
+		track := domain.NewTrackFromProps(domain.TrackProps{ID: "track-1",
 			CornerID: "corner-1",
 			Status:   domain.TrackActive,
 			PINHash:  pinHash,
@@ -143,7 +142,7 @@ func TestFacilitatorAuthService_Login(t *testing.T) {
 		devices := NewMockDeviceRegistrationRepository()
 		deviceToken := "device-token-1"
 		deviceTokenHash := hashSHA256(deviceToken)
-		device := domain.NewDeviceRegistrationFromProps(domain.DeviceRegistrationProps{ID:          "device-1",
+		device := domain.NewDeviceRegistrationFromProps(domain.DeviceRegistrationProps{ID: "device-1",
 			CampID:      "camp-1",
 			Status:      domain.DeviceApproved,
 			TokenHash:   deviceTokenHash,
@@ -179,7 +178,7 @@ func TestFacilitatorAuthService_Login(t *testing.T) {
 
 		tracks := NewMockTrackRepository()
 		pinHash, _ := hashPassword("123456")
-		track := domain.NewTrackFromProps(domain.TrackProps{ID:       "track-1",
+		track := domain.NewTrackFromProps(domain.TrackProps{ID: "track-1",
 			CornerID: "corner-1",
 			Status:   domain.TrackActive,
 			PINHash:  pinHash,
@@ -189,7 +188,7 @@ func TestFacilitatorAuthService_Login(t *testing.T) {
 		devices := NewMockDeviceRegistrationRepository()
 		deviceToken := "device-token-1"
 		deviceTokenHash := hashSHA256(deviceToken)
-		device := domain.NewDeviceRegistrationFromProps(domain.DeviceRegistrationProps{ID:                "device-1",
+		device := domain.NewDeviceRegistrationFromProps(domain.DeviceRegistrationProps{ID: "device-1",
 			CampID:            "camp-1",
 			Status:            domain.DeviceApproved,
 			TokenHash:         deviceTokenHash,

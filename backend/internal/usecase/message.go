@@ -42,7 +42,7 @@ func (s *MessageService) SendDirect(ctx context.Context, trackID domain.TrackID,
 		}
 		return s.messages.Save(ctx, msg)
 	}); err != nil {
-		s.recordAuditLog(ctx, string(trackID), "MESSAGE_DIRECT", "", false, map[string]any{"error": err.Error()})
+		s.recordAuditLog(ctx, string(trackID), ActionMessageDirect, "", false, map[string]any{"error": err.Error()})
 		return nil, err
 	}
 
@@ -54,7 +54,7 @@ func (s *MessageService) SendDirect(ctx context.Context, trackID domain.TrackID,
 		return nil, domain.ErrCornerNotInItinerary
 	}
 
-	s.recordAuditLog(ctx, string(trackID), "MESSAGE_DIRECT", string(msg.ID()), true, map[string]any{"trackID": string(trackID)})
+	s.recordAuditLog(ctx, string(trackID), ActionMessageDirect, string(msg.ID()), true, map[string]any{"trackID": string(trackID)})
 	_ = s.broadcaster.Broadcast(ctx, corner.CampID(), EventMessagesChanged, TrackScope(trackID))
 	return msg, nil
 }
@@ -112,8 +112,8 @@ func oppositeRole(role domain.SenderRole) domain.SenderRole {
 	return domain.RoleAdmin
 }
 
-func (s *MessageService) recordAuditLog(ctx context.Context, actor, action, target string, success bool, metadata map[string]any) {
+func (s *MessageService) recordAuditLog(ctx context.Context, actor string, action AuditAction, target string, success bool, metadata map[string]any) {
 	if s.auditLogs != nil {
-		_ = s.auditLogs.Save(ctx, domain.NewAuditLog(domain.AuditLogID(s.uuidFn()), actor, action, target, success, s.nowFn(), metadata))
+		_ = s.auditLogs.Save(ctx, domain.NewAuditLog(domain.AuditLogID(s.uuidFn()), actor, string(action), target, success, s.nowFn(), metadata))
 	}
 }

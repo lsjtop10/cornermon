@@ -52,10 +52,10 @@ func (s *AnnouncementService) SendAnnouncement(ctx context.Context, campID domai
 		return nil
 	})
 	if err != nil && s.auditLogs != nil {
-		_ = s.auditLogs.Save(ctx, domain.NewAuditLog(domain.AuditLogID(s.uuidFn()), string(actorAdminID), "MESSAGE_BROADCAST", "", false, s.nowFn(), map[string]any{"error": err.Error()}))
+		_ = s.auditLogs.Save(ctx, domain.NewAuditLog(domain.AuditLogID(s.uuidFn()), string(actorAdminID), string(ActionMessageBroadcast), "", false, s.nowFn(), map[string]any{"error": err.Error()}))
 	}
 	if err == nil && s.auditLogs != nil {
-		_ = s.auditLogs.Save(ctx, domain.NewAuditLog(domain.AuditLogID(s.uuidFn()), string(actorAdminID), "MESSAGE_BROADCAST", string(a.ID()), true, s.nowFn(), map[string]any{"campID": string(campID)}))
+		_ = s.auditLogs.Save(ctx, domain.NewAuditLog(domain.AuditLogID(s.uuidFn()), string(actorAdminID), string(ActionMessageBroadcast), string(a.ID()), true, s.nowFn(), map[string]any{"campID": string(campID)}))
 	}
 	if err == nil && s.broadcaster != nil {
 		_ = s.broadcaster.Broadcast(ctx, campID, EventMessagesChanged, CampScope())

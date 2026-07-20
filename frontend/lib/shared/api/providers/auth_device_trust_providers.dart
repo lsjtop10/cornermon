@@ -45,19 +45,19 @@ Future<List<AdminSession>> adminSessionList(Ref ref) async {
   return response.data?.toList() ?? [];
 }
 
-@riverpod
+@Riverpod(retry: noRetry)
 Future<void> revokeAdminSession(Ref ref, String sessionId) async {
   final apiInstance = ref.watch(authDeviceTrustApiProvider);
   await apiInstance.authAdminSessionsIdRevokePost(id: sessionId);
 }
 
-@riverpod
+@Riverpod(retry: noRetry)
 Future<void> releaseTrackLockout(Ref ref, String deviceId) async {
   final apiInstance = ref.watch(authDeviceTrustApiProvider);
   await apiInstance.authTrackLockoutDeviceIdReleasePost(deviceId: deviceId);
 }
 
-@riverpod
+@Riverpod(retry: noRetry)
 Future<void> forceLogoutTrack(Ref ref, TrackId trackId) async {
   final apiInstance = ref.watch(authDeviceTrustApiProvider);
   await apiInstance.authTrackTrackIdForceLogoutPost(trackId: trackId.value);
@@ -78,9 +78,9 @@ Future<List<FacilitatorSession>> activeSessionList(Ref ref, CampId campId) async
 }
 
 @riverpod
-Future<List<DeviceRegistration>> deviceRegistrationList(Ref ref) async {
+Future<List<DeviceRegistration>> deviceRegistrationList(Ref ref, CampId campId) async {
   final apiInstance = ref.watch(authDeviceTrustApiProvider);
-  final response = await apiInstance.deviceRegistrationsGet();
+  final response = await apiInstance.campsCampIdDeviceRegistrationsGet(campId: campId.value);
   return response.data?.toList() ?? [];
 }
 
@@ -88,7 +88,7 @@ Future<List<DeviceRegistration>> deviceRegistrationList(Ref ref) async {
 Future<List<DeviceRegistration>> lockedDeviceList(Ref ref, CampId campId) async {
   final apiInstance = ref.watch(authDeviceTrustApiProvider);
   try {
-    final response = await apiInstance.deviceRegistrationsLockedGet(campId: campId.value);
+    final response = await apiInstance.campsCampIdDeviceRegistrationsLockedGet(campId: campId.value);
     return response.data?.toList() ?? [];
   } on DioException catch (e) {
     if (e.response?.statusCode == 501) {
@@ -98,10 +98,10 @@ Future<List<DeviceRegistration>> lockedDeviceList(Ref ref, CampId campId) async 
   }
 }
 
-@riverpod
-Future<DeviceRegistration> approveDeviceRegistration(Ref ref, DeviceRegistrationId id) async {
+@Riverpod(retry: noRetry)
+Future<DeviceRegistration> approveDeviceRegistration(Ref ref, CampId campId, DeviceRegistrationId id) async {
   final apiInstance = ref.watch(authDeviceTrustApiProvider);
-  final response = await apiInstance.deviceRegistrationsIdApprovePost(id: id.value);
+  final response = await apiInstance.campsCampIdDeviceRegistrationsIdApprovePost(campId: campId.value, id: id.value);
   final data = response.data;
   if (data == null) {
     throw Exception('Device registration approve response was empty');
@@ -109,10 +109,10 @@ Future<DeviceRegistration> approveDeviceRegistration(Ref ref, DeviceRegistration
   return data;
 }
 
-@riverpod
-Future<DeviceRegistration> rejectDeviceRegistration(Ref ref, DeviceRegistrationId id) async {
+@Riverpod(retry: noRetry)
+Future<DeviceRegistration> rejectDeviceRegistration(Ref ref, CampId campId, DeviceRegistrationId id) async {
   final apiInstance = ref.watch(authDeviceTrustApiProvider);
-  final response = await apiInstance.deviceRegistrationsIdRejectPost(id: id.value);
+  final response = await apiInstance.campsCampIdDeviceRegistrationsIdRejectPost(campId: campId.value, id: id.value);
   final data = response.data;
   if (data == null) {
     throw Exception('Device registration reject response was empty');
@@ -120,10 +120,10 @@ Future<DeviceRegistration> rejectDeviceRegistration(Ref ref, DeviceRegistrationI
   return data;
 }
 
-@riverpod
-Future<DeviceRegistration> revokeDeviceRegistration(Ref ref, DeviceRegistrationId id) async {
+@Riverpod(retry: noRetry)
+Future<DeviceRegistration> revokeDeviceRegistration(Ref ref, CampId campId, DeviceRegistrationId id) async {
   final apiInstance = ref.watch(authDeviceTrustApiProvider);
-  final response = await apiInstance.deviceRegistrationsIdRevokePost(id: id.value);
+  final response = await apiInstance.campsCampIdDeviceRegistrationsIdRevokePost(campId: campId.value, id: id.value);
   final data = response.data;
   if (data == null) {
     throw Exception('Device registration revoke response was empty');

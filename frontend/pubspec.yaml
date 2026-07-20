@@ -47,6 +47,8 @@ dependencies:
   share_plus: ^12.0.1
   cornermon_api_gen:
     path: lib/shared/api/gen
+  device_info_plus: ^12.4.0
+  connectivity_plus: ^7.3.0
 
 dev_dependencies:
   flutter_test:
@@ -56,6 +58,7 @@ dev_dependencies:
   riverpod_generator: ^4.0.4
   import_lint: any
   built_collection: ^5.1.1 # main_track_test에서 CornerProgress 리스트 픽스처 구성에 직접 사용 — 기존엔 전이 의존성이었음
+  fake_async: ^1.3.3 # device_trust_provider_test의 폴링 타이머 테스트에서 직접 사용 — 기존엔 전이 의존성이었음
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

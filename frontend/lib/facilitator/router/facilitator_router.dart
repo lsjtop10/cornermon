@@ -63,8 +63,9 @@ GoRouter facilitatorRouter(Ref ref) {
 }
 
 /// redirect 우선순위(위에서부터 순서대로 평가, 첫 매치가 결정):
-/// 1. deviceTrust ∈ {none, rejected, revoked}         → /device-pending
-///    (deviceTrust ∈ {pending, approved}는 통과 — §00 §0-c, 실제 게이트는 PIN 로그인 API 자체)
+/// 1. deviceTrust != approved                          → /device-pending
+///    (screen-spec-facilitator.md B0: PENDING/REJECTED/REVOKED/미등록 모두 앱
+///    사용 자체를 차단하고, APPROVED 감지 시에만 B1로 자동 전환한다)
 /// 2. trackSession == Unauthenticated                  → /pin-login
 /// 3. trackSession == PendingConfirmation               → /pin-login/confirm (뒤로가기로도 못 건너뜀)
 /// 4. 그 외(Authenticated) + 현재 위치가 위 세 화면 중 하나 → /main
@@ -74,9 +75,7 @@ String? _redirect(Ref ref, GoRouterState state) {
 
   final deviceTrustStatus =
       ref.read(deviceTrustProvider).value ?? DeviceTrustStatus.none;
-  if (deviceTrustStatus == DeviceTrustStatus.none ||
-      deviceTrustStatus == DeviceTrustStatus.rejected ||
-      deviceTrustStatus == DeviceTrustStatus.revoked) {
+  if (deviceTrustStatus != DeviceTrustStatus.approved) {
     return location == '/device-pending' ? null : '/device-pending';
   }
 

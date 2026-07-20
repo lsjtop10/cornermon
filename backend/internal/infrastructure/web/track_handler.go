@@ -66,11 +66,11 @@ func mapDomainTrackToDTO(track *domain.Track) TrackResponse {
 func (h *TrackHandler) ListTracks(c echo.Context) error {
 	campID := domain.CampID(c.Param("campId"))
 	if campID == "" {
-		return c.JSON(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: "campId is required"})
+		return echo.NewHTTPError(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: "campId is required"})
 	}
 	tracks, err := h.svc.ListTracksByCamp(c.Request().Context(), campID)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_ERROR", Message: err.Error()})
+		return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_ERROR", Message: err.Error()}).SetInternal(err)
 	}
 	res := make([]TrackResponse, len(tracks))
 	for i, tr := range tracks {
@@ -97,13 +97,13 @@ type CreateTracksRequest struct {
 func (h *TrackHandler) CreateTracks(c echo.Context) error {
 	var req CreateTracksRequest
 	if err := c.Bind(&req); err != nil {
-		return c.JSON(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: "Invalid request body"})
+		return echo.NewHTTPError(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: "Invalid request body"}).SetInternal(err)
 	}
 	var res []TrackPinResponse
 	for i := 0; i < req.Count; i++ {
 		track, pin, err := h.svc.CreateTrack(c.Request().Context(), domain.CampID(req.CampID), domain.CornerID(req.CornerID))
 		if err != nil {
-			return c.JSON(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_ERROR", Message: err.Error()})
+			return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_ERROR", Message: err.Error()}).SetInternal(err)
 		}
 		res = append(res, TrackPinResponse{Track: mapDomainTrackToDTO(track), PIN: pin})
 	}
@@ -150,12 +150,12 @@ type BulkDeleteTracksRequest struct {
 func (h *TrackHandler) BulkDeleteTracks(c echo.Context) error {
 	var req BulkDeleteTracksRequest
 	if err := c.Bind(&req); err != nil {
-		return c.JSON(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: "Invalid request body"})
+		return echo.NewHTTPError(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: "Invalid request body"}).SetInternal(err)
 	}
 	for _, id := range req.TrackIDs {
 		_, err := h.svc.DeleteTrack(c.Request().Context(), domain.TrackID(id))
 		if err != nil {
-			return c.JSON(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_ERROR", Message: err.Error()})
+			return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_ERROR", Message: err.Error()}).SetInternal(err)
 		}
 	}
 	return c.NoContent(http.StatusNoContent)
@@ -207,7 +207,7 @@ func (h *TrackHandler) RegeneratePin(c echo.Context) error {
 	id := domain.TrackID(c.Param("id"))
 	track, plainPIN, err := h.svc.RegeneratePIN(c.Request().Context(), id)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_ERROR", Message: err.Error()})
+		return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_ERROR", Message: err.Error()}).SetInternal(err)
 	}
 	return c.JSON(http.StatusOK, TrackPinResponse{Track: mapDomainTrackToDTO(track), PIN: plainPIN})
 }

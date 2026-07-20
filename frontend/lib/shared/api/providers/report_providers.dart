@@ -3,6 +3,7 @@ import 'package:cornermon_api_gen/cornermon_api_gen.dart';
 import '../client/api_client.dart';
 import '../domain_aliases.dart';
 import '../ids.dart';
+import 'no_retry.dart';
 
 part 'report_providers.g.dart';
 
@@ -23,7 +24,7 @@ Future<CampReport> currentReport(Ref ref, CampId campId) async {
   return data;
 }
 
-@riverpod
+@Riverpod(retry: noRetry)
 Future<CampReport> generateReport(Ref ref, CampId campId) async {
   final apiInstance = ref.watch(reportApiProvider);
   final response = await apiInstance.campsCampIdReportsGeneratePost(campId: campId.value);

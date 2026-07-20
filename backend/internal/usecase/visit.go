@@ -65,11 +65,11 @@ func (s *VisitService) StartVisitByQR(
 
 	session, err := s.sessions.GetByTokenHash(ctx, tokenHash)
 	if err != nil {
-		s.recordAuditLog(ctx, "anonymous", "VISIT_START", "token:"+facilitatorToken, false, map[string]any{"error": err.Error()})
+		s.recordAuditLog(ctx, "anonymous", ActionVisitStart, "token:"+facilitatorToken, false, map[string]any{"error": err.Error()})
 		return nil, err
 	}
 	if session == nil || !session.IsActive() {
-		s.recordAuditLog(ctx, "anonymous", "VISIT_START", "session:inactive", false, map[string]any{"error": domain.ErrSessionRevoked.Error()})
+		s.recordAuditLog(ctx, "anonymous", ActionVisitStart, "session:inactive", false, map[string]any{"error": domain.ErrSessionRevoked.Error()})
 		return nil, domain.ErrSessionRevoked
 	}
 
@@ -145,11 +145,11 @@ func (s *VisitService) StartVisitByQR(
 	})
 
 	if err != nil {
-		s.recordAuditLog(ctx, actor, "VISIT_START", qrPayload, false, map[string]any{"error": err.Error()})
+		s.recordAuditLog(ctx, actor, ActionVisitStart, qrPayload, false, map[string]any{"error": err.Error()})
 		return nil, err
 	}
 
-	s.recordAuditLog(ctx, actor, "VISIT_START", string(visit.ID()), true, map[string]any{"method": string(domain.VisitQRScan), "groupID": string(visit.GroupID())})
+	s.recordAuditLog(ctx, actor, ActionVisitStart, string(visit.ID()), true, map[string]any{"method": string(domain.VisitQRScan), "groupID": string(visit.GroupID())})
 	_ = s.broadcaster.Broadcast(ctx, groupCampID, EventCornersUpdated, CampScope())
 	_ = s.broadcaster.Broadcast(ctx, groupCampID, EventGroupsUpdated, CampScope())
 	_ = s.broadcaster.Broadcast(ctx, groupCampID, EventTracksUpdated, CampScope())
@@ -169,11 +169,11 @@ func (s *VisitService) StartVisitManual(
 
 	session, err := s.sessions.GetByTokenHash(ctx, tokenHash)
 	if err != nil {
-		s.recordAuditLog(ctx, "anonymous", "VISIT_START", "token:"+facilitatorToken, false, map[string]any{"error": err.Error()})
+		s.recordAuditLog(ctx, "anonymous", ActionVisitStart, "token:"+facilitatorToken, false, map[string]any{"error": err.Error()})
 		return nil, err
 	}
 	if session == nil || !session.IsActive() {
-		s.recordAuditLog(ctx, "anonymous", "VISIT_START", "session:inactive", false, map[string]any{"error": domain.ErrSessionRevoked.Error()})
+		s.recordAuditLog(ctx, "anonymous", ActionVisitStart, "session:inactive", false, map[string]any{"error": domain.ErrSessionRevoked.Error()})
 		return nil, domain.ErrSessionRevoked
 	}
 
@@ -236,11 +236,11 @@ func (s *VisitService) StartVisitManual(
 	})
 
 	if err != nil {
-		s.recordAuditLog(ctx, actor, "VISIT_START", string(groupID), false, map[string]any{"error": err.Error()})
+		s.recordAuditLog(ctx, actor, ActionVisitStart, string(groupID), false, map[string]any{"error": err.Error()})
 		return nil, err
 	}
 
-	s.recordAuditLog(ctx, actor, "VISIT_START", string(visit.ID()), true, map[string]any{"method": string(domain.VisitManual), "groupID": string(visit.GroupID())})
+	s.recordAuditLog(ctx, actor, ActionVisitStart, string(visit.ID()), true, map[string]any{"method": string(domain.VisitManual), "groupID": string(visit.GroupID())})
 	_ = s.broadcaster.Broadcast(ctx, groupCampID, EventCornersUpdated, CampScope())
 	_ = s.broadcaster.Broadcast(ctx, groupCampID, EventGroupsUpdated, CampScope())
 	_ = s.broadcaster.Broadcast(ctx, groupCampID, EventTracksUpdated, CampScope())
@@ -259,11 +259,11 @@ func (s *VisitService) CompleteVisit(
 
 	session, err := s.sessions.GetByTokenHash(ctx, tokenHash)
 	if err != nil {
-		s.recordAuditLog(ctx, "anonymous", "VISIT_COMPLETE", "token:"+facilitatorToken, false, map[string]any{"error": err.Error()})
+		s.recordAuditLog(ctx, "anonymous", ActionVisitComplete, "token:"+facilitatorToken, false, map[string]any{"error": err.Error()})
 		return nil, err
 	}
 	if session == nil || !session.IsActive() {
-		s.recordAuditLog(ctx, "anonymous", "VISIT_COMPLETE", "session:inactive", false, map[string]any{"error": domain.ErrSessionRevoked.Error()})
+		s.recordAuditLog(ctx, "anonymous", ActionVisitComplete, "session:inactive", false, map[string]any{"error": domain.ErrSessionRevoked.Error()})
 		return nil, domain.ErrSessionRevoked
 	}
 
@@ -328,11 +328,11 @@ func (s *VisitService) CompleteVisit(
 	})
 
 	if err != nil {
-		s.recordAuditLog(ctx, actor, "VISIT_COMPLETE", "", false, map[string]any{"error": err.Error()})
+		s.recordAuditLog(ctx, actor, ActionVisitComplete, "", false, map[string]any{"error": err.Error()})
 		return nil, err
 	}
 
-	s.recordAuditLog(ctx, actor, "VISIT_COMPLETE", string(visit.ID()), true, map[string]any{"groupID": string(visit.GroupID())})
+	s.recordAuditLog(ctx, actor, ActionVisitComplete, string(visit.ID()), true, map[string]any{"groupID": string(visit.GroupID())})
 	_ = s.broadcaster.Broadcast(ctx, groupCampID, EventCornersUpdated, CampScope())
 	_ = s.broadcaster.Broadcast(ctx, groupCampID, EventGroupsUpdated, CampScope())
 	_ = s.broadcaster.Broadcast(ctx, groupCampID, EventTracksUpdated, CampScope())
@@ -359,11 +359,11 @@ func (s *VisitService) GetCurrentVisit(
 	return s.visits.GetInProgressByTrack(ctx, session.TrackID())
 }
 
-func (s *VisitService) recordAuditLog(ctx context.Context, actor, action, target string, success bool, metadata map[string]any) {
+func (s *VisitService) recordAuditLog(ctx context.Context, actor string, action AuditAction, target string, success bool, metadata map[string]any) {
 	log := domain.NewAuditLog(
 		domain.AuditLogID(s.uuidFn()),
 		actor,
-		action,
+		string(action),
 		target,
 		success,
 		s.nowFn(),

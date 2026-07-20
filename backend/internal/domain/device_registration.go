@@ -149,45 +149,46 @@ func (d *DeviceRegistration) CreatedAt() time.Time {
 }
 
 type DeviceRegistrationProps struct {
-	ID DeviceRegistrationID
-	CampID CampID
-	DeviceName string
-	DeviceModel string
-	DisplayName string
-	Status DeviceRegistrationStatus
-	TokenHash string
+	ID                DeviceRegistrationID
+	CampID            CampID
+	DeviceName        string
+	DeviceModel       string
+	DisplayName       string
+	Status            DeviceRegistrationStatus
+	TokenHash         string
 	FailedPinAttempts int
-	LockedUntil Optional[time.Time]
-	ApprovedAt Optional[time.Time]
-	CreatedAt time.Time
+	LockedUntil       Optional[time.Time]
+	ApprovedAt        Optional[time.Time]
+	CreatedAt         time.Time
 }
+
 func NewDeviceRegistrationFromProps(p DeviceRegistrationProps) *DeviceRegistration {
 	return &DeviceRegistration{
-		id: p.ID,
-		campID: p.CampID,
-		deviceName: p.DeviceName,
-		deviceModel: p.DeviceModel,
-		displayName: p.DisplayName,
-		status: p.Status,
-		tokenHash: p.TokenHash,
+		id:                p.ID,
+		campID:            p.CampID,
+		deviceName:        p.DeviceName,
+		deviceModel:       p.DeviceModel,
+		displayName:       p.DisplayName,
+		status:            p.Status,
+		tokenHash:         p.TokenHash,
 		failedPinAttempts: p.FailedPinAttempts,
-		lockedUntil: p.LockedUntil,
-		approvedAt: p.ApprovedAt,
-		createdAt: p.CreatedAt,
+		lockedUntil:       p.LockedUntil,
+		approvedAt:        p.ApprovedAt,
+		createdAt:         p.CreatedAt,
 	}
 }
 func NewDeviceRegistrationValFromProps(p DeviceRegistrationProps) DeviceRegistration {
 	return DeviceRegistration{
-		id: p.ID,
-		campID: p.CampID,
-		deviceName: p.DeviceName,
-		deviceModel: p.DeviceModel,
-		displayName: p.DisplayName,
-		status: p.Status,
-		tokenHash: p.TokenHash,
+		id:                p.ID,
+		campID:            p.CampID,
+		deviceName:        p.DeviceName,
+		deviceModel:       p.DeviceModel,
+		displayName:       p.DisplayName,
+		status:            p.Status,
+		tokenHash:         p.TokenHash,
 		failedPinAttempts: p.FailedPinAttempts,
-		lockedUntil: p.LockedUntil,
-		approvedAt: p.ApprovedAt,
-		createdAt: p.CreatedAt,
+		lockedUntil:       p.LockedUntil,
+		approvedAt:        p.ApprovedAt,
+		createdAt:         p.CreatedAt,
 	}
 }

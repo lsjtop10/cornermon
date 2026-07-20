@@ -1,4 +1,3 @@
-
 package domain_test
 
 import (
@@ -40,7 +39,7 @@ func TestCamp_Activate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			camp := domain.NewCampFromProps(domain.CampProps{ID:     domain.CampID("camp-1"),
+			camp := domain.NewCampFromProps(domain.CampProps{ID: domain.CampID("camp-1"),
 				Status: tt.initialStatus,
 			})
 
@@ -98,7 +97,7 @@ func TestCamp_End(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			camp := domain.NewCampFromProps(domain.CampProps{ID:     domain.CampID("camp-1"),
+			camp := domain.NewCampFromProps(domain.CampProps{ID: domain.CampID("camp-1"),
 				Status: tt.initialStatus,
 			})
 

@@ -66,6 +66,16 @@ class TrackSession extends _$TrackSession {
   @override
   TrackSessionState build() {
     unawaited(_restore());
+    // 기기 신뢰가 회수되면 지금 진행 중인 트랙 세션도 즉시 말소한다 — 그래야 나중에
+    // 같은 기기가 새 등록 코드로 재승인됐을 때 저장돼 있던 옛 세션이 PIN 입력 없이
+    // 그대로 복원되는 걸 막을 수 있다. 라우터가 이미 deviceTrust != approved일 때
+    // /device-pending으로 우선 리다이렉트하므로, 여기서의 사유(forceLogout)는 화면에
+    // 노출되지 않고 저장소 정리 목적으로만 쓰인다.
+    ref.listen(deviceTrustProvider, (previous, next) {
+      if (next.value == DeviceTrustStatus.revoked) {
+        handleTermination(TrackSessionTerminationReason.forceLogout);
+      }
+    });
     return const TrackSessionUnauthenticated();
   }
 

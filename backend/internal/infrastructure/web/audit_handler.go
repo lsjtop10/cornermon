@@ -25,7 +25,7 @@ type AuditHandler struct {
 type AuditLogResponse struct {
 	ID         string                 `json:"id" format:"uuid"`
 	Actor      string                 `json:"actor"`
-	Action     string                 `json:"action"`
+	Action     string                 `json:"action" enums:"ADMIN_LOGIN,ADMIN_CREATE,ADMIN_PASSWORD_CHANGE,ADMIN_DELETE,ADMIN_SESSION_REVOKE,TRACK_FORCE_LOGOUT,FACILITATOR_LOGIN,SESSION_MIGRATE,FACILITATOR_LOGOUT,BADGE_ASSIGN,BADGE_BULK_GENERATE,BADGE_EXPORT,CAMP_ACTIVATE,CAMP_END,CAMP_CREATE,CAMP_SETTINGS_UPDATE,CORNER_UPDATE,CORNER_DELETE,CORNER_CREATE,DEVICE_APPROVED,DEVICE_REJECTED,DEVICE_REVOKED,PIN_LOCK_RESET,DEVICE_REQUEST,GROUP_CREATE,MESSAGE_DIRECT,MESSAGE_BROADCAST,TRACK_CREATE,TRACK_DELETE,TRACK_REPLACE,PIN_REGENERATE,TRACK_PIN_EXPORT,VISIT_START,VISIT_COMPLETE"`
 	Target     string                 `json:"target"`
 	Success    bool                   `json:"success"`
 	OccurredAt time.Time              `json:"occurredAt" format:"date-time"`
@@ -44,7 +44,7 @@ func NewAuditHandler(querier AuditLogQuerier) *AuditHandler {
 // @Security     AdminAuth
 // @Produce      json
 // @Param        actor query string false "행위자 부분 일치"
-// @Param        action query string false "행위 종류 정확히 일치"
+// @Param        action query string false "행위 종류 정확히 일치" Enums(ADMIN_LOGIN,ADMIN_CREATE,ADMIN_PASSWORD_CHANGE,ADMIN_DELETE,ADMIN_SESSION_REVOKE,TRACK_FORCE_LOGOUT,FACILITATOR_LOGIN,SESSION_MIGRATE,FACILITATOR_LOGOUT,BADGE_ASSIGN,BADGE_BULK_GENERATE,BADGE_EXPORT,CAMP_ACTIVATE,CAMP_END,CAMP_CREATE,CAMP_SETTINGS_UPDATE,CORNER_UPDATE,CORNER_DELETE,CORNER_CREATE,DEVICE_APPROVED,DEVICE_REJECTED,DEVICE_REVOKED,PIN_LOCK_RESET,DEVICE_REQUEST,GROUP_CREATE,MESSAGE_DIRECT,MESSAGE_BROADCAST,TRACK_CREATE,TRACK_DELETE,TRACK_REPLACE,PIN_REGENERATE,TRACK_PIN_EXPORT,VISIT_START,VISIT_COMPLETE)
 // @Param        result query string false "처리 결과" Enums(success,failure)
 // @Param        limit query int false "조회 개수" default(50)
 // @Param        before query string false "이전 응답의 불투명 nextCursor"
@@ -62,7 +62,13 @@ func (h *AuditHandler) ListAuditLogs(c echo.Context) error {
 		limit = parsed
 	}
 
-	query := usecase.AuditLogQuery{Actor: c.QueryParam("actor"), Action: c.QueryParam("action"), Limit: limit}
+	query := usecase.AuditLogQuery{Actor: c.QueryParam("actor"), Limit: limit}
+	if action := c.QueryParam("action"); action != "" {
+		if !usecase.IsValidAuditAction(action) {
+			return echo.NewHTTPError(http.StatusBadRequest, "action must be one of the known audit actions")
+		}
+		query.Action = action
+	}
 	if result := c.QueryParam("result"); result != "" {
 		switch result {
 		case "success":
