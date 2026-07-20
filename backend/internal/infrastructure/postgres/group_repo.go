@@ -88,7 +88,7 @@ func (r *pgGroupRepository) ListByCamp(ctx context.Context, campID domain.CampID
 }
 
 func (r *pgGroupRepository) Save(ctx context.Context, group *domain.Group) error {
-	itineraryJSON, err := json.Marshal(group.Itinerary)
+	itineraryJSON, err := json.Marshal(group.Itinerary())
 	if err != nil {
 		return err
 	}
