@@ -45,6 +45,7 @@ class AdminSidebar extends ConsumerWidget {
       ],
       SidebarMode.reportOnly => const [
         ('리포트', Icons.assessment_outlined, '/report'),
+        ('감사 로그', Icons.history_outlined, '/audit-log'),
       ],
     };
     final selectedIndex = _selectedIndex(context, items);
