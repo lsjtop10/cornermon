@@ -139,7 +139,8 @@ String? _redirect(Ref ref, String location) {
           ? null
           : '/dashboard',
     CampStatus.ACTIVE => null,
-    CampStatus.ENDED => location == '/report' ? null : '/report',
+    CampStatus.ENDED =>
+      location == '/report' || location == '/audit-log' ? null : '/report',
     _ => '/camps',
   };
 }
