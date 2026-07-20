@@ -34,6 +34,21 @@ class _FakeStreamAdapter implements HttpClientAdapter {
   void close({bool force = false}) {}
 }
 
+/// 최초 HTTP 요청 자체가 실패하는 상황(연결 거부 등)을 재현하는 fake adapter.
+class _ThrowingAdapter implements HttpClientAdapter {
+  @override
+  Future<ResponseBody> fetch(
+    RequestOptions options,
+    Stream<Uint8List>? requestStream,
+    Future<void>? cancelFuture,
+  ) {
+    throw DioException(requestOptions: options, error: 'connection refused');
+  }
+
+  @override
+  void close({bool force = false}) {}
+}
+
 Dio _buildFakeDio(Stream<Uint8List> Function() streamFactory) {
   final dio = Dio(BaseOptions(baseUrl: 'http://test.local'))
     ..httpClientAdapter = _FakeStreamAdapter(streamFactory);
@@ -115,6 +130,88 @@ void main() {
       expect(events, hasLength(1));
       expect(events.single.event, SSENotificationEventEnum.groupsUpdated);
       expect(events.single.scope?.kind, SSEScopeKindEnum.camp);
+    });
+
+    test('ShouldCallOnConnectedOnceWhenHttpResponseArrivesRegardlessOfDataArrival', () async {
+      // arrange — 데이터를 전혀 안 보내는 스트림이라도 HTTP 응답 자체는 성공한다.
+      final neverEmitting = StreamController<Uint8List>();
+      addTearDown(neverEmitting.close);
+      final dio = _buildFakeDio(() => neverEmitting.stream);
+      final sseClient = SseClient(dio, heartbeatTimeout: const Duration(seconds: 5));
+      var connectedCount = 0;
+
+      // act
+      final sub = sseClient
+          .connect('/events/track/t1', onConnected: () => connectedCount++)
+          .listen((_) {});
+      addTearDown(sub.cancel);
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+
+      // assert — 도메인 알림이 하나도 없어도 onConnected는 이미 1회 호출돼 있어야 한다.
+      expect(connectedCount, 1);
+    });
+
+    test('ShouldCallOnDisconnectedOnceWhenHeartbeatTimeoutElapses', () async {
+      // arrange
+      final neverEmitting = StreamController<Uint8List>();
+      addTearDown(neverEmitting.close);
+      final dio = _buildFakeDio(() => neverEmitting.stream);
+      final sseClient = SseClient(dio, heartbeatTimeout: const Duration(milliseconds: 50));
+      var disconnectedCount = 0;
+
+      // act
+      final stream = sseClient.connect(
+        '/events/track/t1',
+        onDisconnected: () => disconnectedCount++,
+      );
+
+      // assert
+      await expectLater(
+        stream,
+        emitsError(isA<TimeoutException>()),
+      ).timeout(const Duration(milliseconds: 500));
+      expect(disconnectedCount, 1);
+    });
+
+    test('ShouldCallOnDisconnectedOnceWhenStreamEndsNormally', () async {
+      // arrange
+      const frame = 'event: track_updated\ndata: {"event":"track_updated","scope":{"kind":"track","trackId":"t1"}}\n\n';
+      final dio = _buildFakeDio(() => Stream.value(_bytes(frame)));
+      final sseClient = SseClient(dio);
+      var connectedCount = 0;
+      var disconnectedCount = 0;
+
+      // act
+      final events = await sseClient
+          .connect(
+            '/events/track/t1',
+            onConnected: () => connectedCount++,
+            onDisconnected: () => disconnectedCount++,
+          )
+          .toList();
+
+      // assert — onDone도 실패(재연결 필요) 취급이므로 onDisconnected가 정확히 1회 불려야 한다.
+      expect(events, hasLength(1));
+      expect(connectedCount, 1);
+      expect(disconnectedCount, 1);
+    });
+
+    test('ShouldCallOnDisconnectedOnceWhenInitialHttpRequestFails', () async {
+      // arrange
+      final dio = Dio(BaseOptions(baseUrl: 'http://test.local'))
+        ..httpClientAdapter = _ThrowingAdapter();
+      final sseClient = SseClient(dio);
+      var disconnectedCount = 0;
+
+      // act
+      final stream = sseClient.connect(
+        '/events/track/t1',
+        onDisconnected: () => disconnectedCount++,
+      );
+
+      // assert
+      await expectLater(stream, emitsError(isA<Object>()));
+      expect(disconnectedCount, 1);
     });
   });
 }

@@ -24,7 +24,17 @@ class SseClient {
   final Duration heartbeatTimeout;
 
   /// [path] 예: '/events/track/{trackId}', '/camps/{campId}/events/admin'.
-  Stream<SSENotification> connect(String path) {
+  ///
+  /// [onConnected]: HTTP 응답이 성공적으로 도착해 바이트 스트림 구독을 시작하는 시점(=연결 성립)에
+  /// 정확히 1회 호출된다. 도메인 알림 파싱 성공 여부와 무관하다.
+  /// [onDisconnected]: 워치독 타임아웃, HTTP 스트림 에러, 스트림 종료(onDone), 최초 연결 실패
+  /// 중 하나가 발생할 때마다 정확히 1회 호출되며, 항상 controller.addError/close()보다 먼저
+  /// 호출된다 — 호출측(track_event_stream.dart)이 실패 1건을 정확히 1번만 세도록 하기 위함.
+  Stream<SSENotification> connect(
+    String path, {
+    void Function()? onConnected,
+    void Function()? onDisconnected,
+  }) {
     late final StreamController<SSENotification> controller;
     final cancelToken = CancelToken();
     StreamSubscription<Uint8List>? subscription;
@@ -40,6 +50,7 @@ class SseClient {
     void resetWatchdog() {
       watchdogTimer?.cancel();
       watchdogTimer = Timer(heartbeatTimeout, () {
+        onDisconnected?.call();
         if (!controller.isClosed) {
           controller.addError(
             TimeoutException('SSE heartbeat timeout after $heartbeatTimeout'),
@@ -117,10 +128,12 @@ class SseClient {
               headers: {'Accept': 'text/event-stream'},
             ),
           );
+          onConnected?.call();
           subscription = response.data!.stream.listen(
             onChunk,
             onError: (Object error, StackTrace stackTrace) {
               watchdogTimer?.cancel();
+              onDisconnected?.call();
               if (!controller.isClosed) {
                 controller.addError(error, stackTrace);
                 controller.close();
@@ -128,12 +141,14 @@ class SseClient {
             },
             onDone: () {
               watchdogTimer?.cancel();
+              onDisconnected?.call();
               if (!controller.isClosed) controller.close();
             },
             cancelOnError: true,
           );
         } catch (error, stackTrace) {
           watchdogTimer?.cancel();
+          onDisconnected?.call();
           if (!controller.isClosed) {
             controller.addError(error, stackTrace);
             controller.close();

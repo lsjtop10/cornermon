@@ -48,6 +48,7 @@ dependencies:
   cornermon_api_gen:
     path: lib/shared/api/gen
   device_info_plus: ^12.4.0
+  connectivity_plus: ^7.3.0
 
 dev_dependencies:
   flutter_test:

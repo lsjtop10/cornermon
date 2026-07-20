@@ -22,4 +22,11 @@ class AppEnv {
     'SSE_HEARTBEAT_TIMEOUT_SECONDS',
     defaultValue: 40,
   );
+
+  /// 재연결 시도가 이 횟수만큼 연속으로 실패하면(그 사이 단 한 번도 재연결에 성공하지 못하면)
+  /// "죽은 연결"로 보고 연결 배너를 disconnected로 전환한다.
+  static const int sseMaxConsecutiveMisses = int.fromEnvironment(
+    'SSE_MAX_CONSECUTIVE_MISSES',
+    defaultValue: 3,
+  );
 }
