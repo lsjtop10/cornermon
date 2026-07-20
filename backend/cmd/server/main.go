@@ -36,6 +36,8 @@ func stringToLevel(logLevelString string) slog.Leveler {
 }
 
 func main() {
+	// Load .env if exists
+	_ = godotenv.Load()
 
 	var logLevel slog.Leveler
 	logLevelString := os.Getenv("LOGLEVEL")
@@ -52,8 +54,6 @@ func main() {
 
 	slog.Info("Cornermon Backend Starting...")
 
-	// Load .env if exists
-	_ = godotenv.Load()
 	trackPINEncryptionKey, err := loadTrackPINEncryptionKey()
 	if err != nil {
 		log.Fatalf("Invalid TRACK_PIN_ENCRYPTION_KEY: %v\n", err)
