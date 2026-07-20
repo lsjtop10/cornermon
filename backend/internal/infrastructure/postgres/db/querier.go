@@ -50,6 +50,7 @@ type Querier interface {
 	ListCornersByCamp(ctx context.Context, campID string) ([]Corner, error)
 	ListDeviceRegistrationsByCampAndStatus(ctx context.Context, arg ListDeviceRegistrationsByCampAndStatusParams) ([]DeviceRegistration, error)
 	ListGroupsByCamp(ctx context.Context, campID string) ([]Group, error)
+	ListInProgressVisitsByCamp(ctx context.Context, campID string) ([]Visit, error)
 	ListMessagesByTrack(ctx context.Context, trackID string) ([]Message, error)
 	ListMessagesByTrackAfter(ctx context.Context, arg ListMessagesByTrackAfterParams) ([]Message, error)
 	ListPendingDeviceRegistrationsByCamp(ctx context.Context, campID string) ([]DeviceRegistration, error)

@@ -335,6 +335,11 @@ JOIN groups g ON v.group_id = g.id
 JOIN corners c ON v.corner_id = c.id
 WHERE g.camp_id = $1;
 
+-- name: ListInProgressVisitsByCamp :many
+SELECT v.* FROM visits v
+JOIN groups g ON v.group_id = g.id
+WHERE g.camp_id = $1 AND v.status = 'IN_PROGRESS';
+
 -- name: ListAuditLogs :many
 SELECT * FROM audit_logs
 WHERE (sqlc.narg(actor)::VARCHAR IS NULL OR actor ILIKE '%' || sqlc.narg(actor)::VARCHAR || '%')
