@@ -12,6 +12,7 @@ import (
 type CornerService struct {
 	camps       CampRepository
 	corners     CornerRepository
+	tracks      TrackRepository
 	auditLogs   AuditLogRepository
 	broadcaster Broadcaster
 	tx          TxManager
@@ -23,6 +24,7 @@ type CornerService struct {
 func NewCornerService(
 	camps CampRepository,
 	corners CornerRepository,
+	tracks TrackRepository,
 	auditLogs AuditLogRepository,
 	broadcaster Broadcaster,
 	tx TxManager,
@@ -30,6 +32,7 @@ func NewCornerService(
 	return &CornerService{
 		camps:       camps,
 		corners:     corners,
+		tracks:      tracks,
 		auditLogs:   auditLogs,
 		broadcaster: broadcaster,
 		tx:          tx,
@@ -77,6 +80,28 @@ func (s *CornerService) ListCorners(ctx context.Context, campID domain.CampID) (
 // GetCorner
 func (s *CornerService) GetCorner(ctx context.Context, id domain.CornerID) (*domain.Corner, error) {
 	corner, err := s.corners.Get(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if corner == nil {
+		return nil, domain.ErrCornerNotFound
+	}
+	return corner, nil
+}
+
+// GetCornerByTrack derives the corner from the track's immutable corner
+// assignment — for TrackAuth (진행자) callers, who may only see their own
+// track's corner, never another track's admin-facing detail.
+func (s *CornerService) GetCornerByTrack(ctx context.Context, trackID domain.TrackID) (*domain.Corner, error) {
+	track, err := s.tracks.Get(ctx, trackID)
+	if err != nil {
+		return nil, err
+	}
+	if track == nil {
+		return nil, domain.ErrTrackNotFound
+	}
+
+	corner, err := s.corners.Get(ctx, track.CornerID())
 	if err != nil {
 		return nil, err
 	}

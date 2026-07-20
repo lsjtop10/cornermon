@@ -1,6 +1,7 @@
 package web
 
 import (
+	"errors"
 	"net/http"
 
 	"cornermon/backend/internal/domain"
@@ -141,6 +142,38 @@ func (h *CornerHandler) GetCorner(c echo.Context) error {
 		return domain.ErrCornerNotFound
 	}
 	return c.JSON(http.StatusOK, mapCornerViewToDTO(*view))
+}
+
+// @Summary      진행자 코너 조회
+// @Description  인증된 진행자(TrackAuth)의 트랙이 속한 코너의 핵심 정보를 조회한다. 세션의 트랙과 path trackId가 일치해야 한다. 다른 트랙의 활성 목록·병목 지표 등 관리자 전용 정보는 포함하지 않는다.
+// @Tags         C. Visit (Scan Flow)
+// @Security     TrackAuth
+// @Produce      json
+// @Param        trackId path string true "트랙 ID"
+// @Success      200 {object} CornerResponse
+// @Failure      401 {object} ErrorResponse
+// @Failure      403 {object} ErrorResponse "세션 트랙과 요청 트랙 불일치"
+// @Failure      404 {object} ErrorResponse "트랙 또는 코너 없음"
+// @Router       /tracks/{trackId}/corner [get]
+func (h *CornerHandler) GetCornerByTrack(c echo.Context) error {
+	session, ok := c.Get("facilitatorSession").(*domain.FacilitatorSession)
+	if !ok {
+		return echo.NewHTTPError(http.StatusUnauthorized, ErrorResponse{Code: "UNAUTHORIZED", Message: "unauthorized"})
+	}
+
+	trackID := domain.TrackID(c.Param("trackId"))
+	if session.TrackID() != trackID {
+		return echo.NewHTTPError(http.StatusForbidden, ErrorResponse{Code: "FORBIDDEN", Message: domain.ErrTrackScopeForbidden.Error()}).SetInternal(domain.ErrTrackScopeForbidden)
+	}
+
+	corner, err := h.svc.GetCornerByTrack(c.Request().Context(), trackID)
+	if err != nil {
+		if errors.Is(err, domain.ErrTrackNotFound) || errors.Is(err, domain.ErrCornerNotFound) {
+			return echo.NewHTTPError(http.StatusNotFound, ErrorResponse{Code: "NOT_FOUND", Message: err.Error()}).SetInternal(err)
+		}
+		return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_ERROR", Message: err.Error()}).SetInternal(err)
+	}
+	return c.JSON(http.StatusOK, mapDomainCornerToDTO(corner))
 }
 
 // @Summary      코너 삭제
