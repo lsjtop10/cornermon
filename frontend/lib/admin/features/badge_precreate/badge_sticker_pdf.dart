@@ -12,7 +12,7 @@ Future<Uint8List> buildBadgeStickerPdf(List<api.Badge> badges) async {
       build: (_) => [
         pw.GridView(
           crossAxisCount: 3,
-          childAspectRatio: .9,
+          childAspectRatio: 1.1,
           children: [
             for (final badge in badges)
               pw.Container(
