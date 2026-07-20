@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"cornermon/backend/internal/domain"
@@ -90,8 +91,13 @@ func (s *FacilitatorAuthService) Login(
 	if err != nil {
 		return nil, err
 	}
-	if camp == nil || !camp.IsActive() {
+	if camp == nil {
+		return nil, fmt.Errorf("camp: camp %s is not exist", campID)
+	}
+
+	if camp.Status() == domain.CampEnded {
 		s.recordAuditLog(ctx, "anonymous", ActionFacilitatorLogin, "", false, map[string]any{"error": domain.ErrCampInvalidTransition.Error()})
+
 		return nil, domain.ErrCampInvalidTransition
 	}
 
