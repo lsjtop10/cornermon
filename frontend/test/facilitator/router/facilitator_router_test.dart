@@ -217,7 +217,7 @@ void main() {
           deviceTrustProvider.overrideWith(() => _FakeDeviceTrust(DeviceTrustStatus.approved)),
           trackSessionProvider.overrideWith(() => mutableSession),
           currentVisitProvider(trackId).overrideWith((ref) => null),
-          cornerDetailProvider(CornerId('corner-1')).overrideWith(
+          trackCornerProvider(trackId).overrideWith(
             (ref) => Corner(
               (b) => b
                 ..id = 'corner-1'

@@ -250,7 +250,7 @@ void main() {
           overrides: [
             trackSessionProvider.overrideWith(() => _FakeTrackSession(authenticatedState)),
             currentVisitProvider(trackId).overrideWith((ref) => null),
-            cornerDetailProvider(CornerId('corner-1')).overrideWith(
+            trackCornerProvider(trackId).overrideWith(
               (ref) => Corner(
                 (b) => b
                   ..id = 'corner-1'

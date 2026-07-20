@@ -112,6 +112,7 @@ Class | Method | HTTP request | Description
 [*BResourceManagementAdminApi*](doc/BResourceManagementAdminApi.md) | [**tracksIdRegeneratePinPost**](doc/BResourceManagementAdminApi.md#tracksidregeneratepinpost) | **POST** /tracks/{id}/regenerate-pin | PIN 재발급
 [*BResourceManagementAdminApi*](doc/BResourceManagementAdminApi.md) | [**tracksIdReplacePut**](doc/BResourceManagementAdminApi.md#tracksidreplaceput) | **PUT** /tracks/{id}/replace | 트랙 교체 (비상용)
 [*BResourceManagementAdminApi*](doc/BResourceManagementAdminApi.md) | [**tracksPost**](doc/BResourceManagementAdminApi.md#trackspost) | **POST** /tracks | 트랙 일괄 생성
+[*CVisitScanFlowApi*](doc/CVisitScanFlowApi.md) | [**tracksTrackIdCornerGet**](doc/CVisitScanFlowApi.md#trackstrackidcornerget) | **GET** /tracks/{trackId}/corner | 진행자 코너 조회
 [*CVisitScanFlowApi*](doc/CVisitScanFlowApi.md) | [**tracksTrackIdGroupsGet**](doc/CVisitScanFlowApi.md#trackstrackidgroupsget) | **GET** /tracks/{trackId}/groups | 진행자 수동 체크인용 조 목록 조회
 [*CVisitScanFlowApi*](doc/CVisitScanFlowApi.md) | [**tracksTrackIdVisitsCurrentEndPost**](doc/CVisitScanFlowApi.md#trackstrackidvisitscurrentendpost) | **POST** /tracks/{trackId}/visits/current/end | 현재 방문 종료 (조 퇴장)
 [*CVisitScanFlowApi*](doc/CVisitScanFlowApi.md) | [**tracksTrackIdVisitsCurrentGet**](doc/CVisitScanFlowApi.md#trackstrackidvisitscurrentget) | **GET** /tracks/{trackId}/visits/current | 현재 진행 중인 방문 상태 조회
@@ -217,6 +218,5 @@ Authentication schemes defined for the API:
 
 
 ## Author
-
 
 

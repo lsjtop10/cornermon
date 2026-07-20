@@ -2,6 +2,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import 'package:cornermon/shared/api/domain_aliases.dart';
 import 'package:cornermon/shared/api/ids.dart';
+import 'package:cornermon/shared/api/providers/corner_track_providers.dart';
 import 'package:cornermon/shared/api/providers/message_providers.dart';
 import 'package:cornermon/shared/api/providers/visit_providers.dart';
 import 'package:cornermon/shared/api/sse/track_event_stream.dart';
@@ -36,6 +37,14 @@ class TrackEventCoordinator extends _$TrackEventCoordinator {
           ref.invalidate(currentVisitProvider(trackId));
         }
         break;
+      case SseEventEventEnum.cornersUpdated:
+        // 관리자가 코너 목표시간 등을 바꾸면 camp 스코프로 브로드캐스트된다(백엔드가 캠프 내
+        // 모든 트랙 구독자에게도 전달, backend/internal/infrastructure/sse/broadcaster.go).
+        // 로그인 스냅샷(session.corner)이 최신이 아닐 수 있으므로 TrackAuth 조회로 갱신한다.
+        if (scope?.kind == SseScopeKind.camp) {
+          ref.invalidate(trackCornerProvider(trackId));
+        }
+        break;
       case SseEventEventEnum.messagesChanged:
         if (scope?.kind == SseScopeKind.camp) {
           ref.invalidate(facilitatorBroadcastMessageListProvider);
@@ -60,7 +69,7 @@ class TrackEventCoordinator extends _$TrackEventCoordinator {
             .handleTermination(TrackSessionTerminationReason.campEnded);
         break;
       default:
-        break; // corners_updated/groups_updated/lockout_alert 등 관리자 전용 알림은 진행자 화면과 무관
+        break; // groups_updated/lockout_alert 등 관리자 전용 알림은 진행자 화면과 무관
     }
   }
 }

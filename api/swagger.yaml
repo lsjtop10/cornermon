@@ -2350,6 +2350,40 @@ paths:
       summary: 트랙 교체 (비상용)
       tags:
       - B. Resource Management (Admin)
+  /tracks/{trackId}/corner:
+    get:
+      description: 인증된 진행자(TrackAuth)의 트랙이 속한 코너의 핵심 정보를 조회한다. 세션의 트랙과 path trackId가
+        일치해야 한다. 다른 트랙의 활성 목록·병목 지표 등 관리자 전용 정보는 포함하지 않는다.
+      parameters:
+      - description: 트랙 ID
+        in: path
+        name: trackId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/CornerResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "403":
+          description: 세션 트랙과 요청 트랙 불일치
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "404":
+          description: 트랙 또는 코너 없음
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+      - TrackAuth: []
+      summary: 진행자 코너 조회
+      tags:
+      - C. Visit (Scan Flow)
   /tracks/{trackId}/groups:
     get:
       description: 인증된 진행자의 트랙이 속한 캠프의 조 목록을 반환한다. 세션의 트랙과 path trackId가 일치해야 한다.
