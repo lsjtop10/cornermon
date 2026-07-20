@@ -1,4 +1,3 @@
-
 package domain_test
 
 import (
@@ -8,7 +7,7 @@ import (
 )
 
 func TestCorner_OperationalStatus(t *testing.T) {
-	corner := domain.NewCornerFromProps(domain.CornerProps{ID:            domain.CornerID("corner-1"),
+	corner := domain.NewCornerFromProps(domain.CornerProps{ID: domain.CornerID("corner-1"),
 		TargetMinutes: 10,
 	})
 
@@ -62,7 +61,7 @@ func TestCorner_OperationalStatus(t *testing.T) {
 }
 
 func TestCorner_EffectiveTargetMinutes(t *testing.T) {
-	corner := domain.NewCornerFromProps(domain.CornerProps{ID:            domain.CornerID("corner-1"),
+	corner := domain.NewCornerFromProps(domain.CornerProps{ID: domain.CornerID("corner-1"),
 		TargetMinutes: 12,
 	})
 

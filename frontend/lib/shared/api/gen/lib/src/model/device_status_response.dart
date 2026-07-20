@@ -13,9 +13,17 @@ part 'device_status_response.g.dart';
 /// DeviceStatusResponse
 ///
 /// Properties:
+/// * [campId] 
+/// * [id] 
 /// * [status] 
 @BuiltValue()
 abstract class DeviceStatusResponse implements Built<DeviceStatusResponse, DeviceStatusResponseBuilder> {
+  @BuiltValueField(wireName: r'campId')
+  String? get campId;
+
+  @BuiltValueField(wireName: r'id')
+  String? get id;
+
   @BuiltValueField(wireName: r'status')
   DeviceStatusResponseStatusEnum? get status;
   // enum statusEnum {  PENDING,  APPROVED,  REJECTED,  REVOKED,  };
@@ -43,6 +51,20 @@ class _$DeviceStatusResponseSerializer implements PrimitiveSerializer<DeviceStat
     DeviceStatusResponse object, {
     FullType specifiedType = FullType.unspecified,
   }) sync* {
+    if (object.campId != null) {
+      yield r'campId';
+      yield serializers.serialize(
+        object.campId,
+        specifiedType: const FullType(String),
+      );
+    }
+    if (object.id != null) {
+      yield r'id';
+      yield serializers.serialize(
+        object.id,
+        specifiedType: const FullType(String),
+      );
+    }
     if (object.status != null) {
       yield r'status';
       yield serializers.serialize(
@@ -73,6 +95,20 @@ class _$DeviceStatusResponseSerializer implements PrimitiveSerializer<DeviceStat
       final key = serializedList[i] as String;
       final value = serializedList[i + 1];
       switch (key) {
+        case r'campId':
+          final valueDes = serializers.deserialize(
+            value,
+            specifiedType: const FullType(String),
+          ) as String;
+          result.campId = valueDes;
+          break;
+        case r'id':
+          final valueDes = serializers.deserialize(
+            value,
+            specifiedType: const FullType(String),
+          ) as String;
+          result.id = valueDes;
+          break;
         case r'status':
           final valueDes = serializers.deserialize(
             value,

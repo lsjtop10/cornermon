@@ -147,6 +147,9 @@ func RegisterRoutes(e *echo.Echo, h *Handlers, adminAuth AuthAdminUsecase, track
 	if h.Group != nil {
 		track.GET("/tracks/:trackId/groups", h.Group.ListGroupsByTrack)
 	}
+	if h.Corner != nil {
+		track.GET("/tracks/:trackId/corner", h.Corner.GetCornerByTrack)
+	}
 
 	// ── C. Visit ──
 	if h.Visit != nil {

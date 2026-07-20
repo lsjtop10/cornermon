@@ -37,18 +37,19 @@ func (t *TrackDeletedEvent) OccurredAt() time.Time {
 }
 
 type TrackDeletedEventProps struct {
-	TrackID TrackID
+	TrackID    TrackID
 	OccurredAt time.Time
 }
+
 func NewTrackDeletedEventFromProps(p TrackDeletedEventProps) *TrackDeletedEvent {
 	return &TrackDeletedEvent{
-		trackID: p.TrackID,
+		trackID:    p.TrackID,
 		occurredAt: p.OccurredAt,
 	}
 }
 func NewTrackDeletedEventValFromProps(p TrackDeletedEventProps) TrackDeletedEvent {
 	return TrackDeletedEvent{
-		trackID: p.TrackID,
+		trackID:    p.TrackID,
 		occurredAt: p.OccurredAt,
 	}
 }
@@ -62,18 +63,19 @@ func (t *TrackPINRegeneratedEvent) OccurredAt() time.Time {
 }
 
 type TrackPINRegeneratedEventProps struct {
-	TrackID TrackID
+	TrackID    TrackID
 	OccurredAt time.Time
 }
+
 func NewTrackPINRegeneratedEventFromProps(p TrackPINRegeneratedEventProps) *TrackPINRegeneratedEvent {
 	return &TrackPINRegeneratedEvent{
-		trackID: p.TrackID,
+		trackID:    p.TrackID,
 		occurredAt: p.OccurredAt,
 	}
 }
 func NewTrackPINRegeneratedEventValFromProps(p TrackPINRegeneratedEventProps) TrackPINRegeneratedEvent {
 	return TrackPINRegeneratedEvent{
-		trackID: p.TrackID,
+		trackID:    p.TrackID,
 		occurredAt: p.OccurredAt,
 	}
 }
@@ -87,18 +89,19 @@ func (c *CampEndedEvent) OccurredAt() time.Time {
 }
 
 type CampEndedEventProps struct {
-	CampID CampID
+	CampID     CampID
 	OccurredAt time.Time
 }
+
 func NewCampEndedEventFromProps(p CampEndedEventProps) *CampEndedEvent {
 	return &CampEndedEvent{
-		campID: p.CampID,
+		campID:     p.CampID,
 		occurredAt: p.OccurredAt,
 	}
 }
 func NewCampEndedEventValFromProps(p CampEndedEventProps) CampEndedEvent {
 	return CampEndedEvent{
-		campID: p.CampID,
+		campID:     p.CampID,
 		occurredAt: p.OccurredAt,
 	}
 }
@@ -112,18 +115,19 @@ func (t *TrackFreedEvent) OccurredAt() time.Time {
 }
 
 type TrackFreedEventProps struct {
-	TrackID TrackID
+	TrackID    TrackID
 	OccurredAt time.Time
 }
+
 func NewTrackFreedEventFromProps(p TrackFreedEventProps) *TrackFreedEvent {
 	return &TrackFreedEvent{
-		trackID: p.TrackID,
+		trackID:    p.TrackID,
 		occurredAt: p.OccurredAt,
 	}
 }
 func NewTrackFreedEventValFromProps(p TrackFreedEventProps) TrackFreedEvent {
 	return TrackFreedEvent{
-		trackID: p.TrackID,
+		trackID:    p.TrackID,
 		occurredAt: p.OccurredAt,
 	}
 }

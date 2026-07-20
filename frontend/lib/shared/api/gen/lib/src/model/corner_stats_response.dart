@@ -17,6 +17,7 @@ part 'corner_stats_response.g.dart';
 /// * [completedVisitCount] 
 /// * [cornerId] 
 /// * [cornerName] 
+/// * [overDeviationRatio] 
 /// * [unvisitedGroups] 
 @BuiltValue()
 abstract class CornerStatsResponse implements Built<CornerStatsResponse, CornerStatsResponseBuilder> {
@@ -28,6 +29,9 @@ abstract class CornerStatsResponse implements Built<CornerStatsResponse, CornerS
 
   @BuiltValueField(wireName: r'cornerName')
   String? get cornerName;
+
+  @BuiltValueField(wireName: r'overDeviationRatio')
+  num? get overDeviationRatio;
 
   @BuiltValueField(wireName: r'unvisitedGroups')
   BuiltList<UnvisitedGroupResponse>? get unvisitedGroups;
@@ -74,6 +78,13 @@ class _$CornerStatsResponseSerializer implements PrimitiveSerializer<CornerStats
       yield serializers.serialize(
         object.cornerName,
         specifiedType: const FullType(String),
+      );
+    }
+    if (object.overDeviationRatio != null) {
+      yield r'overDeviationRatio';
+      yield serializers.serialize(
+        object.overDeviationRatio,
+        specifiedType: const FullType(num),
       );
     }
     if (object.unvisitedGroups != null) {
@@ -126,6 +137,13 @@ class _$CornerStatsResponseSerializer implements PrimitiveSerializer<CornerStats
             specifiedType: const FullType(String),
           ) as String;
           result.cornerName = valueDes;
+          break;
+        case r'overDeviationRatio':
+          final valueDes = serializers.deserialize(
+            value,
+            specifiedType: const FullType(num),
+          ) as num;
+          result.overDeviationRatio = valueDes;
           break;
         case r'unvisitedGroups':
           final valueDes = serializers.deserialize(

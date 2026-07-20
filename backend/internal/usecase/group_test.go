@@ -1,4 +1,3 @@
-
 package usecase
 
 import (
@@ -24,7 +23,7 @@ func TestGroupService_RegisterBadge(t *testing.T) {
 		corners.Save(context.Background(), corner2)
 
 		badges := NewMockBadgeRepository()
-		badge := domain.NewBadgeFromProps(domain.BadgeProps{ID:              "badge-1",
+		badge := domain.NewBadgeFromProps(domain.BadgeProps{ID: "badge-1",
 			ShortID:         "B1",
 			QRPayload:       "qr-1",
 			Status:          domain.BadgeUnassigned,
@@ -71,7 +70,7 @@ func TestGroupService_RegisterBadge(t *testing.T) {
 		camps.Save(context.Background(), camp)
 
 		badges := NewMockBadgeRepository()
-		badge := domain.NewBadgeFromProps(domain.BadgeProps{ID:        "badge-1",
+		badge := domain.NewBadgeFromProps(domain.BadgeProps{ID: "badge-1",
 			QRPayload: "qr-1",
 			Status:    domain.BadgeUnassigned,
 		})

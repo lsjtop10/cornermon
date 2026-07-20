@@ -1,4 +1,3 @@
-
 package web_test
 
 import (
@@ -14,7 +13,6 @@ import (
 	"cornermon/backend/internal/infrastructure/web"
 	"github.com/labstack/echo/v4"
 )
-
 
 func TestErrorHandler_AppError(t *testing.T) {
 	// arrange
@@ -83,4 +81,3 @@ func TestErrorHandlerShouldLogErrorMsgUserAgentAndDurationMsWhenSystemErrorOccur
 		t.Error("expected stack_trace to be present for a Wrap()-ed 5xx error")
 	}
 }
-

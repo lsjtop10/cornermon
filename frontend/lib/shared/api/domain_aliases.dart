@@ -28,6 +28,8 @@ typedef DeviceRegistrationRequestBody = DeviceRegistrationRequest;
 typedef DeviceRegistrationCreated = DeviceRegistrationCreatedResponse;
 typedef DeviceRegistrationCreatedStatus =
     DeviceRegistrationCreatedResponseStatusEnum;
+typedef DeviceStatus = DeviceStatusResponse;
+typedef DeviceStatusStatus = DeviceStatusResponseStatusEnum;
 typedef AdminSession = AdminSessionResponse;
 typedef FacilitatorSession = FacilitatorSessionResponse;
 typedef AuditLog = AuditLogResponse;

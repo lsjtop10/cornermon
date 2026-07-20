@@ -18,6 +18,7 @@ part 'camp_response.g.dart';
 /// * [endAt] 
 /// * [id] 
 /// * [name] 
+/// * [registrationCode] 
 /// * [startAt] 
 /// * [status] 
 @BuiltValue()
@@ -36,6 +37,9 @@ abstract class CampResponse implements Built<CampResponse, CampResponseBuilder> 
 
   @BuiltValueField(wireName: r'name')
   String? get name;
+
+  @BuiltValueField(wireName: r'registrationCode')
+  String? get registrationCode;
 
   @BuiltValueField(wireName: r'startAt')
   DateTime? get startAt;
@@ -99,6 +103,13 @@ class _$CampResponseSerializer implements PrimitiveSerializer<CampResponse> {
       yield r'name';
       yield serializers.serialize(
         object.name,
+        specifiedType: const FullType(String),
+      );
+    }
+    if (object.registrationCode != null) {
+      yield r'registrationCode';
+      yield serializers.serialize(
+        object.registrationCode,
         specifiedType: const FullType(String),
       );
     }
@@ -173,6 +184,13 @@ class _$CampResponseSerializer implements PrimitiveSerializer<CampResponse> {
             specifiedType: const FullType(String),
           ) as String;
           result.name = valueDes;
+          break;
+        case r'registrationCode':
+          final valueDes = serializers.deserialize(
+            value,
+            specifiedType: const FullType(String),
+          ) as String;
+          result.registrationCode = valueDes;
           break;
         case r'startAt':
           final valueDes = serializers.deserialize(

@@ -21,11 +21,11 @@ Method | HTTP request | Description
 [**authTrackLogoutPost**](AAuthDeviceTrustApi.md#authtracklogoutpost) | **POST** /auth/track/logout | 진행자 트랙 로그아웃
 [**authTrackSessionsGet**](AAuthDeviceTrustApi.md#authtracksessionsget) | **GET** /auth/track/sessions | 활성 진행자 세션 목록 조회
 [**authTrackTrackIdForceLogoutPost**](AAuthDeviceTrustApi.md#authtracktrackidforcelogoutpost) | **POST** /auth/track/{trackId}/force-logout | 트랙 강제 로그아웃
-[**deviceRegistrationsGet**](AAuthDeviceTrustApi.md#deviceregistrationsget) | **GET** /device-registrations | 기기 등록 목록 조회
-[**deviceRegistrationsIdApprovePost**](AAuthDeviceTrustApi.md#deviceregistrationsidapprovepost) | **POST** /device-registrations/{id}/approve | 기기 승인
-[**deviceRegistrationsIdRejectPost**](AAuthDeviceTrustApi.md#deviceregistrationsidrejectpost) | **POST** /device-registrations/{id}/reject | 기기 거절
-[**deviceRegistrationsIdRevokePost**](AAuthDeviceTrustApi.md#deviceregistrationsidrevokepost) | **POST** /device-registrations/{id}/revoke | 기기 신뢰 취소 (폐기/분실)
-[**deviceRegistrationsLockedGet**](AAuthDeviceTrustApi.md#deviceregistrationslockedget) | **GET** /device-registrations/locked | 잠금 기기 목록 조회
+[**campsCampIdDeviceRegistrationsGet**](AAuthDeviceTrustApi.md#campscampiddeviceregistrationsget) | **GET** /camps/{campId}/device-registrations | 기기 등록 목록 조회
+[**campsCampIdDeviceRegistrationsIdApprovePost**](AAuthDeviceTrustApi.md#campscampiddeviceregistrationsidapprovepost) | **POST** /camps/{campId}/device-registrations/{id}/approve | 기기 승인
+[**campsCampIdDeviceRegistrationsIdRejectPost**](AAuthDeviceTrustApi.md#campscampiddeviceregistrationsidrejectpost) | **POST** /camps/{campId}/device-registrations/{id}/reject | 기기 거절
+[**campsCampIdDeviceRegistrationsIdRevokePost**](AAuthDeviceTrustApi.md#campscampiddeviceregistrationsidrevokepost) | **POST** /camps/{campId}/device-registrations/{id}/revoke | 기기 신뢰 취소 (폐기/분실)
+[**campsCampIdDeviceRegistrationsLockedGet**](AAuthDeviceTrustApi.md#campscampiddeviceregistrationslockedget) | **GET** /camps/{campId}/device-registrations/locked | 잠금 기기 목록 조회
 [**deviceRegistrationsMeGet**](AAuthDeviceTrustApi.md#deviceregistrationsmeget) | **GET** /device-registrations/me | 내 기기 등록 상태 자체 조회
 [**deviceRegistrationsPost**](AAuthDeviceTrustApi.md#deviceregistrationspost) | **POST** /device-registrations | 기기 등록 요청 (최초 앱 실행 시)
 
@@ -575,8 +575,8 @@ void (empty response body)
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
-# **deviceRegistrationsGet**
-> BuiltList<DeviceRegistrationResponse> deviceRegistrationsGet()
+# **campsCampIdDeviceRegistrationsGet**
+> BuiltList<DeviceRegistrationResponse> campsCampIdDeviceRegistrationsGet(campId, status)
 
 기기 등록 목록 조회
 
@@ -591,17 +591,23 @@ import 'package:cornermon_api_gen/api.dart';
 //defaultApiClient.getAuthentication<ApiKeyAuth>('AdminAuth').apiKeyPrefix = 'Bearer';
 
 final api = CornermonApiGen().getAAuthDeviceTrustApi();
+final String campId = campId_example; // String | 캠프 ID
+final String status = status_example; // String | 기기 등록 상태
 
 try {
-    final response = api.deviceRegistrationsGet();
+    final response = api.campsCampIdDeviceRegistrationsGet(campId, status);
     print(response);
 } on DioException catch (e) {
-    print('Exception when calling AAuthDeviceTrustApi->deviceRegistrationsGet: $e\n');
+    print('Exception when calling AAuthDeviceTrustApi->campsCampIdDeviceRegistrationsGet: $e\n');
 }
 ```
 
 ### Parameters
-This endpoint does not need any parameter.
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **campId** | **String**| 캠프 ID | 
+ **status** | **String**| 기기 등록 상태 | [optional] 
 
 ### Return type
 
@@ -618,8 +624,8 @@ This endpoint does not need any parameter.
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
-# **deviceRegistrationsIdApprovePost**
-> DeviceRegistrationResponse deviceRegistrationsIdApprovePost(id)
+# **campsCampIdDeviceRegistrationsIdApprovePost**
+> DeviceRegistrationResponse campsCampIdDeviceRegistrationsIdApprovePost(campId, id)
 
 기기 승인
 
@@ -634,13 +640,14 @@ import 'package:cornermon_api_gen/api.dart';
 //defaultApiClient.getAuthentication<ApiKeyAuth>('AdminAuth').apiKeyPrefix = 'Bearer';
 
 final api = CornermonApiGen().getAAuthDeviceTrustApi();
+final String campId = campId_example; // String | 캠프 ID
 final String id = id_example; // String | 기기 등록 ID
 
 try {
-    final response = api.deviceRegistrationsIdApprovePost(id);
+    final response = api.campsCampIdDeviceRegistrationsIdApprovePost(campId, id);
     print(response);
 } on DioException catch (e) {
-    print('Exception when calling AAuthDeviceTrustApi->deviceRegistrationsIdApprovePost: $e\n');
+    print('Exception when calling AAuthDeviceTrustApi->campsCampIdDeviceRegistrationsIdApprovePost: $e\n');
 }
 ```
 
@@ -648,6 +655,7 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
+ **campId** | **String**| 캠프 ID | 
  **id** | **String**| 기기 등록 ID | 
 
 ### Return type
@@ -665,8 +673,8 @@ Name | Type | Description  | Notes
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
-# **deviceRegistrationsIdRejectPost**
-> DeviceRegistrationResponse deviceRegistrationsIdRejectPost(id)
+# **campsCampIdDeviceRegistrationsIdRejectPost**
+> DeviceRegistrationResponse campsCampIdDeviceRegistrationsIdRejectPost(campId, id)
 
 기기 거절
 
@@ -681,13 +689,14 @@ import 'package:cornermon_api_gen/api.dart';
 //defaultApiClient.getAuthentication<ApiKeyAuth>('AdminAuth').apiKeyPrefix = 'Bearer';
 
 final api = CornermonApiGen().getAAuthDeviceTrustApi();
+final String campId = campId_example; // String | 캠프 ID
 final String id = id_example; // String | 기기 등록 ID
 
 try {
-    final response = api.deviceRegistrationsIdRejectPost(id);
+    final response = api.campsCampIdDeviceRegistrationsIdRejectPost(campId, id);
     print(response);
 } on DioException catch (e) {
-    print('Exception when calling AAuthDeviceTrustApi->deviceRegistrationsIdRejectPost: $e\n');
+    print('Exception when calling AAuthDeviceTrustApi->campsCampIdDeviceRegistrationsIdRejectPost: $e\n');
 }
 ```
 
@@ -695,6 +704,7 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
+ **campId** | **String**| 캠프 ID | 
  **id** | **String**| 기기 등록 ID | 
 
 ### Return type
@@ -712,8 +722,8 @@ Name | Type | Description  | Notes
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
-# **deviceRegistrationsIdRevokePost**
-> DeviceRegistrationResponse deviceRegistrationsIdRevokePost(id)
+# **campsCampIdDeviceRegistrationsIdRevokePost**
+> DeviceRegistrationResponse campsCampIdDeviceRegistrationsIdRevokePost(campId, id)
 
 기기 신뢰 취소 (폐기/분실)
 
@@ -728,13 +738,14 @@ import 'package:cornermon_api_gen/api.dart';
 //defaultApiClient.getAuthentication<ApiKeyAuth>('AdminAuth').apiKeyPrefix = 'Bearer';
 
 final api = CornermonApiGen().getAAuthDeviceTrustApi();
+final String campId = campId_example; // String | 캠프 ID
 final String id = id_example; // String | 기기 등록 ID
 
 try {
-    final response = api.deviceRegistrationsIdRevokePost(id);
+    final response = api.campsCampIdDeviceRegistrationsIdRevokePost(campId, id);
     print(response);
 } on DioException catch (e) {
-    print('Exception when calling AAuthDeviceTrustApi->deviceRegistrationsIdRevokePost: $e\n');
+    print('Exception when calling AAuthDeviceTrustApi->campsCampIdDeviceRegistrationsIdRevokePost: $e\n');
 }
 ```
 
@@ -742,6 +753,7 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
+ **campId** | **String**| 캠프 ID | 
  **id** | **String**| 기기 등록 ID | 
 
 ### Return type
@@ -759,8 +771,8 @@ Name | Type | Description  | Notes
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
-# **deviceRegistrationsLockedGet**
-> BuiltList<DeviceRegistrationResponse> deviceRegistrationsLockedGet(campId)
+# **campsCampIdDeviceRegistrationsLockedGet**
+> BuiltList<DeviceRegistrationResponse> campsCampIdDeviceRegistrationsLockedGet(campId)
 
 잠금 기기 목록 조회
 
@@ -778,10 +790,10 @@ final api = CornermonApiGen().getAAuthDeviceTrustApi();
 final String campId = campId_example; // String | 캠프 ID
 
 try {
-    final response = api.deviceRegistrationsLockedGet(campId);
+    final response = api.campsCampIdDeviceRegistrationsLockedGet(campId);
     print(response);
 } on DioException catch (e) {
-    print('Exception when calling AAuthDeviceTrustApi->deviceRegistrationsLockedGet: $e\n');
+    print('Exception when calling AAuthDeviceTrustApi->campsCampIdDeviceRegistrationsLockedGet: $e\n');
 }
 ```
 
@@ -807,20 +819,21 @@ Name | Type | Description  | Notes
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **deviceRegistrationsMeGet**
-> DeviceStatusResponse deviceRegistrationsMeGet()
+> DeviceStatusResponse deviceRegistrationsMeGet(xDeviceToken)
 
 내 기기 등록 상태 자체 조회
 
-미승인(PENDING) 기기가 자신의 승인 상태를 확인하기 위해 호출한다.
+기기 등록 시 발급받은 opaque device token을 X-Device-Token 헤더에 넣어, 해당 기기의 승인 상태와 식별자를 조회한다. PENDING 상태에서도 호출할 수 있다.
 
 ### Example
 ```dart
 import 'package:cornermon_api_gen/api.dart';
 
 final api = CornermonApiGen().getAAuthDeviceTrustApi();
+final String xDeviceToken = xDeviceToken_example; // String | 기기 등록 토큰 (opaque token, POST /device-registrations 응답의 deviceToken 값)
 
 try {
-    final response = api.deviceRegistrationsMeGet();
+    final response = api.deviceRegistrationsMeGet(xDeviceToken);
     print(response);
 } on DioException catch (e) {
     print('Exception when calling AAuthDeviceTrustApi->deviceRegistrationsMeGet: $e\n');
@@ -828,7 +841,10 @@ try {
 ```
 
 ### Parameters
-This endpoint does not need any parameter.
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **xDeviceToken** | **String**| 기기 등록 토큰 (opaque token, POST /device-registrations 응답의 deviceToken 값) | 
 
 ### Return type
 

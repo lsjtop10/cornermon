@@ -1,4 +1,3 @@
-
 package usecase
 
 import (
@@ -110,7 +109,7 @@ func TestDeviceTrustService_ApproveDevice(t *testing.T) {
 		now := time.Now()
 		camps := NewMockCampRepository()
 		devices := NewMockDeviceRegistrationRepository()
-		device := domain.NewDeviceRegistrationFromProps(domain.DeviceRegistrationProps{ID:     "device-1",
+		device := domain.NewDeviceRegistrationFromProps(domain.DeviceRegistrationProps{ID: "device-1",
 			CampID: "camp-1",
 			Status: domain.DevicePending,
 		})

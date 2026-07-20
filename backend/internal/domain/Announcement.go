@@ -64,31 +64,32 @@ func (a *Announcement) SentAt() time.Time {
 }
 
 type AnnouncementProps struct {
-	ID AnnouncementID
+	ID          AnnouncementID
 	ChannelType MessageChannelType
-	CampID CampID
-	SenderRole SenderRole
-	Content string
-	SentAt time.Time
+	CampID      CampID
+	SenderRole  SenderRole
+	Content     string
+	SentAt      time.Time
 }
+
 func NewAnnouncementFromProps(p AnnouncementProps) *Announcement {
 	return &Announcement{
-		id: p.ID,
+		id:          p.ID,
 		channelType: p.ChannelType,
-		campID: p.CampID,
-		senderRole: p.SenderRole,
-		content: p.Content,
-		sentAt: p.SentAt,
+		campID:      p.CampID,
+		senderRole:  p.SenderRole,
+		content:     p.Content,
+		sentAt:      p.SentAt,
 	}
 }
 func NewAnnouncementValFromProps(p AnnouncementProps) Announcement {
 	return Announcement{
-		id: p.ID,
+		id:          p.ID,
 		channelType: p.ChannelType,
-		campID: p.CampID,
-		senderRole: p.SenderRole,
-		content: p.Content,
-		sentAt: p.SentAt,
+		campID:      p.CampID,
+		senderRole:  p.SenderRole,
+		content:     p.Content,
+		sentAt:      p.SentAt,
 	}
 }
 
@@ -110,24 +111,26 @@ func (r *NoteceReceipt) SetReadAt(t Optional[time.Time]) {
 
 type NoteceReceiptProps struct {
 	NoticeID AnnouncementID
-	TrackID TrackID
-	ReadAt Optional[time.Time]
+	TrackID  TrackID
+	ReadAt   Optional[time.Time]
 }
+
 func NewNoteceReceiptFromProps(p NoteceReceiptProps) *NoteceReceipt {
 	return &NoteceReceipt{
 		noticeID: p.NoticeID,
-		trackID: p.TrackID,
-		readAt: p.ReadAt,
+		trackID:  p.TrackID,
+		readAt:   p.ReadAt,
 	}
 }
 func NewNoteceReceiptValFromProps(p NoteceReceiptProps) NoteceReceipt {
 	return NoteceReceipt{
 		noticeID: p.NoticeID,
-		trackID: p.TrackID,
-		readAt: p.ReadAt,
+		trackID:  p.TrackID,
+		readAt:   p.ReadAt,
 	}
 }
 
 type AnnouncementReceiptProps = NoteceReceiptProps
+
 var NewAnnouncementReceiptFromProps = NewNoteceReceiptFromProps
 var NewAnnouncementReceiptValFromProps = NewNoteceReceiptValFromProps

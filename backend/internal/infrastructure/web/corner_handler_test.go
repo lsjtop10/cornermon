@@ -1,4 +1,3 @@
-
 package web
 
 import (
@@ -92,6 +91,95 @@ func TestGetCornerShouldReturnViewAndNotFound(t *testing.T) {
 			t.Fatalf("expected ErrCornerNotFound, got %v", err)
 		}
 	})
+}
+
+func TestGetCornerByTrackShouldReturnCornerWhenSessionTrackMatchesPath(t *testing.T) {
+	// Arrange
+	corner := domain.NewCornerFromProps(domain.CornerProps{ID: "corner-1", CampID: "camp-1", Name: "코너 1", TargetMinutes: 10})
+	track := domain.NewTrackFromProps(domain.TrackProps{ID: "track-1", CornerID: "corner-1"})
+	service := usecase.NewCornerService(
+		nil,
+		cornerRepoForGroupHandler{corner: corner},
+		trackRepoForGroupHandler{track: track},
+		nil, nil, nil,
+	)
+	e := echo.New()
+	req := httptest.NewRequest(http.MethodGet, "/tracks/track-1/corner", nil)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+	c.SetPath("/tracks/:trackId/corner")
+	c.SetParamNames("trackId")
+	c.SetParamValues("track-1")
+	c.Set("facilitatorSession", domain.NewFacilitatorSessionFromProps(domain.FacilitatorSessionProps{TrackID: "track-1"}))
+
+	// Act
+	err := NewCornerHandler(service, nil).GetCornerByTrack(c)
+
+	// Assert
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	body := rec.Body.String()
+	if rec.Code != http.StatusOK || !containsAll(body, `"id":"corner-1"`, `"targetMinutes":10`) || strings.Contains(body, `"activeTracks":[{`) {
+		t.Fatalf("expected minimal corner response, status=%d body=%s", rec.Code, body)
+	}
+}
+
+func TestGetCornerByTrackShouldRejectRequestWhenSessionTrackDiffers(t *testing.T) {
+	// Arrange
+	e := echo.New()
+	req := httptest.NewRequest(http.MethodGet, "/tracks/track-2/corner", nil)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+	c.SetPath("/tracks/:trackId/corner")
+	c.SetParamNames("trackId")
+	c.SetParamValues("track-2")
+	c.Set("facilitatorSession", domain.NewFacilitatorSessionFromProps(domain.FacilitatorSessionProps{TrackID: "track-1"}))
+
+	// Act
+	err := NewCornerHandler(nil, nil).GetCornerByTrack(c)
+
+	// Assert
+	var httpErr *echo.HTTPError
+	if !errorsAsHTTPError(err, &httpErr) || httpErr.Code != http.StatusForbidden {
+		t.Fatalf("expected 403 Forbidden HTTPError, got %v", err)
+	}
+}
+
+func TestGetCornerByTrackShouldReturnNotFoundWhenTrackMissing(t *testing.T) {
+	// Arrange
+	service := usecase.NewCornerService(
+		nil,
+		cornerRepoForGroupHandler{},
+		trackRepoForGroupHandler{},
+		nil, nil, nil,
+	)
+	e := echo.New()
+	req := httptest.NewRequest(http.MethodGet, "/tracks/track-1/corner", nil)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+	c.SetPath("/tracks/:trackId/corner")
+	c.SetParamNames("trackId")
+	c.SetParamValues("track-1")
+	c.Set("facilitatorSession", domain.NewFacilitatorSessionFromProps(domain.FacilitatorSessionProps{TrackID: "track-1"}))
+
+	// Act
+	err := NewCornerHandler(service, nil).GetCornerByTrack(c)
+
+	// Assert
+	var httpErr *echo.HTTPError
+	if !errorsAsHTTPError(err, &httpErr) || httpErr.Code != http.StatusNotFound {
+		t.Fatalf("expected 404 NotFound HTTPError, got %v", err)
+	}
+}
+
+func errorsAsHTTPError(err error, target **echo.HTTPError) bool {
+	he, ok := err.(*echo.HTTPError)
+	if !ok {
+		return false
+	}
+	*target = he
+	return true
 }
 
 func containsAll(value string, parts ...string) bool {
