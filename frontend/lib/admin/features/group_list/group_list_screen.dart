@@ -250,6 +250,7 @@ class _RegisterGroupDialogState extends ConsumerState<_RegisterGroupDialog> {
                     ? Center(child: Text('QR 인식 완료: ${_payload.text}'))
                     : MobileScanner(
                         onDetect: (capture) {
+                          if (!mounted || _scanned) return;
                           final token = capture.barcodes.firstOrNull?.rawValue;
                           if (token != null) {
                             setState(() {
@@ -301,7 +302,10 @@ class _RegisterGroupDialogState extends ConsumerState<_RegisterGroupDialog> {
           variant: AppButtonVariant.primary,
           size: AppButtonSize.compact,
           label: '등록 확정',
-          onPressed: _busy || _payload.text.isEmpty || _name.text.isEmpty
+          onPressed:
+              _busy ||
+                  _payload.text.trim().isEmpty ||
+                  _name.text.trim().isEmpty
               ? null
               : _submit,
         ),
