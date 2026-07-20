@@ -16,6 +16,7 @@ import 'package:cornermon/admin/features/device_manage/device_manage_screen.dart
 import 'package:cornermon/admin/features/session_manage/session_manage_screen.dart';
 import 'package:cornermon/admin/features/broadcast/broadcast_screen.dart';
 import 'package:cornermon/admin/features/track_direct/track_direct_screen.dart';
+import 'package:cornermon/admin/features/settings/settings_screen.dart';
 import 'package:cornermon/admin/features/audit_log/audit_log_screen.dart';
 import 'package:cornermon/admin/session/admin_session_provider.dart';
 import 'package:cornermon/admin/session/selected_camp_provider.dart';
@@ -96,7 +97,10 @@ final adminRouterProvider = Provider<GoRouter>((ref) {
         '/audit-log',
         (_, _) => const AdminScaffold(body: AuditLogScreen()),
       ),
-      _screenRoute('/settings', 'A15 설정'),
+      _route(
+        '/settings',
+        (_, _) => const AdminScaffold(body: SettingsScreen()),
+      ),
     ],
   );
 });
