@@ -6,6 +6,8 @@ import 'package:cornermon/shared/design_system/tokens/spacing.dart';
 import 'package:cornermon/shared/design_system/tokens/typography.dart';
 import 'package:cornermon/shared/design_system/widgets/empty_state.dart';
 
+import '../audit_log_action_labels.dart';
+
 const _columnFlex = [3, 2, 2, 2, 2];
 
 /// A13 감사 로그 테이블 — 시각/행위자/행위 종류/대상/결과 5개 컬럼.
@@ -109,7 +111,7 @@ class _AuditLogRow extends StatelessWidget {
           Expanded(
             flex: _columnFlex[2],
             child: Text(
-              log.action?.name ?? '-',
+              auditLogActionLabel(log.action?.name),
               style: AppTypography.body.copyWith(color: colors.textPrimary),
             ),
           ),
