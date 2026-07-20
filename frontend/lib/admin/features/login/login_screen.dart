@@ -119,7 +119,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       children: [
                         AppButton(
                           variant: AppButtonVariant.primary,
-                          size: AppButtonSize.compact,
+                          size: AppButtonSize.comfortable,
                           width: AppButtonWidth.fill,
                           label: '로그인',
                           disabledReason: 'ID와 비밀번호를 모두 입력하면 로그인할 수 있습니다.',

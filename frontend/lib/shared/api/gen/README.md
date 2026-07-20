@@ -76,11 +76,11 @@ Class | Method | HTTP request | Description
 [*AAuthDeviceTrustApi*](doc/AAuthDeviceTrustApi.md) | [**authTrackLogoutPost**](doc/AAuthDeviceTrustApi.md#authtracklogoutpost) | **POST** /auth/track/logout | 진행자 트랙 로그아웃
 [*AAuthDeviceTrustApi*](doc/AAuthDeviceTrustApi.md) | [**authTrackSessionsGet**](doc/AAuthDeviceTrustApi.md#authtracksessionsget) | **GET** /auth/track/sessions | 활성 진행자 세션 목록 조회
 [*AAuthDeviceTrustApi*](doc/AAuthDeviceTrustApi.md) | [**authTrackTrackIdForceLogoutPost**](doc/AAuthDeviceTrustApi.md#authtracktrackidforcelogoutpost) | **POST** /auth/track/{trackId}/force-logout | 트랙 강제 로그아웃
-[*AAuthDeviceTrustApi*](doc/AAuthDeviceTrustApi.md) | [**deviceRegistrationsGet**](doc/AAuthDeviceTrustApi.md#deviceregistrationsget) | **GET** /device-registrations | 기기 등록 목록 조회
-[*AAuthDeviceTrustApi*](doc/AAuthDeviceTrustApi.md) | [**deviceRegistrationsIdApprovePost**](doc/AAuthDeviceTrustApi.md#deviceregistrationsidapprovepost) | **POST** /device-registrations/{id}/approve | 기기 승인
-[*AAuthDeviceTrustApi*](doc/AAuthDeviceTrustApi.md) | [**deviceRegistrationsIdRejectPost**](doc/AAuthDeviceTrustApi.md#deviceregistrationsidrejectpost) | **POST** /device-registrations/{id}/reject | 기기 거절
-[*AAuthDeviceTrustApi*](doc/AAuthDeviceTrustApi.md) | [**deviceRegistrationsIdRevokePost**](doc/AAuthDeviceTrustApi.md#deviceregistrationsidrevokepost) | **POST** /device-registrations/{id}/revoke | 기기 신뢰 취소 (폐기/분실)
-[*AAuthDeviceTrustApi*](doc/AAuthDeviceTrustApi.md) | [**deviceRegistrationsLockedGet**](doc/AAuthDeviceTrustApi.md#deviceregistrationslockedget) | **GET** /device-registrations/locked | 잠금 기기 목록 조회
+[*AAuthDeviceTrustApi*](doc/AAuthDeviceTrustApi.md) | [**campsCampIdDeviceRegistrationsGet**](doc/AAuthDeviceTrustApi.md#campscampiddeviceregistrationsget) | **GET** /camps/{campId}/device-registrations | 기기 등록 목록 조회
+[*AAuthDeviceTrustApi*](doc/AAuthDeviceTrustApi.md) | [**campsCampIdDeviceRegistrationsIdApprovePost**](doc/AAuthDeviceTrustApi.md#campscampiddeviceregistrationsidapprovepost) | **POST** /camps/{campId}/device-registrations/{id}/approve | 기기 승인
+[*AAuthDeviceTrustApi*](doc/AAuthDeviceTrustApi.md) | [**campsCampIdDeviceRegistrationsIdRejectPost**](doc/AAuthDeviceTrustApi.md#campscampiddeviceregistrationsidrejectpost) | **POST** /camps/{campId}/device-registrations/{id}/reject | 기기 거절
+[*AAuthDeviceTrustApi*](doc/AAuthDeviceTrustApi.md) | [**campsCampIdDeviceRegistrationsIdRevokePost**](doc/AAuthDeviceTrustApi.md#campscampiddeviceregistrationsidrevokepost) | **POST** /camps/{campId}/device-registrations/{id}/revoke | 기기 신뢰 취소 (폐기/분실)
+[*AAuthDeviceTrustApi*](doc/AAuthDeviceTrustApi.md) | [**campsCampIdDeviceRegistrationsLockedGet**](doc/AAuthDeviceTrustApi.md#campscampiddeviceregistrationslockedget) | **GET** /camps/{campId}/device-registrations/locked | 잠금 기기 목록 조회
 [*AAuthDeviceTrustApi*](doc/AAuthDeviceTrustApi.md) | [**deviceRegistrationsMeGet**](doc/AAuthDeviceTrustApi.md#deviceregistrationsmeget) | **GET** /device-registrations/me | 내 기기 등록 상태 자체 조회
 [*AAuthDeviceTrustApi*](doc/AAuthDeviceTrustApi.md) | [**deviceRegistrationsPost**](doc/AAuthDeviceTrustApi.md#deviceregistrationspost) | **POST** /device-registrations | 기기 등록 요청 (최초 앱 실행 시)
 [*BCampCornerTrackApi*](doc/BCampCornerTrackApi.md) | [**tracksIdMigrateSessionPost**](doc/BCampCornerTrackApi.md#tracksidmigratesessionpost) | **POST** /tracks/{id}/migrate-session | 교체된 트랙의 세션 마이그레이션
@@ -112,6 +112,7 @@ Class | Method | HTTP request | Description
 [*BResourceManagementAdminApi*](doc/BResourceManagementAdminApi.md) | [**tracksIdRegeneratePinPost**](doc/BResourceManagementAdminApi.md#tracksidregeneratepinpost) | **POST** /tracks/{id}/regenerate-pin | PIN 재발급
 [*BResourceManagementAdminApi*](doc/BResourceManagementAdminApi.md) | [**tracksIdReplacePut**](doc/BResourceManagementAdminApi.md#tracksidreplaceput) | **PUT** /tracks/{id}/replace | 트랙 교체 (비상용)
 [*BResourceManagementAdminApi*](doc/BResourceManagementAdminApi.md) | [**tracksPost**](doc/BResourceManagementAdminApi.md#trackspost) | **POST** /tracks | 트랙 일괄 생성
+[*CVisitScanFlowApi*](doc/CVisitScanFlowApi.md) | [**tracksTrackIdCornerGet**](doc/CVisitScanFlowApi.md#trackstrackidcornerget) | **GET** /tracks/{trackId}/corner | 진행자 코너 조회
 [*CVisitScanFlowApi*](doc/CVisitScanFlowApi.md) | [**tracksTrackIdGroupsGet**](doc/CVisitScanFlowApi.md#trackstrackidgroupsget) | **GET** /tracks/{trackId}/groups | 진행자 수동 체크인용 조 목록 조회
 [*CVisitScanFlowApi*](doc/CVisitScanFlowApi.md) | [**tracksTrackIdVisitsCurrentEndPost**](doc/CVisitScanFlowApi.md#trackstrackidvisitscurrentendpost) | **POST** /tracks/{trackId}/visits/current/end | 현재 방문 종료 (조 퇴장)
 [*CVisitScanFlowApi*](doc/CVisitScanFlowApi.md) | [**tracksTrackIdVisitsCurrentGet**](doc/CVisitScanFlowApi.md#trackstrackidvisitscurrentget) | **GET** /tracks/{trackId}/visits/current | 현재 진행 중인 방문 상태 조회
@@ -217,6 +218,5 @@ Authentication schemes defined for the API:
 
 
 ## Author
-
 
 

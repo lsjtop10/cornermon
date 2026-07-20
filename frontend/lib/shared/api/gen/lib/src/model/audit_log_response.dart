@@ -24,7 +24,8 @@ part 'audit_log_response.g.dart';
 @BuiltValue()
 abstract class AuditLogResponse implements Built<AuditLogResponse, AuditLogResponseBuilder> {
   @BuiltValueField(wireName: r'action')
-  String? get action;
+  AuditLogResponseActionEnum? get action;
+  // enum actionEnum {  ADMIN_LOGIN,  ADMIN_CREATE,  ADMIN_PASSWORD_CHANGE,  ADMIN_DELETE,  ADMIN_SESSION_REVOKE,  TRACK_FORCE_LOGOUT,  FACILITATOR_LOGIN,  SESSION_MIGRATE,  FACILITATOR_LOGOUT,  BADGE_ASSIGN,  BADGE_BULK_GENERATE,  BADGE_EXPORT,  CAMP_ACTIVATE,  CAMP_END,  CAMP_CREATE,  CAMP_SETTINGS_UPDATE,  CORNER_UPDATE,  CORNER_DELETE,  CORNER_CREATE,  DEVICE_APPROVED,  DEVICE_REJECTED,  DEVICE_REVOKED,  PIN_LOCK_RESET,  DEVICE_REQUEST,  GROUP_CREATE,  MESSAGE_DIRECT,  MESSAGE_BROADCAST,  TRACK_CREATE,  TRACK_DELETE,  TRACK_REPLACE,  PIN_REGENERATE,  TRACK_PIN_EXPORT,  VISIT_START,  VISIT_COMPLETE,  };
 
   @BuiltValueField(wireName: r'actor')
   String? get actor;
@@ -71,7 +72,7 @@ class _$AuditLogResponseSerializer implements PrimitiveSerializer<AuditLogRespon
       yield r'action';
       yield serializers.serialize(
         object.action,
-        specifiedType: const FullType(String),
+        specifiedType: const FullType(AuditLogResponseActionEnum),
       );
     }
     if (object.actor != null) {
@@ -142,8 +143,8 @@ class _$AuditLogResponseSerializer implements PrimitiveSerializer<AuditLogRespon
         case r'action':
           final valueDes = serializers.deserialize(
             value,
-            specifiedType: const FullType(String),
-          ) as String;
+            specifiedType: const FullType(AuditLogResponseActionEnum),
+          ) as AuditLogResponseActionEnum;
           result.action = valueDes;
           break;
         case r'actor':
@@ -215,4 +216,83 @@ class _$AuditLogResponseSerializer implements PrimitiveSerializer<AuditLogRespon
     );
     return result.build();
   }
+}
+
+class AuditLogResponseActionEnum extends EnumClass {
+
+  @BuiltValueEnumConst(wireName: r'ADMIN_LOGIN')
+  static const AuditLogResponseActionEnum ADMIN_LOGIN = _$auditLogResponseActionEnum_ADMIN_LOGIN;
+  @BuiltValueEnumConst(wireName: r'ADMIN_CREATE')
+  static const AuditLogResponseActionEnum ADMIN_CREATE = _$auditLogResponseActionEnum_ADMIN_CREATE;
+  @BuiltValueEnumConst(wireName: r'ADMIN_PASSWORD_CHANGE')
+  static const AuditLogResponseActionEnum ADMIN_PASSWORD_CHANGE = _$auditLogResponseActionEnum_ADMIN_PASSWORD_CHANGE;
+  @BuiltValueEnumConst(wireName: r'ADMIN_DELETE')
+  static const AuditLogResponseActionEnum ADMIN_DELETE = _$auditLogResponseActionEnum_ADMIN_DELETE;
+  @BuiltValueEnumConst(wireName: r'ADMIN_SESSION_REVOKE')
+  static const AuditLogResponseActionEnum ADMIN_SESSION_REVOKE = _$auditLogResponseActionEnum_ADMIN_SESSION_REVOKE;
+  @BuiltValueEnumConst(wireName: r'TRACK_FORCE_LOGOUT')
+  static const AuditLogResponseActionEnum TRACK_FORCE_LOGOUT = _$auditLogResponseActionEnum_TRACK_FORCE_LOGOUT;
+  @BuiltValueEnumConst(wireName: r'FACILITATOR_LOGIN')
+  static const AuditLogResponseActionEnum FACILITATOR_LOGIN = _$auditLogResponseActionEnum_FACILITATOR_LOGIN;
+  @BuiltValueEnumConst(wireName: r'SESSION_MIGRATE')
+  static const AuditLogResponseActionEnum SESSION_MIGRATE = _$auditLogResponseActionEnum_SESSION_MIGRATE;
+  @BuiltValueEnumConst(wireName: r'FACILITATOR_LOGOUT')
+  static const AuditLogResponseActionEnum FACILITATOR_LOGOUT = _$auditLogResponseActionEnum_FACILITATOR_LOGOUT;
+  @BuiltValueEnumConst(wireName: r'BADGE_ASSIGN')
+  static const AuditLogResponseActionEnum BADGE_ASSIGN = _$auditLogResponseActionEnum_BADGE_ASSIGN;
+  @BuiltValueEnumConst(wireName: r'BADGE_BULK_GENERATE')
+  static const AuditLogResponseActionEnum BADGE_BULK_GENERATE = _$auditLogResponseActionEnum_BADGE_BULK_GENERATE;
+  @BuiltValueEnumConst(wireName: r'BADGE_EXPORT')
+  static const AuditLogResponseActionEnum BADGE_EXPORT = _$auditLogResponseActionEnum_BADGE_EXPORT;
+  @BuiltValueEnumConst(wireName: r'CAMP_ACTIVATE')
+  static const AuditLogResponseActionEnum CAMP_ACTIVATE = _$auditLogResponseActionEnum_CAMP_ACTIVATE;
+  @BuiltValueEnumConst(wireName: r'CAMP_END')
+  static const AuditLogResponseActionEnum CAMP_END = _$auditLogResponseActionEnum_CAMP_END;
+  @BuiltValueEnumConst(wireName: r'CAMP_CREATE')
+  static const AuditLogResponseActionEnum CAMP_CREATE = _$auditLogResponseActionEnum_CAMP_CREATE;
+  @BuiltValueEnumConst(wireName: r'CAMP_SETTINGS_UPDATE')
+  static const AuditLogResponseActionEnum CAMP_SETTINGS_UPDATE = _$auditLogResponseActionEnum_CAMP_SETTINGS_UPDATE;
+  @BuiltValueEnumConst(wireName: r'CORNER_UPDATE')
+  static const AuditLogResponseActionEnum CORNER_UPDATE = _$auditLogResponseActionEnum_CORNER_UPDATE;
+  @BuiltValueEnumConst(wireName: r'CORNER_DELETE')
+  static const AuditLogResponseActionEnum CORNER_DELETE = _$auditLogResponseActionEnum_CORNER_DELETE;
+  @BuiltValueEnumConst(wireName: r'CORNER_CREATE')
+  static const AuditLogResponseActionEnum CORNER_CREATE = _$auditLogResponseActionEnum_CORNER_CREATE;
+  @BuiltValueEnumConst(wireName: r'DEVICE_APPROVED')
+  static const AuditLogResponseActionEnum DEVICE_APPROVED = _$auditLogResponseActionEnum_DEVICE_APPROVED;
+  @BuiltValueEnumConst(wireName: r'DEVICE_REJECTED')
+  static const AuditLogResponseActionEnum DEVICE_REJECTED = _$auditLogResponseActionEnum_DEVICE_REJECTED;
+  @BuiltValueEnumConst(wireName: r'DEVICE_REVOKED')
+  static const AuditLogResponseActionEnum DEVICE_REVOKED = _$auditLogResponseActionEnum_DEVICE_REVOKED;
+  @BuiltValueEnumConst(wireName: r'PIN_LOCK_RESET')
+  static const AuditLogResponseActionEnum PIN_LOCK_RESET = _$auditLogResponseActionEnum_PIN_LOCK_RESET;
+  @BuiltValueEnumConst(wireName: r'DEVICE_REQUEST')
+  static const AuditLogResponseActionEnum DEVICE_REQUEST = _$auditLogResponseActionEnum_DEVICE_REQUEST;
+  @BuiltValueEnumConst(wireName: r'GROUP_CREATE')
+  static const AuditLogResponseActionEnum GROUP_CREATE = _$auditLogResponseActionEnum_GROUP_CREATE;
+  @BuiltValueEnumConst(wireName: r'MESSAGE_DIRECT')
+  static const AuditLogResponseActionEnum MESSAGE_DIRECT = _$auditLogResponseActionEnum_MESSAGE_DIRECT;
+  @BuiltValueEnumConst(wireName: r'MESSAGE_BROADCAST')
+  static const AuditLogResponseActionEnum MESSAGE_BROADCAST = _$auditLogResponseActionEnum_MESSAGE_BROADCAST;
+  @BuiltValueEnumConst(wireName: r'TRACK_CREATE')
+  static const AuditLogResponseActionEnum TRACK_CREATE = _$auditLogResponseActionEnum_TRACK_CREATE;
+  @BuiltValueEnumConst(wireName: r'TRACK_DELETE')
+  static const AuditLogResponseActionEnum TRACK_DELETE = _$auditLogResponseActionEnum_TRACK_DELETE;
+  @BuiltValueEnumConst(wireName: r'TRACK_REPLACE')
+  static const AuditLogResponseActionEnum TRACK_REPLACE = _$auditLogResponseActionEnum_TRACK_REPLACE;
+  @BuiltValueEnumConst(wireName: r'PIN_REGENERATE')
+  static const AuditLogResponseActionEnum PIN_REGENERATE = _$auditLogResponseActionEnum_PIN_REGENERATE;
+  @BuiltValueEnumConst(wireName: r'TRACK_PIN_EXPORT')
+  static const AuditLogResponseActionEnum TRACK_PIN_EXPORT = _$auditLogResponseActionEnum_TRACK_PIN_EXPORT;
+  @BuiltValueEnumConst(wireName: r'VISIT_START')
+  static const AuditLogResponseActionEnum VISIT_START = _$auditLogResponseActionEnum_VISIT_START;
+  @BuiltValueEnumConst(wireName: r'VISIT_COMPLETE')
+  static const AuditLogResponseActionEnum VISIT_COMPLETE = _$auditLogResponseActionEnum_VISIT_COMPLETE;
+
+  static Serializer<AuditLogResponseActionEnum> get serializer => _$auditLogResponseActionEnumSerializer;
+
+  const AuditLogResponseActionEnum._(String name): super(name);
+
+  static BuiltSet<AuditLogResponseActionEnum> get values => _$auditLogResponseActionEnumValues;
+  static AuditLogResponseActionEnum valueOf(String name) => _$auditLogResponseActionEnumValueOf(name);
 }

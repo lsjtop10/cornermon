@@ -9,11 +9,59 @@ All URIs are relative to */api/v1*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
+[**tracksTrackIdCornerGet**](CVisitScanFlowApi.md#trackstrackidcornerget) | **GET** /tracks/{trackId}/corner | 진행자 코너 조회
 [**tracksTrackIdGroupsGet**](CVisitScanFlowApi.md#trackstrackidgroupsget) | **GET** /tracks/{trackId}/groups | 진행자 수동 체크인용 조 목록 조회
 [**tracksTrackIdVisitsCurrentEndPost**](CVisitScanFlowApi.md#trackstrackidvisitscurrentendpost) | **POST** /tracks/{trackId}/visits/current/end | 현재 방문 종료 (조 퇴장)
 [**tracksTrackIdVisitsCurrentGet**](CVisitScanFlowApi.md#trackstrackidvisitscurrentget) | **GET** /tracks/{trackId}/visits/current | 현재 진행 중인 방문 상태 조회
 [**tracksTrackIdVisitsStartPost**](CVisitScanFlowApi.md#trackstrackidvisitsstartpost) | **POST** /tracks/{trackId}/visits/start | 방문 시작 (조 입장)
 
+
+# **tracksTrackIdCornerGet**
+> CornerResponse tracksTrackIdCornerGet(trackId)
+
+진행자 코너 조회
+
+인증된 진행자(TrackAuth)의 트랙이 속한 코너의 핵심 정보를 조회한다. 세션의 트랙과 path trackId가 일치해야 한다. 다른 트랙의 활성 목록·병목 지표 등 관리자 전용 정보는 포함하지 않는다.
+
+### Example
+```dart
+import 'package:cornermon_api_gen/api.dart';
+// TODO Configure API key authorization: TrackAuth
+//defaultApiClient.getAuthentication<ApiKeyAuth>('TrackAuth').apiKey = 'YOUR_API_KEY';
+// uncomment below to setup prefix (e.g. Bearer) for API key, if needed
+//defaultApiClient.getAuthentication<ApiKeyAuth>('TrackAuth').apiKeyPrefix = 'Bearer';
+
+final api = CornermonApiGen().getCVisitScanFlowApi();
+final String trackId = trackId_example; // String | 트랙 ID
+
+try {
+    final response = api.tracksTrackIdCornerGet(trackId);
+    print(response);
+} on DioException catch (e) {
+    print('Exception when calling CVisitScanFlowApi->tracksTrackIdCornerGet: $e\n');
+}
+```
+
+### Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **trackId** | **String**| 트랙 ID | 
+
+### Return type
+
+[**CornerResponse**](CornerResponse.md)
+
+### Authorization
+
+[TrackAuth](../README.md#TrackAuth)
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **tracksTrackIdGroupsGet**
 > BuiltList<GroupResponse> tracksTrackIdGroupsGet(trackId)
@@ -204,4 +252,3 @@ Name | Type | Description  | Notes
  - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-

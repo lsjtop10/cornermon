@@ -5,6 +5,7 @@ import 'package:cornermon/facilitator/session/facilitator_broadcast_provider.dar
 import 'package:cornermon/facilitator/session/track_session_provider.dart';
 import 'package:cornermon/shared/api/domain_aliases.dart';
 import 'package:cornermon/shared/api/ids.dart';
+import 'package:cornermon/shared/api/providers/corner_track_providers.dart';
 import 'package:cornermon/shared/api/providers/message_providers.dart';
 import 'package:cornermon/shared/api/providers/visit_providers.dart';
 import 'package:cornermon/shared/api/sse/track_event_stream.dart';
@@ -35,6 +36,7 @@ void main() {
   late int currentVisitBuildCount;
   late int broadcastListBuildCount;
   late int trackMessageListBuildCount;
+  late int trackCornerBuildCount;
 
   // 스트림 이벤트 전달 → AsyncValue 갱신 → ref.listen 콜백 → invalidate/rebuild가
   // 모두 마이크로태스크를 거쳐 일어나므로, 한 틱을 흘려보내야 결과를 관찰할 수 있다.
@@ -50,6 +52,7 @@ void main() {
     currentVisitBuildCount = 0;
     broadcastListBuildCount = 0;
     trackMessageListBuildCount = 0;
+    trackCornerBuildCount = 0;
 
     container = ProviderContainer(
       overrides: [
@@ -67,6 +70,10 @@ void main() {
           trackMessageListBuildCount++;
           return <Message>[];
         }),
+        trackCornerProvider(trackId).overrideWith((ref) {
+          trackCornerBuildCount++;
+          return Corner((b) => b..id = 'corner-1');
+        }),
       ],
     );
     addTearDown(container.dispose);
@@ -78,6 +85,7 @@ void main() {
     container.listen(currentVisitProvider(trackId), (_, _) {});
     container.listen(facilitatorBroadcastMessageListProvider, (_, _) {});
     container.listen(trackMessageListProvider(trackId), (_, _) {});
+    container.listen(trackCornerProvider(trackId), (_, _) {});
   });
 
   test('ShouldInvalidateCurrentVisitWhenTrackUpdatedScopeMatchesOwnTrack', () async {
@@ -112,6 +120,22 @@ void main() {
 
     // assert
     expect(currentVisitBuildCount, baseline);
+  });
+
+  test('ShouldInvalidateTrackCornerWhenCornersUpdatedScopeIsCamp', () async {
+    // arrange
+    final baseline = trackCornerBuildCount;
+    final event = SseEvent(
+      (b) => b
+        ..event = SseEventEventEnum.cornersUpdated
+        ..scope.kind = SseScopeKind.camp,
+    );
+
+    // act
+    await pushAndSettle(event);
+
+    // assert
+    expect(trackCornerBuildCount, greaterThan(baseline));
   });
 
   test('ShouldInvalidateBroadcastListWhenMessagesChangedScopeIsBroadcast', () async {
