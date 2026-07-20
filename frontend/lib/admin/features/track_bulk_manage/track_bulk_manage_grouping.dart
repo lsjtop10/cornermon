@@ -6,7 +6,11 @@ class CornerTrackGroup {
   final api.Corner corner;
   final List<api.Track> tracks;
 
-  bool get canDelete => tracks.isEmpty;
+  /// 코너 삭제는 DB에서 트랙·방문 기록까지 `ON DELETE CASCADE`로 함께 제거되므로
+  /// 트랙이 있어도 막지 않는다. 다만 진행 중인 방문(BUSY 트랙)이 있는 채로 지우면
+  /// 현장에서 스캔 중인 진행자의 세션이 끊기므로 그 경우에만 막는다.
+  bool get canDelete =>
+      tracks.every((track) => track.operationalStatus != api.TrackOperationalStatus.BUSY);
 }
 
 /// 코너 목록과 트랙 목록을 코너 기준으로 묶는다. 트랙이 하나도 없는 코너도 반드시 그룹으로

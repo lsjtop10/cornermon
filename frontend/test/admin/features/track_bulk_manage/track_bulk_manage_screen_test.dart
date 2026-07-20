@@ -20,13 +20,19 @@ class _SelectedCampId extends SelectedCampId {
 CornerResponse _corner(String id, String name) =>
     CornerResponse((b) => b..id = id..name = name..targetMinutes = 10);
 
-TrackResponse _track(String id, String cornerId, int trackNo) => TrackResponse(
+TrackResponse _track(
+  String id,
+  String cornerId,
+  int trackNo, {
+  TrackResponseOperationalStatusEnum status =
+      TrackResponseOperationalStatusEnum.IDLE,
+}) => TrackResponse(
   (b) => b
     ..id = id
     ..cornerId = cornerId
     ..trackNo = trackNo
     ..status = TrackResponseStatusEnum.ACTIVE
-    ..operationalStatus = TrackResponseOperationalStatusEnum.IDLE,
+    ..operationalStatus = status,
 );
 
 Future<void> _pumpScreen(
@@ -77,26 +83,33 @@ void main() {
   final campId = CampId('camp-1');
 
   testWidgets(
-    'ShouldEnableDeleteButtonWhenCornerHasNoTracks',
+    'ShouldEnableDeleteButtonWhenNoBusyTrackInCorner',
     (tester) async {
-      // arrange: 코너 2개 - c1은 트랙 있음, c2는 트랙 없는 좀비 코너
+      // arrange: c1은 IDLE 트랙만 있음, c2는 BUSY 트랙이 있음(진행 중인 방문)
       await _pumpScreen(
         tester,
         campId: campId,
         corners: [_corner('c1', '코너 A'), _corner('c2', '코너 B')],
-        tracks: [_track('t1', 'c1', 1)],
+        tracks: [
+          _track('t1', 'c1', 1),
+          _track(
+            't2',
+            'c2',
+            1,
+            status: TrackResponseOperationalStatusEnum.BUSY,
+          ),
+        ],
       );
 
-      // act: 각 코너 그룹의 삭제 버튼(AppButton) 탐색
+      // act
       final deleteButtons = tester
           .widgetList<AppButton>(find.byType(AppButton))
           .where((button) => button.label == '코너 삭제')
           .toList();
 
-      // assert: 트랙 있는 코너(c1)는 비활성, 트랙 0개 코너(c2)만 활성화된 삭제 버튼을 가진다
+      // assert: IDLE 트랙만 있는 코너(c1)는 삭제 가능, BUSY 트랙이 있는 코너(c2)는 불가
       expect(find.text('코너 A'), findsOneWidget);
       expect(find.text('코너 B'), findsOneWidget);
-      expect(find.text('연결된 트랙이 없습니다'), findsOneWidget);
       expect(deleteButtons, hasLength(2));
       expect(deleteButtons.where((b) => b.onPressed == null), hasLength(1));
       expect(deleteButtons.where((b) => b.onPressed != null), hasLength(1));
@@ -125,6 +138,31 @@ void main() {
       // assert: deleteCornerProvider가 해당 코너 id로 호출됨
       expect(deletedIds, ['zombie']);
       expect(find.text('코너가 삭제되었습니다'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'ShouldAllowDeleteWhenCornerHasOnlyIdleTracks',
+    (tester) async {
+      // arrange: 트랙이 연결돼 있어도(IDLE) 삭제 가능해야 한다
+      // (코너 삭제는 DB CASCADE로 트랙·방문 기록까지 함께 제거됨)
+      final deletedIds = <String>[];
+      await _pumpScreen(
+        tester,
+        campId: campId,
+        corners: [_corner('c1', '코너 A')],
+        tracks: [_track('t1', 'c1', 1)],
+        deletedCornerIds: deletedIds,
+      );
+
+      // act
+      await tester.tap(find.text('코너 삭제'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('진행'));
+      await tester.pumpAndSettle();
+
+      // assert
+      expect(deletedIds, ['c1']);
     },
   );
 }
