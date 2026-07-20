@@ -76,36 +76,37 @@ func (m *Message) SetReadAt(t Optional[time.Time]) {
 }
 
 type MessageProps struct {
-	ID MessageID
+	ID          MessageID
 	ChannelType MessageChannelType
-	CampID Optional[CampID]
-	TrackID TrackID
-	SenderRole SenderRole
-	Content string
-	SentAt time.Time
-	ReadAt Optional[time.Time]
+	CampID      Optional[CampID]
+	TrackID     TrackID
+	SenderRole  SenderRole
+	Content     string
+	SentAt      time.Time
+	ReadAt      Optional[time.Time]
 }
+
 func NewMessageFromProps(p MessageProps) *Message {
 	return &Message{
-		id: p.ID,
+		id:          p.ID,
 		channelType: p.ChannelType,
-		campID: p.CampID,
-		trackID: p.TrackID,
-		senderRole: p.SenderRole,
-		content: p.Content,
-		sentAt: p.SentAt,
-		readAt: p.ReadAt,
+		campID:      p.CampID,
+		trackID:     p.TrackID,
+		senderRole:  p.SenderRole,
+		content:     p.Content,
+		sentAt:      p.SentAt,
+		readAt:      p.ReadAt,
 	}
 }
 func NewMessageValFromProps(p MessageProps) Message {
 	return Message{
-		id: p.ID,
+		id:          p.ID,
 		channelType: p.ChannelType,
-		campID: p.CampID,
-		trackID: p.TrackID,
-		senderRole: p.SenderRole,
-		content: p.Content,
-		sentAt: p.SentAt,
-		readAt: p.ReadAt,
+		campID:      p.CampID,
+		trackID:     p.TrackID,
+		senderRole:  p.SenderRole,
+		content:     p.Content,
+		sentAt:      p.SentAt,
+		readAt:      p.ReadAt,
 	}
 }

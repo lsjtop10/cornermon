@@ -9,6 +9,7 @@ targets:
             - lib/shared/api/providers/*.dart
             - lib/shared/api/sse/*.dart
             - lib/shared/auth/*.dart
+            - lib/shared/network/*.dart
             - lib/facilitator/session/*.dart
             - lib/facilitator/features/**/*.dart
             - lib/facilitator/router/*.dart

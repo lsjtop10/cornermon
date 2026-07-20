@@ -1,5 +1,6 @@
 // @dart=2.18
 // GENERATED CODE - DO NOT MODIFY BY HAND
+// @dart=2.18
 
 part of 'device_status_response.dart';
 
@@ -81,13 +82,17 @@ class _$DeviceStatusResponseStatusEnumSerializer
 
 class _$DeviceStatusResponse extends DeviceStatusResponse {
   @override
+  final String? campId;
+  @override
+  final String? id;
+  @override
   final DeviceStatusResponseStatusEnum? status;
 
   factory _$DeviceStatusResponse(
           [void Function(DeviceStatusResponseBuilder)? updates]) =>
       (DeviceStatusResponseBuilder()..update(updates))._build();
 
-  _$DeviceStatusResponse._({this.status}) : super._();
+  _$DeviceStatusResponse._({this.campId, this.id, this.status}) : super._();
   @override
   DeviceStatusResponse rebuild(
           void Function(DeviceStatusResponseBuilder) updates) =>
@@ -100,12 +105,17 @@ class _$DeviceStatusResponse extends DeviceStatusResponse {
   @override
   bool operator ==(Object other) {
     if (identical(other, this)) return true;
-    return other is DeviceStatusResponse && status == other.status;
+    return other is DeviceStatusResponse &&
+        campId == other.campId &&
+        id == other.id &&
+        status == other.status;
   }
 
   @override
   int get hashCode {
     var _$hash = 0;
+    _$hash = $jc(_$hash, campId.hashCode);
+    _$hash = $jc(_$hash, id.hashCode);
     _$hash = $jc(_$hash, status.hashCode);
     _$hash = $jf(_$hash);
     return _$hash;
@@ -114,6 +124,8 @@ class _$DeviceStatusResponse extends DeviceStatusResponse {
   @override
   String toString() {
     return (newBuiltValueToStringHelper(r'DeviceStatusResponse')
+          ..add('campId', campId)
+          ..add('id', id)
           ..add('status', status))
         .toString();
   }
@@ -122,6 +134,14 @@ class _$DeviceStatusResponse extends DeviceStatusResponse {
 class DeviceStatusResponseBuilder
     implements Builder<DeviceStatusResponse, DeviceStatusResponseBuilder> {
   _$DeviceStatusResponse? _$v;
+
+  String? _campId;
+  String? get campId => _$this._campId;
+  set campId(String? campId) => _$this._campId = campId;
+
+  String? _id;
+  String? get id => _$this._id;
+  set id(String? id) => _$this._id = id;
 
   DeviceStatusResponseStatusEnum? _status;
   DeviceStatusResponseStatusEnum? get status => _$this._status;
@@ -134,6 +154,8 @@ class DeviceStatusResponseBuilder
   DeviceStatusResponseBuilder get _$this {
     final $v = _$v;
     if ($v != null) {
+      _campId = $v.campId;
+      _id = $v.id;
       _status = $v.status;
       _$v = null;
     }
@@ -156,6 +178,8 @@ class DeviceStatusResponseBuilder
   _$DeviceStatusResponse _build() {
     final _$result = _$v ??
         _$DeviceStatusResponse._(
+          campId: campId,
+          id: id,
           status: status,
         );
     replace(_$result);

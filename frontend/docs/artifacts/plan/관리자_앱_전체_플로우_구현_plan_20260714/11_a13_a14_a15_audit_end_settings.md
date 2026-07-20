@@ -315,14 +315,28 @@ class BottleneckThresholdSection extends ConsumerStatefulWidget {
 - [ ] 필터를 바꾸면 누적된 로그가 비워지고 `before` 없이 처음부터 재조회된다(이전 필터의 결과가 남아있지 않음)
 
 ### A14 코너학습 종료
-- [ ] ACTIVE 캠프의 운영 모드 어느 화면(대시보드/조현황/설정 등)에 있어도 상단 바에 "코너학습 종료" destructive 버튼이 보인다
-- [ ] PENDING/ENDED 캠프에서는 이 버튼이 보이지 않는다(준비 모드엔 "코너학습 시작"이 같은 자리에 대신 나타남)
-- [ ] 버튼 클릭 시 뜨는 확인 모달에 현재 완주/부분완주(근사) 조 수 요약이 표시된다
-- [ ] "종료 선언" 클릭 시 `POST /camps/{id}/end`가 먼저 호출되고, 성공하면 이어서 `POST /camps/{campId}/reports/generate`가 호출된다(네트워크 탭/로그로 순서 확인)
-- [ ] 종료 처리 완료 후 캠프의 대시보드(A1)로 남지 않고 캠프 목록(A0-c) 화면으로 이동한다
-- [ ] 캠프 목록에서 방금 종료한 캠프가 "종료됨" 배지로 표시된다
-- [ ] `reports/generate` 호출이 실패하도록 목업했을 때도 `/end` 성공이면 캠프 목록으로는 정상 이동하고, 경고 스낵바가 별도로 뜬다(종료 자체가 실패로 처리되지 않음)
-- [ ] `endCamp` 자체가 실패(400/409)하면 모달이 닫히지 않고 에러가 인라인 표시되며 캠프 목록으로 이동하지 않는다
+
+> **구현 노트(신규)**: `endCamp`/`generateReport` provider가 `retry: noRetry` 없이 plain `@riverpod`로
+> 정의돼 있었다(`createCamp`만 이미 `retry: noRetry`였음 — §2.3 DEVELOPER_GUIDE 기준 기존 코드베이스의
+> 누락). 실패 시 Riverpod 기본 정책(무제한 횟수, 지수 백오프 최대 6.4초, 실시간)이 적용되어
+> `endCampControllerProvider.confirm()`의 에러 처리·리포트 실패 폴백 경로가 즉시 반영되지 않고 최대
+> 수십 초 지연 후에야(또는 컨트롤러 자체가 async gap 중 dispose되어) 반영되는 문제를 실제로
+> 재현했다(`test/admin/features/end_camp/end_camp_controller_test.dart` 작성 중 발견, plain `test()`가
+> 실시간으로 재시도 backoff를 기다리다 30초 타임아웃). A14의 "실패 시 인라인 에러 즉시 표시",
+> "reports/generate 실패는 무시하고 즉시 다음 단계로 진행" 요구사항과 직접 충돌하므로
+> `frontend/lib/shared/api/providers/camp_providers.dart`의 `endCamp`와
+> `frontend/lib/shared/api/providers/report_providers.dart`의 `generateReport`에
+> `@Riverpod(retry: noRetry)`를 추가하고 `build_runner`로 재생성했다(다른 화면의 `startCamp`/`updateCamp`는
+> A14 범위 밖이라 손대지 않음 — 각 소유 worktree가 필요 시 동일 패턴 적용 필요).
+
+- [x] ACTIVE 캠프의 운영 모드 어느 화면(대시보드/조현황/설정 등)에 있어도 상단 바에 "코너학습 종료" destructive 버튼이 보인다 — `end_camp_bar_button_test.dart`의 `ShoudShowEndButtonWhenAdminScaffoldIsOperating`
+- [x] PENDING/ENDED 캠프에서는 이 버튼이 보이지 않는다(준비 모드엔 "코너학습 시작"이 같은 자리에 대신 나타남) — `ShoudHideEndButtonWhenAdminScaffoldIsPreparing`, `ShoudHideEndButtonWhenAdminScaffoldIsReportOnly`
+- [x] 버튼 클릭 시 뜨는 확인 모달에 현재 완주/부분완주(근사) 조 수 요약이 표시된다 — `ShoudShowLiveSummaryWhenConfirmDialogOpened`
+- [x] "종료 선언" 클릭 시 `POST /camps/{id}/end`가 먼저 호출되고, 성공하면 이어서 `POST /camps/{campId}/reports/generate`가 호출된다(네트워크 탭/로그로 순서 확인) — `end_camp_controller_test.dart`의 `ShoudCallEndCampBeforeGenerateReport`(호출 순서 배열로 검증)
+- [x] 종료 처리 완료 후 캠프의 대시보드(A1)로 남지 않고 캠프 목록(A0-c) 화면으로 이동한다 — `ShoudNavigateToCampsWithoutSnackbarWhenEndAndReportBothSucceed` 등에서 `context.go('/camps')` 확인
+- [x] 캠프 목록에서 방금 종료한 캠프가 "종료됨" 배지로 표시된다 — A0-c(`camp_list_screen.dart`)에 이미 구현되어 있음을 코드로 재확인(A14가 새로 만들 필요 없음)
+- [x] `reports/generate` 호출이 실패하도록 목업했을 때도 `/end` 성공이면 캠프 목록으로는 정상 이동하고, 경고 스낵바가 별도로 뜬다(종료 자체가 실패로 처리되지 않음) — `ShoudNavigateToCampsAndShowWarningSnackbarWhenReportGenerationFailsButEndSucceeds`
+- [x] `endCamp` 자체가 실패(400/409)하면 모달이 닫히지 않고 에러가 인라인 표시되며 캠프 목록으로 이동하지 않는다 — `ShoudKeepDialogOpenAndShowServerMessageWhenEndFails`, `end_camp_controller_test.dart`의 `ShoudThrowAndKeepSelectedCampIdWhenEndCampFails`
 
 ### A15 설정
 - [x] `/settings` 진입 시 뒤로가기 버튼이 없다(사이드바 최상위 항목) — `SettingsScreen`은 자체 `Scaffold(appBar: AppBar(title: Text('설정')))`만 두고 `leading`을 지정하지 않는다. `/settings`는 `context.go()`로만 도달하는 최상위 라우트라 `Navigator.canPop()`이 항상 false라 자동 back 화살표가 생기지 않는다 — 같은 패턴(자체 AppBar, leading 미지정)인 `group_list_screen.dart`(조 현황, 사이드바 최상위 항목)와 동일 구조로 확인.

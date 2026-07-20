@@ -12,9 +12,10 @@ import '../../test_utils/widget_test_helpers.dart';
 
 /// 읽음 처리 POST 호출만 기록하는 가짜 구현 — 다른 메서드는 이 테스트에서 호출되지 않는다.
 class _FakeMessagesApi extends EMessageApi {
-  _FakeMessagesApi() : super(Dio(), serializers);
+  _FakeMessagesApi({this.error}) : super(Dio(), serializers);
 
   final List<String> readCalledIds = [];
+  final Object? error;
 
   @override
   Future<Response<void>> messagesBroadcastIdReadPost({
@@ -27,6 +28,7 @@ class _FakeMessagesApi extends EMessageApi {
     ProgressCallback? onReceiveProgress,
   }) async {
     readCalledIds.add(id);
+    if (error != null) throw error!;
     return Response<void>(requestOptions: RequestOptions(path: '/messages/broadcast/$id/read'));
   }
 }
@@ -104,6 +106,28 @@ void main() {
     // assert
     expect(fakeApi.readCalledIds.toSet(), {'m-unread-a', 'm-unread-b'});
     expect(fakeApi.readCalledIds, isNot(contains('m-read')));
+  });
+
+  testWidgets('ShouldShowFailureFeedbackWhenReadRequestFails', (tester) async {
+    // arrange
+    final fakeApi = _FakeMessagesApi(error: StateError('request failed'));
+
+    // act
+    await tester.pumpWidget(
+      buildTestable(
+        const BroadcastInboxScreen(),
+        overrides: [
+          facilitatorBroadcastMessageListProvider.overrideWith(
+            (ref) => [_buildMessage(id: 'm-unread', content: '안읽음')],
+          ),
+          messageApiProvider.overrideWithValue(fakeApi),
+        ],
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // assert
+    expect(find.text('공지 읽음 처리에 실패했습니다'), findsOneWidget);
   });
 
   testWidgets('ShouldRenderLocalTimeLabelNotRawUtcString', (tester) async {

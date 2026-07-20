@@ -903,6 +903,8 @@ class AAuthDeviceTrustApi {
   /// 관리자가 등록되었거나 대기 중인 기기 목록을 확인한다.
   ///
   /// Parameters:
+  /// * [campId] - 캠프 ID
+  /// * [status] - 기기 등록 상태
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
   /// * [headers] - Can be used to add additional headers to the request
   /// * [extras] - Can be used to add flags to the request
@@ -912,7 +914,9 @@ class AAuthDeviceTrustApi {
   ///
   /// Returns a [Future] containing a [Response] with a [BuiltList<DeviceRegistrationResponse>] as data
   /// Throws [DioException] if API call or serialization fails
-  Future<Response<BuiltList<DeviceRegistrationResponse>>> deviceRegistrationsGet({ 
+  Future<Response<BuiltList<DeviceRegistrationResponse>>> campsCampIdDeviceRegistrationsGet({ 
+    required String campId,
+    String? status,
     CancelToken? cancelToken,
     Map<String, dynamic>? headers,
     Map<String, dynamic>? extra,
@@ -920,7 +924,7 @@ class AAuthDeviceTrustApi {
     ProgressCallback? onSendProgress,
     ProgressCallback? onReceiveProgress,
   }) async {
-    final _path = r'/device-registrations';
+    final _path = r'/camps/{campId}/device-registrations'.replaceAll('{' r'campId' '}', encodeQueryParameter(_serializers, campId, const FullType(String)).toString());
     final _options = Options(
       method: r'GET',
       headers: <String, dynamic>{
@@ -940,9 +944,14 @@ class AAuthDeviceTrustApi {
       validateStatus: validateStatus,
     );
 
+    final _queryParameters = <String, dynamic>{
+      if (status != null) r'status': encodeQueryParameter(_serializers, status, const FullType(String)),
+    };
+
     final _response = await _dio.request<Object>(
       _path,
       options: _options,
+      queryParameters: _queryParameters,
       cancelToken: cancelToken,
       onSendProgress: onSendProgress,
       onReceiveProgress: onReceiveProgress,
@@ -983,6 +992,7 @@ class AAuthDeviceTrustApi {
   /// PENDING 상태인 기기를 APPROVED로 승인한다.
   ///
   /// Parameters:
+  /// * [campId] - 캠프 ID
   /// * [id] - 기기 등록 ID
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
   /// * [headers] - Can be used to add additional headers to the request
@@ -993,7 +1003,8 @@ class AAuthDeviceTrustApi {
   ///
   /// Returns a [Future] containing a [Response] with a [DeviceRegistrationResponse] as data
   /// Throws [DioException] if API call or serialization fails
-  Future<Response<DeviceRegistrationResponse>> deviceRegistrationsIdApprovePost({ 
+  Future<Response<DeviceRegistrationResponse>> campsCampIdDeviceRegistrationsIdApprovePost({ 
+    required String campId,
     required String id,
     CancelToken? cancelToken,
     Map<String, dynamic>? headers,
@@ -1002,7 +1013,7 @@ class AAuthDeviceTrustApi {
     ProgressCallback? onSendProgress,
     ProgressCallback? onReceiveProgress,
   }) async {
-    final _path = r'/device-registrations/{id}/approve'.replaceAll('{' r'id' '}', encodeQueryParameter(_serializers, id, const FullType(String)).toString());
+    final _path = r'/camps/{campId}/device-registrations/{id}/approve'.replaceAll('{' r'campId' '}', encodeQueryParameter(_serializers, campId, const FullType(String)).toString()).replaceAll('{' r'id' '}', encodeQueryParameter(_serializers, id, const FullType(String)).toString());
     final _options = Options(
       method: r'POST',
       headers: <String, dynamic>{
@@ -1065,6 +1076,7 @@ class AAuthDeviceTrustApi {
   /// PENDING 상태인 기기를 REJECTED로 거절한다.
   ///
   /// Parameters:
+  /// * [campId] - 캠프 ID
   /// * [id] - 기기 등록 ID
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
   /// * [headers] - Can be used to add additional headers to the request
@@ -1075,7 +1087,8 @@ class AAuthDeviceTrustApi {
   ///
   /// Returns a [Future] containing a [Response] with a [DeviceRegistrationResponse] as data
   /// Throws [DioException] if API call or serialization fails
-  Future<Response<DeviceRegistrationResponse>> deviceRegistrationsIdRejectPost({ 
+  Future<Response<DeviceRegistrationResponse>> campsCampIdDeviceRegistrationsIdRejectPost({ 
+    required String campId,
     required String id,
     CancelToken? cancelToken,
     Map<String, dynamic>? headers,
@@ -1084,7 +1097,7 @@ class AAuthDeviceTrustApi {
     ProgressCallback? onSendProgress,
     ProgressCallback? onReceiveProgress,
   }) async {
-    final _path = r'/device-registrations/{id}/reject'.replaceAll('{' r'id' '}', encodeQueryParameter(_serializers, id, const FullType(String)).toString());
+    final _path = r'/camps/{campId}/device-registrations/{id}/reject'.replaceAll('{' r'campId' '}', encodeQueryParameter(_serializers, campId, const FullType(String)).toString()).replaceAll('{' r'id' '}', encodeQueryParameter(_serializers, id, const FullType(String)).toString());
     final _options = Options(
       method: r'POST',
       headers: <String, dynamic>{
@@ -1147,6 +1160,7 @@ class AAuthDeviceTrustApi {
   /// APPROVED 기기의 권한을 REVOKED로 박탈한다.
   ///
   /// Parameters:
+  /// * [campId] - 캠프 ID
   /// * [id] - 기기 등록 ID
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
   /// * [headers] - Can be used to add additional headers to the request
@@ -1157,7 +1171,8 @@ class AAuthDeviceTrustApi {
   ///
   /// Returns a [Future] containing a [Response] with a [DeviceRegistrationResponse] as data
   /// Throws [DioException] if API call or serialization fails
-  Future<Response<DeviceRegistrationResponse>> deviceRegistrationsIdRevokePost({ 
+  Future<Response<DeviceRegistrationResponse>> campsCampIdDeviceRegistrationsIdRevokePost({ 
+    required String campId,
     required String id,
     CancelToken? cancelToken,
     Map<String, dynamic>? headers,
@@ -1166,7 +1181,7 @@ class AAuthDeviceTrustApi {
     ProgressCallback? onSendProgress,
     ProgressCallback? onReceiveProgress,
   }) async {
-    final _path = r'/device-registrations/{id}/revoke'.replaceAll('{' r'id' '}', encodeQueryParameter(_serializers, id, const FullType(String)).toString());
+    final _path = r'/camps/{campId}/device-registrations/{id}/revoke'.replaceAll('{' r'campId' '}', encodeQueryParameter(_serializers, campId, const FullType(String)).toString()).replaceAll('{' r'id' '}', encodeQueryParameter(_serializers, id, const FullType(String)).toString());
     final _options = Options(
       method: r'POST',
       headers: <String, dynamic>{
@@ -1239,7 +1254,7 @@ class AAuthDeviceTrustApi {
   ///
   /// Returns a [Future] containing a [Response] with a [BuiltList<DeviceRegistrationResponse>] as data
   /// Throws [DioException] if API call or serialization fails
-  Future<Response<BuiltList<DeviceRegistrationResponse>>> deviceRegistrationsLockedGet({ 
+  Future<Response<BuiltList<DeviceRegistrationResponse>>> campsCampIdDeviceRegistrationsLockedGet({ 
     required String campId,
     CancelToken? cancelToken,
     Map<String, dynamic>? headers,
@@ -1248,7 +1263,7 @@ class AAuthDeviceTrustApi {
     ProgressCallback? onSendProgress,
     ProgressCallback? onReceiveProgress,
   }) async {
-    final _path = r'/device-registrations/locked';
+    final _path = r'/camps/{campId}/device-registrations/locked'.replaceAll('{' r'campId' '}', encodeQueryParameter(_serializers, campId, const FullType(String)).toString());
     final _options = Options(
       method: r'GET',
       headers: <String, dynamic>{
@@ -1268,14 +1283,9 @@ class AAuthDeviceTrustApi {
       validateStatus: validateStatus,
     );
 
-    final _queryParameters = <String, dynamic>{
-      r'campId': encodeQueryParameter(_serializers, campId, const FullType(String)),
-    };
-
     final _response = await _dio.request<Object>(
       _path,
       options: _options,
-      queryParameters: _queryParameters,
       cancelToken: cancelToken,
       onSendProgress: onSendProgress,
       onReceiveProgress: onReceiveProgress,
@@ -1313,9 +1323,10 @@ class AAuthDeviceTrustApi {
   }
 
   /// 내 기기 등록 상태 자체 조회
-  /// 미승인(PENDING) 기기가 자신의 승인 상태를 확인하기 위해 호출한다.
+  /// 기기 등록 시 발급받은 opaque device token을 X-Device-Token 헤더에 넣어, 해당 기기의 승인 상태와 식별자를 조회한다. PENDING 상태에서도 호출할 수 있다.
   ///
   /// Parameters:
+  /// * [xDeviceToken] - 기기 등록 토큰 (opaque token, POST /device-registrations 응답의 deviceToken 값)
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
   /// * [headers] - Can be used to add additional headers to the request
   /// * [extras] - Can be used to add flags to the request
@@ -1326,6 +1337,7 @@ class AAuthDeviceTrustApi {
   /// Returns a [Future] containing a [Response] with a [DeviceStatusResponse] as data
   /// Throws [DioException] if API call or serialization fails
   Future<Response<DeviceStatusResponse>> deviceRegistrationsMeGet({ 
+    required String xDeviceToken,
     CancelToken? cancelToken,
     Map<String, dynamic>? headers,
     Map<String, dynamic>? extra,
@@ -1337,6 +1349,7 @@ class AAuthDeviceTrustApi {
     final _options = Options(
       method: r'GET',
       headers: <String, dynamic>{
+        r'X-Device-Token': xDeviceToken,
         ...?headers,
       },
       extra: <String, dynamic>{

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:cornermon/admin/session/selected_camp_provider.dart';
 import 'package:cornermon/admin/widgets/sidebar/admin_sidebar.dart';
+import 'package:cornermon/admin/features/end_camp/end_camp_bar_button.dart';
 import 'package:cornermon/admin/features/start_camp/start_camp_button.dart';
 
 class AdminScaffold extends ConsumerWidget {
@@ -38,6 +39,14 @@ class AdminScaffold extends ConsumerWidget {
                         child: Padding(
                           padding: const EdgeInsets.all(12),
                           child: StartCampButton(),
+                        ),
+                      ),
+                    if (sidebarModeFor(camp.status!) == SidebarMode.operating)
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: EndCampBarButton(),
                         ),
                       ),
                     Expanded(child: body),

@@ -1,5 +1,6 @@
 // @dart=2.18
 // GENERATED CODE - DO NOT MODIFY BY HAND
+// @dart=2.18
 
 part of 'corner_stats_response.dart';
 
@@ -15,6 +16,8 @@ class _$CornerStatsResponse extends CornerStatsResponse {
   @override
   final String? cornerName;
   @override
+  final num? overDeviationRatio;
+  @override
   final BuiltList<UnvisitedGroupResponse>? unvisitedGroups;
 
   factory _$CornerStatsResponse(
@@ -25,6 +28,7 @@ class _$CornerStatsResponse extends CornerStatsResponse {
       {this.completedVisitCount,
       this.cornerId,
       this.cornerName,
+      this.overDeviationRatio,
       this.unvisitedGroups})
       : super._();
   @override
@@ -43,6 +47,7 @@ class _$CornerStatsResponse extends CornerStatsResponse {
         completedVisitCount == other.completedVisitCount &&
         cornerId == other.cornerId &&
         cornerName == other.cornerName &&
+        overDeviationRatio == other.overDeviationRatio &&
         unvisitedGroups == other.unvisitedGroups;
   }
 
@@ -52,6 +57,7 @@ class _$CornerStatsResponse extends CornerStatsResponse {
     _$hash = $jc(_$hash, completedVisitCount.hashCode);
     _$hash = $jc(_$hash, cornerId.hashCode);
     _$hash = $jc(_$hash, cornerName.hashCode);
+    _$hash = $jc(_$hash, overDeviationRatio.hashCode);
     _$hash = $jc(_$hash, unvisitedGroups.hashCode);
     _$hash = $jf(_$hash);
     return _$hash;
@@ -63,6 +69,7 @@ class _$CornerStatsResponse extends CornerStatsResponse {
           ..add('completedVisitCount', completedVisitCount)
           ..add('cornerId', cornerId)
           ..add('cornerName', cornerName)
+          ..add('overDeviationRatio', overDeviationRatio)
           ..add('unvisitedGroups', unvisitedGroups))
         .toString();
   }
@@ -85,6 +92,11 @@ class CornerStatsResponseBuilder
   String? get cornerName => _$this._cornerName;
   set cornerName(String? cornerName) => _$this._cornerName = cornerName;
 
+  num? _overDeviationRatio;
+  num? get overDeviationRatio => _$this._overDeviationRatio;
+  set overDeviationRatio(num? overDeviationRatio) =>
+      _$this._overDeviationRatio = overDeviationRatio;
+
   ListBuilder<UnvisitedGroupResponse>? _unvisitedGroups;
   ListBuilder<UnvisitedGroupResponse> get unvisitedGroups =>
       _$this._unvisitedGroups ??= ListBuilder<UnvisitedGroupResponse>();
@@ -101,6 +113,7 @@ class CornerStatsResponseBuilder
       _completedVisitCount = $v.completedVisitCount;
       _cornerId = $v.cornerId;
       _cornerName = $v.cornerName;
+      _overDeviationRatio = $v.overDeviationRatio;
       _unvisitedGroups = $v.unvisitedGroups?.toBuilder();
       _$v = null;
     }
@@ -128,6 +141,7 @@ class CornerStatsResponseBuilder
             completedVisitCount: completedVisitCount,
             cornerId: cornerId,
             cornerName: cornerName,
+            overDeviationRatio: overDeviationRatio,
             unvisitedGroups: _unvisitedGroups?.build(),
           );
     } catch (_) {

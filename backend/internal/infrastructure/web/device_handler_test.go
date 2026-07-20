@@ -1,4 +1,3 @@
-
 package web
 
 import (
@@ -17,10 +16,44 @@ import (
 func TestShouldReturnActualCreatedAtWhenDeviceRegistrationRequested(t *testing.T) {
 	// Arrange
 	e := echo.New()
+	e.HTTPErrorHandler = ErrorHandler()
 	createdAt := time.Date(2026, 7, 15, 8, 0, 0, 0, time.UTC)
-	stub := &listDeviceTrustStub{requestedReg: domain.NewDeviceRegistrationFromProps(domain.DeviceRegistrationProps{ID: "device-1", Status: domain.DevicePending, CreatedAt: createdAt})}
+	stub := &listDeviceTrustStub{requestedReg: domain.NewDeviceRegistrationFromProps(domain.DeviceRegistrationProps{ID: "device-1", CampID: "camp-1", Status: domain.DevicePending, CreatedAt: createdAt})}
 	handler := NewDeviceHandler(stub)
 	body := bytes.NewBufferString(`{"registrationCode":"7ZQK3M2X","deviceName":"iPad","deviceModel":"iPad Pro 11 2022","displayName":"1번 태블릿"}`)
+	req := httptest.NewRequest(http.MethodPost, "/device-registrations", body)
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+
+	// Act
+	err := handler.RequestRegistration(c)
+	if err != nil {
+		e.HTTPErrorHandler(err, c)
+	}
+
+	// Assert
+	if rec.Code != http.StatusCreated {
+		t.Fatalf("expected 201 response, code=%d err=%v", rec.Code, err)
+	}
+	var response DeviceRegistrationResponse
+	if err := json.Unmarshal(rec.Body.Bytes(), &response); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if !response.CreatedAt.Equal(createdAt) {
+		t.Fatalf("expected CreatedAt %v, got %v", createdAt, response.CreatedAt)
+	}
+	if response.CampID != "camp-1" {
+		t.Fatalf("expected campId camp-1, got %q", response.CampID)
+	}
+}
+
+func TestShouldNormalizeRegistrationCodeWhenDeviceRegistrationRequestedWithLowercaseCode(t *testing.T) {
+	// Arrange
+	e := echo.New()
+	stub := &listDeviceTrustStub{requestedReg: domain.NewDeviceRegistrationFromProps(domain.DeviceRegistrationProps{ID: "device-1", Status: domain.DevicePending})}
+	handler := NewDeviceHandler(stub)
+	body := bytes.NewBufferString(`{"registrationCode":"7Zqk3m2x","deviceName":"iPad","deviceModel":"iPad Pro 11 2022","displayName":"1번 태블릿"}`)
 	req := httptest.NewRequest(http.MethodPost, "/device-registrations", body)
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
@@ -32,30 +65,85 @@ func TestShouldReturnActualCreatedAtWhenDeviceRegistrationRequested(t *testing.T
 	if err != nil || rec.Code != http.StatusCreated {
 		t.Fatalf("expected 201 response, code=%d err=%v", rec.Code, err)
 	}
-	var response DeviceRegistrationResponse
+	if stub.registrationCode != "7ZQK3M2X" {
+		t.Fatalf("expected uppercased registration code, got %q", stub.registrationCode)
+	}
+}
+
+func TestShouldReturnRegistrationAndCampIdentityWhenGettingMyRegistrationStatus(t *testing.T) {
+	// Arrange
+	e := echo.New()
+	registration := domain.NewDeviceRegistrationFromProps(domain.DeviceRegistrationProps{
+		ID:     "device-1",
+		CampID: "camp-1",
+		Status: domain.DevicePending,
+	})
+	stub := &listDeviceTrustStub{myRegistration: registration}
+	handler := NewDeviceHandler(stub)
+	req := httptest.NewRequest(http.MethodGet, "/device-registrations/me", nil)
+	req.Header.Set("X-Device-Token", "device-token")
+	rec := httptest.NewRecorder()
+
+	// Act
+	err := handler.GetMyRegistrationStatus(e.NewContext(req, rec))
+
+	// Assert
+	if err != nil || rec.Code != http.StatusOK {
+		t.Fatalf("expected 200 response, code=%d err=%v", rec.Code, err)
+	}
+	var response DeviceStatusResponse
 	if err := json.Unmarshal(rec.Body.Bytes(), &response); err != nil {
 		t.Fatalf("decode response: %v", err)
 	}
-	if !response.CreatedAt.Equal(createdAt) {
-		t.Fatalf("expected CreatedAt %v, got %v", createdAt, response.CreatedAt)
+	if response.ID != "device-1" || response.CampID != "camp-1" || response.Status != string(domain.DevicePending) {
+		t.Fatalf("expected device and camp identity, got %+v", response)
+	}
+	if stub.deviceToken != "device-token" {
+		t.Fatalf("expected X-Device-Token to identify requester")
+	}
+}
+
+func TestShouldReturnUnauthorizedWhenDeviceTokenHeaderIsMissingForMyRegistrationStatus(t *testing.T) {
+	// Arrange
+	e := echo.New()
+	e.HTTPErrorHandler = ErrorHandler()
+	handler := NewDeviceHandler(&listDeviceTrustStub{})
+	req := httptest.NewRequest(http.MethodGet, "/device-registrations/me", nil)
+	rec := httptest.NewRecorder()
+	ctx := e.NewContext(req, rec)
+
+	// Act
+	err := handler.GetMyRegistrationStatus(ctx)
+	if err != nil {
+		e.HTTPErrorHandler(err, ctx)
+	}
+
+	// Assert
+	if rec.Code != http.StatusUnauthorized {
+		t.Fatalf("expected 401 response, code=%d err=%v", rec.Code, err)
 	}
 }
 
 func TestShouldReturnNotFoundWhenRegistrationCodeDoesNotMatchAnyCamp(t *testing.T) {
 	// Arrange
 	e := echo.New()
+	e.HTTPErrorHandler = ErrorHandler()
 	stub := &listDeviceTrustStub{requestErr: domain.ErrCampNotFound}
 	handler := NewDeviceHandler(stub)
 	body := bytes.NewBufferString(`{"registrationCode":"UNKNOWN1","deviceName":"iPad"}`)
 	req := httptest.NewRequest(http.MethodPost, "/device-registrations", body)
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
 
 	// Act
-	err := handler.RequestRegistration(e.NewContext(req, rec))
+	err := handler.RequestRegistration(c)
+	if err != nil {
+		e.HTTPErrorHandler(err, c)
+	}
 
 	// Assert
-	if err != nil || rec.Code != http.StatusNotFound {
+	if rec.Code != http.StatusNotFound {
 		t.Fatalf("expected 404 response, code=%d err=%v", rec.Code, err)
 	}
 }
@@ -63,18 +151,23 @@ func TestShouldReturnNotFoundWhenRegistrationCodeDoesNotMatchAnyCamp(t *testing.
 func TestShouldReturnBadRequestWhenCampIsNotActiveForRegistration(t *testing.T) {
 	// Arrange
 	e := echo.New()
+	e.HTTPErrorHandler = ErrorHandler()
 	stub := &listDeviceTrustStub{requestErr: domain.ErrCampInvalidTransition}
 	handler := NewDeviceHandler(stub)
 	body := bytes.NewBufferString(`{"registrationCode":"7ZQK3M2X","deviceName":"iPad"}`)
 	req := httptest.NewRequest(http.MethodPost, "/device-registrations", body)
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
 
 	// Act
-	err := handler.RequestRegistration(e.NewContext(req, rec))
+	err := handler.RequestRegistration(c)
+	if err != nil {
+		e.HTTPErrorHandler(err, c)
+	}
 
 	// Assert
-	if err != nil || rec.Code != http.StatusBadRequest {
+	if rec.Code != http.StatusBadRequest {
 		t.Fatalf("expected 400 response, code=%d err=%v", rec.Code, err)
 	}
 }
@@ -82,17 +175,25 @@ func TestShouldReturnBadRequestWhenCampIsNotActiveForRegistration(t *testing.T) 
 func TestShouldReturnActualCreatedAtWhenListingRegistrations(t *testing.T) {
 	// Arrange
 	e := echo.New()
+	e.HTTPErrorHandler = ErrorHandler()
 	createdAt := time.Date(2026, 7, 14, 9, 0, 0, 0, time.UTC)
 	stub := &listDeviceTrustStub{reviewedDevices: []*domain.DeviceRegistration{domain.NewDeviceRegistrationFromProps(domain.DeviceRegistrationProps{ID: "device-1", Status: domain.DevicePending, CreatedAt: createdAt})}}
 	handler := NewDeviceHandler(stub)
-	req := httptest.NewRequest(http.MethodGet, "/device-registrations?campId=camp-1", nil)
+	req := httptest.NewRequest(http.MethodGet, "/camps/camp-1/device-registrations", nil)
 	rec := httptest.NewRecorder()
+	ctx := e.NewContext(req, rec)
+	ctx.SetPath("/camps/:campId/device-registrations")
+	ctx.SetParamNames("campId")
+	ctx.SetParamValues("camp-1")
 
 	// Act
-	err := handler.ListRegistrations(e.NewContext(req, rec))
+	err := handler.ListRegistrations(ctx)
+	if err != nil {
+		e.HTTPErrorHandler(err, ctx)
+	}
 
 	// Assert
-	if err != nil || rec.Code != http.StatusOK {
+	if rec.Code != http.StatusOK {
 		t.Fatalf("expected 200 response, code=%d err=%v", rec.Code, err)
 	}
 	var response []DeviceRegistrationResponse

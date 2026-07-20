@@ -1,4 +1,3 @@
-
 package web
 
 import (
@@ -39,6 +38,7 @@ func TestAdminManagementHandlerShouldMapDomainErrorsToHTTPStatus(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			// Arrange
 			e := echo.New()
+			e.HTTPErrorHandler = ErrorHandler()
 			req := httptest.NewRequest(http.MethodPost, "/admins", strings.NewReader(`{"username":"new","password":"password","role":"CORNER_OPERATOR"}`))
 			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 			rec := httptest.NewRecorder()
@@ -48,9 +48,12 @@ func TestAdminManagementHandlerShouldMapDomainErrorsToHTTPStatus(t *testing.T) {
 
 			// Act
 			err := handler.CreateAdmin(c)
+			if err != nil {
+				e.HTTPErrorHandler(err, c)
+			}
 
 			// Assert
-			if err != nil || rec.Code != tc.want {
+			if rec.Code != tc.want {
 				t.Fatalf("expected status %d, got status=%d err=%v", tc.want, rec.Code, err)
 			}
 		})

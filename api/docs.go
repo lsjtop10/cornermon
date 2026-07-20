@@ -257,6 +257,42 @@ const docTemplate = `{
                         "in": "query"
                     },
                     {
+                        "enum": [
+                            "ADMIN_LOGIN",
+                            "ADMIN_CREATE",
+                            "ADMIN_PASSWORD_CHANGE",
+                            "ADMIN_DELETE",
+                            "ADMIN_SESSION_REVOKE",
+                            "TRACK_FORCE_LOGOUT",
+                            "FACILITATOR_LOGIN",
+                            "SESSION_MIGRATE",
+                            "FACILITATOR_LOGOUT",
+                            "BADGE_ASSIGN",
+                            "BADGE_BULK_GENERATE",
+                            "BADGE_EXPORT",
+                            "CAMP_ACTIVATE",
+                            "CAMP_END",
+                            "CAMP_CREATE",
+                            "CAMP_SETTINGS_UPDATE",
+                            "CORNER_UPDATE",
+                            "CORNER_DELETE",
+                            "CORNER_CREATE",
+                            "DEVICE_APPROVED",
+                            "DEVICE_REJECTED",
+                            "DEVICE_REVOKED",
+                            "PIN_LOCK_RESET",
+                            "DEVICE_REQUEST",
+                            "GROUP_CREATE",
+                            "MESSAGE_DIRECT",
+                            "MESSAGE_BROADCAST",
+                            "TRACK_CREATE",
+                            "TRACK_DELETE",
+                            "TRACK_REPLACE",
+                            "PIN_REGENERATE",
+                            "TRACK_PIN_EXPORT",
+                            "VISIT_START",
+                            "VISIT_COMPLETE"
+                        ],
                         "type": "string",
                         "description": "행위 종류 정확히 일치",
                         "name": "action",
@@ -932,6 +968,221 @@ const docTemplate = `{
                 }
             }
         },
+        "/camps/{campId}/device-registrations": {
+            "get": {
+                "security": [
+                    {
+                        "AdminAuth": []
+                    }
+                ],
+                "description": "관리자가 등록되었거나 대기 중인 기기 목록을 확인한다.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "A. Auth \u0026 Device Trust"
+                ],
+                "summary": "기기 등록 목록 조회",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "캠프 ID",
+                        "name": "campId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "기기 등록 상태",
+                        "name": "status",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/DeviceRegistrationResponse"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/camps/{campId}/device-registrations/locked": {
+            "get": {
+                "security": [
+                    {
+                        "AdminAuth": []
+                    }
+                ],
+                "description": "캠프 내 PIN 연속 실패로 잠금된(APPROVED, LockedUntil이 미래) 기기 목록을 조회한다.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "A. Auth \u0026 Device Trust"
+                ],
+                "summary": "잠금 기기 목록 조회",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "캠프 ID",
+                        "name": "campId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/DeviceRegistrationResponse"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/camps/{campId}/device-registrations/{id}/approve": {
+            "post": {
+                "security": [
+                    {
+                        "AdminAuth": []
+                    }
+                ],
+                "description": "PENDING 상태인 기기를 APPROVED로 승인한다.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "A. Auth \u0026 Device Trust"
+                ],
+                "summary": "기기 승인",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "캠프 ID",
+                        "name": "campId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "기기 등록 ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/DeviceRegistrationResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/camps/{campId}/device-registrations/{id}/reject": {
+            "post": {
+                "security": [
+                    {
+                        "AdminAuth": []
+                    }
+                ],
+                "description": "PENDING 상태인 기기를 REJECTED로 거절한다.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "A. Auth \u0026 Device Trust"
+                ],
+                "summary": "기기 거절",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "캠프 ID",
+                        "name": "campId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "기기 등록 ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/DeviceRegistrationResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/camps/{campId}/device-registrations/{id}/revoke": {
+            "post": {
+                "security": [
+                    {
+                        "AdminAuth": []
+                    }
+                ],
+                "description": "APPROVED 기기의 권한을 REVOKED로 박탈한다.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "A. Auth \u0026 Device Trust"
+                ],
+                "summary": "기기 신뢰 취소 (폐기/분실)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "캠프 ID",
+                        "name": "campId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "기기 등록 ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/DeviceRegistrationResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/camps/{campId}/groups": {
             "get": {
                 "security": [
@@ -979,7 +1230,7 @@ const docTemplate = `{
                         "TrackAuth": []
                     }
                 ],
-                "description": "관리자 또는 진행자가 캠프에 발송된 BROADCAST 메시지들의 목록을 조회한다.",
+                "description": "관리자 또는 진행자가 캠프에 발송된 BROADCAST 메시지들의 목록을 조회한다. TrackAuth 응답의 isRead와 readAt은 현재 트랙의 수신 확인 상태다.",
                 "produces": [
                     "application/json"
                 ],
@@ -1662,32 +1913,6 @@ const docTemplate = `{
             }
         },
         "/device-registrations": {
-            "get": {
-                "security": [
-                    {
-                        "AdminAuth": []
-                    }
-                ],
-                "description": "관리자가 등록되었거나 대기 중인 기기 목록을 확인한다.",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "A. Auth \u0026 Device Trust"
-                ],
-                "summary": "기기 등록 목록 조회",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/DeviceRegistrationResponse"
-                            }
-                        }
-                    }
-                }
-            },
             "post": {
                 "description": "기기가 서버에 등록을 요청한다. 이후 관리자의 승인 대기.",
                 "consumes": [
@@ -1721,52 +1946,9 @@ const docTemplate = `{
                 }
             }
         },
-        "/device-registrations/locked": {
-            "get": {
-                "security": [
-                    {
-                        "AdminAuth": []
-                    }
-                ],
-                "description": "캠프 내 PIN 연속 실패로 잠금된(APPROVED, LockedUntil이 미래) 기기 목록을 조회한다.",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "A. Auth \u0026 Device Trust"
-                ],
-                "summary": "잠금 기기 목록 조회",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "캠프 ID",
-                        "name": "campId",
-                        "in": "query",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/DeviceRegistrationResponse"
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
         "/device-registrations/me": {
             "get": {
-                "description": "미승인(PENDING) 기기가 자신의 승인 상태를 확인하기 위해 호출한다.",
+                "description": "기기 등록 시 발급받은 opaque device token을 X-Device-Token 헤더에 넣어, 해당 기기의 승인 상태와 식별자를 조회한다. PENDING 상태에서도 호출할 수 있다.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1777,113 +1959,20 @@ const docTemplate = `{
                     "A. Auth \u0026 Device Trust"
                 ],
                 "summary": "내 기기 등록 상태 자체 조회",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "기기 등록 토큰 (opaque token, POST /device-registrations 응답의 deviceToken 값)",
+                        "name": "X-Device-Token",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/DeviceStatusResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/device-registrations/{id}/approve": {
-            "post": {
-                "security": [
-                    {
-                        "AdminAuth": []
-                    }
-                ],
-                "description": "PENDING 상태인 기기를 APPROVED로 승인한다.",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "A. Auth \u0026 Device Trust"
-                ],
-                "summary": "기기 승인",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "기기 등록 ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/DeviceRegistrationResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/device-registrations/{id}/reject": {
-            "post": {
-                "security": [
-                    {
-                        "AdminAuth": []
-                    }
-                ],
-                "description": "PENDING 상태인 기기를 REJECTED로 거절한다.",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "A. Auth \u0026 Device Trust"
-                ],
-                "summary": "기기 거절",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "기기 등록 ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/DeviceRegistrationResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/device-registrations/{id}/revoke": {
-            "post": {
-                "security": [
-                    {
-                        "AdminAuth": []
-                    }
-                ],
-                "description": "APPROVED 기기의 권한을 REVOKED로 박탈한다.",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "A. Auth \u0026 Device Trust"
-                ],
-                "summary": "기기 신뢰 취소 (폐기/분실)",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "기기 등록 ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/DeviceRegistrationResponse"
                         }
                     }
                 }
@@ -2392,6 +2481,58 @@ const docTemplate = `{
                 }
             }
         },
+        "/tracks/{trackId}/corner": {
+            "get": {
+                "security": [
+                    {
+                        "TrackAuth": []
+                    }
+                ],
+                "description": "인증된 진행자(TrackAuth)의 트랙이 속한 코너의 핵심 정보를 조회한다. 세션의 트랙과 path trackId가 일치해야 한다. 다른 트랙의 활성 목록·병목 지표 등 관리자 전용 정보는 포함하지 않는다.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "C. Visit (Scan Flow)"
+                ],
+                "summary": "진행자 코너 조회",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "트랙 ID",
+                        "name": "trackId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/CornerResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "세션 트랙과 요청 트랙 불일치",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "트랙 또는 코너 없음",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/tracks/{trackId}/groups": {
             "get": {
                 "security": [
@@ -2812,7 +2953,43 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "action": {
-                    "type": "string"
+                    "type": "string",
+                    "enum": [
+                        "ADMIN_LOGIN",
+                        "ADMIN_CREATE",
+                        "ADMIN_PASSWORD_CHANGE",
+                        "ADMIN_DELETE",
+                        "ADMIN_SESSION_REVOKE",
+                        "TRACK_FORCE_LOGOUT",
+                        "FACILITATOR_LOGIN",
+                        "SESSION_MIGRATE",
+                        "FACILITATOR_LOGOUT",
+                        "BADGE_ASSIGN",
+                        "BADGE_BULK_GENERATE",
+                        "BADGE_EXPORT",
+                        "CAMP_ACTIVATE",
+                        "CAMP_END",
+                        "CAMP_CREATE",
+                        "CAMP_SETTINGS_UPDATE",
+                        "CORNER_UPDATE",
+                        "CORNER_DELETE",
+                        "CORNER_CREATE",
+                        "DEVICE_APPROVED",
+                        "DEVICE_REJECTED",
+                        "DEVICE_REVOKED",
+                        "PIN_LOCK_RESET",
+                        "DEVICE_REQUEST",
+                        "GROUP_CREATE",
+                        "MESSAGE_DIRECT",
+                        "MESSAGE_BROADCAST",
+                        "TRACK_CREATE",
+                        "TRACK_DELETE",
+                        "TRACK_REPLACE",
+                        "PIN_REGENERATE",
+                        "TRACK_PIN_EXPORT",
+                        "VISIT_START",
+                        "VISIT_COMPLETE"
+                    ]
                 },
                 "actor": {
                     "type": "string"
@@ -3249,6 +3426,10 @@ const docTemplate = `{
                     "type": "string",
                     "format": "date-time"
                 },
+                "campId": {
+                    "type": "string",
+                    "format": "uuid"
+                },
                 "createdAt": {
                     "type": "string",
                     "format": "date-time"
@@ -3306,6 +3487,7 @@ const docTemplate = `{
                     "example": "1번 태블릿"
                 },
                 "registrationCode": {
+                    "description": "각 캠프에 유일하게 부여된 등록 코드입니다. 반드시 대문자로 작성합니다.",
                     "type": "string",
                     "example": "7ZQK3M2X"
                 },
@@ -3324,6 +3506,10 @@ const docTemplate = `{
                 "approvedAt": {
                     "type": "string",
                     "format": "date-time"
+                },
+                "campId": {
+                    "type": "string",
+                    "format": "uuid"
                 },
                 "createdAt": {
                     "type": "string",
@@ -3366,6 +3552,14 @@ const docTemplate = `{
         "DeviceStatusResponse": {
             "type": "object",
             "properties": {
+                "campId": {
+                    "type": "string",
+                    "format": "uuid"
+                },
+                "id": {
+                    "type": "string",
+                    "format": "uuid"
+                },
                 "status": {
                     "type": "string",
                     "enum": [
@@ -3520,9 +3714,11 @@ const docTemplate = `{
                     "format": "uuid"
                 },
                 "isRead": {
+                    "description": "IsRead and ReadAt represent the authenticated track's broadcast receipt on TrackAuth list responses.",
                     "type": "boolean"
                 },
                 "readAt": {
+                    "description": "ReadAt is omitted for unread broadcasts and administrator list responses.",
                     "type": "string",
                     "format": "date-time"
                 },

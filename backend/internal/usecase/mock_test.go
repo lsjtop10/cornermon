@@ -1,10 +1,8 @@
-
 package usecase
 
 import (
 	"context"
 	"errors"
-	"sort"
 	"time"
 
 	"cornermon/backend/internal/domain"
@@ -563,15 +561,25 @@ func (r *MockAnnouncementRepository) Save(_ context.Context, a *domain.Announcem
 	r.Announcements[a.ID()] = a
 	return nil
 }
-func (r *MockAnnouncementRepository) ListNoticeByCamp(_ context.Context, campID domain.CampID) ([]*domain.Announcement, error) {
-	var out []*domain.Announcement
-	for _, a := range r.Announcements {
-		if a.CampID() == campID {
-			out = append(out, a)
-		}
-	}
-	sort.Slice(out, func(i, j int) bool { return out[i].SentAt().Before(out[j].SentAt()) })
-	return out, nil
+
+type MockAnnouncementQuerier struct {
+	Notices          []*domain.Announcement
+	Views            []BroadcastNoticeView
+	Receipts         []BroadcastReceiptDTO
+	ListViewsCallCnt int
+}
+
+func (q *MockAnnouncementQuerier) ListNoticesByCamp(_ context.Context, _ domain.CampID) ([]*domain.Announcement, error) {
+	return q.Notices, nil
+}
+
+func (q *MockAnnouncementQuerier) ListNoticeViewsByCampAndTrack(_ context.Context, _ domain.CampID, _ domain.TrackID) ([]BroadcastNoticeView, error) {
+	q.ListViewsCallCnt++
+	return q.Views, nil
+}
+
+func (q *MockAnnouncementQuerier) ListAnnouncementReceipts(_ context.Context, _ domain.AnnouncementID) ([]BroadcastReceiptDTO, error) {
+	return q.Receipts, nil
 }
 
 type MockAnnouncementReceiptRepository struct{ Receipts []*domain.AnnouncementReceipt }
@@ -590,15 +598,6 @@ func (r *MockAnnouncementReceiptRepository) GetByMessageAndTrack(_ context.Conte
 		}
 	}
 	return nil, nil
-}
-func (r *MockAnnouncementReceiptRepository) ListByMessage(_ context.Context, id domain.AnnouncementID) ([]*domain.AnnouncementReceipt, error) {
-	var out []*domain.AnnouncementReceipt
-	for _, x := range r.Receipts {
-		if x.NoticeID() == id {
-			out = append(out, x)
-		}
-	}
-	return out, nil
 }
 
 // MockAuditLogRepository

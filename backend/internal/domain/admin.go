@@ -69,25 +69,26 @@ func (a *Admin) Role() AdminRole {
 }
 
 type AdminProps struct {
-	ID AdminID
-	Username string
+	ID           AdminID
+	Username     string
 	PasswordHash string
-	Role AdminRole
+	Role         AdminRole
 }
+
 func NewAdminFromProps(p AdminProps) *Admin {
 	return &Admin{
-		id: p.ID,
-		username: p.Username,
+		id:           p.ID,
+		username:     p.Username,
 		passwordHash: p.PasswordHash,
-		role: p.Role,
+		role:         p.Role,
 	}
 }
 func NewAdminValFromProps(p AdminProps) Admin {
 	return Admin{
-		id: p.ID,
-		username: p.Username,
+		id:           p.ID,
+		username:     p.Username,
 		passwordHash: p.PasswordHash,
-		role: p.Role,
+		role:         p.Role,
 	}
 }
 
@@ -120,34 +121,35 @@ func (a *AdminSession) RevokedAt() Optional[time.Time] {
 }
 
 type AdminSessionProps struct {
-	ID AdminSessionID
-	AdminID AdminID
+	ID              AdminSessionID
+	AdminID         AdminID
 	AccessTokenHash string
-	DeviceInfo string
-	CreatedAt time.Time
-	LastUsedAt time.Time
-	RevokedAt Optional[time.Time]
+	DeviceInfo      string
+	CreatedAt       time.Time
+	LastUsedAt      time.Time
+	RevokedAt       Optional[time.Time]
 }
+
 func NewAdminSessionFromProps(p AdminSessionProps) *AdminSession {
 	return &AdminSession{
-		id: p.ID,
-		adminID: p.AdminID,
+		id:              p.ID,
+		adminID:         p.AdminID,
 		accessTokenHash: p.AccessTokenHash,
-		deviceInfo: p.DeviceInfo,
-		createdAt: p.CreatedAt,
-		lastUsedAt: p.LastUsedAt,
-		revokedAt: p.RevokedAt,
+		deviceInfo:      p.DeviceInfo,
+		createdAt:       p.CreatedAt,
+		lastUsedAt:      p.LastUsedAt,
+		revokedAt:       p.RevokedAt,
 	}
 }
 func NewAdminSessionValFromProps(p AdminSessionProps) AdminSession {
 	return AdminSession{
-		id: p.ID,
-		adminID: p.AdminID,
+		id:              p.ID,
+		adminID:         p.AdminID,
 		accessTokenHash: p.AccessTokenHash,
-		deviceInfo: p.DeviceInfo,
-		createdAt: p.CreatedAt,
-		lastUsedAt: p.LastUsedAt,
-		revokedAt: p.RevokedAt,
+		deviceInfo:      p.DeviceInfo,
+		createdAt:       p.CreatedAt,
+		lastUsedAt:      p.LastUsedAt,
+		revokedAt:       p.RevokedAt,
 	}
 }
 

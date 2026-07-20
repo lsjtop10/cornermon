@@ -1,4 +1,3 @@
-
 package web
 
 import (
@@ -35,7 +34,7 @@ func TestMessageRoutesShoudAuthenticateAdminAndTrackWithoutDuplicateRouteRegistr
 	// Arrange
 	uc := &messageUsecaseForHandler{}
 	e := echo.New()
-	RegisterRoutes(e, &Handlers{Auth: &AuthHandler{}, Device: &DeviceHandler{}, Message: NewMessageHandler(uc, nil)}, adminAuthForMessageRoutes{}, trackAuthForMessageRoutes{})
+	RegisterRoutes(e, &Handlers{Auth: &AuthHandler{}, Device: &DeviceHandler{}, Message: NewMessageHandler(uc, nil, nil)}, adminAuthForMessageRoutes{}, trackAuthForMessageRoutes{})
 
 	for _, tc := range []struct {
 		name     string
@@ -65,9 +64,10 @@ func TestMessageRoutesShoudAuthenticateAdminAndTrackWithoutDuplicateRouteRegistr
 
 func TestListBroadcastsRouteShoudAuthenticateBothAdminAndTrackSessions(t *testing.T) {
 	// Arrange
-	announcementUC := &announcementUsecaseForHandler{notices: []*domain.Announcement{domain.NewAnnouncementFromProps(domain.AnnouncementProps{ID: "notice-1", CampID: "camp-1", Content: "hello"})}}
+	announcementCommandUC := &announcementCommandUsecaseForHandler{}
+	announcementQueryUC := &announcementQueryUsecaseForHandler{notices: []*domain.Announcement{domain.NewAnnouncementFromProps(domain.AnnouncementProps{ID: "notice-1", CampID: "camp-1", Content: "hello"})}}
 	e := echo.New()
-	RegisterRoutes(e, &Handlers{Auth: &AuthHandler{}, Device: &DeviceHandler{}, Message: NewMessageHandler(&messageUsecaseForHandler{}, announcementUC)}, adminAuthForMessageRoutes{}, trackAuthForMessageRoutes{})
+	RegisterRoutes(e, &Handlers{Auth: &AuthHandler{}, Device: &DeviceHandler{}, Message: NewMessageHandler(&messageUsecaseForHandler{}, announcementCommandUC, announcementQueryUC)}, adminAuthForMessageRoutes{}, trackAuthForMessageRoutes{})
 
 	for _, tc := range []struct {
 		name  string
@@ -93,9 +93,10 @@ func TestListBroadcastsRouteShoudAuthenticateBothAdminAndTrackSessions(t *testin
 
 func TestListBroadcastsRouteShoudRejectRequestWithoutSession(t *testing.T) {
 	// Arrange
-	announcementUC := &announcementUsecaseForHandler{}
+	announcementCommandUC := &announcementCommandUsecaseForHandler{}
+	announcementQueryUC := &announcementQueryUsecaseForHandler{}
 	e := echo.New()
-	RegisterRoutes(e, &Handlers{Auth: &AuthHandler{}, Device: &DeviceHandler{}, Message: NewMessageHandler(&messageUsecaseForHandler{}, announcementUC)}, adminAuthForMessageRoutes{}, trackAuthForMessageRoutes{})
+	RegisterRoutes(e, &Handlers{Auth: &AuthHandler{}, Device: &DeviceHandler{}, Message: NewMessageHandler(&messageUsecaseForHandler{}, announcementCommandUC, announcementQueryUC)}, adminAuthForMessageRoutes{}, trackAuthForMessageRoutes{})
 
 	// Act
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/camps/camp-1/messages/broadcast", nil)
@@ -105,5 +106,25 @@ func TestListBroadcastsRouteShoudRejectRequestWithoutSession(t *testing.T) {
 	// Assert
 	if rec.Code != http.StatusUnauthorized {
 		t.Fatalf("expected status 401, got %d: %s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestDeviceRegistrationRoutesShouldBeScopedToCamp(t *testing.T) {
+	// Arrange
+	e := echo.New()
+	RegisterRoutes(e, &Handlers{Auth: &AuthHandler{}, Device: &DeviceHandler{}}, adminAuthForMessageRoutes{}, trackAuthForMessageRoutes{})
+
+	// Act
+	routes := make(map[string]bool)
+	for _, route := range e.Routes() {
+		routes[route.Method+" "+route.Path] = true
+	}
+
+	// Assert
+	if !routes[http.MethodGet+" /api/v1/camps/:campId/device-registrations"] {
+		t.Fatal("expected camp-scoped device registration route to be registered")
+	}
+	if routes[http.MethodGet+" /api/v1/device-registrations"] {
+		t.Fatal("expected legacy device registration route to be absent")
 	}
 }

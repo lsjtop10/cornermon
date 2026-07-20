@@ -94,7 +94,7 @@ Future<Camp> startCamp(Ref ref, CampId id) async {
   return data;
 }
 
-@riverpod
+@Riverpod(retry: noRetry)
 Future<Camp> endCamp(Ref ref, CampId id) async {
   final apiInstance = ref.watch(campApiProvider);
   final response = await apiInstance.campsIdEndPost(id: id.value);
