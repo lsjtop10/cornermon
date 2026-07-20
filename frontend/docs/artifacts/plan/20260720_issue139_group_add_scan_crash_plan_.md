@@ -24,9 +24,34 @@ QR 스캔 탭 `MobileScanner.onDetect` 콜백이 `mounted` 가드 없이 `setSta
    이름을 허용해 `_submit()`의 `trim().isEmpty` 체크와 불일치하던 부분을
    `trim()`으로 통일.
 
+## 추가 조치: 카메라 QR 스캔에 의존하지 않는 직접 입력 경로
+
+`mounted` 가드를 추가한 뒤에도 실기기에서 크래시가 재현되었다. 관리자 앱과 진행자
+앱은 같은 iOS `Runner` 프로젝트를 공유하는데, `Info.plist`에 `NSCameraUsageDescription`이
+없어(#140에서 확인된 것과 동일한 원인) 카메라 권한 API를 건드리는 즉시 iOS TCC가
+프로세스를 중단시키는 것으로 추정된다. 이 plist 수정은 `fix/140-facilitator-scan-freeze`
+브랜치에만 있고 아직 main에 병합되지 않았다. 근본 수정(#140 병합)과 별개로, 관리자가
+카메라 없이도 조를 등록할 수 있는 경로를 추가한다.
+
+1. `_RegisterGroupDialog`의 탭을 3개로 확장: `카메라 QR` / `목록에서 선택` /
+   `직접 입력`. `직접 입력` 탭은 `_payload` 컨트롤러에 바로 연결된 `TextField`로,
+   배지 스티커에 인쇄된 ID를 타이핑해 입력할 수 있다.
+2. `badge_sticker_pdf.dart`의 스티커에 기존 `shortId` 아래 `qrPayload`(실제
+   `scan-register` API가 요구하는 값)를 작은 글씨로 추가 인쇄. `직접 입력` 탭에서
+   타이핑할 수 있는 값은 `shortId`가 아니라 `qrPayload`이므로(백엔드 `ScanAssignBadgeRequest`
+   스키마에 `qrPayload` 필드만 존재, `shortId`는 없음) 반드시 이 값을 스티커에 노출해야
+   실제로 대체 입력 수단이 된다.
+
 ## 검증
 
-- `flutter analyze lib/admin/features/group_list/group_list_screen.dart`
-- 수동 시나리오(에뮬레이터/실기기): QR 스캔 탭에서 코드 인식 직후 곧바로 다이얼로그를
-  닫거나 탭을 전환해도 강제종료가 발생하지 않는지 확인.
-- API 계약 변경 없음 (프론트엔드 전용 수정).
+- `flutter analyze lib/admin/features/group_list/group_list_screen.dart
+  lib/admin/features/badge_precreate/badge_sticker_pdf.dart` — No issues found
+- `flutter test test/admin/features/badge_precreate/badge_sticker_pdf_test.dart` — 통과
+  (기존 테스트는 PDF magic bytes만 검증하므로 텍스트 추가로 깨지지 않음)
+- 수동 시나리오(에뮬레이터/실기기):
+  - QR 스캔 탭에서 코드 인식 직후 곧바로 다이얼로그를 닫거나 탭을 전환해도
+    강제종료가 발생하지 않는지 확인
+  - '직접 입력' 탭에서 스티커에 인쇄된 ID를 타이핑해 조 등록이 정상 동작하는지 확인
+  - 배지 스티커 PDF에 shortId와 qrPayload가 모두 출력되는지 확인
+- API 계약 변경 없음 (프론트엔드 전용 수정, 기존 `POST /badges/scan-register`
+  스키마 그대로 사용).

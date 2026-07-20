@@ -33,6 +33,11 @@ Future<Uint8List> buildBadgeStickerPdf(List<api.Badge> badges) async {
                       badge.shortId ?? badge.id ?? '',
                       style: pw.TextStyle(fontSize: 12),
                     ),
+                    pw.SizedBox(height: 2),
+                    pw.Text(
+                      badge.qrPayload ?? badge.id ?? '',
+                      style: pw.TextStyle(fontSize: 7),
+                    ),
                   ],
                 ),
               ),

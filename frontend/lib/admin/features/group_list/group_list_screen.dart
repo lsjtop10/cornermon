@@ -237,6 +237,7 @@ class _RegisterGroupDialogState extends ConsumerState<_RegisterGroupDialog> {
               segments: const [
                 ButtonSegment(value: 0, label: Text('카메라 QR')),
                 ButtonSegment(value: 1, label: Text('목록에서 선택')),
+                ButtonSegment(value: 2, label: Text('직접 입력')),
               ],
               selected: {_tab},
               onSelectionChanged: (value) =>
@@ -261,7 +262,7 @@ class _RegisterGroupDialogState extends ConsumerState<_RegisterGroupDialog> {
                         },
                       ),
               )
-            else
+            else if (_tab == 1)
               SizedBox(
                 height: 180,
                 child: badges.when(
@@ -282,6 +283,15 @@ class _RegisterGroupDialogState extends ConsumerState<_RegisterGroupDialog> {
                         ),
                     ],
                   ),
+                ),
+              )
+            else
+              TextField(
+                controller: _payload,
+                onChanged: (_) => setState(() {}),
+                decoration: const InputDecoration(
+                  labelText: '배지 ID',
+                  hintText: 'QR 코드 아래 인쇄된 ID를 입력하세요',
                 ),
               ),
             if (_payload.text.isNotEmpty)
