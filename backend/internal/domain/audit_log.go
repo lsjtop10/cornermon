@@ -56,33 +56,34 @@ func (a *AuditLog) Metadata() map[string]any {
 }
 
 type AuditLogProps struct {
-	ID AuditLogID
-	Actor string
-	Action string
-	Target string
-	Success bool
+	ID         AuditLogID
+	Actor      string
+	Action     string
+	Target     string
+	Success    bool
 	OccurredAt time.Time
-	Metadata map[string]any
+	Metadata   map[string]any
 }
+
 func NewAuditLogFromProps(p AuditLogProps) *AuditLog {
 	return &AuditLog{
-		id: p.ID,
-		actor: p.Actor,
-		action: p.Action,
-		target: p.Target,
-		success: p.Success,
+		id:         p.ID,
+		actor:      p.Actor,
+		action:     p.Action,
+		target:     p.Target,
+		success:    p.Success,
 		occurredAt: p.OccurredAt,
-		metadata: p.Metadata,
+		metadata:   p.Metadata,
 	}
 }
 func NewAuditLogValFromProps(p AuditLogProps) AuditLog {
 	return AuditLog{
-		id: p.ID,
-		actor: p.Actor,
-		action: p.Action,
-		target: p.Target,
-		success: p.Success,
+		id:         p.ID,
+		actor:      p.Actor,
+		action:     p.Action,
+		target:     p.Target,
+		success:    p.Success,
 		occurredAt: p.OccurredAt,
-		metadata: p.Metadata,
+		metadata:   p.Metadata,
 	}
 }

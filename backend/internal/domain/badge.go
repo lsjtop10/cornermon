@@ -60,27 +60,28 @@ func (b *Badge) SetAssignedGroupID(g Optional[GroupID]) {
 }
 
 type BadgeProps struct {
-	ID BadgeID
-	ShortID string
-	QRPayload string
-	Status BadgeStatus
+	ID              BadgeID
+	ShortID         string
+	QRPayload       string
+	Status          BadgeStatus
 	AssignedGroupID Optional[GroupID]
 }
+
 func NewBadgeFromProps(p BadgeProps) *Badge {
 	return &Badge{
-		id: p.ID,
-		shortID: p.ShortID,
-		qrPayload: p.QRPayload,
-		status: p.Status,
+		id:              p.ID,
+		shortID:         p.ShortID,
+		qrPayload:       p.QRPayload,
+		status:          p.Status,
 		assignedGroupID: p.AssignedGroupID,
 	}
 }
 func NewBadgeValFromProps(p BadgeProps) Badge {
 	return Badge{
-		id: p.ID,
-		shortID: p.ShortID,
-		qrPayload: p.QRPayload,
-		status: p.Status,
+		id:              p.ID,
+		shortID:         p.ShortID,
+		qrPayload:       p.QRPayload,
+		status:          p.Status,
 		assignedGroupID: p.AssignedGroupID,
 	}
 }

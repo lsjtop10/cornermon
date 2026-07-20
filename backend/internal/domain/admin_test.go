@@ -1,4 +1,3 @@
-
 package domain_test
 
 import (
@@ -14,7 +13,7 @@ func TestAdminSession_Lifecycle(t *testing.T) {
 	idleTTL := 30 * time.Minute
 
 	t.Run("Session touch sliding expiration and expiry verification", func(t *testing.T) {
-		session := domain.NewAdminSessionFromProps(domain.AdminSessionProps{ID:              domain.AdminSessionID("session-1"),
+		session := domain.NewAdminSessionFromProps(domain.AdminSessionProps{ID: domain.AdminSessionID("session-1"),
 			AdminID:         domain.AdminID("admin-1"),
 			AccessTokenHash: "access-hash",
 			CreatedAt:       now,
@@ -45,7 +44,7 @@ func TestAdminSession_Lifecycle(t *testing.T) {
 	})
 
 	t.Run("Revoke and revoked session check", func(t *testing.T) {
-		session := domain.NewAdminSessionFromProps(domain.AdminSessionProps{ID:         domain.AdminSessionID("session-2"),
+		session := domain.NewAdminSessionFromProps(domain.AdminSessionProps{ID: domain.AdminSessionID("session-2"),
 			LastUsedAt: now,
 			RevokedAt:  domain.None[time.Time](),
 		})

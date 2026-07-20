@@ -60,30 +60,31 @@ func (f *FacilitatorSession) MigrationTargetTrackID() Optional[TrackID] {
 }
 
 type FacilitatorSessionProps struct {
-	ID FacilitatorSessionID
-	TrackID TrackID
-	TokenHash string
-	CreatedAt time.Time
-	RevokedAt Optional[time.Time]
+	ID                     FacilitatorSessionID
+	TrackID                TrackID
+	TokenHash              string
+	CreatedAt              time.Time
+	RevokedAt              Optional[time.Time]
 	MigrationTargetTrackID Optional[TrackID]
 }
+
 func NewFacilitatorSessionFromProps(p FacilitatorSessionProps) *FacilitatorSession {
 	return &FacilitatorSession{
-		id: p.ID,
-		trackID: p.TrackID,
-		tokenHash: p.TokenHash,
-		createdAt: p.CreatedAt,
-		revokedAt: p.RevokedAt,
+		id:                     p.ID,
+		trackID:                p.TrackID,
+		tokenHash:              p.TokenHash,
+		createdAt:              p.CreatedAt,
+		revokedAt:              p.RevokedAt,
 		migrationTargetTrackID: p.MigrationTargetTrackID,
 	}
 }
 func NewFacilitatorSessionValFromProps(p FacilitatorSessionProps) FacilitatorSession {
 	return FacilitatorSession{
-		id: p.ID,
-		trackID: p.TrackID,
-		tokenHash: p.TokenHash,
-		createdAt: p.CreatedAt,
-		revokedAt: p.RevokedAt,
+		id:                     p.ID,
+		trackID:                p.TrackID,
+		tokenHash:              p.TokenHash,
+		createdAt:              p.CreatedAt,
+		revokedAt:              p.RevokedAt,
 		migrationTargetTrackID: p.MigrationTargetTrackID,
 	}
 }

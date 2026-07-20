@@ -116,36 +116,37 @@ func (v *Visit) SetEndedAt(t Optional[time.Time]) {
 }
 
 type VisitProps struct {
-	ID VisitID
-	GroupID GroupID
-	CornerID CornerID
-	TrackID TrackID
-	Status VisitStatus
+	ID          VisitID
+	GroupID     GroupID
+	CornerID    CornerID
+	TrackID     TrackID
+	Status      VisitStatus
 	InputMethod VisitInputMethod
-	StartedAt time.Time
-	EndedAt Optional[time.Time]
+	StartedAt   time.Time
+	EndedAt     Optional[time.Time]
 }
+
 func NewVisitFromProps(p VisitProps) *Visit {
 	return &Visit{
-		id: p.ID,
-		groupID: p.GroupID,
-		cornerID: p.CornerID,
-		trackID: p.TrackID,
-		status: p.Status,
+		id:          p.ID,
+		groupID:     p.GroupID,
+		cornerID:    p.CornerID,
+		trackID:     p.TrackID,
+		status:      p.Status,
 		inputMethod: p.InputMethod,
-		startedAt: p.StartedAt,
-		endedAt: p.EndedAt,
+		startedAt:   p.StartedAt,
+		endedAt:     p.EndedAt,
 	}
 }
 func NewVisitValFromProps(p VisitProps) Visit {
 	return Visit{
-		id: p.ID,
-		groupID: p.GroupID,
-		cornerID: p.CornerID,
-		trackID: p.TrackID,
-		status: p.Status,
+		id:          p.ID,
+		groupID:     p.GroupID,
+		cornerID:    p.CornerID,
+		trackID:     p.TrackID,
+		status:      p.Status,
 		inputMethod: p.InputMethod,
-		startedAt: p.StartedAt,
-		endedAt: p.EndedAt,
+		startedAt:   p.StartedAt,
+		endedAt:     p.EndedAt,
 	}
 }
