@@ -92,7 +92,7 @@ class AuditLogPageNotifier extends AsyncNotifier<AuditLogPageState> {
     final logs = page.logs?.toList() ?? const <AuditLog>[];
     ref
         .read(auditLogKnownActionsProvider.notifier)
-        .observe(logs.map((log) => log.action).whereType<String>());
+        .observe(logs.map((log) => log.action?.name).whereType<String>());
     final combined = [...previous, ...logs];
     return AuditLogPageState(
       logs: combined,

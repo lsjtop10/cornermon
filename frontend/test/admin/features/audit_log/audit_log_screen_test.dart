@@ -12,7 +12,7 @@ import '../../../test_utils/widget_test_helpers.dart';
 AuditLog _log({
   required String id,
   String actor = 'admin1',
-  String action = 'LOGIN_SUCCESS',
+  AuditLogResponseActionEnum action = AuditLogResponseActionEnum.ADMIN_LOGIN,
   String target = 'track-1',
   bool success = true,
 }) => AuditLogResponse(

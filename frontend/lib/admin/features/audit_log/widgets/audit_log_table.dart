@@ -109,7 +109,7 @@ class _AuditLogRow extends StatelessWidget {
           Expanded(
             flex: _columnFlex[2],
             child: Text(
-              log.action ?? '-',
+              log.action?.name ?? '-',
               style: AppTypography.body.copyWith(color: colors.textPrimary),
             ),
           ),

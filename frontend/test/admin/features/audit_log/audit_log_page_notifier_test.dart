@@ -10,7 +10,7 @@ import 'package:flutter_test/flutter_test.dart';
 AuditLog _log({
   required String id,
   String actor = 'admin1',
-  String action = 'LOGIN_SUCCESS',
+  AuditLogResponseActionEnum action = AuditLogResponseActionEnum.ADMIN_LOGIN,
   bool success = true,
 }) => AuditLogResponse(
   (b) => b
@@ -142,8 +142,8 @@ void main() {
           result: null,
         ).overrideWith(
           (ref) async => _page([
-            _log(id: '1', action: 'LOGIN_SUCCESS'),
-            _log(id: '2', action: 'CORNER_UPDATE'),
+            _log(id: '1', action: AuditLogResponseActionEnum.ADMIN_LOGIN),
+            _log(id: '2', action: AuditLogResponseActionEnum.CORNER_UPDATE),
           ]),
         ),
       ],
@@ -156,7 +156,7 @@ void main() {
     // assert
     expect(
       container.read(auditLogKnownActionsProvider),
-      containsAll(['LOGIN_SUCCESS', 'CORNER_UPDATE']),
+      containsAll(['ADMIN_LOGIN', 'CORNER_UPDATE']),
     );
   });
 }
