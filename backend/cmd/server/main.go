@@ -151,7 +151,7 @@ func main() {
 	authAdminService := usecase.NewAdminAuthService(adminRepo, adminSessionRepo, facilitatorSessionRepo, trackRepo, cornerRepo, broadcaster, auditLogRepo, txManager)
 
 	deviceTrustService := usecase.NewDeviceTrustService(campRepo, deviceRepo, auditLogRepo, broadcaster, txManager)
-	cornerService := usecase.NewCornerService(campRepo, cornerRepo, auditLogRepo, broadcaster, txManager)
+	cornerService := usecase.NewCornerService(campRepo, cornerRepo, trackRepo, auditLogRepo, broadcaster, txManager)
 	cornerViewQuerier := postgres.NewCornerViewQuerier(pool)
 	groupService := usecase.NewGroupService(campRepo, cornerRepo, trackRepo, groupRepo, badgeRepo, visitRepo, auditLogRepo, txManager)
 	badgeService := usecase.NewBadgeService(badgeRepo, groupRepo, auditLogRepo, txManager)
