@@ -102,14 +102,23 @@ class _BroadcastInboxScreenState extends ConsumerState<BroadcastInboxScreen> {
 
     _readRequestedIds.addAll(targets.map((m) => m.id!));
 
-    final api = ref.read(messageApiProvider);
-    await Future.wait(
-      targets.map((m) => api.messagesBroadcastIdReadPost(id: m.id!)),
-    );
+    try {
+      final api = ref.read(messageApiProvider);
+      await Future.wait(
+        targets.map((m) => api.messagesBroadcastIdReadPost(id: m.id!)),
+      );
 
-    if (!mounted) return;
-    // 개별 호출마다가 아니라 전부 끝난 뒤 한 번만 invalidate한다.
-    ref.invalidate(facilitatorBroadcastMessageListProvider);
+      if (!mounted) return;
+      // 개별 호출마다가 아니라 전부 끝난 뒤 한 번만 invalidate한다.
+      ref.invalidate(facilitatorBroadcastMessageListProvider);
+    } catch (error, stackTrace) {
+      _readRequestedIds.removeAll(targets.map((m) => m.id!));
+      debugPrint('broadcast read request failed: $error\n$stackTrace');
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('공지 읽음 처리에 실패했습니다')));
+    }
   }
 }
 
