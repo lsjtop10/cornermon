@@ -677,6 +677,47 @@ func (q *Queries) ListAllBadges(ctx context.Context) ([]Badge, error) {
 	return items, nil
 }
 
+const listAnnouncementReceiptViews = `-- name: ListAnnouncementReceiptViews :many
+SELECT ar.track_id, t.track_no, c.name AS corner_name, ar.read_at
+FROM announcement_receipts ar
+JOIN tracks t ON t.id = ar.track_id
+JOIN corners c ON c.id = t.corner_id
+WHERE ar.announcement_id = $1
+ORDER BY t.track_no
+`
+
+type ListAnnouncementReceiptViewsRow struct {
+	TrackID    string             `json:"track_id"`
+	TrackNo    int32              `json:"track_no"`
+	CornerName string             `json:"corner_name"`
+	ReadAt     pgtype.Timestamptz `json:"read_at"`
+}
+
+func (q *Queries) ListAnnouncementReceiptViews(ctx context.Context, announcementID string) ([]ListAnnouncementReceiptViewsRow, error) {
+	rows, err := q.db.Query(ctx, listAnnouncementReceiptViews, announcementID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListAnnouncementReceiptViewsRow
+	for rows.Next() {
+		var i ListAnnouncementReceiptViewsRow
+		if err := rows.Scan(
+			&i.TrackID,
+			&i.TrackNo,
+			&i.CornerName,
+			&i.ReadAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listAnnouncementReceiptsByAnnouncement = `-- name: ListAnnouncementReceiptsByAnnouncement :many
 SELECT announcement_id, track_id, read_at FROM announcement_receipts WHERE announcement_id = $1
 `
@@ -691,6 +732,57 @@ func (q *Queries) ListAnnouncementReceiptsByAnnouncement(ctx context.Context, an
 	for rows.Next() {
 		var i AnnouncementReceipt
 		if err := rows.Scan(&i.AnnouncementID, &i.TrackID, &i.ReadAt); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listAnnouncementViewsByCampAndTrack = `-- name: ListAnnouncementViewsByCampAndTrack :many
+SELECT a.id, a.camp_id, a.sender_role, a.content, a.sent_at, ar.read_at
+FROM announcements a
+LEFT JOIN announcement_receipts ar
+  ON ar.announcement_id = a.id
+ AND ar.track_id = $1
+WHERE a.camp_id = $2
+ORDER BY a.sent_at
+`
+
+type ListAnnouncementViewsByCampAndTrackParams struct {
+	TrackID string `json:"track_id"`
+	CampID  string `json:"camp_id"`
+}
+
+type ListAnnouncementViewsByCampAndTrackRow struct {
+	ID         string             `json:"id"`
+	CampID     string             `json:"camp_id"`
+	SenderRole string             `json:"sender_role"`
+	Content    string             `json:"content"`
+	SentAt     pgtype.Timestamptz `json:"sent_at"`
+	ReadAt     pgtype.Timestamptz `json:"read_at"`
+}
+
+func (q *Queries) ListAnnouncementViewsByCampAndTrack(ctx context.Context, arg ListAnnouncementViewsByCampAndTrackParams) ([]ListAnnouncementViewsByCampAndTrackRow, error) {
+	rows, err := q.db.Query(ctx, listAnnouncementViewsByCampAndTrack, arg.TrackID, arg.CampID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListAnnouncementViewsByCampAndTrackRow
+	for rows.Next() {
+		var i ListAnnouncementViewsByCampAndTrackRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.CampID,
+			&i.SenderRole,
+			&i.Content,
+			&i.SentAt,
+			&i.ReadAt,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

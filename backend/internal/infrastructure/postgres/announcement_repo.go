@@ -28,15 +28,3 @@ func (r *pgAnnouncementRepository) Save(ctx context.Context, a *domain.Announcem
 	}
 	return nil
 }
-
-func (r *pgAnnouncementRepository) ListNoticeByCamp(ctx context.Context, campID domain.CampID) ([]*domain.Announcement, error) {
-	rows, err := r.queries(ctx).ListAnnouncementsByCamp(ctx, string(campID))
-	if err != nil {
-		return nil, errs.Wrap(ctx, err)
-	}
-	result := make([]*domain.Announcement, len(rows))
-	for i, row := range rows {
-		result[i] = domain.NewAnnouncementFromProps(domain.AnnouncementProps{ID: domain.AnnouncementID(row.ID), CampID: campID, SenderRole: domain.SenderRole(row.SenderRole), Content: row.Content, SentAt: row.SentAt.Time})
-	}
-	return result, nil
-}

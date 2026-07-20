@@ -278,6 +278,15 @@ VALUES ($1, $2, $3, $4, $5);
 -- name: ListAnnouncementsByCamp :many
 SELECT * FROM announcements WHERE camp_id = $1 ORDER BY sent_at;
 
+-- name: ListAnnouncementViewsByCampAndTrack :many
+SELECT a.id, a.camp_id, a.sender_role, a.content, a.sent_at, ar.read_at
+FROM announcements a
+LEFT JOIN announcement_receipts ar
+  ON ar.announcement_id = a.id
+ AND ar.track_id = sqlc.arg(track_id)
+WHERE a.camp_id = sqlc.arg(camp_id)
+ORDER BY a.sent_at;
+
 -- name: SaveAnnouncementReceipt :exec
 INSERT INTO announcement_receipts (announcement_id, track_id, read_at)
 VALUES ($1, $2, $3)
@@ -289,6 +298,14 @@ SELECT * FROM announcement_receipts WHERE announcement_id = $1 AND track_id = $2
 
 -- name: ListAnnouncementReceiptsByAnnouncement :many
 SELECT * FROM announcement_receipts WHERE announcement_id = $1;
+
+-- name: ListAnnouncementReceiptViews :many
+SELECT ar.track_id, t.track_no, c.name AS corner_name, ar.read_at
+FROM announcement_receipts ar
+JOIN tracks t ON t.id = ar.track_id
+JOIN corners c ON c.id = t.corner_id
+WHERE ar.announcement_id = $1
+ORDER BY t.track_no;
 
 -- name: SaveAuditLog :exec
 INSERT INTO audit_logs (id, actor, action, target, success, occurred_at, metadata)
