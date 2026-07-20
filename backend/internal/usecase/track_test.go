@@ -1,4 +1,3 @@
-
 package usecase
 
 import (
@@ -96,7 +95,7 @@ func TestTrackService_DeleteTrack(t *testing.T) {
 		corners.Save(context.Background(), corner)
 
 		tracks := NewMockTrackRepository()
-		track := domain.NewTrackFromProps(domain.TrackProps{ID:             "track-1",
+		track := domain.NewTrackFromProps(domain.TrackProps{ID: "track-1",
 			CornerID:       "corner-1",
 			Status:         domain.TrackActive,
 			CurrentVisitID: domain.None[domain.VisitID](),
@@ -104,7 +103,7 @@ func TestTrackService_DeleteTrack(t *testing.T) {
 		tracks.Save(context.Background(), track)
 
 		sessions := NewMockFacilitatorSessionRepository()
-		session := domain.NewFacilitatorSessionFromProps(domain.FacilitatorSessionProps{ID:        "session-1",
+		session := domain.NewFacilitatorSessionFromProps(domain.FacilitatorSessionProps{ID: "session-1",
 			TrackID:   "track-1",
 			TokenHash: "hash-1",
 			CreatedAt: now,
@@ -153,7 +152,7 @@ func TestTrackService_DeleteTrack(t *testing.T) {
 		camps := NewMockCampRepository()
 		corners := NewMockCornerRepository()
 		tracks := NewMockTrackRepository()
-		track := domain.NewTrackFromProps(domain.TrackProps{ID:             "track-1",
+		track := domain.NewTrackFromProps(domain.TrackProps{ID: "track-1",
 			CornerID:       "corner-1",
 			Status:         domain.TrackActive,
 			CurrentVisitID: domain.Some[domain.VisitID]("visit-1"),

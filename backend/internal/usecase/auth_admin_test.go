@@ -1,4 +1,3 @@
-
 package usecase
 
 import (
@@ -78,7 +77,7 @@ func TestAdminAuthService_ValidateAccessToken(t *testing.T) {
 		// Arrange
 		now := time.Now()
 		sessions := NewMockAdminSessionRepository()
-		session := domain.NewAdminSessionFromProps(domain.AdminSessionProps{ID:              "session-1",
+		session := domain.NewAdminSessionFromProps(domain.AdminSessionProps{ID: "session-1",
 			AdminID:         "admin-1",
 			AccessTokenHash: hashSHA256("access-token-1"),
 			CreatedAt:       now.Add(-1 * time.Hour),
@@ -105,7 +104,7 @@ func TestAdminAuthService_ValidateAccessToken(t *testing.T) {
 		// Arrange
 		now := time.Now()
 		sessions := NewMockAdminSessionRepository()
-		session := domain.NewAdminSessionFromProps(domain.AdminSessionProps{ID:              "session-1",
+		session := domain.NewAdminSessionFromProps(domain.AdminSessionProps{ID: "session-1",
 			AdminID:         "admin-1",
 			AccessTokenHash: hashSHA256("access-token-1"),
 			CreatedAt:       now.Add(-13 * time.Hour),

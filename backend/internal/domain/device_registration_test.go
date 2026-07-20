@@ -1,4 +1,3 @@
-
 package domain_test
 
 import (
@@ -13,7 +12,7 @@ func TestDeviceRegistration_ApproveRejectRevoke(t *testing.T) {
 	now := time.Date(2026, 7, 9, 15, 0, 0, 0, time.UTC)
 
 	t.Run("Approve on PENDING succeeds", func(t *testing.T) {
-		device := domain.NewDeviceRegistrationFromProps(domain.DeviceRegistrationProps{ID:     domain.DeviceRegistrationID("device-1"),
+		device := domain.NewDeviceRegistrationFromProps(domain.DeviceRegistrationProps{ID: domain.DeviceRegistrationID("device-1"),
 			Status: domain.DevicePending,
 		})
 
@@ -33,7 +32,7 @@ func TestDeviceRegistration_ApproveRejectRevoke(t *testing.T) {
 	})
 
 	t.Run("Approve on APPROVED fails with ErrDeviceInvalidTransition", func(t *testing.T) {
-		device := domain.NewDeviceRegistrationFromProps(domain.DeviceRegistrationProps{ID:     domain.DeviceRegistrationID("device-1"),
+		device := domain.NewDeviceRegistrationFromProps(domain.DeviceRegistrationProps{ID: domain.DeviceRegistrationID("device-1"),
 			Status: domain.DeviceApproved,
 		})
 
@@ -44,7 +43,7 @@ func TestDeviceRegistration_ApproveRejectRevoke(t *testing.T) {
 	})
 
 	t.Run("Reject on PENDING succeeds", func(t *testing.T) {
-		device := domain.NewDeviceRegistrationFromProps(domain.DeviceRegistrationProps{ID:     domain.DeviceRegistrationID("device-1"),
+		device := domain.NewDeviceRegistrationFromProps(domain.DeviceRegistrationProps{ID: domain.DeviceRegistrationID("device-1"),
 			Status: domain.DevicePending,
 		})
 
@@ -59,7 +58,7 @@ func TestDeviceRegistration_ApproveRejectRevoke(t *testing.T) {
 	})
 
 	t.Run("Reject on REJECTED fails with ErrDeviceInvalidTransition", func(t *testing.T) {
-		device := domain.NewDeviceRegistrationFromProps(domain.DeviceRegistrationProps{ID:     domain.DeviceRegistrationID("device-1"),
+		device := domain.NewDeviceRegistrationFromProps(domain.DeviceRegistrationProps{ID: domain.DeviceRegistrationID("device-1"),
 			Status: domain.DeviceRejected,
 		})
 
@@ -70,7 +69,7 @@ func TestDeviceRegistration_ApproveRejectRevoke(t *testing.T) {
 	})
 
 	t.Run("Revoke on APPROVED succeeds", func(t *testing.T) {
-		device := domain.NewDeviceRegistrationFromProps(domain.DeviceRegistrationProps{ID:     domain.DeviceRegistrationID("device-1"),
+		device := domain.NewDeviceRegistrationFromProps(domain.DeviceRegistrationProps{ID: domain.DeviceRegistrationID("device-1"),
 			Status: domain.DeviceApproved,
 		})
 
@@ -85,7 +84,7 @@ func TestDeviceRegistration_ApproveRejectRevoke(t *testing.T) {
 	})
 
 	t.Run("Revoke on PENDING fails with ErrDeviceNotApproved", func(t *testing.T) {
-		device := domain.NewDeviceRegistrationFromProps(domain.DeviceRegistrationProps{ID:     domain.DeviceRegistrationID("device-1"),
+		device := domain.NewDeviceRegistrationFromProps(domain.DeviceRegistrationProps{ID: domain.DeviceRegistrationID("device-1"),
 			Status: domain.DevicePending,
 		})
 
@@ -98,7 +97,7 @@ func TestDeviceRegistration_ApproveRejectRevoke(t *testing.T) {
 
 func TestDeviceRegistration_PinFailuresLockPolicies(t *testing.T) {
 	now := time.Date(2026, 7, 9, 15, 0, 0, 0, time.UTC)
-	device := domain.NewDeviceRegistrationFromProps(domain.DeviceRegistrationProps{ID:     domain.DeviceRegistrationID("device-1"),
+	device := domain.NewDeviceRegistrationFromProps(domain.DeviceRegistrationProps{ID: domain.DeviceRegistrationID("device-1"),
 		Status: domain.DeviceApproved,
 	})
 

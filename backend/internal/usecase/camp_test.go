@@ -1,4 +1,3 @@
-
 package usecase
 
 import (
@@ -110,7 +109,7 @@ func TestCampService_EndCamp(t *testing.T) {
 		camps.Save(context.Background(), camp)
 
 		sessions := NewMockFacilitatorSessionRepository()
-		session := domain.NewFacilitatorSessionFromProps(domain.FacilitatorSessionProps{ID:        "session-1",
+		session := domain.NewFacilitatorSessionFromProps(domain.FacilitatorSessionProps{ID: "session-1",
 			TrackID:   "track-1",
 			TokenHash: "token-hash-1",
 			CreatedAt: now,

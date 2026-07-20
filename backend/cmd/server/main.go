@@ -91,8 +91,22 @@ func main() {
 
 	dbctx, cancel := context.WithTimeout(backgroundCtx, 1000*time.Millisecond)
 	defer cancel()
+	// Initialize Database Pool Config
+	config, err := pgxpool.ParseConfig(dbURL)
+	if err != nil {
+		cancel()
+		log.Fatalf("Unable to parse database config: %v\n", err)
+	}
+
+	isDev := os.Getenv("APP_ENV") == "development"
+
+	config.ConnConfig.Tracer = &postgres.SlogQueryTracer{
+		SlowQueryThreshold: 500 * time.Millisecond,
+		LogParameterValues: isDev,
+	}
+
 	// Initialize Database Pool
-	pool, err := pgxpool.New(dbctx, dbURL)
+	pool, err := pgxpool.NewWithConfig(dbctx, config)
 	if err != nil {
 		cancel()
 		log.Fatalf("Unable to connect to database: %v\n", err)

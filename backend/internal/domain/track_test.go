@@ -1,4 +1,3 @@
-
 package domain_test
 
 import (
@@ -11,7 +10,7 @@ import (
 
 func TestTrack_StartVisit(t *testing.T) {
 	t.Run("StartVisit on active idle track succeeds", func(t *testing.T) {
-		track := domain.NewTrackFromProps(domain.TrackProps{ID:             domain.TrackID("track-1"),
+		track := domain.NewTrackFromProps(domain.TrackProps{ID: domain.TrackID("track-1"),
 			Status:         domain.TrackActive,
 			CurrentVisitID: domain.None[domain.VisitID](),
 		})
@@ -31,7 +30,7 @@ func TestTrack_StartVisit(t *testing.T) {
 	})
 
 	t.Run("StartVisit on DELETED track fails with ErrTrackNotActive", func(t *testing.T) {
-		track := domain.NewTrackFromProps(domain.TrackProps{ID:             domain.TrackID("track-1"),
+		track := domain.NewTrackFromProps(domain.TrackProps{ID: domain.TrackID("track-1"),
 			Status:         domain.TrackDeleted,
 			CurrentVisitID: domain.None[domain.VisitID](),
 		})
@@ -43,7 +42,7 @@ func TestTrack_StartVisit(t *testing.T) {
 	})
 
 	t.Run("StartVisit on busy track fails with ErrTrackBusy", func(t *testing.T) {
-		track := domain.NewTrackFromProps(domain.TrackProps{ID:             domain.TrackID("track-1"),
+		track := domain.NewTrackFromProps(domain.TrackProps{ID: domain.TrackID("track-1"),
 			Status:         domain.TrackActive,
 			CurrentVisitID: domain.Some(domain.VisitID("visit-1")),
 		})
@@ -59,7 +58,7 @@ func TestTrack_CompleteVisit(t *testing.T) {
 	now := time.Date(2026, 7, 9, 15, 0, 0, 0, time.UTC)
 
 	t.Run("CompleteVisit on busy active track succeeds", func(t *testing.T) {
-		track := domain.NewTrackFromProps(domain.TrackProps{ID:             domain.TrackID("track-1"),
+		track := domain.NewTrackFromProps(domain.TrackProps{ID: domain.TrackID("track-1"),
 			Status:         domain.TrackActive,
 			CurrentVisitID: domain.Some(domain.VisitID("visit-1")),
 		})
@@ -82,7 +81,7 @@ func TestTrack_CompleteVisit(t *testing.T) {
 	})
 
 	t.Run("CompleteVisit on DELETED track fails with ErrTrackNotActive", func(t *testing.T) {
-		track := domain.NewTrackFromProps(domain.TrackProps{ID:             domain.TrackID("track-1"),
+		track := domain.NewTrackFromProps(domain.TrackProps{ID: domain.TrackID("track-1"),
 			Status:         domain.TrackDeleted,
 			CurrentVisitID: domain.Some(domain.VisitID("visit-1")),
 		})
@@ -94,7 +93,7 @@ func TestTrack_CompleteVisit(t *testing.T) {
 	})
 
 	t.Run("CompleteVisit on idle track fails with ErrTrackNotBusy", func(t *testing.T) {
-		track := domain.NewTrackFromProps(domain.TrackProps{ID:             domain.TrackID("track-1"),
+		track := domain.NewTrackFromProps(domain.TrackProps{ID: domain.TrackID("track-1"),
 			Status:         domain.TrackActive,
 			CurrentVisitID: domain.None[domain.VisitID](),
 		})
@@ -126,7 +125,7 @@ func TestTrack_Delete(t *testing.T) {
 	now := time.Date(2026, 7, 9, 15, 30, 0, 0, time.UTC)
 
 	t.Run("Delete on idle active track succeeds", func(t *testing.T) {
-		track := domain.NewTrackFromProps(domain.TrackProps{ID:             domain.TrackID("track-1"),
+		track := domain.NewTrackFromProps(domain.TrackProps{ID: domain.TrackID("track-1"),
 			Status:         domain.TrackActive,
 			CurrentVisitID: domain.None[domain.VisitID](),
 		})
@@ -157,7 +156,7 @@ func TestTrack_Delete(t *testing.T) {
 	})
 
 	t.Run("Delete on busy track fails with ErrTrackDeleteBlocked", func(t *testing.T) {
-		track := domain.NewTrackFromProps(domain.TrackProps{ID:             domain.TrackID("track-1"),
+		track := domain.NewTrackFromProps(domain.TrackProps{ID: domain.TrackID("track-1"),
 			Status:         domain.TrackActive,
 			CurrentVisitID: domain.Some(domain.VisitID("visit-1")),
 		})
@@ -169,7 +168,7 @@ func TestTrack_Delete(t *testing.T) {
 	})
 
 	t.Run("Delete on already DELETED track fails with ErrTrackAlreadyDeleted", func(t *testing.T) {
-		track := domain.NewTrackFromProps(domain.TrackProps{ID:     domain.TrackID("track-1"),
+		track := domain.NewTrackFromProps(domain.TrackProps{ID: domain.TrackID("track-1"),
 			Status: domain.TrackDeleted,
 		})
 
@@ -184,7 +183,7 @@ func TestTrack_RegeneratePIN(t *testing.T) {
 	now := time.Date(2026, 7, 9, 15, 45, 0, 0, time.UTC)
 
 	t.Run("RegeneratePIN on active track succeeds", func(t *testing.T) {
-		track := domain.NewTrackFromProps(domain.TrackProps{ID:      domain.TrackID("track-1"),
+		track := domain.NewTrackFromProps(domain.TrackProps{ID: domain.TrackID("track-1"),
 			Status:  domain.TrackActive,
 			PINHash: "old-hash",
 		})
@@ -207,7 +206,7 @@ func TestTrack_RegeneratePIN(t *testing.T) {
 	})
 
 	t.Run("RegeneratePIN on DELETED track fails with ErrTrackNotActive", func(t *testing.T) {
-		track := domain.NewTrackFromProps(domain.TrackProps{ID:     domain.TrackID("track-1"),
+		track := domain.NewTrackFromProps(domain.TrackProps{ID: domain.TrackID("track-1"),
 			Status: domain.TrackDeleted,
 		})
 

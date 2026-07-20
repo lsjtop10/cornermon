@@ -45,7 +45,7 @@ func main() {
 
 		astutil.Apply(file, func(c *astutil.Cursor) bool {
 			n := c.Node()
-			
+
 			// Replace UnaryExpr `&domain.X{...}`
 			if un, ok := n.(*ast.UnaryExpr); ok && un.Op == token.AND {
 				if comp, ok := un.X.(*ast.CompositeLit); ok {
@@ -54,10 +54,10 @@ func main() {
 							structName := selExpr.Sel.Name
 							if !strings.HasSuffix(structName, "Props") {
 								selExpr.Sel.Name = structName + "Props"
-								
+
 								callExpr := &ast.CallExpr{
 									Fun: &ast.SelectorExpr{
-										X: &ast.Ident{Name: "domain"},
+										X:   &ast.Ident{Name: "domain"},
 										Sel: &ast.Ident{Name: "New" + structName + "FromProps"},
 									},
 									Args: []ast.Expr{comp},
@@ -70,7 +70,7 @@ func main() {
 					}
 				}
 			}
-			
+
 			// Replace CompositeLit `domain.X{...}`
 			if comp, ok := n.(*ast.CompositeLit); ok {
 				if selExpr, ok := comp.Type.(*ast.SelectorExpr); ok {
@@ -78,10 +78,10 @@ func main() {
 						structName := selExpr.Sel.Name
 						if !strings.HasSuffix(structName, "Props") {
 							selExpr.Sel.Name = structName + "Props"
-							
+
 							callExpr := &ast.CallExpr{
 								Fun: &ast.SelectorExpr{
-									X: &ast.Ident{Name: "domain"},
+									X:   &ast.Ident{Name: "domain"},
 									Sel: &ast.Ident{Name: "New" + structName + "ValFromProps"},
 								},
 								Args: []ast.Expr{comp},
