@@ -102,7 +102,7 @@ func (s *VisitService) StartVisitByQR(
 			return domain.ErrBadgeNotAssigned
 		}
 
-		group, err := s.groups.Get(ctx, assignedGroupID)
+		group, err := s.groups.GetForUpdate(ctx, assignedGroupID)
 		if err != nil {
 			return err
 		}
@@ -193,7 +193,7 @@ func (s *VisitService) StartVisitManual(
 			return domain.ErrTrackBusy
 		}
 
-		group, err := s.groups.Get(ctx, groupID)
+		group, err := s.groups.GetForUpdate(ctx, groupID)
 		if err != nil {
 			return err
 		}
@@ -293,7 +293,7 @@ func (s *VisitService) CompleteVisit(
 			return domain.ErrTrackNotBusy
 		}
 
-		group, err := s.groups.Get(ctx, visit.GroupID())
+		group, err := s.groups.GetForUpdate(ctx, visit.GroupID())
 		if err != nil {
 			return err
 		}

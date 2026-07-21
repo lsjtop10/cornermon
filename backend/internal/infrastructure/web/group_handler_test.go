@@ -52,13 +52,20 @@ type groupRepoForGroupHandler struct{ groups []*domain.Group }
 func (groupRepoForGroupHandler) Get(context.Context, domain.GroupID) (*domain.Group, error) {
 	return nil, nil
 }
+func (groupRepoForGroupHandler) GetForUpdate(context.Context, domain.GroupID) (*domain.Group, error) {
+	return nil, nil
+}
 func (groupRepoForGroupHandler) GetByBadge(context.Context, domain.CampID, domain.BadgeID) (*domain.Group, error) {
 	return nil, nil
 }
 func (r groupRepoForGroupHandler) ListByCamp(context.Context, domain.CampID) ([]*domain.Group, error) {
 	return r.groups, nil
 }
-func (groupRepoForGroupHandler) Save(context.Context, *domain.Group) error { return nil }
+func (r groupRepoForGroupHandler) ListByCampForUpdate(context.Context, domain.CampID) ([]*domain.Group, error) {
+	return r.groups, nil
+}
+func (groupRepoForGroupHandler) Save(context.Context, *domain.Group) error       { return nil }
+func (groupRepoForGroupHandler) SaveBulk(context.Context, []*domain.Group) error { return nil }
 
 func TestListGroupsByTrackShoudReturnGroupsWhenSessionTrackMatchesPath(t *testing.T) {
 	// Arrange

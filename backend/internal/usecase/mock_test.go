@@ -237,6 +237,14 @@ func (r *MockVisitRepository) ListByGroup(ctx context.Context, groupID domain.Gr
 // MockGroupRepository
 type MockGroupRepository struct {
 	Groups map[domain.GroupID]*domain.Group
+
+	// 테스트에서 N+1 회귀(개별 조회 대신 캠프 단위 일괄 조회를 썼는지)를 검증하기 위한 호출 카운터.
+	GetCalls                 int
+	GetForUpdateCalls        int
+	ListByCampCalls          int
+	ListByCampForUpdateCalls int
+	SaveCalls                int
+	SaveBulkCalls            int
 }
 
 func NewMockGroupRepository() *MockGroupRepository {
@@ -244,6 +252,17 @@ func NewMockGroupRepository() *MockGroupRepository {
 }
 
 func (r *MockGroupRepository) Get(ctx context.Context, id domain.GroupID) (*domain.Group, error) {
+	r.GetCalls++
+	g, ok := r.Groups[id]
+	if !ok {
+		return nil, nil
+	}
+	return g, nil
+}
+
+// GetForUpdate는 메모리 맵 기반 Mock이라 실제 행 잠금 개념이 없어 Get과 동일하게 동작한다.
+func (r *MockGroupRepository) GetForUpdate(ctx context.Context, id domain.GroupID) (*domain.Group, error) {
+	r.GetForUpdateCalls++
 	g, ok := r.Groups[id]
 	if !ok {
 		return nil, nil
@@ -261,6 +280,19 @@ func (r *MockGroupRepository) GetByBadge(ctx context.Context, campID domain.Camp
 }
 
 func (r *MockGroupRepository) ListByCamp(ctx context.Context, campID domain.CampID) ([]*domain.Group, error) {
+	r.ListByCampCalls++
+	var list []*domain.Group
+	for _, g := range r.Groups {
+		if g.CampID() == campID {
+			list = append(list, g)
+		}
+	}
+	return list, nil
+}
+
+// ListByCampForUpdate는 메모리 맵 기반 Mock이라 실제 행 잠금 개념이 없어 ListByCamp와 동일하게 동작한다.
+func (r *MockGroupRepository) ListByCampForUpdate(ctx context.Context, campID domain.CampID) ([]*domain.Group, error) {
+	r.ListByCampForUpdateCalls++
 	var list []*domain.Group
 	for _, g := range r.Groups {
 		if g.CampID() == campID {
@@ -271,7 +303,18 @@ func (r *MockGroupRepository) ListByCamp(ctx context.Context, campID domain.Camp
 }
 
 func (r *MockGroupRepository) Save(ctx context.Context, group *domain.Group) error {
+	r.SaveCalls++
 	r.Groups[group.ID()] = group
+	return nil
+}
+
+func (r *MockGroupRepository) SaveBulk(ctx context.Context, groups []*domain.Group) error {
+	r.SaveBulkCalls++
+	for _, g := range groups {
+		if err := r.Save(ctx, g); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 

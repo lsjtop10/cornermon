@@ -191,7 +191,7 @@ func (s *CampService) EndCamp(
 			return err
 		}
 		for _, visit := range visits {
-			group, err := s.groups.Get(ctx, visit.GroupID())
+			group, err := s.groups.GetForUpdate(ctx, visit.GroupID())
 			if err != nil {
 				return err
 			}

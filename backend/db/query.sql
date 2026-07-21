@@ -152,11 +152,17 @@ ON CONFLICT (id) DO UPDATE SET
 -- name: GetGroup :one
 SELECT * FROM groups WHERE id = $1;
 
+-- name: GetGroupForUpdate :one
+SELECT * FROM groups WHERE id = $1 FOR UPDATE;
+
 -- name: GetGroupByBadge :one
 SELECT * FROM groups WHERE camp_id = $1 AND badge_id = $2;
 
 -- name: ListGroupsByCamp :many
 SELECT * FROM groups WHERE camp_id = $1;
+
+-- name: ListGroupsByCampForUpdate :many
+SELECT * FROM groups WHERE camp_id = $1 FOR UPDATE;
 
 -- name: SaveGroup :exec
 INSERT INTO groups (id, camp_id, name, badge_id, itinerary)

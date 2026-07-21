@@ -160,6 +160,104 @@ func TestListGroupsByTrackShoudReturnOnlyDerivedCampGroupsWhenTrackExists(t *tes
 	}
 }
 
+func TestGroupServiceShouldExcludeDeletedCornersWhenListingGroups(t *testing.T) {
+	// Arrange
+	ctx := context.Background()
+	corners := NewMockCornerRepository()
+	_ = corners.Save(ctx, domain.NewCornerFromProps(domain.CornerProps{ID: "corner-current", CampID: "camp-1"}))
+	groups := NewMockGroupRepository()
+	stored := domain.NewGroupFromProps(domain.GroupProps{
+		ID:     "group-1",
+		CampID: "camp-1",
+		Itinerary: []domain.CornerProgress{
+			domain.NewCornerProgressValFromProps(domain.CornerProgressProps{CornerID: "corner-current", Status: domain.VisitNotVisited}),
+			domain.NewCornerProgressValFromProps(domain.CornerProgressProps{CornerID: "corner-deleted", Status: domain.VisitCompleted}),
+		},
+	})
+	_ = groups.Save(ctx, stored)
+	service := NewGroupService(nil, corners, nil, groups, nil, nil, nil, nil)
+
+	// Act
+	result, err := service.ListGroups(ctx, "camp-1")
+
+	// Assert
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(result) != 1 || len(result[0].Itinerary()) != 1 {
+		t.Fatalf("expected one current itinerary corner, got %+v", result)
+	}
+	if result[0].Itinerary()[0].CornerID() != "corner-current" {
+		t.Fatalf("unexpected itinerary: %+v", result[0].Itinerary())
+	}
+	if result[0].IsFinished() {
+		t.Fatal("expected filtered itinerary status to be recalculated")
+	}
+	if len(stored.Itinerary()) != 2 {
+		t.Fatal("expected read filtering not to mutate the stored group")
+	}
+}
+
+func TestGroupServiceShouldExcludeDeletedCornersWhenRetrievingGroupSchedule(t *testing.T) {
+	// Arrange
+	ctx := context.Background()
+	corners := NewMockCornerRepository()
+	_ = corners.Save(ctx, domain.NewCornerFromProps(domain.CornerProps{ID: "corner-current", CampID: "camp-1"}))
+	groups := NewMockGroupRepository()
+	_ = groups.Save(ctx, domain.NewGroupFromProps(domain.GroupProps{
+		ID:     "group-1",
+		CampID: "camp-1",
+		Itinerary: []domain.CornerProgress{
+			domain.NewCornerProgressValFromProps(domain.CornerProgressProps{CornerID: "corner-current", Status: domain.VisitCompleted}),
+			domain.NewCornerProgressValFromProps(domain.CornerProgressProps{CornerID: "corner-deleted", Status: domain.VisitNotVisited}),
+		},
+	}))
+	service := NewGroupService(nil, corners, nil, groups, nil, nil, nil, nil)
+
+	// Act
+	result, err := service.RetrieveGroupRotationSchedule(ctx, "group-1")
+
+	// Assert
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(result.Itinerary()) != 1 || result.Itinerary()[0].CornerID() != "corner-current" {
+		t.Fatalf("unexpected itinerary: %+v", result.Itinerary())
+	}
+	if !result.IsFinished() {
+		t.Fatal("expected filtered itinerary completion to be recalculated")
+	}
+}
+
+func TestGroupServiceShouldExcludeDeletedCornersWhenListingGroupsByTrack(t *testing.T) {
+	// Arrange
+	ctx := context.Background()
+	corners := NewMockCornerRepository()
+	_ = corners.Save(ctx, domain.NewCornerFromProps(domain.CornerProps{ID: "corner-current", CampID: "camp-1"}))
+	tracks := NewMockTrackRepository()
+	_ = tracks.Save(ctx, domain.NewTrackFromProps(domain.TrackProps{ID: "track-1", CornerID: "corner-current", Status: domain.TrackActive}))
+	groups := NewMockGroupRepository()
+	_ = groups.Save(ctx, domain.NewGroupFromProps(domain.GroupProps{
+		ID:     "group-1",
+		CampID: "camp-1",
+		Itinerary: []domain.CornerProgress{
+			domain.NewCornerProgressValFromProps(domain.CornerProgressProps{CornerID: "corner-deleted", Status: domain.VisitNotVisited}),
+		},
+	}))
+	service := NewGroupService(nil, corners, tracks, groups, nil, nil, nil, nil)
+
+	// Act
+	result, err := service.ListGroupsByTrack(ctx, "track-1")
+
+	// Assert
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(result) != 1 || len(result[0].Itinerary()) != 0 {
+		t.Fatalf("expected deleted corner to be excluded, got %+v", result)
+	}
+}
+
 func TestListGroupsByTrackShoudReturnNotFoundWhenRelationMissing(t *testing.T) {
 	tests := []struct {
 		name    string

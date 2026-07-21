@@ -101,7 +101,7 @@ func TestGetCornerByTrackShouldReturnCornerWhenSessionTrackMatchesPath(t *testin
 		nil,
 		cornerRepoForGroupHandler{corner: corner},
 		trackRepoForGroupHandler{track: track},
-		nil, nil, nil,
+		nil, nil, nil, nil,
 	)
 	e := echo.New()
 	req := httptest.NewRequest(http.MethodGet, "/tracks/track-1/corner", nil)
@@ -152,7 +152,7 @@ func TestGetCornerByTrackShouldReturnNotFoundWhenTrackMissing(t *testing.T) {
 		nil,
 		cornerRepoForGroupHandler{},
 		trackRepoForGroupHandler{},
-		nil, nil, nil,
+		nil, nil, nil, nil,
 	)
 	e := echo.New()
 	req := httptest.NewRequest(http.MethodGet, "/tracks/track-1/corner", nil)

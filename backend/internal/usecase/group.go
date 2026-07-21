@@ -161,7 +161,12 @@ func (s *GroupService) ListGroups(
 	ctx context.Context,
 	campID domain.CampID,
 ) ([]*domain.Group, error) {
-	return s.groups.ListByCamp(ctx, campID)
+	groups, err := s.groups.ListByCamp(ctx, campID)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.withCurrentCorners(ctx, groups)
 }
 
 // ListGroupsByTrack derives the camp scope from the track's immutable corner
@@ -186,12 +191,60 @@ func (s *GroupService) ListGroupsByTrack(
 		return nil, domain.ErrCornerNotFound
 	}
 
-	return s.groups.ListByCamp(ctx, corner.CampID())
+	return s.ListGroups(ctx, corner.CampID())
 }
 
 // RetrieveGroupRotationSchedule
 func (s *GroupService) RetrieveGroupRotationSchedule(ctx context.Context, groupID domain.GroupID) (*domain.Group, error) {
-	return s.groups.Get(ctx, groupID)
+	group, err := s.groups.Get(ctx, groupID)
+	if err != nil || group == nil {
+		return group, err
+	}
+
+	groups, err := s.withCurrentCorners(ctx, []*domain.Group{group})
+	if err != nil {
+		return nil, err
+	}
+	return groups[0], nil
+}
+
+// withCurrentCorners returns read snapshots whose itineraries contain only
+// corners that still belong to the group camp. Corner deletion cascades to
+// visits but not to the itinerary JSON stored on groups.
+func (s *GroupService) withCurrentCorners(ctx context.Context, groups []*domain.Group) ([]*domain.Group, error) {
+	cornersByCamp := make(map[domain.CampID]map[domain.CornerID]struct{})
+	filtered := make([]*domain.Group, len(groups))
+
+	for i, group := range groups {
+		cornerIDs, ok := cornersByCamp[group.CampID()]
+		if !ok {
+			corners, err := s.corners.ListByCamp(ctx, group.CampID())
+			if err != nil {
+				return nil, err
+			}
+			cornerIDs = make(map[domain.CornerID]struct{}, len(corners))
+			for _, corner := range corners {
+				cornerIDs[corner.ID()] = struct{}{}
+			}
+			cornersByCamp[group.CampID()] = cornerIDs
+		}
+
+		itinerary := make([]domain.CornerProgress, 0, len(group.Itinerary()))
+		for _, progress := range group.Itinerary() {
+			if _, exists := cornerIDs[progress.CornerID()]; exists {
+				itinerary = append(itinerary, progress)
+			}
+		}
+		filtered[i] = domain.NewGroupFromProps(domain.GroupProps{
+			ID:        group.ID(),
+			CampID:    group.CampID(),
+			Name:      group.Name(),
+			BadgeID:   group.BadgeID(),
+			Itinerary: itinerary,
+		})
+	}
+
+	return filtered, nil
 }
 
 type GroupVisitDetail struct {
