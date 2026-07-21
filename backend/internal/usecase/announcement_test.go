@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"cornermon/backend/internal/domain"
+	"errors"
 	"testing"
 	"time"
 )
@@ -73,7 +74,7 @@ func TestAnnouncementQueryService_ShouldRejectBroadcastQueryWhenTrackIsOutsideCa
 	_, err := service.ListNoticesForTrack(context.Background(), "camp-1", "track-1")
 
 	// Assert
-	if err != domain.ErrTrackScopeForbidden {
+	if !errors.Is(err, domain.ErrTrackScopeForbidden) {
 		t.Fatalf("ListNoticesForTrack() error = %v, want %v", err, domain.ErrTrackScopeForbidden)
 	}
 	if querier.ListViewsCallCnt != 0 {

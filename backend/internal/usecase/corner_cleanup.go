@@ -23,5 +23,10 @@ func NewCornerCleanupService(corners CornerCleanupRepository) *CornerCleanupServ
 }
 
 func (s *CornerCleanupService) PurgeExpired(ctx context.Context) (int64, error) {
-	return s.corners.PurgeDeletedBefore(ctx, s.nowFn().Add(-cornerSoftDeleteRetention))
+
+	count, err := s.corners.PurgeDeletedBefore(ctx, s.nowFn().Add(-cornerSoftDeleteRetention))
+	if err != nil {
+		return 0, withErrorContext("cleanup.purge_expired", "repository.purge_corners", err, nil)
+	}
+	return count, nil
 }

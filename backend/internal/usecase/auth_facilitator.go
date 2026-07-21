@@ -32,7 +32,12 @@ type FacilitatorAuthService struct {
 }
 
 func (s *FacilitatorAuthService) ListActiveSessions(ctx context.Context, campID domain.CampID) ([]*domain.FacilitatorSession, error) {
-	return s.sessions.ListActiveByCamp(ctx, campID)
+
+	sessions, err := s.sessions.ListActiveByCamp(ctx, campID)
+	if err != nil {
+		return nil, withErrorContext("auth_facil.list_sessions", "repository.list_sessions", err, map[string]any{"camp_id": string(campID)})
+	}
+	return sessions, nil
 }
 
 func NewFacilitatorAuthService(
@@ -65,46 +70,48 @@ func (s *FacilitatorAuthService) Login(
 	deviceToken string,
 	pin string,
 ) (*TrackLoginResult, error) {
+
 	now := s.nowFn()
 	deviceTokenHash := hashSHA256(deviceToken)
 
-	// 1. 기기 정보 조회 및 검증
 	device, err := s.devices.GetByTokenHash(ctx, deviceTokenHash)
 	if err != nil {
-		return nil, err
+		return nil, withErrorContext("auth_facil.login", "repository.get_device", err, nil)
 	}
 	if device == nil || device.Status() != domain.DeviceApproved {
-		s.recordAuditLog(ctx, "anonymous", ActionFacilitatorLogin, "", false, map[string]any{"error": domain.ErrDeviceNotApproved.Error()})
-		return nil, domain.ErrDeviceNotApproved
+		s.recordAuditLog(ctx, "anonymous", ActionFacilitatorLogin, "", false, errorAuditMetadata(domain.ErrDeviceNotApproved, nil))
+		var status string
+		if device != nil {
+			status = string(device.Status())
+		}
+		return nil, withErrorContext("auth_facil.login", "validate_device", domain.ErrDeviceNotApproved, map[string]any{"device_found": device != nil, "device_status": status})
 	}
 
 	if device.IsLocked(now) {
-		s.recordAuditLog(ctx, "anonymous", ActionFacilitatorLogin, "", false, map[string]any{"error": domain.ErrDeviceLocked.Error()})
+		s.recordAuditLog(ctx, "anonymous", ActionFacilitatorLogin, "", false, errorAuditMetadata(domain.ErrDeviceLocked, nil))
 		lockedUntil, _ := device.LockedUntil().Value()
-		return nil, domain.NewDeviceLockedErrorFromProps(domain.DeviceLockedErrorProps{LockedUntil: lockedUntil})
+		errLocked := domain.NewDeviceLockedErrorFromProps(domain.DeviceLockedErrorProps{LockedUntil: lockedUntil})
+		return nil, withErrorContext("auth_facil.login", "validate_device_locked", errLocked, map[string]any{"locked_until": lockedUntil})
 	}
 
 	campID := device.CampID()
 
-	// 2. 캠프 정보 조회 및 검증
 	camp, err := s.camps.Get(ctx, campID)
 	if err != nil {
-		return nil, err
+		return nil, withErrorContext("auth_facil.login", "repository.get_camp", err, map[string]any{"camp_id": string(campID)})
 	}
 	if camp == nil {
-		return nil, fmt.Errorf("camp: camp %s is not exist", campID)
+		return nil, withErrorContext("auth_facil.login", "validate_camp", fmt.Errorf("camp: camp %s is not exist", campID), map[string]any{"camp_id": string(campID), "camp_found": false})
 	}
 
 	if camp.Status() == domain.CampEnded {
-		s.recordAuditLog(ctx, "anonymous", ActionFacilitatorLogin, "", false, map[string]any{"error": domain.ErrCampInvalidTransition.Error()})
-
-		return nil, domain.ErrCampInvalidTransition
+		s.recordAuditLog(ctx, "anonymous", ActionFacilitatorLogin, "", false, errorAuditMetadata(domain.ErrCampInvalidTransition, nil))
+		return nil, withErrorContext("auth_facil.login", "validate_camp_status", domain.ErrCampInvalidTransition, map[string]any{"camp_id": string(campID), "camp_status": string(camp.Status())})
 	}
 
-	// 3. 트랙 찾기 및 PIN 검증
 	activeTracks, err := s.tracks.ListActiveByCamp(ctx, campID)
 	if err != nil {
-		return nil, err
+		return nil, withErrorContext("auth_facil.login", "repository.list_tracks", err, map[string]any{"camp_id": string(campID)})
 	}
 
 	var track *domain.Track
@@ -116,7 +123,6 @@ func (s *FacilitatorAuthService) Login(
 	}
 
 	if track == nil {
-		// PIN 검증 실패 시
 		delay, needsAdminAlert := device.RecordPinFailure(now)
 		_ = s.devices.Save(ctx, device)
 
@@ -124,7 +130,7 @@ func (s *FacilitatorAuthService) Login(
 			_ = s.broadcaster.Broadcast(ctx, device.CampID(), EventLockoutAlert, CampScope())
 		}
 
-		s.recordAuditLog(ctx, "anonymous", ActionFacilitatorLogin, "", false, map[string]any{"error": "invalid pin", "device_failures": device.FailedPinAttempts()})
+		s.recordAuditLog(ctx, "anonymous", ActionFacilitatorLogin, "", false, errorAuditMetadata(errors.New("invalid pin"), map[string]any{"device_failures": device.FailedPinAttempts()}))
 
 		var optLocked domain.Optional[time.Time]
 		if delay > 0 {
@@ -133,27 +139,25 @@ func (s *FacilitatorAuthService) Login(
 		} else {
 			optLocked = domain.None[time.Time]()
 		}
-		return nil, domain.NewInvalidPinErrorFromProps(domain.InvalidPinErrorProps{LockedUntil: optLocked})
+		errInvalid := domain.NewInvalidPinErrorFromProps(domain.InvalidPinErrorProps{LockedUntil: optLocked})
+		return nil, withErrorContext("auth_facil.login", "validate_pin", errInvalid, map[string]any{"device_id": string(device.ID()), "failures": device.FailedPinAttempts()})
 	}
 
 	trackID := track.ID()
 
-	// 4. 코너 정보 조회
 	corner, err := s.corners.Get(ctx, track.CornerID())
 	if err != nil {
-		return nil, err
+		return nil, withErrorContext("auth_facil.login", "repository.get_corner", err, map[string]any{"corner_id": string(track.CornerID())})
 	}
 	if corner == nil {
-		return nil, domain.ErrCornerNotInItinerary
+		return nil, withErrorContext("auth_facil.login", "validate_corner", domain.ErrCornerNotInItinerary, map[string]any{"corner_id": string(track.CornerID()), "corner_found": false})
 	}
 
-	// PIN 검증 성공 시 실패 횟수 리셋
 	device.ResetPinFailures()
 
-	// 5. 신규 세션 토큰 및 세션 정보 생성
 	plainToken, sessionTokenHash, err := generateOpaqueToken()
 	if err != nil {
-		return nil, err
+		return nil, withErrorContext("auth_facil.login", "generate_token", err, nil)
 	}
 
 	sessionID := domain.FacilitatorSessionID(s.uuidFn())
@@ -165,16 +169,18 @@ func (s *FacilitatorAuthService) Login(
 		RevokedAt: domain.None[time.Time](),
 	})
 
-	// 6. DB 트랜잭션 내에서 기기 상태 및 세션 정보 저장
 	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
 		if err := s.devices.Save(ctx, device); err != nil {
-			return err
+			return withErrorContext("auth_facil.login", "repository.save_device", err, map[string]any{"device_id": string(device.ID())})
 		}
-		return s.sessions.Save(ctx, session)
+		if err := s.sessions.Save(ctx, session); err != nil {
+			return withErrorContext("auth_facil.login", "repository.save_session", err, map[string]any{"session_id": string(session.ID())})
+		}
+		return nil
 	})
 
 	if err != nil {
-		s.recordAuditLog(ctx, "anonymous", ActionFacilitatorLogin, string(trackID), false, map[string]any{"error": err.Error()})
+		s.recordAuditLog(ctx, "anonymous", ActionFacilitatorLogin, string(trackID), false, errorAuditMetadata(err, nil))
 		return nil, err
 	}
 
@@ -191,45 +197,46 @@ func (s *FacilitatorAuthService) MigrateSession(
 	ctx context.Context,
 	oldSessionToken string,
 ) (*TrackLoginResult, error) {
+
 	now := s.nowFn()
 	oldSessionTokenHash := hashSHA256(oldSessionToken)
 
-	// 1. 기존 세션 검증
 	oldSession, err := s.sessions.GetByTokenHash(ctx, oldSessionTokenHash)
 	if err != nil {
-		return nil, err
+		return nil, withErrorContext("auth_facil.migrate_session", "repository.get_old_session", err, nil)
 	}
 	if oldSession == nil || !oldSession.IsActive() {
-		return nil, domain.ErrSessionRevoked
+		var active bool
+		if oldSession != nil {
+			active = oldSession.IsActive()
+		}
+		return nil, withErrorContext("auth_facil.migrate_session", "validate_old_session", domain.ErrSessionRevoked, map[string]any{"session_found": oldSession != nil, "session_active": active})
 	}
 
-	// 2. 승계 대상 트랙 확인
 	if !oldSession.MigrationTargetTrackID().IsSet() {
-		return nil, errors.New("no migration target for this session")
+		return nil, withErrorContext("auth_facil.migrate_session", "validate_migration_target", errors.New("no migration target for this session"), map[string]any{"session_id": string(oldSession.ID())})
 	}
 	newTrackID, _ := oldSession.MigrationTargetTrackID().Value()
 
-	// 3. 새 트랙 및 코너 조회
 	newTrack, err := s.tracks.Get(ctx, newTrackID)
 	if err != nil {
-		return nil, err
+		return nil, withErrorContext("auth_facil.migrate_session", "repository.get_new_track", err, map[string]any{"new_track_id": string(newTrackID)})
 	}
 	if newTrack == nil {
-		return nil, errors.New("migration target track not found")
+		return nil, withErrorContext("auth_facil.migrate_session", "validate_new_track", errors.New("migration target track not found"), map[string]any{"new_track_id": string(newTrackID), "track_found": false})
 	}
 
 	corner, err := s.corners.Get(ctx, newTrack.CornerID())
 	if err != nil {
-		return nil, err
+		return nil, withErrorContext("auth_facil.migrate_session", "repository.get_corner", err, map[string]any{"corner_id": string(newTrack.CornerID())})
 	}
 	if corner == nil {
-		return nil, domain.ErrCornerNotInItinerary
+		return nil, withErrorContext("auth_facil.migrate_session", "validate_corner", domain.ErrCornerNotInItinerary, map[string]any{"corner_id": string(newTrack.CornerID()), "corner_found": false})
 	}
 
-	// 4. 신규 세션 발급
 	plainToken, sessionTokenHash, err := generateOpaqueToken()
 	if err != nil {
-		return nil, err
+		return nil, withErrorContext("auth_facil.migrate_session", "generate_token", err, nil)
 	}
 
 	sessionID := domain.FacilitatorSessionID(s.uuidFn())
@@ -242,17 +249,19 @@ func (s *FacilitatorAuthService) MigrateSession(
 		MigrationTargetTrackID: domain.None[domain.TrackID](),
 	})
 
-	// 5. DB 트랜잭션 내에서 기존 세션 만료 및 신규 세션 저장
 	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
 		_ = oldSession.Revoke(now)
 		if err := s.sessions.Save(ctx, oldSession); err != nil {
-			return err
+			return withErrorContext("auth_facil.migrate_session", "repository.save_old_session", err, map[string]any{"old_session_id": string(oldSession.ID())})
 		}
-		return s.sessions.Save(ctx, newSession)
+		if err := s.sessions.Save(ctx, newSession); err != nil {
+			return withErrorContext("auth_facil.migrate_session", "repository.save_new_session", err, map[string]any{"new_session_id": string(newSession.ID())})
+		}
+		return nil
 	})
 
 	if err != nil {
-		s.recordAuditLog(ctx, string(oldSession.TrackID()), ActionSessionMigrate, string(newTrackID), false, map[string]any{"error": err.Error()})
+		s.recordAuditLog(ctx, string(oldSession.TrackID()), ActionSessionMigrate, string(newTrackID), false, errorAuditMetadata(err, nil))
 		return nil, err
 	}
 
@@ -269,14 +278,19 @@ func (s *FacilitatorAuthService) ValidateSession(
 	ctx context.Context,
 	plainToken string,
 ) (*domain.FacilitatorSession, error) {
+
 	tokenHash := hashSHA256(plainToken)
 
 	session, err := s.sessions.GetByTokenHash(ctx, tokenHash)
 	if err != nil {
-		return nil, err
+		return nil, withErrorContext("auth_facil.validate_session", "repository.get_session", err, nil)
 	}
 	if session == nil || !session.IsActive() {
-		return nil, domain.ErrSessionRevoked
+		var active bool
+		if session != nil {
+			active = session.IsActive()
+		}
+		return nil, withErrorContext("auth_facil.validate_session", "validate_session", domain.ErrSessionRevoked, map[string]any{"session_found": session != nil, "session_active": active})
 	}
 
 	return session, nil
@@ -286,27 +300,31 @@ func (s *FacilitatorAuthService) Logout(
 	ctx context.Context,
 	sessionID domain.FacilitatorSessionID,
 ) error {
+
 	now := s.nowFn()
 
 	session, err := s.sessions.Get(ctx, sessionID)
 	if err != nil {
-		return err
+		return withErrorContext("auth_facil.logout", "repository.get_session", err, map[string]any{"session_id": string(sessionID)})
 	}
 	if session == nil {
-		return errors.New("session not found")
+		return withErrorContext("auth_facil.logout", "validate_session", errors.New("session not found"), map[string]any{"session_id": string(sessionID), "session_found": false})
 	}
 
 	if err := session.Revoke(now); err != nil {
-		return err
+		return withErrorContext("auth_facil.logout", "domain.revoke", err, map[string]any{"session_id": string(sessionID)})
 	}
 
 	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
-		return s.sessions.Save(ctx, session)
+		if err := s.sessions.Save(ctx, session); err != nil {
+			return withErrorContext("auth_facil.logout", "repository.save_session", err, map[string]any{"session_id": string(sessionID)})
+		}
+		return nil
 	})
 
 	if err != nil {
-		s.recordAuditLog(ctx, string(session.TrackID()), ActionFacilitatorLogout, string(sessionID), false, map[string]any{"error": err.Error()})
-		return err
+		s.recordAuditLog(ctx, string(session.TrackID()), ActionFacilitatorLogout, string(sessionID), false, errorAuditMetadata(err, nil))
+		return err // D-2 allowed: already wrapped or handled
 	}
 
 	s.recordAuditLog(ctx, string(session.TrackID()), ActionFacilitatorLogout, string(sessionID), true, nil)

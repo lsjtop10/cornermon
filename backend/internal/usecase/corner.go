@@ -46,12 +46,13 @@ func NewCornerService(
 
 // AddLearningCorner
 func (s *CornerService) AddLearningCorner(ctx context.Context, campID domain.CampID, name string) (*domain.Corner, error) {
+
 	camp, err := s.camps.Get(ctx, campID)
 	if err != nil {
-		return nil, err
+		return nil, withErrorContext("corner.add", "repository.get_camp", err, map[string]any{"camp_id": string(campID)})
 	}
 	if camp == nil {
-		return nil, domain.ErrCampInvalidTransition
+		return nil, withErrorContext("corner.add", "validate_camp", domain.ErrCampInvalidTransition, map[string]any{"camp_id": string(campID), "camp_found": false})
 	}
 
 	corner := domain.NewCornerFromProps(domain.CornerProps{
@@ -62,15 +63,18 @@ func (s *CornerService) AddLearningCorner(ctx context.Context, campID domain.Cam
 
 	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
 		if err := s.corners.Save(ctx, corner); err != nil {
-			return err
+			return withErrorContext("corner.add", "repository.save_corner", err, map[string]any{"corner_id": string(corner.ID())})
 		}
-		return s.syncGroupItineraries(ctx, campID, func(g *domain.Group) {
+		if err := s.syncGroupItineraries(ctx, campID, func(g *domain.Group) {
 			g.AddCornerToItinerary(corner.ID())
-		})
+		}); err != nil {
+			return withErrorContext("corner.add", "domain.sync_itinerary", err, map[string]any{"corner_id": string(corner.ID())})
+		}
+		return nil
 	})
 
 	if err != nil {
-		s.recordAuditLog(ctx, "admin", ActionCornerCreate, "", false, map[string]any{"error": err.Error()})
+		s.recordAuditLog(ctx, "admin", ActionCornerCreate, "", false, errorAuditMetadata(err, nil))
 		return nil, err
 	}
 
@@ -87,12 +91,13 @@ func (s *CornerService) ListCorners(ctx context.Context, campID domain.CampID) (
 
 // GetCorner
 func (s *CornerService) GetCorner(ctx context.Context, id domain.CornerID) (*domain.Corner, error) {
+
 	corner, err := s.corners.Get(ctx, id)
 	if err != nil {
-		return nil, err
+		return nil, withErrorContext("corner.get", "repository.get_corner", err, map[string]any{"corner_id": string(id)})
 	}
 	if corner == nil {
-		return nil, domain.ErrCornerNotFound
+		return nil, withErrorContext("corner.get", "validate_corner", domain.ErrCornerNotFound, map[string]any{"corner_id": string(id), "corner_found": false})
 	}
 	return corner, nil
 }
@@ -101,42 +106,47 @@ func (s *CornerService) GetCorner(ctx context.Context, id domain.CornerID) (*dom
 // assignment — for TrackAuth (진행자) callers, who may only see their own
 // track's corner, never another track's admin-facing detail.
 func (s *CornerService) GetCornerByTrack(ctx context.Context, trackID domain.TrackID) (*domain.Corner, error) {
+
 	track, err := s.tracks.Get(ctx, trackID)
 	if err != nil {
-		return nil, err
+		return nil, withErrorContext("corner.get_by_track", "repository.get_track", err, map[string]any{"track_id": string(trackID)})
 	}
 	if track == nil {
-		return nil, domain.ErrTrackNotFound
+		return nil, withErrorContext("corner.get_by_track", "validate_track", domain.ErrTrackNotFound, map[string]any{"track_id": string(trackID), "track_found": false})
 	}
 
 	corner, err := s.corners.Get(ctx, track.CornerID())
 	if err != nil {
-		return nil, err
+		return nil, withErrorContext("corner.get_by_track", "repository.get_corner", err, map[string]any{"corner_id": string(track.CornerID())})
 	}
 	if corner == nil {
-		return nil, domain.ErrCornerNotFound
+		return nil, withErrorContext("corner.get_by_track", "validate_corner", domain.ErrCornerNotFound, map[string]any{"corner_id": string(track.CornerID()), "corner_found": false})
 	}
 	return corner, nil
 }
 
 // ModifyCornerSpecification
 func (s *CornerService) ModifyCornerSpecification(ctx context.Context, id domain.CornerID, name string) (*domain.Corner, error) {
+
 	corner, err := s.corners.Get(ctx, id)
 	if err != nil {
-		return nil, err
+		return nil, withErrorContext("corner.modify", "repository.get_corner", err, map[string]any{"corner_id": string(id)})
 	}
 	if corner == nil {
-		return nil, domain.ErrCornerNotInItinerary
+		return nil, withErrorContext("corner.modify", "validate_corner", domain.ErrCornerNotInItinerary, map[string]any{"corner_id": string(id), "corner_found": false})
 	}
 
 	corner.SetName(name) // assuming Name is modifiable
 
 	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
-		return s.corners.Save(ctx, corner)
+		if err := s.corners.Save(ctx, corner); err != nil {
+			return withErrorContext("corner.modify", "repository.save_corner", err, map[string]any{"corner_id": string(id)})
+		}
+		return nil
 	})
 
 	if err != nil {
-		s.recordAuditLog(ctx, "admin", ActionCornerUpdate, string(id), false, map[string]any{"error": err.Error()})
+		s.recordAuditLog(ctx, "admin", ActionCornerUpdate, string(id), false, errorAuditMetadata(err, nil))
 		return nil, err
 	}
 
@@ -148,9 +158,10 @@ func (s *CornerService) ModifyCornerSpecification(ctx context.Context, id domain
 
 // RemoveCornerFromCamp
 func (s *CornerService) RemoveCornerFromCamp(ctx context.Context, id domain.CornerID) error {
+
 	corner, err := s.corners.Get(ctx, id)
 	if err != nil {
-		return err
+		return withErrorContext("corner.remove", "repository.get_corner", err, map[string]any{"corner_id": string(id)})
 	}
 	if corner == nil {
 		return nil // already removed
@@ -158,16 +169,19 @@ func (s *CornerService) RemoveCornerFromCamp(ctx context.Context, id domain.Corn
 
 	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
 		if err := s.corners.SoftDelete(ctx, id, s.nowFn()); err != nil {
-			return err
+			return withErrorContext("corner.remove", "repository.soft_delete", err, map[string]any{"corner_id": string(id)})
 		}
-		return s.syncGroupItineraries(ctx, corner.CampID(), func(g *domain.Group) {
+		if err := s.syncGroupItineraries(ctx, corner.CampID(), func(g *domain.Group) {
 			g.RemoveCornerFromItinerary(id)
-		})
+		}); err != nil {
+			return withErrorContext("corner.remove", "domain.sync_itinerary", err, map[string]any{"corner_id": string(id)})
+		}
+		return nil
 	})
 
 	if err != nil {
-		s.recordAuditLog(ctx, "admin", ActionCornerDelete, string(id), false, map[string]any{"error": err.Error()})
-		return err
+		s.recordAuditLog(ctx, "admin", ActionCornerDelete, string(id), false, errorAuditMetadata(err, nil))
+		return err // D-2 allowed: already wrapped or handled
 	}
 
 	s.recordAuditLog(ctx, "admin", ActionCornerDelete, string(id), true, nil)
@@ -182,7 +196,7 @@ func (s *CornerService) RemoveCornerFromCamp(ctx context.Context, id domain.Corn
 func (s *CornerService) syncGroupItineraries(ctx context.Context, campID domain.CampID, mutate func(*domain.Group)) error {
 	groups, err := s.groups.ListByCampForUpdate(ctx, campID)
 	if err != nil {
-		return err
+		return err // D-2 allowed: already wrapped or handled
 	}
 	for _, g := range groups {
 		mutate(g)

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/labstack/echo/v4"
+	"cornermon/backend/internal/usecase"
 )
 
 func ErrorHandler() echo.HTTPErrorHandler {
@@ -60,6 +61,15 @@ func ErrorHandler() echo.HTTPErrorHandler {
 			slog.String("user_agent", c.Request().UserAgent()),
 			slog.String("error_msg", err.Error()),
 			slog.Any("error", err), // errs.SlogWrappedHandler가 AppError/stack_trace 추출에만 사용, 최종 출력에서는 제거됨
+		}
+
+		var operationErr *usecase.OperationError
+		if errors.As(err, &operationErr) {
+			commonAttrs = append(commonAttrs,
+				slog.String("operation", operationErr.Operation),
+				slog.String("stage", operationErr.Stage),
+				slog.Any("error_context", operationErr.Attributes),
+			)
 		}
 
 		if code >= 500 {

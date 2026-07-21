@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -72,7 +73,7 @@ func TestDeviceTrustService_RequestRegistration(t *testing.T) {
 		_, _, err := s.RequestRegistration(context.Background(), "UNKNOWN1", "iPad-1", "iPad Pro", "1번 태블릿")
 
 		// Assert
-		if err != domain.ErrCampNotFound {
+		if !errors.Is(err, domain.ErrCampNotFound) {
 			t.Fatalf("expected ErrCampNotFound, got %v", err)
 		}
 	})

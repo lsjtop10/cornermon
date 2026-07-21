@@ -54,12 +54,13 @@ func (s *GroupService) AssignBadge(
 	badgeID domain.BadgeID,
 	groupName string,
 ) (*domain.Group, error) {
+
 	badge, err := s.badges.Get(ctx, badgeID)
 	if err != nil {
-		return nil, err
+		return nil, withErrorContext("group.assign_badge", "repository.get_badge", err, map[string]any{"badge_id": string(badgeID)})
 	}
 	if badge == nil {
-		return nil, domain.ErrBadgeNotAssigned
+		return nil, withErrorContext("group.assign_badge", "validate_badge", domain.ErrBadgeNotAssigned, map[string]any{"badge_id": string(badgeID), "badge_found": false})
 	}
 
 	return s.registerBadge(ctx, badge, groupName)
@@ -72,33 +73,35 @@ func (s *GroupService) ScanAssignBadge(
 	qrPayload string,
 	groupName string,
 ) (*domain.Group, error) {
+
 	badge, err := s.badges.GetByQRPayload(ctx, qrPayload)
 	if err != nil {
-		return nil, err
+		return nil, withErrorContext("group.scan_assign_badge", "repository.get_badge", err, nil)
 	}
 	if badge == nil {
-		return nil, domain.ErrBadgeNotAssigned
+		return nil, withErrorContext("group.scan_assign_badge", "validate_badge", domain.ErrBadgeNotAssigned, map[string]any{"badge_found": false})
 	}
 
 	return s.registerBadge(ctx, badge, groupName)
 }
 
 func (s *GroupService) registerBadge(ctx context.Context, badge *domain.Badge, groupName string) (*domain.Group, error) {
+
 	camp, err := s.registrationCamp(ctx)
 	if err != nil {
-		return nil, err
+		return nil, withErrorContext("group.register_badge", "usecase.registration_camp", err, nil)
 	}
 	if camp == nil {
-		return nil, domain.ErrCampNotFound
+		return nil, withErrorContext("group.register_badge", "validate_camp", domain.ErrCampNotFound, map[string]any{"camp_found": false})
 	}
 	if badge.Status() == domain.BadgeAssigned {
-		return nil, domain.ErrBadgeAlreadyAssigned
+		return nil, withErrorContext("group.register_badge", "validate_badge_status", domain.ErrBadgeAlreadyAssigned, map[string]any{"badge_id": string(badge.ID()), "badge_status": string(badge.Status())})
 	}
 
 	campID := camp.ID()
 	corners, err := s.corners.ListByCamp(ctx, campID)
 	if err != nil {
-		return nil, err
+		return nil, withErrorContext("group.register_badge", "repository.list_corners", err, map[string]any{"camp_id": string(campID)})
 	}
 
 	var itinerary []domain.CornerProgress
@@ -119,18 +122,21 @@ func (s *GroupService) registerBadge(ctx context.Context, badge *domain.Badge, g
 	})
 
 	if err := badge.AssignTo(groupID); err != nil {
-		return nil, err
+		return nil, withErrorContext("group.register_badge", "domain.badge_assign", err, map[string]any{"badge_id": string(badge.ID()), "group_id": string(groupID)})
 	}
 
 	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
 		if err := s.groups.Save(ctx, group); err != nil {
-			return err
+			return withErrorContext("group.register_badge", "repository.save_group", err, map[string]any{"group_id": string(group.ID())})
 		}
-		return s.badges.Save(ctx, badge)
+		if err := s.badges.Save(ctx, badge); err != nil {
+			return withErrorContext("group.register_badge", "repository.save_badge", err, map[string]any{"badge_id": string(badge.ID())})
+		}
+		return nil
 	})
 
 	if err != nil {
-		s.recordAuditLog(ctx, "admin", ActionGroupCreate, "", false, map[string]any{"error": err.Error()})
+		s.recordAuditLog(ctx, "admin", ActionGroupCreate, "", false, errorAuditMetadata(err, nil))
 		return nil, err
 	}
 
@@ -139,9 +145,10 @@ func (s *GroupService) registerBadge(ctx context.Context, badge *domain.Badge, g
 }
 
 func (s *GroupService) registrationCamp(ctx context.Context) (*domain.Camp, error) {
+
 	camps, err := s.camps.List(ctx)
 	if err != nil {
-		return nil, err
+		return nil, withErrorContext("group.registration_camp", "repository.list_camps", err, nil)
 	}
 
 	var pendingCamp *domain.Camp
@@ -175,20 +182,21 @@ func (s *GroupService) ListGroupsByTrack(
 	ctx context.Context,
 	trackID domain.TrackID,
 ) ([]*domain.Group, error) {
+
 	track, err := s.tracks.Get(ctx, trackID)
 	if err != nil {
-		return nil, err
+		return nil, withErrorContext("group.list_groups_by_track", "repository.get_track", err, map[string]any{"track_id": string(trackID)})
 	}
 	if track == nil {
-		return nil, domain.ErrTrackNotFound
+		return nil, withErrorContext("group.list_groups_by_track", "validate_track", domain.ErrTrackNotFound, map[string]any{"track_id": string(trackID), "track_found": false})
 	}
 
 	corner, err := s.corners.Get(ctx, track.CornerID())
 	if err != nil {
-		return nil, err
+		return nil, withErrorContext("group.list_groups_by_track", "repository.get_corner", err, map[string]any{"corner_id": string(track.CornerID())})
 	}
 	if corner == nil {
-		return nil, domain.ErrCornerNotFound
+		return nil, withErrorContext("group.list_groups_by_track", "validate_corner", domain.ErrCornerNotFound, map[string]any{"corner_id": string(track.CornerID()), "corner_found": false})
 	}
 
 	return s.ListGroups(ctx, corner.CampID())
@@ -254,22 +262,23 @@ type GroupVisitDetail struct {
 
 // ListGroupVisitDetails
 func (s *GroupService) ListGroupVisitDetails(ctx context.Context, groupID domain.GroupID) ([]GroupVisitDetail, error) {
+
 	group, err := s.groups.Get(ctx, groupID)
 	if err != nil {
-		return nil, err
+		return nil, withErrorContext("group.list_visit_details", "repository.get_group", err, map[string]any{"group_id": string(groupID)})
 	}
 	if group == nil {
-		return nil, domain.ErrCornerNotInItinerary // map to not found
+		return nil, withErrorContext("group.list_visit_details", "validate_group", domain.ErrCornerNotInItinerary, map[string]any{"group_id": string(groupID), "group_found": false})
 	}
 
 	visits, err := s.visits.ListByGroup(ctx, groupID)
 	if err != nil {
-		return nil, err
+		return nil, withErrorContext("group.list_visit_details", "repository.list_visits", err, map[string]any{"group_id": string(groupID)})
 	}
 
 	corners, err := s.corners.ListByCamp(ctx, group.CampID())
 	if err != nil {
-		return nil, err
+		return nil, withErrorContext("group.list_visit_details", "repository.list_corners", err, map[string]any{"camp_id": string(group.CampID())})
 	}
 
 	cornerMap := make(map[domain.CornerID]*domain.Corner)
