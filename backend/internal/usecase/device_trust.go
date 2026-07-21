@@ -125,18 +125,18 @@ func (s *DeviceTrustService) ApproveDevice(
 	ctx context.Context,
 	regID domain.DeviceRegistrationID,
 	actorAdminID domain.AdminID,
-) error {
+) (*domain.DeviceRegistration, error) {
 	now := s.nowFn()
 	device, err := s.devices.Get(ctx, regID)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if device == nil {
-		return domain.ErrDeviceInvalidTransition
+		return nil, domain.ErrDeviceInvalidTransition
 	}
 
 	if err := device.Approve(now); err != nil {
-		return err
+		return nil, err
 	}
 
 	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
@@ -145,12 +145,12 @@ func (s *DeviceTrustService) ApproveDevice(
 
 	if err != nil {
 		s.recordAuditLog(ctx, string(actorAdminID), ActionDeviceApproved, string(regID), false, map[string]any{"error": err.Error()})
-		return err
+		return nil, err
 	}
 
 	s.recordAuditLog(ctx, string(actorAdminID), ActionDeviceApproved, string(regID), true, nil)
 	_ = s.broadcaster.Broadcast(ctx, device.CampID(), EventDeviceRegistrationUpdated, CampScope())
-	return nil
+	return device, nil
 }
 
 // RejectDevice - UC-14 (거부)
@@ -158,17 +158,17 @@ func (s *DeviceTrustService) RejectDevice(
 	ctx context.Context,
 	regID domain.DeviceRegistrationID,
 	actorAdminID domain.AdminID,
-) error {
+) (*domain.DeviceRegistration, error) {
 	device, err := s.devices.Get(ctx, regID)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if device == nil {
-		return domain.ErrDeviceInvalidTransition
+		return nil, domain.ErrDeviceInvalidTransition
 	}
 
 	if err := device.Reject(); err != nil {
-		return err
+		return nil, err
 	}
 
 	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
@@ -177,12 +177,12 @@ func (s *DeviceTrustService) RejectDevice(
 
 	if err != nil {
 		s.recordAuditLog(ctx, string(actorAdminID), ActionDeviceRejected, string(regID), false, map[string]any{"error": err.Error()})
-		return err
+		return nil, err
 	}
 
 	s.recordAuditLog(ctx, string(actorAdminID), ActionDeviceRejected, string(regID), true, nil)
 	_ = s.broadcaster.Broadcast(ctx, device.CampID(), EventDeviceRegistrationUpdated, CampScope())
-	return nil
+	return device, nil
 }
 
 // RevokeDevice - UC-15
@@ -190,17 +190,17 @@ func (s *DeviceTrustService) RevokeDevice(
 	ctx context.Context,
 	regID domain.DeviceRegistrationID,
 	actorAdminID domain.AdminID,
-) error {
+) (*domain.DeviceRegistration, error) {
 	device, err := s.devices.Get(ctx, regID)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if device == nil {
-		return domain.ErrDeviceNotApproved
+		return nil, domain.ErrDeviceNotApproved
 	}
 
 	if err := device.Revoke(); err != nil {
-		return err
+		return nil, err
 	}
 
 	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
@@ -209,12 +209,12 @@ func (s *DeviceTrustService) RevokeDevice(
 
 	if err != nil {
 		s.recordAuditLog(ctx, string(actorAdminID), ActionDeviceRevoked, string(regID), false, map[string]any{"error": err.Error()})
-		return err
+		return nil, err
 	}
 
 	s.recordAuditLog(ctx, string(actorAdminID), ActionDeviceRevoked, string(regID), true, nil)
 	_ = s.broadcaster.Broadcast(ctx, device.CampID(), EventDeviceRegistrationUpdated, CampScope())
-	return nil
+	return device, nil
 }
 
 // ResetPinFailures - UC-16
