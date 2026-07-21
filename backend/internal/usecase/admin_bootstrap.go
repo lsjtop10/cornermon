@@ -17,7 +17,7 @@ import (
 func BootstrapAdmin(ctx context.Context, admins AdminRepository, username, password string, uuidFn func() string) error {
 	count, err := admins.Count(ctx)
 	if err != nil {
-		return err
+		return err // D-2 allowed: already wrapped or handled
 	}
 	if count > 0 {
 		return nil
@@ -27,7 +27,7 @@ func BootstrapAdmin(ctx context.Context, admins AdminRepository, username, passw
 	}
 	passwordHash, err := hashPassword(password)
 	if err != nil {
-		return err
+		return err // D-2 allowed: already wrapped or handled
 	}
 	return admins.Save(ctx, domain.NewAdminFromProps(domain.AdminProps{
 		ID:           domain.AdminID(uuidFn()),

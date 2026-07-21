@@ -81,11 +81,11 @@ func mapDomainCornerToDTO(corner *domain.Corner) CornerResponse {
 func (h *CornerHandler) ListCorners(c echo.Context) error {
 	campID := domain.CampID(c.Param("campId"))
 	if campID == "" {
-		return echo.NewHTTPError(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: "campId is required"})
+		return echo.NewHTTPError(http.StatusBadRequest, ErrorResponse{Code: CodeBadRequest, Message: "campId is required"})
 	}
 	views, err := h.views.ListCornerViewsByCamp(c.Request().Context(), campID)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_ERROR", Message: err.Error()}).SetInternal(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: CodeInternalError, Message: err.Error()}).SetInternal(err)
 	}
 	res := make([]CornerResponse, len(views))
 	for i, view := range views {
@@ -115,7 +115,7 @@ type CreateCornerRequest struct {
 func (h *CornerHandler) CreateCorner(c echo.Context) error {
 	var req CreateCornerRequest
 	if err := c.Bind(&req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: "Invalid request body"}).SetInternal(err)
+		return echo.NewHTTPError(http.StatusBadRequest, ErrorResponse{Code: CodeBadRequest, Message: "Invalid request body"}).SetInternal(err)
 	}
 	corner, err := h.svc.AddLearningCorner(c.Request().Context(), domain.CampID(req.CampID), req.Name)
 	if err != nil {
@@ -159,20 +159,20 @@ func (h *CornerHandler) GetCorner(c echo.Context) error {
 func (h *CornerHandler) GetCornerByTrack(c echo.Context) error {
 	session, ok := c.Get("facilitatorSession").(*domain.FacilitatorSession)
 	if !ok {
-		return echo.NewHTTPError(http.StatusUnauthorized, ErrorResponse{Code: "UNAUTHORIZED", Message: "unauthorized"})
+		return echo.NewHTTPError(http.StatusUnauthorized, ErrorResponse{Code: CodeUnauthorized, Message: "unauthorized"})
 	}
 
 	trackID := domain.TrackID(c.Param("trackId"))
 	if session.TrackID() != trackID {
-		return echo.NewHTTPError(http.StatusForbidden, ErrorResponse{Code: "FORBIDDEN", Message: domain.ErrTrackScopeForbidden.Error()}).SetInternal(domain.ErrTrackScopeForbidden)
+		return echo.NewHTTPError(http.StatusForbidden, ErrorResponse{Code: CodeForbidden, Message: domain.ErrTrackScopeForbidden.Error()}).SetInternal(domain.ErrTrackScopeForbidden)
 	}
 
 	corner, err := h.svc.GetCornerByTrack(c.Request().Context(), trackID)
 	if err != nil {
 		if errors.Is(err, domain.ErrTrackNotFound) || errors.Is(err, domain.ErrCornerNotFound) {
-			return echo.NewHTTPError(http.StatusNotFound, ErrorResponse{Code: "NOT_FOUND", Message: err.Error()}).SetInternal(err)
+			return echo.NewHTTPError(http.StatusNotFound, ErrorResponse{Code: CodeNotFound, Message: err.Error()}).SetInternal(err)
 		}
-		return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_ERROR", Message: err.Error()}).SetInternal(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: CodeInternalError, Message: err.Error()}).SetInternal(err)
 	}
 	return c.JSON(http.StatusOK, mapDomainCornerToDTO(corner))
 }
@@ -219,7 +219,7 @@ type BulkUpdateCornersRequest struct {
 func (h *CornerHandler) BulkUpdateCorners(c echo.Context) error {
 	var req BulkUpdateCornersRequest
 	if err := c.Bind(&req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: "Invalid request body"}).SetInternal(err)
+		return echo.NewHTTPError(http.StatusBadRequest, ErrorResponse{Code: CodeBadRequest, Message: "Invalid request body"}).SetInternal(err)
 	}
 	res := make([]CornerResponse, len(req.Corners))
 	for i, cr := range req.Corners {
@@ -235,9 +235,9 @@ func (h *CornerHandler) BulkUpdateCorners(c echo.Context) error {
 func cornerHTTPError(err error) error {
 	switch {
 	case errors.Is(err, domain.ErrCornerNotFound), errors.Is(err, domain.ErrCornerNotInItinerary):
-		return echo.NewHTTPError(http.StatusNotFound, ErrorResponse{Code: "CORNER_NOT_FOUND", Message: "corner not found"}).SetInternal(err)
+		return echo.NewHTTPError(http.StatusNotFound, ErrorResponse{Code: CodeCornerNotFound, Message: "corner not found"}).SetInternal(err)
 	case errors.Is(err, domain.ErrCampInvalidTransition), errors.Is(err, domain.ErrCampSettingsLocked):
-		return echo.NewHTTPError(http.StatusConflict, ErrorResponse{Code: "CAMP_STATE_CONFLICT", Message: "camp cannot modify corners in its current state"}).SetInternal(err)
+		return echo.NewHTTPError(http.StatusConflict, ErrorResponse{Code: CodeCampStateConflict, Message: "camp cannot modify corners in its current state"}).SetInternal(err)
 	default:
 		return err
 	}

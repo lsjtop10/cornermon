@@ -5,6 +5,7 @@
 
 // ignore_for_file: unused_element
 import 'package:built_collection/built_collection.dart';
+import 'package:cornermon_api_gen/src/model/error_code.dart';
 import 'package:built_value/json_object.dart';
 import 'package:built_value/built_value.dart';
 import 'package:built_value/serializer.dart';
@@ -20,7 +21,8 @@ part 'error_response.g.dart';
 @BuiltValue()
 abstract class ErrorResponse implements Built<ErrorResponse, ErrorResponseBuilder> {
   @BuiltValueField(wireName: r'code')
-  String? get code;
+  ErrorCode? get code;
+  // enum codeEnum {  BADGE_ALREADY_ASSIGNED,  BADGE_NOT_ASSIGNED,  BADGE_NOT_FOUND,  BAD_REQUEST,  CAMP_INVALID_SETTINGS,  CAMP_NOT_ACTIVE,  CAMP_NOT_AVAILABLE,  CAMP_NOT_ENDED,  CAMP_NOT_FOUND,  CAMP_SETTINGS_LOCKED,  CAMP_STATE_CONFLICT,  CONFLICT,  CORNER_NOT_FOUND,  DEVICE_INVALID_TRANSITION,  DEVICE_LOCKED,  DEVICE_NOT_APPROVED,  FORBIDDEN,  GROUP_NOT_FOUND,  HTTP_ERROR,  INTERNAL_ERROR,  INTERNAL_SERVER_ERROR,  INVALID_PIN,  INVALID_TRANSITION,  ITINERARY_CONFLICT,  NOT_FOUND,  SESSION_REVOKED,  TRACK_BUSY,  TRACK_CONFLICT,  TRACK_NOT_ACTIVE,  TRACK_NOT_BUSY,  TRACK_NOT_FOUND,  TRACK_SCOPE_FORBIDDEN,  UNAUTHORIZED,  };
 
   @BuiltValueField(wireName: r'details')
   BuiltMap<String, JsonObject?>? get details;
@@ -55,7 +57,7 @@ class _$ErrorResponseSerializer implements PrimitiveSerializer<ErrorResponse> {
       yield r'code';
       yield serializers.serialize(
         object.code,
-        specifiedType: const FullType(String),
+        specifiedType: const FullType(ErrorCode),
       );
     }
     if (object.details != null) {
@@ -98,8 +100,8 @@ class _$ErrorResponseSerializer implements PrimitiveSerializer<ErrorResponse> {
         case r'code':
           final valueDes = serializers.deserialize(
             value,
-            specifiedType: const FullType(String),
-          ) as String;
+            specifiedType: const FullType(ErrorCode),
+          ) as ErrorCode;
           result.code = valueDes;
           break;
         case r'details':

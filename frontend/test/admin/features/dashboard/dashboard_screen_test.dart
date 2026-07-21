@@ -26,6 +26,7 @@ CornerResponse _corner(
   String name,
   CornerResponseStatusEnum status, {
   bool bottleneck = false,
+  bool hasBusyTrack = false,
 }) => CornerResponse(
   (b) => b
     ..id = id
@@ -39,6 +40,21 @@ CornerResponse _corner(
           ..avgDurationSeconds = 640
           ..sampleCount = 10,
       ),
+    )
+    ..activeTracks.replace(
+      hasBusyTrack
+          ? [
+              TrackSummaryResponse(
+                (track) => track
+                  ..id = '$id-track'
+                  ..cornerId = id
+                  ..trackNo = 1
+                  ..status = TrackSummaryResponseStatusEnum.ACTIVE
+                  ..operationalStatus =
+                      TrackSummaryResponseOperationalStatusEnum.BUSY,
+              ),
+            ]
+          : const <TrackSummaryResponse>[],
     ),
 );
 
@@ -55,13 +71,16 @@ Future<void> _pumpDashboard(
   required CampId campId,
   required List<CornerResponse> corners,
   CampSummaryStatsResponse? summary,
+  List<String>? deletedCornerIds,
+  List<String>? createdCornerNames,
+  CornerResponse? createdCorner,
 }) async {
   final router = GoRouter(
     initialLocation: '/dashboard',
     routes: [
       GoRoute(path: '/dashboard', builder: (_, _) => const DashboardScreen()),
       GoRoute(
-        path: '/corners/:cornerId',
+        path: '/dashboard/corners/:cornerId',
         builder: (_, state) =>
             Text('corner ${state.pathParameters['cornerId']}'),
       ),
@@ -96,6 +115,19 @@ Future<void> _pumpDashboard(
           campId,
         ).overrideWith((ref) async => summary ?? _summary()),
         trackDirectSummariesProvider(campId).overrideWith((ref) async => []),
+        if (deletedCornerIds != null)
+          for (final corner in corners)
+            deleteCornerProvider(CornerId(corner.id!)).overrideWith((
+              ref,
+            ) async {
+              deletedCornerIds.add(corner.id!);
+            }),
+        if (createdCornerNames != null)
+          createCornerProvider(campId, '새 코너', 10).overrideWith((ref) async {
+            createdCornerNames.add('새 코너');
+            return createdCorner ??
+                CornerResponse((b) => b..id = 'new-corner');
+          }),
       ],
       child: MaterialApp.router(routerConfig: router),
     ),
@@ -342,7 +374,8 @@ void main() {
 
       // assert
       expect(find.text('아직 생성된 코너가 없습니다'), findsOneWidget);
-      expect(find.text('코너·트랙 관리'), findsOneWidget);
+      // 컨트롤 바의 상시 버튼 + 빈 상태 CTA, 총 2개가 보여야 한다
+      expect(find.text('코너 추가'), findsNWidgets(2));
     });
 
     testWidgets('ShoudNavigateWhenDashboardActionsAreTapped', (tester) async {
@@ -367,7 +400,7 @@ void main() {
         campId: campId,
         corners: [_corner('corner-1', '코너 1', CornerResponseStatusEnum.BUSY)],
       );
-      await tester.tap(find.text('트랙 일괄 관리 →'));
+      await tester.tap(find.text('트랙별 보기 →'));
       await tester.pumpAndSettle();
       expect(find.text('manage'), findsOneWidget);
 
@@ -379,6 +412,86 @@ void main() {
       await tester.tap(find.text('공지 발송'));
       await tester.pumpAndSettle();
       expect(find.text('broadcast'), findsOneWidget);
+    });
+
+    testWidgets('ShouldCreateCornerWhenAddCornerDialogConfirmed', (
+      tester,
+    ) async {
+      // arrange
+      final campId = CampId('camp-1');
+      final createdNames = <String>[];
+      await _pumpDashboard(
+        tester,
+        campId: campId,
+        corners: const [],
+        createdCornerNames: createdNames,
+      );
+
+      // act: 컨트롤 바의 '코너 추가' 버튼(빈 상태 CTA가 아닌 첫 번째)을 눌러 이름을
+      // 입력하고 저장한다
+      await tester.tap(find.text('코너 추가').first);
+      await tester.pumpAndSettle();
+      await tester.enterText(find.widgetWithText(TextField, '코너 이름'), '새 코너');
+      await tester.tap(find.text('추가'));
+      await tester.pumpAndSettle();
+
+      // assert: createCornerProvider(campId, '새 코너', 10)가 호출됨
+      expect(createdNames, ['새 코너']);
+    });
+
+    testWidgets(
+      'ShouldDeleteCornerWhenDeleteIconConfirmedAndBlockWhenBusy',
+      (tester) async {
+        // arrange: corner-1은 IDLE 트랙만 있어 삭제 가능, corner-2는 BUSY 트랙이 있어
+        // 하드 블록 대상이다
+        final campId = CampId('camp-1');
+        final deletedIds = <String>[];
+        await _pumpDashboard(
+          tester,
+          campId: campId,
+          corners: [
+            _corner('corner-1', '코너 1', CornerResponseStatusEnum.IDLE),
+            _corner(
+              'corner-2',
+              '코너 2',
+              CornerResponseStatusEnum.BUSY,
+              hasBusyTrack: true,
+            ),
+          ],
+          deletedCornerIds: deletedIds,
+        );
+
+        // act: BUSY 트랙이 있는 코너는 하드 블록 모달만 뜨고 삭제되지 않아야 한다
+        final deleteButtons = find.byIcon(Icons.delete_outline);
+        expect(deleteButtons, findsNWidgets(2));
+        await tester.tap(deleteButtons.at(1));
+        await tester.pumpAndSettle();
+        expect(find.text('작업할 수 없습니다'), findsOneWidget);
+        await tester.tap(find.text('확인'));
+        await tester.pumpAndSettle();
+        expect(deletedIds, isEmpty);
+
+        // act: IDLE 트랙만 있는 코너는 소프트 확인 후 삭제된다
+        await tester.tap(deleteButtons.at(0));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('진행'));
+        await tester.pumpAndSettle();
+
+        // assert
+        expect(deletedIds, ['corner-1']);
+      },
+    );
+
+    testWidgets('ShouldShowExportAllPinsActionInAppBar', (tester) async {
+      // arrange
+      await _pumpDashboard(
+        tester,
+        campId: CampId('camp-1'),
+        corners: [_corner('corner-1', '코너 1', CornerResponseStatusEnum.BUSY)],
+      );
+
+      // assert: 전체 PIN 내보내기 액션이 대시보드 앱바로 옮겨와 있어야 한다
+      expect(find.text('전체 PIN 내보내기'), findsOneWidget);
     });
 
     testWidgets('ShoudRefreshCornerAndSummaryProvidersWhenPulled', (

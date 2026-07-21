@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -139,7 +140,7 @@ func TestVisitService_StartVisitByQR(t *testing.T) {
 		_, err := s.StartVisitByQR(context.Background(), sessionToken, "qr-payload-1")
 
 		// Assert
-		if err != domain.ErrSessionRevoked {
+		if !errors.Is(err, domain.ErrSessionRevoked) {
 			t.Errorf("expected ErrSessionRevoked, got %v", err)
 		}
 	})
@@ -199,7 +200,7 @@ func TestVisitService_StartVisitByQR(t *testing.T) {
 		_, err := s.StartVisitByQR(context.Background(), sessionToken, "qr-payload-1")
 
 		// Assert
-		if err != domain.ErrTrackBusy {
+		if !errors.Is(err, domain.ErrTrackBusy) {
 			t.Errorf("expected ErrTrackBusy, got %v", err)
 		}
 	})
@@ -320,7 +321,7 @@ func TestVisitService_CompleteVisit(t *testing.T) {
 		_, err := s.CompleteVisit(context.Background(), sessionToken)
 
 		// Assert
-		if err != domain.ErrTrackNotBusy {
+		if !errors.Is(err, domain.ErrTrackNotBusy) {
 			t.Errorf("expected ErrTrackNotBusy, got %v", err)
 		}
 	})

@@ -41,7 +41,7 @@ final class PinLoginErrorProvider
   }
 }
 
-String _$pinLoginErrorHash() => r'430abc3709211ca28e20ab1dbe19935fd5c5a4e5';
+String _$pinLoginErrorHash() => r'4a03372f47ad6502a8a4a29fc4d1e1edc69f5944';
 
 abstract class _$PinLoginError extends $Notifier<PinLoginUiError?> {
   PinLoginUiError? build();

@@ -273,14 +273,16 @@ type ReportQuerier interface {
 
 // CampReport는 캠프 전체 결과 집계 DTO입니다.
 type CampReport struct {
-	CampID          domain.CampID
-	TotalGroups     int
-	FinishedGroups  int
-	TotalVisits     int
-	CompletedVisits int
-	ManualVisits    int
-	CornerReports   []CornerReport
-	GroupReports    []GroupReport
+	CampID             domain.CampID
+	TotalGroups        int
+	FinishedGroups     int
+	TotalVisits        int
+	CompletedVisits    int
+	ManualVisits       int
+	ProgramDurationSec int     // 첫 방문 started_at ~ 캠프 종료 선언 시각(진행 중이면 현재 시각)
+	AvgDeviationSec    float64 // 모든 COMPLETED 방문의 (실제 소요시간 - 목표시간) 평균
+	CornerReports      []CornerReport
+	GroupReports       []GroupReport
 }
 
 // CornerReport는 코너별 분석 집계 DTO입니다.
@@ -297,11 +299,12 @@ type CornerReport struct {
 
 // GroupReport는 조별 분석 집계 DTO입니다.
 type GroupReport struct {
-	GroupID        domain.GroupID
-	GroupName      string
-	IsFinished     bool
-	CompletedCount int
-	VisitDetails   []VisitDetail
+	GroupID          domain.GroupID
+	GroupName        string
+	IsFinished       bool
+	CompletedCount   int
+	TotalDurationSec int // 완료한 모든 방문의 소요시간 합
+	VisitDetails     []VisitDetail
 }
 
 // VisitDetail은 조의 코너별 방문 상세 정보 DTO입니다.

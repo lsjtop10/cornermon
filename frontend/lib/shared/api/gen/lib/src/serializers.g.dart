@@ -1,6 +1,5 @@
 // @dart=2.18
 // GENERATED CODE - DO NOT MODIFY BY HAND
-// @dart=2.18
 
 part of 'serializers.dart';
 
@@ -50,8 +49,10 @@ Serializers _$serializers = (Serializers().toBuilder()
       ..add(DeviceRegistrationResponse.serializer)
       ..add(DeviceRegistrationResponseStatusEnum.serializer)
       ..add(DeviceStatusResponse.serializer)
+      ..add(DeviceStatusResponseCampStatusEnum.serializer)
       ..add(DeviceStatusResponseStatusEnum.serializer)
       ..add(DirectMessageRequest.serializer)
+      ..add(ErrorCode.serializer)
       ..add(ErrorResponse.serializer)
       ..add(ExportBadgesResponse.serializer)
       ..add(ExportTracksResponse.serializer)

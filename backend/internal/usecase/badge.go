@@ -37,6 +37,7 @@ func NewBadgeService(
 
 // IssueInitialBadges
 func (s *BadgeService) IssueInitialBadges(ctx context.Context, count int) ([]*domain.Badge, error) {
+
 	var badges []*domain.Badge
 	for i := 0; i < count; i++ {
 		uid := s.uuidFn()
@@ -50,11 +51,14 @@ func (s *BadgeService) IssueInitialBadges(ctx context.Context, count int) ([]*do
 	}
 
 	err := s.tx.RunInTx(ctx, func(ctx context.Context) error {
-		return s.badges.SaveBulk(ctx, badges)
+		if err := s.badges.SaveBulk(ctx, badges); err != nil {
+			return withErrorContext("badge.issue_initial", "repository.save_bulk", err, map[string]any{"count": count})
+		}
+		return nil
 	})
 
 	if err != nil {
-		s.recordAuditLog(ctx, "admin", ActionBadgeBulkGenerate, "", false, map[string]any{"error": err.Error()})
+		s.recordAuditLog(ctx, "admin", ActionBadgeBulkGenerate, "", false, errorAuditMetadata(err, nil))
 		return nil, err
 	}
 
@@ -70,9 +74,10 @@ func (s *BadgeService) ListBadges(ctx context.Context) ([]*domain.Badge, error) 
 
 // ExportBadges returns unassigned badges for client printing
 func (s *BadgeService) ExportBadges(ctx context.Context) ([]*domain.Badge, error) {
+
 	badges, err := s.badges.ListAll(ctx)
 	if err != nil {
-		return nil, err
+		return nil, withErrorContext("badge.export", "repository.list_badges", err, nil)
 	}
 
 	var unassigned []*domain.Badge
@@ -111,55 +116,55 @@ func (s *BadgeService) assignBadgeInternal(
 	err := s.tx.RunInTx(ctx, func(ctx context.Context) error {
 		group, err := s.groups.Get(ctx, groupID)
 		if err != nil {
-			return err
+			return err // D-2 allowed: already wrapped or handled
 		}
 		if group == nil {
-			return domain.ErrCornerNotInItinerary // map to not found group
+			return domain.ErrCornerNotInItinerary // D-2 allowed: will be wrapped by tx.run outside
 		}
 
 		targetBadge, err = getBadgeFn(ctx)
 		if err != nil {
-			return err
+			return err // D-2 allowed: already wrapped or handled
 		}
 		if targetBadge == nil {
-			return domain.ErrBadgeNotAssigned // map to not found
+			return domain.ErrBadgeNotAssigned // D-2 allowed: will be wrapped by tx.run outside
 		}
 
 		if targetBadge.Status() == domain.BadgeAssigned {
-			return domain.ErrBadgeAlreadyAssigned
+			return domain.ErrBadgeAlreadyAssigned // D-2 allowed: will be wrapped by tx.run outside
 		}
 
 		// Release old badge if group already has one
 		if string(group.BadgeID()) != "" && string(group.BadgeID()) != string(targetBadge.ID()) {
 			oldBadge, err := s.badges.Get(ctx, group.BadgeID())
 			if err != nil {
-				return err
+				return err // D-2 allowed: already wrapped or handled
 			}
 			if oldBadge != nil {
 				_ = oldBadge.Release()
 				if err := s.badges.Save(ctx, oldBadge); err != nil {
-					return err
+					return err // D-2 allowed: already wrapped or handled
 				}
 			}
 		}
 
 		if err := targetBadge.AssignTo(groupID); err != nil {
-			return err
+			return err // D-2 allowed: already wrapped or handled
 		}
 		group.SetBadgeID(targetBadge.ID())
 
 		if err := s.badges.Save(ctx, targetBadge); err != nil {
-			return err
+			return err // D-2 allowed: already wrapped or handled
 		}
 		if err := s.groups.Save(ctx, group); err != nil {
-			return err
+			return err // D-2 allowed: already wrapped or handled
 		}
 
 		return nil
 	})
 
 	if err != nil {
-		s.recordAuditLog(ctx, "admin", ActionBadgeAssign, string(groupID), false, map[string]any{"error": err.Error()})
+		s.recordAuditLog(ctx, "admin", ActionBadgeAssign, string(groupID), false, errorAuditMetadata(err, nil))
 		return nil, err
 	}
 

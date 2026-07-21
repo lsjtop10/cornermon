@@ -36,6 +36,7 @@ func TestCalculateCampReport(t *testing.T) {
 		}
 
 		now := time.Now()
+		dbCamp := db.Camp{ID: "camp-1", EndedAt: pgtype.Timestamptz{Time: now, Valid: true}}
 		dbVisits := []db.ListVisitsByCampRow{
 			{
 				ID:            "visit-1",
@@ -76,7 +77,7 @@ func TestCalculateCampReport(t *testing.T) {
 		}
 
 		// Act
-		report, err := calculateCampReport(campID, dbGroups, dbCorners, dbVisits)
+		report, err := calculateCampReport(campID, dbCamp, dbGroups, dbCorners, dbVisits, now)
 
 		// Assert
 		if err != nil {
@@ -101,6 +102,28 @@ func TestCalculateCampReport(t *testing.T) {
 		}
 		if report.ManualVisits != 1 {
 			t.Errorf("expected ManualVisits 1, got %d", report.ManualVisits)
+		}
+
+		// visit-1 deviation 0, visit-2 (20min dur - 15min target) = +300, visit-3 (8min dur - 10min target) = -120
+		// avg = (0 + 300 - 120) / 3 = 60
+		if report.AvgDeviationSec != 60 {
+			t.Errorf("expected AvgDeviationSec 60, got %f", report.AvgDeviationSec)
+		}
+
+		// earliest visit start is visit-2 at now-20min, camp ended at `now` -> 20min = 1200s
+		if report.ProgramDurationSec != 1200 {
+			t.Errorf("expected ProgramDurationSec 1200, got %d", report.ProgramDurationSec)
+		}
+
+		var g1Report usecase.GroupReport
+		for _, gr := range report.GroupReports {
+			if gr.GroupID == "group-1" {
+				g1Report = gr
+			}
+		}
+		// group-1: visit-1 duration 600s + visit-2 duration 1080s = 1680s
+		if g1Report.TotalDurationSec != 1680 {
+			t.Errorf("expected group-1 TotalDurationSec 1680, got %d", g1Report.TotalDurationSec)
 		}
 
 		var c1Report usecase.CornerReport
@@ -140,6 +163,7 @@ func TestCalculateCampReport(t *testing.T) {
 		}
 
 		now := time.Now()
+		dbCamp := db.Camp{ID: "camp-2", EndedAt: pgtype.Timestamptz{Time: now, Valid: true}}
 		dbVisits := []db.ListVisitsByCampRow{
 			{
 				ID: "visit-4", GroupID: "group-3", CornerID: "corner-3", TrackID: "track-3",
@@ -165,7 +189,7 @@ func TestCalculateCampReport(t *testing.T) {
 		}
 
 		// Act
-		report, err := calculateCampReport(campID, dbGroups, dbCorners, dbVisits)
+		report, err := calculateCampReport(campID, dbCamp, dbGroups, dbCorners, dbVisits, now)
 
 		// Assert
 		if err != nil {

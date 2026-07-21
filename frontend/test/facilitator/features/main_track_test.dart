@@ -12,6 +12,7 @@ import 'package:cornermon/shared/api/providers/group_providers.dart';
 import 'package:cornermon/shared/api/providers/visit_providers.dart';
 import 'package:cornermon/shared/api/sse/track_event_stream.dart';
 import 'package:cornermon/shared/design_system/tokens/colors.dart';
+import 'package:cornermon/shared/design_system/tokens/spacing.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -104,7 +105,9 @@ void main() {
           onVisitEnded: onVisitEnded,
         ),
         overrides: [
-          groupDetailProvider(groupId).overrideWith((ref) => fakeGroup()),
+          trackScopedGroupsProvider(
+            trackId,
+          ).overrideWith((ref) => [fakeGroup()]),
           visitActionsProvider(trackId).overrideWith(() => fakeActions),
         ],
       );
@@ -294,7 +297,12 @@ void main() {
 
       await tester.pumpWidget(
         buildTestable(
-          const MainTrackScreen(),
+          MediaQuery(
+            data: const MediaQueryData(
+              padding: EdgeInsets.only(top: 24.0),
+            ),
+            child: const MainTrackScreen(),
+          ),
           overrides: [
             trackSessionProvider.overrideWith(() => _FakeTrackSession(authenticatedState)),
             currentVisitProvider(trackId).overrideWith((ref) => null),
@@ -321,6 +329,9 @@ void main() {
       expect(find.text('3번 트랙'), findsOneWidget);
       expect(find.text('스캔 시작'), findsOneWidget);
       expect(find.text('수동으로 처리'), findsOneWidget);
+
+      final headerTopLeft = tester.getTopLeft(find.byType(MainTrackHeader));
+      expect(headerTopLeft.dy, AppSpacing.space2 + 24.0);
     });
   });
 }
