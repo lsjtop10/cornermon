@@ -237,12 +237,12 @@ func (s *CampService) EndCamp(
 	}
 
 	s.recordAuditLog(ctx, string(actorAdminID), ActionCampEnd, string(campID), true, nil)
+	_ = s.broadcaster.Broadcast(ctx, campID, EventCampEnded, CampScope())
 	_ = s.broadcaster.Broadcast(ctx, campID, EventCampUpdated, CampScope())
 	_ = s.broadcaster.Broadcast(ctx, campID, EventDeviceRegistrationUpdated, CampScope())
 	_ = s.broadcaster.Broadcast(ctx, campID, EventCornersUpdated, CampScope())
 	_ = s.broadcaster.Broadcast(ctx, campID, EventGroupsUpdated, CampScope())
 	_ = s.broadcaster.Broadcast(ctx, campID, EventTracksUpdated, CampScope())
-	_ = s.broadcaster.Broadcast(ctx, campID, EventCampEnded, CampScope())
 
 	return nil
 }

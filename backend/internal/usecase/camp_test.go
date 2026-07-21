@@ -197,12 +197,12 @@ func TestCampService_EndCamp(t *testing.T) {
 		}
 
 		if len(broadcaster.Broadcasts) != 6 ||
-			broadcaster.Broadcasts[0].Event != EventCampUpdated || broadcaster.Broadcasts[0].Scope != CampScope() ||
-			broadcaster.Broadcasts[1].Event != EventDeviceRegistrationUpdated ||
-			broadcaster.Broadcasts[2].Event != EventCornersUpdated ||
-			broadcaster.Broadcasts[3].Event != EventGroupsUpdated ||
-			broadcaster.Broadcasts[4].Event != EventTracksUpdated ||
-			broadcaster.Broadcasts[5].Event != EventCampEnded || broadcaster.Broadcasts[5].Scope != CampScope() {
+			broadcaster.Broadcasts[0].Event != EventCampEnded || broadcaster.Broadcasts[0].Scope != CampScope() ||
+			broadcaster.Broadcasts[1].Event != EventCampUpdated ||
+			broadcaster.Broadcasts[2].Event != EventDeviceRegistrationUpdated ||
+			broadcaster.Broadcasts[3].Event != EventCornersUpdated ||
+			broadcaster.Broadcasts[4].Event != EventGroupsUpdated ||
+			broadcaster.Broadcasts[5].Event != EventTracksUpdated {
 			t.Errorf("expected post-commit camp resource broadcasts and camp_ended, got %v", broadcaster.Broadcasts)
 		}
 	})
