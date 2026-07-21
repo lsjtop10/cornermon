@@ -87,7 +87,7 @@ Future<List<Corner>> bulkUpdateCorners(Ref ref, List<CornerUpdateInput> updates)
   return response.data?.toList() ?? [];
 }
 
-@riverpod
+@Riverpod(retry: noRetry)
 Future<void> deleteCorner(Ref ref, CornerId id) async {
   final apiInstance = ref.watch(campApiProvider);
   await apiInstance.cornersIdDelete(id: id.value);
