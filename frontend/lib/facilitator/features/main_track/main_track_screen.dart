@@ -64,32 +64,35 @@ class _MainTrackScreenState extends ConsumerState<MainTrackScreen> {
       body: SafeArea(
         child: Stack(
           children: [
-            Column(
-              children: [
-                MainTrackHeader(trackId: trackId),
-                Expanded(
-                  child: MainTrackBody(
-                    trackId: trackId,
-                    currentVisit: currentVisit,
-                    cornerName: session.corner.name ?? '',
-                    trackNo: session.track.trackNo ?? 0,
-                    targetMinutes: targetMinutes,
-                    onVisitEnded: (summary) =>
-                        setState(() => _visitJustCompleted = summary),
-                  ),
-                ),
-                if (isIdle)
-                  Padding(
-                    padding: const EdgeInsets.all(AppSpacing.space4),
-                    child: AppButton(
-                      variant: AppButtonVariant.secondary,
-                      size: AppButtonSize.comfortable,
-                      width: AppButtonWidth.fill,
-                      label: '수동으로 처리',
-                      onPressed: () => context.go('/main/manual'),
+            Padding(
+              padding: const EdgeInsets.only(top: AppSpacing.space2),
+              child: Column(
+                children: [
+                  MainTrackHeader(trackId: trackId),
+                  Expanded(
+                    child: MainTrackBody(
+                      trackId: trackId,
+                      currentVisit: currentVisit,
+                      cornerName: session.corner.name ?? '',
+                      trackNo: session.track.trackNo ?? 0,
+                      targetMinutes: targetMinutes,
+                      onVisitEnded: (summary) =>
+                          setState(() => _visitJustCompleted = summary),
                     ),
                   ),
-              ],
+                  if (isIdle)
+                    Padding(
+                      padding: const EdgeInsets.all(AppSpacing.space4),
+                      child: AppButton(
+                        variant: AppButtonVariant.secondary,
+                        size: AppButtonSize.comfortable,
+                        width: AppButtonWidth.fill,
+                        label: '수동으로 처리',
+                        onPressed: () => context.go('/main/manual'),
+                      ),
+                    ),
+                ],
+              ),
             ),
             if (_visitJustCompleted != null)
               Positioned.fill(

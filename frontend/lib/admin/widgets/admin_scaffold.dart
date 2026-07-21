@@ -5,6 +5,7 @@ import 'package:cornermon/admin/session/selected_camp_provider.dart';
 import 'package:cornermon/admin/widgets/sidebar/admin_sidebar.dart';
 import 'package:cornermon/admin/features/end_camp/end_camp_bar_button.dart';
 import 'package:cornermon/admin/features/start_camp/start_camp_button.dart';
+import 'package:cornermon/shared/design_system/tokens/spacing.dart';
 
 class AdminScaffold extends ConsumerWidget {
   const AdminScaffold({required this.body, super.key});
@@ -26,34 +27,41 @@ class AdminScaffold extends ConsumerWidget {
           );
         }
         return Scaffold(
-          body: Row(
-            children: [
-              AdminSidebar(mode: sidebarModeFor(camp!.status!)),
-              const VerticalDivider(width: 1),
-              Expanded(
-                child: Column(
-                  children: [
-                    if (sidebarModeFor(camp.status!) == SidebarMode.preparing)
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: Padding(
-                          padding: const EdgeInsets.all(12),
-                          child: StartCampButton(),
-                        ),
-                      ),
-                    if (sidebarModeFor(camp.status!) == SidebarMode.operating)
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: Padding(
-                          padding: const EdgeInsets.all(12),
-                          child: EndCampBarButton(),
-                        ),
-                      ),
-                    Expanded(child: body),
-                  ],
-                ),
+          body: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.only(top: AppSpacing.space2),
+              child: Row(
+                children: [
+                  AdminSidebar(mode: sidebarModeFor(camp!.status!)),
+                  const VerticalDivider(width: 1),
+                  Expanded(
+                    child: Column(
+                      children: [
+                        if (sidebarModeFor(camp.status!) ==
+                            SidebarMode.preparing)
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: Padding(
+                              padding: const EdgeInsets.all(12),
+                              child: StartCampButton(),
+                            ),
+                          ),
+                        if (sidebarModeFor(camp.status!) ==
+                            SidebarMode.operating)
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: Padding(
+                              padding: const EdgeInsets.all(12),
+                              child: EndCampBarButton(),
+                            ),
+                          ),
+                        Expanded(child: body),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         );
       },
