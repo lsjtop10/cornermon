@@ -170,10 +170,14 @@ func (s *GroupService) ListGroups(
 ) ([]*domain.Group, error) {
 	groups, err := s.groups.ListByCamp(ctx, campID)
 	if err != nil {
-		return nil, err
+		return nil, withErrorContext("group.list", "repository.list_groups", err, map[string]any{"camp_id": string(campID)})
 	}
 
-	return s.withCurrentCorners(ctx, groups)
+	filtered, err := s.withCurrentCorners(ctx, groups)
+	if err != nil {
+		return nil, withErrorContext("group.list", "usecase.filter_current_corners", err, map[string]any{"camp_id": string(campID)})
+	}
+	return filtered, nil
 }
 
 // ListGroupsByTrack derives the camp scope from the track's immutable corner
@@ -205,13 +209,16 @@ func (s *GroupService) ListGroupsByTrack(
 // RetrieveGroupRotationSchedule
 func (s *GroupService) RetrieveGroupRotationSchedule(ctx context.Context, groupID domain.GroupID) (*domain.Group, error) {
 	group, err := s.groups.Get(ctx, groupID)
-	if err != nil || group == nil {
-		return group, err
+	if err != nil {
+		return nil, withErrorContext("group.get_rotation_schedule", "repository.get_group", err, map[string]any{"group_id": string(groupID)})
+	}
+	if group == nil {
+		return nil, withErrorContext("group.get_rotation_schedule", "validate_group", domain.ErrCornerNotInItinerary, map[string]any{"group_id": string(groupID), "group_found": false})
 	}
 
 	groups, err := s.withCurrentCorners(ctx, []*domain.Group{group})
 	if err != nil {
-		return nil, err
+		return nil, withErrorContext("group.get_rotation_schedule", "usecase.filter_current_corners", err, map[string]any{"group_id": string(groupID)})
 	}
 	return groups[0], nil
 }
@@ -228,7 +235,7 @@ func (s *GroupService) withCurrentCorners(ctx context.Context, groups []*domain.
 		if !ok {
 			corners, err := s.corners.ListByCamp(ctx, group.CampID())
 			if err != nil {
-				return nil, err
+				return nil, withErrorContext("group.filter_current_corners", "repository.list_corners", err, map[string]any{"camp_id": string(group.CampID())})
 			}
 			cornerIDs = make(map[domain.CornerID]struct{}, len(corners))
 			for _, corner := range corners {

@@ -88,7 +88,7 @@ func (s *MessageService) ListDirectMessages(ctx context.Context, trackID domain.
 		return nil
 	})
 	if err != nil {
-		return nil, err
+		return nil, withErrorContext("message.list_direct", "transaction.run", err, map[string]any{"track_id": string(trackID), "mark_read": markRead})
 	}
 	if markRead {
 		for _, message := range messages {

@@ -116,48 +116,48 @@ func (s *BadgeService) assignBadgeInternal(
 	err := s.tx.RunInTx(ctx, func(ctx context.Context) error {
 		group, err := s.groups.Get(ctx, groupID)
 		if err != nil {
-			return err // D-2 allowed: already wrapped or handled
+			return withErrorContext("badge.assign", "repository.get_group", err, map[string]any{"group_id": string(groupID)})
 		}
 		if group == nil {
-			return domain.ErrCornerNotInItinerary // D-2 allowed: will be wrapped by tx.run outside
+			return withErrorContext("badge.assign", "validate_group", domain.ErrCornerNotInItinerary, map[string]any{"group_id": string(groupID), "group_found": false})
 		}
 
 		targetBadge, err = getBadgeFn(ctx)
 		if err != nil {
-			return err // D-2 allowed: already wrapped or handled
+			return withErrorContext("badge.assign", "repository.get_badge", err, map[string]any{"group_id": string(groupID)})
 		}
 		if targetBadge == nil {
-			return domain.ErrBadgeNotAssigned // D-2 allowed: will be wrapped by tx.run outside
+			return withErrorContext("badge.assign", "validate_badge", domain.ErrBadgeNotAssigned, map[string]any{"group_id": string(groupID), "badge_found": false})
 		}
 
 		if targetBadge.Status() == domain.BadgeAssigned {
-			return domain.ErrBadgeAlreadyAssigned // D-2 allowed: will be wrapped by tx.run outside
+			return withErrorContext("badge.assign", "validate_badge_status", domain.ErrBadgeAlreadyAssigned, map[string]any{"badge_id": string(targetBadge.ID()), "badge_status": string(targetBadge.Status())})
 		}
 
 		// Release old badge if group already has one
 		if string(group.BadgeID()) != "" && string(group.BadgeID()) != string(targetBadge.ID()) {
 			oldBadge, err := s.badges.Get(ctx, group.BadgeID())
 			if err != nil {
-				return err // D-2 allowed: already wrapped or handled
+				return withErrorContext("badge.assign", "repository.get_old_badge", err, map[string]any{"badge_id": string(group.BadgeID())})
 			}
 			if oldBadge != nil {
 				_ = oldBadge.Release()
 				if err := s.badges.Save(ctx, oldBadge); err != nil {
-					return err // D-2 allowed: already wrapped or handled
+					return withErrorContext("badge.assign", "repository.save_old_badge", err, map[string]any{"badge_id": string(oldBadge.ID())})
 				}
 			}
 		}
 
 		if err := targetBadge.AssignTo(groupID); err != nil {
-			return err // D-2 allowed: already wrapped or handled
+			return withErrorContext("badge.assign", "domain.assign_badge", err, map[string]any{"badge_id": string(targetBadge.ID()), "group_id": string(groupID)})
 		}
 		group.SetBadgeID(targetBadge.ID())
 
 		if err := s.badges.Save(ctx, targetBadge); err != nil {
-			return err // D-2 allowed: already wrapped or handled
+			return withErrorContext("badge.assign", "repository.save_badge", err, map[string]any{"badge_id": string(targetBadge.ID())})
 		}
 		if err := s.groups.Save(ctx, group); err != nil {
-			return err // D-2 allowed: already wrapped or handled
+			return withErrorContext("badge.assign", "repository.save_group", err, map[string]any{"group_id": string(group.ID())})
 		}
 
 		return nil

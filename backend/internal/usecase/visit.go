@@ -66,12 +66,14 @@ func (s *VisitService) StartVisitByQR(
 
 	session, err := s.sessions.GetByTokenHash(ctx, tokenHash)
 	if err != nil {
-		s.recordAuditLog(ctx, "anonymous", ActionVisitStart, "token:"+facilitatorToken, false, errorAuditMetadata(err, nil))
+		err = withErrorContext("visit.start_qr", "repository.get_session", err, nil)
+		s.recordAuditLog(ctx, "anonymous", ActionVisitStart, "token:provided", false, errorAuditMetadata(err, nil))
 		return nil, err
 	}
 	if session == nil || !session.IsActive() {
-		s.recordAuditLog(ctx, "anonymous", ActionVisitStart, "session:inactive", false, errorAuditMetadata(domain.ErrSessionRevoked, nil))
-		return nil, domain.ErrSessionRevoked
+		err = withErrorContext("visit.start_qr", "validate_session", domain.ErrSessionRevoked, map[string]any{"session_found": session != nil})
+		s.recordAuditLog(ctx, "anonymous", ActionVisitStart, "session:inactive", false, errorAuditMetadata(err, nil))
+		return nil, err
 	}
 
 	actor := string(session.TrackID())
@@ -167,7 +169,7 @@ func (s *VisitService) StartVisitByQR(
 	})
 
 	if err != nil {
-		s.recordAuditLog(ctx, actor, ActionVisitStart, qrPayload, false, errorAuditMetadata(err, nil))
+		s.recordAuditLog(ctx, actor, ActionVisitStart, "badge:qr_scanned", false, errorAuditMetadata(err, nil))
 		return nil, err
 	}
 
@@ -192,12 +194,14 @@ func (s *VisitService) StartVisitManual(
 
 	session, err := s.sessions.GetByTokenHash(ctx, tokenHash)
 	if err != nil {
-		s.recordAuditLog(ctx, "anonymous", ActionVisitStart, "token:"+facilitatorToken, false, errorAuditMetadata(err, nil))
+		err = withErrorContext("visit.start_manual", "repository.get_session", err, nil)
+		s.recordAuditLog(ctx, "anonymous", ActionVisitStart, "token:provided", false, errorAuditMetadata(err, nil))
 		return nil, err
 	}
 	if session == nil || !session.IsActive() {
-		s.recordAuditLog(ctx, "anonymous", ActionVisitStart, "session:inactive", false, errorAuditMetadata(domain.ErrSessionRevoked, nil))
-		return nil, domain.ErrSessionRevoked
+		err = withErrorContext("visit.start_manual", "validate_session", domain.ErrSessionRevoked, map[string]any{"session_found": session != nil})
+		s.recordAuditLog(ctx, "anonymous", ActionVisitStart, "session:inactive", false, errorAuditMetadata(err, nil))
+		return nil, err
 	}
 
 	actor := string(session.TrackID())
@@ -302,12 +306,14 @@ func (s *VisitService) CompleteVisit(
 
 	session, err := s.sessions.GetByTokenHash(ctx, tokenHash)
 	if err != nil {
-		s.recordAuditLog(ctx, "anonymous", ActionVisitComplete, "token:"+facilitatorToken, false, errorAuditMetadata(err, nil))
+		err = withErrorContext("visit.complete", "repository.get_session", err, nil)
+		s.recordAuditLog(ctx, "anonymous", ActionVisitComplete, "token:provided", false, errorAuditMetadata(err, nil))
 		return nil, err
 	}
 	if session == nil || !session.IsActive() {
-		s.recordAuditLog(ctx, "anonymous", ActionVisitComplete, "session:inactive", false, errorAuditMetadata(domain.ErrSessionRevoked, nil))
-		return nil, domain.ErrSessionRevoked
+		err = withErrorContext("visit.complete", "validate_session", domain.ErrSessionRevoked, map[string]any{"session_found": session != nil})
+		s.recordAuditLog(ctx, "anonymous", ActionVisitComplete, "session:inactive", false, errorAuditMetadata(err, nil))
+		return nil, err
 	}
 
 	actor := string(session.TrackID())

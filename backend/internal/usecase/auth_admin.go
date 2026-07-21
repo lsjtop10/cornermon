@@ -65,13 +65,15 @@ func (s *AdminAuthService) Login(
 		return "", nil, withErrorContext("auth_admin.login", "repository.get_admin", err, map[string]any{"username": username})
 	}
 	if admin == nil {
-		s.recordAuditLog(ctx, "anonymous", ActionAdminLogin, username, false, errorAuditMetadata(errors.New("admin not found"), nil))
-		return "", nil, withErrorContext("auth_admin.login", "validate_admin", errors.New("invalid username or password"), map[string]any{"username": username, "admin_found": false})
+		err = withErrorContext("auth_admin.login", "validate_admin", errors.New("invalid username or password"), map[string]any{"username": username, "admin_found": false})
+		s.recordAuditLog(ctx, "anonymous", ActionAdminLogin, username, false, errorAuditMetadata(err, nil))
+		return "", nil, err
 	}
 
 	if err := verifyPassword(admin.PasswordHash(), password); err != nil {
-		s.recordAuditLog(ctx, "anonymous", ActionAdminLogin, username, false, errorAuditMetadata(errors.New("invalid password"), nil))
-		return "", nil, withErrorContext("auth_admin.login", "validate_password", errors.New("invalid username or password"), map[string]any{"username": username})
+		err = withErrorContext("auth_admin.login", "validate_password", errors.New("invalid username or password"), map[string]any{"username": username})
+		s.recordAuditLog(ctx, "anonymous", ActionAdminLogin, username, false, errorAuditMetadata(err, nil))
+		return "", nil, err
 	}
 
 	plainAccess, accessHash, err := generateOpaqueToken()

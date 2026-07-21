@@ -399,36 +399,50 @@ func (s *TrackService) encryptPIN(ctx context.Context, pin string) (string, erro
 
 // ListTracksByCamp
 func (s *TrackService) ListTracksByCamp(ctx context.Context, campID domain.CampID) ([]*domain.Track, error) {
-	return s.tracks.ListByCamp(ctx, campID)
+	tracks, err := s.tracks.ListByCamp(ctx, campID)
+	if err != nil {
+		return nil, withErrorContext("track.list_by_camp", "repository.list_tracks", err, map[string]any{"camp_id": string(campID)})
+	}
+	return tracks, nil
 }
 
 func (s *TrackService) ExportTrackPIN(ctx context.Context, trackID domain.TrackID) (*domain.Track, string, error) {
 	track, err := s.tracks.Get(ctx, trackID)
 	if err != nil {
-		return nil, "", err
+		return nil, "", withErrorContext("track.export_pin", "repository.get_track", err, map[string]any{"track_id": string(trackID)})
 	}
 	if track == nil || track.Status() != domain.TrackActive {
-		return nil, "", domain.ErrTrackNotActive
+		var status string
+		if track != nil {
+			status = string(track.Status())
+		}
+		return nil, "", withErrorContext("track.export_pin", "validate_track", domain.ErrTrackNotActive, map[string]any{"track_id": string(trackID), "track_found": track != nil, "track_status": status})
 	}
 	if track.PINCiphertext() == "" || s.pinProtector == nil {
-		return nil, "", fmt.Errorf("track PIN must be regenerated before export")
+		return nil, "", withErrorContext("track.export_pin", "validate_pin_export", fmt.Errorf("track PIN must be regenerated before export"), map[string]any{"track_id": string(trackID), "pin_ciphertext_present": track.PINCiphertext() != "", "protector_configured": s.pinProtector != nil})
 	}
 	pin, err := s.pinProtector.Decrypt(ctx, track.PINCiphertext())
-	return track, pin, err
+	if err != nil {
+		return nil, "", withErrorContext("track.export_pin", "protector.decrypt_pin", err, map[string]any{"track_id": string(trackID)})
+	}
+	return track, pin, nil
 }
 
 func (s *TrackService) ExportTrackPINs(ctx context.Context, campID domain.CampID) ([]*domain.Track, []string, error) {
 	tracks, err := s.tracks.ListActiveByCamp(ctx, campID)
-	if err != nil || s.pinProtector == nil {
-		return nil, nil, fmt.Errorf("track PIN export unavailable: %w", err)
+	if err != nil {
+		return nil, nil, withErrorContext("track.export_pins", "repository.list_active_tracks", err, map[string]any{"camp_id": string(campID)})
+	}
+	if s.pinProtector == nil {
+		return nil, nil, withErrorContext("track.export_pins", "validate_pin_protector", fmt.Errorf("track PIN export unavailable"), map[string]any{"camp_id": string(campID), "protector_configured": false})
 	}
 	pins := make([]string, len(tracks))
 	for i, track := range tracks {
 		if track.PINCiphertext() == "" {
-			return nil, nil, fmt.Errorf("track PIN must be regenerated before export")
+			return nil, nil, withErrorContext("track.export_pins", "validate_pin_export", fmt.Errorf("track PIN must be regenerated before export"), map[string]any{"track_id": string(track.ID()), "pin_ciphertext_present": false})
 		}
 		if pins[i], err = s.pinProtector.Decrypt(ctx, track.PINCiphertext()); err != nil {
-			return nil, nil, err
+			return nil, nil, withErrorContext("track.export_pins", "protector.decrypt_pin", err, map[string]any{"track_id": string(track.ID())})
 		}
 	}
 	s.recordAuditLog(ctx, "admin", ActionTrackPinExport, string(campID), true, map[string]any{"count": len(tracks)})

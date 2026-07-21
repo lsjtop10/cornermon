@@ -79,19 +79,21 @@ func (s *FacilitatorAuthService) Login(
 		return nil, withErrorContext("auth_facil.login", "repository.get_device", err, nil)
 	}
 	if device == nil || device.Status() != domain.DeviceApproved {
-		s.recordAuditLog(ctx, "anonymous", ActionFacilitatorLogin, "", false, errorAuditMetadata(domain.ErrDeviceNotApproved, nil))
 		var status string
 		if device != nil {
 			status = string(device.Status())
 		}
-		return nil, withErrorContext("auth_facil.login", "validate_device", domain.ErrDeviceNotApproved, map[string]any{"device_found": device != nil, "device_status": status})
+		err = withErrorContext("auth_facil.login", "validate_device", domain.ErrDeviceNotApproved, map[string]any{"device_found": device != nil, "device_status": status})
+		s.recordAuditLog(ctx, "anonymous", ActionFacilitatorLogin, "", false, errorAuditMetadata(err, nil))
+		return nil, err
 	}
 
 	if device.IsLocked(now) {
-		s.recordAuditLog(ctx, "anonymous", ActionFacilitatorLogin, "", false, errorAuditMetadata(domain.ErrDeviceLocked, nil))
 		lockedUntil, _ := device.LockedUntil().Value()
 		errLocked := domain.NewDeviceLockedErrorFromProps(domain.DeviceLockedErrorProps{LockedUntil: lockedUntil})
-		return nil, withErrorContext("auth_facil.login", "validate_device_locked", errLocked, map[string]any{"locked_until": lockedUntil})
+		err = withErrorContext("auth_facil.login", "validate_device_locked", errLocked, map[string]any{"locked_until": lockedUntil})
+		s.recordAuditLog(ctx, "anonymous", ActionFacilitatorLogin, "", false, errorAuditMetadata(err, nil))
+		return nil, err
 	}
 
 	campID := device.CampID()
@@ -105,8 +107,9 @@ func (s *FacilitatorAuthService) Login(
 	}
 
 	if camp.Status() == domain.CampEnded {
-		s.recordAuditLog(ctx, "anonymous", ActionFacilitatorLogin, "", false, errorAuditMetadata(domain.ErrCampInvalidTransition, nil))
-		return nil, withErrorContext("auth_facil.login", "validate_camp_status", domain.ErrCampInvalidTransition, map[string]any{"camp_id": string(campID), "camp_status": string(camp.Status())})
+		err = withErrorContext("auth_facil.login", "validate_camp_status", domain.ErrCampInvalidTransition, map[string]any{"camp_id": string(campID), "camp_status": string(camp.Status())})
+		s.recordAuditLog(ctx, "anonymous", ActionFacilitatorLogin, "", false, errorAuditMetadata(err, nil))
+		return nil, err
 	}
 
 	activeTracks, err := s.tracks.ListActiveByCamp(ctx, campID)
@@ -130,8 +133,6 @@ func (s *FacilitatorAuthService) Login(
 			_ = s.broadcaster.Broadcast(ctx, device.CampID(), EventLockoutAlert, CampScope())
 		}
 
-		s.recordAuditLog(ctx, "anonymous", ActionFacilitatorLogin, "", false, errorAuditMetadata(errors.New("invalid pin"), map[string]any{"device_failures": device.FailedPinAttempts()}))
-
 		var optLocked domain.Optional[time.Time]
 		if delay > 0 {
 			lockedUntil, _ := device.LockedUntil().Value()
@@ -140,7 +141,9 @@ func (s *FacilitatorAuthService) Login(
 			optLocked = domain.None[time.Time]()
 		}
 		errInvalid := domain.NewInvalidPinErrorFromProps(domain.InvalidPinErrorProps{LockedUntil: optLocked})
-		return nil, withErrorContext("auth_facil.login", "validate_pin", errInvalid, map[string]any{"device_id": string(device.ID()), "failures": device.FailedPinAttempts()})
+		err = withErrorContext("auth_facil.login", "validate_pin", errInvalid, map[string]any{"device_id": string(device.ID()), "failures": device.FailedPinAttempts()})
+		s.recordAuditLog(ctx, "anonymous", ActionFacilitatorLogin, "", false, errorAuditMetadata(err, map[string]any{"device_failures": device.FailedPinAttempts()}))
+		return nil, err
 	}
 
 	trackID := track.ID()
