@@ -1090,6 +1090,41 @@ func (q *Queries) ListGroupsByCamp(ctx context.Context, campID string) ([]Group,
 	return items, nil
 }
 
+const listInProgressVisitsByCamp = `-- name: ListInProgressVisitsByCamp :many
+SELECT v.id, v.group_id, v.corner_id, v.track_id, v.status, v.input_method, v.started_at, v.ended_at FROM visits v
+JOIN groups g ON v.group_id = g.id
+WHERE g.camp_id = $1 AND v.status = 'IN_PROGRESS'
+`
+
+func (q *Queries) ListInProgressVisitsByCamp(ctx context.Context, campID string) ([]Visit, error) {
+	rows, err := q.db.Query(ctx, listInProgressVisitsByCamp, campID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Visit
+	for rows.Next() {
+		var i Visit
+		if err := rows.Scan(
+			&i.ID,
+			&i.GroupID,
+			&i.CornerID,
+			&i.TrackID,
+			&i.Status,
+			&i.InputMethod,
+			&i.StartedAt,
+			&i.EndedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listMessagesByTrack = `-- name: ListMessagesByTrack :many
 SELECT id, track_id, sender_role, content, sent_at, read_at FROM messages WHERE track_id = $1 ORDER BY sent_at
 `

@@ -8,12 +8,13 @@ import (
 	"time"
 
 	"cornermon/backend/internal/domain"
+	"cornermon/backend/internal/usecase"
 
 	"github.com/labstack/echo/v4"
 )
 
 type DeviceTrustUsecase interface {
-	GetMyRegistrationStatus(ctx context.Context, deviceToken string) (*domain.DeviceRegistration, error)
+	GetMyRegistrationStatus(ctx context.Context, deviceToken string) (*usecase.DeviceRegistrationStatusView, error)
 	RequestRegistration(ctx context.Context, registrationCode string, deviceName, deviceModel, displayName string) (string, *domain.DeviceRegistration, error)
 	ApproveDevice(ctx context.Context, regID domain.DeviceRegistrationID, actorAdminID domain.AdminID) error
 	RejectDevice(ctx context.Context, regID domain.DeviceRegistrationID, actorAdminID domain.AdminID) error
@@ -27,9 +28,10 @@ type DeviceHandler struct {
 }
 
 type DeviceStatusResponse struct {
-	ID     string `json:"id" format:"uuid"`
-	CampID string `json:"campId" format:"uuid"`
-	Status string `json:"status" enums:"PENDING,APPROVED,REJECTED,REVOKED"`
+	ID         string `json:"id" format:"uuid"`
+	CampID     string `json:"campId" format:"uuid"`
+	Status     string `json:"status" enums:"PENDING,APPROVED,REJECTED,REVOKED"`
+	CampStatus string `json:"campStatus" enums:"PENDING,ACTIVE,ENDED"`
 } // @name DeviceStatusResponse
 
 type DeviceRegistrationResponse struct {
@@ -66,7 +68,7 @@ type DeviceRegistrationRequest struct {
 } // @name DeviceRegistrationRequest
 
 // @Summary      내 기기 등록 상태 자체 조회
-// @Description  기기 등록 시 발급받은 opaque device token을 X-Device-Token 헤더에 넣어, 해당 기기의 승인 상태와 식별자를 조회한다. PENDING 상태에서도 호출할 수 있다.
+// @Description  기기 등록 시 발급받은 opaque device token을 X-Device-Token 헤더에 넣어, 해당 기기의 승인 상태·식별자와 소속 캠프 상태를 조회한다. PENDING 및 REVOKED 상태에서도 호출할 수 있다.
 // @Tags         A. Auth & Device Trust
 // @Accept       json
 // @Produce      json
@@ -79,7 +81,7 @@ func (h *DeviceHandler) GetMyRegistrationStatus(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusUnauthorized, ErrorResponse{Code: "UNAUTHORIZED", Message: "missing device token"})
 	}
 
-	registration, err := h.deviceTrust.GetMyRegistrationStatus(c.Request().Context(), token)
+	status, err := h.deviceTrust.GetMyRegistrationStatus(c.Request().Context(), token)
 	if err != nil {
 		if err == domain.ErrDeviceNotApproved {
 			return echo.NewHTTPError(http.StatusUnauthorized, ErrorResponse{Code: "UNAUTHORIZED", Message: err.Error()}).SetInternal(err)
@@ -88,9 +90,10 @@ func (h *DeviceHandler) GetMyRegistrationStatus(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, DeviceStatusResponse{
-		ID:     string(registration.ID()),
-		CampID: string(registration.CampID()),
-		Status: string(registration.Status()),
+		ID:         string(status.Registration.ID()),
+		CampID:     string(status.Registration.CampID()),
+		Status:     string(status.Registration.Status()),
+		CampStatus: string(status.CampStatus),
 	})
 }
 

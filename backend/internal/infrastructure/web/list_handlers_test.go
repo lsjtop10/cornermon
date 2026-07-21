@@ -21,13 +21,14 @@ type listDeviceTrustStub struct {
 	requestErr       error
 	reviewedDevices  []*domain.DeviceRegistration
 	myRegistration   *domain.DeviceRegistration
+	campStatus       domain.CampStatus
 	statusErr        error
 	deviceToken      string
 }
 
-func (s *listDeviceTrustStub) GetMyRegistrationStatus(_ context.Context, deviceToken string) (*domain.DeviceRegistration, error) {
+func (s *listDeviceTrustStub) GetMyRegistrationStatus(_ context.Context, deviceToken string) (*usecase.DeviceRegistrationStatusView, error) {
 	s.deviceToken = deviceToken
-	return s.myRegistration, s.statusErr
+	return &usecase.DeviceRegistrationStatusView{Registration: s.myRegistration, CampStatus: s.campStatus}, s.statusErr
 }
 func (s *listDeviceTrustStub) RequestRegistration(_ context.Context, registrationCode, _, _, _ string) (string, *domain.DeviceRegistration, error) {
 	s.registrationCode = registrationCode

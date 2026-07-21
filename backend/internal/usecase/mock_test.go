@@ -164,11 +164,15 @@ func (r *MockTrackRepository) ListByCamp(ctx context.Context, campID domain.Camp
 
 // MockVisitRepository
 type MockVisitRepository struct {
-	Visits map[domain.VisitID]*domain.Visit
+	Visits       map[domain.VisitID]*domain.Visit
+	GroupCampIDs map[domain.GroupID]domain.CampID
 }
 
 func NewMockVisitRepository() *MockVisitRepository {
-	return &MockVisitRepository{Visits: make(map[domain.VisitID]*domain.Visit)}
+	return &MockVisitRepository{
+		Visits:       make(map[domain.VisitID]*domain.Visit),
+		GroupCampIDs: make(map[domain.GroupID]domain.CampID),
+	}
 }
 
 func (r *MockVisitRepository) Get(ctx context.Context, id domain.VisitID) (*domain.Visit, error) {
@@ -195,6 +199,16 @@ func (r *MockVisitRepository) GetCompletedByGroupAndCorner(ctx context.Context, 
 		}
 	}
 	return nil, nil
+}
+
+func (r *MockVisitRepository) ListInProgressByCamp(ctx context.Context, campID domain.CampID) ([]*domain.Visit, error) {
+	var list []*domain.Visit
+	for _, v := range r.Visits {
+		if v.Status() == domain.VisitStatusInProgress && r.GroupCampIDs[v.GroupID()] == campID {
+			list = append(list, v)
+		}
+	}
+	return list, nil
 }
 
 func (r *MockVisitRepository) Save(ctx context.Context, visit *domain.Visit) error {

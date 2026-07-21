@@ -153,7 +153,15 @@ return result, nil
 
 `NotificationEvent` 상수와 scope 문자열(`"camp"`, `"track:"+id`)은 `port.go`에 정의되어
 있습니다. 새 이벤트를 추가할 때:
-- SSE 페이로드는 항상 **풀 스냅샷**이지 델타가 아닙니다 (CLAUDE.md, 기술설계 원칙).
+- SSE 페이로드는 `{event, scope}`만 담는 best-effort 변경 알림이며 스냅샷·델타를 담지 않습니다.
+  일반 이벤트를 받은 클라이언트는 대응 REST API로 최신 상태를 재조회하고, 재연결도 REST resync로
+  처리합니다. 서버는 유실된 이벤트를 저장하거나 재전송하지 않습니다.
+- `camp_ended`는 `ACTIVE → ENDED`에만 쓰는 terminal event입니다. 진행자 클라이언트는 이 이벤트를
+  받으면 REST 재조회 대신 로컬 진행자 세션·기기 등록을 삭제하고 등록 화면으로 이동합니다. SSE를
+  놓치거나 일반 이벤트 재조회가 `SESSION_REVOKED`/401로 실패한 경우에는 아직 보유한 기기 토큰으로
+  `GET /device-registrations/me`를 호출합니다. `APPROVED`+`ACTIVE`면 PIN 세션만 종료된 것이므로
+  기기 등록을 유지해 PIN 로그인으로 이동하고, `REVOKED`+`ENDED`면 캠프 종료, `REVOKED`+그 외
+  캠프 상태면 기기 신뢰 회수로 처리해 기기 등록까지 삭제합니다. 이벤트 도착 순서는 판정 근거가 아닙니다.
 - scope는 `"camp"`(캠프 전체 구독자) 또는 `"track:{id}"`(특정 트랙 구독자) 형태를 따릅니다.
 
 ## 4. Infrastructure 계층

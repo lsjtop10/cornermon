@@ -168,17 +168,17 @@ func TestDeviceTrustService_GetMyRegistrationStatus(t *testing.T) {
 		}
 
 		// Act
-		registration, err := s.GetMyRegistrationStatus(context.Background(), plainToken)
+		status, err := s.GetMyRegistrationStatus(context.Background(), plainToken)
 
 		// Assert
 		if err != nil {
 			t.Fatalf("expected no error, got %v", err)
 		}
-		if registration == nil {
-			t.Fatalf("expected registration to be not nil")
+		if status == nil || status.Registration == nil {
+			t.Fatalf("expected registration status to be not nil")
 		}
-		if registration.ID() != "device-uuid" || registration.CampID() != "camp-1" || registration.Status() != domain.DevicePending {
-			t.Errorf("expected pending registration identity, got id=%s campId=%s status=%s", registration.ID(), registration.CampID(), registration.Status())
+		if status.Registration.ID() != "device-uuid" || status.Registration.CampID() != "camp-1" || status.Registration.Status() != domain.DevicePending || status.CampStatus != domain.CampActive {
+			t.Errorf("expected pending registration and active camp, got %+v", status)
 		}
 	})
 }
