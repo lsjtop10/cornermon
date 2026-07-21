@@ -103,46 +103,62 @@ func TestDeviceTrustService_RequestRegistration(t *testing.T) {
 	})
 }
 
-func TestDeviceTrustService_ApproveDevice(t *testing.T) {
-	t.Run("ShouldApproveDeviceSuccessfullyWhenPending", func(t *testing.T) {
-		// Arrange
-		now := time.Now()
-		camps := NewMockCampRepository()
-		devices := NewMockDeviceRegistrationRepository()
-		device := domain.NewDeviceRegistrationFromProps(domain.DeviceRegistrationProps{ID: "device-1",
-			CampID: "camp-1",
-			Status: domain.DevicePending,
+func TestDeviceTrustService_ShouldReturnUpdatedRegistrationWhenDeviceStatusChanges(t *testing.T) {
+	tests := []struct {
+		name          string
+		initialStatus domain.DeviceRegistrationStatus
+		wantStatus    domain.DeviceRegistrationStatus
+		change        func(*DeviceTrustService, context.Context, domain.DeviceRegistrationID, domain.AdminID) (*domain.DeviceRegistration, error)
+	}{
+		{name: "approved", initialStatus: domain.DevicePending, wantStatus: domain.DeviceApproved, change: (*DeviceTrustService).ApproveDevice},
+		{name: "rejected", initialStatus: domain.DevicePending, wantStatus: domain.DeviceRejected, change: (*DeviceTrustService).RejectDevice},
+		{name: "revoked", initialStatus: domain.DeviceApproved, wantStatus: domain.DeviceRevoked, change: (*DeviceTrustService).RevokeDevice},
+	}
+
+	for _, tt := range tests {
+		t.Run("ShouldReturnUpdatedRegistrationWhenDeviceIs"+tt.name, func(t *testing.T) {
+			// Arrange
+			now := time.Now()
+			camps := NewMockCampRepository()
+			devices := NewMockDeviceRegistrationRepository()
+			device := domain.NewDeviceRegistrationFromProps(domain.DeviceRegistrationProps{ID: "device-1",
+				CampID: "camp-1",
+				Status: tt.initialStatus,
+			})
+			devices.Devices["device-1"] = device
+
+			auditLogs := &MockAuditLogRepository{}
+			broadcaster := &MockBroadcaster{}
+			tx := &MockTxManager{}
+
+			s := NewDeviceTrustService(camps, devices, auditLogs, broadcaster, tx)
+			s.nowFn = func() time.Time { return now }
+			s.uuidFn = func() string { return "audit-uuid" }
+
+			// Act
+			updated, err := tt.change(s, context.Background(), "device-1", "admin-1")
+
+			// Assert
+			if err != nil {
+				t.Fatalf("expected no error, got %v", err)
+			}
+			if updated == nil || updated.Status() != tt.wantStatus {
+				t.Fatalf("expected returned registration status %q, got %+v", tt.wantStatus, updated)
+			}
+
+			persisted, _ := devices.Get(context.Background(), "device-1")
+			if persisted.Status() != tt.wantStatus {
+				t.Errorf("expected persisted status %q, got %s", tt.wantStatus, persisted.Status())
+			}
+
+			if len(broadcaster.Broadcasts) != 1 ||
+				broadcaster.Broadcasts[0].CampID != "camp-1" ||
+				broadcaster.Broadcasts[0].Event != EventDeviceRegistrationUpdated ||
+				broadcaster.Broadcasts[0].Scope != CampScope() {
+				t.Errorf("expected EventDeviceRegistrationUpdated broadcast, got %v", broadcaster.Broadcasts)
+			}
 		})
-		devices.Devices["device-1"] = device
-
-		auditLogs := &MockAuditLogRepository{}
-		broadcaster := &MockBroadcaster{}
-		tx := &MockTxManager{}
-
-		s := NewDeviceTrustService(camps, devices, auditLogs, broadcaster, tx)
-		s.nowFn = func() time.Time { return now }
-		s.uuidFn = func() string { return "audit-uuid" }
-
-		// Act
-		err := s.ApproveDevice(context.Background(), "device-1", "admin-1")
-
-		// Assert
-		if err != nil {
-			t.Fatalf("expected no error, got %v", err)
-		}
-
-		updated, _ := devices.Get(context.Background(), "device-1")
-		if updated.Status() != domain.DeviceApproved {
-			t.Errorf("expected status 'APPROVED', got %s", updated.Status())
-		}
-
-		if len(broadcaster.Broadcasts) != 1 ||
-			broadcaster.Broadcasts[0].CampID != "camp-1" ||
-			broadcaster.Broadcasts[0].Event != EventDeviceRegistrationUpdated ||
-			broadcaster.Broadcasts[0].Scope != CampScope() {
-			t.Errorf("expected EventDeviceRegistrationUpdated broadcast, got %v", broadcaster.Broadcasts)
-		}
-	})
+	}
 }
 
 func TestDeviceTrustService_GetMyRegistrationStatus(t *testing.T) {

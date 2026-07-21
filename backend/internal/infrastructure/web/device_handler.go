@@ -16,9 +16,9 @@ import (
 type DeviceTrustUsecase interface {
 	GetMyRegistrationStatus(ctx context.Context, deviceToken string) (*usecase.DeviceRegistrationStatusView, error)
 	RequestRegistration(ctx context.Context, registrationCode string, deviceName, deviceModel, displayName string) (string, *domain.DeviceRegistration, error)
-	ApproveDevice(ctx context.Context, regID domain.DeviceRegistrationID, actorAdminID domain.AdminID) error
-	RejectDevice(ctx context.Context, regID domain.DeviceRegistrationID, actorAdminID domain.AdminID) error
-	RevokeDevice(ctx context.Context, regID domain.DeviceRegistrationID, actorAdminID domain.AdminID) error
+	ApproveDevice(ctx context.Context, regID domain.DeviceRegistrationID, actorAdminID domain.AdminID) (*domain.DeviceRegistration, error)
+	RejectDevice(ctx context.Context, regID domain.DeviceRegistrationID, actorAdminID domain.AdminID) (*domain.DeviceRegistration, error)
+	RevokeDevice(ctx context.Context, regID domain.DeviceRegistrationID, actorAdminID domain.AdminID) (*domain.DeviceRegistration, error)
 	ReviewDeviceTrustRequests(ctx context.Context, campID domain.CampID, status *domain.DeviceRegistrationStatus) ([]*domain.DeviceRegistration, error)
 	ListLockedDevices(ctx context.Context, campID domain.CampID) ([]*domain.DeviceRegistration, error)
 }
@@ -216,12 +216,12 @@ func (h *DeviceHandler) ApproveDevice(c echo.Context) error {
 	}
 	regID := domain.DeviceRegistrationID(c.Param("id"))
 
-	err := h.deviceTrust.ApproveDevice(c.Request().Context(), regID, session.AdminID())
+	device, err := h.deviceTrust.ApproveDevice(c.Request().Context(), regID, session.AdminID())
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()}).SetInternal(err)
 	}
 
-	return c.NoContent(http.StatusOK)
+	return c.JSON(http.StatusOK, mapDeviceRegistration(device))
 }
 
 // @Summary      기기 거절
@@ -240,12 +240,12 @@ func (h *DeviceHandler) RejectDevice(c echo.Context) error {
 	}
 	regID := domain.DeviceRegistrationID(c.Param("id"))
 
-	err := h.deviceTrust.RejectDevice(c.Request().Context(), regID, session.AdminID())
+	device, err := h.deviceTrust.RejectDevice(c.Request().Context(), regID, session.AdminID())
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()}).SetInternal(err)
 	}
 
-	return c.NoContent(http.StatusOK)
+	return c.JSON(http.StatusOK, mapDeviceRegistration(device))
 }
 
 // @Summary      기기 신뢰 취소 (폐기/분실)
@@ -264,10 +264,10 @@ func (h *DeviceHandler) RevokeDevice(c echo.Context) error {
 	}
 	regID := domain.DeviceRegistrationID(c.Param("id"))
 
-	err := h.deviceTrust.RevokeDevice(c.Request().Context(), regID, session.AdminID())
+	device, err := h.deviceTrust.RevokeDevice(c.Request().Context(), regID, session.AdminID())
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()}).SetInternal(err)
 	}
 
-	return c.NoContent(http.StatusOK)
+	return c.JSON(http.StatusOK, mapDeviceRegistration(device))
 }
