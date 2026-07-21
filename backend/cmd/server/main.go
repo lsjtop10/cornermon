@@ -172,7 +172,7 @@ func main() {
 	cornerHandler := web.NewCornerHandler(cornerService, cornerViewQuerier)
 	trackHandler := web.NewTrackHandler(trackService)
 	groupHandler := web.NewGroupHandler(groupService)
-	badgeHandler := web.NewBadgeHandler(badgeService, groupService, campRepo)
+	badgeHandler := web.NewBadgeHandler(badgeService, groupService)
 	visitHandler := web.NewVisitHandler(visitService)
 
 	eventHandler := web.NewEventHandler(broadcaster, trackRepo, cornerRepo)

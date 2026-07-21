@@ -157,7 +157,7 @@ func (s *CornerService) RemoveCornerFromCamp(ctx context.Context, id domain.Corn
 	}
 
 	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
-		if err := s.corners.Delete(ctx, id); err != nil {
+		if err := s.corners.SoftDelete(ctx, id, s.nowFn()); err != nil {
 			return err
 		}
 		return s.syncGroupItineraries(ctx, corner.CampID(), func(g *domain.Group) {
