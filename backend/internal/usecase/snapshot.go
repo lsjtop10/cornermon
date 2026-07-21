@@ -44,29 +44,30 @@ func (s *SnapshotService) GetSnapshot(
 	ctx context.Context,
 	campID domain.CampID,
 ) (*CampSnapshot, error) {
+
 	camp, err := s.camps.Get(ctx, campID)
 	if err != nil {
-		return nil, err
+		return nil, withErrorContext("snapshot.get", "repository.get_camp", err, map[string]any{"camp_id": string(campID)})
 	}
 	if camp == nil {
-		return nil, domain.ErrCampInvalidTransition
+		return nil, withErrorContext("snapshot.get", "validate_camp", domain.ErrCampInvalidTransition, map[string]any{"camp_id": string(campID), "camp_found": false})
 	}
 
 	corners, err := s.corners.ListByCamp(ctx, campID)
 	if err != nil {
-		return nil, err
+		return nil, withErrorContext("snapshot.get", "repository.list_corners", err, map[string]any{"camp_id": string(campID)})
 	}
 
 	groups, err := s.groups.ListByCamp(ctx, campID)
 	if err != nil {
-		return nil, err
+		return nil, withErrorContext("snapshot.get", "repository.list_groups", err, map[string]any{"camp_id": string(campID)})
 	}
 
 	var cornerSnapshots []CornerSnapshot
 	for _, c := range corners {
 		allTracks, err := s.tracks.ListByCorner(ctx, c.ID())
 		if err != nil {
-			return nil, err
+			return nil, withErrorContext("snapshot.get", "repository.list_tracks", err, map[string]any{"corner_id": string(c.ID())})
 		}
 
 		var activeTracks []*domain.Track

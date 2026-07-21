@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"cornermon/backend/internal/domain"
+
 	"github.com/google/uuid"
 )
 
@@ -25,33 +26,38 @@ func NewMessageService(corners CornerRepository, tracks TrackRepository, message
 }
 
 func (s *MessageService) SendDirect(ctx context.Context, trackID domain.TrackID, content string, senderRole domain.SenderRole) (*domain.Message, error) {
+
 	track, err := s.tracks.Get(ctx, trackID)
 	if err != nil {
-		return nil, err
+		return nil, withErrorContext("message.send_direct", "repository.get_track", err, map[string]any{"track_id": string(trackID)})
 	}
 	if track == nil || track.Status() != domain.TrackActive {
-		return nil, domain.ErrTrackNotActive
+		var status string
+		if track != nil {
+			status = string(track.Status())
+		}
+		return nil, withErrorContext("message.send_direct", "validate_track", domain.ErrTrackNotActive, map[string]any{"track_id": string(trackID), "track_found": track != nil, "track_status": status})
 	}
 	msg := domain.NewMessageFromProps(domain.MessageProps{ID: domain.MessageID(s.uuidFn()), ChannelType: domain.MessageDirect, TrackID: trackID, SenderRole: senderRole, Content: content, SentAt: s.nowFn()})
 	if err := s.tx.RunInTx(ctx, func(ctx context.Context) error {
-		// IncrementUnreadCount locks the track row. Every direct-message write
-		// acquires this lock before inserting the message, so it is serialized
-		// with ResetUnreadCount during a concurrent background read.
 		if err := s.tracks.IncrementUnreadCount(ctx, trackID, oppositeRole(senderRole)); err != nil {
-			return err
+			return withErrorContext("message.send_direct", "repository.increment_unread", err, map[string]any{"track_id": string(trackID)})
 		}
-		return s.messages.Save(ctx, msg)
+		if err := s.messages.Save(ctx, msg); err != nil {
+			return withErrorContext("message.send_direct", "repository.save_message", err, map[string]any{"message_id": string(msg.ID())})
+		}
+		return nil
 	}); err != nil {
-		s.recordAuditLog(ctx, string(trackID), ActionMessageDirect, "", false, map[string]any{"error": err.Error()})
+		s.recordAuditLog(ctx, string(trackID), ActionMessageDirect, "", false, errorAuditMetadata(err, nil))
 		return nil, err
 	}
 
 	corner, err := s.corners.Get(ctx, track.CornerID())
 	if err != nil {
-		return nil, err
+		return nil, withErrorContext("message.send_direct", "repository.get_corner", err, map[string]any{"corner_id": string(track.CornerID())})
 	}
 	if corner == nil {
-		return nil, domain.ErrCornerNotInItinerary
+		return nil, withErrorContext("message.send_direct", "validate_corner", domain.ErrCornerNotInItinerary, map[string]any{"corner_id": string(track.CornerID()), "corner_found": false})
 	}
 
 	s.recordAuditLog(ctx, string(trackID), ActionMessageDirect, string(msg.ID()), true, map[string]any{"trackID": string(trackID)})
@@ -60,26 +66,29 @@ func (s *MessageService) SendDirect(ctx context.Context, trackID domain.TrackID,
 }
 
 func (s *MessageService) ListDirectMessages(ctx context.Context, trackID domain.TrackID, viewerRole domain.SenderRole, after domain.Optional[time.Time], markRead bool) ([]*domain.Message, error) {
+
 	var messages []*domain.Message
 	var readAt time.Time
 	err := s.tx.RunInTx(ctx, func(ctx context.Context) error {
 		var err error
 		messages, err = s.messages.ListMessageByTrackAfter(ctx, trackID, after)
-		if err != nil || !markRead {
-			return err
+		if err != nil {
+			return withErrorContext("message.list_direct", "repository.list_messages", err, map[string]any{"track_id": string(trackID)})
 		}
-		// ResetUnreadCount acquires the same track-row lock as SendDirect before
-		// any messages are marked read. A concurrent send is therefore either
-		// fully visible to this read and reset, or incremented after this
-		// transaction commits; its counter cannot be reset accidentally.
+		if !markRead {
+			return nil
+		}
 		if err := s.tracks.ResetUnreadCount(ctx, trackID, viewerRole); err != nil {
-			return err
+			return withErrorContext("message.list_direct", "repository.reset_unread", err, map[string]any{"track_id": string(trackID)})
 		}
 		readAt = s.nowFn()
-		return s.messages.MarkAllReadByRecipient(ctx, trackID, viewerRole, readAt)
+		if err := s.messages.MarkAllReadByRecipient(ctx, trackID, viewerRole, readAt); err != nil {
+			return withErrorContext("message.list_direct", "repository.mark_read", err, map[string]any{"track_id": string(trackID)})
+		}
+		return nil
 	})
 	if err != nil {
-		return nil, err
+		return nil, withErrorContext("message.list_direct", "transaction.run", err, map[string]any{"track_id": string(trackID), "mark_read": markRead})
 	}
 	if markRead {
 		for _, message := range messages {
@@ -92,12 +101,13 @@ func (s *MessageService) ListDirectMessages(ctx context.Context, trackID domain.
 }
 
 func (s *MessageService) GetUnreadCount(ctx context.Context, trackID domain.TrackID, viewerRole domain.SenderRole) (int, error) {
+
 	track, err := s.tracks.Get(ctx, trackID)
 	if err != nil {
-		return 0, err
+		return 0, withErrorContext("message.get_unread", "repository.get_track", err, map[string]any{"track_id": string(trackID)})
 	}
 	if track == nil {
-		return 0, domain.ErrTrackNotFound
+		return 0, withErrorContext("message.get_unread", "validate_track", domain.ErrTrackNotFound, map[string]any{"track_id": string(trackID), "track_found": false})
 	}
 	if viewerRole == domain.RoleAdmin {
 		return track.UnreadByAdminCount(), nil
