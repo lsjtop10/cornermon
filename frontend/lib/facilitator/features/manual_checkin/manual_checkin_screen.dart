@@ -1,8 +1,10 @@
+import 'package:cornermon_api_gen/cornermon_api_gen.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:cornermon/shared/api/dio_error.dart';
 import 'package:cornermon/shared/api/domain_aliases.dart';
 import 'package:cornermon/shared/api/ids.dart';
 import 'package:cornermon/shared/api/providers/group_providers.dart';
@@ -178,17 +180,13 @@ class _ManualCheckinScreenState extends ConsumerState<ManualCheckinScreen> {
   }
 
   /// ErrorResponse.code → 안내 문구 매핑(B3 QrScanScreen과 동일 규칙, screen-spec B3/B4 공통).
+  /// DUPLICATE_VISIT/GROUP_AT_CORNER는 백엔드가 실제로 보내는 코드 목록에 없어 드리프트로
+  /// 죽어있던 case였다(qr_scan_screen.dart 주석 참고) — enum 전환 시 컴파일이 안 되므로 제거했다.
   String _messageFor(DioException e) {
-    final data = e.response?.data;
-    final body = data is Map ? data : null;
-    final code = body?['code'] as String?;
+    final code = errorCodeOf(e);
     switch (code) {
-      case 'DUPLICATE_VISIT':
-        return '이미 완료된 코너입니다';
-      case 'TRACK_BUSY':
+      case ErrorCode.CodeTrackBusy:
         return '현재 진행중인 조가 있습니다';
-      case 'GROUP_AT_CORNER':
-        return '이 조는 현재 다른 코너에서 진행 중입니다';
       default:
         return '방문을 시작하지 못했습니다';
     }

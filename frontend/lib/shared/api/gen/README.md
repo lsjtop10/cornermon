@@ -169,6 +169,7 @@ Class | Method | HTTP request | Description
  - [DeviceRegistrationResponse](doc/DeviceRegistrationResponse.md)
  - [DeviceStatusResponse](doc/DeviceStatusResponse.md)
  - [DirectMessageRequest](doc/DirectMessageRequest.md)
+ - [ErrorCode](doc/ErrorCode.md)
  - [ErrorResponse](doc/ErrorResponse.md)
  - [ExportBadgesResponse](doc/ExportBadgesResponse.md)
  - [ExportTracksResponse](doc/ExportTracksResponse.md)
@@ -218,5 +219,6 @@ Authentication schemes defined for the API:
 
 
 ## Author
+
 
 

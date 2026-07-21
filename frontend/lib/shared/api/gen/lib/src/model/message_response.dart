@@ -16,8 +16,8 @@ part 'message_response.g.dart';
 /// * [channelType] 
 /// * [content] 
 /// * [id] 
-/// * [isRead] 
-/// * [readAt] 
+/// * [isRead] - IsRead and ReadAt represent the authenticated track's broadcast receipt on TrackAuth list responses.
+/// * [readAt] - ReadAt is omitted for unread broadcasts and administrator list responses.
 /// * [senderRole] 
 /// * [sentAt] 
 /// * [trackId] 
@@ -33,9 +33,11 @@ abstract class MessageResponse implements Built<MessageResponse, MessageResponse
   @BuiltValueField(wireName: r'id')
   String? get id;
 
+  /// IsRead and ReadAt represent the authenticated track's broadcast receipt on TrackAuth list responses.
   @BuiltValueField(wireName: r'isRead')
   bool? get isRead;
 
+  /// ReadAt is omitted for unread broadcasts and administrator list responses.
   @BuiltValueField(wireName: r'readAt')
   DateTime? get readAt;
 
