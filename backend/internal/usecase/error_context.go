@@ -2,84 +2,122 @@ package usecase
 
 import (
 	"errors"
+	"fmt"
+	"strings"
 )
 
-// OperationError preserves the original cause while adding structured context
-// such as operation name, stage, and safe attributes for debugging and audit logging.
+// OperationError adds application-level diagnostics to an error without
+// changing its error identity. HTTP handlers must continue to use errors.Is
+// and errors.As against the wrapped domain error.
 type OperationError struct {
-	Operation  string
-	Stage      string
-	Attributes map[string]any
-	Cause      error
+	operation  string
+	stage      string
+	attributes map[string]any
+	cause      error
 }
 
-// Error returns the underlying cause's error message to preserve existing HTTP contracts.
-// It deliberately does NOT include Operation, Stage, or Attributes to prevent
-// internal context from leaking to clients via HTTP response messages.
 func (e *OperationError) Error() string {
-	if e.Cause != nil {
-		return e.Cause.Error()
+	if e == nil || e.cause == nil {
+		return "unknown operation error"
 	}
-	return "unknown operation error"
+	// Several handler-local mappers use err.Error() as their response message.
+	// Do not expose operation details or identifiers through that path.
+	return e.cause.Error()
 }
 
-// Unwrap returns the underlying cause, allowing errors.Is and errors.As to work normally.
-func (e *OperationError) Unwrap() error {
-	return e.Cause
+func (e *OperationError) Unwrap() error { return e.cause }
+
+func (e *OperationError) Operation() string { return e.operation }
+
+func (e *OperationError) Stage() string { return e.stage }
+
+// Attributes returns a copy so callers cannot mutate error context after it
+// has crossed a usecase boundary.
+func (e *OperationError) Attributes() map[string]any { return copyErrorAttributes(e.attributes) }
+
+// withErrorContext records only application-safe identifiers, status values,
+// booleans, and counters. Secret-bearing keys are discarded defensively even
+// if a future caller mistakenly supplies them.
+func withErrorContext(operation, stage string, cause error, attributes map[string]any) error {
+	return NewOperationError(operation, stage, cause, attributes)
 }
 
-// withErrorContext wraps an error with operation, stage, and safe attributes.
-// The attributes map is copied to prevent modification by the caller.
-func withErrorContext(operation, stage string, cause error, attrs map[string]any) error {
+// NewOperationError is provided for adapters that need to preserve the same
+// diagnostic contract while converting an application error at their boundary.
+func NewOperationError(operation, stage string, cause error, attributes map[string]any) error {
 	if cause == nil {
 		return nil
 	}
-
-	// Copy attributes to prevent caller mutation
-	safeAttrs := make(map[string]any, len(attrs))
-	for k, v := range attrs {
-		safeAttrs[k] = v
+	var existing *OperationError
+	if errors.As(cause, &existing) {
+		return cause
 	}
-
 	return &OperationError{
-		Operation:  operation,
-		Stage:      stage,
-		Attributes: safeAttrs,
-		Cause:      cause,
+		operation:  operation,
+		stage:      stage,
+		attributes: filterErrorAttributes(attributes),
+		cause:      cause,
 	}
 }
 
-// errorAuditMetadata extracts structured attributes from an OperationError,
-// merging them with the provided base metadata. It keeps the "error" key for compatibility.
-func errorAuditMetadata(err error, baseMetadata map[string]any) map[string]any {
-	result := make(map[string]any)
-	if baseMetadata != nil {
-		for k, v := range baseMetadata {
-			result[k] = v
-		}
+func errorAuditMetadata(err error, base map[string]any) map[string]any {
+	metadata := filterErrorAttributes(base)
+	if metadata == nil {
+		metadata = make(map[string]any)
+	}
+	if err == nil {
+		return metadata
 	}
 
-	if err != nil {
-		result["error"] = err.Error()
-
-		var opErr *OperationError
-		if errors.As(err, &opErr) {
-			result["operation"] = opErr.Operation
-			result["stage"] = opErr.Stage
-			// error_type can be the type of the underlying error, or a specific string
-			result["error_type"] = "OperationError"
-
-			if opErr.Attributes != nil {
-				for k, v := range opErr.Attributes {
-					// Avoid overwriting existing keys in baseMetadata if already set?
-					// Or let error context override? Usually error context has specific domain info.
-					if _, exists := result[k]; !exists {
-						result[k] = v
-					}
-				}
-			}
-		}
+	metadata["error"] = err.Error()
+	var operationErr *OperationError
+	if !errors.As(err, &operationErr) {
+		metadata["error_type"] = fmt.Sprintf("%T", err)
+		return metadata
 	}
 
-	return result
+	metadata["operation"] = operationErr.Operation()
+	metadata["stage"] = operationErr.Stage()
+	metadata["error_type"] = fmt.Sprintf("%T", operationErr.Unwrap())
+	for key, value := range operationErr.Attributes() {
+		if _, exists := metadata[key]; !exists {
+			metadata[key] = value
+		}
+	}
+	return metadata
+}
+
+func copyErrorAttributes(attributes map[string]any) map[string]any {
+	if len(attributes) == 0 {
+		return nil
+	}
+	copy := make(map[string]any, len(attributes))
+	for key, value := range attributes {
+		copy[key] = value
+	}
+	return copy
+}
+
+func filterErrorAttributes(attributes map[string]any) map[string]any {
+	if len(attributes) == 0 {
+		return nil
+	}
+	filtered := make(map[string]any, len(attributes))
+	for key, value := range attributes {
+		if isSensitiveErrorAttribute(key) {
+			continue
+		}
+		filtered[key] = value
+	}
+	return filtered
+}
+
+func isSensitiveErrorAttribute(key string) bool {
+	key = strings.ToLower(key)
+	for _, forbidden := range []string{"token", "pin", "password", "hash", "cipher", "registration_code", "qr", "secret"} {
+		if strings.Contains(key, forbidden) {
+			return true
+		}
+	}
+	return false
 }

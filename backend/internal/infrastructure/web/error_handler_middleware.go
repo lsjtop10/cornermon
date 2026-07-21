@@ -6,8 +6,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/labstack/echo/v4"
 	"cornermon/backend/internal/usecase"
+
+	"github.com/labstack/echo/v4"
 )
 
 func ErrorHandler() echo.HTTPErrorHandler {
@@ -66,9 +67,9 @@ func ErrorHandler() echo.HTTPErrorHandler {
 		var operationErr *usecase.OperationError
 		if errors.As(err, &operationErr) {
 			commonAttrs = append(commonAttrs,
-				slog.String("operation", operationErr.Operation),
-				slog.String("stage", operationErr.Stage),
-				slog.Any("error_context", operationErr.Attributes),
+				slog.String("operation", operationErr.Operation()),
+				slog.String("stage", operationErr.Stage()),
+				slog.Any("error_context", operationErr.Attributes()),
 			)
 		}
 
