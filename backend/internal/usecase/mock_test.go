@@ -56,16 +56,19 @@ func (r *MockCampRepository) List(ctx context.Context) ([]*domain.Camp, error) {
 
 // MockCornerRepository
 type MockCornerRepository struct {
-	Corners map[domain.CornerID]*domain.Corner
+	Corners     map[domain.CornerID]*domain.Corner
+	DeletedAt   map[domain.CornerID]time.Time
+	PurgeBefore time.Time
+	PurgedCount int64
 }
 
 func NewMockCornerRepository() *MockCornerRepository {
-	return &MockCornerRepository{Corners: make(map[domain.CornerID]*domain.Corner)}
+	return &MockCornerRepository{Corners: make(map[domain.CornerID]*domain.Corner), DeletedAt: make(map[domain.CornerID]time.Time)}
 }
 
 func (r *MockCornerRepository) Get(ctx context.Context, id domain.CornerID) (*domain.Corner, error) {
 	corner, ok := r.Corners[id]
-	if !ok {
+	if !ok || !r.DeletedAt[id].IsZero() {
 		return nil, nil
 	}
 	return corner, nil
@@ -74,7 +77,7 @@ func (r *MockCornerRepository) Get(ctx context.Context, id domain.CornerID) (*do
 func (r *MockCornerRepository) ListByCamp(ctx context.Context, campID domain.CampID) ([]*domain.Corner, error) {
 	var list []*domain.Corner
 	for _, c := range r.Corners {
-		if c.CampID() == campID {
+		if c.CampID() == campID && r.DeletedAt[c.ID()].IsZero() {
 			list = append(list, c)
 		}
 	}
@@ -86,9 +89,14 @@ func (r *MockCornerRepository) Save(ctx context.Context, corner *domain.Corner) 
 	return nil
 }
 
-func (r *MockCornerRepository) Delete(ctx context.Context, id domain.CornerID) error {
-	delete(r.Corners, id)
+func (r *MockCornerRepository) SoftDelete(ctx context.Context, id domain.CornerID, deletedAt time.Time) error {
+	r.DeletedAt[id] = deletedAt
 	return nil
+}
+
+func (r *MockCornerRepository) PurgeDeletedBefore(ctx context.Context, deletedBefore time.Time) (int64, error) {
+	r.PurgeBefore = deletedBefore
+	return r.PurgedCount, nil
 }
 
 // MockTrackRepository

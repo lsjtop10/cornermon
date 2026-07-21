@@ -177,7 +177,7 @@ func (h *CornerHandler) GetCornerByTrack(c echo.Context) error {
 }
 
 // @Summary      코너 삭제
-// @Description  코너를 삭제한다. 단, 방문 기록이 있으면 삭제할 수 없다.
+// @Description  코너를 soft-delete한다. 삭제된 코너는 일반 조회에서 제외되며 API 계약은 유지된다.
 // @Tags         B. Resource Management (Admin)
 // @Security     AdminAuth
 // @Produce      json

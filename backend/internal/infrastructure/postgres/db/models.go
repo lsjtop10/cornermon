@@ -121,6 +121,8 @@ type Corner struct {
 	TargetMinutes int32 `json:"target_minutes"`
 	// 필수 코너 여부
 	IsMandatory bool `json:"is_mandatory"`
+	// soft-delete된 시각
+	DeletedAt pgtype.Timestamptz `json:"deleted_at"`
 }
 
 // 진행자 기기의 등록 요청 및 승인/잠금 상태를 관리하는 테이블

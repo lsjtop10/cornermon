@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"testing"
+	"time"
 
 	"cornermon/backend/internal/domain"
 )
@@ -12,8 +13,12 @@ func TestCornerServiceCommandRegression(t *testing.T) {
 	camps := NewMockCampRepository()
 	_ = camps.Save(ctx, domain.NewCampFromProps(domain.CampProps{ID: "camp-1", Status: domain.CampPending}))
 	corners := NewMockCornerRepository()
-	service := NewCornerService(camps, corners, NewMockTrackRepository(), &MockAuditLogRepository{}, &MockBroadcaster{}, &MockTxManager{})
+	auditLogs := &MockAuditLogRepository{}
+	broadcaster := &MockBroadcaster{}
+	service := NewCornerService(camps, corners, NewMockTrackRepository(), auditLogs, broadcaster, &MockTxManager{})
 	service.uuidFn = func() string { return "corner-1" }
+	deletedAt := time.Date(2026, time.July, 21, 9, 0, 0, 0, time.UTC)
+	service.nowFn = func() time.Time { return deletedAt }
 
 	created, err := service.AddLearningCorner(ctx, "camp-1", "처음 이름")
 	if err != nil || created.ID() != "corner-1" {
@@ -30,7 +35,42 @@ func TestCornerServiceCommandRegression(t *testing.T) {
 	}
 	deleted, err := corners.Get(ctx, created.ID())
 	if err != nil || deleted != nil {
-		t.Fatalf("corner should be deleted: corner=%+v err=%v", deleted, err)
+		t.Fatalf("soft-deleted corner should be hidden: corner=%+v err=%v", deleted, err)
+	}
+	if got := corners.DeletedAt[created.ID()]; !got.Equal(deletedAt) {
+		t.Fatalf("expected deleted_at=%s, got %s", deletedAt, got)
+	}
+	if len(auditLogs.Logs) != 3 || auditLogs.Logs[2].Action() != string(ActionCornerDelete) || !auditLogs.Logs[2].Success() {
+		t.Fatalf("expected successful corner deletion audit log, got %+v", auditLogs.Logs)
+	}
+	if len(broadcaster.Broadcasts) != 3 || broadcaster.Broadcasts[2].Event != EventCornersUpdated {
+		t.Fatalf("expected corners_updated after deletion, got %+v", broadcaster.Broadcasts)
+	}
+
+	if err := service.RemoveCornerFromCamp(ctx, created.ID()); err != nil {
+		t.Fatalf("repeat delete should be idempotent: %v", err)
+	}
+	if len(auditLogs.Logs) != 3 || len(broadcaster.Broadcasts) != 3 {
+		t.Fatalf("repeat delete must not emit new side effects")
+	}
+}
+
+func TestShouldPurgeCornersAfterSevenDaysWhenCleanupRuns(t *testing.T) {
+	// Arrange
+	ctx := context.Background()
+	corners := NewMockCornerRepository()
+	corners.PurgedCount = 2
+	service := NewCornerCleanupService(corners)
+	now := time.Date(2026, time.July, 21, 9, 0, 0, 0, time.UTC)
+	service.nowFn = func() time.Time { return now }
+
+	// Act
+	count, err := service.PurgeExpired(ctx)
+
+	// Assert
+	wantBefore := now.Add(-7 * 24 * time.Hour)
+	if err != nil || count != 2 || !corners.PurgeBefore.Equal(wantBefore) {
+		t.Fatalf("expected count=2 and cutoff=%s, got count=%d cutoff=%s err=%v", wantBefore, count, corners.PurgeBefore, err)
 	}
 }
 

@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"cornermon/backend/internal/domain"
 	"cornermon/backend/internal/usecase"
@@ -41,8 +42,10 @@ func (r cornerRepoForGroupHandler) Get(context.Context, domain.CornerID) (*domai
 func (cornerRepoForGroupHandler) ListByCamp(context.Context, domain.CampID) ([]*domain.Corner, error) {
 	return nil, nil
 }
-func (cornerRepoForGroupHandler) Save(context.Context, *domain.Corner) error    { return nil }
-func (cornerRepoForGroupHandler) Delete(context.Context, domain.CornerID) error { return nil }
+func (cornerRepoForGroupHandler) Save(context.Context, *domain.Corner) error { return nil }
+func (cornerRepoForGroupHandler) SoftDelete(context.Context, domain.CornerID, time.Time) error {
+	return nil
+}
 
 type groupRepoForGroupHandler struct{ groups []*domain.Group }
 
