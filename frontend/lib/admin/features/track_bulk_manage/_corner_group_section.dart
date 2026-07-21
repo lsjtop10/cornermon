@@ -1,162 +1,151 @@
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:cornermon/shared/api/dio_error.dart';
 import 'package:cornermon/shared/api/domain_aliases.dart' as api;
-import 'package:cornermon/shared/api/ids.dart';
-import 'package:cornermon/shared/api/providers/corner_track_providers.dart';
+import 'package:cornermon/shared/design_system/tokens/colors.dart';
+import 'package:cornermon/shared/design_system/tokens/spacing.dart';
 import 'package:cornermon/shared/design_system/tokens/typography.dart';
-import 'package:cornermon/shared/design_system/widgets/app_button.dart';
-import 'package:cornermon/shared/design_system/widgets/confirm_modal.dart';
+import 'package:cornermon/shared/design_system/widgets/app_tag.dart';
 import 'package:cornermon/shared/design_system/widgets/status_badge.dart';
 
-import '_track_bulk_manage_connection_state.dart';
 import 'track_bulk_manage_grouping.dart';
 
-/// 코너 1개 + 그 코너에 속한 트랙 목록을 트리뷰처럼 접었다 펼 수 있는 항목으로
-/// 보여준다. 코너 삭제는 트랙·방문 기록까지 DB CASCADE로 함께 제거되므로 트랙이
-/// 있어도 막지 않는다 — 진행 중인 방문(BUSY 트랙)이 있을 때만 막는다
-/// (`CornerTrackGroup.canDelete` 참고).
-class CornerGroupSection extends ConsumerStatefulWidget {
-  const CornerGroupSection({
-    required this.campId,
-    required this.group,
-    required this.selectedIds,
-    required this.onSelectTrack,
-    super.key,
-  });
+/// 코너 1개 + 그 코너에 속한 트랙 목록을 평면 박스 안에서 접었다 펼 수 있는 순수
+/// 조회 항목으로 보여준다. 코너/트랙 생성·삭제·수정은 대시보드(코너)와 코너 상세
+/// 화면(트랙)으로 옮겨졌으므로 이 화면에는 어떤 액션도 두지 않는다.
+class CornerGroupSection extends StatefulWidget {
+  const CornerGroupSection({required this.group, super.key});
 
-  final CampId campId;
   final CornerTrackGroup group;
-  final Set<String> selectedIds;
-  final void Function(String trackId, bool selected) onSelectTrack;
 
   @override
-  ConsumerState<CornerGroupSection> createState() =>
-      _CornerGroupSectionState();
+  State<CornerGroupSection> createState() => _CornerGroupSectionState();
 }
 
-class _CornerGroupSectionState extends ConsumerState<CornerGroupSection> {
-  bool _isBusy = false;
-
-  Future<void> _deleteCorner() async {
-    final corner = widget.group.corner;
-    final confirmed = await showConfirmModal(
-      context,
-      kind: ConfirmModalKind.softConfirm,
-      title: '코너 "${corner.name ?? corner.id}"를 삭제하시겠습니까?',
-      body: '연결된 트랙과 방문 기록도 함께 삭제됩니다.',
-    );
-    if (!mounted || !confirmed || _isBusy) return;
-    setState(() => _isBusy = true);
-    try {
-      final provider = deleteCornerProvider(CornerId(corner.id!));
-      final container = ProviderScope.containerOf(context, listen: false);
-      final sub = container.listen(provider, (_, _) {});
-      await container.read(provider.future).whenComplete(sub.close);
-      ref.invalidate(cornerListProvider(widget.campId));
-      ref.invalidate(trackListProvider(widget.campId));
-      ref.read(trackBulkManageConnectionLostProvider.notifier).set(false);
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('코너가 삭제되었습니다')));
-      }
-    } on DioException catch (error, stackTrace) {
-      debugPrint(
-        '[track_bulk_manage] delete corner failed: type=${error.type} '
-        'statusCode=${error.response?.statusCode} '
-        'body=${error.response?.data}\n$stackTrace',
-      );
-      if (isConnectionLost(error)) {
-        ref.read(trackBulkManageConnectionLostProvider.notifier).set(true);
-      } else {
-        _showSnackBar('코너 삭제에 실패했습니다. 잠시 후 다시 시도해주세요.');
-      }
-    } catch (error, stackTrace) {
-      debugPrint('[track_bulk_manage] delete corner failed: $error\n$stackTrace');
-      _showSnackBar('코너 삭제에 실패했습니다. 잠시 후 다시 시도해주세요.');
-    } finally {
-      if (mounted) setState(() => _isBusy = false);
-    }
-  }
-
-  void _showSnackBar(String message) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
-  }
+class _CornerGroupSectionState extends State<CornerGroupSection> {
+  bool _expanded = true;
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colors = isDark ? AppColors.dark : AppColors.light;
     final group = widget.group;
-    return ExpansionTile(
-      initiallyExpanded: true,
-      title: Row(
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.space3),
+      child: Container(
+        decoration: BoxDecoration(
+          color: colors.bgSurface,
+          border: Border.all(color: colors.border),
+          borderRadius: BorderRadius.circular(12.0),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            InkWell(
+              onTap: () => setState(() => _expanded = !_expanded),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.space4,
+                  vertical: AppSpacing.space3,
+                ),
+                child: Row(
+                  children: [
+                    AnimatedRotation(
+                      turns: _expanded ? 0.25 : 0,
+                      duration: const Duration(milliseconds: 150),
+                      child: Icon(
+                        Icons.chevron_right,
+                        color: colors.textSecondary,
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.space2),
+                    Expanded(
+                      child: Text(
+                        group.corner.name ?? group.corner.id ?? '코너',
+                        style: AppTypography.title3.copyWith(
+                          color: colors.textPrimary,
+                        ),
+                      ),
+                    ),
+                    AppTag(label: '트랙 ${group.tracks.length}개'),
+                  ],
+                ),
+              ),
+            ),
+            if (_expanded) ...[
+              Divider(height: 1, color: colors.border),
+              if (group.tracks.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.space4,
+                    vertical: AppSpacing.space4,
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.link_off,
+                        size: 16,
+                        color: colors.textDisabled,
+                      ),
+                      const SizedBox(width: AppSpacing.space2),
+                      Text(
+                        '연결된 트랙이 없습니다',
+                        style: AppTypography.caption.copyWith(
+                          color: colors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              else
+                for (final track in group.tracks) _TrackRow(track: track),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _TrackRow extends StatelessWidget {
+  const _TrackRow({required this.track});
+
+  final api.Track track;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colors = isDark ? AppColors.dark : AppColors.light;
+    final isBusy = track.operationalStatus == api.TrackOperationalStatus.BUSY;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.space4,
+        vertical: AppSpacing.space2,
+      ),
+      decoration: BoxDecoration(
+        border: Border(top: BorderSide(color: colors.border)),
+      ),
+      child: Row(
         children: [
-          Expanded(
-            child: Text(
-              group.corner.name ?? group.corner.id ?? '코너',
-              style: AppTypography.bodyEmphasis,
+          Text(
+            '${track.trackNo ?? '-'}번 트랙',
+            style: AppTypography.bodyEmphasis.copyWith(
+              color: colors.textPrimary,
             ),
           ),
-          Text('트랙 ${group.tracks.length}개'),
-          const SizedBox(width: 12),
-          AppButton(
-            variant: AppButtonVariant.destructive,
-            size: AppButtonSize.compact,
-            label: '코너 삭제',
-            disabledReason: group.canDelete
-                ? null
-                : '진행 중인 방문이 있어 삭제할 수 없습니다',
-            onPressed: group.canDelete && !_isBusy ? _deleteCorner : null,
+          const SizedBox(width: AppSpacing.space3),
+          StatusBadge(
+            status: isBusy ? TrackVisualStatus.busy : TrackVisualStatus.idle,
+          ),
+          const Spacer(),
+          Text(
+            '현재 조: ${track.currentVisit?.groupId ?? '-'}',
+            style: AppTypography.caption.copyWith(color: colors.textSecondary),
           ),
         ],
       ),
-      children: [
-        if (group.tracks.isEmpty)
-          const Padding(
-            padding: EdgeInsets.only(left: 16, bottom: 12),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: Text('연결된 트랙이 없습니다'),
-            ),
-          )
-        else
-          for (final track in group.tracks)
-            ListTile(
-              leading: Checkbox(
-                value: widget.selectedIds.contains(track.id),
-                onChanged: (checked) =>
-                    widget.onSelectTrack(track.id!, checked ?? false),
-              ),
-              title: Text('${track.trackNo ?? '-'}번'),
-              trailing: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  StatusBadge(
-                    status:
-                        track.operationalStatus ==
-                            api.TrackOperationalStatus.BUSY
-                        ? TrackVisualStatus.busy
-                        : TrackVisualStatus.idle,
-                    label:
-                        track.operationalStatus ==
-                            api.TrackOperationalStatus.BUSY
-                        ? 'BUSY'
-                        : 'IDLE',
-                  ),
-                  const SizedBox(width: 12),
-                  const Text('••••••'),
-                ],
-              ),
-              onTap: () =>
-                  widget.onSelectTrack(
-                    track.id!,
-                    !widget.selectedIds.contains(track.id),
-                  ),
-            ),
-      ],
     );
   }
 }
