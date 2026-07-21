@@ -4,8 +4,10 @@ import 'package:cornermon/shared/api/domain_aliases.dart' as api;
 import 'package:cornermon/shared/api/ids.dart';
 import 'package:cornermon/shared/api/providers/group_providers.dart';
 import 'package:cornermon/shared/api/providers/badge_providers.dart';
+import 'package:cornermon/shared/design_system/tokens/spacing.dart';
 import 'package:cornermon/shared/design_system/tokens/typography.dart';
 import 'package:cornermon/shared/design_system/widgets/app_button.dart';
+import 'package:cornermon/shared/design_system/widgets/app_tag.dart';
 import 'package:cornermon/shared/design_system/widgets/pill_tab_bar.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
@@ -80,101 +82,170 @@ class _GroupListScreenState extends ConsumerState<GroupListScreen> {
                   };
                   return _ascending ? compare : -compare;
                 });
-          return Column(
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: PillTabBar(
-                      selectedIndex: GroupStatusFilter.values.indexOf(_filter),
-                      tabs: [
-                        for (final filter in GroupStatusFilter.values)
-                          PillTab(
-                            label: switch (filter) {
-                              GroupStatusFilter.all => '전체',
-                              GroupStatusFilter.finished => '완주',
-                              GroupStatusFilter.partial => '부분완주',
-                            },
-                          ),
-                      ],
-                      onSelected: (index) => setState(
-                        () => _filter = GroupStatusFilter.values[index],
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(right: 16),
-                    child: Text(
-                      '${visible.length}/${items.length}건',
-                      style: AppTypography.caption,
-                    ),
-                  ),
-                ],
-              ),
-              const Divider(height: 1),
-              Expanded(
-                child: RefreshIndicator(
-                  onRefresh: () async =>
-                      ref.refresh(groupListProvider(campId).future),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Card(
-                      clipBehavior: Clip.antiAlias,
-                      margin: EdgeInsets.zero,
-                      child: SingleChildScrollView(
-                        child: SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: DataTable(
-                            sortColumnIndex: _sortColumn.index,
-                            sortAscending: _ascending,
-                            columns: [
-                              DataColumn(
-                                label: const Text('조'),
-                                onSort: (_, _) => _sortBy(GroupSortColumn.name),
-                              ),
-                              DataColumn(
-                                label: const Text('상태'),
-                                onSort: (_, _) =>
-                                    _sortBy(GroupSortColumn.status),
-                              ),
-                              DataColumn(
-                                label: const Text('완료 코너 수'),
-                                numeric: true,
-                                onSort: (_, _) =>
-                                    _sortBy(GroupSortColumn.completedCount),
-                              ),
-                            ],
-                            rows: [
-                              for (final group in visible)
-                                DataRow(
-                                  onSelectChanged: (_) =>
-                                      context.go('/groups/${group.id}'),
-                                  cells: [
-                                    DataCell(Text(group.name ?? '이름 없는 조')),
-                                    DataCell(
-                                      Text(
-                                        group.isFinished == true
-                                            ? '완주'
-                                            : '부분완주',
-                                      ),
-                                    ),
-                                    DataCell(Text(group.completedCountLabel)),
-                                  ],
-                                ),
-                            ],
-                          ),
+          return Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: PillTabBar(
+                        selectedIndex: GroupStatusFilter.values.indexOf(
+                          _filter,
+                        ),
+                        tabs: [
+                          for (final filter in GroupStatusFilter.values)
+                            PillTab(
+                              label: switch (filter) {
+                                GroupStatusFilter.all => '전체',
+                                GroupStatusFilter.finished => '완주',
+                                GroupStatusFilter.partial => '부분완주',
+                              },
+                            ),
+                        ],
+                        onSelected: (index) => setState(
+                          () => _filter = GroupStatusFilter.values[index],
                         ),
                       ),
                     ),
+                    Text(
+                      '${visible.length}/${items.length}건',
+                      style: AppTypography.caption,
+                    ),
+                    PopupMenuButton<GroupSortColumn>(
+                      tooltip: '정렬',
+                      icon: Icon(
+                        _ascending
+                            ? Icons.arrow_upward_outlined
+                            : Icons.arrow_downward_outlined,
+                      ),
+                      onSelected: _sortBy,
+                      itemBuilder: (context) => const [
+                        PopupMenuItem(
+                          value: GroupSortColumn.name,
+                          child: Text('조 이름순'),
+                        ),
+                        PopupMenuItem(
+                          value: GroupSortColumn.status,
+                          child: Text('상태순'),
+                        ),
+                        PopupMenuItem(
+                          value: GroupSortColumn.completedCount,
+                          child: Text('완료 코너 수순'),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Expanded(
+                  child: RefreshIndicator(
+                    onRefresh: () async =>
+                        ref.refresh(groupListProvider(campId).future),
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        final cardWidth = constraints.maxWidth < 300
+                            ? constraints.maxWidth
+                            : 300.0;
+                        return SingleChildScrollView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          child: Align(
+                            alignment: Alignment.topLeft,
+                            child: Wrap(
+                              spacing: AppSpacing.space4,
+                              runSpacing: AppSpacing.space4,
+                              children: [
+                                for (final group in visible)
+                                  SizedBox(
+                                    width: cardWidth,
+                                    height: 144,
+                                    child: _GroupStatusCard(
+                                      group: group,
+                                      onTap: () =>
+                                          context.go('/groups/${group.id}'),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           );
         },
       ),
     );
   }
+}
+
+class _GroupStatusCard extends StatelessWidget {
+  const _GroupStatusCard({required this.group, required this.onTap});
+
+  final api.Group group;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => Card(
+    clipBehavior: Clip.antiAlias,
+    child: InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.space4),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    group.name ?? '이름 없는 조',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTypography.title3.copyWith(
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
+                ),
+                AppTag(
+                  label: group.isFinished == true ? '완주' : '진행 중',
+                  tone: group.isFinished == true
+                      ? AppTagTone.success
+                      : AppTagTone.warning,
+                ),
+              ],
+            ),
+            const Spacer(),
+            Text(
+              '완료 코너',
+              style: AppTypography.caption.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.space1),
+            Row(
+              children: [
+                Text(
+                  group.completedCountLabel,
+                  style: AppTypography.bodyEmphasis.copyWith(
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.space3),
+                Expanded(
+                  child: LinearProgressIndicator(value: group.completionRate),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
 }
 
 class _RegisterGroupDialog extends ConsumerStatefulWidget {
@@ -313,9 +384,7 @@ class _RegisterGroupDialogState extends ConsumerState<_RegisterGroupDialog> {
           size: AppButtonSize.compact,
           label: '등록 확정',
           onPressed:
-              _busy ||
-                  _payload.text.trim().isEmpty ||
-                  _name.text.trim().isEmpty
+              _busy || _payload.text.trim().isEmpty || _name.text.trim().isEmpty
               ? null
               : _submit,
         ),
