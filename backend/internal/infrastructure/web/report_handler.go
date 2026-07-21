@@ -220,9 +220,9 @@ func (h *ReportHandler) ExportCurrentReport(c echo.Context) error {
 func reportHTTPError(err error) error {
 	switch {
 	case errors.Is(err, domain.ErrCampNotFound):
-		return echo.NewHTTPError(http.StatusNotFound, ErrorResponse{Code: "CAMP_NOT_FOUND", Message: "camp not found"}).SetInternal(err)
+		return echo.NewHTTPError(http.StatusNotFound, ErrorResponse{Code: CodeCampNotFound, Message: "camp not found"}).SetInternal(err)
 	case errors.Is(err, domain.ErrCampInvalidTransition):
-		return echo.NewHTTPError(http.StatusConflict, ErrorResponse{Code: "CAMP_NOT_ENDED", Message: "camp must be ended before report generation"}).SetInternal(err)
+		return echo.NewHTTPError(http.StatusConflict, ErrorResponse{Code: CodeCampNotEnded, Message: "camp must be ended before report generation"}).SetInternal(err)
 	default:
 		return err
 	}

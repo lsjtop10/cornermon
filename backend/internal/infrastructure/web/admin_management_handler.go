@@ -51,11 +51,11 @@ type AdminResponse struct {
 func (h *AdminManagementHandler) CreateAdmin(c echo.Context) error {
 	actor, ok := c.Get("adminSession").(*domain.AdminSession)
 	if !ok {
-		return echo.NewHTTPError(http.StatusUnauthorized, ErrorResponse{Code: "UNAUTHORIZED", Message: "unauthorized"})
+		return echo.NewHTTPError(http.StatusUnauthorized, ErrorResponse{Code: CodeUnauthorized, Message: "unauthorized"})
 	}
 	var req CreateAdminRequest
 	if err := c.Bind(&req); err != nil || req.Username == "" || req.Password == "" {
-		return echo.NewHTTPError(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: "username and password are required"}).SetInternal(err)
+		return echo.NewHTTPError(http.StatusBadRequest, ErrorResponse{Code: CodeBadRequest, Message: "username and password are required"}).SetInternal(err)
 	}
 	admin, err := h.admins.CreateAdmin(c.Request().Context(), actor.AdminID(), req.Username, req.Password, domain.AdminRole(req.Role))
 	if err != nil {
@@ -77,11 +77,11 @@ func (h *AdminManagementHandler) CreateAdmin(c echo.Context) error {
 func (h *AdminManagementHandler) ChangeAdminPassword(c echo.Context) error {
 	actor, ok := c.Get("adminSession").(*domain.AdminSession)
 	if !ok {
-		return echo.NewHTTPError(http.StatusUnauthorized, ErrorResponse{Code: "UNAUTHORIZED", Message: "unauthorized"})
+		return echo.NewHTTPError(http.StatusUnauthorized, ErrorResponse{Code: CodeUnauthorized, Message: "unauthorized"})
 	}
 	var req ChangeAdminPasswordRequest
 	if err := c.Bind(&req); err != nil || req.Password == "" {
-		return echo.NewHTTPError(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: "password is required"}).SetInternal(err)
+		return echo.NewHTTPError(http.StatusBadRequest, ErrorResponse{Code: CodeBadRequest, Message: "password is required"}).SetInternal(err)
 	}
 	if err := h.admins.ChangeAdminPassword(c.Request().Context(), actor.AdminID(), domain.AdminID(c.Param("id")), req.Password); err != nil {
 		return adminManagementError(err)
@@ -100,7 +100,7 @@ func (h *AdminManagementHandler) ChangeAdminPassword(c echo.Context) error {
 func (h *AdminManagementHandler) DeleteAdmin(c echo.Context) error {
 	actor, ok := c.Get("adminSession").(*domain.AdminSession)
 	if !ok {
-		return echo.NewHTTPError(http.StatusUnauthorized, ErrorResponse{Code: "UNAUTHORIZED", Message: "unauthorized"})
+		return echo.NewHTTPError(http.StatusUnauthorized, ErrorResponse{Code: CodeUnauthorized, Message: "unauthorized"})
 	}
 	if err := h.admins.DeleteAdmin(c.Request().Context(), actor.AdminID(), domain.AdminID(c.Param("id"))); err != nil {
 		return adminManagementError(err)
@@ -111,14 +111,14 @@ func (h *AdminManagementHandler) DeleteAdmin(c echo.Context) error {
 func adminManagementError(err error) error {
 	switch {
 	case errors.Is(err, domain.ErrAdminForbidden):
-		return echo.NewHTTPError(http.StatusForbidden, ErrorResponse{Code: "FORBIDDEN", Message: err.Error()}).SetInternal(err)
+		return echo.NewHTTPError(http.StatusForbidden, ErrorResponse{Code: CodeForbidden, Message: err.Error()}).SetInternal(err)
 	case errors.Is(err, domain.ErrAdminNotFound):
-		return echo.NewHTTPError(http.StatusNotFound, ErrorResponse{Code: "NOT_FOUND", Message: err.Error()}).SetInternal(err)
+		return echo.NewHTTPError(http.StatusNotFound, ErrorResponse{Code: CodeNotFound, Message: err.Error()}).SetInternal(err)
 	case errors.Is(err, domain.ErrAdminUsernameTaken), errors.Is(err, domain.ErrAdminSelfDeleteForbidden), errors.Is(err, domain.ErrAdminLastSystemAdmin):
-		return echo.NewHTTPError(http.StatusConflict, ErrorResponse{Code: "CONFLICT", Message: err.Error()}).SetInternal(err)
+		return echo.NewHTTPError(http.StatusConflict, ErrorResponse{Code: CodeConflict, Message: err.Error()}).SetInternal(err)
 	case errors.Is(err, domain.ErrAdminInvalidRole):
-		return echo.NewHTTPError(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: err.Error()}).SetInternal(err)
+		return echo.NewHTTPError(http.StatusBadRequest, ErrorResponse{Code: CodeBadRequest, Message: err.Error()}).SetInternal(err)
 	default:
-		return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()}).SetInternal(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: CodeInternalServerError, Message: err.Error()}).SetInternal(err)
 	}
 }
