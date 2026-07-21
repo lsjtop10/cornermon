@@ -5,6 +5,7 @@ import 'package:cornermon/admin/session/selected_camp_provider.dart';
 import 'package:cornermon/admin/widgets/admin_scaffold.dart';
 import 'package:cornermon/shared/api/ids.dart';
 import 'package:cornermon/shared/api/providers/camp_providers.dart';
+import 'package:cornermon/shared/design_system/tokens/spacing.dart';
 import 'package:cornermon/shared/design_system/widgets/app_button.dart';
 import 'package:cornermon_api_gen/cornermon_api_gen.dart';
 import 'package:flutter/material.dart';
@@ -56,6 +57,47 @@ void main() {
 
     // assert
     expect(find.text('코너학습 시작'), findsNothing);
+  });
+
+  testWidgets('ShouldPositionStartActionBelowSystemTopInsetWhenPreparing', (
+    tester,
+  ) async {
+    // arrange
+    final campId = CampId('camp-1');
+    final router = GoRouter(
+      routes: [
+        GoRoute(
+          path: '/',
+          builder: (_, _) => const AdminScaffold(body: Text('body')),
+        ),
+      ],
+    );
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          selectedCampIdProvider.overrideWith(() => _SelectedCampId(campId)),
+          selectedCampProvider.overrideWith(
+            (ref) async => _camp(CampResponseStatusEnum.PENDING),
+          ),
+        ],
+        child: MaterialApp.router(
+          routerConfig: router,
+          builder: (context, child) => MediaQuery(
+            data: MediaQuery.of(
+              context,
+            ).copyWith(padding: const EdgeInsets.only(top: 24.0)),
+            child: child!,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // act
+    final actionTopLeft = tester.getTopLeft(find.byType(StartCampButton));
+
+    // assert
+    expect(actionTopLeft.dy, 24.0 + AppSpacing.space2 + 12.0);
   });
 
   testWidgets('ShoudShowDialogAndNotStartCampWhenCancelTapped', (tester) async {
