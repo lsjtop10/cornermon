@@ -13,6 +13,7 @@ type CornerService struct {
 	camps       CampRepository
 	corners     CornerRepository
 	tracks      TrackRepository
+	groups      GroupRepository
 	auditLogs   AuditLogRepository
 	broadcaster Broadcaster
 	tx          TxManager
@@ -25,6 +26,7 @@ func NewCornerService(
 	camps CampRepository,
 	corners CornerRepository,
 	tracks TrackRepository,
+	groups GroupRepository,
 	auditLogs AuditLogRepository,
 	broadcaster Broadcaster,
 	tx TxManager,
@@ -33,6 +35,7 @@ func NewCornerService(
 		camps:       camps,
 		corners:     corners,
 		tracks:      tracks,
+		groups:      groups,
 		auditLogs:   auditLogs,
 		broadcaster: broadcaster,
 		tx:          tx,
@@ -58,7 +61,12 @@ func (s *CornerService) AddLearningCorner(ctx context.Context, campID domain.Cam
 	})
 
 	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
-		return s.corners.Save(ctx, corner)
+		if err := s.corners.Save(ctx, corner); err != nil {
+			return err
+		}
+		return s.syncGroupItineraries(ctx, campID, func(g *domain.Group) {
+			g.AddCornerToItinerary(corner.ID())
+		})
 	})
 
 	if err != nil {
@@ -149,7 +157,12 @@ func (s *CornerService) RemoveCornerFromCamp(ctx context.Context, id domain.Corn
 	}
 
 	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
-		return s.corners.Delete(ctx, id)
+		if err := s.corners.SoftDelete(ctx, id, s.nowFn()); err != nil {
+			return err
+		}
+		return s.syncGroupItineraries(ctx, corner.CampID(), func(g *domain.Group) {
+			g.RemoveCornerFromItinerary(id)
+		})
 	})
 
 	if err != nil {
@@ -161,6 +174,20 @@ func (s *CornerService) RemoveCornerFromCamp(ctx context.Context, id domain.Corn
 	_ = s.broadcaster.Broadcast(ctx, corner.CampID(), EventCornersUpdated, CampScope())
 
 	return nil
+}
+
+// syncGroupItineraries는 코너 추가/삭제에 맞춰 캠프 내 모든 조의 순회표를 갱신한다.
+// ListByCampForUpdate로 한 번에 잠금+조회(N+1 방지)한 뒤 SaveBulk로 한 트랜잭션에서
+// 저장하며, 반드시 호출부의 s.tx.RunInTx 블록 안에서만 호출해야 한다.
+func (s *CornerService) syncGroupItineraries(ctx context.Context, campID domain.CampID, mutate func(*domain.Group)) error {
+	groups, err := s.groups.ListByCampForUpdate(ctx, campID)
+	if err != nil {
+		return err
+	}
+	for _, g := range groups {
+		mutate(g)
+	}
+	return s.groups.SaveBulk(ctx, groups)
 }
 
 func (s *CornerService) recordAuditLog(ctx context.Context, actor string, action AuditAction, target string, success bool, metadata map[string]any) {

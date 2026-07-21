@@ -45,7 +45,10 @@ developer guide.
   access/refresh) are **opaque tokens**, not JWT, stored as hashes. This is a finalized
   decision — do not propose JWT.
 - **SSE real-time push**: broadcast only after commit (rolled-back changes must never reach
-  clients); events carry full snapshots, never deltas; clients treat reconnect as resync.
+  clients). Events are best-effort `{event, scope}` change notifications, not snapshots;
+  clients REST-resync on ordinary events and reconnect. `camp_ended` is a terminal exception:
+  facilitator clients clear local credentials without a REST refresh, and recover missed
+  termination through `GET /device-registrations/me`.
 - **API Change Protocol**: per `workflow/Collaborate.md`, frontend opens a PR first, then
   backend implements and **must update `api/openapi.yaml`** before merging.
 

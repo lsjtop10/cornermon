@@ -6,13 +6,14 @@ package db
 
 import (
 	"context"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type Querier interface {
 	CountAdmins(ctx context.Context) (int64, error)
 	CountAdminsByRole(ctx context.Context, role string) (int64, error)
 	DeleteAdmin(ctx context.Context, id string) error
-	DeleteCorner(ctx context.Context, id string) error
 	GetAdmin(ctx context.Context, id string) (Admin, error)
 	GetAdminByUsername(ctx context.Context, username string) (Admin, error)
 	GetAdminSession(ctx context.Context, id string) (AdminSession, error)
@@ -31,6 +32,7 @@ type Querier interface {
 	GetFacilitatorSessionByTokenHash(ctx context.Context, tokenHash string) (FacilitatorSession, error)
 	GetGroup(ctx context.Context, id string) (Group, error)
 	GetGroupByBadge(ctx context.Context, arg GetGroupByBadgeParams) (Group, error)
+	GetGroupForUpdate(ctx context.Context, id string) (Group, error)
 	GetInProgressVisitByTrack(ctx context.Context, trackID string) (Visit, error)
 	GetTrack(ctx context.Context, id string) (Track, error)
 	GetVisit(ctx context.Context, id string) (Visit, error)
@@ -50,6 +52,8 @@ type Querier interface {
 	ListCornersByCamp(ctx context.Context, campID string) ([]Corner, error)
 	ListDeviceRegistrationsByCampAndStatus(ctx context.Context, arg ListDeviceRegistrationsByCampAndStatusParams) ([]DeviceRegistration, error)
 	ListGroupsByCamp(ctx context.Context, campID string) ([]Group, error)
+	ListGroupsByCampForUpdate(ctx context.Context, campID string) ([]Group, error)
+	ListInProgressVisitsByCamp(ctx context.Context, campID string) ([]Visit, error)
 	ListMessagesByTrack(ctx context.Context, trackID string) ([]Message, error)
 	ListMessagesByTrackAfter(ctx context.Context, arg ListMessagesByTrackAfterParams) ([]Message, error)
 	ListPendingDeviceRegistrationsByCamp(ctx context.Context, campID string) ([]DeviceRegistration, error)
@@ -58,6 +62,7 @@ type Querier interface {
 	ListVisitsByCamp(ctx context.Context, campID string) ([]ListVisitsByCampRow, error)
 	ListVisitsByGroup(ctx context.Context, groupID string) ([]Visit, error)
 	MarkAllMessagesReadByRecipient(ctx context.Context, arg MarkAllMessagesReadByRecipientParams) error
+	PurgeDeletedCorners(ctx context.Context, deletedAt pgtype.Timestamptz) (int64, error)
 	ResetTrackUnreadCount(ctx context.Context, arg ResetTrackUnreadCountParams) error
 	SaveAdmin(ctx context.Context, arg SaveAdminParams) error
 	SaveAdminSession(ctx context.Context, arg SaveAdminSessionParams) error
@@ -73,6 +78,7 @@ type Querier interface {
 	SaveMessage(ctx context.Context, arg SaveMessageParams) error
 	SaveTrack(ctx context.Context, arg SaveTrackParams) error
 	SaveVisit(ctx context.Context, arg SaveVisitParams) error
+	SoftDeleteCorner(ctx context.Context, arg SoftDeleteCornerParams) error
 }
 
 var _ Querier = (*Queries)(nil)

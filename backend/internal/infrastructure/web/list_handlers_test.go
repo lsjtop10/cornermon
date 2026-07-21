@@ -21,13 +21,16 @@ type listDeviceTrustStub struct {
 	requestErr       error
 	reviewedDevices  []*domain.DeviceRegistration
 	myRegistration   *domain.DeviceRegistration
+	campStatus       domain.CampStatus
 	statusErr        error
 	deviceToken      string
+	mutatedDevice    *domain.DeviceRegistration
+	mutationErr      error
 }
 
-func (s *listDeviceTrustStub) GetMyRegistrationStatus(_ context.Context, deviceToken string) (*domain.DeviceRegistration, error) {
+func (s *listDeviceTrustStub) GetMyRegistrationStatus(_ context.Context, deviceToken string) (*usecase.DeviceRegistrationStatusView, error) {
 	s.deviceToken = deviceToken
-	return s.myRegistration, s.statusErr
+	return &usecase.DeviceRegistrationStatusView{Registration: s.myRegistration, CampStatus: s.campStatus}, s.statusErr
 }
 func (s *listDeviceTrustStub) RequestRegistration(_ context.Context, registrationCode, _, _, _ string) (string, *domain.DeviceRegistration, error) {
 	s.registrationCode = registrationCode
@@ -36,14 +39,14 @@ func (s *listDeviceTrustStub) RequestRegistration(_ context.Context, registratio
 	}
 	return "token", s.requestedReg, nil
 }
-func (s *listDeviceTrustStub) ApproveDevice(context.Context, domain.DeviceRegistrationID, domain.AdminID) error {
-	return nil
+func (s *listDeviceTrustStub) ApproveDevice(context.Context, domain.DeviceRegistrationID, domain.AdminID) (*domain.DeviceRegistration, error) {
+	return s.mutatedDevice, s.mutationErr
 }
-func (s *listDeviceTrustStub) RejectDevice(context.Context, domain.DeviceRegistrationID, domain.AdminID) error {
-	return nil
+func (s *listDeviceTrustStub) RejectDevice(context.Context, domain.DeviceRegistrationID, domain.AdminID) (*domain.DeviceRegistration, error) {
+	return s.mutatedDevice, s.mutationErr
 }
-func (s *listDeviceTrustStub) RevokeDevice(context.Context, domain.DeviceRegistrationID, domain.AdminID) error {
-	return nil
+func (s *listDeviceTrustStub) RevokeDevice(context.Context, domain.DeviceRegistrationID, domain.AdminID) (*domain.DeviceRegistration, error) {
+	return s.mutatedDevice, s.mutationErr
 }
 func (s *listDeviceTrustStub) ReviewDeviceTrustRequests(context.Context, domain.CampID, *domain.DeviceRegistrationStatus) ([]*domain.DeviceRegistration, error) {
 	return s.reviewedDevices, nil

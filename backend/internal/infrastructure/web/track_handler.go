@@ -1,6 +1,7 @@
 package web
 
 import (
+	"errors"
 	"net/http"
 
 	"cornermon/backend/internal/domain"
@@ -93,6 +94,8 @@ type CreateTracksRequest struct {
 // @Produce      json
 // @Param        request body CreateTracksRequest true "생성 정보"
 // @Success      201 {array} TrackPinResponse
+// @Failure      404 {object} ErrorResponse "CORNER_NOT_FOUND: 대상 코너가 없음"
+// @Failure      409 {object} ErrorResponse "CAMP_NOT_AVAILABLE: 종료된 캠프에는 트랙을 생성할 수 없음"
 // @Router       /tracks [post]
 func (h *TrackHandler) CreateTracks(c echo.Context) error {
 	var req CreateTracksRequest
@@ -103,7 +106,7 @@ func (h *TrackHandler) CreateTracks(c echo.Context) error {
 	for i := 0; i < req.Count; i++ {
 		track, pin, err := h.svc.CreateTrack(c.Request().Context(), domain.CampID(req.CampID), domain.CornerID(req.CornerID))
 		if err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_ERROR", Message: err.Error()}).SetInternal(err)
+			return trackHTTPError(err)
 		}
 		res = append(res, TrackPinResponse{Track: mapDomainTrackToDTO(track), PIN: pin})
 	}
@@ -146,6 +149,8 @@ type BulkDeleteTracksRequest struct {
 // @Produce      json
 // @Param        request body BulkDeleteTracksRequest true "삭제할 트랙 ID 목록"
 // @Success      204 "성공적으로 삭제됨"
+// @Failure      404 {object} ErrorResponse "TRACK_NOT_FOUND: 대상 트랙이 없거나 이미 삭제됨"
+// @Failure      409 {object} ErrorResponse "TRACK_DELETE_BLOCKED: 진행 중인 방문이 있어 삭제할 수 없음"
 // @Router       /tracks/bulk-delete [delete]
 func (h *TrackHandler) BulkDeleteTracks(c echo.Context) error {
 	var req BulkDeleteTracksRequest
@@ -155,7 +160,7 @@ func (h *TrackHandler) BulkDeleteTracks(c echo.Context) error {
 	for _, id := range req.TrackIDs {
 		_, err := h.svc.DeleteTrack(c.Request().Context(), domain.TrackID(id))
 		if err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_ERROR", Message: err.Error()}).SetInternal(err)
+			return trackHTTPError(err)
 		}
 	}
 	return c.NoContent(http.StatusNoContent)
@@ -190,7 +195,7 @@ func (h *TrackHandler) ReplaceTrack(c echo.Context) error {
 		domain.CornerID(req.NewCornerID),
 	)
 	if err != nil {
-		return err
+		return trackHTTPError(err)
 	}
 	return c.JSON(http.StatusOK, TrackPinResponse{Track: mapDomainTrackToDTO(track), PIN: pin})
 }
@@ -202,12 +207,13 @@ func (h *TrackHandler) ReplaceTrack(c echo.Context) error {
 // @Produce      json
 // @Param        id path string true "트랙 ID"
 // @Success      200 {object} TrackPinResponse
+// @Failure      404 {object} ErrorResponse "TRACK_NOT_FOUND: 대상 트랙이 없거나 활성 상태가 아님"
 // @Router       /tracks/{id}/regenerate-pin [post]
 func (h *TrackHandler) RegeneratePin(c echo.Context) error {
 	id := domain.TrackID(c.Param("id"))
 	track, plainPIN, err := h.svc.RegeneratePIN(c.Request().Context(), id)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_ERROR", Message: err.Error()}).SetInternal(err)
+		return trackHTTPError(err)
 	}
 	return c.JSON(http.StatusOK, TrackPinResponse{Track: mapDomainTrackToDTO(track), PIN: plainPIN})
 }
@@ -227,7 +233,7 @@ func (h *TrackHandler) ExportTracks(c echo.Context) error {
 	}
 	tracks, pins, err := h.svc.ExportTrackPINs(c.Request().Context(), campID)
 	if err != nil {
-		return err
+		return trackHTTPError(err)
 	}
 	res := make([]TrackPinResponse, len(tracks))
 	for i, track := range tracks {
@@ -248,8 +254,23 @@ func (h *TrackHandler) ExportTracks(c echo.Context) error {
 func (h *TrackHandler) ExportTrackSingle(c echo.Context) error {
 	track, pin, err := h.svc.ExportTrackPIN(c.Request().Context(), domain.TrackID(c.Param("id")))
 	if err != nil {
-		return err
+		return trackHTTPError(err)
 	}
 	c.Response().Header().Set("Cache-Control", "no-store")
 	return c.JSON(http.StatusOK, TrackPinResponse{Track: mapDomainTrackToDTO(track), PIN: pin})
+}
+
+func trackHTTPError(err error) error {
+	switch {
+	case errors.Is(err, domain.ErrCornerNotFound), errors.Is(err, domain.ErrCornerNotInItinerary):
+		return echo.NewHTTPError(http.StatusNotFound, ErrorResponse{Code: "CORNER_NOT_FOUND", Message: "corner not found"}).SetInternal(err)
+	case errors.Is(err, domain.ErrTrackNotActive), errors.Is(err, domain.ErrTrackNotFound):
+		return echo.NewHTTPError(http.StatusNotFound, ErrorResponse{Code: "TRACK_NOT_FOUND", Message: "track not found"}).SetInternal(err)
+	case errors.Is(err, domain.ErrTrackDeleteBlocked), errors.Is(err, domain.ErrTrackBusy), errors.Is(err, domain.ErrTrackCampMismatch):
+		return echo.NewHTTPError(http.StatusConflict, ErrorResponse{Code: "TRACK_CONFLICT", Message: "track cannot be changed in its current state"}).SetInternal(err)
+	case errors.Is(err, domain.ErrCampInvalidTransition):
+		return echo.NewHTTPError(http.StatusConflict, ErrorResponse{Code: "CAMP_NOT_AVAILABLE", Message: "camp is not available for track management"}).SetInternal(err)
+	default:
+		return err
+	}
 }

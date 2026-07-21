@@ -152,7 +152,7 @@ func main() {
 	authAdminService := usecase.NewAdminAuthService(adminRepo, adminSessionRepo, facilitatorSessionRepo, trackRepo, cornerRepo, broadcaster, auditLogRepo, txManager)
 
 	deviceTrustService := usecase.NewDeviceTrustService(campRepo, deviceRepo, auditLogRepo, broadcaster, txManager)
-	cornerService := usecase.NewCornerService(campRepo, cornerRepo, trackRepo, auditLogRepo, broadcaster, txManager)
+	cornerService := usecase.NewCornerService(campRepo, cornerRepo, trackRepo, groupRepo, auditLogRepo, broadcaster, txManager)
 	cornerViewQuerier := postgres.NewCornerViewQuerier(pool)
 	groupService := usecase.NewGroupService(campRepo, cornerRepo, trackRepo, groupRepo, badgeRepo, visitRepo, auditLogRepo, txManager)
 	badgeService := usecase.NewBadgeService(badgeRepo, groupRepo, auditLogRepo, txManager)
@@ -163,7 +163,7 @@ func main() {
 	messageService := usecase.NewMessageService(cornerRepo, trackRepo, messageRepo, auditLogRepo, broadcaster, txManager)
 	announcementService := usecase.NewAnnouncementService(announcementRepo, announcementReceiptRepo, campRepo, trackRepo, facilitatorSessionRepo, txManager, auditLogRepo, broadcaster)
 	announcementQueryService := usecase.NewAnnouncementQueryService(announcementQuerier, trackRepo, cornerRepo)
-	campService := usecase.NewCampService(campRepo, trackRepo, facilitatorSessionRepo, auditLogRepo, broadcaster, txManager)
+	campService := usecase.NewCampService(campRepo, trackRepo, deviceRepo, visitRepo, groupRepo, facilitatorSessionRepo, auditLogRepo, broadcaster, txManager)
 
 	// Initialize Handlers
 	authHandler := web.NewAuthHandler(authAdminService, authFacilitatorService, deviceTrustService)
@@ -172,7 +172,7 @@ func main() {
 	cornerHandler := web.NewCornerHandler(cornerService, cornerViewQuerier)
 	trackHandler := web.NewTrackHandler(trackService)
 	groupHandler := web.NewGroupHandler(groupService)
-	badgeHandler := web.NewBadgeHandler(badgeService, groupService, campRepo)
+	badgeHandler := web.NewBadgeHandler(badgeService, groupService)
 	visitHandler := web.NewVisitHandler(visitService)
 
 	eventHandler := web.NewEventHandler(broadcaster, trackRepo, cornerRepo)

@@ -77,7 +77,7 @@ func TestGetCornerShouldReturnViewAndNotFound(t *testing.T) {
 		}
 	})
 
-	t.Run("returns the domain not-found error", func(t *testing.T) {
+	t.Run("maps missing corner to not found HTTP error", func(t *testing.T) {
 		e := echo.New()
 		req := httptest.NewRequest(http.MethodGet, "/corners/missing", nil)
 		rec := httptest.NewRecorder()
@@ -87,8 +87,9 @@ func TestGetCornerShouldReturnViewAndNotFound(t *testing.T) {
 		c.SetParamValues("missing")
 
 		err := NewCornerHandler(nil, fakeCornerViewQuerier{}).GetCorner(c)
-		if err != domain.ErrCornerNotFound {
-			t.Fatalf("expected ErrCornerNotFound, got %v", err)
+		var httpErr *echo.HTTPError
+		if !errorsAsHTTPError(err, &httpErr) || httpErr.Code != http.StatusNotFound {
+			t.Fatalf("expected 404 HTTP error, got %v", err)
 		}
 	})
 }
@@ -101,7 +102,7 @@ func TestGetCornerByTrackShouldReturnCornerWhenSessionTrackMatchesPath(t *testin
 		nil,
 		cornerRepoForGroupHandler{corner: corner},
 		trackRepoForGroupHandler{track: track},
-		nil, nil, nil,
+		nil, nil, nil, nil,
 	)
 	e := echo.New()
 	req := httptest.NewRequest(http.MethodGet, "/tracks/track-1/corner", nil)
@@ -152,7 +153,7 @@ func TestGetCornerByTrackShouldReturnNotFoundWhenTrackMissing(t *testing.T) {
 		nil,
 		cornerRepoForGroupHandler{},
 		trackRepoForGroupHandler{},
-		nil, nil, nil,
+		nil, nil, nil, nil,
 	)
 	e := echo.New()
 	req := httptest.NewRequest(http.MethodGet, "/tracks/track-1/corner", nil)

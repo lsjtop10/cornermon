@@ -1,4 +1,4 @@
-.PHONY: build run test clean docker-build swag start-postgres reset-postgres stop-postgres
+.PHONY: build run test clean docker-build swag cleanup-corners start-postgres reset-postgres stop-postgres
 
 MAKEFILE_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 POSTGRES_COMPOSE_FILE := $(MAKEFILE_DIR)db/docker-compose.yml
@@ -27,6 +27,9 @@ docker-build:
 
 swag:
 	swag init -g internal/infrastructure/web/doc.go -d . -o ../api --parseDependency --parseInternal
+
+cleanup-corners:
+	go run ./cmd/cleanup-corners
 
 start-postgres:
 	docker compose --file "$(POSTGRES_COMPOSE_FILE)" up

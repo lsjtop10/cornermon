@@ -42,15 +42,6 @@ func (q *Queries) DeleteAdmin(ctx context.Context, id string) error {
 	return err
 }
 
-const deleteCorner = `-- name: DeleteCorner :exec
-DELETE FROM corners WHERE id = $1
-`
-
-func (q *Queries) DeleteCorner(ctx context.Context, id string) error {
-	_, err := q.db.Exec(ctx, deleteCorner, id)
-	return err
-}
-
 const getAdmin = `-- name: GetAdmin :one
 SELECT id, username, password_hash, role FROM admins WHERE id = $1
 `
@@ -241,7 +232,7 @@ func (q *Queries) GetCompletedVisitByGroupAndCorner(ctx context.Context, arg Get
 }
 
 const getCorner = `-- name: GetCorner :one
-SELECT id, camp_id, name, target_minutes, is_mandatory FROM corners WHERE id = $1
+SELECT id, camp_id, name, target_minutes, is_mandatory, deleted_at FROM corners WHERE id = $1 AND deleted_at IS NULL
 `
 
 func (q *Queries) GetCorner(ctx context.Context, id string) (Corner, error) {
@@ -253,6 +244,7 @@ func (q *Queries) GetCorner(ctx context.Context, id string) (Corner, error) {
 		&i.Name,
 		&i.TargetMinutes,
 		&i.IsMandatory,
+		&i.DeletedAt,
 	)
 	return i, err
 }
@@ -288,7 +280,7 @@ JOIN LATERAL (
     FROM tracks t
     WHERE t.corner_id = c.id AND t.status = 'ACTIVE'
 ) active_tracks ON TRUE
-WHERE c.id = $1
+WHERE c.id = $1 AND c.deleted_at IS NULL
 `
 
 type GetCornerViewRow struct {
@@ -435,6 +427,23 @@ func (q *Queries) GetGroupByBadge(ctx context.Context, arg GetGroupByBadgeParams
 	return i, err
 }
 
+const getGroupForUpdate = `-- name: GetGroupForUpdate :one
+SELECT id, camp_id, name, badge_id, itinerary FROM groups WHERE id = $1 FOR UPDATE
+`
+
+func (q *Queries) GetGroupForUpdate(ctx context.Context, id string) (Group, error) {
+	row := q.db.QueryRow(ctx, getGroupForUpdate, id)
+	var i Group
+	err := row.Scan(
+		&i.ID,
+		&i.CampID,
+		&i.Name,
+		&i.BadgeID,
+		&i.Itinerary,
+	)
+	return i, err
+}
+
 const getInProgressVisitByTrack = `-- name: GetInProgressVisitByTrack :one
 SELECT id, group_id, corner_id, track_id, status, input_method, started_at, ended_at FROM visits WHERE track_id = $1 AND status = 'IN_PROGRESS'
 `
@@ -518,7 +527,7 @@ const listActiveFacilitatorSessionsByCamp = `-- name: ListActiveFacilitatorSessi
 SELECT f.id, f.track_id, f.token_hash, f.created_at, f.revoked_at FROM facilitator_sessions f
 JOIN tracks t ON f.track_id = t.id
 JOIN corners c ON t.corner_id = c.id
-WHERE c.camp_id = $1 AND f.revoked_at IS NULL
+WHERE c.camp_id = $1 AND c.deleted_at IS NULL AND f.revoked_at IS NULL
 `
 
 func (q *Queries) ListActiveFacilitatorSessionsByCamp(ctx context.Context, campID string) ([]FacilitatorSession, error) {
@@ -580,7 +589,7 @@ func (q *Queries) ListActiveFacilitatorSessionsByTrack(ctx context.Context, trac
 const listActiveTracksByCamp = `-- name: ListActiveTracksByCamp :many
 SELECT t.id, t.corner_id, t.track_no, t.status, t.pin_hash, t.pin_ciphertext, t.current_visit_id, t.deleted_at, t.unread_by_admin_count, t.unread_by_track_count FROM tracks t
 JOIN corners c ON t.corner_id = c.id
-WHERE c.camp_id = $1 AND t.status = 'ACTIVE'
+WHERE c.camp_id = $1 AND c.deleted_at IS NULL AND t.status = 'ACTIVE'
 `
 
 func (q *Queries) ListActiveTracksByCamp(ctx context.Context, campID string) ([]Track, error) {
@@ -946,7 +955,7 @@ JOIN LATERAL (
     FROM tracks t
     WHERE t.corner_id = c.id AND t.status = 'ACTIVE'
 ) active_tracks ON TRUE
-WHERE c.camp_id = $1
+WHERE c.camp_id = $1 AND c.deleted_at IS NULL
 ORDER BY c.id
 `
 
@@ -989,7 +998,7 @@ func (q *Queries) ListCornerViewsByCamp(ctx context.Context, campID string) ([]L
 }
 
 const listCornersByCamp = `-- name: ListCornersByCamp :many
-SELECT id, camp_id, name, target_minutes, is_mandatory FROM corners WHERE camp_id = $1
+SELECT id, camp_id, name, target_minutes, is_mandatory, deleted_at FROM corners WHERE camp_id = $1 AND deleted_at IS NULL
 `
 
 func (q *Queries) ListCornersByCamp(ctx context.Context, campID string) ([]Corner, error) {
@@ -1007,6 +1016,7 @@ func (q *Queries) ListCornersByCamp(ctx context.Context, campID string) ([]Corne
 			&i.Name,
 			&i.TargetMinutes,
 			&i.IsMandatory,
+			&i.DeletedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -1079,6 +1089,71 @@ func (q *Queries) ListGroupsByCamp(ctx context.Context, campID string) ([]Group,
 			&i.Name,
 			&i.BadgeID,
 			&i.Itinerary,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listGroupsByCampForUpdate = `-- name: ListGroupsByCampForUpdate :many
+SELECT id, camp_id, name, badge_id, itinerary FROM groups WHERE camp_id = $1 FOR UPDATE
+`
+
+func (q *Queries) ListGroupsByCampForUpdate(ctx context.Context, campID string) ([]Group, error) {
+	rows, err := q.db.Query(ctx, listGroupsByCampForUpdate, campID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Group
+	for rows.Next() {
+		var i Group
+		if err := rows.Scan(
+			&i.ID,
+			&i.CampID,
+			&i.Name,
+			&i.BadgeID,
+			&i.Itinerary,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listInProgressVisitsByCamp = `-- name: ListInProgressVisitsByCamp :many
+SELECT v.id, v.group_id, v.corner_id, v.track_id, v.status, v.input_method, v.started_at, v.ended_at FROM visits v
+JOIN groups g ON v.group_id = g.id
+WHERE g.camp_id = $1 AND v.status = 'IN_PROGRESS'
+`
+
+func (q *Queries) ListInProgressVisitsByCamp(ctx context.Context, campID string) ([]Visit, error) {
+	rows, err := q.db.Query(ctx, listInProgressVisitsByCamp, campID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Visit
+	for rows.Next() {
+		var i Visit
+		if err := rows.Scan(
+			&i.ID,
+			&i.GroupID,
+			&i.CornerID,
+			&i.TrackID,
+			&i.Status,
+			&i.InputMethod,
+			&i.StartedAt,
+			&i.EndedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -1199,7 +1274,7 @@ func (q *Queries) ListPendingDeviceRegistrationsByCamp(ctx context.Context, camp
 const listTracksByCamp = `-- name: ListTracksByCamp :many
 SELECT t.id, t.corner_id, t.track_no, t.status, t.pin_hash, t.pin_ciphertext, t.current_visit_id, t.deleted_at, t.unread_by_admin_count, t.unread_by_track_count FROM tracks t
 JOIN corners c ON t.corner_id = c.id
-WHERE c.camp_id = $1
+WHERE c.camp_id = $1 AND c.deleted_at IS NULL
 `
 
 func (q *Queries) ListTracksByCamp(ctx context.Context, campID string) ([]Track, error) {
@@ -1369,6 +1444,21 @@ type MarkAllMessagesReadByRecipientParams struct {
 func (q *Queries) MarkAllMessagesReadByRecipient(ctx context.Context, arg MarkAllMessagesReadByRecipientParams) error {
 	_, err := q.db.Exec(ctx, markAllMessagesReadByRecipient, arg.ReadAt, arg.TrackID, arg.Recipient)
 	return err
+}
+
+const purgeDeletedCorners = `-- name: PurgeDeletedCorners :execrows
+DELETE FROM corners c
+WHERE c.deleted_at <= $1
+  AND NOT EXISTS (SELECT 1 FROM tracks t WHERE t.corner_id = c.id)
+  AND NOT EXISTS (SELECT 1 FROM visits v WHERE v.corner_id = c.id)
+`
+
+func (q *Queries) PurgeDeletedCorners(ctx context.Context, deletedAt pgtype.Timestamptz) (int64, error) {
+	result, err := q.db.Exec(ctx, purgeDeletedCorners, deletedAt)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
 
 const resetTrackUnreadCount = `-- name: ResetTrackUnreadCount :exec
@@ -1806,5 +1896,21 @@ func (q *Queries) SaveVisit(ctx context.Context, arg SaveVisitParams) error {
 		arg.StartedAt,
 		arg.EndedAt,
 	)
+	return err
+}
+
+const softDeleteCorner = `-- name: SoftDeleteCorner :exec
+UPDATE corners
+SET deleted_at = $2
+WHERE id = $1 AND deleted_at IS NULL
+`
+
+type SoftDeleteCornerParams struct {
+	ID        string             `json:"id"`
+	DeletedAt pgtype.Timestamptz `json:"deleted_at"`
+}
+
+func (q *Queries) SoftDeleteCorner(ctx context.Context, arg SoftDeleteCornerParams) error {
+	_, err := q.db.Exec(ctx, softDeleteCorner, arg.ID, arg.DeletedAt)
 	return err
 }

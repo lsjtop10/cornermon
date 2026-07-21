@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"cornermon/backend/internal/domain"
 	"cornermon/backend/internal/usecase"
@@ -41,12 +42,17 @@ func (r cornerRepoForGroupHandler) Get(context.Context, domain.CornerID) (*domai
 func (cornerRepoForGroupHandler) ListByCamp(context.Context, domain.CampID) ([]*domain.Corner, error) {
 	return nil, nil
 }
-func (cornerRepoForGroupHandler) Save(context.Context, *domain.Corner) error    { return nil }
-func (cornerRepoForGroupHandler) Delete(context.Context, domain.CornerID) error { return nil }
+func (cornerRepoForGroupHandler) Save(context.Context, *domain.Corner) error { return nil }
+func (cornerRepoForGroupHandler) SoftDelete(context.Context, domain.CornerID, time.Time) error {
+	return nil
+}
 
 type groupRepoForGroupHandler struct{ groups []*domain.Group }
 
 func (groupRepoForGroupHandler) Get(context.Context, domain.GroupID) (*domain.Group, error) {
+	return nil, nil
+}
+func (groupRepoForGroupHandler) GetForUpdate(context.Context, domain.GroupID) (*domain.Group, error) {
 	return nil, nil
 }
 func (groupRepoForGroupHandler) GetByBadge(context.Context, domain.CampID, domain.BadgeID) (*domain.Group, error) {
@@ -55,7 +61,11 @@ func (groupRepoForGroupHandler) GetByBadge(context.Context, domain.CampID, domai
 func (r groupRepoForGroupHandler) ListByCamp(context.Context, domain.CampID) ([]*domain.Group, error) {
 	return r.groups, nil
 }
-func (groupRepoForGroupHandler) Save(context.Context, *domain.Group) error { return nil }
+func (r groupRepoForGroupHandler) ListByCampForUpdate(context.Context, domain.CampID) ([]*domain.Group, error) {
+	return r.groups, nil
+}
+func (groupRepoForGroupHandler) Save(context.Context, *domain.Group) error       { return nil }
+func (groupRepoForGroupHandler) SaveBulk(context.Context, []*domain.Group) error { return nil }
 
 func TestListGroupsByTrackShoudReturnGroupsWhenSessionTrackMatchesPath(t *testing.T) {
 	// Arrange
@@ -100,7 +110,8 @@ func TestListGroupsByTrackShoudRejectRequestWhenSessionTrackDiffers(t *testing.T
 	err := NewGroupHandler(nil).ListGroupsByTrack(c)
 
 	// Assert
-	if err != domain.ErrTrackScopeForbidden {
-		t.Fatalf("expected ErrTrackScopeForbidden, got %v", err)
+	var httpErr *echo.HTTPError
+	if !errorsAsHTTPError(err, &httpErr) || httpErr.Code != http.StatusForbidden {
+		t.Fatalf("expected 403 HTTP error, got %v", err)
 	}
 }

@@ -8,16 +8,17 @@ import (
 	"time"
 
 	"cornermon/backend/internal/domain"
+	"cornermon/backend/internal/usecase"
 
 	"github.com/labstack/echo/v4"
 )
 
 type DeviceTrustUsecase interface {
-	GetMyRegistrationStatus(ctx context.Context, deviceToken string) (*domain.DeviceRegistration, error)
+	GetMyRegistrationStatus(ctx context.Context, deviceToken string) (*usecase.DeviceRegistrationStatusView, error)
 	RequestRegistration(ctx context.Context, registrationCode string, deviceName, deviceModel, displayName string) (string, *domain.DeviceRegistration, error)
-	ApproveDevice(ctx context.Context, regID domain.DeviceRegistrationID, actorAdminID domain.AdminID) error
-	RejectDevice(ctx context.Context, regID domain.DeviceRegistrationID, actorAdminID domain.AdminID) error
-	RevokeDevice(ctx context.Context, regID domain.DeviceRegistrationID, actorAdminID domain.AdminID) error
+	ApproveDevice(ctx context.Context, regID domain.DeviceRegistrationID, actorAdminID domain.AdminID) (*domain.DeviceRegistration, error)
+	RejectDevice(ctx context.Context, regID domain.DeviceRegistrationID, actorAdminID domain.AdminID) (*domain.DeviceRegistration, error)
+	RevokeDevice(ctx context.Context, regID domain.DeviceRegistrationID, actorAdminID domain.AdminID) (*domain.DeviceRegistration, error)
 	ReviewDeviceTrustRequests(ctx context.Context, campID domain.CampID, status *domain.DeviceRegistrationStatus) ([]*domain.DeviceRegistration, error)
 	ListLockedDevices(ctx context.Context, campID domain.CampID) ([]*domain.DeviceRegistration, error)
 }
@@ -27,9 +28,10 @@ type DeviceHandler struct {
 }
 
 type DeviceStatusResponse struct {
-	ID     string `json:"id" format:"uuid"`
-	CampID string `json:"campId" format:"uuid"`
-	Status string `json:"status" enums:"PENDING,APPROVED,REJECTED,REVOKED"`
+	ID         string `json:"id" format:"uuid"`
+	CampID     string `json:"campId" format:"uuid"`
+	Status     string `json:"status" enums:"PENDING,APPROVED,REJECTED,REVOKED"`
+	CampStatus string `json:"campStatus" enums:"PENDING,ACTIVE,ENDED"`
 } // @name DeviceStatusResponse
 
 type DeviceRegistrationResponse struct {
@@ -66,7 +68,7 @@ type DeviceRegistrationRequest struct {
 } // @name DeviceRegistrationRequest
 
 // @Summary      내 기기 등록 상태 자체 조회
-// @Description  기기 등록 시 발급받은 opaque device token을 X-Device-Token 헤더에 넣어, 해당 기기의 승인 상태와 식별자를 조회한다. PENDING 상태에서도 호출할 수 있다.
+// @Description  기기 등록 시 발급받은 opaque device token을 X-Device-Token 헤더에 넣어, 해당 기기의 승인 상태·식별자와 소속 캠프 상태를 조회한다. PENDING 및 REVOKED 상태에서도 호출할 수 있다.
 // @Tags         A. Auth & Device Trust
 // @Accept       json
 // @Produce      json
@@ -79,18 +81,22 @@ func (h *DeviceHandler) GetMyRegistrationStatus(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusUnauthorized, ErrorResponse{Code: "UNAUTHORIZED", Message: "missing device token"})
 	}
 
-	registration, err := h.deviceTrust.GetMyRegistrationStatus(c.Request().Context(), token)
+	status, err := h.deviceTrust.GetMyRegistrationStatus(c.Request().Context(), token)
 	if err != nil {
-		if err == domain.ErrDeviceNotApproved {
+		if errors.Is(err, domain.ErrDeviceNotApproved) {
 			return echo.NewHTTPError(http.StatusUnauthorized, ErrorResponse{Code: "UNAUTHORIZED", Message: err.Error()}).SetInternal(err)
+		}
+		if errors.Is(err, domain.ErrCampNotFound) {
+			return echo.NewHTTPError(http.StatusNotFound, ErrorResponse{Code: "CAMP_NOT_FOUND", Message: err.Error()}).SetInternal(err)
 		}
 		return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_ERROR", Message: err.Error()}).SetInternal(err)
 	}
 
 	return c.JSON(http.StatusOK, DeviceStatusResponse{
-		ID:     string(registration.ID()),
-		CampID: string(registration.CampID()),
-		Status: string(registration.Status()),
+		ID:         string(status.Registration.ID()),
+		CampID:     string(status.Registration.CampID()),
+		Status:     string(status.Registration.Status()),
+		CampStatus: string(status.CampStatus),
 	})
 }
 
@@ -101,6 +107,8 @@ func (h *DeviceHandler) GetMyRegistrationStatus(c echo.Context) error {
 // @Produce      json
 // @Param        request body DeviceRegistrationRequest true "등록 정보"
 // @Success      201 {object} DeviceRegistrationCreatedResponse
+// @Failure      404 {object} ErrorResponse "CAMP_NOT_FOUND: 등록 코드에 해당하는 캠프가 없음"
+// @Failure      400 {object} ErrorResponse "INVALID_TRANSITION: 종료된 캠프에는 기기를 등록할 수 없음"
 // @Router       /device-registrations [post]
 func (h *DeviceHandler) RequestRegistration(c echo.Context) error {
 	var req DeviceRegistrationRequest
@@ -113,10 +121,7 @@ func (h *DeviceHandler) RequestRegistration(c echo.Context) error {
 		if errors.Is(err, domain.ErrCampNotFound) {
 			return echo.NewHTTPError(http.StatusNotFound, ErrorResponse{Code: "CAMP_NOT_FOUND", Message: err.Error()}).SetInternal(err)
 		}
-		if errors.Is(err, domain.ErrCampInvalidTransition) {
-			return echo.NewHTTPError(http.StatusBadRequest, ErrorResponse{Code: "INVALID_TRANSITION", Message: err.Error()}).SetInternal(err)
-		}
-		return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()}).SetInternal(err)
+		return deviceRegistrationHTTPError(err)
 	}
 
 	return c.JSON(http.StatusCreated, DeviceRegistrationCreatedResponse{
@@ -205,6 +210,7 @@ func mapDeviceRegistration(device *domain.DeviceRegistration) DeviceRegistration
 // @Param        campId path string true "캠프 ID"
 // @Param        id path string true "기기 등록 ID"
 // @Success      200 {object} DeviceRegistrationResponse
+// @Failure      409 {object} ErrorResponse "DEVICE_INVALID_TRANSITION: PENDING 상태가 아닌 기기는 승인할 수 없음"
 // @Router       /camps/{campId}/device-registrations/{id}/approve [post]
 func (h *DeviceHandler) ApproveDevice(c echo.Context) error {
 	session, ok := c.Get("adminSession").(*domain.AdminSession)
@@ -213,12 +219,12 @@ func (h *DeviceHandler) ApproveDevice(c echo.Context) error {
 	}
 	regID := domain.DeviceRegistrationID(c.Param("id"))
 
-	err := h.deviceTrust.ApproveDevice(c.Request().Context(), regID, session.AdminID())
+	device, err := h.deviceTrust.ApproveDevice(c.Request().Context(), regID, session.AdminID())
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()}).SetInternal(err)
+		return deviceRegistrationHTTPError(err)
 	}
 
-	return c.NoContent(http.StatusOK)
+	return c.JSON(http.StatusOK, mapDeviceRegistration(device))
 }
 
 // @Summary      기기 거절
@@ -229,6 +235,7 @@ func (h *DeviceHandler) ApproveDevice(c echo.Context) error {
 // @Param        campId path string true "캠프 ID"
 // @Param        id path string true "기기 등록 ID"
 // @Success      200 {object} DeviceRegistrationResponse
+// @Failure      409 {object} ErrorResponse "DEVICE_INVALID_TRANSITION: PENDING 상태가 아닌 기기는 거절할 수 없음"
 // @Router       /camps/{campId}/device-registrations/{id}/reject [post]
 func (h *DeviceHandler) RejectDevice(c echo.Context) error {
 	session, ok := c.Get("adminSession").(*domain.AdminSession)
@@ -237,12 +244,12 @@ func (h *DeviceHandler) RejectDevice(c echo.Context) error {
 	}
 	regID := domain.DeviceRegistrationID(c.Param("id"))
 
-	err := h.deviceTrust.RejectDevice(c.Request().Context(), regID, session.AdminID())
+	device, err := h.deviceTrust.RejectDevice(c.Request().Context(), regID, session.AdminID())
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()}).SetInternal(err)
+		return deviceRegistrationHTTPError(err)
 	}
 
-	return c.NoContent(http.StatusOK)
+	return c.JSON(http.StatusOK, mapDeviceRegistration(device))
 }
 
 // @Summary      기기 신뢰 취소 (폐기/분실)
@@ -253,6 +260,7 @@ func (h *DeviceHandler) RejectDevice(c echo.Context) error {
 // @Param        campId path string true "캠프 ID"
 // @Param        id path string true "기기 등록 ID"
 // @Success      200 {object} DeviceRegistrationResponse
+// @Failure      409 {object} ErrorResponse "DEVICE_NOT_APPROVED: APPROVED 상태가 아닌 기기는 신뢰를 취소할 수 없음"
 // @Router       /camps/{campId}/device-registrations/{id}/revoke [post]
 func (h *DeviceHandler) RevokeDevice(c echo.Context) error {
 	session, ok := c.Get("adminSession").(*domain.AdminSession)
@@ -261,10 +269,25 @@ func (h *DeviceHandler) RevokeDevice(c echo.Context) error {
 	}
 	regID := domain.DeviceRegistrationID(c.Param("id"))
 
-	err := h.deviceTrust.RevokeDevice(c.Request().Context(), regID, session.AdminID())
+	device, err := h.deviceTrust.RevokeDevice(c.Request().Context(), regID, session.AdminID())
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()}).SetInternal(err)
+		return deviceRegistrationHTTPError(err)
 	}
 
-	return c.NoContent(http.StatusOK)
+	return c.JSON(http.StatusOK, mapDeviceRegistration(device))
+}
+
+func deviceRegistrationHTTPError(err error) error {
+	switch {
+	case errors.Is(err, domain.ErrCampNotFound):
+		return echo.NewHTTPError(http.StatusNotFound, ErrorResponse{Code: "CAMP_NOT_FOUND", Message: "camp not found"}).SetInternal(err)
+	case errors.Is(err, domain.ErrCampInvalidTransition):
+		return echo.NewHTTPError(http.StatusBadRequest, ErrorResponse{Code: "INVALID_TRANSITION", Message: "camp is not available for device registration"}).SetInternal(err)
+	case errors.Is(err, domain.ErrDeviceInvalidTransition):
+		return echo.NewHTTPError(http.StatusConflict, ErrorResponse{Code: "DEVICE_INVALID_TRANSITION", Message: "device registration cannot make that transition"}).SetInternal(err)
+	case errors.Is(err, domain.ErrDeviceNotApproved):
+		return echo.NewHTTPError(http.StatusConflict, ErrorResponse{Code: "DEVICE_NOT_APPROVED", Message: "device is not approved"}).SetInternal(err)
+	default:
+		return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: "internal server error"}).SetInternal(err)
+	}
 }
