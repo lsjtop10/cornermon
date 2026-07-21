@@ -20,19 +20,19 @@ class PinInvalid extends PinLoginUiError {
   final int? retryAfterSeconds;
 }
 
-/// 429 PIN_LOCKED — 2분 단계, 카운트다운만 표시하고 액션 링크는 없다(도움요청 제거 결정, 2026-07-10).
+/// 429 DEVICE_LOCKED — 2분 단계, 카운트다운만 표시하고 액션 링크는 없다(도움요청 제거 결정, 2026-07-10).
 class PinLocked extends PinLoginUiError {
   const PinLocked({required this.retryAfterSeconds});
 
   final int retryAfterSeconds;
 }
 
-/// 403 DEVICE_NOT_TRUSTED.
+/// 403 DEVICE_NOT_APPROVED.
 class DeviceNotTrustedYet extends PinLoginUiError {
   const DeviceNotTrustedYet();
 }
 
-/// 403 CAMP_NOT_ACTIVE.
+/// 403 CAMP_NOT_AVAILABLE.
 class CampNotActiveYet extends PinLoginUiError {
   const CampNotActiveYet();
 }
@@ -59,7 +59,7 @@ class PinLoginError extends _$PinLoginError {
   bool _isDeviceNotTrusted(DioException e) =>
       e.response?.statusCode == 403 &&
       e.response?.data is Map &&
-      (e.response?.data as Map)['code'] == 'DEVICE_NOT_TRUSTED';
+      (e.response?.data as Map)['code'] == 'DEVICE_NOT_APPROVED';
 
   PinLoginUiError _mapError(DioException e) {
     final statusCode = e.response?.statusCode;
@@ -74,13 +74,13 @@ class PinLoginError extends _$PinLoginError {
     if (statusCode == 400 && code == 'INVALID_PIN') {
       return PinInvalid(retryAfterSeconds: retryAfterSeconds);
     }
-    if (statusCode == 403 && code == 'DEVICE_NOT_TRUSTED') {
+    if (statusCode == 403 && code == 'DEVICE_NOT_APPROVED') {
       return const DeviceNotTrustedYet();
     }
-    if (statusCode == 403 && code == 'CAMP_NOT_ACTIVE') {
+    if (statusCode == 403 && code == 'CAMP_NOT_AVAILABLE') {
       return const CampNotActiveYet();
     }
-    if (statusCode == 429 && code == 'PIN_LOCKED') {
+    if (statusCode == 429 && code == 'DEVICE_LOCKED') {
       return PinLocked(retryAfterSeconds: retryAfterSeconds ?? 0);
     }
     // 인식되지 않은 코드는 "PIN이 일치하지 않습니다"로 안전하게 대체한다(fail-safe degrade).
