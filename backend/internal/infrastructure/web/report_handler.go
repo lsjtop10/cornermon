@@ -105,12 +105,14 @@ func mapSummary(r *usecase.CampReport) CampSummaryStatsResponse {
 	}
 
 	return CampSummaryStatsResponse{
-		TotalGroups:         r.TotalGroups,
-		FinishedGroupCount:  r.FinishedGroups,
-		CompletionRate:      completionRate,
-		TotalVisits:         r.TotalVisits,
-		VisitCompletionRate: visitCompletionRate,
-		ManualVisitRatio:    manualVisitRatio,
+		TotalGroups:            r.TotalGroups,
+		FinishedGroupCount:     r.FinishedGroups,
+		CompletionRate:         completionRate,
+		TotalVisits:            r.TotalVisits,
+		VisitCompletionRate:    visitCompletionRate,
+		ProgramDurationSeconds: r.ProgramDurationSec,
+		AvgDeviationSeconds:    float32(r.AvgDeviationSec),
+		ManualVisitRatio:       manualVisitRatio,
 	}
 }
 
@@ -131,9 +133,10 @@ func mapReport(r *usecase.CampReport) CampReportResponse {
 	}
 	for _, gr := range r.GroupReports {
 		res.GroupStats = append(res.GroupStats, GroupStatsResponse{
-			GroupID:        string(gr.GroupID),
-			GroupName:      gr.GroupName,
-			CompletedCount: gr.CompletedCount,
+			GroupID:              string(gr.GroupID),
+			GroupName:            gr.GroupName,
+			CompletedCount:       gr.CompletedCount,
+			TotalDurationSeconds: gr.TotalDurationSec,
 		})
 	}
 	return res
