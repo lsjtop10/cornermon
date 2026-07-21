@@ -52,15 +52,19 @@ func NewCampService(
 
 // OpenNewCamp
 func (s *CampService) OpenNewCamp(ctx context.Context, name string, startAt, endAt time.Time) (*domain.Camp, error) {
+
 	camp, err := domain.NewCamp(domain.CampID(s.uuidFn()), name, startAt, endAt)
 	if err != nil {
-		return nil, err
+		return nil, withErrorContext("camp.open", "domain.new_camp", err, map[string]any{"name": name})
 	}
 	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
-		return s.camps.Save(ctx, camp)
+		if err := s.camps.Save(ctx, camp); err != nil {
+			return withErrorContext("camp.open", "repository.save_camp", err, map[string]any{"camp_id": string(camp.ID())})
+		}
+		return nil
 	})
 	if err != nil {
-		s.recordAuditLog(ctx, "admin", ActionCampCreate, "", false, map[string]any{"error": err.Error()})
+		s.recordAuditLog(ctx, "admin", ActionCampCreate, "", false, errorAuditMetadata(err, nil))
 		return nil, err
 	}
 	s.recordAuditLog(ctx, "admin", ActionCampCreate, string(camp.ID()), true, map[string]any{"name": name})
@@ -83,22 +87,26 @@ func (s *CampService) UpdateCampSettings(
 	actorAdminID domain.AdminID,
 	patch domain.CampSettingsPatch,
 ) (*domain.Camp, error) {
+
 	camp, err := s.camps.Get(ctx, campID)
 	if err != nil {
-		return nil, err
+		return nil, withErrorContext("camp.update_settings", "repository.get_camp", err, map[string]any{"camp_id": string(campID)})
 	}
 	if camp == nil {
-		return nil, domain.ErrCampNotFound
+		return nil, withErrorContext("camp.update_settings", "validate_camp", domain.ErrCampNotFound, map[string]any{"camp_id": string(campID), "camp_found": false})
 	}
 	if err := camp.UpdateSettings(patch); err != nil {
-		return nil, err
+		return nil, withErrorContext("camp.update_settings", "domain.update_settings", err, map[string]any{"camp_id": string(campID)})
 	}
 
 	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
-		return s.camps.Save(ctx, camp)
+		if err := s.camps.Save(ctx, camp); err != nil {
+			return withErrorContext("camp.update_settings", "repository.save_camp", err, map[string]any{"camp_id": string(campID)})
+		}
+		return nil
 	})
 	if err != nil {
-		s.recordAuditLog(ctx, string(actorAdminID), ActionCampSettingsUpdate, string(campID), false, map[string]any{"error": err.Error()})
+		s.recordAuditLog(ctx, string(actorAdminID), ActionCampSettingsUpdate, string(campID), false, errorAuditMetadata(err, nil))
 		return nil, err
 	}
 
@@ -113,26 +121,30 @@ func (s *CampService) ActivateCamp(
 	campID domain.CampID,
 	actorAdminID domain.AdminID,
 ) error {
+
 	now := s.nowFn()
 	camp, err := s.camps.Get(ctx, campID)
 	if err != nil {
-		return err
+		return withErrorContext("camp.activate", "repository.get_camp", err, map[string]any{"camp_id": string(campID)})
 	}
 	if camp == nil {
-		return domain.ErrCampInvalidTransition
+		return withErrorContext("camp.activate", "validate_camp", domain.ErrCampInvalidTransition, map[string]any{"camp_id": string(campID), "camp_found": false})
 	}
 
 	if err := camp.Activate(now); err != nil {
-		return err
+		return withErrorContext("camp.activate", "domain.activate", err, map[string]any{"camp_id": string(campID), "camp_status": string(camp.Status())})
 	}
 
 	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
-		return s.camps.Save(ctx, camp)
+		if err := s.camps.Save(ctx, camp); err != nil {
+			return withErrorContext("camp.activate", "repository.save_camp", err, map[string]any{"camp_id": string(campID)})
+		}
+		return nil
 	})
 
 	if err != nil {
-		s.recordAuditLog(ctx, string(actorAdminID), ActionCampActivate, string(campID), false, map[string]any{"error": err.Error()})
-		return err
+		s.recordAuditLog(ctx, string(actorAdminID), ActionCampActivate, string(campID), false, errorAuditMetadata(err, nil))
+		return err // D-2 allowed: already wrapped or handled
 	}
 
 	s.recordAuditLog(ctx, string(actorAdminID), ActionCampActivate, string(campID), true, nil)
@@ -147,93 +159,97 @@ func (s *CampService) EndCamp(
 	campID domain.CampID,
 	actorAdminID domain.AdminID,
 ) error {
+
 	now := s.nowFn()
 	err := s.tx.RunInTx(ctx, func(ctx context.Context) error {
 		camp, err := s.camps.Get(ctx, campID)
 		if err != nil {
-			return err
+			return withErrorContext("camp.end", "repository.get_camp", err, map[string]any{"camp_id": string(campID)})
 		}
 		if camp == nil {
-			return domain.ErrCampInvalidTransition
+			return withErrorContext("camp.end", "validate_camp", domain.ErrCampInvalidTransition, map[string]any{"camp_id": string(campID), "camp_found": false})
 		}
 		if _, err := camp.End(now); err != nil {
-			return err
+			return withErrorContext("camp.end", "domain.end", err, map[string]any{"camp_id": string(campID), "camp_status": string(camp.Status())})
 		}
 
 		approvedStatus := domain.DeviceApproved
 		devices, err := s.devices.ListByCampAndStatus(ctx, campID, &approvedStatus)
 		if err != nil {
-			return err
+			return withErrorContext("camp.end", "repository.list_devices", err, map[string]any{"camp_id": string(campID)})
 		}
 		for _, device := range devices {
 			if err := device.Revoke(); err != nil {
-				return err
+				return withErrorContext("camp.end", "domain.device_revoke", err, map[string]any{"device_id": string(device.ID())})
 			}
 			if err := s.devices.Save(ctx, device); err != nil {
-				return err
+				return withErrorContext("camp.end", "repository.save_device", err, map[string]any{"device_id": string(device.ID())})
 			}
 		}
 
 		sessions, err := s.sessions.ListActiveByCamp(ctx, campID)
 		if err != nil {
-			return err
+			return withErrorContext("camp.end", "repository.list_sessions", err, map[string]any{"camp_id": string(campID)})
 		}
 		for _, sess := range sessions {
 			if err := sess.Revoke(now); err == nil {
 				if err := s.sessions.Save(ctx, sess); err != nil {
-					return err
+					return withErrorContext("camp.end", "repository.save_session", err, map[string]any{"session_id": string(sess.ID())})
 				}
 			}
 		}
 
 		visits, err := s.visits.ListInProgressByCamp(ctx, campID)
 		if err != nil {
-			return err
+			return withErrorContext("camp.end", "repository.list_visits", err, map[string]any{"camp_id": string(campID)})
 		}
 		for _, visit := range visits {
 			group, err := s.groups.GetForUpdate(ctx, visit.GroupID())
 			if err != nil {
-				return err
+				return withErrorContext("camp.end", "repository.get_group", err, map[string]any{"group_id": string(visit.GroupID()), "visit_id": string(visit.ID())})
 			}
 			if group == nil {
-				return domain.ErrCornerNotInItinerary
+				return withErrorContext("camp.end", "validate_group", domain.ErrCornerNotInItinerary, map[string]any{"group_id": string(visit.GroupID()), "visit_id": string(visit.ID()), "group_found": false})
 			}
 
 			track, err := s.tracks.Get(ctx, visit.TrackID())
 			if err != nil {
-				return err
+				return withErrorContext("camp.end", "repository.get_track", err, map[string]any{"track_id": string(visit.TrackID()), "visit_id": string(visit.ID())})
 			}
 			if track == nil {
-				return domain.ErrTrackNotActive
+				return withErrorContext("camp.end", "validate_track", domain.ErrTrackNotActive, map[string]any{"track_id": string(visit.TrackID()), "visit_id": string(visit.ID()), "track_found": false})
 			}
 
 			if err := visit.Complete(now); err != nil {
-				return err
+				return withErrorContext("camp.end", "domain.visit_complete", err, map[string]any{"visit_id": string(visit.ID())})
 			}
 			if _, err := track.CompleteVisit(now); err != nil {
-				return err
+				return withErrorContext("camp.end", "domain.track_complete_visit", err, map[string]any{"track_id": string(track.ID())})
 			}
 			if err := group.MarkVisitCompleted(visit.CornerID()); err != nil {
-				return err
+				return withErrorContext("camp.end", "domain.group_mark_completed", err, map[string]any{"group_id": string(group.ID()), "corner_id": string(visit.CornerID())})
 			}
 
 			if err := s.visits.Save(ctx, visit); err != nil {
-				return err
+				return withErrorContext("camp.end", "repository.save_visit", err, map[string]any{"visit_id": string(visit.ID())})
 			}
 			if err := s.tracks.Save(ctx, track); err != nil {
-				return err
+				return withErrorContext("camp.end", "repository.save_track", err, map[string]any{"track_id": string(track.ID())})
 			}
 			if err := s.groups.Save(ctx, group); err != nil {
-				return err
+				return withErrorContext("camp.end", "repository.save_group", err, map[string]any{"group_id": string(group.ID())})
 			}
 		}
 
-		return s.camps.Save(ctx, camp)
+		if err := s.camps.Save(ctx, camp); err != nil {
+			return withErrorContext("camp.end", "repository.save_camp", err, map[string]any{"camp_id": string(campID)})
+		}
+		return nil
 	})
 
 	if err != nil {
-		s.recordAuditLog(ctx, string(actorAdminID), ActionCampEnd, string(campID), false, map[string]any{"error": err.Error()})
-		return err
+		s.recordAuditLog(ctx, string(actorAdminID), ActionCampEnd, string(campID), false, errorAuditMetadata(err, nil))
+		return err // D-2 allowed: already wrapped or handled
 	}
 
 	s.recordAuditLog(ctx, string(actorAdminID), ActionCampEnd, string(campID), true, nil)
