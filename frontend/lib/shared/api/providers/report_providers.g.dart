@@ -139,7 +139,7 @@ final class GenerateReportProvider
     required GenerateReportFamily super.from,
     required CampId super.argument,
   }) : super(
-         retry: null,
+         retry: noRetry,
          name: r'generateReportProvider',
          isAutoDispose: true,
          dependencies: null,
@@ -178,13 +178,13 @@ final class GenerateReportProvider
   }
 }
 
-String _$generateReportHash() => r'eeea938652213e63d05bd86f7973a81f6e6043e0';
+String _$generateReportHash() => r'07a49afe5c65e1f8c746abdb5a3fa975c9c01836';
 
 final class GenerateReportFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<CampReport>, CampId> {
   GenerateReportFamily._()
     : super(
-        retry: null,
+        retry: noRetry,
         name: r'generateReportProvider',
         dependencies: null,
         $allTransitiveDependencies: null,

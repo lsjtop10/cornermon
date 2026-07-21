@@ -20,8 +20,8 @@ const (
 
 func (cp *CornerProgress) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
-		CornerID CornerID               `json:"CornerID"`
-		Status   VisitStatusPerCorner   `json:"Status"`
+		CornerID CornerID             `json:"CornerID"`
+		Status   VisitStatusPerCorner `json:"Status"`
 	}{
 		CornerID: cp.cornerID,
 		Status:   cp.status,
@@ -30,8 +30,8 @@ func (cp *CornerProgress) MarshalJSON() ([]byte, error) {
 
 func (cp *CornerProgress) UnmarshalJSON(data []byte) error {
 	var aux struct {
-		CornerID CornerID               `json:"CornerID"`
-		Status   VisitStatusPerCorner   `json:"Status"`
+		CornerID CornerID             `json:"CornerID"`
+		Status   VisitStatusPerCorner `json:"Status"`
 	}
 	if err := json.Unmarshal(data, &aux); err != nil {
 		return err
@@ -126,6 +126,26 @@ func (g *Group) MarkVisitCompleted(cornerID CornerID) error {
 	return nil
 }
 
+// AddCornerToItinerary는 새로 추가된 코너를 순회표에 반영합니다. 이미 있으면 아무 일도 하지 않습니다.
+func (g *Group) AddCornerToItinerary(cornerID CornerID) {
+	for _, progress := range g.itinerary {
+		if progress.cornerID == cornerID {
+			return
+		}
+	}
+	g.itinerary = append(g.itinerary, CornerProgress{cornerID: cornerID, status: VisitNotVisited})
+}
+
+// RemoveCornerFromItinerary는 삭제된 코너를 순회표에서 제거합니다.
+func (g *Group) RemoveCornerFromItinerary(cornerID CornerID) {
+	for i, progress := range g.itinerary {
+		if progress.cornerID == cornerID {
+			g.itinerary = append(g.itinerary[:i], g.itinerary[i+1:]...)
+			return
+		}
+	}
+}
+
 func (c *CornerProgress) CornerID() CornerID {
 	return c.cornerID
 }
@@ -136,18 +156,19 @@ func (c *CornerProgress) Status() VisitStatusPerCorner {
 
 type CornerProgressProps struct {
 	CornerID CornerID
-	Status VisitStatusPerCorner
+	Status   VisitStatusPerCorner
 }
+
 func NewCornerProgressFromProps(p CornerProgressProps) *CornerProgress {
 	return &CornerProgress{
 		cornerID: p.CornerID,
-		status: p.Status,
+		status:   p.Status,
 	}
 }
 func NewCornerProgressValFromProps(p CornerProgressProps) CornerProgress {
 	return CornerProgress{
 		cornerID: p.CornerID,
-		status: p.Status,
+		status:   p.Status,
 	}
 }
 
@@ -176,27 +197,28 @@ func (g *Group) SetItinerary(itinerary []CornerProgress) {
 }
 
 type GroupProps struct {
-	ID GroupID
-	CampID CampID
-	Name string
-	BadgeID BadgeID
+	ID        GroupID
+	CampID    CampID
+	Name      string
+	BadgeID   BadgeID
 	Itinerary []CornerProgress
 }
+
 func NewGroupFromProps(p GroupProps) *Group {
 	return &Group{
-		id: p.ID,
-		campID: p.CampID,
-		name: p.Name,
-		badgeID: p.BadgeID,
+		id:        p.ID,
+		campID:    p.CampID,
+		name:      p.Name,
+		badgeID:   p.BadgeID,
 		itinerary: p.Itinerary,
 	}
 }
 func NewGroupValFromProps(p GroupProps) Group {
 	return Group{
-		id: p.ID,
-		campID: p.CampID,
-		name: p.Name,
-		badgeID: p.BadgeID,
+		id:        p.ID,
+		campID:    p.CampID,
+		name:      p.Name,
+		badgeID:   p.BadgeID,
 		itinerary: p.Itinerary,
 	}
 }

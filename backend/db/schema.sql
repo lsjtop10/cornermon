@@ -29,7 +29,8 @@ CREATE TABLE corners (
     camp_id VARCHAR(50) NOT NULL REFERENCES camps(id) ON DELETE CASCADE,
     name VARCHAR(255) NOT NULL,
     target_minutes INT NOT NULL DEFAULT 10,
-    is_mandatory BOOLEAN NOT NULL DEFAULT false
+    is_mandatory BOOLEAN NOT NULL DEFAULT false,
+    deleted_at TIMESTAMP WITH TIME ZONE
 );
 COMMENT ON TABLE corners IS '캠프 내의 각 코너(부스/프로그램)를 정의하는 테이블';
 COMMENT ON COLUMN corners.id IS '코너 고유 식별자';
@@ -37,6 +38,8 @@ COMMENT ON COLUMN corners.camp_id IS '소속 캠프 식별자';
 COMMENT ON COLUMN corners.name IS '코너 이름';
 COMMENT ON COLUMN corners.target_minutes IS '코너별 목표 진행 시간(분)';
 COMMENT ON COLUMN corners.is_mandatory IS '필수 코너 여부';
+COMMENT ON COLUMN corners.deleted_at IS 'soft-delete된 시각';
+CREATE INDEX idx_corners_active_by_camp ON corners(camp_id) WHERE deleted_at IS NULL;
 
 -- 트랙(기기/진행자석) 테이블
 CREATE TABLE tracks (

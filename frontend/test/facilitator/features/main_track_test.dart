@@ -1,5 +1,6 @@
 import 'package:built_collection/built_collection.dart';
 import 'package:cornermon/facilitator/features/main_track/_main_track_body.dart';
+import 'package:cornermon/facilitator/features/main_track/_main_track_header.dart';
 import 'package:cornermon/facilitator/features/main_track/main_track_screen.dart';
 import 'package:cornermon/facilitator/session/facilitator_broadcast_provider.dart';
 import 'package:cornermon/facilitator/session/track_session_provider.dart';
@@ -39,6 +40,53 @@ void main() {
           ..isFinished = false
           ..itinerary = ListBuilder<CornerProgress>(const []),
       );
+
+  Message broadcast({DateTime? readAt}) => Message(
+    (b) => b
+      ..id = 'broadcast-1'
+      ..channelType = MessageChannelType.BROADCAST
+      ..senderRole = MessageSenderRoleEnum.ADMIN
+      ..content = '공지'
+      ..sentAt = DateTime.utc(2026, 7, 20)
+      ..readAt = readAt,
+  );
+
+  testWidgets('ShouldClearBroadcastBadgeWhenRefreshedMessagesAreRead', (
+    tester,
+  ) async {
+    // arrange
+    final unread = broadcast();
+    final read = broadcast(readAt: DateTime.utc(2026, 7, 20, 1));
+
+    Future<void> pumpHeader(List<Message> messages) => tester.pumpWidget(
+      buildTestable(
+        MainTrackHeader(trackId: trackId),
+        overrides: [
+          currentVisitProvider(trackId).overrideWith((ref) => null),
+          facilitatorBroadcastMessageListProvider.overrideWith(
+            (ref) => messages,
+          ),
+          trackConnectionProvider(
+            trackId,
+          ).overrideWithValue(TrackConnectionState.connected),
+        ],
+      ),
+    );
+
+    // act
+    await pumpHeader([unread]);
+    await tester.pump();
+
+    // assert
+    expect(find.text('1'), findsOneWidget);
+
+    // act
+    await pumpHeader([read]);
+    await tester.pump();
+
+    // assert
+    expect(find.text('1'), findsNothing);
+  });
 
   Widget buildBusyBody({
     required VisitSummary visit,
@@ -250,7 +298,7 @@ void main() {
           overrides: [
             trackSessionProvider.overrideWith(() => _FakeTrackSession(authenticatedState)),
             currentVisitProvider(trackId).overrideWith((ref) => null),
-            cornerDetailProvider(CornerId('corner-1')).overrideWith(
+            trackCornerProvider(trackId).overrideWith(
               (ref) => Corner(
                 (b) => b
                   ..id = 'corner-1'

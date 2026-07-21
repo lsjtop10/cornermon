@@ -1,4 +1,3 @@
-
 package usecase
 
 import (
@@ -9,8 +8,8 @@ import (
 	"cornermon/backend/internal/domain"
 )
 
-func TestGroupService_RegisterBadge(t *testing.T) {
-	t.Run("ShouldRegisterBadgeSuccessfullyWhenBadgeIsUnassigned", func(t *testing.T) {
+func TestGroupService_AssignBadge(t *testing.T) {
+	t.Run("ShouldAssignBadgeSuccessfullyWhenBadgeIsUnassigned", func(t *testing.T) {
 		// Arrange
 		now := time.Now()
 		camps := NewMockCampRepository()
@@ -24,7 +23,7 @@ func TestGroupService_RegisterBadge(t *testing.T) {
 		corners.Save(context.Background(), corner2)
 
 		badges := NewMockBadgeRepository()
-		badge := domain.NewBadgeFromProps(domain.BadgeProps{ID:              "badge-1",
+		badge := domain.NewBadgeFromProps(domain.BadgeProps{ID: "badge-1",
 			ShortID:         "B1",
 			QRPayload:       "qr-1",
 			Status:          domain.BadgeUnassigned,
@@ -42,7 +41,7 @@ func TestGroupService_RegisterBadge(t *testing.T) {
 		s.uuidFn = func() string { return "group-uuid" }
 
 		// Act
-		group, err := s.RegisterBadge(context.Background(), "camp-1", "qr-1", "1조")
+		group, err := s.AssignBadge(context.Background(), "badge-1", "1조")
 
 		// Assert
 		if err != nil {
@@ -64,14 +63,16 @@ func TestGroupService_RegisterBadge(t *testing.T) {
 		}
 	})
 
-	t.Run("ShouldFailRegisterBadgeWhenCampIsEnded", func(t *testing.T) {
+	t.Run("ShouldAssignBadgeWhenOnlyPendingCampExists", func(t *testing.T) {
 		// Arrange
 		camps := NewMockCampRepository()
-		camp := domain.NewCampFromProps(domain.CampProps{ID: "camp-1", Status: domain.CampEnded})
+		camp := domain.NewCampFromProps(domain.CampProps{ID: "camp-1", Status: domain.CampPending})
 		camps.Save(context.Background(), camp)
 
+		corners := NewMockCornerRepository()
+		corners.Save(context.Background(), domain.NewCornerFromProps(domain.CornerProps{ID: "corner-1", CampID: "camp-1"}))
 		badges := NewMockBadgeRepository()
-		badge := domain.NewBadgeFromProps(domain.BadgeProps{ID:        "badge-1",
+		badge := domain.NewBadgeFromProps(domain.BadgeProps{ID: "badge-1",
 			QRPayload: "qr-1",
 			Status:    domain.BadgeUnassigned,
 		})
@@ -82,14 +83,56 @@ func TestGroupService_RegisterBadge(t *testing.T) {
 		auditLogs := &MockAuditLogRepository{}
 		tx := &MockTxManager{}
 
-		s := NewGroupService(camps, nil, NewMockTrackRepository(), groups, badges, visits, auditLogs, tx)
+		s := NewGroupService(camps, corners, NewMockTrackRepository(), groups, badges, visits, auditLogs, tx)
+		s.uuidFn = func() string { return "group-uuid" }
 
 		// Act
-		_, err := s.RegisterBadge(context.Background(), "camp-1", "qr-1", "1조")
+		group, err := s.AssignBadge(context.Background(), "badge-1", "1조")
 
 		// Assert
-		if err != domain.ErrCampInvalidTransition {
-			t.Errorf("expected ErrCampInvalidTransition, got %v", err)
+		if err != nil {
+			t.Fatalf("expected no error, got %v", err)
+		}
+		if group == nil || group.CampID() != "camp-1" {
+			t.Fatalf("expected group assigned to pending camp, got %+v", group)
+		}
+	})
+
+	t.Run("ShouldReturnCampNotFoundWhenNoPendingOrActiveCampExists", func(t *testing.T) {
+		// Arrange
+		camps := NewMockCampRepository()
+		_ = camps.Save(context.Background(), domain.NewCampFromProps(domain.CampProps{ID: "camp-1", Status: domain.CampEnded}))
+		badges := NewMockBadgeRepository()
+		_ = badges.Save(context.Background(), domain.NewBadgeFromProps(domain.BadgeProps{ID: "badge-1", QRPayload: "qr-1", Status: domain.BadgeUnassigned}))
+		service := NewGroupService(camps, NewMockCornerRepository(), NewMockTrackRepository(), NewMockGroupRepository(), badges, NewMockVisitRepository(), &MockAuditLogRepository{}, &MockTxManager{})
+
+		// Act
+		_, err := service.AssignBadge(context.Background(), "badge-1", "1조")
+
+		// Assert
+		if err != domain.ErrCampNotFound {
+			t.Fatalf("expected ErrCampNotFound, got %v", err)
+		}
+	})
+
+	t.Run("ShouldAssignBadgeWhenQRPayloadMatches", func(t *testing.T) {
+		// Arrange
+		camps := NewMockCampRepository()
+		_ = camps.Save(context.Background(), domain.NewCampFromProps(domain.CampProps{ID: "camp-1", Status: domain.CampActive}))
+		badges := NewMockBadgeRepository()
+		_ = badges.Save(context.Background(), domain.NewBadgeFromProps(domain.BadgeProps{ID: "badge-1", QRPayload: "qr-1", Status: domain.BadgeUnassigned}))
+		service := NewGroupService(camps, NewMockCornerRepository(), NewMockTrackRepository(), NewMockGroupRepository(), badges, NewMockVisitRepository(), &MockAuditLogRepository{}, &MockTxManager{})
+		service.uuidFn = func() string { return "group-uuid" }
+
+		// Act
+		group, err := service.ScanAssignBadge(context.Background(), "qr-1", "1조")
+
+		// Assert
+		if err != nil {
+			t.Fatalf("expected no error, got %v", err)
+		}
+		if group == nil || group.BadgeID() != "badge-1" {
+			t.Fatalf("expected badge assignment from QR payload, got %+v", group)
 		}
 	})
 }
@@ -114,6 +157,104 @@ func TestListGroupsByTrackShoudReturnOnlyDerivedCampGroupsWhenTrackExists(t *tes
 	}
 	if len(result) != 1 || result[0].ID() != "group-1" {
 		t.Fatalf("track camp scope leaked groups: %+v", result)
+	}
+}
+
+func TestGroupServiceShouldExcludeDeletedCornersWhenListingGroups(t *testing.T) {
+	// Arrange
+	ctx := context.Background()
+	corners := NewMockCornerRepository()
+	_ = corners.Save(ctx, domain.NewCornerFromProps(domain.CornerProps{ID: "corner-current", CampID: "camp-1"}))
+	groups := NewMockGroupRepository()
+	stored := domain.NewGroupFromProps(domain.GroupProps{
+		ID:     "group-1",
+		CampID: "camp-1",
+		Itinerary: []domain.CornerProgress{
+			domain.NewCornerProgressValFromProps(domain.CornerProgressProps{CornerID: "corner-current", Status: domain.VisitNotVisited}),
+			domain.NewCornerProgressValFromProps(domain.CornerProgressProps{CornerID: "corner-deleted", Status: domain.VisitCompleted}),
+		},
+	})
+	_ = groups.Save(ctx, stored)
+	service := NewGroupService(nil, corners, nil, groups, nil, nil, nil, nil)
+
+	// Act
+	result, err := service.ListGroups(ctx, "camp-1")
+
+	// Assert
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(result) != 1 || len(result[0].Itinerary()) != 1 {
+		t.Fatalf("expected one current itinerary corner, got %+v", result)
+	}
+	if result[0].Itinerary()[0].CornerID() != "corner-current" {
+		t.Fatalf("unexpected itinerary: %+v", result[0].Itinerary())
+	}
+	if result[0].IsFinished() {
+		t.Fatal("expected filtered itinerary status to be recalculated")
+	}
+	if len(stored.Itinerary()) != 2 {
+		t.Fatal("expected read filtering not to mutate the stored group")
+	}
+}
+
+func TestGroupServiceShouldExcludeDeletedCornersWhenRetrievingGroupSchedule(t *testing.T) {
+	// Arrange
+	ctx := context.Background()
+	corners := NewMockCornerRepository()
+	_ = corners.Save(ctx, domain.NewCornerFromProps(domain.CornerProps{ID: "corner-current", CampID: "camp-1"}))
+	groups := NewMockGroupRepository()
+	_ = groups.Save(ctx, domain.NewGroupFromProps(domain.GroupProps{
+		ID:     "group-1",
+		CampID: "camp-1",
+		Itinerary: []domain.CornerProgress{
+			domain.NewCornerProgressValFromProps(domain.CornerProgressProps{CornerID: "corner-current", Status: domain.VisitCompleted}),
+			domain.NewCornerProgressValFromProps(domain.CornerProgressProps{CornerID: "corner-deleted", Status: domain.VisitNotVisited}),
+		},
+	}))
+	service := NewGroupService(nil, corners, nil, groups, nil, nil, nil, nil)
+
+	// Act
+	result, err := service.RetrieveGroupRotationSchedule(ctx, "group-1")
+
+	// Assert
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(result.Itinerary()) != 1 || result.Itinerary()[0].CornerID() != "corner-current" {
+		t.Fatalf("unexpected itinerary: %+v", result.Itinerary())
+	}
+	if !result.IsFinished() {
+		t.Fatal("expected filtered itinerary completion to be recalculated")
+	}
+}
+
+func TestGroupServiceShouldExcludeDeletedCornersWhenListingGroupsByTrack(t *testing.T) {
+	// Arrange
+	ctx := context.Background()
+	corners := NewMockCornerRepository()
+	_ = corners.Save(ctx, domain.NewCornerFromProps(domain.CornerProps{ID: "corner-current", CampID: "camp-1"}))
+	tracks := NewMockTrackRepository()
+	_ = tracks.Save(ctx, domain.NewTrackFromProps(domain.TrackProps{ID: "track-1", CornerID: "corner-current", Status: domain.TrackActive}))
+	groups := NewMockGroupRepository()
+	_ = groups.Save(ctx, domain.NewGroupFromProps(domain.GroupProps{
+		ID:     "group-1",
+		CampID: "camp-1",
+		Itinerary: []domain.CornerProgress{
+			domain.NewCornerProgressValFromProps(domain.CornerProgressProps{CornerID: "corner-deleted", Status: domain.VisitNotVisited}),
+		},
+	}))
+	service := NewGroupService(nil, corners, tracks, groups, nil, nil, nil, nil)
+
+	// Act
+	result, err := service.ListGroupsByTrack(ctx, "track-1")
+
+	// Assert
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(result) != 1 || len(result[0].Itinerary()) != 0 {
+		t.Fatalf("expected deleted corner to be excluded, got %+v", result)
 	}
 }
 

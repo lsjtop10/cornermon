@@ -14,6 +14,7 @@ part 'device_registration_created_response.g.dart';
 ///
 /// Properties:
 /// * [approvedAt] 
+/// * [campId] 
 /// * [createdAt] 
 /// * [deviceModel] 
 /// * [deviceName] 
@@ -27,6 +28,9 @@ part 'device_registration_created_response.g.dart';
 abstract class DeviceRegistrationCreatedResponse implements Built<DeviceRegistrationCreatedResponse, DeviceRegistrationCreatedResponseBuilder> {
   @BuiltValueField(wireName: r'approvedAt')
   DateTime? get approvedAt;
+
+  @BuiltValueField(wireName: r'campId')
+  String? get campId;
 
   @BuiltValueField(wireName: r'createdAt')
   DateTime? get createdAt;
@@ -84,6 +88,13 @@ class _$DeviceRegistrationCreatedResponseSerializer implements PrimitiveSerializ
       yield serializers.serialize(
         object.approvedAt,
         specifiedType: const FullType(DateTime),
+      );
+    }
+    if (object.campId != null) {
+      yield r'campId';
+      yield serializers.serialize(
+        object.campId,
+        specifiedType: const FullType(String),
       );
     }
     if (object.createdAt != null) {
@@ -178,6 +189,13 @@ class _$DeviceRegistrationCreatedResponseSerializer implements PrimitiveSerializ
             specifiedType: const FullType(DateTime),
           ) as DateTime;
           result.approvedAt = valueDes;
+          break;
+        case r'campId':
+          final valueDes = serializers.deserialize(
+            value,
+            specifiedType: const FullType(String),
+          ) as String;
+          result.campId = valueDes;
           break;
         case r'createdAt':
           final valueDes = serializers.deserialize(

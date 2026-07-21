@@ -47,21 +47,31 @@ func NewGroupService(
 	}
 }
 
-// RegisterBadge - UC-19
-func (s *GroupService) RegisterBadge(
+// AssignBadge creates a group and assigns the badge identified by its ID to it.
+// The group belongs to the current registration camp (PENDING or ACTIVE).
+func (s *GroupService) AssignBadge(
 	ctx context.Context,
-	campID domain.CampID,
-	qrPayload string,
+	badgeID domain.BadgeID,
 	groupName string,
 ) (*domain.Group, error) {
-	camp, err := s.camps.Get(ctx, campID)
+	badge, err := s.badges.Get(ctx, badgeID)
 	if err != nil {
 		return nil, err
 	}
-	if camp == nil || camp.Status() == domain.CampEnded {
-		return nil, domain.ErrCampInvalidTransition
+	if badge == nil {
+		return nil, domain.ErrBadgeNotAssigned
 	}
 
+	return s.registerBadge(ctx, badge, groupName)
+}
+
+// ScanAssignBadge creates a group and assigns the badge identified by its QR payload.
+// The group belongs to the current registration camp (PENDING or ACTIVE).
+func (s *GroupService) ScanAssignBadge(
+	ctx context.Context,
+	qrPayload string,
+	groupName string,
+) (*domain.Group, error) {
 	badge, err := s.badges.GetByQRPayload(ctx, qrPayload)
 	if err != nil {
 		return nil, err
@@ -69,10 +79,23 @@ func (s *GroupService) RegisterBadge(
 	if badge == nil {
 		return nil, domain.ErrBadgeNotAssigned
 	}
+
+	return s.registerBadge(ctx, badge, groupName)
+}
+
+func (s *GroupService) registerBadge(ctx context.Context, badge *domain.Badge, groupName string) (*domain.Group, error) {
+	camp, err := s.registrationCamp(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if camp == nil {
+		return nil, domain.ErrCampNotFound
+	}
 	if badge.Status() == domain.BadgeAssigned {
 		return nil, domain.ErrBadgeAlreadyAssigned
 	}
 
+	campID := camp.ID()
 	corners, err := s.corners.ListByCamp(ctx, campID)
 	if err != nil {
 		return nil, err
@@ -107,12 +130,30 @@ func (s *GroupService) RegisterBadge(
 	})
 
 	if err != nil {
-		s.recordAuditLog(ctx, "admin", "GROUP_CREATE", "", false, map[string]any{"error": err.Error()})
+		s.recordAuditLog(ctx, "admin", ActionGroupCreate, "", false, map[string]any{"error": err.Error()})
 		return nil, err
 	}
 
-	s.recordAuditLog(ctx, "admin", "GROUP_CREATE", string(groupID), true, map[string]any{"campID": string(campID), "badgeID": string(badge.ID())})
+	s.recordAuditLog(ctx, "admin", ActionGroupCreate, string(groupID), true, map[string]any{"campID": string(campID), "badgeID": string(badge.ID())})
 	return group, nil
+}
+
+func (s *GroupService) registrationCamp(ctx context.Context) (*domain.Camp, error) {
+	camps, err := s.camps.List(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var pendingCamp *domain.Camp
+	for _, camp := range camps {
+		switch camp.Status() {
+		case domain.CampActive:
+			return camp, nil
+		case domain.CampPending:
+			pendingCamp = camp
+		}
+	}
+	return pendingCamp, nil
 }
 
 // ListGroups
@@ -120,7 +161,12 @@ func (s *GroupService) ListGroups(
 	ctx context.Context,
 	campID domain.CampID,
 ) ([]*domain.Group, error) {
-	return s.groups.ListByCamp(ctx, campID)
+	groups, err := s.groups.ListByCamp(ctx, campID)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.withCurrentCorners(ctx, groups)
 }
 
 // ListGroupsByTrack derives the camp scope from the track's immutable corner
@@ -145,12 +191,60 @@ func (s *GroupService) ListGroupsByTrack(
 		return nil, domain.ErrCornerNotFound
 	}
 
-	return s.groups.ListByCamp(ctx, corner.CampID())
+	return s.ListGroups(ctx, corner.CampID())
 }
 
 // RetrieveGroupRotationSchedule
 func (s *GroupService) RetrieveGroupRotationSchedule(ctx context.Context, groupID domain.GroupID) (*domain.Group, error) {
-	return s.groups.Get(ctx, groupID)
+	group, err := s.groups.Get(ctx, groupID)
+	if err != nil || group == nil {
+		return group, err
+	}
+
+	groups, err := s.withCurrentCorners(ctx, []*domain.Group{group})
+	if err != nil {
+		return nil, err
+	}
+	return groups[0], nil
+}
+
+// withCurrentCorners returns read snapshots whose itineraries contain only
+// corners that still belong to the group camp. Corner deletion cascades to
+// visits but not to the itinerary JSON stored on groups.
+func (s *GroupService) withCurrentCorners(ctx context.Context, groups []*domain.Group) ([]*domain.Group, error) {
+	cornersByCamp := make(map[domain.CampID]map[domain.CornerID]struct{})
+	filtered := make([]*domain.Group, len(groups))
+
+	for i, group := range groups {
+		cornerIDs, ok := cornersByCamp[group.CampID()]
+		if !ok {
+			corners, err := s.corners.ListByCamp(ctx, group.CampID())
+			if err != nil {
+				return nil, err
+			}
+			cornerIDs = make(map[domain.CornerID]struct{}, len(corners))
+			for _, corner := range corners {
+				cornerIDs[corner.ID()] = struct{}{}
+			}
+			cornersByCamp[group.CampID()] = cornerIDs
+		}
+
+		itinerary := make([]domain.CornerProgress, 0, len(group.Itinerary()))
+		for _, progress := range group.Itinerary() {
+			if _, exists := cornerIDs[progress.CornerID()]; exists {
+				itinerary = append(itinerary, progress)
+			}
+		}
+		filtered[i] = domain.NewGroupFromProps(domain.GroupProps{
+			ID:        group.ID(),
+			CampID:    group.CampID(),
+			Name:      group.Name(),
+			BadgeID:   group.BadgeID(),
+			Itinerary: itinerary,
+		})
+	}
+
+	return filtered, nil
 }
 
 type GroupVisitDetail struct {
@@ -197,11 +291,11 @@ func (s *GroupService) ListGroupVisitDetails(ctx context.Context, groupID domain
 	return details, nil
 }
 
-func (s *GroupService) recordAuditLog(ctx context.Context, actor, action, target string, success bool, metadata map[string]any) {
+func (s *GroupService) recordAuditLog(ctx context.Context, actor string, action AuditAction, target string, success bool, metadata map[string]any) {
 	log := domain.NewAuditLog(
 		domain.AuditLogID(s.uuidFn()),
 		actor,
-		action,
+		string(action),
 		target,
 		success,
 		s.nowFn(),

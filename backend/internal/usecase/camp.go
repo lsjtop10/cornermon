@@ -12,6 +12,9 @@ import (
 type CampService struct {
 	camps       CampRepository
 	tracks      TrackRepository
+	devices     DeviceRegistrationRepository
+	visits      VisitRepository
+	groups      GroupRepository
 	sessions    FacilitatorSessionRepository
 	auditLogs   AuditLogRepository
 	broadcaster Broadcaster
@@ -24,6 +27,9 @@ type CampService struct {
 func NewCampService(
 	camps CampRepository,
 	tracks TrackRepository,
+	devices DeviceRegistrationRepository,
+	visits VisitRepository,
+	groups GroupRepository,
 	sessions FacilitatorSessionRepository,
 	auditLogs AuditLogRepository,
 	broadcaster Broadcaster,
@@ -32,6 +38,9 @@ func NewCampService(
 	return &CampService{
 		camps:       camps,
 		tracks:      tracks,
+		devices:     devices,
+		visits:      visits,
+		groups:      groups,
 		sessions:    sessions,
 		auditLogs:   auditLogs,
 		broadcaster: broadcaster,
@@ -51,10 +60,10 @@ func (s *CampService) OpenNewCamp(ctx context.Context, name string, startAt, end
 		return s.camps.Save(ctx, camp)
 	})
 	if err != nil {
-		s.recordAuditLog(ctx, "admin", "CAMP_CREATE", "", false, map[string]any{"error": err.Error()})
+		s.recordAuditLog(ctx, "admin", ActionCampCreate, "", false, map[string]any{"error": err.Error()})
 		return nil, err
 	}
-	s.recordAuditLog(ctx, "admin", "CAMP_CREATE", string(camp.ID()), true, map[string]any{"name": name})
+	s.recordAuditLog(ctx, "admin", ActionCampCreate, string(camp.ID()), true, map[string]any{"name": name})
 	return camp, nil
 }
 
@@ -89,11 +98,11 @@ func (s *CampService) UpdateCampSettings(
 		return s.camps.Save(ctx, camp)
 	})
 	if err != nil {
-		s.recordAuditLog(ctx, string(actorAdminID), "CAMP_SETTINGS_UPDATE", string(campID), false, map[string]any{"error": err.Error()})
+		s.recordAuditLog(ctx, string(actorAdminID), ActionCampSettingsUpdate, string(campID), false, map[string]any{"error": err.Error()})
 		return nil, err
 	}
 
-	s.recordAuditLog(ctx, string(actorAdminID), "CAMP_SETTINGS_UPDATE", string(campID), true, nil)
+	s.recordAuditLog(ctx, string(actorAdminID), ActionCampSettingsUpdate, string(campID), true, nil)
 	_ = s.broadcaster.Broadcast(ctx, campID, EventCampUpdated, CampScope())
 	return camp, nil
 }
@@ -122,11 +131,11 @@ func (s *CampService) ActivateCamp(
 	})
 
 	if err != nil {
-		s.recordAuditLog(ctx, string(actorAdminID), "CAMP_ACTIVATE", string(campID), false, map[string]any{"error": err.Error()})
+		s.recordAuditLog(ctx, string(actorAdminID), ActionCampActivate, string(campID), false, map[string]any{"error": err.Error()})
 		return err
 	}
 
-	s.recordAuditLog(ctx, string(actorAdminID), "CAMP_ACTIVATE", string(campID), true, nil)
+	s.recordAuditLog(ctx, string(actorAdminID), ActionCampActivate, string(campID), true, nil)
 	_ = s.broadcaster.Broadcast(ctx, campID, EventCampUpdated, CampScope())
 
 	return nil
@@ -139,20 +148,32 @@ func (s *CampService) EndCamp(
 	actorAdminID domain.AdminID,
 ) error {
 	now := s.nowFn()
-	camp, err := s.camps.Get(ctx, campID)
-	if err != nil {
-		return err
-	}
-	if camp == nil {
-		return domain.ErrCampInvalidTransition
-	}
+	err := s.tx.RunInTx(ctx, func(ctx context.Context) error {
+		camp, err := s.camps.Get(ctx, campID)
+		if err != nil {
+			return err
+		}
+		if camp == nil {
+			return domain.ErrCampInvalidTransition
+		}
+		if _, err := camp.End(now); err != nil {
+			return err
+		}
 
-	if _, err := camp.End(now); err != nil {
-		return err
-	}
+		approvedStatus := domain.DeviceApproved
+		devices, err := s.devices.ListByCampAndStatus(ctx, campID, &approvedStatus)
+		if err != nil {
+			return err
+		}
+		for _, device := range devices {
+			if err := device.Revoke(); err != nil {
+				return err
+			}
+			if err := s.devices.Save(ctx, device); err != nil {
+				return err
+			}
+		}
 
-	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
-		// 해당 캠프 세션 일괄 무효화
 		sessions, err := s.sessions.ListActiveByCamp(ctx, campID)
 		if err != nil {
 			return err
@@ -165,26 +186,72 @@ func (s *CampService) EndCamp(
 			}
 		}
 
+		visits, err := s.visits.ListInProgressByCamp(ctx, campID)
+		if err != nil {
+			return err
+		}
+		for _, visit := range visits {
+			group, err := s.groups.GetForUpdate(ctx, visit.GroupID())
+			if err != nil {
+				return err
+			}
+			if group == nil {
+				return domain.ErrCornerNotInItinerary
+			}
+
+			track, err := s.tracks.Get(ctx, visit.TrackID())
+			if err != nil {
+				return err
+			}
+			if track == nil {
+				return domain.ErrTrackNotActive
+			}
+
+			if err := visit.Complete(now); err != nil {
+				return err
+			}
+			if _, err := track.CompleteVisit(now); err != nil {
+				return err
+			}
+			if err := group.MarkVisitCompleted(visit.CornerID()); err != nil {
+				return err
+			}
+
+			if err := s.visits.Save(ctx, visit); err != nil {
+				return err
+			}
+			if err := s.tracks.Save(ctx, track); err != nil {
+				return err
+			}
+			if err := s.groups.Save(ctx, group); err != nil {
+				return err
+			}
+		}
+
 		return s.camps.Save(ctx, camp)
 	})
 
 	if err != nil {
-		s.recordAuditLog(ctx, string(actorAdminID), "CAMP_END", string(campID), false, map[string]any{"error": err.Error()})
+		s.recordAuditLog(ctx, string(actorAdminID), ActionCampEnd, string(campID), false, map[string]any{"error": err.Error()})
 		return err
 	}
 
-	s.recordAuditLog(ctx, string(actorAdminID), "CAMP_END", string(campID), true, nil)
-	_ = s.broadcaster.Broadcast(ctx, campID, EventCampUpdated, CampScope())
+	s.recordAuditLog(ctx, string(actorAdminID), ActionCampEnd, string(campID), true, nil)
 	_ = s.broadcaster.Broadcast(ctx, campID, EventCampEnded, CampScope())
+	_ = s.broadcaster.Broadcast(ctx, campID, EventCampUpdated, CampScope())
+	_ = s.broadcaster.Broadcast(ctx, campID, EventDeviceRegistrationUpdated, CampScope())
+	_ = s.broadcaster.Broadcast(ctx, campID, EventCornersUpdated, CampScope())
+	_ = s.broadcaster.Broadcast(ctx, campID, EventGroupsUpdated, CampScope())
+	_ = s.broadcaster.Broadcast(ctx, campID, EventTracksUpdated, CampScope())
 
 	return nil
 }
 
-func (s *CampService) recordAuditLog(ctx context.Context, actor, action, target string, success bool, metadata map[string]any) {
+func (s *CampService) recordAuditLog(ctx context.Context, actor string, action AuditAction, target string, success bool, metadata map[string]any) {
 	log := domain.NewAuditLog(
 		domain.AuditLogID(s.uuidFn()),
 		actor,
-		action,
+		string(action),
 		target,
 		success,
 		s.nowFn(),

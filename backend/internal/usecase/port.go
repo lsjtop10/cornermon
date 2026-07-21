@@ -32,7 +32,13 @@ type CornerRepository interface {
 	Get(ctx context.Context, id domain.CornerID) (*domain.Corner, error)
 	ListByCamp(ctx context.Context, campID domain.CampID) ([]*domain.Corner, error)
 	Save(ctx context.Context, corner *domain.Corner) error
-	Delete(ctx context.Context, id domain.CornerID) error
+	SoftDelete(ctx context.Context, id domain.CornerID, deletedAt time.Time) error
+}
+
+// CornerCleanupRepository physically removes only candidates selected by the
+// persistence layer's history-safe cleanup query.
+type CornerCleanupRepository interface {
+	PurgeDeletedBefore(ctx context.Context, deletedBefore time.Time) (int64, error)
 }
 
 // CornerViewQuerier는 코너 핵심 정보, 완료 방문 지표, 활성 트랙을 한 번에 반환하는 읽기 전용 포트입니다.
@@ -77,6 +83,7 @@ type VisitRepository interface {
 	Get(ctx context.Context, id domain.VisitID) (*domain.Visit, error)
 	GetInProgressByTrack(ctx context.Context, trackID domain.TrackID) (*domain.Visit, error)
 	GetCompletedByGroupAndCorner(ctx context.Context, groupID domain.GroupID, cornerID domain.CornerID) (*domain.Visit, error)
+	ListInProgressByCamp(ctx context.Context, campID domain.CampID) ([]*domain.Visit, error)
 	ListByGroup(ctx context.Context, groupID domain.GroupID) ([]*domain.Visit, error)
 	Save(ctx context.Context, visit *domain.Visit) error
 }
@@ -84,9 +91,17 @@ type VisitRepository interface {
 // GroupRepository는 조 엔티티의 지속성을 담당하는 포트입니다.
 type GroupRepository interface {
 	Get(ctx context.Context, id domain.GroupID) (*domain.Group, error)
+	// GetForUpdate는 Get과 동일하지만 행을 잠급니다(SELECT ... FOR UPDATE). 코너
+	// 추가/삭제로 인한 순회표 동기화와 방문 시작/완료가 같은 조 행을 동시에 갱신할 때
+	// lost update를 막기 위한 것으로, 반드시 TxManager.RunInTx 안에서만 호출해야 합니다.
+	GetForUpdate(ctx context.Context, id domain.GroupID) (*domain.Group, error)
 	GetByBadge(ctx context.Context, campID domain.CampID, badgeID domain.BadgeID) (*domain.Group, error)
 	ListByCamp(ctx context.Context, campID domain.CampID) ([]*domain.Group, error)
+	// ListByCampForUpdate는 ListByCamp와 동일하지만 캠프의 모든 조 행을 잠급니다.
+	// 코너 추가/삭제 시 캠프 내 전체 조의 순회표를 갱신하기 전에 사용합니다.
+	ListByCampForUpdate(ctx context.Context, campID domain.CampID) ([]*domain.Group, error)
 	Save(ctx context.Context, group *domain.Group) error
+	SaveBulk(ctx context.Context, groups []*domain.Group) error
 }
 
 // BadgeRepository는 배지 엔티티의 지속성을 담당하는 포트입니다.
@@ -142,17 +157,22 @@ type MessageRepository interface {
 	MarkAllReadByRecipient(ctx context.Context, trackID domain.TrackID, recipient domain.SenderRole, readAt time.Time) error
 }
 
-// MessageRepository는 공지사항 엔티티의 지속성을 담당하는 포트입니다.
+// AnnouncementRepository는 공지사항 명령 모델의 지속성을 담당하는 포트입니다.
 type AnnouncementRepository interface {
-	Save(ctx context.Context, msg *domain.Announcement) error
-	ListNoticeByCamp(ctx context.Context, campID domain.CampID) ([]*domain.Announcement, error)
+	Save(ctx context.Context, announcement *domain.Announcement) error
+}
+
+// AnnouncementQuerier는 공지 화면에 필요한 읽기 전용 스냅샷을 제공하는 포트입니다.
+type AnnouncementQuerier interface {
+	ListNoticesByCamp(ctx context.Context, campID domain.CampID) ([]*domain.Announcement, error)
+	ListNoticeViewsByCampAndTrack(ctx context.Context, campID domain.CampID, trackID domain.TrackID) ([]BroadcastNoticeView, error)
+	ListAnnouncementReceipts(ctx context.Context, announcementID domain.AnnouncementID) ([]BroadcastReceiptDTO, error)
 }
 
 // BroadcastReceiptRepository는 공지 수신 확인 엔티티의 지속성을 담당하는 포트입니다.
 type AnnouncementReceiptRepository interface {
 	Save(ctx context.Context, receipt *domain.AnnouncementReceipt) error
 	GetByMessageAndTrack(ctx context.Context, msgID domain.AnnouncementID, trackID domain.TrackID) (*domain.AnnouncementReceipt, error)
-	ListByMessage(ctx context.Context, msgID domain.AnnouncementID) ([]*domain.AnnouncementReceipt, error)
 }
 
 // AuditLogRepository는 감사 로그 엔티티의 지속성을 담당하는 포트입니다.

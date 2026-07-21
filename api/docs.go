@@ -173,7 +173,7 @@ const docTemplate = `{
                         "AdminAuth": []
                     }
                 ],
-                "description": "관리자용 실시간 변경 알림 스트림입니다. 각 event의 data는 SSENotification JSON이며 예시는 {\"event\":\"tracks_updated\",\"scope\":{\"kind\":\"camp\"}} 입니다. 이벤트에는 상태 스냅샷이 포함되지 않으므로, 수신한 클라이언트는 해당 REST API로 최신 상태를 조회해야 합니다. 이벤트는 best-effort 알림이므로 서버는 유실된 메시지를 저장·재전송하지 않습니다. 버퍼가 찬 연결은 종료되며, 클라이언트는 재연결 후 REST API로 최신 상태를 다시 조회해야 합니다.",
+                "description": "관리자용 best-effort 변경 알림 스트림입니다. 각 event의 data는 SSENotification JSON이며 예시는 {\"event\":\"tracks_updated\",\"scope\":{\"kind\":\"camp\"}} 입니다. 이벤트에는 상태 스냅샷이 없으므로 수신한 관리자는 해당 REST API로 최신 상태를 조회합니다. ` + "`" + `camp_ended` + "`" + `도 관리자는 REST 재조회할 수 있습니다. 서버는 유실된 메시지를 저장·재전송하지 않으며, 버퍼가 찬 연결은 종료됩니다. 재연결 후 REST API로 최신 상태를 다시 조회해야 합니다.",
                 "produces": [
                     "text/event-stream"
                 ],
@@ -207,7 +207,7 @@ const docTemplate = `{
                         "TrackAuth": []
                     }
                 ],
-                "description": "트랙 진행자용 실시간 변경 알림 스트림입니다. 각 event의 data는 SSENotification JSON이며 예시는 {\"event\":\"track_updated\",\"scope\":{\"kind\":\"track\",\"trackId\":\"track-id\"}} 입니다. 이벤트에는 상태 스냅샷이 포함되지 않으므로, 수신한 클라이언트는 해당 REST API로 최신 상태를 조회해야 합니다. 이벤트는 best-effort 알림이므로 서버는 유실된 메시지를 저장·재전송하지 않습니다. 버퍼가 찬 연결은 종료되며, 클라이언트는 재연결 후 REST API로 최신 상태를 다시 조회해야 합니다.",
+                "description": "트랙 진행자용 best-effort 변경 알림 스트림입니다. 각 event의 data는 SSENotification JSON이며 예시는 {\"event\":\"track_updated\",\"scope\":{\"kind\":\"track\",\"trackId\":\"track-id\"}} 입니다. 일반 이벤트에는 상태 스냅샷이 없으므로 REST API로 최신 상태를 조회합니다. 단, ` + "`" + `camp_ended` + "`" + `는 terminal event이므로 REST 재조회 없이 로컬 진행자 세션·기기 등록을 삭제하고 등록 화면으로 이동합니다. 이벤트 도착·순서는 판정 근거가 아니며, 일반 재조회가 SESSION_REVOKED/401로 실패하거나 SSE를 놓치면 GET /device-registrations/me의 status와 campStatus로 최종 복구합니다: APPROVED/ACTIVE는 PIN 세션만 종료, REVOKED/ENDED는 캠프 종료, REVOKED/그 외는 기기 신뢰 회수입니다. 서버는 유실된 메시지를 저장·재전송하지 않습니다.",
                 "produces": [
                     "text/event-stream"
                 ],
@@ -257,6 +257,42 @@ const docTemplate = `{
                         "in": "query"
                     },
                     {
+                        "enum": [
+                            "ADMIN_LOGIN",
+                            "ADMIN_CREATE",
+                            "ADMIN_PASSWORD_CHANGE",
+                            "ADMIN_DELETE",
+                            "ADMIN_SESSION_REVOKE",
+                            "TRACK_FORCE_LOGOUT",
+                            "FACILITATOR_LOGIN",
+                            "SESSION_MIGRATE",
+                            "FACILITATOR_LOGOUT",
+                            "BADGE_ASSIGN",
+                            "BADGE_BULK_GENERATE",
+                            "BADGE_EXPORT",
+                            "CAMP_ACTIVATE",
+                            "CAMP_END",
+                            "CAMP_CREATE",
+                            "CAMP_SETTINGS_UPDATE",
+                            "CORNER_UPDATE",
+                            "CORNER_DELETE",
+                            "CORNER_CREATE",
+                            "DEVICE_APPROVED",
+                            "DEVICE_REJECTED",
+                            "DEVICE_REVOKED",
+                            "PIN_LOCK_RESET",
+                            "DEVICE_REQUEST",
+                            "GROUP_CREATE",
+                            "MESSAGE_DIRECT",
+                            "MESSAGE_BROADCAST",
+                            "TRACK_CREATE",
+                            "TRACK_DELETE",
+                            "TRACK_REPLACE",
+                            "PIN_REGENERATE",
+                            "TRACK_PIN_EXPORT",
+                            "VISIT_START",
+                            "VISIT_COMPLETE"
+                        ],
                         "type": "string",
                         "description": "행위 종류 정확히 일치",
                         "name": "action",
@@ -456,6 +492,12 @@ const docTemplate = `{
                 "responses": {
                     "204": {
                         "description": "성공"
+                    },
+                    "409": {
+                        "description": "DEVICE_INVALID_TRANSITION: 존재하지 않거나 잠금 해제할 수 없는 기기",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
                     }
                 }
             }
@@ -504,19 +546,19 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "잘못된 PIN (지연 가능)",
+                        "description": "INVALID_PIN: PIN이 올바르지 않음",
                         "schema": {
                             "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "403": {
-                        "description": "신뢰 기기 아님 또는 캠프 미시작",
+                        "description": "DEVICE_NOT_APPROVED: 기기가 승인되지 않음; CAMP_NOT_AVAILABLE: 캠프가 로그인 가능한 상태가 아님",
                         "schema": {
                             "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "429": {
-                        "description": "PIN 잠금(지연) 중",
+                        "description": "DEVICE_LOCKED: PIN 실패 횟수 초과로 기기가 일시 잠김",
                         "schema": {
                             "$ref": "#/definitions/ErrorResponse"
                         }
@@ -542,6 +584,12 @@ const docTemplate = `{
                 "responses": {
                     "204": {
                         "description": "성공"
+                    },
+                    "401": {
+                        "description": "SESSION_REVOKED: 세션이 이미 취소됨",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
                     }
                 }
             }
@@ -932,6 +980,239 @@ const docTemplate = `{
                 }
             }
         },
+        "/camps/{campId}/device-registrations": {
+            "get": {
+                "security": [
+                    {
+                        "AdminAuth": []
+                    }
+                ],
+                "description": "관리자가 등록되었거나 대기 중인 기기 목록을 확인한다.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "A. Auth \u0026 Device Trust"
+                ],
+                "summary": "기기 등록 목록 조회",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "캠프 ID",
+                        "name": "campId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "기기 등록 상태",
+                        "name": "status",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/DeviceRegistrationResponse"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/camps/{campId}/device-registrations/locked": {
+            "get": {
+                "security": [
+                    {
+                        "AdminAuth": []
+                    }
+                ],
+                "description": "캠프 내 PIN 연속 실패로 잠금된(APPROVED, LockedUntil이 미래) 기기 목록을 조회한다.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "A. Auth \u0026 Device Trust"
+                ],
+                "summary": "잠금 기기 목록 조회",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "캠프 ID",
+                        "name": "campId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/DeviceRegistrationResponse"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/camps/{campId}/device-registrations/{id}/approve": {
+            "post": {
+                "security": [
+                    {
+                        "AdminAuth": []
+                    }
+                ],
+                "description": "PENDING 상태인 기기를 APPROVED로 승인한다.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "A. Auth \u0026 Device Trust"
+                ],
+                "summary": "기기 승인",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "캠프 ID",
+                        "name": "campId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "기기 등록 ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/DeviceRegistrationResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "DEVICE_INVALID_TRANSITION: PENDING 상태가 아닌 기기는 승인할 수 없음",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/camps/{campId}/device-registrations/{id}/reject": {
+            "post": {
+                "security": [
+                    {
+                        "AdminAuth": []
+                    }
+                ],
+                "description": "PENDING 상태인 기기를 REJECTED로 거절한다.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "A. Auth \u0026 Device Trust"
+                ],
+                "summary": "기기 거절",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "캠프 ID",
+                        "name": "campId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "기기 등록 ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/DeviceRegistrationResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "DEVICE_INVALID_TRANSITION: PENDING 상태가 아닌 기기는 거절할 수 없음",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/camps/{campId}/device-registrations/{id}/revoke": {
+            "post": {
+                "security": [
+                    {
+                        "AdminAuth": []
+                    }
+                ],
+                "description": "APPROVED 기기의 권한을 REVOKED로 박탈한다.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "A. Auth \u0026 Device Trust"
+                ],
+                "summary": "기기 신뢰 취소 (폐기/분실)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "캠프 ID",
+                        "name": "campId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "기기 등록 ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/DeviceRegistrationResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "DEVICE_NOT_APPROVED: APPROVED 상태가 아닌 기기는 신뢰를 취소할 수 없음",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/camps/{campId}/groups": {
             "get": {
                 "security": [
@@ -979,7 +1260,7 @@ const docTemplate = `{
                         "TrackAuth": []
                     }
                 ],
-                "description": "관리자 또는 진행자가 캠프에 발송된 BROADCAST 메시지들의 목록을 조회한다.",
+                "description": "관리자 또는 진행자가 캠프에 발송된 BROADCAST 메시지들의 목록을 조회한다. TrackAuth 응답의 isRead와 readAt은 현재 트랙의 수신 확인 상태다.",
                 "produces": [
                     "application/json"
                 ],
@@ -1063,7 +1344,13 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "BAD_REQUEST: 요청 본문 또는 campId가 없음",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "CAMP_NOT_ACTIVE: ACTIVE 캠프에서만 공지를 보낼 수 있음",
                         "schema": {
                             "$ref": "#/definitions/ErrorResponse"
                         }
@@ -1101,6 +1388,12 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/CampReportResponse"
                         }
+                    },
+                    "404": {
+                        "description": "CAMP_NOT_FOUND: 캠프가 없음",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
                     }
                 }
             }
@@ -1134,6 +1427,12 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/CampReportResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "CAMP_NOT_FOUND: 캠프가 없음",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -1169,6 +1468,18 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/CampReportResponse"
                         }
+                    },
+                    "404": {
+                        "description": "CAMP_NOT_FOUND: 캠프가 없음",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "CAMP_NOT_ENDED: 종료된 캠프에서만 최종 리포트를 생성할 수 있음",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
                     }
                 }
             }
@@ -1202,6 +1513,12 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/CampSummaryStatsResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "CAMP_NOT_FOUND: 캠프가 없음",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -1326,19 +1643,19 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "CAMP_INVALID_SETTINGS: 설정 값이 유효하지 않음",
                         "schema": {
                             "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "404": {
-                        "description": "Not Found",
+                        "description": "CAMP_NOT_FOUND: 대상 캠프가 없음",
                         "schema": {
                             "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "409": {
-                        "description": "Conflict",
+                        "description": "CAMP_SETTINGS_LOCKED: 종료된 캠프는 수정할 수 없음",
                         "schema": {
                             "$ref": "#/definitions/ErrorResponse"
                         }
@@ -1384,7 +1701,7 @@ const docTemplate = `{
                         }
                     },
                     "409": {
-                        "description": "Conflict",
+                        "description": "CAMP_STATE_CONFLICT: 종료할 수 없는 캠프 상태 또는 정리 중인 방문 충돌",
                         "schema": {
                             "$ref": "#/definitions/ErrorResponse"
                         }
@@ -1430,7 +1747,7 @@ const docTemplate = `{
                         }
                     },
                     "409": {
-                        "description": "이미 활성화됨 또는 필수 조건 미충족",
+                        "description": "CAMP_STATE_CONFLICT: 이미 활성화되었거나 활성화할 수 없는 상태",
                         "schema": {
                             "$ref": "#/definitions/ErrorResponse"
                         }
@@ -1485,6 +1802,12 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/ErrorResponse"
                         }
+                    },
+                    "409": {
+                        "description": "CAMP_STATE_CONFLICT: 현재 캠프 상태에서는 코너를 생성할 수 없음",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
                     }
                 }
             }
@@ -1534,8 +1857,14 @@ const docTemplate = `{
                             "$ref": "#/definitions/ErrorResponse"
                         }
                     },
+                    "404": {
+                        "description": "CORNER_NOT_FOUND: 수정할 코너가 없음",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
                     "409": {
-                        "description": "Conflict",
+                        "description": "CAMP_STATE_CONFLICT: 현재 캠프 상태에서는 코너를 수정할 수 없음",
                         "schema": {
                             "$ref": "#/definitions/ErrorResponse"
                         }
@@ -1612,7 +1941,7 @@ const docTemplate = `{
                         }
                     },
                     "404": {
-                        "description": "Not Found",
+                        "description": "CORNER_NOT_FOUND: 대상 코너가 없음",
                         "schema": {
                             "$ref": "#/definitions/ErrorResponse"
                         }
@@ -1625,7 +1954,7 @@ const docTemplate = `{
                         "AdminAuth": []
                     }
                 ],
-                "description": "코너를 삭제한다. 단, 방문 기록이 있으면 삭제할 수 없다.",
+                "description": "코너를 soft-delete한다. 삭제된 코너는 일반 조회에서 제외되며 API 계약은 유지된다.",
                 "produces": [
                     "application/json"
                 ],
@@ -1653,7 +1982,7 @@ const docTemplate = `{
                         }
                     },
                     "409": {
-                        "description": "활성화된 캠프이거나 종속 데이터가 존재함",
+                        "description": "CAMP_STATE_CONFLICT: 현재 캠프 상태에서는 코너를 삭제할 수 없음",
                         "schema": {
                             "$ref": "#/definitions/ErrorResponse"
                         }
@@ -1662,32 +1991,6 @@ const docTemplate = `{
             }
         },
         "/device-registrations": {
-            "get": {
-                "security": [
-                    {
-                        "AdminAuth": []
-                    }
-                ],
-                "description": "관리자가 등록되었거나 대기 중인 기기 목록을 확인한다.",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "A. Auth \u0026 Device Trust"
-                ],
-                "summary": "기기 등록 목록 조회",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/DeviceRegistrationResponse"
-                            }
-                        }
-                    }
-                }
-            },
             "post": {
                 "description": "기기가 서버에 등록을 요청한다. 이후 관리자의 승인 대기.",
                 "consumes": [
@@ -1717,46 +2020,15 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/DeviceRegistrationCreatedResponse"
                         }
-                    }
-                }
-            }
-        },
-        "/device-registrations/locked": {
-            "get": {
-                "security": [
-                    {
-                        "AdminAuth": []
-                    }
-                ],
-                "description": "캠프 내 PIN 연속 실패로 잠금된(APPROVED, LockedUntil이 미래) 기기 목록을 조회한다.",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "A. Auth \u0026 Device Trust"
-                ],
-                "summary": "잠금 기기 목록 조회",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "캠프 ID",
-                        "name": "campId",
-                        "in": "query",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/DeviceRegistrationResponse"
-                            }
-                        }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "INVALID_TRANSITION: 종료된 캠프에는 기기를 등록할 수 없음",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "CAMP_NOT_FOUND: 등록 코드에 해당하는 캠프가 없음",
                         "schema": {
                             "$ref": "#/definitions/ErrorResponse"
                         }
@@ -1766,7 +2038,7 @@ const docTemplate = `{
         },
         "/device-registrations/me": {
             "get": {
-                "description": "미승인(PENDING) 기기가 자신의 승인 상태를 확인하기 위해 호출한다.",
+                "description": "기기 등록 시 발급받은 opaque device token을 X-Device-Token 헤더에 넣어, 해당 기기의 승인 상태·식별자와 소속 캠프 상태를 조회한다. PENDING 및 REVOKED 상태에서도 호출할 수 있다.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1777,113 +2049,20 @@ const docTemplate = `{
                     "A. Auth \u0026 Device Trust"
                 ],
                 "summary": "내 기기 등록 상태 자체 조회",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "기기 등록 토큰 (opaque token, POST /device-registrations 응답의 deviceToken 값)",
+                        "name": "X-Device-Token",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/DeviceStatusResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/device-registrations/{id}/approve": {
-            "post": {
-                "security": [
-                    {
-                        "AdminAuth": []
-                    }
-                ],
-                "description": "PENDING 상태인 기기를 APPROVED로 승인한다.",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "A. Auth \u0026 Device Trust"
-                ],
-                "summary": "기기 승인",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "기기 등록 ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/DeviceRegistrationResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/device-registrations/{id}/reject": {
-            "post": {
-                "security": [
-                    {
-                        "AdminAuth": []
-                    }
-                ],
-                "description": "PENDING 상태인 기기를 REJECTED로 거절한다.",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "A. Auth \u0026 Device Trust"
-                ],
-                "summary": "기기 거절",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "기기 등록 ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/DeviceRegistrationResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/device-registrations/{id}/revoke": {
-            "post": {
-                "security": [
-                    {
-                        "AdminAuth": []
-                    }
-                ],
-                "description": "APPROVED 기기의 권한을 REVOKED로 박탈한다.",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "A. Auth \u0026 Device Trust"
-                ],
-                "summary": "기기 신뢰 취소 (폐기/분실)",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "기기 등록 ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/DeviceRegistrationResponse"
                         }
                     }
                 }
@@ -2112,6 +2291,18 @@ const docTemplate = `{
                                 "$ref": "#/definitions/TrackPinResponse"
                             }
                         }
+                    },
+                    "404": {
+                        "description": "CORNER_NOT_FOUND: 대상 코너가 없음",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "CAMP_NOT_AVAILABLE: 종료된 캠프에는 트랙을 생성할 수 없음",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
                     }
                 }
             }
@@ -2148,6 +2339,18 @@ const docTemplate = `{
                 "responses": {
                     "204": {
                         "description": "성공적으로 삭제됨"
+                    },
+                    "404": {
+                        "description": "TRACK_NOT_FOUND: 대상 트랙이 없거나 이미 삭제됨",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "TRACK_DELETE_BLOCKED: 진행 중인 방문이 있어 삭제할 수 없음",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
                     }
                 }
             }
@@ -2324,6 +2527,12 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/TrackPinResponse"
                         }
+                    },
+                    "404": {
+                        "description": "TRACK_NOT_FOUND: 대상 트랙이 없거나 활성 상태가 아님",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
                     }
                 }
             }
@@ -2392,6 +2601,58 @@ const docTemplate = `{
                 }
             }
         },
+        "/tracks/{trackId}/corner": {
+            "get": {
+                "security": [
+                    {
+                        "TrackAuth": []
+                    }
+                ],
+                "description": "인증된 진행자(TrackAuth)의 트랙이 속한 코너의 핵심 정보를 조회한다. 세션의 트랙과 path trackId가 일치해야 한다. 다른 트랙의 활성 목록·병목 지표 등 관리자 전용 정보는 포함하지 않는다.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "C. Visit (Scan Flow)"
+                ],
+                "summary": "진행자 코너 조회",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "트랙 ID",
+                        "name": "trackId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/CornerResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "세션 트랙과 요청 트랙 불일치",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "트랙 또는 코너 없음",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/tracks/{trackId}/groups": {
             "get": {
                 "security": [
@@ -2433,7 +2694,7 @@ const docTemplate = `{
                         }
                     },
                     "403": {
-                        "description": "세션 트랙과 요청 트랙 불일치",
+                        "description": "TRACK_SCOPE_FORBIDDEN: 세션 트랙과 요청 트랙이 불일치",
                         "schema": {
                             "$ref": "#/definitions/ErrorResponse"
                         }
@@ -2497,7 +2758,7 @@ const docTemplate = `{
                         }
                     },
                     "403": {
-                        "description": "세션 트랙과 요청 트랙 불일치",
+                        "description": "TRACK_SCOPE_FORBIDDEN: 세션 트랙과 요청 트랙이 불일치",
                         "schema": {
                             "$ref": "#/definitions/ErrorResponse"
                         }
@@ -2584,7 +2845,7 @@ const docTemplate = `{
                         }
                     },
                     "403": {
-                        "description": "세션 트랙과 요청 트랙 불일치",
+                        "description": "TRACK_SCOPE_FORBIDDEN: 세션 트랙과 요청 트랙이 불일치",
                         "schema": {
                             "$ref": "#/definitions/ErrorResponse"
                         }
@@ -2623,8 +2884,17 @@ const docTemplate = `{
                             "$ref": "#/definitions/VisitSummaryResponse"
                         }
                     },
+                    "401": {
+                        "description": "SESSION_REVOKED: 진행자 세션이 취소됨",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
                     "404": {
-                        "description": "진행 중인 방문 없음"
+                        "description": "VISIT_NOT_FOUND: 진행 중인 방문 없음",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
                     }
                 }
             }
@@ -2660,8 +2930,14 @@ const docTemplate = `{
                             "$ref": "#/definitions/VisitSummaryResponse"
                         }
                     },
+                    "401": {
+                        "description": "SESSION_REVOKED: 진행자 세션이 취소됨",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
                     "409": {
-                        "description": "TRACK_NOT_BUSY 등",
+                        "description": "TRACK_NOT_BUSY, TRACK_NOT_ACTIVE, ITINERARY_CONFLICT: 현재 운영 상태에서 방문을 종료할 수 없음",
                         "schema": {
                             "$ref": "#/definitions/ErrorResponse"
                         }
@@ -2712,8 +2988,20 @@ const docTemplate = `{
                             "$ref": "#/definitions/VisitSummaryResponse"
                         }
                     },
+                    "401": {
+                        "description": "SESSION_REVOKED: 진행자 세션이 취소됨",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "BADGE_NOT_ASSIGNED: 배지가 존재하지 않거나 조에 배정되지 않음",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
                     "409": {
-                        "description": "TRACK_BUSY, DUPLICATE_VISIT 등",
+                        "description": "TRACK_BUSY, TRACK_NOT_ACTIVE, ITINERARY_CONFLICT, CAMP_NOT_ACTIVE: 현재 운영 상태에서 방문을 시작할 수 없음",
                         "schema": {
                             "$ref": "#/definitions/ErrorResponse"
                         }
@@ -2812,7 +3100,43 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "action": {
-                    "type": "string"
+                    "type": "string",
+                    "enum": [
+                        "ADMIN_LOGIN",
+                        "ADMIN_CREATE",
+                        "ADMIN_PASSWORD_CHANGE",
+                        "ADMIN_DELETE",
+                        "ADMIN_SESSION_REVOKE",
+                        "TRACK_FORCE_LOGOUT",
+                        "FACILITATOR_LOGIN",
+                        "SESSION_MIGRATE",
+                        "FACILITATOR_LOGOUT",
+                        "BADGE_ASSIGN",
+                        "BADGE_BULK_GENERATE",
+                        "BADGE_EXPORT",
+                        "CAMP_ACTIVATE",
+                        "CAMP_END",
+                        "CAMP_CREATE",
+                        "CAMP_SETTINGS_UPDATE",
+                        "CORNER_UPDATE",
+                        "CORNER_DELETE",
+                        "CORNER_CREATE",
+                        "DEVICE_APPROVED",
+                        "DEVICE_REJECTED",
+                        "DEVICE_REVOKED",
+                        "PIN_LOCK_RESET",
+                        "DEVICE_REQUEST",
+                        "GROUP_CREATE",
+                        "MESSAGE_DIRECT",
+                        "MESSAGE_BROADCAST",
+                        "TRACK_CREATE",
+                        "TRACK_DELETE",
+                        "TRACK_REPLACE",
+                        "PIN_REGENERATE",
+                        "TRACK_PIN_EXPORT",
+                        "VISIT_START",
+                        "VISIT_COMPLETE"
+                    ]
                 },
                 "actor": {
                     "type": "string"
@@ -3249,6 +3573,10 @@ const docTemplate = `{
                     "type": "string",
                     "format": "date-time"
                 },
+                "campId": {
+                    "type": "string",
+                    "format": "uuid"
+                },
                 "createdAt": {
                     "type": "string",
                     "format": "date-time"
@@ -3306,6 +3634,7 @@ const docTemplate = `{
                     "example": "1번 태블릿"
                 },
                 "registrationCode": {
+                    "description": "각 캠프에 유일하게 부여된 등록 코드입니다. 반드시 대문자로 작성합니다.",
                     "type": "string",
                     "example": "7ZQK3M2X"
                 },
@@ -3324,6 +3653,10 @@ const docTemplate = `{
                 "approvedAt": {
                     "type": "string",
                     "format": "date-time"
+                },
+                "campId": {
+                    "type": "string",
+                    "format": "uuid"
                 },
                 "createdAt": {
                     "type": "string",
@@ -3366,6 +3699,22 @@ const docTemplate = `{
         "DeviceStatusResponse": {
             "type": "object",
             "properties": {
+                "campId": {
+                    "type": "string",
+                    "format": "uuid"
+                },
+                "campStatus": {
+                    "type": "string",
+                    "enum": [
+                        "PENDING",
+                        "ACTIVE",
+                        "ENDED"
+                    ]
+                },
+                "id": {
+                    "type": "string",
+                    "format": "uuid"
+                },
                 "status": {
                     "type": "string",
                     "enum": [
@@ -3520,9 +3869,11 @@ const docTemplate = `{
                     "format": "uuid"
                 },
                 "isRead": {
+                    "description": "IsRead and ReadAt represent the authenticated track's broadcast receipt on TrackAuth list responses.",
                     "type": "boolean"
                 },
                 "readAt": {
+                    "description": "ReadAt is omitted for unread broadcasts and administrator list responses.",
                     "type": "string",
                     "format": "date-time"
                 },

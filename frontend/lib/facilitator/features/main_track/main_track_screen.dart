@@ -46,16 +46,14 @@ class _MainTrackScreenState extends ConsumerState<MainTrackScreen> {
         .watch(currentVisitProvider(trackId))
         .maybeWhen(data: (v) => v, orElse: () => null);
 
-    // 목표시간(분)은 Track/로그인 응답이 아니라 Corner 엔티티에만 있어 별도 조회가 필요하다.
-    final cornerId = session.corner.id;
-    final targetMinutes = cornerId == null
-        ? null
-        : ref
-              .watch(cornerDetailProvider(CornerId(cornerId)))
-              .maybeWhen(
-                data: (corner) => corner.targetMinutes,
-                orElse: () => null,
-              );
+    // 목표시간(분)은 TrackAuth 조회(trackCornerProvider)로 최신값을 받아온다. 아직 응답이
+    // 없는 첫 프레임에는 로그인 스냅샷(session.corner.targetMinutes)을 임시로 보여준다.
+    final targetMinutes = ref
+        .watch(trackCornerProvider(trackId))
+        .maybeWhen(
+          data: (corner) => corner.targetMinutes,
+          orElse: () => session.corner.targetMinutes,
+        );
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final colors = isDark ? AppColors.dark : AppColors.light;

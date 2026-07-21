@@ -153,6 +153,104 @@ final class CornerDetailFamily extends $Family
   String toString() => r'cornerDetailProvider';
 }
 
+/// TrackAuth로 자기 트랙이 속한 코너를 조회한다(GET /tracks/{trackId}/corner) — `cornerDetailProvider`와
+/// 달리 AdminAuth가 아니라 진행자 세션 토큰으로 호출되므로 크로스 트랙 관리자 정보(activeTracks 등)는 오지 않는다.
+/// 트랙 세션은 무만료라 로그인 스냅샷(`session.corner`)이 오래됐을 수 있으므로 화면 진입 시 한 번
+/// 조회하고, `corners_updated` SSE(track_event_coordinator.dart) 수신 시 다시 무효화해 최신
+/// targetMinutes를 반영한다.
+
+@ProviderFor(trackCorner)
+final trackCornerProvider = TrackCornerFamily._();
+
+/// TrackAuth로 자기 트랙이 속한 코너를 조회한다(GET /tracks/{trackId}/corner) — `cornerDetailProvider`와
+/// 달리 AdminAuth가 아니라 진행자 세션 토큰으로 호출되므로 크로스 트랙 관리자 정보(activeTracks 등)는 오지 않는다.
+/// 트랙 세션은 무만료라 로그인 스냅샷(`session.corner`)이 오래됐을 수 있으므로 화면 진입 시 한 번
+/// 조회하고, `corners_updated` SSE(track_event_coordinator.dart) 수신 시 다시 무효화해 최신
+/// targetMinutes를 반영한다.
+
+final class TrackCornerProvider
+    extends $FunctionalProvider<AsyncValue<Corner>, Corner, FutureOr<Corner>>
+    with $FutureModifier<Corner>, $FutureProvider<Corner> {
+  /// TrackAuth로 자기 트랙이 속한 코너를 조회한다(GET /tracks/{trackId}/corner) — `cornerDetailProvider`와
+  /// 달리 AdminAuth가 아니라 진행자 세션 토큰으로 호출되므로 크로스 트랙 관리자 정보(activeTracks 등)는 오지 않는다.
+  /// 트랙 세션은 무만료라 로그인 스냅샷(`session.corner`)이 오래됐을 수 있으므로 화면 진입 시 한 번
+  /// 조회하고, `corners_updated` SSE(track_event_coordinator.dart) 수신 시 다시 무효화해 최신
+  /// targetMinutes를 반영한다.
+  TrackCornerProvider._({
+    required TrackCornerFamily super.from,
+    required TrackId super.argument,
+  }) : super(
+         retry: null,
+         name: r'trackCornerProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$trackCornerHash();
+
+  @override
+  String toString() {
+    return r'trackCornerProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<Corner> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<Corner> create(Ref ref) {
+    final argument = this.argument as TrackId;
+    return trackCorner(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is TrackCornerProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$trackCornerHash() => r'8e90729a405c91d96f7dbecfa9950fa68b996095';
+
+/// TrackAuth로 자기 트랙이 속한 코너를 조회한다(GET /tracks/{trackId}/corner) — `cornerDetailProvider`와
+/// 달리 AdminAuth가 아니라 진행자 세션 토큰으로 호출되므로 크로스 트랙 관리자 정보(activeTracks 등)는 오지 않는다.
+/// 트랙 세션은 무만료라 로그인 스냅샷(`session.corner`)이 오래됐을 수 있으므로 화면 진입 시 한 번
+/// 조회하고, `corners_updated` SSE(track_event_coordinator.dart) 수신 시 다시 무효화해 최신
+/// targetMinutes를 반영한다.
+
+final class TrackCornerFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<Corner>, TrackId> {
+  TrackCornerFamily._()
+    : super(
+        retry: null,
+        name: r'trackCornerProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// TrackAuth로 자기 트랙이 속한 코너를 조회한다(GET /tracks/{trackId}/corner) — `cornerDetailProvider`와
+  /// 달리 AdminAuth가 아니라 진행자 세션 토큰으로 호출되므로 크로스 트랙 관리자 정보(activeTracks 등)는 오지 않는다.
+  /// 트랙 세션은 무만료라 로그인 스냅샷(`session.corner`)이 오래됐을 수 있으므로 화면 진입 시 한 번
+  /// 조회하고, `corners_updated` SSE(track_event_coordinator.dart) 수신 시 다시 무효화해 최신
+  /// targetMinutes를 반영한다.
+
+  TrackCornerProvider call(TrackId trackId) =>
+      TrackCornerProvider._(argument: trackId, from: this);
+
+  @override
+  String toString() => r'trackCornerProvider';
+}
+
 @ProviderFor(createCorner)
 final createCornerProvider = CreateCornerFamily._();
 
@@ -314,7 +412,7 @@ final class DeleteCornerProvider
     required DeleteCornerFamily super.from,
     required CornerId super.argument,
   }) : super(
-         retry: null,
+         retry: noRetry,
          name: r'deleteCornerProvider',
          isAutoDispose: true,
          dependencies: null,
@@ -353,13 +451,13 @@ final class DeleteCornerProvider
   }
 }
 
-String _$deleteCornerHash() => r'301b07435cb00e8b31794ba91f1b447198925920';
+String _$deleteCornerHash() => r'6977fb7525e20d64b35f5301f0510f28d314aa4b';
 
 final class DeleteCornerFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<void>, CornerId> {
   DeleteCornerFamily._()
     : super(
-        retry: null,
+        retry: noRetry,
         name: r'deleteCornerProvider',
         dependencies: null,
         $allTransitiveDependencies: null,

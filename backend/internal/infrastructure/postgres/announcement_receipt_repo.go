@@ -51,14 +51,3 @@ func (r *pgAnnouncementReceiptRepository) GetByMessageAndTrack(ctx context.Conte
 	}
 	return mapAnnouncementReceipt(row), nil
 }
-func (r *pgAnnouncementReceiptRepository) ListByMessage(ctx context.Context, id domain.AnnouncementID) ([]*domain.AnnouncementReceipt, error) {
-	rows, err := r.queries(ctx).ListAnnouncementReceiptsByAnnouncement(ctx, string(id))
-	if err != nil {
-		return nil, errs.Wrap(ctx, err)
-	}
-	out := make([]*domain.AnnouncementReceipt, len(rows))
-	for i, row := range rows {
-		out[i] = mapAnnouncementReceipt(row)
-	}
-	return out, nil
-}

@@ -1,4 +1,3 @@
-
 package web
 
 import (
@@ -36,29 +35,36 @@ func (m *messageUsecaseForHandler) GetUnreadCount(context.Context, domain.TrackI
 	return 0, nil
 }
 
-type announcementUsecaseForHandler struct {
-	notices []*domain.Announcement
-}
+type announcementCommandUsecaseForHandler struct{}
 
-func (a *announcementUsecaseForHandler) SendAnnouncement(context.Context, domain.CampID, string, domain.AdminID) (*domain.Announcement, error) {
+func (a *announcementCommandUsecaseForHandler) SendAnnouncement(context.Context, domain.CampID, string, domain.AdminID) (*domain.Announcement, error) {
 	return nil, nil
 }
 
-func (a *announcementUsecaseForHandler) ListNoticesByCamp(context.Context, domain.CampID) ([]*domain.Announcement, error) {
+func (a *announcementCommandUsecaseForHandler) MarkNoticeRead(context.Context, string, domain.AnnouncementID) error {
+	return nil
+}
+
+type announcementQueryUsecaseForHandler struct {
+	notices []*domain.Announcement
+	views   []usecase.BroadcastNoticeView
+}
+
+func (a *announcementQueryUsecaseForHandler) ListNoticesByCamp(context.Context, domain.CampID) ([]*domain.Announcement, error) {
 	return a.notices, nil
 }
 
-func (a *announcementUsecaseForHandler) GetAnnouncementReceipts(context.Context, domain.AnnouncementID) ([]usecase.BroadcastReceiptDTO, error) {
-	return nil, nil
+func (a *announcementQueryUsecaseForHandler) ListNoticesForTrack(context.Context, domain.CampID, domain.TrackID) ([]usecase.BroadcastNoticeView, error) {
+	return a.views, nil
 }
 
-func (a *announcementUsecaseForHandler) MarkNoticeRead(context.Context, string, domain.AnnouncementID) error {
-	return nil
+func (a *announcementQueryUsecaseForHandler) GetAnnouncementReceipts(context.Context, domain.AnnouncementID) ([]usecase.BroadcastReceiptDTO, error) {
+	return nil, nil
 }
 
 func TestListBroadcastsShoudReturnNoticesWhenAdminSessionPresent(t *testing.T) {
 	// Arrange
-	uc := &announcementUsecaseForHandler{notices: []*domain.Announcement{domain.NewAnnouncementFromProps(domain.AnnouncementProps{ID: "notice-1", CampID: "camp-1", Content: "hello"})}}
+	query := &announcementQueryUsecaseForHandler{notices: []*domain.Announcement{domain.NewAnnouncementFromProps(domain.AnnouncementProps{ID: "notice-1", CampID: "camp-1", Content: "hello"})}}
 	e := echo.New()
 	req := httptest.NewRequest(http.MethodGet, "/camps/camp-1/messages/broadcast", nil)
 	rec := httptest.NewRecorder()
@@ -68,7 +74,7 @@ func TestListBroadcastsShoudReturnNoticesWhenAdminSessionPresent(t *testing.T) {
 	c.Set("adminSession", domain.NewAdminSessionFromProps(domain.AdminSessionProps{AdminID: "admin-1"}))
 
 	// Act
-	err := NewMessageHandler(&messageUsecaseForHandler{}, uc).ListBroadcasts(c)
+	err := NewMessageHandler(&messageUsecaseForHandler{}, &announcementCommandUsecaseForHandler{}, query).ListBroadcasts(c)
 
 	// Assert
 	if err != nil {
@@ -77,11 +83,15 @@ func TestListBroadcastsShoudReturnNoticesWhenAdminSessionPresent(t *testing.T) {
 	if rec.Code != http.StatusOK {
 		t.Fatalf("expected 200, got %d", rec.Code)
 	}
+	if !strings.Contains(rec.Body.String(), `"isRead":false`) || strings.Contains(rec.Body.String(), `"readAt"`) {
+		t.Fatalf("expected admin response without track receipt state, got %s", rec.Body.String())
+	}
 }
 
 func TestListBroadcastsShoudReturnNoticesWhenFacilitatorSessionPresent(t *testing.T) {
 	// Arrange
-	uc := &announcementUsecaseForHandler{notices: []*domain.Announcement{domain.NewAnnouncementFromProps(domain.AnnouncementProps{ID: "notice-1", CampID: "camp-1", Content: "hello"})}}
+	readAt := time.Date(2026, 7, 20, 1, 2, 3, 0, time.UTC)
+	query := &announcementQueryUsecaseForHandler{views: []usecase.BroadcastNoticeView{{Announcement: domain.NewAnnouncementFromProps(domain.AnnouncementProps{ID: "notice-1", CampID: "camp-1", Content: "hello"}), ReadAt: domain.Some(readAt)}}}
 	e := echo.New()
 	req := httptest.NewRequest(http.MethodGet, "/camps/camp-1/messages/broadcast", nil)
 	rec := httptest.NewRecorder()
@@ -91,7 +101,7 @@ func TestListBroadcastsShoudReturnNoticesWhenFacilitatorSessionPresent(t *testin
 	c.Set("facilitatorSession", domain.NewFacilitatorSessionFromProps(domain.FacilitatorSessionProps{TrackID: "track-1"}))
 
 	// Act
-	err := NewMessageHandler(&messageUsecaseForHandler{}, uc).ListBroadcasts(c)
+	err := NewMessageHandler(&messageUsecaseForHandler{}, &announcementCommandUsecaseForHandler{}, query).ListBroadcasts(c)
 
 	// Assert
 	if err != nil {
@@ -99,6 +109,9 @@ func TestListBroadcastsShoudReturnNoticesWhenFacilitatorSessionPresent(t *testin
 	}
 	if rec.Code != http.StatusOK {
 		t.Fatalf("expected 200, got %d", rec.Code)
+	}
+	if !strings.Contains(rec.Body.String(), `"isRead":true`) || !strings.Contains(rec.Body.String(), readAt.Format(time.RFC3339)) {
+		t.Fatalf("expected read receipt state, got %s", rec.Body.String())
 	}
 }
 
@@ -113,11 +126,12 @@ func TestListDirectMessagesShoudRejectRequestWhenSessionTrackDiffers(t *testing.
 	c.Set("facilitatorSession", domain.NewFacilitatorSessionFromProps(domain.FacilitatorSessionProps{TrackID: "track-1"}))
 
 	// Act
-	err := NewMessageHandler(&messageUsecaseForHandler{}, nil).ListDirectMessages(c)
+	err := NewMessageHandler(&messageUsecaseForHandler{}, nil, nil).ListDirectMessages(c)
 
 	// Assert
-	if err != domain.ErrTrackScopeForbidden {
-		t.Fatalf("expected ErrTrackScopeForbidden, got %v", err)
+	var httpErr *echo.HTTPError
+	if !errorsAsHTTPError(err, &httpErr) || httpErr.Code != http.StatusForbidden {
+		t.Fatalf("expected 403 HTTP error, got %v", err)
 	}
 }
 
@@ -132,11 +146,12 @@ func TestGetUnreadCountShoudRejectRequestWhenSessionTrackDiffers(t *testing.T) {
 	c.Set("facilitatorSession", domain.NewFacilitatorSessionFromProps(domain.FacilitatorSessionProps{TrackID: "track-1"}))
 
 	// Act
-	err := NewMessageHandler(&messageUsecaseForHandler{}, nil).GetUnreadCount(c)
+	err := NewMessageHandler(&messageUsecaseForHandler{}, nil, nil).GetUnreadCount(c)
 
 	// Assert
-	if err != domain.ErrTrackScopeForbidden {
-		t.Fatalf("expected ErrTrackScopeForbidden, got %v", err)
+	var httpErr *echo.HTTPError
+	if !errorsAsHTTPError(err, &httpErr) || httpErr.Code != http.StatusForbidden {
+		t.Fatalf("expected 403 HTTP error, got %v", err)
 	}
 }
 
@@ -152,11 +167,12 @@ func TestSendDirectShoudRejectRequestWhenSessionTrackDiffers(t *testing.T) {
 	c.Set("facilitatorSession", domain.NewFacilitatorSessionFromProps(domain.FacilitatorSessionProps{TrackID: "track-1"}))
 
 	// Act
-	err := NewMessageHandler(&messageUsecaseForHandler{}, nil).SendDirect(c)
+	err := NewMessageHandler(&messageUsecaseForHandler{}, nil, nil).SendDirect(c)
 
 	// Assert
-	if err != domain.ErrTrackScopeForbidden {
-		t.Fatalf("expected ErrTrackScopeForbidden, got %v", err)
+	var httpErr *echo.HTTPError
+	if !errorsAsHTTPError(err, &httpErr) || httpErr.Code != http.StatusForbidden {
+		t.Fatalf("expected 403 HTTP error, got %v", err)
 	}
 }
 
@@ -172,7 +188,7 @@ func TestListDirectMessagesShoudNotMarkReadWhenBackgroundIsOmitted(t *testing.T)
 	c.Set("facilitatorSession", domain.NewFacilitatorSessionFromProps(domain.FacilitatorSessionProps{TrackID: "track-1"}))
 
 	// Act
-	err := NewMessageHandler(uc, nil).ListDirectMessages(c)
+	err := NewMessageHandler(uc, nil, nil).ListDirectMessages(c)
 
 	// Assert
 	if err != nil {

@@ -1,4 +1,3 @@
-
 package web
 
 import (
@@ -16,29 +15,38 @@ import (
 )
 
 type listDeviceTrustStub struct {
-	devices         []*domain.DeviceRegistration
-	requestedReg    *domain.DeviceRegistration
-	requestErr      error
-	reviewedDevices []*domain.DeviceRegistration
+	devices          []*domain.DeviceRegistration
+	requestedReg     *domain.DeviceRegistration
+	registrationCode string
+	requestErr       error
+	reviewedDevices  []*domain.DeviceRegistration
+	myRegistration   *domain.DeviceRegistration
+	campStatus       domain.CampStatus
+	statusErr        error
+	deviceToken      string
+	mutatedDevice    *domain.DeviceRegistration
+	mutationErr      error
 }
 
-func (s *listDeviceTrustStub) GetMyRegistrationStatus(context.Context, string) (*domain.DeviceRegistrationStatus, error) {
-	return nil, nil
+func (s *listDeviceTrustStub) GetMyRegistrationStatus(_ context.Context, deviceToken string) (*usecase.DeviceRegistrationStatusView, error) {
+	s.deviceToken = deviceToken
+	return &usecase.DeviceRegistrationStatusView{Registration: s.myRegistration, CampStatus: s.campStatus}, s.statusErr
 }
-func (s *listDeviceTrustStub) RequestRegistration(context.Context, string, string, string, string) (string, *domain.DeviceRegistration, error) {
+func (s *listDeviceTrustStub) RequestRegistration(_ context.Context, registrationCode, _, _, _ string) (string, *domain.DeviceRegistration, error) {
+	s.registrationCode = registrationCode
 	if s.requestErr != nil {
 		return "", nil, s.requestErr
 	}
 	return "token", s.requestedReg, nil
 }
-func (s *listDeviceTrustStub) ApproveDevice(context.Context, domain.DeviceRegistrationID, domain.AdminID) error {
-	return nil
+func (s *listDeviceTrustStub) ApproveDevice(context.Context, domain.DeviceRegistrationID, domain.AdminID) (*domain.DeviceRegistration, error) {
+	return s.mutatedDevice, s.mutationErr
 }
-func (s *listDeviceTrustStub) RejectDevice(context.Context, domain.DeviceRegistrationID, domain.AdminID) error {
-	return nil
+func (s *listDeviceTrustStub) RejectDevice(context.Context, domain.DeviceRegistrationID, domain.AdminID) (*domain.DeviceRegistration, error) {
+	return s.mutatedDevice, s.mutationErr
 }
-func (s *listDeviceTrustStub) RevokeDevice(context.Context, domain.DeviceRegistrationID, domain.AdminID) error {
-	return nil
+func (s *listDeviceTrustStub) RevokeDevice(context.Context, domain.DeviceRegistrationID, domain.AdminID) (*domain.DeviceRegistration, error) {
+	return s.mutatedDevice, s.mutationErr
 }
 func (s *listDeviceTrustStub) ReviewDeviceTrustRequests(context.Context, domain.CampID, *domain.DeviceRegistrationStatus) ([]*domain.DeviceRegistration, error) {
 	return s.reviewedDevices, nil
@@ -69,18 +77,25 @@ func (listAdminAuthStub) ValidateAccessToken(context.Context, string) (*domain.A
 }
 
 func TestShouldReturnLockedDeviceResponseWhenCampIDIsProvided(t *testing.T) {
-	// Arrange
 	e := echo.New()
+	e.HTTPErrorHandler = ErrorHandler()
 	lockedUntil := time.Date(2026, 7, 15, 12, 0, 0, 0, time.UTC)
 	handler := NewDeviceHandler(&listDeviceTrustStub{devices: []*domain.DeviceRegistration{domain.NewDeviceRegistrationFromProps(domain.DeviceRegistrationProps{ID: "device-1", DeviceName: "iPad", Status: domain.DeviceApproved, FailedPinAttempts: 5, LockedUntil: domain.Some(lockedUntil)})}})
-	req := httptest.NewRequest(http.MethodGet, "/device-registrations/locked?campId=camp-1", nil)
+	req := httptest.NewRequest(http.MethodGet, "/camps/camp-1/device-registrations/locked", nil)
 	rec := httptest.NewRecorder()
+	ctx := e.NewContext(req, rec)
+	ctx.SetPath("/camps/:campId/device-registrations/locked")
+	ctx.SetParamNames("campId")
+	ctx.SetParamValues("camp-1")
 
 	// Act
-	err := handler.ListLockedDevices(e.NewContext(req, rec))
+	err := handler.ListLockedDevices(ctx)
+	if err != nil {
+		e.HTTPErrorHandler(err, ctx)
+	}
 
 	// Assert
-	if err != nil || rec.Code != http.StatusOK {
+	if rec.Code != http.StatusOK {
 		t.Fatalf("expected 200 response, code=%d err=%v", rec.Code, err)
 	}
 	var response []DeviceRegistrationResponse
@@ -93,18 +108,22 @@ func TestShouldReturnLockedDeviceResponseWhenCampIDIsProvided(t *testing.T) {
 }
 
 func TestShouldReturnActiveSessionResponseWhenCampIDIsProvided(t *testing.T) {
-	// Arrange
 	e := echo.New()
+	e.HTTPErrorHandler = ErrorHandler()
 	createdAt := time.Date(2026, 7, 15, 10, 0, 0, 0, time.UTC)
 	handler := NewAuthHandler(nil, &listFacilitatorAuthStub{sessions: []*domain.FacilitatorSession{domain.NewFacilitatorSessionFromProps(domain.FacilitatorSessionProps{ID: "session-1", TrackID: "track-1", CreatedAt: createdAt})}}, nil)
 	req := httptest.NewRequest(http.MethodGet, "/auth/track/sessions?campId=camp-1", nil)
 	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
 
 	// Act
-	err := handler.ListActiveFacilitatorSessions(e.NewContext(req, rec))
+	err := handler.ListActiveFacilitatorSessions(c)
+	if err != nil {
+		e.HTTPErrorHandler(err, c)
+	}
 
 	// Assert
-	if err != nil || rec.Code != http.StatusOK {
+	if rec.Code != http.StatusOK {
 		t.Fatalf("expected 200 response, code=%d err=%v", rec.Code, err)
 	}
 	var response []FacilitatorSessionResponse
@@ -126,14 +145,18 @@ func TestShouldRejectListRequestsWhenCampIDIsMissing(t *testing.T) {
 		{"active sessions", NewAuthHandler(nil, &listFacilitatorAuthStub{}, nil).ListActiveFacilitatorSessions, "/auth/track/sessions"},
 	} {
 		t.Run(test.name, func(t *testing.T) {
-			// Arrange
 			e := echo.New()
+			e.HTTPErrorHandler = ErrorHandler()
 			req := httptest.NewRequest(http.MethodGet, test.path, nil)
 			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
 			// Act
-			err := test.handler(e.NewContext(req, rec))
+			err := test.handler(c)
+			if err != nil {
+				e.HTTPErrorHandler(err, c)
+			}
 			// Assert
-			if err != nil || rec.Code != http.StatusBadRequest {
+			if rec.Code != http.StatusBadRequest {
 				t.Fatalf("expected 400 response, code=%d err=%v", rec.Code, err)
 			}
 		})
@@ -141,14 +164,14 @@ func TestShouldRejectListRequestsWhenCampIDIsMissing(t *testing.T) {
 }
 
 func TestShouldRejectListRequestsWhenAdminAuthenticationIsMissing(t *testing.T) {
-	// Arrange
 	e := echo.New()
+	e.HTTPErrorHandler = ErrorHandler()
 	admin := e.Group("")
 	admin.Use(AdminAuthMiddleware(listAdminAuthStub{}))
 	admin.GET("/auth/track/sessions", NewAuthHandler(nil, &listFacilitatorAuthStub{}, nil).ListActiveFacilitatorSessions)
-	admin.GET("/device-registrations/locked", NewDeviceHandler(&listDeviceTrustStub{}).ListLockedDevices)
+	admin.GET("/camps/:campId/device-registrations/locked", NewDeviceHandler(&listDeviceTrustStub{}).ListLockedDevices)
 
-	for _, path := range []string{"/auth/track/sessions?campId=camp-1", "/device-registrations/locked?campId=camp-1"} {
+	for _, path := range []string{"/auth/track/sessions?campId=camp-1", "/camps/camp-1/device-registrations/locked"} {
 		t.Run(path, func(t *testing.T) {
 			// Act
 			rec := httptest.NewRecorder()

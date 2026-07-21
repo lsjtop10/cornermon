@@ -12,7 +12,7 @@ Future<Uint8List> buildBadgeStickerPdf(List<api.Badge> badges) async {
       build: (_) => [
         pw.GridView(
           crossAxisCount: 3,
-          childAspectRatio: .9,
+          childAspectRatio: 1.1,
           children: [
             for (final badge in badges)
               pw.Container(
@@ -32,6 +32,11 @@ Future<Uint8List> buildBadgeStickerPdf(List<api.Badge> badges) async {
                     pw.Text(
                       badge.shortId ?? badge.id ?? '',
                       style: pw.TextStyle(fontSize: 12),
+                    ),
+                    pw.SizedBox(height: 2),
+                    pw.Text(
+                      badge.qrPayload ?? badge.id ?? '',
+                      style: pw.TextStyle(fontSize: 7),
                     ),
                   ],
                 ),

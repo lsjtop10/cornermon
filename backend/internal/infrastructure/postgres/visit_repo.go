@@ -83,6 +83,19 @@ func (r *pgVisitRepository) GetCompletedByGroupAndCorner(ctx context.Context, gr
 	return mapVisit(row), nil
 }
 
+func (r *pgVisitRepository) ListInProgressByCamp(ctx context.Context, campID domain.CampID) ([]*domain.Visit, error) {
+	rows, err := r.queries(ctx).ListInProgressVisitsByCamp(ctx, string(campID))
+	if err != nil {
+		return nil, errs.Wrap(ctx, err)
+	}
+
+	visits := make([]*domain.Visit, len(rows))
+	for i, row := range rows {
+		visits[i] = mapVisit(row)
+	}
+	return visits, nil
+}
+
 func (r *pgVisitRepository) Save(ctx context.Context, visit *domain.Visit) error {
 	params := db.SaveVisitParams{
 		ID:          string(visit.ID()),

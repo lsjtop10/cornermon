@@ -1,10 +1,8 @@
-
 package usecase
 
 import (
 	"context"
 	"errors"
-	"sort"
 	"time"
 
 	"cornermon/backend/internal/domain"
@@ -58,16 +56,19 @@ func (r *MockCampRepository) List(ctx context.Context) ([]*domain.Camp, error) {
 
 // MockCornerRepository
 type MockCornerRepository struct {
-	Corners map[domain.CornerID]*domain.Corner
+	Corners     map[domain.CornerID]*domain.Corner
+	DeletedAt   map[domain.CornerID]time.Time
+	PurgeBefore time.Time
+	PurgedCount int64
 }
 
 func NewMockCornerRepository() *MockCornerRepository {
-	return &MockCornerRepository{Corners: make(map[domain.CornerID]*domain.Corner)}
+	return &MockCornerRepository{Corners: make(map[domain.CornerID]*domain.Corner), DeletedAt: make(map[domain.CornerID]time.Time)}
 }
 
 func (r *MockCornerRepository) Get(ctx context.Context, id domain.CornerID) (*domain.Corner, error) {
 	corner, ok := r.Corners[id]
-	if !ok {
+	if !ok || !r.DeletedAt[id].IsZero() {
 		return nil, nil
 	}
 	return corner, nil
@@ -76,7 +77,7 @@ func (r *MockCornerRepository) Get(ctx context.Context, id domain.CornerID) (*do
 func (r *MockCornerRepository) ListByCamp(ctx context.Context, campID domain.CampID) ([]*domain.Corner, error) {
 	var list []*domain.Corner
 	for _, c := range r.Corners {
-		if c.CampID() == campID {
+		if c.CampID() == campID && r.DeletedAt[c.ID()].IsZero() {
 			list = append(list, c)
 		}
 	}
@@ -88,9 +89,14 @@ func (r *MockCornerRepository) Save(ctx context.Context, corner *domain.Corner) 
 	return nil
 }
 
-func (r *MockCornerRepository) Delete(ctx context.Context, id domain.CornerID) error {
-	delete(r.Corners, id)
+func (r *MockCornerRepository) SoftDelete(ctx context.Context, id domain.CornerID, deletedAt time.Time) error {
+	r.DeletedAt[id] = deletedAt
 	return nil
+}
+
+func (r *MockCornerRepository) PurgeDeletedBefore(ctx context.Context, deletedBefore time.Time) (int64, error) {
+	r.PurgeBefore = deletedBefore
+	return r.PurgedCount, nil
 }
 
 // MockTrackRepository
@@ -166,11 +172,15 @@ func (r *MockTrackRepository) ListByCamp(ctx context.Context, campID domain.Camp
 
 // MockVisitRepository
 type MockVisitRepository struct {
-	Visits map[domain.VisitID]*domain.Visit
+	Visits       map[domain.VisitID]*domain.Visit
+	GroupCampIDs map[domain.GroupID]domain.CampID
 }
 
 func NewMockVisitRepository() *MockVisitRepository {
-	return &MockVisitRepository{Visits: make(map[domain.VisitID]*domain.Visit)}
+	return &MockVisitRepository{
+		Visits:       make(map[domain.VisitID]*domain.Visit),
+		GroupCampIDs: make(map[domain.GroupID]domain.CampID),
+	}
 }
 
 func (r *MockVisitRepository) Get(ctx context.Context, id domain.VisitID) (*domain.Visit, error) {
@@ -199,6 +209,16 @@ func (r *MockVisitRepository) GetCompletedByGroupAndCorner(ctx context.Context, 
 	return nil, nil
 }
 
+func (r *MockVisitRepository) ListInProgressByCamp(ctx context.Context, campID domain.CampID) ([]*domain.Visit, error) {
+	var list []*domain.Visit
+	for _, v := range r.Visits {
+		if v.Status() == domain.VisitStatusInProgress && r.GroupCampIDs[v.GroupID()] == campID {
+			list = append(list, v)
+		}
+	}
+	return list, nil
+}
+
 func (r *MockVisitRepository) Save(ctx context.Context, visit *domain.Visit) error {
 	r.Visits[visit.ID()] = visit
 	return nil
@@ -217,6 +237,14 @@ func (r *MockVisitRepository) ListByGroup(ctx context.Context, groupID domain.Gr
 // MockGroupRepository
 type MockGroupRepository struct {
 	Groups map[domain.GroupID]*domain.Group
+
+	// 테스트에서 N+1 회귀(개별 조회 대신 캠프 단위 일괄 조회를 썼는지)를 검증하기 위한 호출 카운터.
+	GetCalls                 int
+	GetForUpdateCalls        int
+	ListByCampCalls          int
+	ListByCampForUpdateCalls int
+	SaveCalls                int
+	SaveBulkCalls            int
 }
 
 func NewMockGroupRepository() *MockGroupRepository {
@@ -224,6 +252,17 @@ func NewMockGroupRepository() *MockGroupRepository {
 }
 
 func (r *MockGroupRepository) Get(ctx context.Context, id domain.GroupID) (*domain.Group, error) {
+	r.GetCalls++
+	g, ok := r.Groups[id]
+	if !ok {
+		return nil, nil
+	}
+	return g, nil
+}
+
+// GetForUpdate는 메모리 맵 기반 Mock이라 실제 행 잠금 개념이 없어 Get과 동일하게 동작한다.
+func (r *MockGroupRepository) GetForUpdate(ctx context.Context, id domain.GroupID) (*domain.Group, error) {
+	r.GetForUpdateCalls++
 	g, ok := r.Groups[id]
 	if !ok {
 		return nil, nil
@@ -241,6 +280,19 @@ func (r *MockGroupRepository) GetByBadge(ctx context.Context, campID domain.Camp
 }
 
 func (r *MockGroupRepository) ListByCamp(ctx context.Context, campID domain.CampID) ([]*domain.Group, error) {
+	r.ListByCampCalls++
+	var list []*domain.Group
+	for _, g := range r.Groups {
+		if g.CampID() == campID {
+			list = append(list, g)
+		}
+	}
+	return list, nil
+}
+
+// ListByCampForUpdate는 메모리 맵 기반 Mock이라 실제 행 잠금 개념이 없어 ListByCamp와 동일하게 동작한다.
+func (r *MockGroupRepository) ListByCampForUpdate(ctx context.Context, campID domain.CampID) ([]*domain.Group, error) {
+	r.ListByCampForUpdateCalls++
 	var list []*domain.Group
 	for _, g := range r.Groups {
 		if g.CampID() == campID {
@@ -251,7 +303,18 @@ func (r *MockGroupRepository) ListByCamp(ctx context.Context, campID domain.Camp
 }
 
 func (r *MockGroupRepository) Save(ctx context.Context, group *domain.Group) error {
+	r.SaveCalls++
 	r.Groups[group.ID()] = group
+	return nil
+}
+
+func (r *MockGroupRepository) SaveBulk(ctx context.Context, groups []*domain.Group) error {
+	r.SaveBulkCalls++
+	for _, g := range groups {
+		if err := r.Save(ctx, g); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -563,15 +626,25 @@ func (r *MockAnnouncementRepository) Save(_ context.Context, a *domain.Announcem
 	r.Announcements[a.ID()] = a
 	return nil
 }
-func (r *MockAnnouncementRepository) ListNoticeByCamp(_ context.Context, campID domain.CampID) ([]*domain.Announcement, error) {
-	var out []*domain.Announcement
-	for _, a := range r.Announcements {
-		if a.CampID() == campID {
-			out = append(out, a)
-		}
-	}
-	sort.Slice(out, func(i, j int) bool { return out[i].SentAt().Before(out[j].SentAt()) })
-	return out, nil
+
+type MockAnnouncementQuerier struct {
+	Notices          []*domain.Announcement
+	Views            []BroadcastNoticeView
+	Receipts         []BroadcastReceiptDTO
+	ListViewsCallCnt int
+}
+
+func (q *MockAnnouncementQuerier) ListNoticesByCamp(_ context.Context, _ domain.CampID) ([]*domain.Announcement, error) {
+	return q.Notices, nil
+}
+
+func (q *MockAnnouncementQuerier) ListNoticeViewsByCampAndTrack(_ context.Context, _ domain.CampID, _ domain.TrackID) ([]BroadcastNoticeView, error) {
+	q.ListViewsCallCnt++
+	return q.Views, nil
+}
+
+func (q *MockAnnouncementQuerier) ListAnnouncementReceipts(_ context.Context, _ domain.AnnouncementID) ([]BroadcastReceiptDTO, error) {
+	return q.Receipts, nil
 }
 
 type MockAnnouncementReceiptRepository struct{ Receipts []*domain.AnnouncementReceipt }
@@ -590,15 +663,6 @@ func (r *MockAnnouncementReceiptRepository) GetByMessageAndTrack(_ context.Conte
 		}
 	}
 	return nil, nil
-}
-func (r *MockAnnouncementReceiptRepository) ListByMessage(_ context.Context, id domain.AnnouncementID) ([]*domain.AnnouncementReceipt, error) {
-	var out []*domain.AnnouncementReceipt
-	for _, x := range r.Receipts {
-		if x.NoticeID() == id {
-			out = append(out, x)
-		}
-	}
-	return out, nil
 }
 
 // MockAuditLogRepository

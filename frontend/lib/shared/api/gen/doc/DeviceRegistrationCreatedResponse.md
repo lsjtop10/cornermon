@@ -9,6 +9,7 @@ import 'package:cornermon_api_gen/api.dart';
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **approvedAt** | [**DateTime**](DateTime.md) |  | [optional] 
+**campId** | **String** |  | [optional] 
 **createdAt** | [**DateTime**](DateTime.md) |  | [optional] 
 **deviceModel** | **String** |  | [optional] 
 **deviceName** | **String** |  | [optional] 

@@ -1,18 +1,24 @@
+import 'dart:typed_data';
+
+import 'package:cornermon/admin/features/track_bulk_manage/track_csv_export.dart';
 import 'package:cornermon/admin/features/track_direct/track_direct_providers.dart';
 import 'package:cornermon/admin/session/selected_camp_provider.dart';
 import 'package:cornermon/shared/api/domain_aliases.dart' as api;
+import 'package:cornermon/shared/api/ids.dart';
 import 'package:cornermon/shared/api/providers/corner_track_providers.dart';
 import 'package:cornermon/shared/api/providers/report_providers.dart';
 import 'package:cornermon/shared/design_system/tokens/colors.dart';
 import 'package:cornermon/shared/design_system/tokens/typography.dart';
 import 'package:cornermon/shared/design_system/widgets/app_button.dart';
 import 'package:cornermon/shared/design_system/widgets/app_dropdown.dart';
+import 'package:cornermon/shared/design_system/widgets/confirm_modal.dart';
 import 'package:cornermon/shared/design_system/widgets/empty_state.dart';
 import 'package:cornermon/shared/design_system/widgets/connection_banner.dart';
 import 'package:cornermon/shared/design_system/widgets/pill_tab_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:share_plus/share_plus.dart';
 
 enum CornerSortOption { cornerNo, name, avgDeviationDesc, avgDeviationAsc }
 
@@ -42,6 +48,123 @@ class CornerDashboardEntry {
   final api.Corner corner;
   final num? avgDeviationSeconds;
   bool get inactive => corner.status == api.CornerOperationalStatus.INACTIVE;
+  bool get hasBusyTrack => (corner.activeTracks?.toList() ?? const []).any(
+    (track) => track.operationalStatus?.name == 'BUSY',
+  );
+}
+
+Future<void> _showAddCornerDialog(
+  BuildContext context,
+  WidgetRef ref,
+  CampId campId,
+) async {
+  final nameController = TextEditingController();
+  final minutesController = TextEditingController(text: '10');
+  final confirmed = await showDialog<bool>(
+    context: context,
+    builder: (context) {
+      final isDark = Theme.of(context).brightness == Brightness.dark;
+      final colors = isDark ? AppColors.dark : AppColors.light;
+      return AlertDialog(
+        title: Text(
+          '코너 추가',
+          style: AppTypography.title3.copyWith(color: colors.textPrimary),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            TextField(
+              controller: nameController,
+              autofocus: true,
+              decoration: const InputDecoration(labelText: '코너 이름'),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: minutesController,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(labelText: '목표시간(분)'),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('취소'),
+          ),
+          AppButton(
+            variant: AppButtonVariant.primary,
+            size: AppButtonSize.compact,
+            label: '추가',
+            onPressed: () => Navigator.pop(context, true),
+          ),
+        ],
+      );
+    },
+  );
+  if (confirmed != true) return;
+  final name = nameController.text.trim();
+  final minutes = int.tryParse(minutesController.text) ?? 10;
+  if (name.isEmpty) return;
+  await ref.read(createCornerProvider(campId, name, minutes).future);
+  ref.invalidate(cornerListProvider(campId));
+}
+
+Future<void> _deleteCorner(
+  BuildContext context,
+  WidgetRef ref,
+  CampId campId,
+  CornerDashboardEntry entry,
+) async {
+  if (entry.hasBusyTrack) {
+    await showConfirmModal(
+      context,
+      kind: ConfirmModalKind.hardBlock,
+      title: '작업할 수 없습니다',
+      body: '진행 중인 방문이 있어 삭제할 수 없습니다',
+    );
+    return;
+  }
+  final confirmed = await showConfirmModal(
+    context,
+    kind: ConfirmModalKind.softConfirm,
+    title: '코너 "${entry.corner.name ?? entry.corner.id}"를 삭제하시겠습니까?',
+    body: '연결된 트랙과 방문 기록도 함께 삭제됩니다.',
+  );
+  if (!confirmed) return;
+  try {
+    await ref.read(deleteCornerProvider(CornerId(entry.corner.id!)).future);
+    ref.invalidate(cornerListProvider(campId));
+  } catch (_) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('코너 삭제에 실패했습니다. 잠시 후 다시 시도해주세요.')),
+      );
+    }
+  }
+}
+
+Future<void> _exportAllTracksCsv(
+  BuildContext context,
+  WidgetRef ref,
+  CampId campId,
+) async {
+  final response = await ref.read(exportAllTracksCsvProvider(campId).future);
+  final bytes = buildTrackPinCsvBytes(
+    response.tracks ?? const <api.TrackPin>[],
+  );
+  await SharePlus.instance.share(
+    ShareParams(
+      files: [XFile.fromData(Uint8List.fromList(bytes), mimeType: 'text/csv')],
+      fileNameOverrides: ['track-pins.csv'],
+      subject: '트랙 PIN 목록',
+    ),
+  );
+  if (context.mounted) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('PIN CSV를 내보냈습니다')));
+  }
 }
 
 List<CornerDashboardEntry> buildDashboardEntries(
@@ -136,7 +259,21 @@ class DashboardScreen extends ConsumerWidget {
       orElse: () => 0,
     );
     return Scaffold(
-      appBar: AppBar(title: const Text('대시보드')),
+      appBar: AppBar(
+        title: const Text('대시보드'),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: AppButton(
+              variant: AppButtonVariant.secondary,
+              size: AppButtonSize.compact,
+              icon: Icons.download_outlined,
+              label: '전체 PIN 내보내기',
+              onPressed: () => _exportAllTracksCsv(context, ref, id),
+            ),
+          ),
+        ],
+      ),
       body: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(cornerListProvider(id));
@@ -156,7 +293,7 @@ class DashboardScreen extends ConsumerWidget {
               isActive: isActive,
             ),
             const SizedBox(height: 20),
-            _Controls(isActive: isActive),
+            _Controls(isActive: isActive, campId: id),
             const SizedBox(height: 12),
             _Filters(),
             const SizedBox(height: 16),
@@ -192,9 +329,9 @@ class DashboardScreen extends ConsumerWidget {
                       icon: noCorners
                           ? Icons.account_tree_outlined
                           : Icons.filter_alt_off,
-                      actionLabel: noCorners ? '코너·트랙 관리' : null,
+                      actionLabel: noCorners ? '코너 추가' : null,
                       onAction: noCorners
-                          ? () => context.go('/corner-track-manage')
+                          ? () => _showAddCornerDialog(context, ref, id)
                           : null,
                     ),
                   );
@@ -216,8 +353,11 @@ class DashboardScreen extends ConsumerWidget {
                       onTap: () =>
                           context.go('/dashboard/corners/${entry.corner.id}'),
                       onCreateTrack: entry.inactive
-                          ? () => context.go('/corner-track-manage')
+                          ? () => context.go(
+                              '/dashboard/corners/${entry.corner.id}',
+                            )
                           : null,
+                      onDelete: () => _deleteCorner(context, ref, id, entry),
                     );
                   },
                 );
@@ -305,12 +445,15 @@ class _SummaryBar extends StatelessWidget {
 }
 
 class _Controls extends ConsumerWidget {
-  const _Controls({required this.isActive});
+  const _Controls({required this.isActive, required this.campId});
   final bool isActive;
+  final CampId campId;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) => Row(
-    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  Widget build(BuildContext context, WidgetRef ref) => Wrap(
+    spacing: 12,
+    runSpacing: 8,
+    crossAxisAlignment: WrapCrossAlignment.center,
     children: [
       AppDropdown<CornerSortOption>(
         value: ref.watch(dashboardSortProvider),
@@ -335,25 +478,26 @@ class _Controls extends ConsumerWidget {
           ),
         ],
       ),
-      Wrap(
-        spacing: 12,
-        runSpacing: 8,
-        children: [
-          AppButton(
-            variant: AppButtonVariant.secondary,
-            size: AppButtonSize.compact,
-            label: '트랙 일괄 관리 →',
-            onPressed: () => context.go('/corner-track-manage'),
-          ),
-          if (isActive)
-            AppButton(
-              variant: AppButtonVariant.primary,
-              size: AppButtonSize.compact,
-              label: '공지 발송',
-              onPressed: () => context.go('/messages/broadcast'),
-            ),
-        ],
+      AppButton(
+        variant: AppButtonVariant.secondary,
+        size: AppButtonSize.compact,
+        icon: Icons.add,
+        label: '코너 추가',
+        onPressed: () => _showAddCornerDialog(context, ref, campId),
       ),
+      AppButton(
+        variant: AppButtonVariant.secondary,
+        size: AppButtonSize.compact,
+        label: '트랙별 보기 →',
+        onPressed: () => context.go('/corner-track-manage'),
+      ),
+      if (isActive)
+        AppButton(
+          variant: AppButtonVariant.primary,
+          size: AppButtonSize.compact,
+          label: '공지 발송',
+          onPressed: () => context.go('/messages/broadcast'),
+        ),
     ],
   );
 }
@@ -388,12 +532,14 @@ class CornerStatusCard extends StatelessWidget {
     required this.entry,
     required this.onTap,
     this.onCreateTrack,
+    this.onDelete,
     super.key,
   });
 
   final CornerDashboardEntry entry;
   final VoidCallback onTap;
   final VoidCallback? onCreateTrack;
+  final VoidCallback? onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -459,6 +605,21 @@ class CornerStatusCard extends StatelessWidget {
                       color: colors.statusAlert,
                       icon: '▲',
                       label: '병목',
+                    ),
+                  if (onDelete != null)
+                    SizedBox(
+                      width: 28,
+                      height: 28,
+                      child: IconButton(
+                        tooltip: '코너 삭제',
+                        padding: EdgeInsets.zero,
+                        iconSize: 18,
+                        onPressed: onDelete,
+                        icon: Icon(
+                          Icons.delete_outline,
+                          color: colors.textSecondary,
+                        ),
+                      ),
                     ),
                 ],
               ),

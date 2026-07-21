@@ -16,7 +16,7 @@ part 'device_registration_request.g.dart';
 /// * [deviceModel] 
 /// * [deviceName] 
 /// * [displayName] 
-/// * [registrationCode] 
+/// * [registrationCode] - 각 캠프에 유일하게 부여된 등록 코드입니다. 반드시 대문자로 작성합니다.
 /// * [role] 
 @BuiltValue()
 abstract class DeviceRegistrationRequest implements Built<DeviceRegistrationRequest, DeviceRegistrationRequestBuilder> {
@@ -29,6 +29,7 @@ abstract class DeviceRegistrationRequest implements Built<DeviceRegistrationRequ
   @BuiltValueField(wireName: r'displayName')
   String? get displayName;
 
+  /// 각 캠프에 유일하게 부여된 등록 코드입니다. 반드시 대문자로 작성합니다.
   @BuiltValueField(wireName: r'registrationCode')
   String? get registrationCode;
 

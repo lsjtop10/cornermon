@@ -144,9 +144,10 @@ void main() {
   );
 
   testWidgets(
-    'ShouldNotRedirectAwayFromPinLoginWhenDeviceTrustIsPending',
+    'ShouldRedirectToDevicePendingWhenDeviceTrustIsPending',
     (tester) async {
-      // arrange: deviceTrust == pending은 §00 §0-c 결정에 따라 통과되어야 한다.
+      // arrange: deviceTrust == pending은 screen-spec-facilitator.md B0에 따라
+      // APPROVED 감지 전까지 앱 사용 자체가 차단되어야 한다(none/rejected/revoked와 동일).
       await tester.pumpWidget(
         _buildApp([
           deviceTrustProvider.overrideWith(() => _FakeDeviceTrust(DeviceTrustStatus.pending)),
@@ -156,16 +157,10 @@ void main() {
       );
       await tester.pump();
       await tester.pump();
-      expect(find.byType(PinLoginScreen), findsOneWidget);
 
-      // act: URL 직접 조작으로 다시 /pin-login 이동을 시도해도(예: 새로고침 상황을 흉내)
-      final context = tester.element(find.byType(PinLoginScreen));
-      GoRouter.of(context).go('/pin-login');
-      await tester.pump();
-      await tester.pump();
-
-      // assert: 그대로 유지된다(되돌려지지 않음)
-      expect(find.byType(PinLoginScreen), findsOneWidget);
+      // assert: /pin-login으로 진입을 시도해도 /device-pending으로 되돌려진다.
+      expect(find.byType(DevicePendingScreen), findsOneWidget);
+      expect(find.byType(PinLoginScreen), findsNothing);
     },
   );
 
@@ -222,7 +217,7 @@ void main() {
           deviceTrustProvider.overrideWith(() => _FakeDeviceTrust(DeviceTrustStatus.approved)),
           trackSessionProvider.overrideWith(() => mutableSession),
           currentVisitProvider(trackId).overrideWith((ref) => null),
-          cornerDetailProvider(CornerId('corner-1')).overrideWith(
+          trackCornerProvider(trackId).overrideWith(
             (ref) => Corner(
               (b) => b
                 ..id = 'corner-1'

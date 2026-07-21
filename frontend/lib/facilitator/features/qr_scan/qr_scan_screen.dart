@@ -134,7 +134,20 @@ class _QrScanScreenState extends ConsumerState<QrScanScreen> {
       body: Stack(
         children: [
           Positioned.fill(
-            child: MobileScanner(controller: _controller, onDetect: _onDetect),
+            child: MobileScanner(
+              controller: _controller,
+              onDetect: _onDetect,
+              errorBuilder: (context, error) => Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(AppSpacing.space6),
+                  child: Text(
+                    '카메라를 사용할 수 없습니다. 설정에서 카메라 권한을 허용해주세요.',
+                    style: AppTypography.body.copyWith(color: Colors.white),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+            ),
           ),
           Center(child: QrScanFrame(state: _frameState)),
           SafeArea(

@@ -17,6 +17,8 @@ import 'package:cornermon/admin/features/session_manage/session_manage_screen.da
 import 'package:cornermon/admin/features/broadcast/broadcast_screen.dart';
 import 'package:cornermon/admin/features/track_direct/track_direct_screen.dart';
 import 'package:cornermon/admin/features/report/report_screen.dart';
+import 'package:cornermon/admin/features/settings/settings_screen.dart';
+import 'package:cornermon/admin/features/audit_log/audit_log_screen.dart';
 import 'package:cornermon/admin/session/admin_session_provider.dart';
 import 'package:cornermon/admin/session/selected_camp_provider.dart';
 import 'package:cornermon/admin/widgets/admin_scaffold.dart';
@@ -92,8 +94,14 @@ final adminRouterProvider = Provider<GoRouter>((ref) {
         (_, _) => const AdminScaffold(body: TrackDirectScreen()),
       ),
       _route('/report', (_, _) => const AdminScaffold(body: ReportScreen())),
-      _screenRoute('/audit-log', 'A13 감사 로그'),
-      _screenRoute('/settings', 'A15 설정'),
+      _route(
+        '/audit-log',
+        (_, _) => const AdminScaffold(body: AuditLogScreen()),
+      ),
+      _route(
+        '/settings',
+        (_, _) => const AdminScaffold(body: SettingsScreen()),
+      ),
     ],
   );
 });
@@ -110,9 +118,6 @@ GoRoute _route(String path, _PageBuilder builder) => GoRoute(
 GoRoute _plainRoute(String path, String title) =>
     _route(path, (_, _) => AdminStubScreen(title: title));
 
-GoRoute _screenRoute(String path, String title) =>
-    _route(path, (_, _) => AdminScaffold(body: AdminStubScreen(title: title)));
-
 String? _redirect(Ref ref, String location) {
   if (ref.read(adminSessionProvider) is AdminSessionUnauthenticated) {
     return location == '/login' ? null : '/login';
@@ -121,7 +126,7 @@ String? _redirect(Ref ref, String location) {
   if (location == '/login') {
     return '/camps';
   }
-  
+
   if (_campIndependentLocations.contains(location)) return null;
   if (ref.read(selectedCampIdProvider) == null) return '/camps';
 
@@ -136,7 +141,8 @@ String? _redirect(Ref ref, String location) {
           ? null
           : '/dashboard',
     CampStatus.ACTIVE => null,
-    CampStatus.ENDED => location == '/report' ? null : '/report',
+    CampStatus.ENDED =>
+      location == '/report' || location == '/audit-log' ? null : '/report',
     _ => '/camps',
   };
 }

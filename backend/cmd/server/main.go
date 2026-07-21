@@ -36,6 +36,8 @@ func stringToLevel(logLevelString string) slog.Leveler {
 }
 
 func main() {
+	// Load .env if exists
+	_ = godotenv.Load()
 
 	var logLevel slog.Leveler
 	logLevelString := os.Getenv("LOGLEVEL")
@@ -52,8 +54,6 @@ func main() {
 
 	slog.Info("Cornermon Backend Starting...")
 
-	// Load .env if exists
-	_ = godotenv.Load()
 	trackPINEncryptionKey, err := loadTrackPINEncryptionKey()
 	if err != nil {
 		log.Fatalf("Invalid TRACK_PIN_ENCRYPTION_KEY: %v\n", err)
@@ -91,8 +91,22 @@ func main() {
 
 	dbctx, cancel := context.WithTimeout(backgroundCtx, 1000*time.Millisecond)
 	defer cancel()
+	// Initialize Database Pool Config
+	config, err := pgxpool.ParseConfig(dbURL)
+	if err != nil {
+		cancel()
+		log.Fatalf("Unable to parse database config: %v\n", err)
+	}
+
+	isDev := os.Getenv("APP_ENV") == "development"
+
+	config.ConnConfig.Tracer = &postgres.SlogQueryTracer{
+		SlowQueryThreshold: 500 * time.Millisecond,
+		LogParameterValues: isDev,
+	}
+
 	// Initialize Database Pool
-	pool, err := pgxpool.New(dbctx, dbURL)
+	pool, err := pgxpool.NewWithConfig(dbctx, config)
 	if err != nil {
 		cancel()
 		log.Fatalf("Unable to connect to database: %v\n", err)
@@ -119,6 +133,7 @@ func main() {
 	badgeRepo := postgres.NewBadgeRepository(pool)
 	announcementReceiptRepo := postgres.NewAnnouncementReceiptRepository(pool)
 	announcementRepo := postgres.NewAnnouncementRepository(pool)
+	announcementQuerier := postgres.NewAnnouncementQuerier(pool)
 	campRepo := postgres.NewCampRepository(pool)
 	cornerRepo := postgres.NewCornerRepository(pool)
 	deviceRepo := postgres.NewDeviceRegistrationRepository(pool)
@@ -137,7 +152,7 @@ func main() {
 	authAdminService := usecase.NewAdminAuthService(adminRepo, adminSessionRepo, facilitatorSessionRepo, trackRepo, cornerRepo, broadcaster, auditLogRepo, txManager)
 
 	deviceTrustService := usecase.NewDeviceTrustService(campRepo, deviceRepo, auditLogRepo, broadcaster, txManager)
-	cornerService := usecase.NewCornerService(campRepo, cornerRepo, auditLogRepo, broadcaster, txManager)
+	cornerService := usecase.NewCornerService(campRepo, cornerRepo, trackRepo, groupRepo, auditLogRepo, broadcaster, txManager)
 	cornerViewQuerier := postgres.NewCornerViewQuerier(pool)
 	groupService := usecase.NewGroupService(campRepo, cornerRepo, trackRepo, groupRepo, badgeRepo, visitRepo, auditLogRepo, txManager)
 	badgeService := usecase.NewBadgeService(badgeRepo, groupRepo, auditLogRepo, txManager)
@@ -146,8 +161,9 @@ func main() {
 	reportService := usecase.NewReportService(campRepo, reportQuerier)
 	authFacilitatorService := usecase.NewFacilitatorAuthService(campRepo, cornerRepo, trackRepo, deviceRepo, facilitatorSessionRepo, auditLogRepo, broadcaster, txManager)
 	messageService := usecase.NewMessageService(cornerRepo, trackRepo, messageRepo, auditLogRepo, broadcaster, txManager)
-	announcementService := usecase.NewAnnouncementService(announcementRepo, announcementReceiptRepo, campRepo, cornerRepo, trackRepo, facilitatorSessionRepo, txManager, auditLogRepo, broadcaster)
-	campService := usecase.NewCampService(campRepo, trackRepo, facilitatorSessionRepo, auditLogRepo, broadcaster, txManager)
+	announcementService := usecase.NewAnnouncementService(announcementRepo, announcementReceiptRepo, campRepo, trackRepo, facilitatorSessionRepo, txManager, auditLogRepo, broadcaster)
+	announcementQueryService := usecase.NewAnnouncementQueryService(announcementQuerier, trackRepo, cornerRepo)
+	campService := usecase.NewCampService(campRepo, trackRepo, deviceRepo, visitRepo, groupRepo, facilitatorSessionRepo, auditLogRepo, broadcaster, txManager)
 
 	// Initialize Handlers
 	authHandler := web.NewAuthHandler(authAdminService, authFacilitatorService, deviceTrustService)
@@ -156,12 +172,12 @@ func main() {
 	cornerHandler := web.NewCornerHandler(cornerService, cornerViewQuerier)
 	trackHandler := web.NewTrackHandler(trackService)
 	groupHandler := web.NewGroupHandler(groupService)
-	badgeHandler := web.NewBadgeHandler(badgeService, groupService, campRepo)
+	badgeHandler := web.NewBadgeHandler(badgeService, groupService)
 	visitHandler := web.NewVisitHandler(visitService)
 
 	eventHandler := web.NewEventHandler(broadcaster, trackRepo, cornerRepo)
 
-	messageHandler := web.NewMessageHandler(messageService, announcementService)
+	messageHandler := web.NewMessageHandler(messageService, announcementService, announcementQueryService)
 	reportHandler := web.NewReportHandler(reportService, reportQuerier, campRepo)
 	auditHandler := web.NewAuditHandler(auditLogRepo)
 	adminManagementHandler := web.NewAdminManagementHandler(authAdminService)

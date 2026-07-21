@@ -20,6 +20,11 @@ type DeviceTrustService struct {
 	uuidFn func() string
 }
 
+type DeviceRegistrationStatusView struct {
+	Registration *domain.DeviceRegistration
+	CampStatus   domain.CampStatus
+}
+
 func NewDeviceTrustService(
 	camps CampRepository,
 	devices DeviceRegistrationRepository,
@@ -51,7 +56,7 @@ func (s *DeviceTrustService) RequestRegistration(
 	if camp == nil {
 		return "", nil, domain.ErrCampNotFound
 	}
-	if !camp.IsActive() {
+	if camp.Status() == domain.CampEnded {
 		return "", nil, domain.ErrCampInvalidTransition
 	}
 	campID := camp.ID
@@ -81,11 +86,11 @@ func (s *DeviceTrustService) RequestRegistration(
 	})
 
 	if err != nil {
-		s.recordAuditLog(ctx, "anonymous", "DEVICE_REQUEST", "", false, map[string]any{"error": err.Error()})
+		s.recordAuditLog(ctx, "anonymous", ActionDeviceRequest, "", false, map[string]any{"error": err.Error()})
 		return "", nil, err
 	}
 
-	s.recordAuditLog(ctx, "anonymous", "DEVICE_REQUEST", string(reg.ID()), true, map[string]any{"campID()": string(campID())})
+	s.recordAuditLog(ctx, "anonymous", ActionDeviceRequest, string(reg.ID()), true, map[string]any{"campID()": string(campID())})
 	_ = s.broadcaster.Broadcast(ctx, campID(), EventDeviceRegistrationUpdated, CampScope())
 	return plainToken, reg, nil
 }
@@ -94,7 +99,7 @@ func (s *DeviceTrustService) RequestRegistration(
 func (s *DeviceTrustService) GetMyRegistrationStatus(
 	ctx context.Context,
 	deviceToken string,
-) (*domain.DeviceRegistrationStatus, error) {
+) (*DeviceRegistrationStatusView, error) {
 	deviceTokenHash := hashSHA256(deviceToken)
 	device, err := s.devices.GetByTokenHash(ctx, deviceTokenHash)
 	if err != nil {
@@ -103,8 +108,16 @@ func (s *DeviceTrustService) GetMyRegistrationStatus(
 	if device == nil {
 		return nil, domain.ErrDeviceNotApproved // 혹은 NotFound 처리
 	}
-	status := device.Status()
-	return &status, nil
+
+	camp, err := s.camps.Get(ctx, device.CampID())
+	if err != nil {
+		return nil, err
+	}
+	if camp == nil {
+		return nil, domain.ErrCampNotFound
+	}
+
+	return &DeviceRegistrationStatusView{Registration: device, CampStatus: camp.Status()}, nil
 }
 
 // ApproveDevice - UC-14 (승인)
@@ -112,18 +125,18 @@ func (s *DeviceTrustService) ApproveDevice(
 	ctx context.Context,
 	regID domain.DeviceRegistrationID,
 	actorAdminID domain.AdminID,
-) error {
+) (*domain.DeviceRegistration, error) {
 	now := s.nowFn()
 	device, err := s.devices.Get(ctx, regID)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if device == nil {
-		return domain.ErrDeviceInvalidTransition
+		return nil, domain.ErrDeviceInvalidTransition
 	}
 
 	if err := device.Approve(now); err != nil {
-		return err
+		return nil, err
 	}
 
 	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
@@ -131,13 +144,13 @@ func (s *DeviceTrustService) ApproveDevice(
 	})
 
 	if err != nil {
-		s.recordAuditLog(ctx, string(actorAdminID), "DEVICE_APPROVED", string(regID), false, map[string]any{"error": err.Error()})
-		return err
+		s.recordAuditLog(ctx, string(actorAdminID), ActionDeviceApproved, string(regID), false, map[string]any{"error": err.Error()})
+		return nil, err
 	}
 
-	s.recordAuditLog(ctx, string(actorAdminID), "DEVICE_APPROVED", string(regID), true, nil)
+	s.recordAuditLog(ctx, string(actorAdminID), ActionDeviceApproved, string(regID), true, nil)
 	_ = s.broadcaster.Broadcast(ctx, device.CampID(), EventDeviceRegistrationUpdated, CampScope())
-	return nil
+	return device, nil
 }
 
 // RejectDevice - UC-14 (거부)
@@ -145,17 +158,17 @@ func (s *DeviceTrustService) RejectDevice(
 	ctx context.Context,
 	regID domain.DeviceRegistrationID,
 	actorAdminID domain.AdminID,
-) error {
+) (*domain.DeviceRegistration, error) {
 	device, err := s.devices.Get(ctx, regID)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if device == nil {
-		return domain.ErrDeviceInvalidTransition
+		return nil, domain.ErrDeviceInvalidTransition
 	}
 
 	if err := device.Reject(); err != nil {
-		return err
+		return nil, err
 	}
 
 	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
@@ -163,13 +176,13 @@ func (s *DeviceTrustService) RejectDevice(
 	})
 
 	if err != nil {
-		s.recordAuditLog(ctx, string(actorAdminID), "DEVICE_REJECTED", string(regID), false, map[string]any{"error": err.Error()})
-		return err
+		s.recordAuditLog(ctx, string(actorAdminID), ActionDeviceRejected, string(regID), false, map[string]any{"error": err.Error()})
+		return nil, err
 	}
 
-	s.recordAuditLog(ctx, string(actorAdminID), "DEVICE_REJECTED", string(regID), true, nil)
+	s.recordAuditLog(ctx, string(actorAdminID), ActionDeviceRejected, string(regID), true, nil)
 	_ = s.broadcaster.Broadcast(ctx, device.CampID(), EventDeviceRegistrationUpdated, CampScope())
-	return nil
+	return device, nil
 }
 
 // RevokeDevice - UC-15
@@ -177,17 +190,17 @@ func (s *DeviceTrustService) RevokeDevice(
 	ctx context.Context,
 	regID domain.DeviceRegistrationID,
 	actorAdminID domain.AdminID,
-) error {
+) (*domain.DeviceRegistration, error) {
 	device, err := s.devices.Get(ctx, regID)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if device == nil {
-		return domain.ErrDeviceNotApproved
+		return nil, domain.ErrDeviceNotApproved
 	}
 
 	if err := device.Revoke(); err != nil {
-		return err
+		return nil, err
 	}
 
 	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
@@ -195,13 +208,13 @@ func (s *DeviceTrustService) RevokeDevice(
 	})
 
 	if err != nil {
-		s.recordAuditLog(ctx, string(actorAdminID), "DEVICE_REVOKED", string(regID), false, map[string]any{"error": err.Error()})
-		return err
+		s.recordAuditLog(ctx, string(actorAdminID), ActionDeviceRevoked, string(regID), false, map[string]any{"error": err.Error()})
+		return nil, err
 	}
 
-	s.recordAuditLog(ctx, string(actorAdminID), "DEVICE_REVOKED", string(regID), true, nil)
+	s.recordAuditLog(ctx, string(actorAdminID), ActionDeviceRevoked, string(regID), true, nil)
 	_ = s.broadcaster.Broadcast(ctx, device.CampID(), EventDeviceRegistrationUpdated, CampScope())
-	return nil
+	return device, nil
 }
 
 // ResetPinFailures - UC-16
@@ -225,11 +238,11 @@ func (s *DeviceTrustService) ResetPinFailures(
 	})
 
 	if err != nil {
-		s.recordAuditLog(ctx, string(actorAdminID), "PIN_LOCK_RESET", string(regID), false, map[string]any{"error": err.Error()})
+		s.recordAuditLog(ctx, string(actorAdminID), ActionPinLockReset, string(regID), false, map[string]any{"error": err.Error()})
 		return err
 	}
 
-	s.recordAuditLog(ctx, string(actorAdminID), "PIN_LOCK_RESET", string(regID), true, nil)
+	s.recordAuditLog(ctx, string(actorAdminID), ActionPinLockReset, string(regID), true, nil)
 	_ = s.broadcaster.Broadcast(ctx, device.CampID(), EventDeviceRegistrationUpdated, CampScope())
 	return nil
 }
@@ -272,11 +285,11 @@ func (s *DeviceTrustService) ListLockedDevices(ctx context.Context, campID domai
 	return locked, nil
 }
 
-func (s *DeviceTrustService) recordAuditLog(ctx context.Context, actor, action, target string, success bool, metadata map[string]any) {
+func (s *DeviceTrustService) recordAuditLog(ctx context.Context, actor string, action AuditAction, target string, success bool, metadata map[string]any) {
 	log := domain.NewAuditLog(
 		domain.AuditLogID(s.uuidFn()),
 		actor,
-		action,
+		string(action),
 		target,
 		success,
 		s.nowFn(),

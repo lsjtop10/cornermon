@@ -4,6 +4,9 @@ import 'package:cornermon/shared/api/domain_aliases.dart' as api;
 import 'package:cornermon/shared/api/ids.dart';
 import 'package:cornermon/shared/api/providers/corner_track_providers.dart';
 import 'package:cornermon/shared/api/providers/group_providers.dart';
+import 'package:cornermon/shared/design_system/tokens/spacing.dart';
+import 'package:cornermon/shared/design_system/tokens/typography.dart';
+import 'package:cornermon/shared/design_system/widgets/app_tag.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -21,6 +24,10 @@ class GroupDetailScreen extends ConsumerWidget {
         ? null
         : ref.watch(cornerListProvider(campId));
     final tracks = campId == null ? null : ref.watch(trackListProvider(campId));
+    final cornerNames = {
+      for (final corner in corners?.asData?.value ?? const <api.Corner>[])
+        if (corner.id != null) corner.id!: corner.name ?? corner.id!,
+    };
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
@@ -35,29 +42,58 @@ class GroupDetailScreen extends ConsumerWidget {
         data: (value) => ListView(
           padding: const EdgeInsets.all(24),
           children: [
+            _GroupSummaryHeader(group: value),
+            const SizedBox(height: AppSpacing.space6),
             Text(
-              value.name ?? '이름 없는 조',
-              style: Theme.of(context).textTheme.headlineSmall,
+              '순회 진행률',
+              style: AppTypography.title2.copyWith(
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
             ),
+            const SizedBox(height: AppSpacing.space2),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(AppSpacing.space4),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text('완료 코너'),
+                        Text(
+                          value.completedCountLabel,
+                          style: AppTypography.bodyEmphasis.copyWith(
+                            color: Theme.of(context).colorScheme.onSurface,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: AppSpacing.space3),
+                    LinearProgressIndicator(value: value.completionRate),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.space5),
             Text(
-              value.isFinished == true
-                  ? '완주 · ${value.completedCountLabel}'
-                  : '진행 중 · ${value.completedCountLabel}',
+              '코너 방문 현황',
+              style: AppTypography.title2.copyWith(
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
             ),
-            const SizedBox(height: 20),
-            Text('순회표', style: Theme.of(context).textTheme.titleLarge),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                for (final progress
-                    in value.itinerary ?? const <api.CornerProgress>[])
-                  _ProgressCell(progress: progress),
-              ],
+            const SizedBox(height: AppSpacing.space2),
+            _ItineraryStatusList(
+              itinerary: value.itinerary ?? const <api.CornerProgress>[],
+              cornerNames: cornerNames,
             ),
-            const SizedBox(height: 24),
-            Text('방문 이력', style: Theme.of(context).textTheme.titleLarge),
+            const SizedBox(height: AppSpacing.space6),
+            Text(
+              '방문 이력',
+              style: AppTypography.title2.copyWith(
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
+            ),
             visits.when(
               loading: () => const Padding(
                 padding: EdgeInsets.all(24),
@@ -65,11 +101,6 @@ class GroupDetailScreen extends ConsumerWidget {
               ),
               error: (error, _) => Text('방문 이력을 불러오지 못했습니다.\n$error'),
               data: (items) {
-                final cornerNames = {
-                  for (final corner
-                      in corners?.asData?.value ?? const <api.Corner>[])
-                    corner.id!: corner.name ?? corner.id!,
-                };
                 final trackNumbers = {
                   for (final track
                       in tracks?.asData?.value ?? const <api.Track>[])
@@ -132,22 +163,126 @@ class GroupDetailScreen extends ConsumerWidget {
   }
 }
 
-class _ProgressCell extends StatelessWidget {
-  const _ProgressCell({required this.progress});
-  final api.CornerProgress progress;
+class _GroupSummaryHeader extends StatelessWidget {
+  const _GroupSummaryHeader({required this.group});
+
+  final api.Group group;
+
+  @override
+  Widget build(BuildContext context) => Row(
+    children: [
+      Expanded(
+        child: Text(
+          group.name ?? '이름 없는 조',
+          style: AppTypography.title2.copyWith(
+            color: Theme.of(context).colorScheme.onSurface,
+          ),
+        ),
+      ),
+      AppTag(
+        label: group.isFinished == true ? '완주' : '진행 중',
+        tone: group.isFinished == true
+            ? AppTagTone.success
+            : AppTagTone.warning,
+      ),
+    ],
+  );
+}
+
+class _ItineraryStatusList extends StatelessWidget {
+  const _ItineraryStatusList({
+    required this.itinerary,
+    required this.cornerNames,
+  });
+
+  final Iterable<api.CornerProgress> itinerary;
+  final Map<String, String> cornerNames;
+
   @override
   Widget build(BuildContext context) {
-    final status = progress.status;
-    final icon = switch (status) {
-      api.VisitStatusPerCorner.COMPLETED => Icons.check_circle,
-      api.VisitStatusPerCorner.IN_PROGRESS => Icons.timelapse,
-      _ => Icons.radio_button_unchecked,
+    final items = itinerary.toList();
+    if (items.isEmpty) {
+      return const Card(
+        child: ListTile(
+          leading: Icon(Icons.route_outlined),
+          title: Text('순회표가 아직 없습니다'),
+        ),
+      );
+    }
+    return LayoutBuilder(
+      builder: (context, constraints) => GridView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: _itineraryColumnCount(constraints.maxWidth),
+          mainAxisSpacing: AppSpacing.space2,
+          crossAxisSpacing: AppSpacing.space2,
+          childAspectRatio: 2.0,
+        ),
+        itemCount: items.length,
+        itemBuilder: (context, index) => _ItineraryStatusCard(
+          progress: items[index],
+          cornerName: cornerNames[items[index].cornerId],
+        ),
+      ),
+    );
+  }
+}
+
+int _itineraryColumnCount(double width) {
+  if (width >= 800) return 5;
+  if (width >= 600) return 4;
+  if (width >= 400) return 3;
+  return 2;
+}
+
+class _ItineraryStatusCard extends StatelessWidget {
+  const _ItineraryStatusCard({
+    required this.progress,
+    required this.cornerName,
+  });
+
+  final api.CornerProgress progress;
+  final String? cornerName;
+
+  @override
+  Widget build(BuildContext context) {
+    final presentation = switch (progress.status) {
+      api.VisitStatusPerCorner.COMPLETED => (
+        label: '완료',
+        tone: AppTagTone.success,
+      ),
+      api.VisitStatusPerCorner.IN_PROGRESS => (
+        label: '방문 중',
+        tone: AppTagTone.warning,
+      ),
+      _ => (label: '미방문', tone: AppTagTone.neutral),
     };
-    return SizedBox(
-      width: 112,
-      child: Chip(
-        avatar: Icon(icon),
-        label: Text(progress.cornerName ?? progress.cornerId ?? '-'),
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.space3,
+          vertical: AppSpacing.space2,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              cornerName ??
+                  progress.cornerName ??
+                  progress.cornerId ??
+                  '이름 없는 코너',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppTypography.bodyEmphasis.copyWith(
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.space1),
+            AppTag(label: presentation.label, tone: presentation.tone),
+          ],
+        ),
       ),
     );
   }
