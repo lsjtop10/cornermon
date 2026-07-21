@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import 'package:cornermon/shared/api/domain_aliases.dart' as api;
 import 'package:cornermon/shared/design_system/tokens/colors.dart';
@@ -43,7 +44,8 @@ class _CornerGroupSectionState extends State<CornerGroupSection> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             InkWell(
-              onTap: () => setState(() => _expanded = !_expanded),
+              onTap: () =>
+                  context.go('/dashboard/corners/${group.corner.id}'),
               child: Padding(
                 padding: const EdgeInsets.symmetric(
                   horizontal: AppSpacing.space4,
@@ -51,12 +53,19 @@ class _CornerGroupSectionState extends State<CornerGroupSection> {
                 ),
                 child: Row(
                   children: [
-                    AnimatedRotation(
-                      turns: _expanded ? 0.25 : 0,
-                      duration: const Duration(milliseconds: 150),
-                      child: Icon(
-                        Icons.chevron_right,
-                        color: colors.textSecondary,
+                    InkWell(
+                      onTap: () => setState(() => _expanded = !_expanded),
+                      borderRadius: BorderRadius.circular(4),
+                      child: Padding(
+                        padding: const EdgeInsets.all(4),
+                        child: AnimatedRotation(
+                          turns: _expanded ? 0.25 : 0,
+                          duration: const Duration(milliseconds: 150),
+                          child: Icon(
+                            Icons.chevron_right,
+                            color: colors.textSecondary,
+                          ),
+                        ),
                       ),
                     ),
                     const SizedBox(width: AppSpacing.space2),

@@ -47,6 +47,11 @@ Future<void> _pumpScreen(
         path: '/corner-track-manage',
         builder: (_, _) => const TrackBulkManageScreen(),
       ),
+      GoRoute(
+        path: '/dashboard/corners/:cornerId',
+        builder: (_, state) =>
+            Scaffold(body: Text('코너 상세 ${state.pathParameters['cornerId']}')),
+      ),
     ],
   );
   await tester.pumpWidget(
@@ -120,6 +125,26 @@ void main() {
       // assert
       expect(find.text('좀비 코너'), findsOneWidget);
       expect(find.text('연결된 트랙이 없습니다'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'ShouldNavigateToCornerDetailWhenCornerCardTapped',
+    (tester) async {
+      // arrange
+      await _pumpScreen(
+        tester,
+        campId: campId,
+        corners: [_corner('c1', '코너 A')],
+        tracks: [_track('t1', 'c1', 1)],
+      );
+
+      // act
+      await tester.tap(find.text('코너 A'));
+      await tester.pumpAndSettle();
+
+      // assert
+      expect(find.text('코너 상세 c1'), findsOneWidget);
     },
   );
 }
