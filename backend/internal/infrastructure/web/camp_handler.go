@@ -118,7 +118,7 @@ func mapDomainCampToDTO(camp *domain.Camp) CampResponse {
 func (h *CampHandler) ListCamps(c echo.Context) error {
 	camps, err := h.svc.ListCamps(c.Request().Context())
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_ERROR", Message: err.Error()}).SetInternal(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: CodeInternalError, Message: err.Error()}).SetInternal(err)
 	}
 	res := make([]CampResponse, len(camps))
 	for i, cp := range camps {
@@ -147,7 +147,7 @@ type CreateCampRequest struct {
 func (h *CampHandler) CreateCamp(c echo.Context) error {
 	var req CreateCampRequest
 	if err := c.Bind(&req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: "Invalid request body"}).SetInternal(err)
+		return echo.NewHTTPError(http.StatusBadRequest, ErrorResponse{Code: CodeBadRequest, Message: "Invalid request body"}).SetInternal(err)
 	}
 	camp, err := h.svc.OpenNewCamp(c.Request().Context(), req.Name, req.StartAt, req.EndAt)
 	if err != nil {
@@ -169,10 +169,10 @@ func (h *CampHandler) GetCamp(c echo.Context) error {
 	id := domain.CampID(c.Param("id"))
 	camp, err := h.svc.GetCamp(c.Request().Context(), id)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_ERROR", Message: err.Error()}).SetInternal(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: CodeInternalError, Message: err.Error()}).SetInternal(err)
 	}
 	if camp == nil {
-		return echo.NewHTTPError(http.StatusNotFound, ErrorResponse{Code: "NOT_FOUND", Message: "Camp not found"})
+		return echo.NewHTTPError(http.StatusNotFound, ErrorResponse{Code: CodeNotFound, Message: "Camp not found"})
 	}
 	return c.JSON(http.StatusOK, mapDomainCampToDTO(camp))
 }
@@ -222,13 +222,13 @@ func (h *CampHandler) EndCamp(c echo.Context) error {
 func campHTTPError(err error) error {
 	switch {
 	case errors.Is(err, domain.ErrCampNotFound):
-		return echo.NewHTTPError(http.StatusNotFound, ErrorResponse{Code: "CAMP_NOT_FOUND", Message: "camp not found"}).SetInternal(err)
+		return echo.NewHTTPError(http.StatusNotFound, ErrorResponse{Code: CodeCampNotFound, Message: "camp not found"}).SetInternal(err)
 	case errors.Is(err, domain.ErrCampInvalidSettings):
-		return echo.NewHTTPError(http.StatusBadRequest, ErrorResponse{Code: "CAMP_INVALID_SETTINGS", Message: "camp settings are invalid"}).SetInternal(err)
+		return echo.NewHTTPError(http.StatusBadRequest, ErrorResponse{Code: CodeCampInvalidSettings, Message: "camp settings are invalid"}).SetInternal(err)
 	case errors.Is(err, domain.ErrCampSettingsLocked):
-		return echo.NewHTTPError(http.StatusConflict, ErrorResponse{Code: "CAMP_SETTINGS_LOCKED", Message: "camp settings are locked"}).SetInternal(err)
+		return echo.NewHTTPError(http.StatusConflict, ErrorResponse{Code: CodeCampSettingsLocked, Message: "camp settings are locked"}).SetInternal(err)
 	case errors.Is(err, domain.ErrCampInvalidTransition), errors.Is(err, domain.ErrCornerNotInItinerary), errors.Is(err, domain.ErrTrackNotActive):
-		return echo.NewHTTPError(http.StatusConflict, ErrorResponse{Code: "CAMP_STATE_CONFLICT", Message: "camp cannot make that state transition"}).SetInternal(err)
+		return echo.NewHTTPError(http.StatusConflict, ErrorResponse{Code: CodeCampStateConflict, Message: "camp cannot make that state transition"}).SetInternal(err)
 	default:
 		return err
 	}

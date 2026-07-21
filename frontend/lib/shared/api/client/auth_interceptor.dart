@@ -22,7 +22,12 @@ class AuthInterceptor extends Interceptor {
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) async {
     final response = err.response;
-    if (response?.statusCode != 401) {
+    // 기기 상태 조회는 트랙 401의 복구 수단이다. 이 요청 자체가 401이면 다시
+    // onUnauthorized()를 호출해 같은 `/me` 요청을 재귀적으로 만들지 않는다.
+    final isDeviceStatusRequest = err.requestOptions.path.endsWith(
+      '/device-registrations/me',
+    );
+    if (response?.statusCode != 401 || isDeviceStatusRequest) {
       handler.next(err);
       return;
     }
@@ -37,9 +42,14 @@ class AuthInterceptor extends Interceptor {
 
     try {
       final retryOptions = err.requestOptions.copyWith(
-        headers: {...err.requestOptions.headers, 'Authorization': 'Bearer $token'},
+        headers: {
+          ...err.requestOptions.headers,
+          'Authorization': 'Bearer $token',
+        },
       );
-      final retryResponse = await ref.read(apiClientProvider).fetch<dynamic>(retryOptions);
+      final retryResponse = await ref
+          .read(apiClientProvider)
+          .fetch<dynamic>(retryOptions);
       handler.resolve(retryResponse);
     } on DioException catch (retryError) {
       handler.next(retryError);

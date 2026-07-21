@@ -9,6 +9,7 @@ import 'package:cornermon_api_gen/api.dart';
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **campId** | **String** |  | [optional] 
+**campStatus** | **String** |  | [optional] 
 **id** | **String** |  | [optional] 
 **status** | **String** |  | [optional] 
 

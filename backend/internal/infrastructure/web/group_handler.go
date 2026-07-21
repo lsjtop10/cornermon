@@ -181,11 +181,11 @@ func (h *GroupHandler) ListGroupVisits(c echo.Context) error {
 func groupHTTPError(err error) error {
 	switch {
 	case errors.Is(err, domain.ErrTrackScopeForbidden):
-		return echo.NewHTTPError(http.StatusForbidden, ErrorResponse{Code: "TRACK_SCOPE_FORBIDDEN", Message: "track session cannot access the requested track"}).SetInternal(err)
+		return echo.NewHTTPError(http.StatusForbidden, ErrorResponse{Code: CodeTrackScopeForbidden, Message: "track session cannot access the requested track"}).SetInternal(err)
 	case errors.Is(err, domain.ErrTrackNotFound):
-		return echo.NewHTTPError(http.StatusNotFound, ErrorResponse{Code: "TRACK_NOT_FOUND", Message: "track not found"}).SetInternal(err)
+		return echo.NewHTTPError(http.StatusNotFound, ErrorResponse{Code: CodeTrackNotFound, Message: "track not found"}).SetInternal(err)
 	case errors.Is(err, domain.ErrCornerNotFound), errors.Is(err, domain.ErrCornerNotInItinerary):
-		return echo.NewHTTPError(http.StatusNotFound, ErrorResponse{Code: "GROUP_NOT_FOUND", Message: "group or related corner not found"}).SetInternal(err)
+		return echo.NewHTTPError(http.StatusNotFound, ErrorResponse{Code: CodeGroupNotFound, Message: "group or related corner not found"}).SetInternal(err)
 	default:
 		return err
 	}

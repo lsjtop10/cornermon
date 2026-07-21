@@ -412,7 +412,7 @@ final class DeleteCornerProvider
     required DeleteCornerFamily super.from,
     required CornerId super.argument,
   }) : super(
-         retry: null,
+         retry: noRetry,
          name: r'deleteCornerProvider',
          isAutoDispose: true,
          dependencies: null,
@@ -451,13 +451,13 @@ final class DeleteCornerProvider
   }
 }
 
-String _$deleteCornerHash() => r'301b07435cb00e8b31794ba91f1b447198925920';
+String _$deleteCornerHash() => r'6977fb7525e20d64b35f5301f0510f28d314aa4b';
 
 final class DeleteCornerFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<void>, CornerId> {
   DeleteCornerFamily._()
     : super(
-        retry: null,
+        retry: noRetry,
         name: r'deleteCornerProvider',
         dependencies: null,
         $allTransitiveDependencies: null,

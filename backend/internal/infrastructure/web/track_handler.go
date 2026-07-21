@@ -67,11 +67,11 @@ func mapDomainTrackToDTO(track *domain.Track) TrackResponse {
 func (h *TrackHandler) ListTracks(c echo.Context) error {
 	campID := domain.CampID(c.Param("campId"))
 	if campID == "" {
-		return echo.NewHTTPError(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: "campId is required"})
+		return echo.NewHTTPError(http.StatusBadRequest, ErrorResponse{Code: CodeBadRequest, Message: "campId is required"})
 	}
 	tracks, err := h.svc.ListTracksByCamp(c.Request().Context(), campID)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_ERROR", Message: err.Error()}).SetInternal(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: CodeInternalError, Message: err.Error()}).SetInternal(err)
 	}
 	res := make([]TrackResponse, len(tracks))
 	for i, tr := range tracks {
@@ -100,7 +100,7 @@ type CreateTracksRequest struct {
 func (h *TrackHandler) CreateTracks(c echo.Context) error {
 	var req CreateTracksRequest
 	if err := c.Bind(&req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: "Invalid request body"}).SetInternal(err)
+		return echo.NewHTTPError(http.StatusBadRequest, ErrorResponse{Code: CodeBadRequest, Message: "Invalid request body"}).SetInternal(err)
 	}
 	var res []TrackPinResponse
 	for i := 0; i < req.Count; i++ {
@@ -155,7 +155,7 @@ type BulkDeleteTracksRequest struct {
 func (h *TrackHandler) BulkDeleteTracks(c echo.Context) error {
 	var req BulkDeleteTracksRequest
 	if err := c.Bind(&req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: "Invalid request body"}).SetInternal(err)
+		return echo.NewHTTPError(http.StatusBadRequest, ErrorResponse{Code: CodeBadRequest, Message: "Invalid request body"}).SetInternal(err)
 	}
 	for _, id := range req.TrackIDs {
 		_, err := h.svc.DeleteTrack(c.Request().Context(), domain.TrackID(id))
@@ -263,13 +263,13 @@ func (h *TrackHandler) ExportTrackSingle(c echo.Context) error {
 func trackHTTPError(err error) error {
 	switch {
 	case errors.Is(err, domain.ErrCornerNotFound), errors.Is(err, domain.ErrCornerNotInItinerary):
-		return echo.NewHTTPError(http.StatusNotFound, ErrorResponse{Code: "CORNER_NOT_FOUND", Message: "corner not found"}).SetInternal(err)
+		return echo.NewHTTPError(http.StatusNotFound, ErrorResponse{Code: CodeCornerNotFound, Message: "corner not found"}).SetInternal(err)
 	case errors.Is(err, domain.ErrTrackNotActive), errors.Is(err, domain.ErrTrackNotFound):
-		return echo.NewHTTPError(http.StatusNotFound, ErrorResponse{Code: "TRACK_NOT_FOUND", Message: "track not found"}).SetInternal(err)
+		return echo.NewHTTPError(http.StatusNotFound, ErrorResponse{Code: CodeTrackNotFound, Message: "track not found"}).SetInternal(err)
 	case errors.Is(err, domain.ErrTrackDeleteBlocked), errors.Is(err, domain.ErrTrackBusy), errors.Is(err, domain.ErrTrackCampMismatch):
-		return echo.NewHTTPError(http.StatusConflict, ErrorResponse{Code: "TRACK_CONFLICT", Message: "track cannot be changed in its current state"}).SetInternal(err)
+		return echo.NewHTTPError(http.StatusConflict, ErrorResponse{Code: CodeTrackConflict, Message: "track cannot be changed in its current state"}).SetInternal(err)
 	case errors.Is(err, domain.ErrCampInvalidTransition):
-		return echo.NewHTTPError(http.StatusConflict, ErrorResponse{Code: "CAMP_NOT_AVAILABLE", Message: "camp is not available for track management"}).SetInternal(err)
+		return echo.NewHTTPError(http.StatusConflict, ErrorResponse{Code: CodeCampNotAvailable, Message: "camp is not available for track management"}).SetInternal(err)
 	default:
 		return err
 	}

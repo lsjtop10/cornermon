@@ -387,7 +387,7 @@ void (empty response body)
 ### HTTP request headers
 
  - **Content-Type**: Not defined
- - **Accept**: Not defined
+ - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -478,7 +478,7 @@ void (empty response body)
 ### HTTP request headers
 
  - **Content-Type**: Not defined
- - **Accept**: Not defined
+ - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -823,7 +823,7 @@ Name | Type | Description  | Notes
 
 내 기기 등록 상태 자체 조회
 
-기기 등록 시 발급받은 opaque device token을 X-Device-Token 헤더에 넣어, 해당 기기의 승인 상태와 식별자를 조회한다. PENDING 상태에서도 호출할 수 있다.
+기기 등록 시 발급받은 opaque device token을 X-Device-Token 헤더에 넣어, 해당 기기의 승인 상태·식별자와 소속 캠프 상태를 조회한다. PENDING 및 REVOKED 상태에서도 호출할 수 있다.
 
 ### Example
 ```dart

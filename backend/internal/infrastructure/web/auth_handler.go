@@ -88,13 +88,13 @@ func NewAuthHandler(
 func (h *AuthHandler) AdminLogin(c echo.Context) error {
 	var req AdminLoginRequest
 	if err := c.Bind(&req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: "invalid request"}).SetInternal(err)
+		return echo.NewHTTPError(http.StatusBadRequest, ErrorResponse{Code: CodeBadRequest, Message: "invalid request"}).SetInternal(err)
 	}
 
 	deviceInfo := c.Request().UserAgent()
 	access, _, err := h.adminAuth.Login(c.Request().Context(), req.ID, req.Password, deviceInfo)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusUnauthorized, ErrorResponse{Code: "UNAUTHORIZED", Message: err.Error()}).SetInternal(err)
+		return echo.NewHTTPError(http.StatusUnauthorized, ErrorResponse{Code: CodeUnauthorized, Message: err.Error()}).SetInternal(err)
 	}
 
 	return c.JSON(http.StatusOK, AdminLoginResponse{
@@ -114,12 +114,12 @@ func (h *AuthHandler) AdminLogin(c echo.Context) error {
 func (h *AuthHandler) AdminLogout(c echo.Context) error {
 	session, ok := c.Get("adminSession").(*domain.AdminSession)
 	if !ok {
-		return echo.NewHTTPError(http.StatusUnauthorized, ErrorResponse{Code: "UNAUTHORIZED", Message: "unauthorized"})
+		return echo.NewHTTPError(http.StatusUnauthorized, ErrorResponse{Code: CodeUnauthorized, Message: "unauthorized"})
 	}
 
 	err := h.adminAuth.RevokeSession(c.Request().Context(), session.ID(), session.AdminID())
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()}).SetInternal(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: CodeInternalServerError, Message: err.Error()}).SetInternal(err)
 	}
 
 	return c.NoContent(http.StatusNoContent)
@@ -135,12 +135,12 @@ func (h *AuthHandler) AdminLogout(c echo.Context) error {
 func (h *AuthHandler) ListAdminSessions(c echo.Context) error {
 	session, ok := c.Get("adminSession").(*domain.AdminSession)
 	if !ok {
-		return echo.NewHTTPError(http.StatusUnauthorized, ErrorResponse{Code: "UNAUTHORIZED", Message: "unauthorized"})
+		return echo.NewHTTPError(http.StatusUnauthorized, ErrorResponse{Code: CodeUnauthorized, Message: "unauthorized"})
 	}
 
 	sessions, err := h.adminAuth.ListSessions(c.Request().Context(), session.AdminID())
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()}).SetInternal(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: CodeInternalServerError, Message: err.Error()}).SetInternal(err)
 	}
 
 	var res []AdminSessionResponse
@@ -179,11 +179,11 @@ type FacilitatorSessionResponse struct {
 func (h *AuthHandler) ListActiveFacilitatorSessions(c echo.Context) error {
 	campID := c.QueryParam("campId")
 	if campID == "" {
-		return echo.NewHTTPError(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: "missing campId"})
+		return echo.NewHTTPError(http.StatusBadRequest, ErrorResponse{Code: CodeBadRequest, Message: "missing campId"})
 	}
 	sessions, err := h.facilitatorAuth.ListActiveSessions(c.Request().Context(), domain.CampID(campID))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()}).SetInternal(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: CodeInternalServerError, Message: err.Error()}).SetInternal(err)
 	}
 	res := make([]FacilitatorSessionResponse, len(sessions))
 	for i, session := range sessions {
@@ -203,13 +203,13 @@ func (h *AuthHandler) ListActiveFacilitatorSessions(c echo.Context) error {
 func (h *AuthHandler) RevokeAdminSession(c echo.Context) error {
 	session, ok := c.Get("adminSession").(*domain.AdminSession)
 	if !ok {
-		return echo.NewHTTPError(http.StatusUnauthorized, ErrorResponse{Code: "UNAUTHORIZED", Message: "unauthorized"})
+		return echo.NewHTTPError(http.StatusUnauthorized, ErrorResponse{Code: CodeUnauthorized, Message: "unauthorized"})
 	}
 	targetID := domain.AdminSessionID(c.Param("id"))
 
 	err := h.adminAuth.RevokeSession(c.Request().Context(), targetID, session.AdminID())
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()}).SetInternal(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: CodeInternalServerError, Message: err.Error()}).SetInternal(err)
 	}
 
 	return c.NoContent(http.StatusNoContent)
@@ -231,12 +231,12 @@ func (h *AuthHandler) RevokeAdminSession(c echo.Context) error {
 func (h *AuthHandler) TrackLogin(c echo.Context) error {
 	var req TrackLoginRequest
 	if err := c.Bind(&req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: "invalid request"}).SetInternal(err)
+		return echo.NewHTTPError(http.StatusBadRequest, ErrorResponse{Code: CodeBadRequest, Message: "invalid request"}).SetInternal(err)
 	}
 
 	deviceToken := c.Request().Header.Get("X-Device-Token")
 	if deviceToken == "" {
-		return echo.NewHTTPError(http.StatusForbidden, ErrorResponse{Code: "FORBIDDEN", Message: "missing device token"})
+		return echo.NewHTTPError(http.StatusForbidden, ErrorResponse{Code: CodeForbidden, Message: "missing device token"})
 	}
 
 	res, err := h.facilitatorAuth.Login(c.Request().Context(), deviceToken, req.PIN)
@@ -265,13 +265,13 @@ func (h *AuthHandler) TrackLogin(c echo.Context) error {
 func trackLoginHTTPError(err error) error {
 	switch {
 	case errors.Is(err, domain.ErrDeviceNotApproved):
-		return echo.NewHTTPError(http.StatusForbidden, ErrorResponse{Code: "DEVICE_NOT_APPROVED", Message: "device is not approved"}).SetInternal(err)
+		return echo.NewHTTPError(http.StatusForbidden, ErrorResponse{Code: CodeDeviceNotApproved, Message: "device is not approved"}).SetInternal(err)
 	case errors.Is(err, domain.ErrDeviceLocked):
-		return echo.NewHTTPError(http.StatusTooManyRequests, ErrorResponse{Code: "DEVICE_LOCKED", Message: "device is temporarily locked"}).SetInternal(err)
+		return echo.NewHTTPError(http.StatusTooManyRequests, ErrorResponse{Code: CodeDeviceLocked, Message: "device is temporarily locked"}).SetInternal(err)
 	case errors.Is(err, domain.ErrInvalidPin):
-		return echo.NewHTTPError(http.StatusBadRequest, ErrorResponse{Code: "INVALID_PIN", Message: "invalid pin"}).SetInternal(err)
+		return echo.NewHTTPError(http.StatusBadRequest, ErrorResponse{Code: CodeInvalidPin, Message: "invalid pin"}).SetInternal(err)
 	case errors.Is(err, domain.ErrCampInvalidTransition):
-		return echo.NewHTTPError(http.StatusForbidden, ErrorResponse{Code: "CAMP_NOT_AVAILABLE", Message: "camp is not available for track login"}).SetInternal(err)
+		return echo.NewHTTPError(http.StatusForbidden, ErrorResponse{Code: CodeCampNotAvailable, Message: "camp is not available for track login"}).SetInternal(err)
 	default:
 		return err
 	}
@@ -288,15 +288,15 @@ func trackLoginHTTPError(err error) error {
 func (h *AuthHandler) TrackLogout(c echo.Context) error {
 	session, ok := c.Get("facilitatorSession").(*domain.FacilitatorSession)
 	if !ok {
-		return echo.NewHTTPError(http.StatusUnauthorized, ErrorResponse{Code: "UNAUTHORIZED", Message: "unauthorized"})
+		return echo.NewHTTPError(http.StatusUnauthorized, ErrorResponse{Code: CodeUnauthorized, Message: "unauthorized"})
 	}
 
 	err := h.facilitatorAuth.Logout(c.Request().Context(), session.ID())
 	if err != nil {
 		if errors.Is(err, domain.ErrSessionRevoked) {
-			return echo.NewHTTPError(http.StatusUnauthorized, ErrorResponse{Code: "SESSION_REVOKED", Message: "session is revoked"}).SetInternal(err)
+			return echo.NewHTTPError(http.StatusUnauthorized, ErrorResponse{Code: CodeSessionRevoked, Message: "session is revoked"}).SetInternal(err)
 		}
-		return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()}).SetInternal(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: CodeInternalServerError, Message: err.Error()}).SetInternal(err)
 	}
 
 	return c.NoContent(http.StatusNoContent)
@@ -313,13 +313,13 @@ func (h *AuthHandler) TrackLogout(c echo.Context) error {
 func (h *AuthHandler) ForceTrackLogout(c echo.Context) error {
 	session, ok := c.Get("adminSession").(*domain.AdminSession)
 	if !ok {
-		return echo.NewHTTPError(http.StatusUnauthorized, ErrorResponse{Code: "UNAUTHORIZED", Message: "unauthorized"})
+		return echo.NewHTTPError(http.StatusUnauthorized, ErrorResponse{Code: CodeUnauthorized, Message: "unauthorized"})
 	}
 	trackID := domain.TrackID(c.Param("trackId"))
 
 	err := h.adminAuth.ForceTrackLogout(c.Request().Context(), trackID, session.AdminID())
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()}).SetInternal(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: CodeInternalServerError, Message: err.Error()}).SetInternal(err)
 	}
 
 	return c.NoContent(http.StatusNoContent)
@@ -337,16 +337,16 @@ func (h *AuthHandler) ForceTrackLogout(c echo.Context) error {
 func (h *AuthHandler) ReleaseLockout(c echo.Context) error {
 	session, ok := c.Get("adminSession").(*domain.AdminSession)
 	if !ok {
-		return echo.NewHTTPError(http.StatusUnauthorized, ErrorResponse{Code: "UNAUTHORIZED", Message: "unauthorized"})
+		return echo.NewHTTPError(http.StatusUnauthorized, ErrorResponse{Code: CodeUnauthorized, Message: "unauthorized"})
 	}
 	deviceID := domain.DeviceRegistrationID(c.Param("deviceId"))
 
 	err := h.deviceTrust.ResetPinFailures(c.Request().Context(), deviceID, session.AdminID())
 	if err != nil {
 		if errors.Is(err, domain.ErrDeviceInvalidTransition) {
-			return echo.NewHTTPError(http.StatusConflict, ErrorResponse{Code: "DEVICE_INVALID_TRANSITION", Message: "device registration cannot reset pin failures"}).SetInternal(err)
+			return echo.NewHTTPError(http.StatusConflict, ErrorResponse{Code: CodeDeviceInvalidTransition, Message: "device registration cannot reset pin failures"}).SetInternal(err)
 		}
-		return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()}).SetInternal(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: CodeInternalServerError, Message: err.Error()}).SetInternal(err)
 	}
 
 	return c.NoContent(http.StatusNoContent)
@@ -364,15 +364,15 @@ func (h *AuthHandler) ReleaseLockout(c echo.Context) error {
 func (h *AuthHandler) MigrateSession(c echo.Context) error {
 	sessionToken := extractToken(c.Request().Header.Get("Authorization"))
 	if sessionToken == "" {
-		return echo.NewHTTPError(http.StatusUnauthorized, ErrorResponse{Code: "UNAUTHORIZED", Message: "missing token"})
+		return echo.NewHTTPError(http.StatusUnauthorized, ErrorResponse{Code: CodeUnauthorized, Message: "missing token"})
 	}
 
 	res, err := h.facilitatorAuth.MigrateSession(c.Request().Context(), sessionToken)
 	if err != nil {
 		if errors.Is(err, domain.ErrSessionRevoked) {
-			return echo.NewHTTPError(http.StatusUnauthorized, ErrorResponse{Code: "SESSION_REVOKED", Message: "session is revoked"}).SetInternal(err)
+			return echo.NewHTTPError(http.StatusUnauthorized, ErrorResponse{Code: CodeSessionRevoked, Message: "session is revoked"}).SetInternal(err)
 		}
-		return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()}).SetInternal(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: CodeInternalServerError, Message: err.Error()}).SetInternal(err)
 	}
 
 	return c.JSON(http.StatusOK, TrackLoginResponse{
