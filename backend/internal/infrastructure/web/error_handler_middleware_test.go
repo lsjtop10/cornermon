@@ -11,6 +11,7 @@ import (
 
 	"cornermon/backend/internal/errs"
 	"cornermon/backend/internal/infrastructure/web"
+	"cornermon/backend/internal/usecase"
 	"github.com/labstack/echo/v4"
 )
 
@@ -37,6 +38,36 @@ func TestErrorHandler_AppError(t *testing.T) {
 	// assert
 	if rec.Code != http.StatusInternalServerError {
 		t.Errorf("expected status code %d, got %d", http.StatusInternalServerError, rec.Code)
+	}
+}
+
+func TestErrorHandlerShouldLogOperationContextFromHTTPInternalError(t *testing.T) {
+	// arrange
+	buf := withCapturedLogger(t)
+	e := echo.New()
+	e.Use(web.Logger())
+	e.HTTPErrorHandler = web.ErrorHandler()
+	e.GET("/api/v1/test", func(c echo.Context) error {
+		err := usecase.NewOperationError("visit.complete", "repository.save_visit", errors.New("write failed"), map[string]any{"visit_id": "visit-1"})
+		return echo.NewHTTPError(http.StatusInternalServerError, "internal error").SetInternal(err)
+	})
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/test", nil)
+	rec := httptest.NewRecorder()
+
+	// act
+	e.ServeHTTP(rec, req)
+
+	// assert
+	var parsed map[string]any
+	if err := json.Unmarshal(bytes.TrimSpace(buf.Bytes()), &parsed); err != nil {
+		t.Fatalf("expected valid JSON log line, got %v", err)
+	}
+	if parsed["operation"] != "visit.complete" || parsed["stage"] != "repository.save_visit" {
+		t.Fatalf("expected operation context, got %#v", parsed)
+	}
+	context, ok := parsed["error_context"].(map[string]any)
+	if !ok || context["visit_id"] != "visit-1" {
+		t.Fatalf("expected visit context, got %#v", parsed["error_context"])
 	}
 }
 
