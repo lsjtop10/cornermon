@@ -58,37 +58,41 @@ func (s *TrackService) CreateTrack(
 	campID domain.CampID,
 	cornerID domain.CornerID,
 ) (*domain.Track, string, error) {
+
 	camp, err := s.camps.Get(ctx, campID)
 	if err != nil {
-		return nil, "", err
+		return nil, "", withErrorContext("track.create", "repository.get_camp", err, map[string]any{"camp_id": string(campID)})
 	}
-
 	if camp == nil || camp.Status() == domain.CampEnded {
-		return nil, "", domain.ErrCampInvalidTransition
+		var status string
+		if camp != nil {
+			status = string(camp.Status())
+		}
+		return nil, "", withErrorContext("track.create", "validate_camp", domain.ErrCampInvalidTransition, map[string]any{"camp_id": string(campID), "camp_found": camp != nil, "camp_status": status})
 	}
 
 	corner, err := s.corners.Get(ctx, cornerID)
 	if err != nil {
-		return nil, "", err
+		return nil, "", withErrorContext("track.create", "repository.get_corner", err, map[string]any{"corner_id": string(cornerID)})
 	}
 	if corner == nil {
-		return nil, "", domain.ErrCornerNotInItinerary // Corner not found
+		return nil, "", withErrorContext("track.create", "validate_corner", domain.ErrCornerNotInItinerary, map[string]any{"corner_id": string(cornerID), "corner_found": false})
 	}
 
 	plainPIN, hashPIN, err := generateTrackPIN()
 	if err != nil {
-		return nil, "", err
+		return nil, "", withErrorContext("track.create", "domain.generate_pin", err, nil)
 	}
 	pinCiphertext, err := s.encryptPIN(ctx, plainPIN)
 	if err != nil {
-		return nil, "", err
+		return nil, "", withErrorContext("track.create", "protector.encrypt_pin", err, nil)
 	}
 
 	var track *domain.Track
 	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
 		existingTracks, err := s.tracks.ListByCorner(ctx, cornerID)
 		if err != nil {
-			return err
+			return withErrorContext("track.create", "repository.list_tracks", err, map[string]any{"corner_id": string(cornerID)})
 		}
 
 		nextTrackNo := 1
@@ -108,11 +112,14 @@ func (s *TrackService) CreateTrack(
 			CurrentVisitID: domain.None[domain.VisitID](),
 		})
 
-		return s.tracks.Save(ctx, track)
+		if err := s.tracks.Save(ctx, track); err != nil {
+			return withErrorContext("track.create", "repository.save_track", err, map[string]any{"track_id": string(track.ID())})
+		}
+		return nil
 	})
 
 	if err != nil {
-		s.recordAuditLog(ctx, "admin", ActionTrackCreate, "", false, map[string]any{"error": err.Error()})
+		s.recordAuditLog(ctx, "admin", ActionTrackCreate, "", false, errorAuditMetadata(err, nil))
 		return nil, "", err
 	}
 
@@ -127,28 +134,27 @@ func (s *TrackService) DeleteTrack(
 	ctx context.Context,
 	trackID domain.TrackID,
 ) (bool, error) {
+
 	now := s.nowFn()
 	track, err := s.tracks.Get(ctx, trackID)
 	if err != nil {
-		return false, err
+		return false, withErrorContext("track.delete", "repository.get_track", err, map[string]any{"track_id": string(trackID)})
 	}
 	if track == nil {
-		return false, domain.ErrTrackNotActive
+		return false, withErrorContext("track.delete", "validate_track", domain.ErrTrackNotActive, map[string]any{"track_id": string(trackID), "track_found": false})
 	}
 
 	var isLastTrack bool
 	var cornerCampID domain.CampID
 
 	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
-		// Event를 트리거하여 상태 변경
 		if _, err := track.Delete(now); err != nil {
-			return err
+			return withErrorContext("track.delete", "domain.delete", err, map[string]any{"track_id": string(trackID)})
 		}
 
-		// 마지막 트랙인지 여부 확인
 		allTracks, err := s.tracks.ListByCorner(ctx, track.CornerID())
 		if err != nil {
-			return err
+			return withErrorContext("track.delete", "repository.list_tracks", err, map[string]any{"corner_id": string(track.CornerID())})
 		}
 
 		activeCount := 0
@@ -159,33 +165,34 @@ func (s *TrackService) DeleteTrack(
 		}
 		isLastTrack = (activeCount == 0)
 
-		// 캠프 ID 확인을 위해 코너 정보 조회
 		corner, err := s.corners.Get(ctx, track.CornerID())
 		if err != nil {
-			return err
+			return withErrorContext("track.delete", "repository.get_corner", err, map[string]any{"corner_id": string(track.CornerID())})
 		}
 		if corner != nil {
 			cornerCampID = corner.CampID()
 		}
 
-		// 세션 일괄 Revoke
 		sessions, err := s.sessions.ListActiveByTrack(ctx, trackID)
 		if err != nil {
-			return err
+			return withErrorContext("track.delete", "repository.list_sessions", err, map[string]any{"track_id": string(trackID)})
 		}
 		for _, sess := range sessions {
 			if err := sess.Revoke(now); err == nil {
 				if err := s.sessions.Save(ctx, sess); err != nil {
-					return err
+					return withErrorContext("track.delete", "repository.save_session", err, map[string]any{"session_id": string(sess.ID())})
 				}
 			}
 		}
 
-		return s.tracks.Save(ctx, track)
+		if err := s.tracks.Save(ctx, track); err != nil {
+			return withErrorContext("track.delete", "repository.save_track", err, map[string]any{"track_id": string(trackID)})
+		}
+		return nil
 	})
 
 	if err != nil {
-		s.recordAuditLog(ctx, "admin", ActionTrackDelete, string(trackID), false, map[string]any{"error": err.Error()})
+		s.recordAuditLog(ctx, "admin", ActionTrackDelete, string(trackID), false, errorAuditMetadata(err, nil))
 		return false, err
 	}
 
@@ -204,58 +211,59 @@ func (s *TrackService) ReplaceTrack(
 	oldTrackID domain.TrackID,
 	newCornerID domain.CornerID,
 ) (*domain.Track, string, error) {
+
 	now := s.nowFn()
 	oldTrack, err := s.tracks.Get(ctx, oldTrackID)
 	if err != nil {
-		return nil, "", err
+		return nil, "", withErrorContext("track.replace", "repository.get_old_track", err, map[string]any{"old_track_id": string(oldTrackID)})
 	}
 	if oldTrack == nil {
-		return nil, "", domain.ErrTrackNotActive
+		return nil, "", withErrorContext("track.replace", "validate_old_track", domain.ErrTrackNotActive, map[string]any{"old_track_id": string(oldTrackID), "track_found": false})
 	}
 
 	newCorner, err := s.corners.Get(ctx, newCornerID)
 	if err != nil {
-		return nil, "", err
+		return nil, "", withErrorContext("track.replace", "repository.get_new_corner", err, map[string]any{"new_corner_id": string(newCornerID)})
 	}
 	if newCorner == nil {
-		return nil, "", domain.ErrCornerNotFound
+		return nil, "", withErrorContext("track.replace", "validate_new_corner", domain.ErrCornerNotFound, map[string]any{"new_corner_id": string(newCornerID), "corner_found": false})
 	}
 	oldCorner, err := s.corners.Get(ctx, oldTrack.CornerID())
 	if err != nil {
-		return nil, "", err
+		return nil, "", withErrorContext("track.replace", "repository.get_old_corner", err, map[string]any{"old_corner_id": string(oldTrack.CornerID())})
 	}
 	if oldCorner == nil {
-		return nil, "", domain.ErrCornerNotFound
+		return nil, "", withErrorContext("track.replace", "validate_old_corner", domain.ErrCornerNotFound, map[string]any{"old_corner_id": string(oldTrack.CornerID()), "corner_found": false})
 	}
 	if oldCorner.CampID() != newCorner.CampID() {
-		return nil, "", domain.ErrTrackCampMismatch
+		return nil, "", withErrorContext("track.replace", "validate_camp_match", domain.ErrTrackCampMismatch, map[string]any{
+			"old_camp_id": string(oldCorner.CampID()), "new_camp_id": string(newCorner.CampID()),
+		})
 	}
 
 	plainPIN, hashPIN, err := generateTrackPIN()
 	if err != nil {
-		return nil, "", err
+		return nil, "", withErrorContext("track.replace", "domain.generate_pin", err, nil)
 	}
 	pinCiphertext, err := s.encryptPIN(ctx, plainPIN)
 	if err != nil {
-		return nil, "", err
+		return nil, "", withErrorContext("track.replace", "protector.encrypt_pin", err, nil)
 	}
 
 	var newTrack *domain.Track
 
 	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
-		// 기존 트랙 삭제
 		if _, err := oldTrack.Delete(now); err != nil {
-			return err
+			return withErrorContext("track.replace", "domain.delete_old", err, map[string]any{"old_track_id": string(oldTrackID)})
 		}
 
 		if err := s.tracks.Save(ctx, oldTrack); err != nil {
-			return err
+			return withErrorContext("track.replace", "repository.save_old_track", err, map[string]any{"old_track_id": string(oldTrackID)})
 		}
 
-		// 신규 트랙 생성
 		existingTracks, err := s.tracks.ListByCorner(ctx, newCornerID)
 		if err != nil {
-			return err
+			return withErrorContext("track.replace", "repository.list_new_tracks", err, map[string]any{"new_corner_id": string(newCornerID)})
 		}
 
 		nextTrackNo := 1
@@ -277,18 +285,17 @@ func (s *TrackService) ReplaceTrack(
 		})
 
 		if err := s.tracks.Save(ctx, newTrack); err != nil {
-			return err
+			return withErrorContext("track.replace", "repository.save_new_track", err, map[string]any{"new_track_id": string(newTrack.ID())})
 		}
 
-		// 기존 트랙 세션에 마이그레이션 타겟 설정 (Revoke 하지 않음)
 		sessions, err := s.sessions.ListActiveByTrack(ctx, oldTrackID)
 		if err != nil {
-			return err
+			return withErrorContext("track.replace", "repository.list_sessions", err, map[string]any{"old_track_id": string(oldTrackID)})
 		}
 		for _, sess := range sessions {
 			sess.SetMigrationTarget(newTrackID)
 			if err := s.sessions.Save(ctx, sess); err != nil {
-				return err
+				return withErrorContext("track.replace", "repository.save_session", err, map[string]any{"session_id": string(sess.ID())})
 			}
 		}
 
@@ -296,7 +303,7 @@ func (s *TrackService) ReplaceTrack(
 	})
 
 	if err != nil {
-		s.recordAuditLog(ctx, "admin", ActionTrackReplace, string(oldTrackID), false, map[string]any{"error": err.Error()})
+		s.recordAuditLog(ctx, "admin", ActionTrackReplace, string(oldTrackID), false, errorAuditMetadata(err, nil))
 		return nil, "", err
 	}
 
@@ -312,59 +319,65 @@ func (s *TrackService) RegeneratePIN(
 	ctx context.Context,
 	trackID domain.TrackID,
 ) (*domain.Track, string, error) {
+
 	now := s.nowFn()
 	track, err := s.tracks.Get(ctx, trackID)
 	if err != nil {
-		return nil, "", err
+		return nil, "", withErrorContext("track.regenerate_pin", "repository.get_track", err, map[string]any{"track_id": string(trackID)})
 	}
 	if track == nil || track.Status() != domain.TrackActive {
-		return nil, "", domain.ErrTrackNotActive
+		var status string
+		if track != nil {
+			status = string(track.Status())
+		}
+		return nil, "", withErrorContext("track.regenerate_pin", "validate_track", domain.ErrTrackNotActive, map[string]any{"track_id": string(trackID), "track_found": track != nil, "track_status": status})
 	}
 
 	plainPIN, hashPIN, err := generateTrackPIN()
 	if err != nil {
-		return nil, "", err
+		return nil, "", withErrorContext("track.regenerate_pin", "domain.generate_pin", err, nil)
 	}
 	pinCiphertext, err := s.encryptPIN(ctx, plainPIN)
 	if err != nil {
-		return nil, "", err
+		return nil, "", withErrorContext("track.regenerate_pin", "protector.encrypt_pin", err, nil)
 	}
 
 	var cornerCampID domain.CampID
 
 	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
 		if _, err := track.RegeneratePIN(hashPIN, now); err != nil {
-			return err
+			return withErrorContext("track.regenerate_pin", "domain.regenerate_pin", err, map[string]any{"track_id": string(trackID)})
 		}
 		track.SetPINCiphertext(pinCiphertext)
 
-		// 코너 정보 조회를 통해 캠프 ID 획득
 		corner, err := s.corners.Get(ctx, track.CornerID())
 		if err != nil {
-			return err
+			return withErrorContext("track.regenerate_pin", "repository.get_corner", err, map[string]any{"corner_id": string(track.CornerID())})
 		}
 		if corner != nil {
 			cornerCampID = corner.CampID()
 		}
 
-		// 세션 일괄 Revoke
 		sessions, err := s.sessions.ListActiveByTrack(ctx, trackID)
 		if err != nil {
-			return err
+			return withErrorContext("track.regenerate_pin", "repository.list_sessions", err, map[string]any{"track_id": string(trackID)})
 		}
 		for _, sess := range sessions {
 			if err := sess.Revoke(now); err == nil {
 				if err := s.sessions.Save(ctx, sess); err != nil {
-					return err
+					return withErrorContext("track.regenerate_pin", "repository.save_session", err, map[string]any{"session_id": string(sess.ID())})
 				}
 			}
 		}
 
-		return s.tracks.Save(ctx, track)
+		if err := s.tracks.Save(ctx, track); err != nil {
+			return withErrorContext("track.regenerate_pin", "repository.save_track", err, map[string]any{"track_id": string(trackID)})
+		}
+		return nil
 	})
 
 	if err != nil {
-		s.recordAuditLog(ctx, "admin", ActionPinRegenerate, string(trackID), false, map[string]any{"error": err.Error()})
+		s.recordAuditLog(ctx, "admin", ActionPinRegenerate, string(trackID), false, errorAuditMetadata(err, nil))
 		return nil, "", err
 	}
 
@@ -386,36 +399,50 @@ func (s *TrackService) encryptPIN(ctx context.Context, pin string) (string, erro
 
 // ListTracksByCamp
 func (s *TrackService) ListTracksByCamp(ctx context.Context, campID domain.CampID) ([]*domain.Track, error) {
-	return s.tracks.ListByCamp(ctx, campID)
+	tracks, err := s.tracks.ListByCamp(ctx, campID)
+	if err != nil {
+		return nil, withErrorContext("track.list_by_camp", "repository.list_tracks", err, map[string]any{"camp_id": string(campID)})
+	}
+	return tracks, nil
 }
 
 func (s *TrackService) ExportTrackPIN(ctx context.Context, trackID domain.TrackID) (*domain.Track, string, error) {
 	track, err := s.tracks.Get(ctx, trackID)
 	if err != nil {
-		return nil, "", err
+		return nil, "", withErrorContext("track.export_pin", "repository.get_track", err, map[string]any{"track_id": string(trackID)})
 	}
 	if track == nil || track.Status() != domain.TrackActive {
-		return nil, "", domain.ErrTrackNotActive
+		var status string
+		if track != nil {
+			status = string(track.Status())
+		}
+		return nil, "", withErrorContext("track.export_pin", "validate_track", domain.ErrTrackNotActive, map[string]any{"track_id": string(trackID), "track_found": track != nil, "track_status": status})
 	}
 	if track.PINCiphertext() == "" || s.pinProtector == nil {
-		return nil, "", fmt.Errorf("track PIN must be regenerated before export")
+		return nil, "", withErrorContext("track.export_pin", "validate_pin_export", fmt.Errorf("track PIN must be regenerated before export"), map[string]any{"track_id": string(trackID), "pin_ciphertext_present": track.PINCiphertext() != "", "protector_configured": s.pinProtector != nil})
 	}
 	pin, err := s.pinProtector.Decrypt(ctx, track.PINCiphertext())
-	return track, pin, err
+	if err != nil {
+		return nil, "", withErrorContext("track.export_pin", "protector.decrypt_pin", err, map[string]any{"track_id": string(trackID)})
+	}
+	return track, pin, nil
 }
 
 func (s *TrackService) ExportTrackPINs(ctx context.Context, campID domain.CampID) ([]*domain.Track, []string, error) {
 	tracks, err := s.tracks.ListActiveByCamp(ctx, campID)
-	if err != nil || s.pinProtector == nil {
-		return nil, nil, fmt.Errorf("track PIN export unavailable: %w", err)
+	if err != nil {
+		return nil, nil, withErrorContext("track.export_pins", "repository.list_active_tracks", err, map[string]any{"camp_id": string(campID)})
+	}
+	if s.pinProtector == nil {
+		return nil, nil, withErrorContext("track.export_pins", "validate_pin_protector", fmt.Errorf("track PIN export unavailable"), map[string]any{"camp_id": string(campID), "protector_configured": false})
 	}
 	pins := make([]string, len(tracks))
 	for i, track := range tracks {
 		if track.PINCiphertext() == "" {
-			return nil, nil, fmt.Errorf("track PIN must be regenerated before export")
+			return nil, nil, withErrorContext("track.export_pins", "validate_pin_export", fmt.Errorf("track PIN must be regenerated before export"), map[string]any{"track_id": string(track.ID()), "pin_ciphertext_present": false})
 		}
 		if pins[i], err = s.pinProtector.Decrypt(ctx, track.PINCiphertext()); err != nil {
-			return nil, nil, err
+			return nil, nil, withErrorContext("track.export_pins", "protector.decrypt_pin", err, map[string]any{"track_id": string(track.ID())})
 		}
 	}
 	s.recordAuditLog(ctx, "admin", ActionTrackPinExport, string(campID), true, map[string]any{"count": len(tracks)})

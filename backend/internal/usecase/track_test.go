@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -79,7 +80,7 @@ func TestTrackService_CreateTrack(t *testing.T) {
 		_, _, err := s.CreateTrack(context.Background(), "camp-1", "corner-1")
 
 		// Assert
-		if err != domain.ErrCampInvalidTransition {
+		if !errors.Is(err, domain.ErrCampInvalidTransition) {
 			t.Errorf("expected ErrCampInvalidTransition, got %v", err)
 		}
 	})
@@ -171,7 +172,7 @@ func TestTrackService_DeleteTrack(t *testing.T) {
 		_, err := s.DeleteTrack(context.Background(), "track-1")
 
 		// Assert
-		if err != domain.ErrTrackDeleteBlocked {
+		if !errors.Is(err, domain.ErrTrackDeleteBlocked) {
 			t.Errorf("expected ErrTrackDeleteBlocked, got %v", err)
 		}
 	})
@@ -227,7 +228,7 @@ func TestReplaceTrackShoudRejectDifferentCampBeforeMutation(t *testing.T) {
 	_, _, err := service.ReplaceTrack(context.Background(), "track-old", "corner-new")
 
 	// Assert
-	if err != domain.ErrTrackCampMismatch {
+	if !errors.Is(err, domain.ErrTrackCampMismatch) {
 		t.Fatalf("expected ErrTrackCampMismatch, got %v", err)
 	}
 	if original.Status() != domain.TrackActive || len(broadcaster.Broadcasts) != 0 {
@@ -249,7 +250,7 @@ func TestReplaceTrackShoudPreserveBusyTrackWhenRejected(t *testing.T) {
 	_, _, err := service.ReplaceTrack(context.Background(), "track-old", "corner-new")
 
 	// Assert
-	if err != domain.ErrTrackDeleteBlocked {
+	if !errors.Is(err, domain.ErrTrackDeleteBlocked) {
 		t.Fatalf("expected ErrTrackDeleteBlocked, got %v", err)
 	}
 	if original.Status() != domain.TrackActive {
