@@ -130,7 +130,7 @@ void main() {
     final container = _buildContainer(
       _loginError(
         statusCode: 429,
-        code: 'PIN_LOCKED',
+        code: 'DEVICE_LOCKED',
         details: {'retryAfterSeconds': 120},
       ),
     );
@@ -148,7 +148,7 @@ void main() {
   test('ShouldMapDeviceNotTrustedErrorCode', () async {
     // arrange
     final container = _buildContainer(
-      _loginError(statusCode: 403, code: 'DEVICE_NOT_TRUSTED'),
+      _loginError(statusCode: 403, code: 'DEVICE_NOT_APPROVED'),
     );
     addTearDown(container.dispose);
 
@@ -165,7 +165,7 @@ void main() {
       // arrange
       final deviceTrust = _RecordingDeviceTrust();
       final container = _buildContainer(
-        _loginError(statusCode: 403, code: 'DEVICE_NOT_TRUSTED'),
+        _loginError(statusCode: 403, code: 'DEVICE_NOT_APPROVED'),
         deviceTrust: deviceTrust,
       );
       addTearDown(container.dispose);
@@ -181,7 +181,7 @@ void main() {
   test('ShouldMapCampNotActiveErrorCode', () async {
     // arrange
     final container = _buildContainer(
-      _loginError(statusCode: 403, code: 'CAMP_NOT_ACTIVE'),
+      _loginError(statusCode: 403, code: 'CAMP_NOT_AVAILABLE'),
     );
     addTearDown(container.dispose);
 
