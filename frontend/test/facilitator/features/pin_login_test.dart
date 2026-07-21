@@ -60,15 +60,15 @@ class _FixedPinLoginError extends PinLoginError {
 }
 
 class _RecordingDeviceTrust extends DeviceTrust {
-  bool clearRegistrationCalled = false;
+  bool recoveryCalled = false;
 
   @override
   Future<DeviceTrustStatus> build() async => DeviceTrustStatus.approved;
 
   @override
-  Future<void> clearRegistration() async {
-    clearRegistrationCalled = true;
-    state = const AsyncData(DeviceTrustStatus.none);
+  Future<DeviceTrustRecovery> recoverFromTrackUnauthorized() async {
+    recoveryCalled = true;
+    return DeviceTrustRecovery.cleared;
   }
 }
 
@@ -159,21 +159,24 @@ void main() {
     expect(container.read(pinLoginErrorProvider), isA<DeviceNotTrustedYet>());
   });
 
-  test('ShouldClearRegistrationWhenDeviceNotTrustedErrorCode', () async {
-    // arrange
-    final deviceTrust = _RecordingDeviceTrust();
-    final container = _buildContainer(
-      _loginError(statusCode: 403, code: 'DEVICE_NOT_TRUSTED'),
-      deviceTrust: deviceTrust,
-    );
-    addTearDown(container.dispose);
+  test(
+    'ShouldRecoverRegistrationStatusWhenDeviceNotTrustedErrorCode',
+    () async {
+      // arrange
+      final deviceTrust = _RecordingDeviceTrust();
+      final container = _buildContainer(
+        _loginError(statusCode: 403, code: 'DEVICE_NOT_TRUSTED'),
+        deviceTrust: deviceTrust,
+      );
+      addTearDown(container.dispose);
 
-    // act
-    await container.read(pinLoginErrorProvider.notifier).submit('000000');
+      // act
+      await container.read(pinLoginErrorProvider.notifier).submit('000000');
 
-    // assert
-    expect(deviceTrust.clearRegistrationCalled, isTrue);
-  });
+      // assert
+      expect(deviceTrust.recoveryCalled, isTrue);
+    },
+  );
 
   test('ShouldMapCampNotActiveErrorCode', () async {
     // arrange

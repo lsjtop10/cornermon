@@ -30,6 +30,7 @@ typedef DeviceRegistrationCreatedStatus =
     DeviceRegistrationCreatedResponseStatusEnum;
 typedef DeviceStatus = DeviceStatusResponse;
 typedef DeviceStatusStatus = DeviceStatusResponseStatusEnum;
+typedef DeviceStatusCampStatus = DeviceStatusResponseCampStatusEnum;
 typedef AdminSession = AdminSessionResponse;
 typedef FacilitatorSession = FacilitatorSessionResponse;
 typedef AuditLog = AuditLogResponse;

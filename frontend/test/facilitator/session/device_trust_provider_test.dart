@@ -61,9 +61,13 @@ String _serializedAuthenticatedSession() => jsonEncode(
 /// GET /device-registrations/me — 호출할 때마다 리스트의 다음 status를 반환해
 /// 폴링 도중 발생하는 상태 전이를 흉내낸다.
 class _FakeAuthDeviceTrustApi extends AAuthDeviceTrustApi {
-  _FakeAuthDeviceTrustApi(this._responses) : super(Dio(), standardSerializers);
+  _FakeAuthDeviceTrustApi(
+    this._responses, {
+    this.campStatus = DeviceStatusResponseCampStatusEnum.ACTIVE,
+  }) : super(Dio(), standardSerializers);
 
   final List<DeviceStatusResponseStatusEnum> _responses;
+  final DeviceStatusResponseCampStatusEnum campStatus;
   int callCount = 0;
   String? lastDeviceToken;
 
@@ -84,7 +88,11 @@ class _FakeAuthDeviceTrustApi extends AAuthDeviceTrustApi {
     return Response<DeviceStatusResponse>(
       requestOptions: RequestOptions(path: path),
       statusCode: 200,
-      data: DeviceStatusResponse((b) => b..status = _responses[index]),
+      data: DeviceStatusResponse(
+        (b) => b
+          ..status = _responses[index]
+          ..campStatus = campStatus,
+      ),
     );
   }
 }
@@ -226,4 +234,69 @@ void main() {
     expect(store._values['device_trust_status'], isNull);
     expect(store._values['device_trust_registration_id'], isNull);
   });
+
+  test(
+    'ShouldClearRegistrationWhenUnauthorizedRecoveryFindsRevokedEndedCamp',
+    () async {
+      // arrange
+      final store = _FakePendingTokenStore()
+        .._values['device_trust_status'] = 'approved';
+      final api = _FakeAuthDeviceTrustApi([
+        DeviceStatusResponseStatusEnum.REVOKED,
+      ], campStatus: DeviceStatusResponseCampStatusEnum.ENDED);
+      final container = ProviderContainer(
+        overrides: [
+          secureTokenStoreProvider.overrideWithValue(store),
+          authDeviceTrustApiProvider.overrideWithValue(api),
+        ],
+      );
+      addTearDown(container.dispose);
+      container.listen(deviceTrustProvider, (_, _) {});
+      await Future<void>.delayed(Duration.zero);
+
+      // act
+      final result = await container
+          .read(deviceTrustProvider.notifier)
+          .recoverFromTrackUnauthorized();
+
+      // assert
+      expect(result, DeviceTrustRecovery.cleared);
+      expect(container.read(deviceTrustProvider).value, DeviceTrustStatus.none);
+      expect(store._values['device_trust_token'], isNull);
+    },
+  );
+
+  test(
+    'ShouldKeepRegistrationWhenUnauthorizedRecoveryFindsApprovedActiveCamp',
+    () async {
+      // arrange
+      final store = _FakePendingTokenStore()
+        .._values['device_trust_status'] = 'approved';
+      final api = _FakeAuthDeviceTrustApi([
+        DeviceStatusResponseStatusEnum.APPROVED,
+      ], campStatus: DeviceStatusResponseCampStatusEnum.ACTIVE);
+      final container = ProviderContainer(
+        overrides: [
+          secureTokenStoreProvider.overrideWithValue(store),
+          authDeviceTrustApiProvider.overrideWithValue(api),
+        ],
+      );
+      addTearDown(container.dispose);
+      container.listen(deviceTrustProvider, (_, _) {});
+      await Future<void>.delayed(Duration.zero);
+
+      // act
+      final result = await container
+          .read(deviceTrustProvider.notifier)
+          .recoverFromTrackUnauthorized();
+
+      // assert
+      expect(result, DeviceTrustRecovery.retained);
+      expect(
+        container.read(deviceTrustProvider).value,
+        DeviceTrustStatus.approved,
+      );
+      expect(store._values['device_trust_token'], 'fake-device-token');
+    },
+  );
 }

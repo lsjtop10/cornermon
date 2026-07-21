@@ -48,7 +48,9 @@ class PinLoginError extends _$PinLoginError {
       state = null;
     } on DioException catch (e) {
       if (_isDeviceNotTrusted(e)) {
-        await ref.read(deviceTrustProvider.notifier).clearRegistration();
+        await ref
+            .read(deviceTrustProvider.notifier)
+            .recoverFromTrackUnauthorized();
       }
       state = _mapError(e);
     }

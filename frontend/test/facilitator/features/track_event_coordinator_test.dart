@@ -147,6 +147,22 @@ void main() {
     },
   );
 
+  test('ShouldInvalidateCurrentVisitWhenCampUpdatedScopeIsCamp', () async {
+    // arrange
+    final baseline = currentVisitBuildCount;
+    final event = SseEvent(
+      (b) => b
+        ..event = SseEventEventEnum.campUpdated
+        ..scope.kind = SseScopeKind.camp,
+    );
+
+    // act
+    await pushAndSettle(event);
+
+    // assert
+    expect(currentVisitBuildCount, greaterThan(baseline));
+  });
+
   test('ShouldInvalidateTrackCornerWhenCornersUpdatedScopeIsCamp', () async {
     // arrange
     final baseline = trackCornerBuildCount;

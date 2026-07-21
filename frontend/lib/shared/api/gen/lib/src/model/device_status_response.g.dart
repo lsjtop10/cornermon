@@ -8,6 +8,38 @@ part of 'device_status_response.dart';
 // BuiltValueGenerator
 // **************************************************************************
 
+const DeviceStatusResponseCampStatusEnum
+    _$deviceStatusResponseCampStatusEnum_PENDING =
+    const DeviceStatusResponseCampStatusEnum._('PENDING');
+const DeviceStatusResponseCampStatusEnum
+    _$deviceStatusResponseCampStatusEnum_ACTIVE =
+    const DeviceStatusResponseCampStatusEnum._('ACTIVE');
+const DeviceStatusResponseCampStatusEnum
+    _$deviceStatusResponseCampStatusEnum_ENDED =
+    const DeviceStatusResponseCampStatusEnum._('ENDED');
+
+DeviceStatusResponseCampStatusEnum _$deviceStatusResponseCampStatusEnumValueOf(
+    String name) {
+  switch (name) {
+    case 'PENDING':
+      return _$deviceStatusResponseCampStatusEnum_PENDING;
+    case 'ACTIVE':
+      return _$deviceStatusResponseCampStatusEnum_ACTIVE;
+    case 'ENDED':
+      return _$deviceStatusResponseCampStatusEnum_ENDED;
+    default:
+      throw ArgumentError(name);
+  }
+}
+
+final BuiltSet<DeviceStatusResponseCampStatusEnum>
+    _$deviceStatusResponseCampStatusEnumValues = BuiltSet<
+        DeviceStatusResponseCampStatusEnum>(const <DeviceStatusResponseCampStatusEnum>[
+  _$deviceStatusResponseCampStatusEnum_PENDING,
+  _$deviceStatusResponseCampStatusEnum_ACTIVE,
+  _$deviceStatusResponseCampStatusEnum_ENDED,
+]);
+
 const DeviceStatusResponseStatusEnum _$deviceStatusResponseStatusEnum_PENDING =
     const DeviceStatusResponseStatusEnum._('PENDING');
 const DeviceStatusResponseStatusEnum _$deviceStatusResponseStatusEnum_APPROVED =
@@ -45,6 +77,42 @@ final BuiltSet<DeviceStatusResponseStatusEnum>
 Serializer<DeviceStatusResponseStatusEnum>
     _$deviceStatusResponseStatusEnumSerializer =
     _$DeviceStatusResponseStatusEnumSerializer();
+
+Serializer<DeviceStatusResponseCampStatusEnum>
+    _$deviceStatusResponseCampStatusEnumSerializer =
+    _$DeviceStatusResponseCampStatusEnumSerializer();
+
+class _$DeviceStatusResponseCampStatusEnumSerializer
+    implements PrimitiveSerializer<DeviceStatusResponseCampStatusEnum> {
+  static const Map<String, Object> _toWire = const <String, Object>{
+    'PENDING': 'PENDING',
+    'ACTIVE': 'ACTIVE',
+    'ENDED': 'ENDED',
+  };
+  static const Map<Object, String> _fromWire = const <Object, String>{
+    'PENDING': 'PENDING',
+    'ACTIVE': 'ACTIVE',
+    'ENDED': 'ENDED',
+  };
+
+  @override
+  final Iterable<Type> types = const <Type>[DeviceStatusResponseCampStatusEnum];
+  @override
+  final String wireName = 'DeviceStatusResponseCampStatusEnum';
+
+  @override
+  Object serialize(
+          Serializers serializers, DeviceStatusResponseCampStatusEnum object,
+          {FullType specifiedType = FullType.unspecified}) =>
+      _toWire[object.name] ?? object.name;
+
+  @override
+  DeviceStatusResponseCampStatusEnum deserialize(
+          Serializers serializers, Object serialized,
+          {FullType specifiedType = FullType.unspecified}) =>
+      DeviceStatusResponseCampStatusEnum.valueOf(
+          _fromWire[serialized] ?? (serialized is String ? serialized : ''));
+}
 
 class _$DeviceStatusResponseStatusEnumSerializer
     implements PrimitiveSerializer<DeviceStatusResponseStatusEnum> {
@@ -84,6 +152,8 @@ class _$DeviceStatusResponse extends DeviceStatusResponse {
   @override
   final String? campId;
   @override
+  final DeviceStatusResponseCampStatusEnum? campStatus;
+  @override
   final String? id;
   @override
   final DeviceStatusResponseStatusEnum? status;
@@ -92,7 +162,8 @@ class _$DeviceStatusResponse extends DeviceStatusResponse {
           [void Function(DeviceStatusResponseBuilder)? updates]) =>
       (DeviceStatusResponseBuilder()..update(updates))._build();
 
-  _$DeviceStatusResponse._({this.campId, this.id, this.status}) : super._();
+  _$DeviceStatusResponse._({this.campId, this.campStatus, this.id, this.status})
+      : super._();
   @override
   DeviceStatusResponse rebuild(
           void Function(DeviceStatusResponseBuilder) updates) =>
@@ -107,6 +178,7 @@ class _$DeviceStatusResponse extends DeviceStatusResponse {
     if (identical(other, this)) return true;
     return other is DeviceStatusResponse &&
         campId == other.campId &&
+        campStatus == other.campStatus &&
         id == other.id &&
         status == other.status;
   }
@@ -115,6 +187,7 @@ class _$DeviceStatusResponse extends DeviceStatusResponse {
   int get hashCode {
     var _$hash = 0;
     _$hash = $jc(_$hash, campId.hashCode);
+    _$hash = $jc(_$hash, campStatus.hashCode);
     _$hash = $jc(_$hash, id.hashCode);
     _$hash = $jc(_$hash, status.hashCode);
     _$hash = $jf(_$hash);
@@ -125,6 +198,7 @@ class _$DeviceStatusResponse extends DeviceStatusResponse {
   String toString() {
     return (newBuiltValueToStringHelper(r'DeviceStatusResponse')
           ..add('campId', campId)
+          ..add('campStatus', campStatus)
           ..add('id', id)
           ..add('status', status))
         .toString();
@@ -138,6 +212,11 @@ class DeviceStatusResponseBuilder
   String? _campId;
   String? get campId => _$this._campId;
   set campId(String? campId) => _$this._campId = campId;
+
+  DeviceStatusResponseCampStatusEnum? _campStatus;
+  DeviceStatusResponseCampStatusEnum? get campStatus => _$this._campStatus;
+  set campStatus(DeviceStatusResponseCampStatusEnum? campStatus) =>
+      _$this._campStatus = campStatus;
 
   String? _id;
   String? get id => _$this._id;
@@ -155,6 +234,7 @@ class DeviceStatusResponseBuilder
     final $v = _$v;
     if ($v != null) {
       _campId = $v.campId;
+      _campStatus = $v.campStatus;
       _id = $v.id;
       _status = $v.status;
       _$v = null;
@@ -179,6 +259,7 @@ class DeviceStatusResponseBuilder
     final _$result = _$v ??
         _$DeviceStatusResponse._(
           campId: campId,
+          campStatus: campStatus,
           id: id,
           status: status,
         );

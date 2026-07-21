@@ -13,13 +13,19 @@ part 'device_status_response.g.dart';
 /// DeviceStatusResponse
 ///
 /// Properties:
-/// * [campId] 
-/// * [id] 
-/// * [status] 
+/// * [campId]
+/// * [campStatus]
+/// * [id]
+/// * [status]
 @BuiltValue()
-abstract class DeviceStatusResponse implements Built<DeviceStatusResponse, DeviceStatusResponseBuilder> {
+abstract class DeviceStatusResponse
+    implements Built<DeviceStatusResponse, DeviceStatusResponseBuilder> {
   @BuiltValueField(wireName: r'campId')
   String? get campId;
+
+  @BuiltValueField(wireName: r'campStatus')
+  DeviceStatusResponseCampStatusEnum? get campStatus;
+  // enum campStatusEnum {  PENDING,  ACTIVE,  ENDED,  };
 
   @BuiltValueField(wireName: r'id')
   String? get id;
@@ -30,18 +36,24 @@ abstract class DeviceStatusResponse implements Built<DeviceStatusResponse, Devic
 
   DeviceStatusResponse._();
 
-  factory DeviceStatusResponse([void updates(DeviceStatusResponseBuilder b)]) = _$DeviceStatusResponse;
+  factory DeviceStatusResponse([void updates(DeviceStatusResponseBuilder b)]) =
+      _$DeviceStatusResponse;
 
   @BuiltValueHook(initializeBuilder: true)
   static void _defaults(DeviceStatusResponseBuilder b) => b;
 
   @BuiltValueSerializer(custom: true)
-  static Serializer<DeviceStatusResponse> get serializer => _$DeviceStatusResponseSerializer();
+  static Serializer<DeviceStatusResponse> get serializer =>
+      _$DeviceStatusResponseSerializer();
 }
 
-class _$DeviceStatusResponseSerializer implements PrimitiveSerializer<DeviceStatusResponse> {
+class _$DeviceStatusResponseSerializer
+    implements PrimitiveSerializer<DeviceStatusResponse> {
   @override
-  final Iterable<Type> types = const [DeviceStatusResponse, _$DeviceStatusResponse];
+  final Iterable<Type> types = const [
+    DeviceStatusResponse,
+    _$DeviceStatusResponse
+  ];
 
   @override
   final String wireName = r'DeviceStatusResponse';
@@ -56,6 +68,13 @@ class _$DeviceStatusResponseSerializer implements PrimitiveSerializer<DeviceStat
       yield serializers.serialize(
         object.campId,
         specifiedType: const FullType(String),
+      );
+    }
+    if (object.campStatus != null) {
+      yield r'campStatus';
+      yield serializers.serialize(
+        object.campStatus,
+        specifiedType: const FullType(DeviceStatusResponseCampStatusEnum),
       );
     }
     if (object.id != null) {
@@ -80,7 +99,9 @@ class _$DeviceStatusResponseSerializer implements PrimitiveSerializer<DeviceStat
     DeviceStatusResponse object, {
     FullType specifiedType = FullType.unspecified,
   }) {
-    return _serializeProperties(serializers, object, specifiedType: specifiedType).toList();
+    return _serializeProperties(serializers, object,
+            specifiedType: specifiedType)
+        .toList();
   }
 
   void _deserializeProperties(
@@ -101,6 +122,13 @@ class _$DeviceStatusResponseSerializer implements PrimitiveSerializer<DeviceStat
             specifiedType: const FullType(String),
           ) as String;
           result.campId = valueDes;
+          break;
+        case r'campStatus':
+          final valueDes = serializers.deserialize(
+            value,
+            specifiedType: const FullType(DeviceStatusResponseCampStatusEnum),
+          ) as DeviceStatusResponseCampStatusEnum;
+          result.campStatus = valueDes;
           break;
         case r'id':
           final valueDes = serializers.deserialize(
@@ -145,21 +173,49 @@ class _$DeviceStatusResponseSerializer implements PrimitiveSerializer<DeviceStat
   }
 }
 
-class DeviceStatusResponseStatusEnum extends EnumClass {
-
+class DeviceStatusResponseCampStatusEnum extends EnumClass {
   @BuiltValueEnumConst(wireName: r'PENDING')
-  static const DeviceStatusResponseStatusEnum PENDING = _$deviceStatusResponseStatusEnum_PENDING;
+  static const DeviceStatusResponseCampStatusEnum PENDING =
+      _$deviceStatusResponseCampStatusEnum_PENDING;
+  @BuiltValueEnumConst(wireName: r'ACTIVE')
+  static const DeviceStatusResponseCampStatusEnum ACTIVE =
+      _$deviceStatusResponseCampStatusEnum_ACTIVE;
+  @BuiltValueEnumConst(wireName: r'ENDED')
+  static const DeviceStatusResponseCampStatusEnum ENDED =
+      _$deviceStatusResponseCampStatusEnum_ENDED;
+
+  static Serializer<DeviceStatusResponseCampStatusEnum> get serializer =>
+      _$deviceStatusResponseCampStatusEnumSerializer;
+
+  const DeviceStatusResponseCampStatusEnum._(String name) : super(name);
+
+  static BuiltSet<DeviceStatusResponseCampStatusEnum> get values =>
+      _$deviceStatusResponseCampStatusEnumValues;
+  static DeviceStatusResponseCampStatusEnum valueOf(String name) =>
+      _$deviceStatusResponseCampStatusEnumValueOf(name);
+}
+
+class DeviceStatusResponseStatusEnum extends EnumClass {
+  @BuiltValueEnumConst(wireName: r'PENDING')
+  static const DeviceStatusResponseStatusEnum PENDING =
+      _$deviceStatusResponseStatusEnum_PENDING;
   @BuiltValueEnumConst(wireName: r'APPROVED')
-  static const DeviceStatusResponseStatusEnum APPROVED = _$deviceStatusResponseStatusEnum_APPROVED;
+  static const DeviceStatusResponseStatusEnum APPROVED =
+      _$deviceStatusResponseStatusEnum_APPROVED;
   @BuiltValueEnumConst(wireName: r'REJECTED')
-  static const DeviceStatusResponseStatusEnum REJECTED = _$deviceStatusResponseStatusEnum_REJECTED;
+  static const DeviceStatusResponseStatusEnum REJECTED =
+      _$deviceStatusResponseStatusEnum_REJECTED;
   @BuiltValueEnumConst(wireName: r'REVOKED')
-  static const DeviceStatusResponseStatusEnum REVOKED = _$deviceStatusResponseStatusEnum_REVOKED;
+  static const DeviceStatusResponseStatusEnum REVOKED =
+      _$deviceStatusResponseStatusEnum_REVOKED;
 
-  static Serializer<DeviceStatusResponseStatusEnum> get serializer => _$deviceStatusResponseStatusEnumSerializer;
+  static Serializer<DeviceStatusResponseStatusEnum> get serializer =>
+      _$deviceStatusResponseStatusEnumSerializer;
 
-  const DeviceStatusResponseStatusEnum._(String name): super(name);
+  const DeviceStatusResponseStatusEnum._(String name) : super(name);
 
-  static BuiltSet<DeviceStatusResponseStatusEnum> get values => _$deviceStatusResponseStatusEnumValues;
-  static DeviceStatusResponseStatusEnum valueOf(String name) => _$deviceStatusResponseStatusEnumValueOf(name);
+  static BuiltSet<DeviceStatusResponseStatusEnum> get values =>
+      _$deviceStatusResponseStatusEnumValues;
+  static DeviceStatusResponseStatusEnum valueOf(String name) =>
+      _$deviceStatusResponseStatusEnumValueOf(name);
 }
