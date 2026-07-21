@@ -1,6 +1,7 @@
 package web
 
 import (
+	"errors"
 	"net/http"
 	"time"
 
@@ -80,7 +81,7 @@ func (h *GroupHandler) ListGroups(c echo.Context) error {
 // @Param        trackId path string true "트랙 ID"
 // @Success      200 {array} GroupResponse
 // @Failure      401 {object} ErrorResponse
-// @Failure      403 {object} ErrorResponse "세션 트랙과 요청 트랙 불일치"
+// @Failure      403 {object} ErrorResponse "TRACK_SCOPE_FORBIDDEN: 세션 트랙과 요청 트랙이 불일치"
 // @Failure      404 {object} ErrorResponse "트랙 또는 코너 없음"
 // @Router       /tracks/{trackId}/groups [get]
 func (h *GroupHandler) ListGroupsByTrack(c echo.Context) error {
@@ -91,12 +92,12 @@ func (h *GroupHandler) ListGroupsByTrack(c echo.Context) error {
 
 	trackID := domain.TrackID(c.Param("trackId"))
 	if session.TrackID() != trackID {
-		return domain.ErrTrackScopeForbidden
+		return groupHTTPError(domain.ErrTrackScopeForbidden)
 	}
 
 	groups, err := h.groupUC.ListGroupsByTrack(c.Request().Context(), trackID)
 	if err != nil {
-		return err
+		return groupHTTPError(err)
 	}
 	res := make([]GroupResponse, len(groups))
 	for i, group := range groups {
@@ -117,7 +118,7 @@ func (h *GroupHandler) GetGroup(c echo.Context) error {
 	id := c.Param("id")
 	g, err := h.groupUC.RetrieveGroupRotationSchedule(c.Request().Context(), domain.GroupID(id))
 	if err != nil {
-		return err
+		return groupHTTPError(err)
 	}
 	if g == nil {
 		return echo.ErrNotFound
@@ -137,7 +138,7 @@ func (h *GroupHandler) ListGroupVisits(c echo.Context) error {
 	id := domain.GroupID(c.Param("id"))
 	details, err := h.groupUC.ListGroupVisitDetails(c.Request().Context(), id)
 	if err != nil {
-		return err
+		return groupHTTPError(err)
 	}
 
 	res := make([]VisitSummaryResponse, len(details))
@@ -175,4 +176,17 @@ func (h *GroupHandler) ListGroupVisits(c echo.Context) error {
 		}
 	}
 	return c.JSON(http.StatusOK, res)
+}
+
+func groupHTTPError(err error) error {
+	switch {
+	case errors.Is(err, domain.ErrTrackScopeForbidden):
+		return echo.NewHTTPError(http.StatusForbidden, ErrorResponse{Code: "TRACK_SCOPE_FORBIDDEN", Message: "track session cannot access the requested track"}).SetInternal(err)
+	case errors.Is(err, domain.ErrTrackNotFound):
+		return echo.NewHTTPError(http.StatusNotFound, ErrorResponse{Code: "TRACK_NOT_FOUND", Message: "track not found"}).SetInternal(err)
+	case errors.Is(err, domain.ErrCornerNotFound), errors.Is(err, domain.ErrCornerNotInItinerary):
+		return echo.NewHTTPError(http.StatusNotFound, ErrorResponse{Code: "GROUP_NOT_FOUND", Message: "group or related corner not found"}).SetInternal(err)
+	default:
+		return err
+	}
 }

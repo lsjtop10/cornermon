@@ -129,8 +129,9 @@ func TestListDirectMessagesShoudRejectRequestWhenSessionTrackDiffers(t *testing.
 	err := NewMessageHandler(&messageUsecaseForHandler{}, nil, nil).ListDirectMessages(c)
 
 	// Assert
-	if err != domain.ErrTrackScopeForbidden {
-		t.Fatalf("expected ErrTrackScopeForbidden, got %v", err)
+	var httpErr *echo.HTTPError
+	if !errorsAsHTTPError(err, &httpErr) || httpErr.Code != http.StatusForbidden {
+		t.Fatalf("expected 403 HTTP error, got %v", err)
 	}
 }
 
@@ -148,8 +149,9 @@ func TestGetUnreadCountShoudRejectRequestWhenSessionTrackDiffers(t *testing.T) {
 	err := NewMessageHandler(&messageUsecaseForHandler{}, nil, nil).GetUnreadCount(c)
 
 	// Assert
-	if err != domain.ErrTrackScopeForbidden {
-		t.Fatalf("expected ErrTrackScopeForbidden, got %v", err)
+	var httpErr *echo.HTTPError
+	if !errorsAsHTTPError(err, &httpErr) || httpErr.Code != http.StatusForbidden {
+		t.Fatalf("expected 403 HTTP error, got %v", err)
 	}
 }
 
@@ -168,8 +170,9 @@ func TestSendDirectShoudRejectRequestWhenSessionTrackDiffers(t *testing.T) {
 	err := NewMessageHandler(&messageUsecaseForHandler{}, nil, nil).SendDirect(c)
 
 	// Assert
-	if err != domain.ErrTrackScopeForbidden {
-		t.Fatalf("expected ErrTrackScopeForbidden, got %v", err)
+	var httpErr *echo.HTTPError
+	if !errorsAsHTTPError(err, &httpErr) || httpErr.Code != http.StatusForbidden {
+		t.Fatalf("expected 403 HTTP error, got %v", err)
 	}
 }
 

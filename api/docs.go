@@ -492,6 +492,12 @@ const docTemplate = `{
                 "responses": {
                     "204": {
                         "description": "성공"
+                    },
+                    "409": {
+                        "description": "DEVICE_INVALID_TRANSITION: 존재하지 않거나 잠금 해제할 수 없는 기기",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
                     }
                 }
             }
@@ -540,19 +546,19 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "잘못된 PIN (지연 가능)",
+                        "description": "INVALID_PIN: PIN이 올바르지 않음",
                         "schema": {
                             "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "403": {
-                        "description": "신뢰 기기 아님 또는 캠프 미시작",
+                        "description": "DEVICE_NOT_APPROVED: 기기가 승인되지 않음; CAMP_NOT_AVAILABLE: 캠프가 로그인 가능한 상태가 아님",
                         "schema": {
                             "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "429": {
-                        "description": "PIN 잠금(지연) 중",
+                        "description": "DEVICE_LOCKED: PIN 실패 횟수 초과로 기기가 일시 잠김",
                         "schema": {
                             "$ref": "#/definitions/ErrorResponse"
                         }
@@ -578,6 +584,12 @@ const docTemplate = `{
                 "responses": {
                     "204": {
                         "description": "성공"
+                    },
+                    "401": {
+                        "description": "SESSION_REVOKED: 세션이 이미 취소됨",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
                     }
                 }
             }
@@ -1097,6 +1109,12 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/DeviceRegistrationResponse"
                         }
+                    },
+                    "409": {
+                        "description": "DEVICE_INVALID_TRANSITION: PENDING 상태가 아닌 기기는 승인할 수 없음",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
                     }
                 }
             }
@@ -1138,6 +1156,12 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/DeviceRegistrationResponse"
                         }
+                    },
+                    "409": {
+                        "description": "DEVICE_INVALID_TRANSITION: PENDING 상태가 아닌 기기는 거절할 수 없음",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
                     }
                 }
             }
@@ -1178,6 +1202,12 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/DeviceRegistrationResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "DEVICE_NOT_APPROVED: APPROVED 상태가 아닌 기기는 신뢰를 취소할 수 없음",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -1314,7 +1344,13 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "BAD_REQUEST: 요청 본문 또는 campId가 없음",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "CAMP_NOT_ACTIVE: ACTIVE 캠프에서만 공지를 보낼 수 있음",
                         "schema": {
                             "$ref": "#/definitions/ErrorResponse"
                         }
@@ -1352,6 +1388,12 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/CampReportResponse"
                         }
+                    },
+                    "404": {
+                        "description": "CAMP_NOT_FOUND: 캠프가 없음",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
                     }
                 }
             }
@@ -1385,6 +1427,12 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/CampReportResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "CAMP_NOT_FOUND: 캠프가 없음",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -1420,6 +1468,18 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/CampReportResponse"
                         }
+                    },
+                    "404": {
+                        "description": "CAMP_NOT_FOUND: 캠프가 없음",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "CAMP_NOT_ENDED: 종료된 캠프에서만 최종 리포트를 생성할 수 있음",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
                     }
                 }
             }
@@ -1453,6 +1513,12 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/CampSummaryStatsResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "CAMP_NOT_FOUND: 캠프가 없음",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -1577,19 +1643,19 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "CAMP_INVALID_SETTINGS: 설정 값이 유효하지 않음",
                         "schema": {
                             "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "404": {
-                        "description": "Not Found",
+                        "description": "CAMP_NOT_FOUND: 대상 캠프가 없음",
                         "schema": {
                             "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "409": {
-                        "description": "Conflict",
+                        "description": "CAMP_SETTINGS_LOCKED: 종료된 캠프는 수정할 수 없음",
                         "schema": {
                             "$ref": "#/definitions/ErrorResponse"
                         }
@@ -1635,7 +1701,7 @@ const docTemplate = `{
                         }
                     },
                     "409": {
-                        "description": "Conflict",
+                        "description": "CAMP_STATE_CONFLICT: 종료할 수 없는 캠프 상태 또는 정리 중인 방문 충돌",
                         "schema": {
                             "$ref": "#/definitions/ErrorResponse"
                         }
@@ -1681,7 +1747,7 @@ const docTemplate = `{
                         }
                     },
                     "409": {
-                        "description": "이미 활성화됨 또는 필수 조건 미충족",
+                        "description": "CAMP_STATE_CONFLICT: 이미 활성화되었거나 활성화할 수 없는 상태",
                         "schema": {
                             "$ref": "#/definitions/ErrorResponse"
                         }
@@ -1736,6 +1802,12 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/ErrorResponse"
                         }
+                    },
+                    "409": {
+                        "description": "CAMP_STATE_CONFLICT: 현재 캠프 상태에서는 코너를 생성할 수 없음",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
                     }
                 }
             }
@@ -1785,8 +1857,14 @@ const docTemplate = `{
                             "$ref": "#/definitions/ErrorResponse"
                         }
                     },
+                    "404": {
+                        "description": "CORNER_NOT_FOUND: 수정할 코너가 없음",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
                     "409": {
-                        "description": "Conflict",
+                        "description": "CAMP_STATE_CONFLICT: 현재 캠프 상태에서는 코너를 수정할 수 없음",
                         "schema": {
                             "$ref": "#/definitions/ErrorResponse"
                         }
@@ -1863,7 +1941,7 @@ const docTemplate = `{
                         }
                     },
                     "404": {
-                        "description": "Not Found",
+                        "description": "CORNER_NOT_FOUND: 대상 코너가 없음",
                         "schema": {
                             "$ref": "#/definitions/ErrorResponse"
                         }
@@ -1904,7 +1982,7 @@ const docTemplate = `{
                         }
                     },
                     "409": {
-                        "description": "활성화된 캠프이거나 종속 데이터가 존재함",
+                        "description": "CAMP_STATE_CONFLICT: 현재 캠프 상태에서는 코너를 삭제할 수 없음",
                         "schema": {
                             "$ref": "#/definitions/ErrorResponse"
                         }
@@ -1941,6 +2019,18 @@ const docTemplate = `{
                         "description": "Created",
                         "schema": {
                             "$ref": "#/definitions/DeviceRegistrationCreatedResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "INVALID_TRANSITION: 종료된 캠프에는 기기를 등록할 수 없음",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "CAMP_NOT_FOUND: 등록 코드에 해당하는 캠프가 없음",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -2201,6 +2291,18 @@ const docTemplate = `{
                                 "$ref": "#/definitions/TrackPinResponse"
                             }
                         }
+                    },
+                    "404": {
+                        "description": "CORNER_NOT_FOUND: 대상 코너가 없음",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "CAMP_NOT_AVAILABLE: 종료된 캠프에는 트랙을 생성할 수 없음",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
                     }
                 }
             }
@@ -2237,6 +2339,18 @@ const docTemplate = `{
                 "responses": {
                     "204": {
                         "description": "성공적으로 삭제됨"
+                    },
+                    "404": {
+                        "description": "TRACK_NOT_FOUND: 대상 트랙이 없거나 이미 삭제됨",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "TRACK_DELETE_BLOCKED: 진행 중인 방문이 있어 삭제할 수 없음",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
                     }
                 }
             }
@@ -2413,6 +2527,12 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/TrackPinResponse"
                         }
+                    },
+                    "404": {
+                        "description": "TRACK_NOT_FOUND: 대상 트랙이 없거나 활성 상태가 아님",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
                     }
                 }
             }
@@ -2574,7 +2694,7 @@ const docTemplate = `{
                         }
                     },
                     "403": {
-                        "description": "세션 트랙과 요청 트랙 불일치",
+                        "description": "TRACK_SCOPE_FORBIDDEN: 세션 트랙과 요청 트랙이 불일치",
                         "schema": {
                             "$ref": "#/definitions/ErrorResponse"
                         }
@@ -2638,7 +2758,7 @@ const docTemplate = `{
                         }
                     },
                     "403": {
-                        "description": "세션 트랙과 요청 트랙 불일치",
+                        "description": "TRACK_SCOPE_FORBIDDEN: 세션 트랙과 요청 트랙이 불일치",
                         "schema": {
                             "$ref": "#/definitions/ErrorResponse"
                         }
@@ -2725,7 +2845,7 @@ const docTemplate = `{
                         }
                     },
                     "403": {
-                        "description": "세션 트랙과 요청 트랙 불일치",
+                        "description": "TRACK_SCOPE_FORBIDDEN: 세션 트랙과 요청 트랙이 불일치",
                         "schema": {
                             "$ref": "#/definitions/ErrorResponse"
                         }
@@ -2764,8 +2884,17 @@ const docTemplate = `{
                             "$ref": "#/definitions/VisitSummaryResponse"
                         }
                     },
+                    "401": {
+                        "description": "SESSION_REVOKED: 진행자 세션이 취소됨",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
                     "404": {
-                        "description": "진행 중인 방문 없음"
+                        "description": "VISIT_NOT_FOUND: 진행 중인 방문 없음",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
                     }
                 }
             }
@@ -2801,8 +2930,14 @@ const docTemplate = `{
                             "$ref": "#/definitions/VisitSummaryResponse"
                         }
                     },
+                    "401": {
+                        "description": "SESSION_REVOKED: 진행자 세션이 취소됨",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
                     "409": {
-                        "description": "TRACK_NOT_BUSY 등",
+                        "description": "TRACK_NOT_BUSY, TRACK_NOT_ACTIVE, ITINERARY_CONFLICT: 현재 운영 상태에서 방문을 종료할 수 없음",
                         "schema": {
                             "$ref": "#/definitions/ErrorResponse"
                         }
@@ -2853,8 +2988,20 @@ const docTemplate = `{
                             "$ref": "#/definitions/VisitSummaryResponse"
                         }
                     },
+                    "401": {
+                        "description": "SESSION_REVOKED: 진행자 세션이 취소됨",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "BADGE_NOT_ASSIGNED: 배지가 존재하지 않거나 조에 배정되지 않음",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
                     "409": {
-                        "description": "TRACK_BUSY, DUPLICATE_VISIT 등",
+                        "description": "TRACK_BUSY, TRACK_NOT_ACTIVE, ITINERARY_CONFLICT, CAMP_NOT_ACTIVE: 현재 운영 상태에서 방문을 시작할 수 없음",
                         "schema": {
                             "$ref": "#/definitions/ErrorResponse"
                         }
