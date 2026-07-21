@@ -3738,7 +3738,11 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "code": {
-                    "type": "string",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/internal_infrastructure_web.ErrorCode"
+                        }
+                    ],
                     "example": "INVALID_REQUEST"
                 },
                 "details": {
@@ -4187,6 +4191,79 @@ const docTemplate = `{
                     "format": "uuid"
                 }
             }
+        },
+        "internal_infrastructure_web.ErrorCode": {
+            "type": "string",
+            "enum": [
+                "BADGE_ALREADY_ASSIGNED",
+                "BADGE_NOT_ASSIGNED",
+                "BADGE_NOT_FOUND",
+                "BAD_REQUEST",
+                "CAMP_INVALID_SETTINGS",
+                "CAMP_NOT_ACTIVE",
+                "CAMP_NOT_AVAILABLE",
+                "CAMP_NOT_ENDED",
+                "CAMP_NOT_FOUND",
+                "CAMP_SETTINGS_LOCKED",
+                "CAMP_STATE_CONFLICT",
+                "CONFLICT",
+                "CORNER_NOT_FOUND",
+                "DEVICE_INVALID_TRANSITION",
+                "DEVICE_LOCKED",
+                "DEVICE_NOT_APPROVED",
+                "FORBIDDEN",
+                "GROUP_NOT_FOUND",
+                "HTTP_ERROR",
+                "INTERNAL_ERROR",
+                "INTERNAL_SERVER_ERROR",
+                "INVALID_PIN",
+                "INVALID_TRANSITION",
+                "ITINERARY_CONFLICT",
+                "NOT_FOUND",
+                "SESSION_REVOKED",
+                "TRACK_BUSY",
+                "TRACK_CONFLICT",
+                "TRACK_NOT_ACTIVE",
+                "TRACK_NOT_BUSY",
+                "TRACK_NOT_FOUND",
+                "TRACK_SCOPE_FORBIDDEN",
+                "UNAUTHORIZED"
+            ],
+            "x-enum-varnames": [
+                "CodeBadgeAlreadyAssigned",
+                "CodeBadgeNotAssigned",
+                "CodeBadgeNotFound",
+                "CodeBadRequest",
+                "CodeCampInvalidSettings",
+                "CodeCampNotActive",
+                "CodeCampNotAvailable",
+                "CodeCampNotEnded",
+                "CodeCampNotFound",
+                "CodeCampSettingsLocked",
+                "CodeCampStateConflict",
+                "CodeConflict",
+                "CodeCornerNotFound",
+                "CodeDeviceInvalidTransition",
+                "CodeDeviceLocked",
+                "CodeDeviceNotApproved",
+                "CodeForbidden",
+                "CodeGroupNotFound",
+                "CodeHTTPError",
+                "CodeInternalError",
+                "CodeInternalServerError",
+                "CodeInvalidPin",
+                "CodeInvalidTransition",
+                "CodeItineraryConflict",
+                "CodeNotFound",
+                "CodeSessionRevoked",
+                "CodeTrackBusy",
+                "CodeTrackConflict",
+                "CodeTrackNotActive",
+                "CodeTrackNotBusy",
+                "CodeTrackNotFound",
+                "CodeTrackScopeForbidden",
+                "CodeUnauthorized"
+            ]
         }
     },
     "securityDefinitions": {
