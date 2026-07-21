@@ -23,7 +23,7 @@ Method | HTTP request | Description
 
 발송된 공지사항 목록
 
-관리자 또는 진행자가 캠프에 발송된 BROADCAST 메시지들의 목록을 조회한다.
+관리자 또는 진행자가 캠프에 발송된 BROADCAST 메시지들의 목록을 조회한다. TrackAuth 응답의 isRead와 readAt은 현재 트랙의 수신 확인 상태다.
 
 ### Example
 ```dart

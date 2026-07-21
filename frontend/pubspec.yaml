@@ -42,6 +42,7 @@ dependencies:
   mobile_scanner: ^7.2.0
   collection: ^1.19.0 # B3 QR 스캔 onDetect에서 barcodes.firstOrNull 직접 사용 — 기존엔 전이 의존성이었음
   one_of: '>=1.5.0 <2.0.0' # cornermon_api_gen이 이미 이 버전으로 고정 — oneOf 요청 바디(방문 시작) 구성에 직접 필요
+  built_value: '>=8.4.0 <9.0.0' # cornermon_api_gen이 이미 이 버전으로 고정 — dio_error.dart의 ErrorCode 역직렬화(FullType)에 직접 필요
   pdf: ^3.11.1
   printing: ^5.13.4
   share_plus: ^12.0.1

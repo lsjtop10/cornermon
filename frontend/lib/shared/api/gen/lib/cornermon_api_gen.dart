@@ -53,6 +53,7 @@ export 'package:cornermon_api_gen/src/model/device_registration_request.dart';
 export 'package:cornermon_api_gen/src/model/device_registration_response.dart';
 export 'package:cornermon_api_gen/src/model/device_status_response.dart';
 export 'package:cornermon_api_gen/src/model/direct_message_request.dart';
+export 'package:cornermon_api_gen/src/model/error_code.dart';
 export 'package:cornermon_api_gen/src/model/error_response.dart';
 export 'package:cornermon_api_gen/src/model/export_badges_response.dart';
 export 'package:cornermon_api_gen/src/model/export_tracks_response.dart';

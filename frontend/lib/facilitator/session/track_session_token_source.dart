@@ -1,6 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../shared/auth/session_token_source.dart';
+import 'device_trust_provider.dart';
 import 'track_session_provider.dart';
 
 /// [SessionTokenSource] 구현체 — 트랙 세션은 유휴 타임아웃이 없어(§2.4) silent refresh
@@ -11,12 +12,14 @@ class TrackSessionTokenSource implements SessionTokenSource {
   final Ref ref;
 
   @override
-  String? get currentAccessToken => ref.read(trackSessionProvider).accessTokenOrNull;
+  String? get currentAccessToken =>
+      ref.read(trackSessionProvider).accessTokenOrNull;
 
   @override
   Future<void> onUnauthorized() async {
     ref
         .read(trackSessionProvider.notifier)
         .handleTermination(TrackSessionTerminationReason.forceLogout);
+    await ref.read(deviceTrustProvider.notifier).recoverFromTrackUnauthorized();
   }
 }

@@ -14,12 +14,17 @@ part 'device_status_response.g.dart';
 ///
 /// Properties:
 /// * [campId] 
+/// * [campStatus] 
 /// * [id] 
 /// * [status] 
 @BuiltValue()
 abstract class DeviceStatusResponse implements Built<DeviceStatusResponse, DeviceStatusResponseBuilder> {
   @BuiltValueField(wireName: r'campId')
   String? get campId;
+
+  @BuiltValueField(wireName: r'campStatus')
+  DeviceStatusResponseCampStatusEnum? get campStatus;
+  // enum campStatusEnum {  PENDING,  ACTIVE,  ENDED,  };
 
   @BuiltValueField(wireName: r'id')
   String? get id;
@@ -56,6 +61,13 @@ class _$DeviceStatusResponseSerializer implements PrimitiveSerializer<DeviceStat
       yield serializers.serialize(
         object.campId,
         specifiedType: const FullType(String),
+      );
+    }
+    if (object.campStatus != null) {
+      yield r'campStatus';
+      yield serializers.serialize(
+        object.campStatus,
+        specifiedType: const FullType(DeviceStatusResponseCampStatusEnum),
       );
     }
     if (object.id != null) {
@@ -102,6 +114,13 @@ class _$DeviceStatusResponseSerializer implements PrimitiveSerializer<DeviceStat
           ) as String;
           result.campId = valueDes;
           break;
+        case r'campStatus':
+          final valueDes = serializers.deserialize(
+            value,
+            specifiedType: const FullType(DeviceStatusResponseCampStatusEnum),
+          ) as DeviceStatusResponseCampStatusEnum;
+          result.campStatus = valueDes;
+          break;
         case r'id':
           final valueDes = serializers.deserialize(
             value,
@@ -143,6 +162,23 @@ class _$DeviceStatusResponseSerializer implements PrimitiveSerializer<DeviceStat
     );
     return result.build();
   }
+}
+
+class DeviceStatusResponseCampStatusEnum extends EnumClass {
+
+  @BuiltValueEnumConst(wireName: r'PENDING')
+  static const DeviceStatusResponseCampStatusEnum PENDING = _$deviceStatusResponseCampStatusEnum_PENDING;
+  @BuiltValueEnumConst(wireName: r'ACTIVE')
+  static const DeviceStatusResponseCampStatusEnum ACTIVE = _$deviceStatusResponseCampStatusEnum_ACTIVE;
+  @BuiltValueEnumConst(wireName: r'ENDED')
+  static const DeviceStatusResponseCampStatusEnum ENDED = _$deviceStatusResponseCampStatusEnum_ENDED;
+
+  static Serializer<DeviceStatusResponseCampStatusEnum> get serializer => _$deviceStatusResponseCampStatusEnumSerializer;
+
+  const DeviceStatusResponseCampStatusEnum._(String name): super(name);
+
+  static BuiltSet<DeviceStatusResponseCampStatusEnum> get values => _$deviceStatusResponseCampStatusEnumValues;
+  static DeviceStatusResponseCampStatusEnum valueOf(String name) => _$deviceStatusResponseCampStatusEnumValueOf(name);
 }
 
 class DeviceStatusResponseStatusEnum extends EnumClass {
