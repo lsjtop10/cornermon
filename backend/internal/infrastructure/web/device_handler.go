@@ -83,7 +83,7 @@ func (h *DeviceHandler) GetMyRegistrationStatus(c echo.Context) error {
 
 	status, err := h.deviceTrust.GetMyRegistrationStatus(c.Request().Context(), token)
 	if err != nil {
-		if err == domain.ErrDeviceNotApproved {
+		if errors.Is(err, domain.ErrDeviceNotApproved) {
 			return echo.NewHTTPError(http.StatusUnauthorized, ErrorResponse{Code: "UNAUTHORIZED", Message: err.Error()}).SetInternal(err)
 		}
 		return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_ERROR", Message: err.Error()}).SetInternal(err)

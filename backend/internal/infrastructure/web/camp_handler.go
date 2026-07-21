@@ -1,6 +1,7 @@
 package web
 
 import (
+	"errors"
 	"net/http"
 	"time"
 
@@ -150,7 +151,7 @@ func (h *CampHandler) CreateCamp(c echo.Context) error {
 	}
 	camp, err := h.svc.OpenNewCamp(c.Request().Context(), req.Name, req.StartAt, req.EndAt)
 	if err != nil {
-		if err == domain.ErrCampInvalidSettings {
+		if errors.Is(err, domain.ErrCampInvalidSettings) {
 			return echo.NewHTTPError(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: err.Error()}).SetInternal(err)
 		}
 		return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_ERROR", Message: err.Error()}).SetInternal(err)
@@ -194,7 +195,7 @@ func (h *CampHandler) StartCamp(c echo.Context) error {
 	adminID := getAdminID(c)
 	err := h.svc.ActivateCamp(c.Request().Context(), id, adminID)
 	if err != nil {
-		if err == domain.ErrCampInvalidTransition {
+		if errors.Is(err, domain.ErrCampInvalidTransition) {
 			return echo.NewHTTPError(http.StatusConflict, ErrorResponse{Code: "CONFLICT", Message: err.Error()}).SetInternal(err)
 		}
 		return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_ERROR", Message: err.Error()}).SetInternal(err)
@@ -218,7 +219,7 @@ func (h *CampHandler) EndCamp(c echo.Context) error {
 	adminID := getAdminID(c)
 	err := h.svc.EndCamp(c.Request().Context(), id, adminID)
 	if err != nil {
-		if err == domain.ErrCampInvalidTransition {
+		if errors.Is(err, domain.ErrCampInvalidTransition) {
 			return echo.NewHTTPError(http.StatusConflict, ErrorResponse{Code: "CONFLICT", Message: err.Error()}).SetInternal(err)
 		}
 		return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_ERROR", Message: err.Error()}).SetInternal(err)

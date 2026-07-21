@@ -2,6 +2,7 @@ package web
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"time"
 
@@ -345,7 +346,7 @@ func (h *AuthHandler) MigrateSession(c echo.Context) error {
 
 	res, err := h.facilitatorAuth.MigrateSession(c.Request().Context(), sessionToken)
 	if err != nil {
-		if err == domain.ErrSessionRevoked {
+		if errors.Is(err, domain.ErrSessionRevoked) {
 			return echo.NewHTTPError(http.StatusUnauthorized, ErrorResponse{Code: "UNAUTHORIZED", Message: err.Error()}).SetInternal(err)
 		}
 		return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()}).SetInternal(err)
