@@ -18,10 +18,10 @@ ON CONFLICT (id) DO UPDATE SET
     bottleneck_ratio_pct = EXCLUDED.bottleneck_ratio_pct;
 
 -- name: GetCorner :one
-SELECT * FROM corners WHERE id = $1;
+SELECT * FROM corners WHERE id = $1 AND deleted_at IS NULL;
 
 -- name: ListCornersByCamp :many
-SELECT * FROM corners WHERE camp_id = $1;
+SELECT * FROM corners WHERE camp_id = $1 AND deleted_at IS NULL;
 
 -- name: ListCornerViewsByCamp :many
 SELECT
@@ -54,7 +54,7 @@ JOIN LATERAL (
     FROM tracks t
     WHERE t.corner_id = c.id AND t.status = 'ACTIVE'
 ) active_tracks ON TRUE
-WHERE c.camp_id = $1
+WHERE c.camp_id = $1 AND c.deleted_at IS NULL
 ORDER BY c.id;
 
 -- name: GetCornerView :one
@@ -88,7 +88,7 @@ JOIN LATERAL (
     FROM tracks t
     WHERE t.corner_id = c.id AND t.status = 'ACTIVE'
 ) active_tracks ON TRUE
-WHERE c.id = $1;
+WHERE c.id = $1 AND c.deleted_at IS NULL;
 
 -- name: SaveCorner :exec
 INSERT INTO corners (id, camp_id, name, target_minutes, is_mandatory)
@@ -107,7 +107,7 @@ SELECT * FROM tracks WHERE corner_id = $1;
 -- name: ListActiveTracksByCamp :many
 SELECT t.* FROM tracks t
 JOIN corners c ON t.corner_id = c.id
-WHERE c.camp_id = $1 AND t.status = 'ACTIVE';
+WHERE c.camp_id = $1 AND c.deleted_at IS NULL AND t.status = 'ACTIVE';
 
 -- name: SaveTrack :exec
 INSERT INTO tracks (id, corner_id, track_no, status, pin_hash, pin_ciphertext, current_visit_id, deleted_at, unread_by_admin_count, unread_by_track_count)
@@ -207,7 +207,7 @@ SELECT * FROM facilitator_sessions WHERE track_id = $1 AND revoked_at IS NULL;
 SELECT f.* FROM facilitator_sessions f
 JOIN tracks t ON f.track_id = t.id
 JOIN corners c ON t.corner_id = c.id
-WHERE c.camp_id = $1 AND f.revoked_at IS NULL;
+WHERE c.camp_id = $1 AND c.deleted_at IS NULL AND f.revoked_at IS NULL;
 
 -- name: SaveFacilitatorSession :exec
 INSERT INTO facilitator_sessions (id, track_id, token_hash, created_at, revoked_at)
@@ -314,13 +314,21 @@ VALUES ($1, $2, $3, $4, $5, $6, $7);
 -- name: ListCamps :many
 SELECT * FROM camps;
 
--- name: DeleteCorner :exec
-DELETE FROM corners WHERE id = $1;
+-- name: SoftDeleteCorner :exec
+UPDATE corners
+SET deleted_at = $2
+WHERE id = $1 AND deleted_at IS NULL;
+
+-- name: PurgeDeletedCorners :execrows
+DELETE FROM corners c
+WHERE c.deleted_at <= $1
+  AND NOT EXISTS (SELECT 1 FROM tracks t WHERE t.corner_id = c.id)
+  AND NOT EXISTS (SELECT 1 FROM visits v WHERE v.corner_id = c.id);
 
 -- name: ListTracksByCamp :many
 SELECT t.* FROM tracks t
 JOIN corners c ON t.corner_id = c.id
-WHERE c.camp_id = $1;
+WHERE c.camp_id = $1 AND c.deleted_at IS NULL;
 
 -- name: ListAllBadges :many
 SELECT * FROM badges;

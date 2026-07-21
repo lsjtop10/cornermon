@@ -149,7 +149,7 @@ func (s *CornerService) RemoveCornerFromCamp(ctx context.Context, id domain.Corn
 	}
 
 	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
-		return s.corners.Delete(ctx, id)
+		return s.corners.SoftDelete(ctx, id, s.nowFn())
 	})
 
 	if err != nil {

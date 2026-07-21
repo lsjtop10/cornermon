@@ -2,11 +2,13 @@ package postgres
 
 import (
 	"context"
+	"time"
 
 	"cornermon/backend/internal/domain"
 	"cornermon/backend/internal/errs"
 	"cornermon/backend/internal/infrastructure/postgres/db"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -73,10 +75,18 @@ func (r *pgCornerRepository) Save(ctx context.Context, corner *domain.Corner) er
 	return nil
 }
 
-func (r *pgCornerRepository) Delete(ctx context.Context, id domain.CornerID) error {
-	err := r.queries(ctx).DeleteCorner(ctx, string(id))
+func (r *pgCornerRepository) SoftDelete(ctx context.Context, id domain.CornerID, deletedAt time.Time) error {
+	err := r.queries(ctx).SoftDeleteCorner(ctx, db.SoftDeleteCornerParams{ID: string(id), DeletedAt: pgtype.Timestamptz{Time: deletedAt, Valid: true}})
 	if err != nil {
 		return errs.Wrap(ctx, err)
 	}
 	return nil
+}
+
+func (r *pgCornerRepository) PurgeDeletedBefore(ctx context.Context, deletedBefore time.Time) (int64, error) {
+	count, err := r.queries(ctx).PurgeDeletedCorners(ctx, pgtype.Timestamptz{Time: deletedBefore, Valid: true})
+	if err != nil {
+		return 0, errs.Wrap(ctx, err)
+	}
+	return count, nil
 }

@@ -32,7 +32,13 @@ type CornerRepository interface {
 	Get(ctx context.Context, id domain.CornerID) (*domain.Corner, error)
 	ListByCamp(ctx context.Context, campID domain.CampID) ([]*domain.Corner, error)
 	Save(ctx context.Context, corner *domain.Corner) error
-	Delete(ctx context.Context, id domain.CornerID) error
+	SoftDelete(ctx context.Context, id domain.CornerID, deletedAt time.Time) error
+}
+
+// CornerCleanupRepository physically removes only candidates selected by the
+// persistence layer's history-safe cleanup query.
+type CornerCleanupRepository interface {
+	PurgeDeletedBefore(ctx context.Context, deletedBefore time.Time) (int64, error)
 }
 
 // CornerViewQuerier는 코너 핵심 정보, 완료 방문 지표, 활성 트랙을 한 번에 반환하는 읽기 전용 포트입니다.

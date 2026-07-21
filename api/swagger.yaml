@@ -1955,7 +1955,7 @@ paths:
       - B. Resource Management (Admin)
   /corners/{id}:
     delete:
-      description: 코너를 삭제한다. 단, 방문 기록이 있으면 삭제할 수 없다.
+      description: 코너를 soft-delete한다. 삭제된 코너는 일반 조회에서 제외되며 API 계약은 유지된다.
       parameters:
       - description: 코너 ID
         in: path
