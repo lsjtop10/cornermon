@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import 'package:cornermon/shared/api/domain_aliases.dart';
@@ -6,6 +8,7 @@ import 'package:cornermon/shared/api/providers/corner_track_providers.dart';
 import 'package:cornermon/shared/api/providers/message_providers.dart';
 import 'package:cornermon/shared/api/providers/visit_providers.dart';
 import 'package:cornermon/shared/api/sse/track_event_stream.dart';
+import 'package:cornermon/facilitator/session/device_trust_provider.dart';
 import 'package:cornermon/facilitator/session/facilitator_broadcast_provider.dart';
 import 'package:cornermon/facilitator/session/track_session_provider.dart';
 
@@ -37,6 +40,14 @@ class TrackEventCoordinator extends _$TrackEventCoordinator {
           ref.invalidate(currentVisitProvider(trackId));
         }
         break;
+      case SseEventEventEnum.campUpdated:
+        // 캠프 범위 변경은 상태 스냅샷이 없는 일반 알림이다. 현재 방문을 REST로
+        // 재조회하고, 종료로 인해 트랙 세션이 401이면 AuthInterceptor가 기기 상태
+        // 조회로 최종 원인을 판정한다.
+        if (scope?.kind == SseScopeKind.camp) {
+          ref.invalidate(currentVisitProvider(trackId));
+        }
+        break;
       case SseEventEventEnum.cornersUpdated:
         // 관리자가 코너 목표시간 등을 바꾸면 camp 스코프로 브로드캐스트된다(백엔드가 캠프 내
         // 모든 트랙 구독자에게도 전달, backend/internal/infrastructure/sse/broadcaster.go).
@@ -64,12 +75,17 @@ class TrackEventCoordinator extends _$TrackEventCoordinator {
             .handleTermination(TrackSessionTerminationReason.forceLogout);
         break;
       case SseEventEventEnum.campEnded:
-        ref
-            .read(trackSessionProvider.notifier)
-            .handleTermination(TrackSessionTerminationReason.campEnded);
+        unawaited(_handleCampEnded());
         break;
       default:
         break; // groups_updated/lockout_alert 등 관리자 전용 알림은 진행자 화면과 무관
     }
+  }
+
+  Future<void> _handleCampEnded() async {
+    await ref.read(deviceTrustProvider.notifier).clearRegistration();
+    ref
+        .read(trackSessionProvider.notifier)
+        .handleTermination(TrackSessionTerminationReason.campEnded);
   }
 }

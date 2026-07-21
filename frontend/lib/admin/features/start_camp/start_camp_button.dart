@@ -1,4 +1,5 @@
 import 'package:cornermon/admin/features/start_camp/start_camp_controller.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -21,6 +22,27 @@ class StartCampButton extends ConsumerWidget {
       builder: (_) => const StartCampConfirmDialog(),
     ),
   );
+}
+
+/// POST start-camp 실패를 사용자 문구로 변환한다(camp_handler.go StartCamp 참고).
+/// 인식 못한 코드(네트워크 오류, 5xx 등)는 원문을 로그로만 남기고 일반 문구로 대체한다.
+String _describeStartError(Object error, StackTrace stackTrace) {
+  if (error is DioException) {
+    debugPrint(
+      '[start_camp] failed: type=${error.type} '
+      'statusCode=${error.response?.statusCode} '
+      'body=${error.response?.data}\n$stackTrace',
+    );
+    final code = (error.response?.data is Map)
+        ? (error.response?.data as Map)['code'] as String?
+        : null;
+    if (code == 'CAMP_STATE_CONFLICT') {
+      return '이미 시작되었거나 시작할 수 없는 캠프 상태입니다.';
+    }
+  } else {
+    debugPrint('[start_camp] failed: $error\n$stackTrace');
+  }
+  return '시작 확정에 실패했습니다. 잠시 후 다시 시도해주세요.';
 }
 
 class StartCampConfirmDialog extends ConsumerStatefulWidget {
@@ -46,8 +68,8 @@ class _StartCampConfirmDialogState
       final result = ref.read(startCampControllerProvider);
       if (result.hasError) throw result.error!;
       if (mounted) Navigator.pop(context);
-    } catch (error) {
-      if (mounted) setState(() => _error = error.toString());
+    } catch (error, stackTrace) {
+      if (mounted) setState(() => _error = _describeStartError(error, stackTrace));
     } finally {
       if (mounted) setState(() => _submitting = false);
     }

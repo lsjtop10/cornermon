@@ -77,7 +77,7 @@ func (h *VisitHandler) StartVisit(c echo.Context) error {
 
 	var req VisitStartRequest
 	if err := c.Bind(&req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: "invalid request"}).SetInternal(err)
+		return echo.NewHTTPError(http.StatusBadRequest, ErrorResponse{Code: CodeBadRequest, Message: "invalid request"}).SetInternal(err)
 	}
 
 	var visit *domain.Visit
@@ -146,19 +146,19 @@ func (h *VisitHandler) GetCurrentVisit(c echo.Context) error {
 func visitHTTPError(err error) error {
 	switch {
 	case errors.Is(err, domain.ErrSessionRevoked):
-		return echo.NewHTTPError(http.StatusUnauthorized, ErrorResponse{Code: "SESSION_REVOKED", Message: "facilitator session is revoked"}).SetInternal(err)
+		return echo.NewHTTPError(http.StatusUnauthorized, ErrorResponse{Code: CodeSessionRevoked, Message: "facilitator session is revoked"}).SetInternal(err)
 	case errors.Is(err, domain.ErrBadgeNotAssigned):
-		return echo.NewHTTPError(http.StatusNotFound, ErrorResponse{Code: "BADGE_NOT_ASSIGNED", Message: "badge is not assigned to a group"}).SetInternal(err)
+		return echo.NewHTTPError(http.StatusNotFound, ErrorResponse{Code: CodeBadgeNotAssigned, Message: "badge is not assigned to a group"}).SetInternal(err)
 	case errors.Is(err, domain.ErrTrackBusy):
-		return echo.NewHTTPError(http.StatusConflict, ErrorResponse{Code: "TRACK_BUSY", Message: "track already has a visit in progress"}).SetInternal(err)
+		return echo.NewHTTPError(http.StatusConflict, ErrorResponse{Code: CodeTrackBusy, Message: "track already has a visit in progress"}).SetInternal(err)
 	case errors.Is(err, domain.ErrTrackNotBusy):
-		return echo.NewHTTPError(http.StatusConflict, ErrorResponse{Code: "TRACK_NOT_BUSY", Message: "track has no visit in progress"}).SetInternal(err)
+		return echo.NewHTTPError(http.StatusConflict, ErrorResponse{Code: CodeTrackNotBusy, Message: "track has no visit in progress"}).SetInternal(err)
 	case errors.Is(err, domain.ErrTrackNotActive):
-		return echo.NewHTTPError(http.StatusConflict, ErrorResponse{Code: "TRACK_NOT_ACTIVE", Message: "track is not active"}).SetInternal(err)
+		return echo.NewHTTPError(http.StatusConflict, ErrorResponse{Code: CodeTrackNotActive, Message: "track is not active"}).SetInternal(err)
 	case errors.Is(err, domain.ErrCornerNotInItinerary), errors.Is(err, domain.ErrGroupBusy), errors.Is(err, domain.ErrDuplicateVisit), errors.Is(err, domain.ErrVisitAlreadyCompleted):
-		return echo.NewHTTPError(http.StatusConflict, ErrorResponse{Code: "ITINERARY_CONFLICT", Message: "visit does not satisfy the group itinerary"}).SetInternal(err)
+		return echo.NewHTTPError(http.StatusConflict, ErrorResponse{Code: CodeItineraryConflict, Message: "visit does not satisfy the group itinerary"}).SetInternal(err)
 	case errors.Is(err, domain.ErrCampInvalidTransition):
-		return echo.NewHTTPError(http.StatusConflict, ErrorResponse{Code: "CAMP_NOT_ACTIVE", Message: "camp is not active"}).SetInternal(err)
+		return echo.NewHTTPError(http.StatusConflict, ErrorResponse{Code: CodeCampNotActive, Message: "camp is not active"}).SetInternal(err)
 	default:
 		return err
 	}

@@ -788,7 +788,7 @@ Name | Type | Description  | Notes
 
 코너 삭제
 
-코너를 삭제한다. 단, 방문 기록이 있으면 삭제할 수 없다.
+코너를 soft-delete한다. 삭제된 코너는 일반 조회에서 제외되며 API 계약은 유지된다.
 
 ### Example
 ```dart
@@ -1059,7 +1059,7 @@ void (empty response body)
 ### HTTP request headers
 
  - **Content-Type**: application/json
- - **Accept**: Not defined
+ - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 

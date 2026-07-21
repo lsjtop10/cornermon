@@ -136,8 +136,9 @@ void main() {
     expect(fakeActions.startByQrCallCount, 1);
   });
 
-  testWidgets('ShouldShowDuplicateVisitMessageWhenDuplicateVisitCodeReturned', (tester) async {
-    // arrange
+  testWidgets('ShouldShowGenericMessageWhenUnrecognizedCodeReturned', (tester) async {
+    // arrange — DUPLICATE_VISIT은 백엔드가 실제로 보내는 코드가 아니다(qr_scan_screen.dart
+    // _messageFor 주석 참고). 클라이언트가 모르는 코드로 떨어졌을 때의 기본 분기를 검증한다.
     final fakeActions = _FakeVisitActions(errorToThrow: _visitStartError('DUPLICATE_VISIT'));
     await tester.pumpWidget(
       buildTestable(
@@ -156,7 +157,7 @@ void main() {
     await tester.pump();
 
     // assert
-    expect(find.text('이미 완료된 코너입니다'), findsOneWidget);
+    expect(find.text('방문을 시작하지 못했습니다'), findsOneWidget);
   });
 
   testWidgets('ShouldShowTrackBusyMessageWhenTrackBusyCodeReturned', (tester) async {
@@ -182,28 +183,6 @@ void main() {
     expect(find.text('현재 진행중인 조가 있습니다'), findsOneWidget);
   });
 
-  testWidgets('ShouldShowGroupAtCornerMessageWhenGroupAtCornerCodeReturned', (tester) async {
-    // arrange
-    final fakeActions = _FakeVisitActions(errorToThrow: _visitStartError('GROUP_AT_CORNER'));
-    await tester.pumpWidget(
-      buildTestable(
-        const QrScanScreen(),
-        overrides: [
-          trackSessionProvider.overrideWith(() => _FakeTrackSession(buildAuthenticatedState())),
-          visitActionsProvider(trackId).overrideWith(() => fakeActions),
-        ],
-      ),
-    );
-    await tester.pump();
-
-    // act
-    fakePlatform.barcodesController.add(_capture('qr-token-1'));
-    await tester.pump();
-    await tester.pump();
-
-    // assert
-    expect(find.text('이 조는 현재 다른 코너에서 진행 중입니다'), findsOneWidget);
-  });
 
   testWidgets('ShouldDisposeControllerExactlyOnceWhenScreenRemoved', (tester) async {
     // arrange

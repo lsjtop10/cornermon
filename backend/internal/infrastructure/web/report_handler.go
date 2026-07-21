@@ -105,12 +105,14 @@ func mapSummary(r *usecase.CampReport) CampSummaryStatsResponse {
 	}
 
 	return CampSummaryStatsResponse{
-		TotalGroups:         r.TotalGroups,
-		FinishedGroupCount:  r.FinishedGroups,
-		CompletionRate:      completionRate,
-		TotalVisits:         r.TotalVisits,
-		VisitCompletionRate: visitCompletionRate,
-		ManualVisitRatio:    manualVisitRatio,
+		TotalGroups:            r.TotalGroups,
+		FinishedGroupCount:     r.FinishedGroups,
+		CompletionRate:         completionRate,
+		TotalVisits:            r.TotalVisits,
+		VisitCompletionRate:    visitCompletionRate,
+		ProgramDurationSeconds: r.ProgramDurationSec,
+		AvgDeviationSeconds:    float32(r.AvgDeviationSec),
+		ManualVisitRatio:       manualVisitRatio,
 	}
 }
 
@@ -131,9 +133,10 @@ func mapReport(r *usecase.CampReport) CampReportResponse {
 	}
 	for _, gr := range r.GroupReports {
 		res.GroupStats = append(res.GroupStats, GroupStatsResponse{
-			GroupID:        string(gr.GroupID),
-			GroupName:      gr.GroupName,
-			CompletedCount: gr.CompletedCount,
+			GroupID:              string(gr.GroupID),
+			GroupName:            gr.GroupName,
+			CompletedCount:       gr.CompletedCount,
+			TotalDurationSeconds: gr.TotalDurationSec,
 		})
 	}
 	return res
@@ -220,9 +223,9 @@ func (h *ReportHandler) ExportCurrentReport(c echo.Context) error {
 func reportHTTPError(err error) error {
 	switch {
 	case errors.Is(err, domain.ErrCampNotFound):
-		return echo.NewHTTPError(http.StatusNotFound, ErrorResponse{Code: "CAMP_NOT_FOUND", Message: "camp not found"}).SetInternal(err)
+		return echo.NewHTTPError(http.StatusNotFound, ErrorResponse{Code: CodeCampNotFound, Message: "camp not found"}).SetInternal(err)
 	case errors.Is(err, domain.ErrCampInvalidTransition):
-		return echo.NewHTTPError(http.StatusConflict, ErrorResponse{Code: "CAMP_NOT_ENDED", Message: "camp must be ended before report generation"}).SetInternal(err)
+		return echo.NewHTTPError(http.StatusConflict, ErrorResponse{Code: CodeCampNotEnded, Message: "camp must be ended before report generation"}).SetInternal(err)
 	default:
 		return err
 	}

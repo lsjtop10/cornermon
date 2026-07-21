@@ -20,6 +20,12 @@ const _pollInterval = Duration(seconds: 15);
 /// 나머지 4개는 [DeviceRegistrationStatus](서버)를 그대로 미러링한다.
 enum DeviceTrustStatus { none, pending, approved, rejected, revoked }
 
+/// 트랙 인증 401 뒤 `/device-registrations/me`의 권위 있는 상태로 내린 결론이다.
+/// `retained`는 PIN 세션만 만료됐다는 뜻이고, `cleared`는 이 기기의 등록도 더 이상
+/// 쓸 수 없다는 뜻이다. 네트워크·형식 오류는 등록을 섣불리 지우지 않고 `unresolved`로
+/// 남겨 다음 보호 API 실패에서 다시 판정한다.
+enum DeviceTrustRecovery { retained, cleared, unresolved }
+
 const _deviceRegistrationIdKey = 'device_trust_registration_id';
 const _deviceStatusKey = 'device_trust_status';
 const _deviceTrustTokenKey = 'device_trust_token';
@@ -45,6 +51,7 @@ DeviceTrustStatus _fromStatusResponse(DeviceStatusStatus status) =>
 @riverpod
 class DeviceTrust extends _$DeviceTrust {
   Timer? _pollTimer;
+  Future<DeviceTrustRecovery>? _recoveryInFlight;
 
   @override
   Future<DeviceTrustStatus> build() async {
@@ -90,14 +97,13 @@ class DeviceTrust extends _$DeviceTrust {
       final newStatus = _fromStatusResponse(responseStatus);
       if (newStatus == DeviceTrustStatus.pending) return;
 
+      if (newStatus == DeviceTrustStatus.revoked) {
+        await clearRegistration();
+        return;
+      }
+
       _pollTimer?.cancel();
       await store.write(_deviceStatusKey, newStatus.name);
-      if (newStatus == DeviceTrustStatus.revoked) {
-        // 회수된 기기 토큰은 즉시 폐기한다 — 재등록 시 requestRegistration이
-        // 새 토큰으로 덮어쓰므로 남겨둘 이유가 없다. 트랙 세션 말소는
-        // track_session_provider가 이 상태 전이를 직접 구독해 처리한다.
-        await store.delete(_deviceTrustTokenKey);
-      }
       state = AsyncData(newStatus);
     } on DioException catch (error, stackTrace) {
       // 일시적 네트워크 오류로 폴링 자체를 멈추지 않는다 — 다음 tick에 재시도.
@@ -105,6 +111,57 @@ class DeviceTrust extends _$DeviceTrust {
         '[device_trust] polling failed: type=${error.type} '
         'statusCode=${error.response?.statusCode}\n$stackTrace',
       );
+    }
+  }
+
+  /// 트랙 권한이 401로 거절됐을 때 기기 토큰으로 최종 원인을 확인한다.
+  ///
+  /// SSE의 종류·도착 순서는 판단 근거가 아니다. `APPROVED + ACTIVE`면 PIN 세션만
+  /// 끝난 것이므로 기기 등록을 보존하고, `REVOKED + ENDED` 및 `REVOKED + 그 외`
+  /// 상태면 [clearRegistration]으로 등록까지 폐기한다. 동시에 여러 보호 REST가 401을
+  /// 받아도 상태 조회는 하나만 수행한다.
+  Future<DeviceTrustRecovery> recoverFromTrackUnauthorized() {
+    return _recoveryInFlight ??= _recoverFromTrackUnauthorized().whenComplete(
+      () => _recoveryInFlight = null,
+    );
+  }
+
+  Future<DeviceTrustRecovery> _recoverFromTrackUnauthorized() async {
+    final store = ref.read(secureTokenStoreProvider);
+    final deviceToken = await store.read(_deviceTrustTokenKey);
+    if (deviceToken == null) return DeviceTrustRecovery.unresolved;
+
+    try {
+      final response = await ref
+          .read(authDeviceTrustApiProvider)
+          .deviceRegistrationsMeGet(xDeviceToken: deviceToken);
+      final registration = response.data;
+      final registrationStatus = registration?.status;
+      final campStatus = registration?.campStatus;
+      if (registrationStatus == null || campStatus == null) {
+        return DeviceTrustRecovery.unresolved;
+      }
+
+      if (registrationStatus == DeviceStatusStatus.APPROVED &&
+          campStatus == DeviceStatusCampStatus.ACTIVE) {
+        return DeviceTrustRecovery.retained;
+      }
+
+      if (registrationStatus == DeviceStatusStatus.REVOKED) {
+        await clearRegistration();
+        return DeviceTrustRecovery.cleared;
+      }
+
+      // 보호된 트랙 API를 호출할 수 없는 상태(PENDING/REJECTED 등)는 더 이상
+      // 등록된 기기로 취급하지 않는다. 응답이 불완전한 경우만 위에서 보존한다.
+      await clearRegistration();
+      return DeviceTrustRecovery.cleared;
+    } on DioException catch (error, stackTrace) {
+      debugPrint(
+        '[device_trust] unauthorized recovery failed: '
+        'type=${error.type} statusCode=${error.response?.statusCode}\n$stackTrace',
+      );
+      return DeviceTrustRecovery.unresolved;
     }
   }
 
@@ -144,6 +201,25 @@ class DeviceTrust extends _$DeviceTrust {
     if (status == DeviceTrustStatus.pending) {
       _schedulePolling();
     }
+  }
+
+  /// 이 기기의 로컬 등록 정보를 폐기하고 새 캠프 등록 흐름으로 되돌린다.
+  ///
+  /// 서버의 기기 신뢰 철회 권한은 관리자/캠프 종료에 남겨 둔다. 이 메서드는
+  /// 신뢰 철회가 이미 확인된 경우와 사용자의 수동 초기화 모두에서 로컬 저장소와
+  /// provider 상태를 같은 방식으로 정리하는 단일 경로다.
+  Future<void> clearRegistration() async {
+    _pollTimer?.cancel();
+    final store = ref.read(secureTokenStoreProvider);
+    await Future.wait([
+      store.delete(_deviceRegistrationIdKey),
+      store.delete(_deviceStatusKey),
+      store.delete(_deviceTrustTokenKey),
+    ]);
+    if (!ref.mounted) return;
+    _pollTimer?.cancel();
+    ref.invalidate(deviceTrustTokenProvider);
+    state = const AsyncData(DeviceTrustStatus.none);
   }
 
   static String _defaultDeviceName() =>

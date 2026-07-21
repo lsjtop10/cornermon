@@ -11,9 +11,8 @@ import (
 
 	"cornermon/backend/internal/errs"
 	"cornermon/backend/internal/infrastructure/web"
-
-	"github.com/labstack/echo/v4"
 	"cornermon/backend/internal/usecase"
+	"github.com/labstack/echo/v4"
 )
 
 func TestErrorHandler_AppError(t *testing.T) {
@@ -39,6 +38,36 @@ func TestErrorHandler_AppError(t *testing.T) {
 	// assert
 	if rec.Code != http.StatusInternalServerError {
 		t.Errorf("expected status code %d, got %d", http.StatusInternalServerError, rec.Code)
+	}
+}
+
+func TestErrorHandlerShouldLogOperationContextFromHTTPInternalError(t *testing.T) {
+	// arrange
+	buf := withCapturedLogger(t)
+	e := echo.New()
+	e.Use(web.Logger())
+	e.HTTPErrorHandler = web.ErrorHandler()
+	e.GET("/api/v1/test", func(c echo.Context) error {
+		err := usecase.NewOperationError("visit.complete", "repository.save_visit", errors.New("write failed"), map[string]any{"visit_id": "visit-1"})
+		return echo.NewHTTPError(http.StatusInternalServerError, "internal error").SetInternal(err)
+	})
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/test", nil)
+	rec := httptest.NewRecorder()
+
+	// act
+	e.ServeHTTP(rec, req)
+
+	// assert
+	var parsed map[string]any
+	if err := json.Unmarshal(bytes.TrimSpace(buf.Bytes()), &parsed); err != nil {
+		t.Fatalf("expected valid JSON log line, got %v", err)
+	}
+	if parsed["operation"] != "visit.complete" || parsed["stage"] != "repository.save_visit" {
+		t.Fatalf("expected operation context, got %#v", parsed)
+	}
+	context, ok := parsed["error_context"].(map[string]any)
+	if !ok || context["visit_id"] != "visit-1" {
+		t.Fatalf("expected visit context, got %#v", parsed["error_context"])
 	}
 }
 
@@ -81,61 +110,5 @@ func TestErrorHandlerShouldLogErrorMsgUserAgentAndDurationMsWhenSystemErrorOccur
 	}
 	if _, exists := parsed["stack_trace"]; !exists {
 		t.Error("expected stack_trace to be present for a Wrap()-ed 5xx error")
-	}
-}
-
-func TestErrorHandler_OperationError(t *testing.T) {
-	// arrange
-	buf := withCapturedLogger(t)
-	e := echo.New()
-	e.Use(web.Logger())
-	e.HTTPErrorHandler = web.ErrorHandler()
-	dbErr := errors.New("underlying domain error")
-	opErr := &usecase.OperationError{
-		Operation: "test.op",
-		Stage:     "test.stage",
-		Attributes: map[string]any{
-			"test_attr": "attr_value",
-		},
-		Cause: dbErr,
-	}
-
-	// operationErr can be wrapped inside an echo.HTTPError
-	e.GET("/api/v1/test_op", func(c echo.Context) error {
-		return echo.NewHTTPError(http.StatusBadRequest, web.ErrorResponse{
-			Code:    "BAD_REQUEST",
-			Message: "Bad request",
-		}).SetInternal(opErr)
-	})
-
-	req := httptest.NewRequest(http.MethodGet, "/api/v1/test_op", nil)
-	rec := httptest.NewRecorder()
-
-	// act
-	e.ServeHTTP(rec, req)
-
-	// assert
-	if rec.Code != http.StatusBadRequest {
-		t.Fatalf("expected status code %d, got %d", http.StatusBadRequest, rec.Code)
-	}
-
-	var parsed map[string]any
-	if err := json.Unmarshal(bytes.TrimSpace(buf.Bytes()), &parsed); err != nil {
-		t.Fatalf("expected valid JSON log line, got error: %v, line: %s", err, buf.String())
-	}
-
-	if parsed["operation"] != "test.op" {
-		t.Errorf("expected operation 'test.op', got %v", parsed["operation"])
-	}
-	if parsed["stage"] != "test.stage" {
-		t.Errorf("expected stage 'test.stage', got %v", parsed["stage"])
-	}
-
-	ctxAttr, ok := parsed["error_context"].(map[string]any)
-	if !ok {
-		t.Fatalf("expected error_context map, got %v", parsed["error_context"])
-	}
-	if ctxAttr["test_attr"] != "attr_value" {
-		t.Errorf("expected test_attr 'attr_value', got %v", ctxAttr["test_attr"])
 	}
 }

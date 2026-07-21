@@ -69,6 +69,36 @@ func TestMapReportShouldMapOverDeviationRatioWhenCornerReportsProvided(t *testin
 	}
 }
 
+func TestMapReportShouldMapCampAndGroupAggregatesWhenReportProvided(t *testing.T) {
+	// Arrange
+	report := &usecase.CampReport{
+		CampID:             "camp-1",
+		ProgramDurationSec: 1200,
+		AvgDeviationSec:    60,
+		GroupReports: []usecase.GroupReport{
+			{GroupID: "group-1", GroupName: "조 1", CompletedCount: 2, TotalDurationSec: 1680},
+		},
+	}
+
+	// Act
+	res := mapReport(report)
+	summary := mapSummary(report)
+
+	// Assert
+	if summary.ProgramDurationSeconds != 1200 {
+		t.Errorf("expected ProgramDurationSeconds 1200, got %d", summary.ProgramDurationSeconds)
+	}
+	if summary.AvgDeviationSeconds != 60 {
+		t.Errorf("expected AvgDeviationSeconds 60, got %f", summary.AvgDeviationSeconds)
+	}
+	if len(res.GroupStats) != 1 {
+		t.Fatalf("expected 1 group stat, got %d", len(res.GroupStats))
+	}
+	if got := res.GroupStats[0].TotalDurationSeconds; got != 1680 {
+		t.Errorf("expected group-1 TotalDurationSeconds 1680, got %d", got)
+	}
+}
+
 func TestGetCurrentReportShoudKeepCampScopeWhenRequestsRunConcurrently(t *testing.T) {
 	// Arrange
 	camps := &campRepositoryStub{camps: map[domain.CampID]*domain.Camp{

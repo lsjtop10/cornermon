@@ -3,76 +3,79 @@ package usecase
 import (
 	"errors"
 	"testing"
-
-	"github.com/stretchr/testify/assert"
 )
 
-func TestOperationError_Error(t *testing.T) {
-	cause := errors.New("underlying domain error")
-	err := withErrorContext("visit.start_manual", "validate_track_active", cause, map[string]any{
-		"track_id": "test_track",
-	})
+func TestOperationErrorShouldPreserveCauseAndIsCompatibility(t *testing.T) {
+	// arrange
+	cause := errors.New("track is not active")
+	err := withErrorContext("visit.start_manual", "validate_track_active", cause, map[string]any{"track_id": "track-1"})
 
-	assert.Equal(t, "underlying domain error", err.Error())
+	// act / assert
+	if err.Error() != cause.Error() {
+		t.Fatalf("expected original message, got %q", err.Error())
+	}
+	if !errors.Is(err, cause) {
+		t.Fatal("expected errors.Is to find the original cause")
+	}
+	var operationErr *OperationError
+	if !errors.As(err, &operationErr) {
+		t.Fatal("expected errors.As to find OperationError")
+	}
+	if operationErr.Operation() != "visit.start_manual" || operationErr.Stage() != "validate_track_active" {
+		t.Fatalf("unexpected operation context: %s/%s", operationErr.Operation(), operationErr.Stage())
+	}
 }
 
-func TestOperationError_Unwrap(t *testing.T) {
-	cause := errors.New("underlying domain error")
-	err := withErrorContext("visit.start_manual", "validate_track_active", cause, map[string]any{
-		"track_id": "test_track",
-	})
+func TestOperationErrorShouldCopyAndFilterAttributes(t *testing.T) {
+	// arrange
+	attributes := map[string]any{"track_id": "track-1", "device_token": "secret", "pin": "123456"}
+	err := withErrorContext("visit.start_manual", "validate_track_active", errors.New("failed"), attributes)
+	attributes["track_id"] = "changed"
 
-	assert.True(t, errors.Is(err, cause))
+	// act
+	var operationErr *OperationError
+	errors.As(err, &operationErr)
+	actual := operationErr.Attributes()
+	actual["track_id"] = "mutated"
 
-	var opErr *OperationError
-	assert.True(t, errors.As(err, &opErr))
-	assert.Equal(t, "visit.start_manual", opErr.Operation)
-	assert.Equal(t, "validate_track_active", opErr.Stage)
-	assert.Equal(t, "test_track", opErr.Attributes["track_id"])
+	// assert
+	if actual["device_token"] != nil || actual["pin"] != nil {
+		t.Fatal("expected secret-bearing attributes to be excluded")
+	}
+	if operationErr.Attributes()["track_id"] != "track-1" {
+		t.Fatalf("expected isolated attributes, got %#v", operationErr.Attributes())
+	}
 }
 
-func TestOperationError_AttributeIsolation(t *testing.T) {
-	cause := errors.New("underlying domain error")
-	attrs := map[string]any{"track_id": "test_track"}
-	err := withErrorContext("visit.start_manual", "validate_track_active", cause, attrs)
+func TestErrorAuditMetadataShouldProjectOperationContext(t *testing.T) {
+	// arrange
+	err := withErrorContext("visit.complete", "repository.save_visit", errors.New("write failed"), map[string]any{"visit_id": "visit-1"})
 
-	attrs["track_id"] = "modified_track"
+	// act
+	metadata := errorAuditMetadata(err, map[string]any{"actor_kind": "track", "token": "secret"})
 
-	var opErr *OperationError
-	errors.As(err, &opErr)
-	assert.Equal(t, "test_track", opErr.Attributes["track_id"], "Attributes should be isolated from caller modifications")
+	// assert
+	if metadata["operation"] != "visit.complete" || metadata["stage"] != "repository.save_visit" {
+		t.Fatalf("expected operation metadata, got %#v", metadata)
+	}
+	if metadata["visit_id"] != "visit-1" || metadata["token"] != nil {
+		t.Fatalf("unexpected metadata: %#v", metadata)
+	}
 }
 
-func TestErrorAuditMetadata(t *testing.T) {
-	cause := errors.New("underlying domain error")
-	opErr := withErrorContext("test.op", "test.stage", cause, map[string]any{
-		"safe_attr": "value",
-	})
+func TestOperationErrorShouldKeepFirstFailureStageWhenPassedThroughBoundary(t *testing.T) {
+	// arrange
+	first := withErrorContext("visit.complete", "repository.save_visit", errors.New("write failed"), map[string]any{"visit_id": "visit-1"})
 
-	base := map[string]any{"existing": "data"}
-	result := errorAuditMetadata(opErr, base)
+	// act
+	err := withErrorContext("visit.complete", "transaction.run", first, map[string]any{"camp_id": "camp-1"})
 
-	assert.Equal(t, "data", result["existing"])
-	assert.Equal(t, "underlying domain error", result["error"])
-	assert.Equal(t, "test.op", result["operation"])
-	assert.Equal(t, "test.stage", result["stage"])
-	assert.Equal(t, "OperationError", result["error_type"])
-	assert.Equal(t, "value", result["safe_attr"])
-}
-
-func TestErrorAuditMetadata_NilError(t *testing.T) {
-	base := map[string]any{"existing": "data"}
-	result := errorAuditMetadata(nil, base)
-	assert.Equal(t, "data", result["existing"])
-	assert.NotContains(t, result, "error")
-}
-
-func TestErrorAuditMetadata_RegularError(t *testing.T) {
-	cause := errors.New("regular error")
-	base := map[string]any{"existing": "data"}
-	result := errorAuditMetadata(cause, base)
-
-	assert.Equal(t, "data", result["existing"])
-	assert.Equal(t, "regular error", result["error"])
-	assert.NotContains(t, result, "operation")
+	// assert
+	var operationErr *OperationError
+	if !errors.As(err, &operationErr) {
+		t.Fatal("expected operation error")
+	}
+	if operationErr.Stage() != "repository.save_visit" {
+		t.Fatalf("expected first failure stage, got %q", operationErr.Stage())
+	}
 }
