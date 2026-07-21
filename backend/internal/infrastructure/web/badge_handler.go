@@ -1,7 +1,7 @@
 package web
 
 import (
-	"context"
+	"errors"
 	"net/http"
 
 	"cornermon/backend/internal/domain"
@@ -13,7 +13,6 @@ import (
 type BadgeHandler struct {
 	badgeUC *usecase.BadgeService
 	groupUC *usecase.GroupService
-	camps   usecase.CampRepository
 }
 
 type BadgeResponse struct {
@@ -27,27 +26,11 @@ type BadgeResponse struct {
 func NewBadgeHandler(
 	badgeUC *usecase.BadgeService,
 	groupUC *usecase.GroupService,
-	camps usecase.CampRepository,
 ) *BadgeHandler {
 	return &BadgeHandler{
 		badgeUC: badgeUC,
 		groupUC: groupUC,
-		camps:   camps,
 	}
-}
-
-// getActiveCamp is a helper to find the currently active camp
-func (h *BadgeHandler) getActiveCamp(ctx context.Context) (*domain.Camp, error) {
-	camps, err := h.camps.List(ctx)
-	if err != nil {
-		return nil, err
-	}
-	for _, camp := range camps {
-		if camp.Status() == domain.CampActive {
-			return camp, nil
-		}
-	}
-	return nil, nil
 }
 
 func mapBadgeToDTO(b *domain.Badge) BadgeResponse {
@@ -158,34 +141,9 @@ func (h *BadgeHandler) AssignBadge(c echo.Context) error {
 		return err
 	}
 
-	camp, err := h.getActiveCamp(c.Request().Context())
+	group, err := h.groupUC.AssignBadge(c.Request().Context(), id, req.GroupName)
 	if err != nil {
-		return err
-	}
-	if camp == nil {
-		return echo.NewHTTPError(http.StatusNotFound, "active camp not found")
-	}
-
-	// We need a badge's QRPayload to use GroupService.RegisterBadge, or we add RegisterBadgeByID to GroupService.
-	// Since GroupService.RegisterBadge uses qrPayload, let's get the badge first.
-	badges, err := h.badgeUC.ListBadges(c.Request().Context())
-	if err != nil {
-		return err
-	}
-	var qrPayload string
-	for _, b := range badges {
-		if b.ID() == id {
-			qrPayload = b.QRPayload()
-			break
-		}
-	}
-	if qrPayload == "" {
-		return echo.ErrNotFound
-	}
-
-	group, err := h.groupUC.RegisterBadge(c.Request().Context(), camp.ID(), qrPayload, req.GroupName)
-	if err != nil {
-		return err
+		return badgeAssignmentHTTPError(err)
 	}
 
 	return c.JSON(http.StatusCreated, mapGroupToDTO(group))
@@ -211,18 +169,23 @@ func (h *BadgeHandler) ScanAssignBadge(c echo.Context) error {
 		return err
 	}
 
-	camp, err := h.getActiveCamp(c.Request().Context())
+	group, err := h.groupUC.ScanAssignBadge(c.Request().Context(), req.QRPayload, req.GroupName)
 	if err != nil {
-		return err
-	}
-	if camp == nil {
-		return echo.NewHTTPError(http.StatusNotFound, "active camp not found")
-	}
-
-	group, err := h.groupUC.RegisterBadge(c.Request().Context(), camp.ID(), req.QRPayload, req.GroupName)
-	if err != nil {
-		return err
+		return badgeAssignmentHTTPError(err)
 	}
 
 	return c.JSON(http.StatusCreated, mapGroupToDTO(group))
+}
+
+func badgeAssignmentHTTPError(err error) error {
+	switch {
+	case errors.Is(err, domain.ErrCampNotFound):
+		return echo.NewHTTPError(http.StatusNotFound, ErrorResponse{Code: "CAMP_NOT_FOUND", Message: err.Error()}).SetInternal(err)
+	case errors.Is(err, domain.ErrBadgeNotAssigned):
+		return echo.NewHTTPError(http.StatusNotFound, ErrorResponse{Code: "BADGE_NOT_FOUND", Message: err.Error()}).SetInternal(err)
+	case errors.Is(err, domain.ErrBadgeAlreadyAssigned):
+		return echo.NewHTTPError(http.StatusConflict, ErrorResponse{Code: "BADGE_ALREADY_ASSIGNED", Message: err.Error()}).SetInternal(err)
+	default:
+		return err
+	}
 }
