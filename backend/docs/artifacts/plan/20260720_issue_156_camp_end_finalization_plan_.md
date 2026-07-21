@@ -71,6 +71,7 @@ func (s *CampService) EndCamp(
 | E-1 | 변경 알림+REST resync 및 재전송 미보장 원칙을 상위·개발자·기술 설계 문서에 동기화 | `/home/lsjtop10/projects/cornermon-issue-156/{CLAUDE.md,backend/docs/DEVELOPER_GUIDE.md,docs/technical-design.md}` (기존 파일 확장) |
 | E-2 | 진행자 `camp_ended` terminal 처리와 유실 복구 경로를 SSE API 문서에 명시 | `/home/lsjtop10/projects/cornermon-issue-156/backend/internal/infrastructure/web/event_handler.go`, `/home/lsjtop10/projects/cornermon-issue-156/api/` (기존 파일 확장·자동 생성) |
 | E-3 | 커밋 뒤 `camp_ended`를 첫 이벤트로 발행하고 순서를 테스트 | `/home/lsjtop10/projects/cornermon-issue-156/backend/internal/usecase/camp.go`, `/home/lsjtop10/projects/cornermon-issue-156/backend/internal/usecase/camp_test.go` (기존 파일 확장) |
+| E-4 | SSE 유실·순서 역전 시 `status`+`campStatus`로 판정하는 fallback 규칙을 문서화 | `/home/lsjtop10/projects/cornermon-issue-156/{backend/docs/DEVELOPER_GUIDE.md,docs/technical-design.md,backend/internal/infrastructure/web/event_handler.go}` (기존 파일 확장) |
 
 ## 4. 검증 체크리스트
 
@@ -86,3 +87,4 @@ func (s *CampService) EndCamp(
 - [x] 기기 상태 조회의 Swagger 계약과 생성 문서가 동기화된다.
 - [x] 일반 SSE의 REST 재조회·재연결 원칙과 서버 재전송 미보장이 문서와 API 계약에 일치한다.
 - [x] 진행자 `camp_ended`는 REST 재조회 없는 terminal 처리이며, 커밋 뒤 첫 이벤트로 발행된다.
+- [x] SSE 유실·순서 역전 때 `GET /device-registrations/me`의 `status`+`campStatus`로 최종 처리하는 규칙이 문서와 API 계약에 명시된다.
