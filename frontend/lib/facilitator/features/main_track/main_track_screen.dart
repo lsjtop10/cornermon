@@ -94,6 +94,7 @@ class _MainTrackScreenState extends ConsumerState<MainTrackScreen> {
             if (_visitJustCompleted != null)
               Positioned.fill(
                 child: VisitSummaryOverlay(
+                  trackId: trackId,
                   visit: _visitJustCompleted!,
                   onDismiss: () => setState(() => _visitJustCompleted = null),
                 ),

@@ -13,11 +13,13 @@ import 'package:cornermon/shared/design_system/tokens/typography.dart';
 /// B5 — 방문 종료 확인 직후 소요시간/편차를 짧게 보여주고 자동으로 사라지는 오버레이.
 class VisitSummaryOverlay extends ConsumerStatefulWidget {
   const VisitSummaryOverlay({
+    required this.trackId,
     required this.visit,
     required this.onDismiss,
     super.key,
   });
 
+  final TrackId trackId;
   final VisitSummary visit;
   final VoidCallback onDismiss;
 
@@ -69,9 +71,15 @@ class _VisitSummaryOverlayState extends ConsumerState<VisitSummaryOverlay> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final colors = isDark ? AppColors.dark : AppColors.light;
 
-    final groupAsync = ref.watch(
-      groupDetailProvider(GroupId(widget.visit.groupId!)),
-    );
+    // groupDetailProvider(GET /groups/{id})는 admin 전용 라우트라 트랙 토큰으로 호출하면
+    // 401을 유발해 세션이 강제 종료된다 — 이미 로그인 시 구독 중인 트랙 스코프 그룹 목록
+    // (GET /tracks/{trackId}/groups)에서 같은 조를 찾아 쓴다.
+    final groupAsync = ref
+        .watch(trackScopedGroupsProvider(widget.trackId))
+        .whenData(
+          (groups) =>
+              groups.firstWhere((g) => g.id == widget.visit.groupId),
+        );
     final duration = widget.visit.durationSeconds ?? 0;
     final deviation = widget.visit.deviationSeconds ?? 0;
     final deviationColor = deviation > 0
