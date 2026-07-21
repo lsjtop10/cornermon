@@ -224,9 +224,9 @@ func (h *AuthHandler) RevokeAdminSession(c echo.Context) error {
 // @Param        X-Device-Token header string true "기기 신뢰 토큰 (opaque token, 값을 그대로 전달)"
 // @Param        request body TrackLoginRequest true "6자리 숫자 트랙 PIN"
 // @Success      200 {object} TrackLoginResponse "로그인 성공 — 트랙 세션 토큰 발급"
-// @Failure      400 {object} ErrorResponse "잘못된 PIN (지연 가능)"
-// @Failure      403 {object} ErrorResponse "신뢰 기기 아님 또는 캠프 미시작"
-// @Failure      429 {object} ErrorResponse "PIN 잠금(지연) 중"
+// @Failure      400 {object} ErrorResponse "INVALID_PIN: PIN이 올바르지 않음"
+// @Failure      403 {object} ErrorResponse "DEVICE_NOT_APPROVED: 기기가 승인되지 않음; CAMP_NOT_AVAILABLE: 캠프가 로그인 가능한 상태가 아님"
+// @Failure      429 {object} ErrorResponse "DEVICE_LOCKED: PIN 실패 횟수 초과로 기기가 일시 잠김"
 // @Router       /auth/track/login [post]
 func (h *AuthHandler) TrackLogin(c echo.Context) error {
 	var req TrackLoginRequest
@@ -241,7 +241,7 @@ func (h *AuthHandler) TrackLogin(c echo.Context) error {
 
 	res, err := h.facilitatorAuth.Login(c.Request().Context(), deviceToken, req.PIN)
 	if err != nil {
-		return err
+		return trackLoginHTTPError(err)
 	}
 
 	return c.JSON(http.StatusOK, TrackLoginResponse{
@@ -262,12 +262,28 @@ func (h *AuthHandler) TrackLogin(c echo.Context) error {
 	})
 }
 
+func trackLoginHTTPError(err error) error {
+	switch {
+	case errors.Is(err, domain.ErrDeviceNotApproved):
+		return echo.NewHTTPError(http.StatusForbidden, ErrorResponse{Code: "DEVICE_NOT_APPROVED", Message: "device is not approved"}).SetInternal(err)
+	case errors.Is(err, domain.ErrDeviceLocked):
+		return echo.NewHTTPError(http.StatusTooManyRequests, ErrorResponse{Code: "DEVICE_LOCKED", Message: "device is temporarily locked"}).SetInternal(err)
+	case errors.Is(err, domain.ErrInvalidPin):
+		return echo.NewHTTPError(http.StatusBadRequest, ErrorResponse{Code: "INVALID_PIN", Message: "invalid pin"}).SetInternal(err)
+	case errors.Is(err, domain.ErrCampInvalidTransition):
+		return echo.NewHTTPError(http.StatusForbidden, ErrorResponse{Code: "CAMP_NOT_AVAILABLE", Message: "camp is not available for track login"}).SetInternal(err)
+	default:
+		return err
+	}
+}
+
 // @Summary      진행자 트랙 로그아웃
 // @Description  트랙 진행자가 스스로 로그아웃한다.
 // @Tags         A. Auth & Device Trust
 // @Security     TrackAuth
 // @Produce      json
 // @Success      204 "성공"
+// @Failure      401 {object} ErrorResponse "SESSION_REVOKED: 세션이 이미 취소됨"
 // @Router       /auth/track/logout [post]
 func (h *AuthHandler) TrackLogout(c echo.Context) error {
 	session, ok := c.Get("facilitatorSession").(*domain.FacilitatorSession)
@@ -277,6 +293,9 @@ func (h *AuthHandler) TrackLogout(c echo.Context) error {
 
 	err := h.facilitatorAuth.Logout(c.Request().Context(), session.ID())
 	if err != nil {
+		if errors.Is(err, domain.ErrSessionRevoked) {
+			return echo.NewHTTPError(http.StatusUnauthorized, ErrorResponse{Code: "SESSION_REVOKED", Message: "session is revoked"}).SetInternal(err)
+		}
 		return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()}).SetInternal(err)
 	}
 
@@ -313,6 +332,7 @@ func (h *AuthHandler) ForceTrackLogout(c echo.Context) error {
 // @Produce      json
 // @Param        deviceId path string true "기기 ID"
 // @Success      204 "성공"
+// @Failure      409 {object} ErrorResponse "DEVICE_INVALID_TRANSITION: 존재하지 않거나 잠금 해제할 수 없는 기기"
 // @Router       /auth/track/lockout/{deviceId}/release [post]
 func (h *AuthHandler) ReleaseLockout(c echo.Context) error {
 	session, ok := c.Get("adminSession").(*domain.AdminSession)
@@ -323,6 +343,9 @@ func (h *AuthHandler) ReleaseLockout(c echo.Context) error {
 
 	err := h.deviceTrust.ResetPinFailures(c.Request().Context(), deviceID, session.AdminID())
 	if err != nil {
+		if errors.Is(err, domain.ErrDeviceInvalidTransition) {
+			return echo.NewHTTPError(http.StatusConflict, ErrorResponse{Code: "DEVICE_INVALID_TRANSITION", Message: "device registration cannot reset pin failures"}).SetInternal(err)
+		}
 		return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()}).SetInternal(err)
 	}
 
@@ -347,7 +370,7 @@ func (h *AuthHandler) MigrateSession(c echo.Context) error {
 	res, err := h.facilitatorAuth.MigrateSession(c.Request().Context(), sessionToken)
 	if err != nil {
 		if errors.Is(err, domain.ErrSessionRevoked) {
-			return echo.NewHTTPError(http.StatusUnauthorized, ErrorResponse{Code: "UNAUTHORIZED", Message: err.Error()}).SetInternal(err)
+			return echo.NewHTTPError(http.StatusUnauthorized, ErrorResponse{Code: "SESSION_REVOKED", Message: "session is revoked"}).SetInternal(err)
 		}
 		return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()}).SetInternal(err)
 	}

@@ -89,7 +89,8 @@ type BroadcastMessageRequest struct {
 // @Param        campId path string true "캠프 ID"
 // @Param        request body BroadcastMessageRequest true "메시지 내용"
 // @Success      201 {object} MessageResponse
-// @Failure      400 {object} ErrorResponse
+// @Failure      400 {object} ErrorResponse "BAD_REQUEST: 요청 본문 또는 campId가 없음"
+// @Failure      409 {object} ErrorResponse "CAMP_NOT_ACTIVE: ACTIVE 캠프에서만 공지를 보낼 수 있음"
 // @Router       /camps/{campId}/messages/broadcast [post]
 func (h *MessageHandler) SendBroadcast(c echo.Context) error {
 	session, ok := c.Get("adminSession").(*domain.AdminSession)
@@ -108,7 +109,7 @@ func (h *MessageHandler) SendBroadcast(c echo.Context) error {
 
 	announcement, err := h.announcement.SendAnnouncement(c.Request().Context(), campID, req.Content, session.AdminID())
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()}).SetInternal(err)
+		return messageHTTPError(err)
 	}
 
 	return c.JSON(http.StatusCreated, MessageResponse{
@@ -137,7 +138,7 @@ func (h *MessageHandler) ListBroadcasts(c echo.Context) error {
 	if session, ok := c.Get("facilitatorSession").(*domain.FacilitatorSession); ok {
 		views, err := h.announcementQuery.ListNoticesForTrack(c.Request().Context(), campID, session.TrackID())
 		if err != nil {
-			return err
+			return messageHTTPError(err)
 		}
 		res = make([]MessageResponse, len(views))
 		for i, view := range views {
@@ -213,7 +214,7 @@ func (h *MessageHandler) ReadBroadcast(c echo.Context) error {
 
 	err := h.announcement.MarkNoticeRead(c.Request().Context(), token, announcementID)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()}).SetInternal(err)
+		return messageHTTPError(err)
 	}
 
 	return c.NoContent(http.StatusNoContent)
@@ -255,7 +256,7 @@ func (h *MessageHandler) SendDirect(c echo.Context) error {
 
 	msg, err := h.message.SendDirect(c.Request().Context(), trackID, req.Content, senderRole)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()}).SetInternal(err)
+		return messageHTTPError(err)
 	}
 
 	var tID *string
@@ -284,7 +285,7 @@ func (h *MessageHandler) SendDirect(c echo.Context) error {
 // @Param        background query bool false "true면 상대측이 보낸 미확인 메시지를 읽음 처리"
 // @Param        after query string false "RFC3339 UTC 이후 메시지만 반환"
 // @Success      200 {array} MessageResponse
-// @Failure      403 {object} ErrorResponse "세션 트랙과 요청 트랙 불일치"
+// @Failure      403 {object} ErrorResponse "TRACK_SCOPE_FORBIDDEN: 세션 트랙과 요청 트랙이 불일치"
 // @Router       /tracks/{trackId}/messages [get]
 func (h *MessageHandler) ListDirectMessages(c echo.Context) error {
 	trackID := domain.TrackID(c.Param("trackId"))
@@ -305,7 +306,7 @@ func (h *MessageHandler) ListDirectMessages(c echo.Context) error {
 	}
 	msgs, err := h.message.ListDirectMessages(c.Request().Context(), trackID, viewerRole, after, background)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()}).SetInternal(err)
+		return messageHTTPError(err)
 	}
 
 	return c.JSON(http.StatusOK, mapMessages(msgs))
@@ -323,7 +324,7 @@ type UnreadCountResponse struct {
 // @Produce      json
 // @Param        trackId path string true "트랙 ID"
 // @Success      200 {object} UnreadCountResponse
-// @Failure      403 {object} ErrorResponse "세션 트랙과 요청 트랙 불일치"
+// @Failure      403 {object} ErrorResponse "TRACK_SCOPE_FORBIDDEN: 세션 트랙과 요청 트랙이 불일치"
 // @Router       /tracks/{trackId}/messages/unread-count [get]
 func (h *MessageHandler) GetUnreadCount(c echo.Context) error {
 	trackID := domain.TrackID(c.Param("trackId"))
@@ -336,7 +337,7 @@ func (h *MessageHandler) GetUnreadCount(c echo.Context) error {
 	}
 	count, err := h.message.GetUnreadCount(c.Request().Context(), trackID, role)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()}).SetInternal(err)
+		return messageHTTPError(err)
 	}
 	return c.JSON(http.StatusOK, UnreadCountResponse{UnreadCount: count})
 }
@@ -347,9 +348,26 @@ func requireFacilitatorTrackScope(c echo.Context, trackID domain.TrackID) error 
 		return echo.NewHTTPError(http.StatusUnauthorized, "unauthorized")
 	}
 	if session.TrackID() != trackID {
-		return domain.ErrTrackScopeForbidden
+		return messageHTTPError(domain.ErrTrackScopeForbidden)
 	}
 	return nil
+}
+
+func messageHTTPError(err error) error {
+	switch {
+	case errors.Is(err, domain.ErrSessionRevoked):
+		return echo.NewHTTPError(http.StatusUnauthorized, ErrorResponse{Code: "SESSION_REVOKED", Message: "facilitator session is revoked"}).SetInternal(err)
+	case errors.Is(err, domain.ErrTrackScopeForbidden):
+		return echo.NewHTTPError(http.StatusForbidden, ErrorResponse{Code: "TRACK_SCOPE_FORBIDDEN", Message: "track session cannot access the requested track"}).SetInternal(err)
+	case errors.Is(err, domain.ErrTrackNotFound), errors.Is(err, domain.ErrTrackNotActive):
+		return echo.NewHTTPError(http.StatusNotFound, ErrorResponse{Code: "TRACK_NOT_FOUND", Message: "track not found"}).SetInternal(err)
+	case errors.Is(err, domain.ErrCornerNotInItinerary):
+		return echo.NewHTTPError(http.StatusNotFound, ErrorResponse{Code: "CORNER_NOT_FOUND", Message: "track corner not found"}).SetInternal(err)
+	case errors.Is(err, domain.ErrCampInvalidTransition):
+		return echo.NewHTTPError(http.StatusConflict, ErrorResponse{Code: "CAMP_NOT_ACTIVE", Message: "camp is not active"}).SetInternal(err)
+	default:
+		return err
+	}
 }
 
 func parseBackground(value string) (bool, error) {

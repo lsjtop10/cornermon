@@ -404,8 +404,11 @@ func (s *TrackService) ListTracksByCamp(ctx context.Context, campID domain.CampI
 
 func (s *TrackService) ExportTrackPIN(ctx context.Context, trackID domain.TrackID) (*domain.Track, string, error) {
 	track, err := s.tracks.Get(ctx, trackID)
-	if err != nil || track == nil || track.Status() != domain.TrackActive {
+	if err != nil {
 		return nil, "", err
+	}
+	if track == nil || track.Status() != domain.TrackActive {
+		return nil, "", domain.ErrTrackNotActive
 	}
 	if track.PINCiphertext() == "" || s.pinProtector == nil {
 		return nil, "", fmt.Errorf("track PIN must be regenerated before export")

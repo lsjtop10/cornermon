@@ -43,9 +43,9 @@ type UpdateCampRequest struct {
 // @Param        id path string true "캠프 ID"
 // @Param        request body UpdateCampRequest true "부분 수정할 캠프 설정"
 // @Success      200 {object} CampResponse
-// @Failure      400 {object} ErrorResponse
-// @Failure      404 {object} ErrorResponse
-// @Failure      409 {object} ErrorResponse
+// @Failure      400 {object} ErrorResponse "CAMP_INVALID_SETTINGS: 설정 값이 유효하지 않음"
+// @Failure      404 {object} ErrorResponse "CAMP_NOT_FOUND: 대상 캠프가 없음"
+// @Failure      409 {object} ErrorResponse "CAMP_SETTINGS_LOCKED: 종료된 캠프는 수정할 수 없음"
 // @Router       /camps/{id} [patch]
 func (h *CampHandler) UpdateCamp(c echo.Context) error {
 	var req UpdateCampRequest
@@ -72,7 +72,7 @@ func (h *CampHandler) UpdateCamp(c echo.Context) error {
 
 	camp, err := h.svc.UpdateCampSettings(c.Request().Context(), domain.CampID(c.Param("id")), getAdminID(c), patch)
 	if err != nil {
-		return err
+		return campHTTPError(err)
 	}
 	return c.JSON(http.StatusOK, mapDomainCampToDTO(camp))
 }
@@ -151,10 +151,7 @@ func (h *CampHandler) CreateCamp(c echo.Context) error {
 	}
 	camp, err := h.svc.OpenNewCamp(c.Request().Context(), req.Name, req.StartAt, req.EndAt)
 	if err != nil {
-		if errors.Is(err, domain.ErrCampInvalidSettings) {
-			return echo.NewHTTPError(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: err.Error()}).SetInternal(err)
-		}
-		return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_ERROR", Message: err.Error()}).SetInternal(err)
+		return campHTTPError(err)
 	}
 	return c.JSON(http.StatusCreated, mapDomainCampToDTO(camp))
 }
@@ -188,17 +185,14 @@ func (h *CampHandler) GetCamp(c echo.Context) error {
 // @Param        id path string true "캠프 ID"
 // @Success      200 {object} CampResponse
 // @Failure      400 {object} ErrorResponse
-// @Failure      409 {object} ErrorResponse "이미 활성화됨 또는 필수 조건 미충족"
+// @Failure      409 {object} ErrorResponse "CAMP_STATE_CONFLICT: 이미 활성화되었거나 활성화할 수 없는 상태"
 // @Router       /camps/{id}/start [post]
 func (h *CampHandler) StartCamp(c echo.Context) error {
 	id := domain.CampID(c.Param("id"))
 	adminID := getAdminID(c)
 	err := h.svc.ActivateCamp(c.Request().Context(), id, adminID)
 	if err != nil {
-		if errors.Is(err, domain.ErrCampInvalidTransition) {
-			return echo.NewHTTPError(http.StatusConflict, ErrorResponse{Code: "CONFLICT", Message: err.Error()}).SetInternal(err)
-		}
-		return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_ERROR", Message: err.Error()}).SetInternal(err)
+		return campHTTPError(err)
 	}
 	camp, _ := h.svc.GetCamp(c.Request().Context(), id)
 	return c.JSON(http.StatusOK, mapDomainCampToDTO(camp))
@@ -212,18 +206,30 @@ func (h *CampHandler) StartCamp(c echo.Context) error {
 // @Param        id path string true "캠프 ID"
 // @Success      200 {object} CampResponse
 // @Failure      400 {object} ErrorResponse
-// @Failure      409 {object} ErrorResponse
+// @Failure      409 {object} ErrorResponse "CAMP_STATE_CONFLICT: 종료할 수 없는 캠프 상태 또는 정리 중인 방문 충돌"
 // @Router       /camps/{id}/end [post]
 func (h *CampHandler) EndCamp(c echo.Context) error {
 	id := domain.CampID(c.Param("id"))
 	adminID := getAdminID(c)
 	err := h.svc.EndCamp(c.Request().Context(), id, adminID)
 	if err != nil {
-		if errors.Is(err, domain.ErrCampInvalidTransition) {
-			return echo.NewHTTPError(http.StatusConflict, ErrorResponse{Code: "CONFLICT", Message: err.Error()}).SetInternal(err)
-		}
-		return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_ERROR", Message: err.Error()}).SetInternal(err)
+		return campHTTPError(err)
 	}
 	camp, _ := h.svc.GetCamp(c.Request().Context(), id)
 	return c.JSON(http.StatusOK, mapDomainCampToDTO(camp))
+}
+
+func campHTTPError(err error) error {
+	switch {
+	case errors.Is(err, domain.ErrCampNotFound):
+		return echo.NewHTTPError(http.StatusNotFound, ErrorResponse{Code: "CAMP_NOT_FOUND", Message: "camp not found"}).SetInternal(err)
+	case errors.Is(err, domain.ErrCampInvalidSettings):
+		return echo.NewHTTPError(http.StatusBadRequest, ErrorResponse{Code: "CAMP_INVALID_SETTINGS", Message: "camp settings are invalid"}).SetInternal(err)
+	case errors.Is(err, domain.ErrCampSettingsLocked):
+		return echo.NewHTTPError(http.StatusConflict, ErrorResponse{Code: "CAMP_SETTINGS_LOCKED", Message: "camp settings are locked"}).SetInternal(err)
+	case errors.Is(err, domain.ErrCampInvalidTransition), errors.Is(err, domain.ErrCornerNotInItinerary), errors.Is(err, domain.ErrTrackNotActive):
+		return echo.NewHTTPError(http.StatusConflict, ErrorResponse{Code: "CAMP_STATE_CONFLICT", Message: "camp cannot make that state transition"}).SetInternal(err)
+	default:
+		return err
+	}
 }

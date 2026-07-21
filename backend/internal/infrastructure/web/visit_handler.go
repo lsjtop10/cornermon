@@ -1,6 +1,7 @@
 package web
 
 import (
+	"errors"
 	"net/http"
 	"strings"
 	"time"
@@ -66,7 +67,9 @@ func mapVisitToDTO(v *domain.Visit) VisitSummaryResponse {
 // @Param        trackId path string true "트랙 ID"
 // @Param        request body VisitStartRequest true "입장 방식 및 페이로드"
 // @Success      201 {object} VisitSummaryResponse
-// @Failure      409 {object} ErrorResponse "TRACK_BUSY, DUPLICATE_VISIT 등"
+// @Failure      401 {object} ErrorResponse "SESSION_REVOKED: 진행자 세션이 취소됨"
+// @Failure      404 {object} ErrorResponse "BADGE_NOT_ASSIGNED: 배지가 존재하지 않거나 조에 배정되지 않음"
+// @Failure      409 {object} ErrorResponse "TRACK_BUSY, TRACK_NOT_ACTIVE, ITINERARY_CONFLICT, CAMP_NOT_ACTIVE: 현재 운영 상태에서 방문을 시작할 수 없음"
 // @Router       /tracks/{trackId}/visits/start [post]
 func (h *VisitHandler) StartVisit(c echo.Context) error {
 	authHeader := c.Request().Header.Get("Authorization")
@@ -74,7 +77,7 @@ func (h *VisitHandler) StartVisit(c echo.Context) error {
 
 	var req VisitStartRequest
 	if err := c.Bind(&req); err != nil {
-		return err
+		return echo.NewHTTPError(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: "invalid request"}).SetInternal(err)
 	}
 
 	var visit *domain.Visit
@@ -87,7 +90,7 @@ func (h *VisitHandler) StartVisit(c echo.Context) error {
 	}
 
 	if err != nil {
-		return err
+		return visitHTTPError(err)
 	}
 
 	return c.JSON(http.StatusCreated, mapVisitToDTO(visit))
@@ -100,7 +103,8 @@ func (h *VisitHandler) StartVisit(c echo.Context) error {
 // @Produce      json
 // @Param        trackId path string true "트랙 ID"
 // @Success      200 {object} VisitSummaryResponse
-// @Failure      409 {object} ErrorResponse "TRACK_NOT_BUSY 등"
+// @Failure      401 {object} ErrorResponse "SESSION_REVOKED: 진행자 세션이 취소됨"
+// @Failure      409 {object} ErrorResponse "TRACK_NOT_BUSY, TRACK_NOT_ACTIVE, ITINERARY_CONFLICT: 현재 운영 상태에서 방문을 종료할 수 없음"
 // @Router       /tracks/{trackId}/visits/current/end [post]
 func (h *VisitHandler) EndCurrentVisit(c echo.Context) error {
 	authHeader := c.Request().Header.Get("Authorization")
@@ -108,7 +112,7 @@ func (h *VisitHandler) EndCurrentVisit(c echo.Context) error {
 
 	visit, err := h.visitUC.CompleteVisit(c.Request().Context(), token)
 	if err != nil {
-		return err
+		return visitHTTPError(err)
 	}
 
 	return c.JSON(http.StatusOK, mapVisitToDTO(visit))
@@ -121,7 +125,8 @@ func (h *VisitHandler) EndCurrentVisit(c echo.Context) error {
 // @Produce      json
 // @Param        trackId path string true "트랙 ID"
 // @Success      200 {object} VisitSummaryResponse
-// @Failure      404 "진행 중인 방문 없음"
+// @Failure      401 {object} ErrorResponse "SESSION_REVOKED: 진행자 세션이 취소됨"
+// @Failure      404 {object} ErrorResponse "VISIT_NOT_FOUND: 진행 중인 방문 없음"
 // @Router       /tracks/{trackId}/visits/current [get]
 func (h *VisitHandler) GetCurrentVisit(c echo.Context) error {
 	authHeader := c.Request().Header.Get("Authorization")
@@ -129,11 +134,32 @@ func (h *VisitHandler) GetCurrentVisit(c echo.Context) error {
 
 	visit, err := h.visitUC.GetCurrentVisit(c.Request().Context(), token)
 	if err != nil {
-		return err
+		return visitHTTPError(err)
 	}
 	if visit == nil {
 		return echo.ErrNotFound
 	}
 
 	return c.JSON(http.StatusOK, mapVisitToDTO(visit))
+}
+
+func visitHTTPError(err error) error {
+	switch {
+	case errors.Is(err, domain.ErrSessionRevoked):
+		return echo.NewHTTPError(http.StatusUnauthorized, ErrorResponse{Code: "SESSION_REVOKED", Message: "facilitator session is revoked"}).SetInternal(err)
+	case errors.Is(err, domain.ErrBadgeNotAssigned):
+		return echo.NewHTTPError(http.StatusNotFound, ErrorResponse{Code: "BADGE_NOT_ASSIGNED", Message: "badge is not assigned to a group"}).SetInternal(err)
+	case errors.Is(err, domain.ErrTrackBusy):
+		return echo.NewHTTPError(http.StatusConflict, ErrorResponse{Code: "TRACK_BUSY", Message: "track already has a visit in progress"}).SetInternal(err)
+	case errors.Is(err, domain.ErrTrackNotBusy):
+		return echo.NewHTTPError(http.StatusConflict, ErrorResponse{Code: "TRACK_NOT_BUSY", Message: "track has no visit in progress"}).SetInternal(err)
+	case errors.Is(err, domain.ErrTrackNotActive):
+		return echo.NewHTTPError(http.StatusConflict, ErrorResponse{Code: "TRACK_NOT_ACTIVE", Message: "track is not active"}).SetInternal(err)
+	case errors.Is(err, domain.ErrCornerNotInItinerary), errors.Is(err, domain.ErrGroupBusy), errors.Is(err, domain.ErrDuplicateVisit), errors.Is(err, domain.ErrVisitAlreadyCompleted):
+		return echo.NewHTTPError(http.StatusConflict, ErrorResponse{Code: "ITINERARY_CONFLICT", Message: "visit does not satisfy the group itinerary"}).SetInternal(err)
+	case errors.Is(err, domain.ErrCampInvalidTransition):
+		return echo.NewHTTPError(http.StatusConflict, ErrorResponse{Code: "CAMP_NOT_ACTIVE", Message: "camp is not active"}).SetInternal(err)
+	default:
+		return err
+	}
 }
