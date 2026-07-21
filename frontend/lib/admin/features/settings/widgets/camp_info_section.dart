@@ -77,8 +77,9 @@ class _CampInfoSectionState extends ConsumerState<CampInfoSection> {
           context,
         ).showSnackBar(const SnackBar(content: Text('캠프 정보가 저장되었습니다.')));
       }
-    } catch (error) {
-      if (mounted) setState(() => _error = error.toString());
+    } catch (error, stackTrace) {
+      final message = describeUpdateCampError(error, stackTrace);
+      if (mounted) setState(() => _error = message);
     } finally {
       if (mounted) setState(() => _saving = false);
     }
