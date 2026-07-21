@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -10,6 +11,27 @@ import 'package:cornermon/shared/design_system/tokens/colors.dart';
 import 'package:cornermon/shared/design_system/tokens/spacing.dart';
 import 'package:cornermon/shared/design_system/tokens/typography.dart';
 import 'package:cornermon/shared/design_system/widgets/app_button.dart';
+
+/// POST end-camp 실패를 사용자 문구로 변환한다(camp_handler.go EndCamp 참고).
+/// 인식 못한 코드(네트워크 오류, 5xx 등)는 원문을 로그로만 남기고 일반 문구로 대체한다.
+String _describeEndError(Object error, StackTrace stackTrace) {
+  if (error is DioException) {
+    debugPrint(
+      '[end_camp] failed: type=${error.type} '
+      'statusCode=${error.response?.statusCode} '
+      'body=${error.response?.data}\n$stackTrace',
+    );
+    final code = (error.response?.data is Map)
+        ? (error.response?.data as Map)['code'] as String?
+        : null;
+    if (code == 'CAMP_STATE_CONFLICT') {
+      return '종료할 수 없는 캠프 상태이거나 정리 중인 방문이 있습니다.';
+    }
+  } else {
+    debugPrint('[end_camp] failed: $error\n$stackTrace');
+  }
+  return '종료 처리에 실패했습니다. 잠시 후 다시 시도해주세요.';
+}
 
 class EndCampConfirmDialog extends ConsumerStatefulWidget {
   const EndCampConfirmDialog({required this.campId, super.key});
@@ -50,8 +72,8 @@ class _EndCampConfirmDialogState extends ConsumerState<EndCampConfirmDialog> {
           });
         }
       }
-    } catch (error) {
-      if (mounted) setState(() => _error = error.toString());
+    } catch (error, stackTrace) {
+      if (mounted) setState(() => _error = _describeEndError(error, stackTrace));
     } finally {
       if (mounted) setState(() => _submitting = false);
     }

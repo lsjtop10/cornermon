@@ -2,6 +2,7 @@ import 'package:cornermon/admin/features/settings/widgets/camp_info_section.dart
 import 'package:cornermon/shared/api/ids.dart';
 import 'package:cornermon/shared/api/providers/camp_providers.dart';
 import 'package:cornermon_api_gen/cornermon_api_gen.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -63,7 +64,7 @@ void main() {
   });
 
   testWidgets(
-    'ShoudShowInlineErrorAndKeepPreviousValueWhenSaveFails',
+    'ShoudShowFriendlyMessageAndKeepPreviousValueWhenSaveFails',
     (tester) async {
       // arrange
       final camp = _camp();
@@ -75,7 +76,16 @@ void main() {
               name: '테스트 캠프',
               startAt: camp.startAt,
               endAt: camp.endAt,
-            ).overrideWith((_) async => throw Exception('이름이 중복됩니다')),
+            ).overrideWith(
+              (_) async => throw DioException(
+                requestOptions: RequestOptions(path: '/camps/camp-1'),
+                response: Response(
+                  requestOptions: RequestOptions(path: '/camps/camp-1'),
+                  statusCode: 409,
+                  data: {'code': 'CAMP_SETTINGS_LOCKED', 'message': 'x'},
+                ),
+              ),
+            ),
           ],
           child: MaterialApp(home: Scaffold(body: CampInfoSection(camp: camp))),
         ),
@@ -85,8 +95,9 @@ void main() {
       await tester.tap(find.text('저장'));
       await tester.pumpAndSettle();
 
-      // assert
-      expect(find.textContaining('이름이 중복됩니다'), findsOneWidget);
+      // assert — 서버 원문(ErrorResponse.code/message)이 아닌 가공된 안내 문구만 노출한다
+      expect(find.textContaining('종료된 캠프는 설정을 수정할 수 없습니다'), findsOneWidget);
+      expect(find.textContaining('CAMP_SETTINGS_LOCKED'), findsNothing);
       expect(find.text('테스트 캠프'), findsOneWidget);
     },
   );
