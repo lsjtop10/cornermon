@@ -15,4 +15,9 @@ extension AdminGroupX on api.Group {
     final total = itin.length;
     return '$completedCount/$total';
   }
+
+  double get completionRate {
+    final total = (itinerary ?? const <api.CornerProgress>[]).length;
+    return total == 0 ? 0 : completedCount / total;
+  }
 }
