@@ -56,6 +56,17 @@ func (r *pgGroupRepository) Get(ctx context.Context, id domain.GroupID) (*domain
 	return mapGroup(row)
 }
 
+func (r *pgGroupRepository) GetForUpdate(ctx context.Context, id domain.GroupID) (*domain.Group, error) {
+	row, err := r.queries(ctx).GetGroupForUpdate(ctx, string(id))
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, nil
+		}
+		return nil, errs.Wrap(ctx, err)
+	}
+	return mapGroup(row)
+}
+
 func (r *pgGroupRepository) GetByBadge(ctx context.Context, campID domain.CampID, badgeID domain.BadgeID) (*domain.Group, error) {
 	row, err := r.queries(ctx).GetGroupByBadge(ctx, db.GetGroupByBadgeParams{
 		CampID:  string(campID),
@@ -87,6 +98,23 @@ func (r *pgGroupRepository) ListByCamp(ctx context.Context, campID domain.CampID
 	return groups, nil
 }
 
+func (r *pgGroupRepository) ListByCampForUpdate(ctx context.Context, campID domain.CampID) ([]*domain.Group, error) {
+	rows, err := r.queries(ctx).ListGroupsByCampForUpdate(ctx, string(campID))
+	if err != nil {
+		return nil, errs.Wrap(ctx, err)
+	}
+
+	groups := make([]*domain.Group, len(rows))
+	for i, row := range rows {
+		g, err := mapGroup(row)
+		if err != nil {
+			return nil, err
+		}
+		groups[i] = g
+	}
+	return groups, nil
+}
+
 func (r *pgGroupRepository) Save(ctx context.Context, group *domain.Group) error {
 	itineraryJSON, err := json.Marshal(group.Itinerary())
 	if err != nil {
@@ -100,6 +128,36 @@ func (r *pgGroupRepository) Save(ctx context.Context, group *domain.Group) error
 		BadgeID:   string(group.BadgeID()),
 		Itinerary: itineraryJSON,
 	})
+	if err != nil {
+		return errs.Wrap(ctx, err)
+	}
+	return nil
+}
+
+func (r *pgGroupRepository) SaveBulk(ctx context.Context, groups []*domain.Group) error {
+	if tx := ExtractTx(ctx); tx != nil {
+		for _, g := range groups {
+			if err := r.Save(ctx, g); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+
+	tx, err := r.pool.BeginTx(ctx, pgx.TxOptions{})
+	if err != nil {
+		return errs.Wrap(ctx, err)
+	}
+	defer tx.Rollback(ctx)
+
+	txCtx := context.WithValue(ctx, txKey, tx)
+	for _, g := range groups {
+		if err := r.Save(txCtx, g); err != nil {
+			return err
+		}
+	}
+
+	err = tx.Commit(ctx)
 	if err != nil {
 		return errs.Wrap(ctx, err)
 	}

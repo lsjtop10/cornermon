@@ -435,6 +435,23 @@ func (q *Queries) GetGroupByBadge(ctx context.Context, arg GetGroupByBadgeParams
 	return i, err
 }
 
+const getGroupForUpdate = `-- name: GetGroupForUpdate :one
+SELECT id, camp_id, name, badge_id, itinerary FROM groups WHERE id = $1 FOR UPDATE
+`
+
+func (q *Queries) GetGroupForUpdate(ctx context.Context, id string) (Group, error) {
+	row := q.db.QueryRow(ctx, getGroupForUpdate, id)
+	var i Group
+	err := row.Scan(
+		&i.ID,
+		&i.CampID,
+		&i.Name,
+		&i.BadgeID,
+		&i.Itinerary,
+	)
+	return i, err
+}
+
 const getInProgressVisitByTrack = `-- name: GetInProgressVisitByTrack :one
 SELECT id, group_id, corner_id, track_id, status, input_method, started_at, ended_at FROM visits WHERE track_id = $1 AND status = 'IN_PROGRESS'
 `
@@ -1066,6 +1083,36 @@ SELECT id, camp_id, name, badge_id, itinerary FROM groups WHERE camp_id = $1
 
 func (q *Queries) ListGroupsByCamp(ctx context.Context, campID string) ([]Group, error) {
 	rows, err := q.db.Query(ctx, listGroupsByCamp, campID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Group
+	for rows.Next() {
+		var i Group
+		if err := rows.Scan(
+			&i.ID,
+			&i.CampID,
+			&i.Name,
+			&i.BadgeID,
+			&i.Itinerary,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listGroupsByCampForUpdate = `-- name: ListGroupsByCampForUpdate :many
+SELECT id, camp_id, name, badge_id, itinerary FROM groups WHERE camp_id = $1 FOR UPDATE
+`
+
+func (q *Queries) ListGroupsByCampForUpdate(ctx context.Context, campID string) ([]Group, error) {
+	rows, err := q.db.Query(ctx, listGroupsByCampForUpdate, campID)
 	if err != nil {
 		return nil, err
 	}
