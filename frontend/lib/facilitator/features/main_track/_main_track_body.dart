@@ -173,9 +173,15 @@ class _BusyBodyState extends ConsumerState<_BusyBody> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final colors = isDark ? AppColors.dark : AppColors.light;
-    final groupAsync = ref.watch(
-      groupDetailProvider(GroupId(widget.visit.groupId!)),
-    );
+    // groupDetailProvider(GET /groups/{id})는 admin 전용 라우트라 트랙 토큰으로 호출하면
+    // 401을 유발해 세션이 강제 종료된다 — 이미 로그인 시 구독 중인 트랙 스코프 그룹 목록
+    // (GET /tracks/{trackId}/groups)에서 같은 조를 찾아 쓴다.
+    final groupAsync = ref
+        .watch(trackScopedGroupsProvider(widget.trackId))
+        .whenData(
+          (groups) =>
+              groups.firstWhere((g) => g.id == widget.visit.groupId),
+        );
 
     final targetSeconds = widget.targetMinutes != null
         ? widget.targetMinutes! * 60
