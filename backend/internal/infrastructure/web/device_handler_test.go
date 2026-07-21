@@ -78,7 +78,7 @@ func TestShouldReturnRegistrationAndCampIdentityWhenGettingMyRegistrationStatus(
 		CampID: "camp-1",
 		Status: domain.DevicePending,
 	})
-	stub := &listDeviceTrustStub{myRegistration: registration}
+	stub := &listDeviceTrustStub{myRegistration: registration, campStatus: domain.CampActive}
 	handler := NewDeviceHandler(stub)
 	req := httptest.NewRequest(http.MethodGet, "/device-registrations/me", nil)
 	req.Header.Set("X-Device-Token", "device-token")
@@ -95,7 +95,7 @@ func TestShouldReturnRegistrationAndCampIdentityWhenGettingMyRegistrationStatus(
 	if err := json.Unmarshal(rec.Body.Bytes(), &response); err != nil {
 		t.Fatalf("decode response: %v", err)
 	}
-	if response.ID != "device-1" || response.CampID != "camp-1" || response.Status != string(domain.DevicePending) {
+	if response.ID != "device-1" || response.CampID != "camp-1" || response.Status != string(domain.DevicePending) || response.CampStatus != string(domain.CampActive) {
 		t.Fatalf("expected device and camp identity, got %+v", response)
 	}
 	if stub.deviceToken != "device-token" {

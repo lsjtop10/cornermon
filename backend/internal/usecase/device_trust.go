@@ -20,6 +20,11 @@ type DeviceTrustService struct {
 	uuidFn func() string
 }
 
+type DeviceRegistrationStatusView struct {
+	Registration *domain.DeviceRegistration
+	CampStatus   domain.CampStatus
+}
+
 func NewDeviceTrustService(
 	camps CampRepository,
 	devices DeviceRegistrationRepository,
@@ -94,7 +99,7 @@ func (s *DeviceTrustService) RequestRegistration(
 func (s *DeviceTrustService) GetMyRegistrationStatus(
 	ctx context.Context,
 	deviceToken string,
-) (*domain.DeviceRegistration, error) {
+) (*DeviceRegistrationStatusView, error) {
 	deviceTokenHash := hashSHA256(deviceToken)
 	device, err := s.devices.GetByTokenHash(ctx, deviceTokenHash)
 	if err != nil {
@@ -103,7 +108,16 @@ func (s *DeviceTrustService) GetMyRegistrationStatus(
 	if device == nil {
 		return nil, domain.ErrDeviceNotApproved // 혹은 NotFound 처리
 	}
-	return device, nil
+
+	camp, err := s.camps.Get(ctx, device.CampID())
+	if err != nil {
+		return nil, err
+	}
+	if camp == nil {
+		return nil, domain.ErrCampNotFound
+	}
+
+	return &DeviceRegistrationStatusView{Registration: device, CampStatus: camp.Status()}, nil
 }
 
 // ApproveDevice - UC-14 (승인)

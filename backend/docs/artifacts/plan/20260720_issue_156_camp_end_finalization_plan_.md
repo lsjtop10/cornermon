@@ -23,7 +23,7 @@ func (s *CampService) EndCamp(
 - `CampService`가 DeviceRegistration·Visit·Group 저장소를 주입받아, 캠프 저장과 모든 연관 상태 저장을 동일 `TxManager` 경계에서 수행한다.
 - 기존 `COMPLETED` Visit와 `NOT_VISITED` itinerary는 조회·변경 대상에서 제외한다.
 - 트랜잭션이 성공한 뒤에만 camp, device, corner, group, track 관련 full-snapshot SSE 및 `camp_ended`를 발행한다.
-- HTTP 계약은 기존 `POST /camps/:id/end`를 유지하므로 OpenAPI 변경은 없다.
+- `GET /device-registrations/me` 응답에 기기가 속한 캠프의 상태를 포함해, 종료 뒤에도 기기 토큰으로 상태를 재동기화한다.
 
 의존성 규칙:
 
@@ -56,6 +56,14 @@ func (s *CampService) EndCamp(
 | C-2 | 트랜잭션 실패 시 SSE 미발행 테스트 | `/home/lsjtop10/projects/cornermon-issue-156/backend/internal/usecase/camp_test.go` (기존 파일 확장) |
 | C-3 | `gofmt`, `sqlc generate`, `go test ./...`, `go vet ./...`, diff 자체 리뷰 | 작업 트리 |
 
+### Phase D: 진행자 캠프 상태 계약 (예상 30분)
+
+| 순서 | 작업 | 파일 |
+| --- | --- | --- |
+| D-1 | 기기 상태 조회 유스케이스가 등록 기기와 소속 캠프 상태를 함께 반환 | `/home/lsjtop10/projects/cornermon-issue-156/backend/internal/usecase/device_trust.go` (기존 파일 확장) |
+| D-2 | `DeviceStatusResponse.campStatus` DTO·핸들러와 유스케이스/웹 테스트 갱신 | `/home/lsjtop10/projects/cornermon-issue-156/backend/internal/{usecase,infrastructure/web}/` (기존 파일 확장) |
+| D-3 | Swag 주석을 기준으로 API 생성 문서 갱신 | `/home/lsjtop10/projects/cornermon-issue-156/api/` (자동 생성) |
+
 ## 4. 검증 체크리스트
 
 - [x] 종료된 캠프의 APPROVED 기기는 `REVOKED`가 되어 다음 PIN 로그인에서 거부된다.
@@ -66,3 +74,5 @@ func (s *CampService) EndCamp(
 - [x] 저장 실패 시 성공 SSE가 발행되지 않는다.
 - [x] 커밋 후 camp/device/corner/group/track SSE와 `camp_ended`가 발행된다.
 - [x] `sqlc generate`, `go test ./...`, `go vet ./...`가 통과한다.
+- [x] 기기 상태 조회가 `campStatus`(`PENDING`/`ACTIVE`/`ENDED`)를 반환한다.
+- [x] 기기 상태 조회의 Swagger 계약과 생성 문서가 동기화된다.
