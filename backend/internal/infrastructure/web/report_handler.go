@@ -1,6 +1,7 @@
 package web
 
 import (
+	"errors"
 	"net/http"
 	"time"
 
@@ -145,12 +146,13 @@ func mapReport(r *usecase.CampReport) CampReportResponse {
 // @Produce      json
 // @Param        campId path string true "캠프 ID"
 // @Success      200 {object} CampSummaryStatsResponse
+// @Failure      404 {object} ErrorResponse "CAMP_NOT_FOUND: 캠프가 없음"
 // @Router       /camps/{campId}/reports/live-summary [get]
 func (h *ReportHandler) LiveSummary(c echo.Context) error {
 	campID := domain.CampID(c.Param("campId"))
 	report, err := h.reportService.GetCampReport(c.Request().Context(), campID)
 	if err != nil {
-		return err
+		return reportHTTPError(err)
 	}
 
 	return c.JSON(http.StatusOK, mapSummary(report))
@@ -163,12 +165,13 @@ func (h *ReportHandler) LiveSummary(c echo.Context) error {
 // @Produce      json
 // @Param        campId path string true "캠프 ID"
 // @Success      200 {object} CampReportResponse
+// @Failure      404 {object} ErrorResponse "CAMP_NOT_FOUND: 캠프가 없음"
 // @Router       /camps/{campId}/reports/current [get]
 func (h *ReportHandler) GetCurrentReport(c echo.Context) error {
 	campID := domain.CampID(c.Param("campId"))
 	report, err := h.reportService.GetCampReport(c.Request().Context(), campID)
 	if err != nil {
-		return err
+		return reportHTTPError(err)
 	}
 
 	return c.JSON(http.StatusOK, mapReport(report))
@@ -181,12 +184,14 @@ func (h *ReportHandler) GetCurrentReport(c echo.Context) error {
 // @Produce      json
 // @Param        campId path string true "캠프 ID"
 // @Success      201 {object} CampReportResponse
+// @Failure      404 {object} ErrorResponse "CAMP_NOT_FOUND: 캠프가 없음"
+// @Failure      409 {object} ErrorResponse "CAMP_NOT_ENDED: 종료된 캠프에서만 최종 리포트를 생성할 수 있음"
 // @Router       /camps/{campId}/reports/generate [post]
 func (h *ReportHandler) GenerateReport(c echo.Context) error {
 	campID := domain.CampID(c.Param("campId"))
 	report, err := h.reportService.GenerateCampReport(c.Request().Context(), campID)
 	if err != nil {
-		return err
+		return reportHTTPError(err)
 	}
 
 	return c.JSON(http.StatusCreated, mapReport(report))
@@ -199,14 +204,26 @@ func (h *ReportHandler) GenerateReport(c echo.Context) error {
 // @Produce      json
 // @Param        campId path string true "캠프 ID"
 // @Success      200 {object} CampReportResponse
+// @Failure      404 {object} ErrorResponse "CAMP_NOT_FOUND: 캠프가 없음"
 // @Router       /camps/{campId}/reports/current/export [get]
 func (h *ReportHandler) ExportCurrentReport(c echo.Context) error {
 	campID := domain.CampID(c.Param("campId"))
 	report, err := h.reportService.GetCampReport(c.Request().Context(), campID)
 	if err != nil {
-		return err
+		return reportHTTPError(err)
 	}
 
 	// Just return JSON as per the updated spec
 	return c.JSON(http.StatusOK, mapReport(report))
+}
+
+func reportHTTPError(err error) error {
+	switch {
+	case errors.Is(err, domain.ErrCampNotFound):
+		return echo.NewHTTPError(http.StatusNotFound, ErrorResponse{Code: "CAMP_NOT_FOUND", Message: "camp not found"}).SetInternal(err)
+	case errors.Is(err, domain.ErrCampInvalidTransition):
+		return echo.NewHTTPError(http.StatusConflict, ErrorResponse{Code: "CAMP_NOT_ENDED", Message: "camp must be ended before report generation"}).SetInternal(err)
+	default:
+		return err
+	}
 }

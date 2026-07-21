@@ -110,6 +110,7 @@ type CreateCornerRequest struct {
 // @Success      201 {object} CornerResponse
 // @Failure      400 {object} ErrorResponse
 // @Failure      401 {object} ErrorResponse
+// @Failure      409 {object} ErrorResponse "CAMP_STATE_CONFLICT: 현재 캠프 상태에서는 코너를 생성할 수 없음"
 // @Router       /corners [post]
 func (h *CornerHandler) CreateCorner(c echo.Context) error {
 	var req CreateCornerRequest
@@ -118,7 +119,7 @@ func (h *CornerHandler) CreateCorner(c echo.Context) error {
 	}
 	corner, err := h.svc.AddLearningCorner(c.Request().Context(), domain.CampID(req.CampID), req.Name)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_ERROR", Message: err.Error()}).SetInternal(err)
+		return cornerHTTPError(err)
 	}
 	return c.JSON(http.StatusCreated, mapDomainCornerToDTO(corner))
 }
@@ -130,16 +131,16 @@ func (h *CornerHandler) CreateCorner(c echo.Context) error {
 // @Produce      json
 // @Param        id path string true "코너 ID"
 // @Success      200 {object} CornerResponse
-// @Failure      404 {object} ErrorResponse
+// @Failure      404 {object} ErrorResponse "CORNER_NOT_FOUND: 대상 코너가 없음"
 // @Router       /corners/{id} [get]
 func (h *CornerHandler) GetCorner(c echo.Context) error {
 	id := domain.CornerID(c.Param("id"))
 	view, err := h.views.GetCornerView(c.Request().Context(), id)
 	if err != nil {
-		return err
+		return cornerHTTPError(err)
 	}
 	if view == nil {
-		return domain.ErrCornerNotFound
+		return cornerHTTPError(domain.ErrCornerNotFound)
 	}
 	return c.JSON(http.StatusOK, mapCornerViewToDTO(*view))
 }
@@ -184,13 +185,13 @@ func (h *CornerHandler) GetCornerByTrack(c echo.Context) error {
 // @Param        id path string true "코너 ID"
 // @Success      204 "성공적으로 삭제됨"
 // @Failure      400 {object} ErrorResponse
-// @Failure      409 {object} ErrorResponse "활성화된 캠프이거나 종속 데이터가 존재함"
+// @Failure      409 {object} ErrorResponse "CAMP_STATE_CONFLICT: 현재 캠프 상태에서는 코너를 삭제할 수 없음"
 // @Router       /corners/{id} [delete]
 func (h *CornerHandler) DeleteCorner(c echo.Context) error {
 	id := domain.CornerID(c.Param("id"))
 	err := h.svc.RemoveCornerFromCamp(c.Request().Context(), id)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_ERROR", Message: err.Error()}).SetInternal(err)
+		return cornerHTTPError(err)
 	}
 	return c.NoContent(http.StatusNoContent)
 }
@@ -212,7 +213,8 @@ type BulkUpdateCornersRequest struct {
 // @Param        request body BulkUpdateCornersRequest true "수정할 코너 목록"
 // @Success      200 {array} CornerResponse
 // @Failure      400 {object} ErrorResponse
-// @Failure      409 {object} ErrorResponse
+// @Failure      404 {object} ErrorResponse "CORNER_NOT_FOUND: 수정할 코너가 없음"
+// @Failure      409 {object} ErrorResponse "CAMP_STATE_CONFLICT: 현재 캠프 상태에서는 코너를 수정할 수 없음"
 // @Router       /corners/bulk-update [put]
 func (h *CornerHandler) BulkUpdateCorners(c echo.Context) error {
 	var req BulkUpdateCornersRequest
@@ -223,9 +225,20 @@ func (h *CornerHandler) BulkUpdateCorners(c echo.Context) error {
 	for i, cr := range req.Corners {
 		updated, err := h.svc.ModifyCornerSpecification(c.Request().Context(), domain.CornerID(cr.ID), cr.Name)
 		if err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_ERROR", Message: err.Error()}).SetInternal(err)
+			return cornerHTTPError(err)
 		}
 		res[i] = mapDomainCornerToDTO(updated)
 	}
 	return c.JSON(http.StatusOK, res)
+}
+
+func cornerHTTPError(err error) error {
+	switch {
+	case errors.Is(err, domain.ErrCornerNotFound), errors.Is(err, domain.ErrCornerNotInItinerary):
+		return echo.NewHTTPError(http.StatusNotFound, ErrorResponse{Code: "CORNER_NOT_FOUND", Message: "corner not found"}).SetInternal(err)
+	case errors.Is(err, domain.ErrCampInvalidTransition), errors.Is(err, domain.ErrCampSettingsLocked):
+		return echo.NewHTTPError(http.StatusConflict, ErrorResponse{Code: "CAMP_STATE_CONFLICT", Message: "camp cannot modify corners in its current state"}).SetInternal(err)
+	default:
+		return err
+	}
 }

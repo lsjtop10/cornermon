@@ -83,8 +83,11 @@ func (h *DeviceHandler) GetMyRegistrationStatus(c echo.Context) error {
 
 	status, err := h.deviceTrust.GetMyRegistrationStatus(c.Request().Context(), token)
 	if err != nil {
-		if err == domain.ErrDeviceNotApproved {
+		if errors.Is(err, domain.ErrDeviceNotApproved) {
 			return echo.NewHTTPError(http.StatusUnauthorized, ErrorResponse{Code: "UNAUTHORIZED", Message: err.Error()}).SetInternal(err)
+		}
+		if errors.Is(err, domain.ErrCampNotFound) {
+			return echo.NewHTTPError(http.StatusNotFound, ErrorResponse{Code: "CAMP_NOT_FOUND", Message: err.Error()}).SetInternal(err)
 		}
 		return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_ERROR", Message: err.Error()}).SetInternal(err)
 	}
@@ -104,6 +107,8 @@ func (h *DeviceHandler) GetMyRegistrationStatus(c echo.Context) error {
 // @Produce      json
 // @Param        request body DeviceRegistrationRequest true "등록 정보"
 // @Success      201 {object} DeviceRegistrationCreatedResponse
+// @Failure      404 {object} ErrorResponse "CAMP_NOT_FOUND: 등록 코드에 해당하는 캠프가 없음"
+// @Failure      400 {object} ErrorResponse "INVALID_TRANSITION: 종료된 캠프에는 기기를 등록할 수 없음"
 // @Router       /device-registrations [post]
 func (h *DeviceHandler) RequestRegistration(c echo.Context) error {
 	var req DeviceRegistrationRequest
@@ -116,10 +121,7 @@ func (h *DeviceHandler) RequestRegistration(c echo.Context) error {
 		if errors.Is(err, domain.ErrCampNotFound) {
 			return echo.NewHTTPError(http.StatusNotFound, ErrorResponse{Code: "CAMP_NOT_FOUND", Message: err.Error()}).SetInternal(err)
 		}
-		if errors.Is(err, domain.ErrCampInvalidTransition) {
-			return echo.NewHTTPError(http.StatusBadRequest, ErrorResponse{Code: "INVALID_TRANSITION", Message: err.Error()}).SetInternal(err)
-		}
-		return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()}).SetInternal(err)
+		return deviceRegistrationHTTPError(err)
 	}
 
 	return c.JSON(http.StatusCreated, DeviceRegistrationCreatedResponse{
@@ -208,6 +210,7 @@ func mapDeviceRegistration(device *domain.DeviceRegistration) DeviceRegistration
 // @Param        campId path string true "캠프 ID"
 // @Param        id path string true "기기 등록 ID"
 // @Success      200 {object} DeviceRegistrationResponse
+// @Failure      409 {object} ErrorResponse "DEVICE_INVALID_TRANSITION: PENDING 상태가 아닌 기기는 승인할 수 없음"
 // @Router       /camps/{campId}/device-registrations/{id}/approve [post]
 func (h *DeviceHandler) ApproveDevice(c echo.Context) error {
 	session, ok := c.Get("adminSession").(*domain.AdminSession)
@@ -218,7 +221,7 @@ func (h *DeviceHandler) ApproveDevice(c echo.Context) error {
 
 	device, err := h.deviceTrust.ApproveDevice(c.Request().Context(), regID, session.AdminID())
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()}).SetInternal(err)
+		return deviceRegistrationHTTPError(err)
 	}
 
 	return c.JSON(http.StatusOK, mapDeviceRegistration(device))
@@ -232,6 +235,7 @@ func (h *DeviceHandler) ApproveDevice(c echo.Context) error {
 // @Param        campId path string true "캠프 ID"
 // @Param        id path string true "기기 등록 ID"
 // @Success      200 {object} DeviceRegistrationResponse
+// @Failure      409 {object} ErrorResponse "DEVICE_INVALID_TRANSITION: PENDING 상태가 아닌 기기는 거절할 수 없음"
 // @Router       /camps/{campId}/device-registrations/{id}/reject [post]
 func (h *DeviceHandler) RejectDevice(c echo.Context) error {
 	session, ok := c.Get("adminSession").(*domain.AdminSession)
@@ -242,7 +246,7 @@ func (h *DeviceHandler) RejectDevice(c echo.Context) error {
 
 	device, err := h.deviceTrust.RejectDevice(c.Request().Context(), regID, session.AdminID())
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()}).SetInternal(err)
+		return deviceRegistrationHTTPError(err)
 	}
 
 	return c.JSON(http.StatusOK, mapDeviceRegistration(device))
@@ -256,6 +260,7 @@ func (h *DeviceHandler) RejectDevice(c echo.Context) error {
 // @Param        campId path string true "캠프 ID"
 // @Param        id path string true "기기 등록 ID"
 // @Success      200 {object} DeviceRegistrationResponse
+// @Failure      409 {object} ErrorResponse "DEVICE_NOT_APPROVED: APPROVED 상태가 아닌 기기는 신뢰를 취소할 수 없음"
 // @Router       /camps/{campId}/device-registrations/{id}/revoke [post]
 func (h *DeviceHandler) RevokeDevice(c echo.Context) error {
 	session, ok := c.Get("adminSession").(*domain.AdminSession)
@@ -266,8 +271,23 @@ func (h *DeviceHandler) RevokeDevice(c echo.Context) error {
 
 	device, err := h.deviceTrust.RevokeDevice(c.Request().Context(), regID, session.AdminID())
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()}).SetInternal(err)
+		return deviceRegistrationHTTPError(err)
 	}
 
 	return c.JSON(http.StatusOK, mapDeviceRegistration(device))
+}
+
+func deviceRegistrationHTTPError(err error) error {
+	switch {
+	case errors.Is(err, domain.ErrCampNotFound):
+		return echo.NewHTTPError(http.StatusNotFound, ErrorResponse{Code: "CAMP_NOT_FOUND", Message: "camp not found"}).SetInternal(err)
+	case errors.Is(err, domain.ErrCampInvalidTransition):
+		return echo.NewHTTPError(http.StatusBadRequest, ErrorResponse{Code: "INVALID_TRANSITION", Message: "camp is not available for device registration"}).SetInternal(err)
+	case errors.Is(err, domain.ErrDeviceInvalidTransition):
+		return echo.NewHTTPError(http.StatusConflict, ErrorResponse{Code: "DEVICE_INVALID_TRANSITION", Message: "device registration cannot make that transition"}).SetInternal(err)
+	case errors.Is(err, domain.ErrDeviceNotApproved):
+		return echo.NewHTTPError(http.StatusConflict, ErrorResponse{Code: "DEVICE_NOT_APPROVED", Message: "device is not approved"}).SetInternal(err)
+	default:
+		return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: "internal server error"}).SetInternal(err)
+	}
 }

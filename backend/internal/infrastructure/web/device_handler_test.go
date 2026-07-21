@@ -3,6 +3,7 @@ package web
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -45,6 +46,44 @@ func TestShouldReturnActualCreatedAtWhenDeviceRegistrationRequested(t *testing.T
 	}
 	if response.CampID != "camp-1" {
 		t.Fatalf("expected campId camp-1, got %q", response.CampID)
+	}
+}
+
+func TestDeviceRegistrationMutationShouldMapExpectedDomainErrorsToConflict(t *testing.T) {
+	tests := []struct {
+		name   string
+		handle func(*DeviceHandler, echo.Context) error
+		err    error
+		code   string
+	}{
+		{name: "approve invalid transition", handle: (*DeviceHandler).ApproveDevice, err: fmt.Errorf("approve: %w", domain.ErrDeviceInvalidTransition), code: "DEVICE_INVALID_TRANSITION"},
+		{name: "reject invalid transition", handle: (*DeviceHandler).RejectDevice, err: domain.ErrDeviceInvalidTransition, code: "DEVICE_INVALID_TRANSITION"},
+		{name: "revoke non approved device", handle: (*DeviceHandler).RevokeDevice, err: domain.ErrDeviceNotApproved, code: "DEVICE_NOT_APPROVED"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// arrange
+			e := echo.New()
+			e.HTTPErrorHandler = ErrorHandler()
+			handler := NewDeviceHandler(&listDeviceTrustStub{mutationErr: tt.err})
+			req := httptest.NewRequest(http.MethodPost, "/camps/camp-1/device-registrations/device-1", nil)
+			rec := httptest.NewRecorder()
+			ctx := e.NewContext(req, rec)
+			ctx.Set("adminSession", domain.NewAdminSessionFromProps(domain.AdminSessionProps{AdminID: "admin-1"}))
+			ctx.SetParamNames("campId", "id")
+			ctx.SetParamValues("camp-1", "device-1")
+
+			// act
+			if err := tt.handle(handler, ctx); err != nil {
+				e.HTTPErrorHandler(err, ctx)
+			}
+
+			// assert
+			if rec.Code != http.StatusConflict || !bytes.Contains(rec.Body.Bytes(), []byte(tt.code)) {
+				t.Fatalf("expected 409 %s, got status=%d body=%s", tt.code, rec.Code, rec.Body.String())
+			}
+		})
 	}
 }
 

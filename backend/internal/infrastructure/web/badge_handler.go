@@ -82,7 +82,7 @@ type BulkGenerateBadgesRequest struct {
 func (h *BadgeHandler) BulkGenerateBadges(c echo.Context) error {
 	var req BulkGenerateBadgesRequest
 	if err := c.Bind(&req); err != nil {
-		return err
+		return echo.NewHTTPError(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: "invalid request"}).SetInternal(err)
 	}
 	badges, err := h.badgeUC.IssueInitialBadges(c.Request().Context(), req.Count)
 	if err != nil {
@@ -138,7 +138,7 @@ func (h *BadgeHandler) AssignBadge(c echo.Context) error {
 		GroupName string `json:"groupName"`
 	}
 	if err := c.Bind(&req); err != nil {
-		return err
+		return echo.NewHTTPError(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: "invalid request"}).SetInternal(err)
 	}
 
 	group, err := h.groupUC.AssignBadge(c.Request().Context(), id, req.GroupName)
@@ -166,7 +166,7 @@ type ScanAssignBadgeRequest struct {
 func (h *BadgeHandler) ScanAssignBadge(c echo.Context) error {
 	var req ScanAssignBadgeRequest
 	if err := c.Bind(&req); err != nil {
-		return err
+		return echo.NewHTTPError(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: "invalid request"}).SetInternal(err)
 	}
 
 	group, err := h.groupUC.ScanAssignBadge(c.Request().Context(), req.QRPayload, req.GroupName)

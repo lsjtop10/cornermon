@@ -110,7 +110,8 @@ func TestListGroupsByTrackShoudRejectRequestWhenSessionTrackDiffers(t *testing.T
 	err := NewGroupHandler(nil).ListGroupsByTrack(c)
 
 	// Assert
-	if err != domain.ErrTrackScopeForbidden {
-		t.Fatalf("expected ErrTrackScopeForbidden, got %v", err)
+	var httpErr *echo.HTTPError
+	if !errorsAsHTTPError(err, &httpErr) || httpErr.Code != http.StatusForbidden {
+		t.Fatalf("expected 403 HTTP error, got %v", err)
 	}
 }
