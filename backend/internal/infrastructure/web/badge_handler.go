@@ -82,7 +82,7 @@ type BulkGenerateBadgesRequest struct {
 func (h *BadgeHandler) BulkGenerateBadges(c echo.Context) error {
 	var req BulkGenerateBadgesRequest
 	if err := c.Bind(&req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: "invalid request"}).SetInternal(err)
+		return echo.NewHTTPError(http.StatusBadRequest, ErrorResponse{Code: CodeBadRequest, Message: "invalid request"}).SetInternal(err)
 	}
 	badges, err := h.badgeUC.IssueInitialBadges(c.Request().Context(), req.Count)
 	if err != nil {
@@ -138,7 +138,7 @@ func (h *BadgeHandler) AssignBadge(c echo.Context) error {
 		GroupName string `json:"groupName"`
 	}
 	if err := c.Bind(&req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: "invalid request"}).SetInternal(err)
+		return echo.NewHTTPError(http.StatusBadRequest, ErrorResponse{Code: CodeBadRequest, Message: "invalid request"}).SetInternal(err)
 	}
 
 	group, err := h.groupUC.AssignBadge(c.Request().Context(), id, req.GroupName)
@@ -166,7 +166,7 @@ type ScanAssignBadgeRequest struct {
 func (h *BadgeHandler) ScanAssignBadge(c echo.Context) error {
 	var req ScanAssignBadgeRequest
 	if err := c.Bind(&req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: "invalid request"}).SetInternal(err)
+		return echo.NewHTTPError(http.StatusBadRequest, ErrorResponse{Code: CodeBadRequest, Message: "invalid request"}).SetInternal(err)
 	}
 
 	group, err := h.groupUC.ScanAssignBadge(c.Request().Context(), req.QRPayload, req.GroupName)
@@ -180,11 +180,11 @@ func (h *BadgeHandler) ScanAssignBadge(c echo.Context) error {
 func badgeAssignmentHTTPError(err error) error {
 	switch {
 	case errors.Is(err, domain.ErrCampNotFound):
-		return echo.NewHTTPError(http.StatusNotFound, ErrorResponse{Code: "CAMP_NOT_FOUND", Message: err.Error()}).SetInternal(err)
+		return echo.NewHTTPError(http.StatusNotFound, ErrorResponse{Code: CodeCampNotFound, Message: err.Error()}).SetInternal(err)
 	case errors.Is(err, domain.ErrBadgeNotAssigned):
-		return echo.NewHTTPError(http.StatusNotFound, ErrorResponse{Code: "BADGE_NOT_FOUND", Message: err.Error()}).SetInternal(err)
+		return echo.NewHTTPError(http.StatusNotFound, ErrorResponse{Code: CodeBadgeNotFound, Message: err.Error()}).SetInternal(err)
 	case errors.Is(err, domain.ErrBadgeAlreadyAssigned):
-		return echo.NewHTTPError(http.StatusConflict, ErrorResponse{Code: "BADGE_ALREADY_ASSIGNED", Message: err.Error()}).SetInternal(err)
+		return echo.NewHTTPError(http.StatusConflict, ErrorResponse{Code: CodeBadgeAlreadyAssigned, Message: err.Error()}).SetInternal(err)
 	default:
 		return err
 	}

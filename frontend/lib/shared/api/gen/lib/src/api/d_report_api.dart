@@ -12,6 +12,7 @@ import 'package:dio/dio.dart';
 import 'package:cornermon_api_gen/src/api_util.dart';
 import 'package:cornermon_api_gen/src/model/camp_report_response.dart';
 import 'package:cornermon_api_gen/src/model/camp_summary_stats_response.dart';
+import 'package:cornermon_api_gen/src/model/error_response.dart';
 
 class DReportApi {
 

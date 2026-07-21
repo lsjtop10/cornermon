@@ -47,6 +47,7 @@ import 'package:cornermon_api_gen/src/model/device_registration_request.dart';
 import 'package:cornermon_api_gen/src/model/device_registration_response.dart';
 import 'package:cornermon_api_gen/src/model/device_status_response.dart';
 import 'package:cornermon_api_gen/src/model/direct_message_request.dart';
+import 'package:cornermon_api_gen/src/model/error_code.dart';
 import 'package:cornermon_api_gen/src/model/error_response.dart';
 import 'package:cornermon_api_gen/src/model/export_badges_response.dart';
 import 'package:cornermon_api_gen/src/model/export_tracks_response.dart';
@@ -106,6 +107,7 @@ part 'serializers.g.dart';
   DeviceRegistrationResponse,
   DeviceStatusResponse,
   DirectMessageRequest,
+  ErrorCode,
   ErrorResponse,
   ExportBadgesResponse,
   ExportTracksResponse,

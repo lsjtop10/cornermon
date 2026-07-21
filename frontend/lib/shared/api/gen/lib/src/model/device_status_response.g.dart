@@ -1,6 +1,5 @@
 // @dart=2.18
 // GENERATED CODE - DO NOT MODIFY BY HAND
-// @dart=2.18
 
 part of 'device_status_response.dart';
 
@@ -74,13 +73,12 @@ final BuiltSet<DeviceStatusResponseStatusEnum>
   _$deviceStatusResponseStatusEnum_REVOKED,
 ]);
 
-Serializer<DeviceStatusResponseStatusEnum>
-    _$deviceStatusResponseStatusEnumSerializer =
-    _$DeviceStatusResponseStatusEnumSerializer();
-
 Serializer<DeviceStatusResponseCampStatusEnum>
     _$deviceStatusResponseCampStatusEnumSerializer =
     _$DeviceStatusResponseCampStatusEnumSerializer();
+Serializer<DeviceStatusResponseStatusEnum>
+    _$deviceStatusResponseStatusEnumSerializer =
+    _$DeviceStatusResponseStatusEnumSerializer();
 
 class _$DeviceStatusResponseCampStatusEnumSerializer
     implements PrimitiveSerializer<DeviceStatusResponseCampStatusEnum> {

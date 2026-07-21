@@ -1,6 +1,5 @@
 // @dart=2.18
 // GENERATED CODE - DO NOT MODIFY BY HAND
-// @dart=2.18
 
 part of 'error_response.dart';
 
@@ -10,7 +9,7 @@ part of 'error_response.dart';
 
 class _$ErrorResponse extends ErrorResponse {
   @override
-  final String? code;
+  final ErrorCode? code;
   @override
   final BuiltMap<String, JsonObject?>? details;
   @override
@@ -60,9 +59,9 @@ class ErrorResponseBuilder
     implements Builder<ErrorResponse, ErrorResponseBuilder> {
   _$ErrorResponse? _$v;
 
-  String? _code;
-  String? get code => _$this._code;
-  set code(String? code) => _$this._code = code;
+  ErrorCode? _code;
+  ErrorCode? get code => _$this._code;
+  set code(ErrorCode? code) => _$this._code = code;
 
   MapBuilder<String, JsonObject?>? _details;
   MapBuilder<String, JsonObject?> get details =>

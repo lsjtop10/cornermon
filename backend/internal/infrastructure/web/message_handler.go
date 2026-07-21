@@ -95,16 +95,16 @@ type BroadcastMessageRequest struct {
 func (h *MessageHandler) SendBroadcast(c echo.Context) error {
 	session, ok := c.Get("adminSession").(*domain.AdminSession)
 	if !ok {
-		return echo.NewHTTPError(http.StatusUnauthorized, ErrorResponse{Code: "UNAUTHORIZED", Message: "unauthorized"})
+		return echo.NewHTTPError(http.StatusUnauthorized, ErrorResponse{Code: CodeUnauthorized, Message: "unauthorized"})
 	}
 	campID := domain.CampID(c.Param("campId"))
 	if campID == "" {
-		return echo.NewHTTPError(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: "campId is required"})
+		return echo.NewHTTPError(http.StatusBadRequest, ErrorResponse{Code: CodeBadRequest, Message: "campId is required"})
 	}
 
 	var req BroadcastMessageRequest
 	if err := c.Bind(&req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: "invalid request"}).SetInternal(err)
+		return echo.NewHTTPError(http.StatusBadRequest, ErrorResponse{Code: CodeBadRequest, Message: "invalid request"}).SetInternal(err)
 	}
 
 	announcement, err := h.announcement.SendAnnouncement(c.Request().Context(), campID, req.Content, session.AdminID())
@@ -131,7 +131,7 @@ func (h *MessageHandler) SendBroadcast(c echo.Context) error {
 func (h *MessageHandler) ListBroadcasts(c echo.Context) error {
 	campID := domain.CampID(c.Param("campId"))
 	if campID == "" {
-		return echo.NewHTTPError(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: "campId is required"})
+		return echo.NewHTTPError(http.StatusBadRequest, ErrorResponse{Code: CodeBadRequest, Message: "campId is required"})
 	}
 
 	var res []MessageResponse
@@ -147,7 +147,7 @@ func (h *MessageHandler) ListBroadcasts(c echo.Context) error {
 	} else {
 		announcements, err := h.announcementQuery.ListNoticesByCamp(c.Request().Context(), campID)
 		if err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()}).SetInternal(err)
+			return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: CodeInternalServerError, Message: err.Error()}).SetInternal(err)
 		}
 		res = make([]MessageResponse, len(announcements))
 		for i, announcement := range announcements {
@@ -171,7 +171,7 @@ func (h *MessageHandler) GetBroadcastReceipts(c echo.Context) error {
 
 	dtos, err := h.announcementQuery.GetAnnouncementReceipts(c.Request().Context(), announcementID)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_SERVER_ERROR", Message: err.Error()}).SetInternal(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: CodeInternalServerError, Message: err.Error()}).SetInternal(err)
 	}
 
 	receipts := make([]BroadcastReceiptResponse, len(dtos))
@@ -239,7 +239,7 @@ func (h *MessageHandler) SendDirect(c echo.Context) error {
 
 	var req DirectMessageRequest
 	if err := c.Bind(&req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: "invalid request"}).SetInternal(err)
+		return echo.NewHTTPError(http.StatusBadRequest, ErrorResponse{Code: CodeBadRequest, Message: "invalid request"}).SetInternal(err)
 	}
 
 	var senderRole domain.SenderRole
@@ -251,7 +251,7 @@ func (h *MessageHandler) SendDirect(c echo.Context) error {
 		}
 		senderRole = domain.RoleTrack
 	} else {
-		return echo.NewHTTPError(http.StatusUnauthorized, ErrorResponse{Code: "UNAUTHORIZED", Message: "unauthorized"})
+		return echo.NewHTTPError(http.StatusUnauthorized, ErrorResponse{Code: CodeUnauthorized, Message: "unauthorized"})
 	}
 
 	msg, err := h.message.SendDirect(c.Request().Context(), trackID, req.Content, senderRole)
@@ -298,11 +298,11 @@ func (h *MessageHandler) ListDirectMessages(c echo.Context) error {
 	}
 	background, err := parseBackground(c.QueryParam("background"))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: err.Error()}).SetInternal(err)
+		return echo.NewHTTPError(http.StatusBadRequest, ErrorResponse{Code: CodeBadRequest, Message: err.Error()}).SetInternal(err)
 	}
 	after, err := parseAfter(c.QueryParam("after"))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, ErrorResponse{Code: "BAD_REQUEST", Message: "after must be RFC3339"}).SetInternal(err)
+		return echo.NewHTTPError(http.StatusBadRequest, ErrorResponse{Code: CodeBadRequest, Message: "after must be RFC3339"}).SetInternal(err)
 	}
 	msgs, err := h.message.ListDirectMessages(c.Request().Context(), trackID, viewerRole, after, background)
 	if err != nil {
@@ -356,15 +356,15 @@ func requireFacilitatorTrackScope(c echo.Context, trackID domain.TrackID) error 
 func messageHTTPError(err error) error {
 	switch {
 	case errors.Is(err, domain.ErrSessionRevoked):
-		return echo.NewHTTPError(http.StatusUnauthorized, ErrorResponse{Code: "SESSION_REVOKED", Message: "facilitator session is revoked"}).SetInternal(err)
+		return echo.NewHTTPError(http.StatusUnauthorized, ErrorResponse{Code: CodeSessionRevoked, Message: "facilitator session is revoked"}).SetInternal(err)
 	case errors.Is(err, domain.ErrTrackScopeForbidden):
-		return echo.NewHTTPError(http.StatusForbidden, ErrorResponse{Code: "TRACK_SCOPE_FORBIDDEN", Message: "track session cannot access the requested track"}).SetInternal(err)
+		return echo.NewHTTPError(http.StatusForbidden, ErrorResponse{Code: CodeTrackScopeForbidden, Message: "track session cannot access the requested track"}).SetInternal(err)
 	case errors.Is(err, domain.ErrTrackNotFound), errors.Is(err, domain.ErrTrackNotActive):
-		return echo.NewHTTPError(http.StatusNotFound, ErrorResponse{Code: "TRACK_NOT_FOUND", Message: "track not found"}).SetInternal(err)
+		return echo.NewHTTPError(http.StatusNotFound, ErrorResponse{Code: CodeTrackNotFound, Message: "track not found"}).SetInternal(err)
 	case errors.Is(err, domain.ErrCornerNotInItinerary):
-		return echo.NewHTTPError(http.StatusNotFound, ErrorResponse{Code: "CORNER_NOT_FOUND", Message: "track corner not found"}).SetInternal(err)
+		return echo.NewHTTPError(http.StatusNotFound, ErrorResponse{Code: CodeCornerNotFound, Message: "track corner not found"}).SetInternal(err)
 	case errors.Is(err, domain.ErrCampInvalidTransition):
-		return echo.NewHTTPError(http.StatusConflict, ErrorResponse{Code: "CAMP_NOT_ACTIVE", Message: "camp is not active"}).SetInternal(err)
+		return echo.NewHTTPError(http.StatusConflict, ErrorResponse{Code: CodeCampNotActive, Message: "camp is not active"}).SetInternal(err)
 	default:
 		return err
 	}
