@@ -47,21 +47,31 @@ func NewGroupService(
 	}
 }
 
-// RegisterBadge - UC-19
-func (s *GroupService) RegisterBadge(
+// AssignBadge creates a group and assigns the badge identified by its ID to it.
+// The group belongs to the current registration camp (PENDING or ACTIVE).
+func (s *GroupService) AssignBadge(
 	ctx context.Context,
-	campID domain.CampID,
-	qrPayload string,
+	badgeID domain.BadgeID,
 	groupName string,
 ) (*domain.Group, error) {
-	camp, err := s.camps.Get(ctx, campID)
+	badge, err := s.badges.Get(ctx, badgeID)
 	if err != nil {
 		return nil, err
 	}
-	if camp == nil || camp.Status() == domain.CampEnded {
-		return nil, domain.ErrCampInvalidTransition
+	if badge == nil {
+		return nil, domain.ErrBadgeNotAssigned
 	}
 
+	return s.registerBadge(ctx, badge, groupName)
+}
+
+// ScanAssignBadge creates a group and assigns the badge identified by its QR payload.
+// The group belongs to the current registration camp (PENDING or ACTIVE).
+func (s *GroupService) ScanAssignBadge(
+	ctx context.Context,
+	qrPayload string,
+	groupName string,
+) (*domain.Group, error) {
 	badge, err := s.badges.GetByQRPayload(ctx, qrPayload)
 	if err != nil {
 		return nil, err
@@ -69,10 +79,23 @@ func (s *GroupService) RegisterBadge(
 	if badge == nil {
 		return nil, domain.ErrBadgeNotAssigned
 	}
+
+	return s.registerBadge(ctx, badge, groupName)
+}
+
+func (s *GroupService) registerBadge(ctx context.Context, badge *domain.Badge, groupName string) (*domain.Group, error) {
+	camp, err := s.registrationCamp(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if camp == nil {
+		return nil, domain.ErrCampNotFound
+	}
 	if badge.Status() == domain.BadgeAssigned {
 		return nil, domain.ErrBadgeAlreadyAssigned
 	}
 
+	campID := camp.ID()
 	corners, err := s.corners.ListByCamp(ctx, campID)
 	if err != nil {
 		return nil, err
@@ -113,6 +136,24 @@ func (s *GroupService) RegisterBadge(
 
 	s.recordAuditLog(ctx, "admin", ActionGroupCreate, string(groupID), true, map[string]any{"campID": string(campID), "badgeID": string(badge.ID())})
 	return group, nil
+}
+
+func (s *GroupService) registrationCamp(ctx context.Context) (*domain.Camp, error) {
+	camps, err := s.camps.List(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var pendingCamp *domain.Camp
+	for _, camp := range camps {
+		switch camp.Status() {
+		case domain.CampActive:
+			return camp, nil
+		case domain.CampPending:
+			pendingCamp = camp
+		}
+	}
+	return pendingCamp, nil
 }
 
 // ListGroups
