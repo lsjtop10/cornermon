@@ -148,7 +148,6 @@ func (s *CampService) EndCamp(
 	actorAdminID domain.AdminID,
 ) error {
 	now := s.nowFn()
-	updatedTrackIDs := make(map[domain.TrackID]struct{})
 	err := s.tx.RunInTx(ctx, func(ctx context.Context) error {
 		camp, err := s.camps.Get(ctx, campID)
 		if err != nil {
@@ -224,7 +223,6 @@ func (s *CampService) EndCamp(
 			if err := s.tracks.Save(ctx, track); err != nil {
 				return err
 			}
-			updatedTrackIDs[track.ID()] = struct{}{}
 			if err := s.groups.Save(ctx, group); err != nil {
 				return err
 			}
@@ -244,9 +242,6 @@ func (s *CampService) EndCamp(
 	_ = s.broadcaster.Broadcast(ctx, campID, EventCornersUpdated, CampScope())
 	_ = s.broadcaster.Broadcast(ctx, campID, EventGroupsUpdated, CampScope())
 	_ = s.broadcaster.Broadcast(ctx, campID, EventTracksUpdated, CampScope())
-	for trackID := range updatedTrackIDs {
-		_ = s.broadcaster.Broadcast(ctx, campID, EventTrackUpdated, TrackScope(trackID))
-	}
 	_ = s.broadcaster.Broadcast(ctx, campID, EventCampEnded, CampScope())
 
 	return nil
