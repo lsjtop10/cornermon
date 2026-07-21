@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -110,7 +111,7 @@ func TestGroupService_AssignBadge(t *testing.T) {
 		_, err := service.AssignBadge(context.Background(), "badge-1", "1조")
 
 		// Assert
-		if err != domain.ErrCampNotFound {
+		if !errors.Is(err, domain.ErrCampNotFound) {
 			t.Fatalf("expected ErrCampNotFound, got %v", err)
 		}
 	})
@@ -281,7 +282,7 @@ func TestListGroupsByTrackShoudReturnNotFoundWhenRelationMissing(t *testing.T) {
 			_, err := service.ListGroupsByTrack(context.Background(), "track-1")
 
 			// Assert
-			if err != tc.wantErr {
+			if !errors.Is(err, tc.wantErr) {
 				t.Fatalf("expected %v, got %v", tc.wantErr, err)
 			}
 		})
