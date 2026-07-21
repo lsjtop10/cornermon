@@ -42,6 +42,8 @@ Future<void> _drainAutoDismissTimer(WidgetTester tester) =>
     tester.pump(const Duration(seconds: 3));
 
 void main() {
+  final trackId = TrackId('track-1');
+
   testWidgets('ShouldFormatDurationAsMinutesSeconds', (tester) async {
     // arrange
     final visit = _buildVisit(durationSeconds: 600, deviationSeconds: 0);
@@ -50,11 +52,11 @@ void main() {
     // act
     await tester.pumpWidget(
       buildTestable(
-        VisitSummaryOverlay(visit: visit, onDismiss: () {}),
-        overrides: [groupDetailProvider(GroupId(visit.groupId!)).overrideWith((ref) => group)],
+        VisitSummaryOverlay(trackId: trackId, visit: visit, onDismiss: () {}),
+        overrides: [trackScopedGroupsProvider(trackId).overrideWith((ref) => [group])],
       ),
     );
-    await tester.pump(); // groupDetailProvider(FutureOr) 1틱 대기
+    await tester.pump(); // trackScopedGroupsProvider(FutureOr) 1틱 대기
 
     // assert
     expect(find.text('10:00'), findsOneWidget);
@@ -70,8 +72,8 @@ void main() {
     // act
     await tester.pumpWidget(
       buildTestable(
-        VisitSummaryOverlay(visit: visit, onDismiss: () {}),
-        overrides: [groupDetailProvider(GroupId(visit.groupId!)).overrideWith((ref) => group)],
+        VisitSummaryOverlay(trackId: trackId, visit: visit, onDismiss: () {}),
+        overrides: [trackScopedGroupsProvider(trackId).overrideWith((ref) => [group])],
       ),
     );
     await tester.pump();
@@ -91,9 +93,9 @@ void main() {
     // act: 편차 0
     await tester.pumpWidget(
       buildTestable(
-        VisitSummaryOverlay(visit: zeroVisit, onDismiss: () {}),
+        VisitSummaryOverlay(trackId: trackId, visit: zeroVisit, onDismiss: () {}),
         overrides: [
-          groupDetailProvider(GroupId(zeroVisit.groupId!)).overrideWith((ref) => group),
+          trackScopedGroupsProvider(trackId).overrideWith((ref) => [group]),
         ],
       ),
     );
@@ -108,9 +110,9 @@ void main() {
     final negativeVisit = _buildVisit(deviationSeconds: -30);
     await tester.pumpWidget(
       buildTestable(
-        VisitSummaryOverlay(visit: negativeVisit, onDismiss: () {}),
+        VisitSummaryOverlay(trackId: trackId, visit: negativeVisit, onDismiss: () {}),
         overrides: [
-          groupDetailProvider(GroupId(negativeVisit.groupId!)).overrideWith((ref) => group),
+          trackScopedGroupsProvider(trackId).overrideWith((ref) => [group]),
         ],
       ),
     );
@@ -131,8 +133,8 @@ void main() {
     // act
     await tester.pumpWidget(
       buildTestable(
-        VisitSummaryOverlay(visit: visit, onDismiss: () => dismissCount++),
-        overrides: [groupDetailProvider(GroupId(visit.groupId!)).overrideWith((ref) => group)],
+        VisitSummaryOverlay(trackId: trackId, visit: visit, onDismiss: () => dismissCount++),
+        overrides: [trackScopedGroupsProvider(trackId).overrideWith((ref) => [group])],
       ),
     );
     await tester.pump();
@@ -153,8 +155,8 @@ void main() {
       // act
       await tester.pumpWidget(
         buildTestable(
-          VisitSummaryOverlay(visit: visit, onDismiss: () => dismissCount++),
-          overrides: [groupDetailProvider(GroupId(visit.groupId!)).overrideWith((ref) => group)],
+          VisitSummaryOverlay(trackId: trackId, visit: visit, onDismiss: () => dismissCount++),
+          overrides: [trackScopedGroupsProvider(trackId).overrideWith((ref) => [group])],
         ),
       );
       await tester.pump();

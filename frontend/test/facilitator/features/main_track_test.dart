@@ -105,7 +105,9 @@ void main() {
           onVisitEnded: onVisitEnded,
         ),
         overrides: [
-          groupDetailProvider(groupId).overrideWith((ref) => fakeGroup()),
+          trackScopedGroupsProvider(
+            trackId,
+          ).overrideWith((ref) => [fakeGroup()]),
           visitActionsProvider(trackId).overrideWith(() => fakeActions),
         ],
       );

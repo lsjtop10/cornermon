@@ -16,6 +16,7 @@ import 'package:cornermon/admin/features/device_manage/device_manage_screen.dart
 import 'package:cornermon/admin/features/session_manage/session_manage_screen.dart';
 import 'package:cornermon/admin/features/broadcast/broadcast_screen.dart';
 import 'package:cornermon/admin/features/track_direct/track_direct_screen.dart';
+import 'package:cornermon/admin/features/report/report_screen.dart';
 import 'package:cornermon/admin/features/settings/settings_screen.dart';
 import 'package:cornermon/admin/features/audit_log/audit_log_screen.dart';
 import 'package:cornermon/admin/session/admin_session_provider.dart';
@@ -92,7 +93,7 @@ final adminRouterProvider = Provider<GoRouter>((ref) {
         '/messages/direct',
         (_, _) => const AdminScaffold(body: TrackDirectScreen()),
       ),
-      _screenRoute('/report', 'A12 리포트'),
+      _route('/report', (_, _) => const AdminScaffold(body: ReportScreen())),
       _route(
         '/audit-log',
         (_, _) => const AdminScaffold(body: AuditLogScreen()),
@@ -116,9 +117,6 @@ GoRoute _route(String path, _PageBuilder builder) => GoRoute(
 
 GoRoute _plainRoute(String path, String title) =>
     _route(path, (_, _) => AdminStubScreen(title: title));
-
-GoRoute _screenRoute(String path, String title) =>
-    _route(path, (_, _) => AdminScaffold(body: AdminStubScreen(title: title)));
 
 String? _redirect(Ref ref, String location) {
   if (ref.read(adminSessionProvider) is AdminSessionUnauthenticated) {
