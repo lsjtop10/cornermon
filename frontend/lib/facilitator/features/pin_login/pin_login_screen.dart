@@ -74,7 +74,7 @@ class PinLoginScreen extends ConsumerWidget {
   }
 }
 
-/// PinOtpInput + 상태별 안내 텍스트. PIN_LOCKED 카운트다운은 서버가 내려준
+/// PinOtpInput + 상태별 안내 텍스트. DEVICE_LOCKED 카운트다운은 서버가 내려준
 /// retryAfterSeconds에서 시작해 로컬 타이머로 0까지 줄이고, 0이 되면 입력을 다시 활성화한다.
 class _PinLoginBody extends StatefulWidget {
   const _PinLoginBody({required this.error, required this.onSubmitted});

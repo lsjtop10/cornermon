@@ -128,10 +128,24 @@ void main() {
         ).overrideWith((ref) async => CampSummaryStats()),
       ],
     );
-    final endedContainer = _container(
-      session: authenticated,
-      campId: CampId('camp-1'),
-      camp: _camp(CampStatus.ENDED),
+    final endedContainer = ProviderContainer(
+      overrides: [
+        adminSessionProvider.overrideWith(
+          () => _FakeAdminSession(authenticated),
+        ),
+        selectedCampIdProvider.overrideWith(() => _FakeSelectedCampId(campId)),
+        selectedCampProvider.overrideWith(
+          (ref) async => _camp(CampStatus.ENDED),
+        ),
+        campListProvider.overrideWith(
+          (ref) async => [_camp(CampStatus.ENDED)],
+        ),
+        cornerListProvider(campId).overrideWith((ref) async => const []),
+        // ENDED 캠프이므로 reportViewProvider가 currentReport를 실제로 호출한다(A12).
+        currentReportProvider(
+          campId,
+        ).overrideWith((ref) async => CampReport((b) => b..campId = campId.value)),
+      ],
     );
     addTearDown(pendingContainer.dispose);
     addTearDown(endedContainer.dispose);
@@ -147,7 +161,9 @@ void main() {
     await _pumpApp(tester, endedContainer);
     endedContainer.read(adminRouterProvider).go('/settings');
     await tester.pumpAndSettle();
-    expect(find.text('A12 리포트'), findsOneWidget);
+    // /settings는 ENDED 캠프에서 접근 불가 → /report(A12)로 리다이렉트된다(실제 화면 렌더링).
+    expect(find.text('리포트'), findsWidgets);
+    expect(find.byType(AdminSidebar), findsOneWidget);
   });
 
   testWidgets('ShouldAllowBadgesWithoutSelectedCamp', (tester) async {

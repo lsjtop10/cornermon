@@ -33,7 +33,6 @@ class AdminSidebar extends ConsumerWidget {
         ('조 현황', Icons.groups_outlined, '/groups'),
         ('기기 관리', Icons.devices_outlined, '/devices'),
         ('메시지', Icons.message_outlined, '/messages/broadcast'),
-        ('리포트', Icons.assessment_outlined, '/report'),
         ('감사 로그', Icons.history_outlined, '/audit-log'),
         ('설정', Icons.settings_outlined, '/settings'),
       ],

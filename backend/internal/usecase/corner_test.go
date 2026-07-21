@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -178,7 +179,7 @@ func TestGetCornerByTrackShouldReturnTrackNotFoundWhenTrackMissing(t *testing.T)
 	corner, err := service.GetCornerByTrack(ctx, "missing-track")
 
 	// Assert
-	if err != domain.ErrTrackNotFound || corner != nil {
+	if !errors.Is(err, domain.ErrTrackNotFound) || corner != nil {
 		t.Fatalf("expected ErrTrackNotFound, got corner=%+v err=%v", corner, err)
 	}
 }
@@ -194,7 +195,7 @@ func TestGetCornerByTrackShouldReturnCornerNotFoundWhenCornerMissing(t *testing.
 	corner, err := service.GetCornerByTrack(ctx, "track-1")
 
 	// Assert
-	if err != domain.ErrCornerNotFound || corner != nil {
+	if !errors.Is(err, domain.ErrCornerNotFound) || corner != nil {
 		t.Fatalf("expected ErrCornerNotFound, got corner=%+v err=%v", corner, err)
 	}
 }

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/labstack/echo/v4"
+	"cornermon/backend/internal/usecase"
 )
 
 func ErrorHandler() echo.HTTPErrorHandler {
@@ -18,7 +19,7 @@ func ErrorHandler() echo.HTTPErrorHandler {
 		ctx := c.Request().Context()
 
 		var code int
-		var errCode string
+		var errCode ErrorCode
 		var details map[string]interface{}
 		var message string = err.Error()
 
@@ -34,14 +35,14 @@ func ErrorHandler() echo.HTTPErrorHandler {
 				message = erPtr.Message
 				details = erPtr.Details
 			} else if m, ok := he.Message.(string); ok {
-				errCode = "HTTP_ERROR"
+				errCode = CodeHTTPError
 				message = m
 			} else {
-				errCode = "HTTP_ERROR"
+				errCode = CodeHTTPError
 			}
 		} else {
 			code = http.StatusInternalServerError
-			errCode = "INTERNAL_SERVER_ERROR"
+			errCode = CodeInternalServerError
 		}
 
 		var durationMsAttr slog.Attr
@@ -60,6 +61,15 @@ func ErrorHandler() echo.HTTPErrorHandler {
 			slog.String("user_agent", c.Request().UserAgent()),
 			slog.String("error_msg", err.Error()),
 			slog.Any("error", err), // errs.SlogWrappedHandler가 AppError/stack_trace 추출에만 사용, 최종 출력에서는 제거됨
+		}
+
+		var operationErr *usecase.OperationError
+		if errors.As(err, &operationErr) {
+			commonAttrs = append(commonAttrs,
+				slog.String("operation", operationErr.Operation),
+				slog.String("stage", operationErr.Stage),
+				slog.Any("error_context", operationErr.Attributes),
+			)
 		}
 
 		if code >= 500 {

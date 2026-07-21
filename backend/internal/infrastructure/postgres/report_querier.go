@@ -4,6 +4,7 @@ import (
 	"context"
 	"math"
 	"sort"
+	"time"
 
 	"cornermon/backend/internal/domain"
 	"cornermon/backend/internal/errs"
@@ -13,11 +14,12 @@ import (
 )
 
 type pgReportQuerier struct {
-	pool *pgxpool.Pool
+	pool  *pgxpool.Pool
+	nowFn func() time.Time
 }
 
 func NewReportQuerier(pool *pgxpool.Pool) *pgReportQuerier {
-	return &pgReportQuerier{pool: pool}
+	return &pgReportQuerier{pool: pool, nowFn: func() time.Time { return time.Now().UTC() }}
 }
 
 func (r *pgReportQuerier) queries(ctx context.Context) *db.Queries {
@@ -29,6 +31,11 @@ func (r *pgReportQuerier) queries(ctx context.Context) *db.Queries {
 
 func (r *pgReportQuerier) QueryCampReport(ctx context.Context, campID domain.CampID) (*usecase.CampReport, error) {
 	q := r.queries(ctx)
+
+	dbCamp, err := q.GetCamp(ctx, string(campID))
+	if err != nil {
+		return nil, errs.Wrap(ctx, err)
+	}
 
 	dbGroups, err := q.ListGroupsByCamp(ctx, string(campID))
 	if err != nil {
@@ -45,10 +52,10 @@ func (r *pgReportQuerier) QueryCampReport(ctx context.Context, campID domain.Cam
 		return nil, errs.Wrap(ctx, err)
 	}
 
-	return calculateCampReport(campID, dbGroups, dbCorners, dbVisits)
+	return calculateCampReport(campID, dbCamp, dbGroups, dbCorners, dbVisits, r.nowFn())
 }
 
-func calculateCampReport(campID domain.CampID, dbGroups []db.Group, dbCorners []db.Corner, dbVisits []db.ListVisitsByCampRow) (*usecase.CampReport, error) {
+func calculateCampReport(campID domain.CampID, dbCamp db.Camp, dbGroups []db.Group, dbCorners []db.Corner, dbVisits []db.ListVisitsByCampRow, now time.Time) (*usecase.CampReport, error) {
 	totalGroups := len(dbGroups)
 	finishedGroupsCount := 0
 
@@ -91,12 +98,16 @@ func calculateCampReport(campID domain.CampID, dbGroups []db.Group, dbCorners []
 	completedVisitsCount := 0
 	manualVisitsCount := 0
 
+	var campDeviationSum float64
+	campDeviationCount := 0
+
 	for i, gr := range groupReports {
 		gID := string(gr.GroupID)
 		completedVisits := groupCompletedVisits[gID]
 		groupReports[i].CompletedCount = len(completedVisits)
 
 		details := make([]usecase.VisitDetail, 0, len(completedVisits))
+		totalDuration := 0
 		for _, cv := range completedVisits {
 			completedVisitsCount++
 			if cv.InputMethod == "MANUAL" {
@@ -113,9 +124,37 @@ func calculateCampReport(campID domain.CampID, dbGroups []db.Group, dbCorners []
 					DurationSec:  duration,
 					DeviationSec: deviation,
 				})
+				totalDuration += duration
+				campDeviationSum += float64(deviation)
+				campDeviationCount++
 			}
 		}
 		groupReports[i].VisitDetails = details
+		groupReports[i].TotalDurationSec = totalDuration
+	}
+
+	avgDeviationSec := 0.0
+	if campDeviationCount > 0 {
+		avgDeviationSec = campDeviationSum / float64(campDeviationCount)
+	}
+
+	programDurationSec := 0
+	var firstVisitStart time.Time
+	hasFirstVisit := false
+	for _, v := range dbVisits {
+		if v.StartedAt.Valid && (!hasFirstVisit || v.StartedAt.Time.Before(firstVisitStart)) {
+			firstVisitStart = v.StartedAt.Time
+			hasFirstVisit = true
+		}
+	}
+	if hasFirstVisit {
+		endRef := now
+		if dbCamp.EndedAt.Valid {
+			endRef = dbCamp.EndedAt.Time
+		}
+		if endRef.After(firstVisitStart) {
+			programDurationSec = int(endRef.Sub(firstVisitStart).Seconds())
+		}
 	}
 
 	cornerReports := make([]usecase.CornerReport, 0, len(dbCorners))
@@ -176,14 +215,16 @@ func calculateCampReport(campID domain.CampID, dbGroups []db.Group, dbCorners []
 	}
 
 	report := &usecase.CampReport{
-		CampID:          campID,
-		TotalGroups:     totalGroups,
-		FinishedGroups:  finishedGroupsCount,
-		TotalVisits:     totalVisits,
-		CompletedVisits: completedVisitsCount,
-		ManualVisits:    manualVisitsCount,
-		CornerReports:   cornerReports,
-		GroupReports:    groupReports,
+		CampID:             campID,
+		TotalGroups:        totalGroups,
+		FinishedGroups:     finishedGroupsCount,
+		TotalVisits:        totalVisits,
+		CompletedVisits:    completedVisitsCount,
+		ManualVisits:       manualVisitsCount,
+		ProgramDurationSec: programDurationSec,
+		AvgDeviationSec:    avgDeviationSec,
+		CornerReports:      cornerReports,
+		GroupReports:       groupReports,
 	}
 
 	return report, nil

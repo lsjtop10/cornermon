@@ -5,7 +5,8 @@ package web
 // (frontend pin_login_error_provider.dart가 겪은 문제 참고). 여기 선언된 named
 // type + const 블록에서 swag가 ErrorResponse.code의 openapi enum을 자동으로
 // 추출하므로(domain.CampStatus와 동일한 관례), 값 목록을 다른 곳에 중복 선언하지 않는다.
-type ErrorCode string // @name ErrorCode
+// @name ErrorCode
+type ErrorCode string
 
 const (
 	CodeBadgeAlreadyAssigned    ErrorCode = "BADGE_ALREADY_ASSIGNED"
@@ -44,7 +45,7 @@ const (
 )
 
 type ErrorResponse struct {
-	Code    string                 `json:"code" example:"INVALID_REQUEST"`
+	Code    ErrorCode              `json:"code" example:"INVALID_REQUEST"`
 	Message string                 `json:"message" example:"잘못된 요청입니다."`
 	Details map[string]interface{} `json:"details,omitempty"`
 } // @name ErrorResponse

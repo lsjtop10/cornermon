@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"cornermon/backend/internal/domain"
@@ -50,7 +51,7 @@ func TestReportService_GenerateCampReport(t *testing.T) {
 		_, err := s.GenerateCampReport(context.Background(), "camp-1")
 
 		// Assert
-		if err != domain.ErrCampInvalidTransition {
+		if !errors.Is(err, domain.ErrCampInvalidTransition) {
 			t.Errorf("expected ErrCampInvalidTransition, got %v", err)
 		}
 	})
@@ -88,7 +89,7 @@ func TestGetCampReportShoudReturnNotFoundWhenCampDoesNotExist(t *testing.T) {
 	_, err := service.GetCampReport(context.Background(), "missing")
 
 	// Assert
-	if err != domain.ErrCampNotFound {
+	if !errors.Is(err, domain.ErrCampNotFound) {
 		t.Fatalf("expected ErrCampNotFound, got %v", err)
 	}
 }

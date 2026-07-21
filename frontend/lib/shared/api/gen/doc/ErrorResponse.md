@@ -8,7 +8,7 @@ import 'package:cornermon_api_gen/api.dart';
 ## Properties
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**code** | **String** |  | [optional] 
+**code** | [**ErrorCode**](ErrorCode.md) |  | [optional] 
 **details** | [**BuiltMap&lt;String, JsonObject&gt;**](JsonObject.md) |  | [optional] 
 **message** | **String** |  | [optional] 
 

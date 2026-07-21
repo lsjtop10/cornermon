@@ -82,37 +82,37 @@ func errorAuditMetadata(err error, attrs map[string]any) map[string]any
 
 | 순서 | 작업 | 파일 |
 | --- | --- | --- |
-| A-1 | `OperationError`, 원인 unwrap, 속성 복사·정규화, `errors.As` 추출 헬퍼를 추가한다. operation/stage 명명 규칙(`visit.start_qr`, `track.replace`, `repository.save_visit` 등)을 상수 또는 문서화된 규약으로 고정한다. | `/home/lsjtop10/projects/cornermon/backend/internal/usecase/error_context.go` **(신규)** |
-| A-2 | 실패 감사 로그용 메타데이터 병합 헬퍼를 추가한다. 기존 `error` 키는 호환성을 위해 유지하고 `operation`, `stage`, `error_type`, 안전 속성을 추가한다. | `/home/lsjtop10/projects/cornermon/backend/internal/usecase/error_context.go` **(신규)**, 각 서비스의 `recordAuditLog` 호출부 **(기존 파일 확장)** |
-| A-3 | HTTP 오류 처리 시 `OperationError`를 `errors.As`로 읽어 slog 속성으로 기록한다. 4xx/5xx 응답 body와 `SetInternal` 원인 연결은 바꾸지 않는다. | `/home/lsjtop10/projects/cornermon/backend/internal/infrastructure/web/error_handler_middleware.go` **(기존 파일 확장)** |
-| A-4 | 오류 wrapper, HTTP 로그 속성, 민감정보 제외 및 기존 domain 매핑 호환성 테스트를 작성한다. | `/home/lsjtop10/projects/cornermon/backend/internal/usecase/error_context_test.go` **(신규)**, `/home/lsjtop10/projects/cornermon/backend/internal/infrastructure/web/error_handler_middleware_test.go` **(기존 파일 확장)** |
+| [x] A-1 | `OperationError`, 원인 unwrap, 속성 복사·정규화, `errors.As` 추출 헬퍼를 추가한다. operation/stage 명명 규칙(`visit.start_qr`, `track.replace`, `repository.save_visit` 등)을 상수 또는 문서화된 규약으로 고정한다. | `/home/lsjtop10/projects/cornermon/backend/internal/usecase/error_context.go` **(신규)** |
+| [x] A-2 | 실패 감사 로그용 메타데이터 병합 헬퍼를 추가한다. 기존 `error` 키는 호환성을 위해 유지하고 `operation`, `stage`, `error_type`, 안전 속성을 추가한다. | `/home/lsjtop10/projects/cornermon/backend/internal/usecase/error_context.go` **(신규)**, 각 서비스의 `recordAuditLog` 호출부 **(기존 파일 확장)** |
+| [x] A-3 | HTTP 오류 처리 시 `OperationError`를 `errors.As`로 읽어 slog 속성으로 기록한다. 4xx/5xx 응답 body와 `SetInternal` 원인 연결은 바꾸지 않는다. | `/home/lsjtop10/projects/cornermon/backend/internal/infrastructure/web/error_handler_middleware.go` **(기존 파일 확장)** |
+| [x] A-4 | 오류 wrapper, HTTP 로그 속성, 민감정보 제외 및 기존 domain 매핑 호환성 테스트를 작성한다. | `/home/lsjtop10/projects/cornermon/backend/internal/usecase/error_context_test.go` **(신규)**, `/home/lsjtop10/projects/cornermon/backend/internal/infrastructure/web/error_handler_middleware_test.go` **(기존 파일 확장)** |
 
 ### Phase B: P0 명령 유즈케이스 전수 전환 (예상 소요: 6시간)
 
 | 순서 | 작업 | 파일 |
 | --- | --- | --- |
-| B-1 | QR/수동 시작과 완료의 session 조회, track 상태, badge 배정, group itinerary, camp ACTIVE 조건, 각 Save를 stage별로 감싼다. `track_id`, `group_id`, `badge_id`(확인 후), `camp_id`, `corner_id`, `track_status`, `camp_status`, `current_visit_set`을 조건에 맞게 기록한다. | `/home/lsjtop10/projects/cornermon/backend/internal/usecase/visit.go` **(기존 파일 확장)** |
-| B-2 | 캠프 생성/설정/활성화/종료와 종료 중 기기·세션·진행 방문 finalization을 감싼다. 누락된 group/track은 어떤 `visit_id`에서 발견됐는지, 상태 전이는 실제 camp 상태와 기대 상태를 기록한다. | `/home/lsjtop10/projects/cornermon/backend/internal/usecase/camp.go` **(기존 파일 확장)** |
-| B-3 | track 생성/삭제/교체/PIN 재생성·내보내기의 camp/corner/track 조건, PIN protector, repository/transaction 단계를 감싼다. PIN 값·ciphertext를 속성에 넣지 않는다. | `/home/lsjtop10/projects/cornermon/backend/internal/usecase/track.go` **(기존 파일 확장)** |
-| B-4 | group 등록·순회표 조회, badge 지정/스캔 지정, corner 생성·수정·삭제·순회표 동기화의 엔티티 조회/상태/저장 실패를 감싼다. 기존의 잘못된 sentinel 선택 또는 모호한 주석(`group not found`에 `ErrCornerNotInItinerary` 등)은 이번 단계에서 계약 변경 없이 별도 `stage`로 구분하고, sentinel 정정 필요성은 후속 이슈로 기록한다. | `/home/lsjtop10/projects/cornermon/backend/internal/usecase/group.go`, `badge.go`, `corner.go` **(기존 파일 확장)** |
-| B-5 | 각 P0 서비스 테스트에 원인 sentinel 보존, stage/attributes, 실패 audit metadata를 추가한다. | `/home/lsjtop10/projects/cornermon/backend/internal/usecase/visit_test.go`, `camp_test.go`, `track_test.go`, `group_test.go`, `badge_test.go`, `corner_test.go` **(기존 파일 확장)** |
+| [x] B-1 | QR/수동 시작과 완료의 session 조회, track 상태, badge 배정, group itinerary, camp ACTIVE 조건, 각 Save를 stage별로 감싼다. `track_id`, `group_id`, `badge_id`(확인 후), `camp_id`, `corner_id`, `track_status`, `camp_status`, `current_visit_set`을 조건에 맞게 기록한다. | `/home/lsjtop10/projects/cornermon/backend/internal/usecase/visit.go` **(기존 파일 확장)** |
+| [x] B-2 | 캠프 생성/설정/활성화/종료와 종료 중 기기·세션·진행 방문 finalization을 감싼다. 누락된 group/track은 어떤 `visit_id`에서 발견됐는지, 상태 전이는 실제 camp 상태와 기대 상태를 기록한다. | `/home/lsjtop10/projects/cornermon/backend/internal/usecase/camp.go` **(기존 파일 확장)** |
+| [x] B-3 | track 생성/삭제/교체/PIN 재생성·내보내기의 camp/corner/track 조건, PIN protector, repository/transaction 단계를 감싼다. PIN 값·ciphertext를 속성에 넣지 않는다. | `/home/lsjtop10/projects/cornermon/backend/internal/usecase/track.go` **(기존 파일 확장)** |
+| [x] B-4 | group 등록·순회표 조회, badge 지정/스캔 지정, corner 생성·수정·삭제·순회표 동기화의 엔티티 조회/상태/저장 실패를 감싼다. 기존의 잘못된 sentinel 선택 또는 모호한 주석(`group not found`에 `ErrCornerNotInItinerary` 등)은 이번 단계에서 계약 변경 없이 별도 `stage`로 구분하고, sentinel 정정 필요성은 후속 이슈로 기록한다. | `/home/lsjtop10/projects/cornermon/backend/internal/usecase/group.go`, `badge.go`, `corner.go` **(기존 파일 확장)** |
+| [x] B-5 | 각 P0 서비스 테스트에 원인 sentinel 보존, stage/attributes, 실패 audit metadata를 추가한다. | `/home/lsjtop10/projects/cornermon/backend/internal/usecase/visit_test.go`, `camp_test.go`, `track_test.go`, `group_test.go`, `badge_test.go`, `corner_test.go` **(기존 파일 확장)** |
 
 ### Phase C: P1/P2 유즈케이스 전수 전환 (예상 소요: 5시간)
 
 | 순서 | 작업 | 파일 |
 | --- | --- | --- |
-| C-1 | 진행자/관리자 인증 및 기기 신뢰의 session/device/admin/camp 조회, 권한·잠금·상태전이, 토큰 생성/암호화/저장 실패를 감싼다. credential 값은 기록하지 않는다. | `/home/lsjtop10/projects/cornermon/backend/internal/usecase/auth_facilitator.go`, `auth_admin.go`, `device_trust.go` **(기존 파일 확장)** |
-| C-2 | 공지·메시지의 track scope, receipt, unread counter 및 저장 실패를 감싸고 audit metadata에 track/camp/notice/message 식별자를 남긴다. | `/home/lsjtop10/projects/cornermon/backend/internal/usecase/announcement.go`, `message.go` **(기존 파일 확장)** |
-| C-3 | report/snapshot/cleanup/bootstrap의 camp 상태와 query/repository 실패에 operation/stage를 부여한다. 단, 주기 작업의 개별 레코드 오류에는 해당 레코드 ID만 남긴다. | `/home/lsjtop10/projects/cornermon/backend/internal/usecase/report.go`, `snapshot.go`, `corner_cleanup.go`, `admin_bootstrap.go`, `utils.go` **(기존 파일 확장)** |
-| C-4 | 각 파일의 기존 단위 테스트에 sentinel/typed domain error 호환성과 민감정보 비노출을 추가한다. | `/home/lsjtop10/projects/cornermon/backend/internal/usecase/*_test.go` **(기존 파일 확장)** |
+| [x] C-1 | `auth_admin.go`, `auth_facilitator.go`, `device_trust.go` (디바이스 승인/거절, 세션 갱신/만료) | `/home/lsjtop10/projects/cornermon/backend/internal/usecase/auth_admin.go`, `auth_facilitator.go`, `device_trust.go` **(기존 파일 확장)** |
+| [x] C-2 | `admin_management.go`, `announcement.go`, `report.go`, `list_views.go` (조회 유즈케이스) | `/home/lsjtop10/projects/cornermon/backend/internal/usecase/admin_management.go`, `announcement.go`, `report.go`, `list_views.go` **(기존 파일 확장)** |
+| [x] C-3 | report/snapshot/cleanup/bootstrap의 camp 상태와 query/repository 실패에 operation/stage를 부여한다. 단, 주기 작업의 개별 레코드 오류에는 해당 레코드 ID만 남긴다. | `/home/lsjtop10/projects/cornermon/backend/internal/usecase/report.go`, `snapshot.go`, `corner_cleanup.go`, `admin_bootstrap.go`, `utils.go` **(기존 파일 확장)** |
+| [x] C-4 | 각 파일의 기존 단위 테스트에 sentinel/typed domain error 호환성과 민감정보 비노출을 추가한다. | `/home/lsjtop10/projects/cornermon/backend/internal/usecase/*_test.go` **(기존 파일 확장)** |
 
 ### Phase D: 회귀 검증·자체 리뷰 (예상 소요: 2시간)
 
 | 순서 | 작업 | 파일 |
 | --- | --- | --- |
-| D-1 | `errors.Is` 기반 핸들러 분기가 wrapper 후에도 기존 HTTP 상태·코드를 유지하는 대표 통합 테스트를 추가한다. | `/home/lsjtop10/projects/cornermon/backend/internal/infrastructure/web/*_handler_test.go` **(기존 파일 확장)** |
-| D-2 | wrapper 없는 직접 sentinel 반환 및 `return err` 잔존 지점을 재검색한다. 허용된 예외(단순 private helper/이미 맥락화된 오류)는 코드 주석 또는 테스트로 근거를 남긴다. | `/home/lsjtop10/projects/cornermon/backend/internal/usecase/` **(전수 점검)** |
-| D-3 | 포맷, 전체 테스트, vet, diff 자체 리뷰와 로그 샘플 검토를 수행한다. | `/home/lsjtop10/projects/cornermon/backend/` |
+| [x] D-1 | `errors.Is` 기반 핸들러 분기가 wrapper 후에도 기존 HTTP 상태·코드를 유지하는 대표 통합 테스트를 추가한다. | `/home/lsjtop10/projects/cornermon/backend/internal/infrastructure/web/*_handler_test.go` **(기존 파일 확장)** |
+| [x] D-2 | wrapper 없는 직접 sentinel 반환 및 `return err` 잔존 지점을 재검색한다. 허용된 예외(단순 private helper/이미 맥락화된 오류)는 코드 주석 또는 테스트로 근거를 남긴다. | `/home/lsjtop10/projects/cornermon/backend/internal/usecase/` **(전수 점검)** |
+| [x] D-3 | 포맷, 전체 테스트, vet, diff 자체 리뷰와 로그 샘플 검토를 수행한다. | `/home/lsjtop10/projects/cornermon/backend/` |
 
 ## 4. 대표 적용 예시
 

@@ -39,6 +39,7 @@ doc/DeviceRegistrationResponse.md
 doc/DeviceStatusResponse.md
 doc/DirectMessageRequest.md
 doc/EMessageApi.md
+doc/ErrorCode.md
 doc/ErrorResponse.md
 doc/ExportBadgesResponse.md
 doc/ExportTracksResponse.md
@@ -116,6 +117,7 @@ lib/src/model/device_registration_request.dart
 lib/src/model/device_registration_response.dart
 lib/src/model/device_status_response.dart
 lib/src/model/direct_message_request.dart
+lib/src/model/error_code.dart
 lib/src/model/error_response.dart
 lib/src/model/export_badges_response.dart
 lib/src/model/export_tracks_response.dart
@@ -141,3 +143,4 @@ lib/src/model/visit_start_request.dart
 lib/src/model/visit_summary_response.dart
 lib/src/serializers.dart
 pubspec.yaml
+test/error_code_test.dart

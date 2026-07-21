@@ -52,7 +52,7 @@ func TestCampService_OpenNewCamp(t *testing.T) {
 		camp, err := s.OpenNewCamp(context.Background(), "New Camp", time.Time{}, time.Time{})
 
 		// Assert
-		if err != domain.ErrCampInvalidSettings {
+		if !errors.Is(err, domain.ErrCampInvalidSettings) {
 			t.Fatalf("expected ErrCampInvalidSettings, got %v", err)
 		}
 		if camp != nil {
@@ -286,7 +286,7 @@ func TestUpdateCampSettingsShoudReturnNotFoundWhenCampMissing(t *testing.T) {
 	_, err := service.UpdateCampSettings(context.Background(), "missing", "admin-1", domain.CampSettingsPatch{})
 
 	// Assert
-	if err != domain.ErrCampNotFound {
+	if !errors.Is(err, domain.ErrCampNotFound) {
 		t.Fatalf("expected ErrCampNotFound, got %v", err)
 	}
 }

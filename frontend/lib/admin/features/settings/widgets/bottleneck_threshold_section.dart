@@ -84,8 +84,9 @@ class _BottleneckThresholdSectionState
           context,
         ).showSnackBar(const SnackBar(content: Text('병목 판정 기준이 저장되었습니다.')));
       }
-    } catch (error) {
-      if (mounted) setState(() => _error = error.toString());
+    } catch (error, stackTrace) {
+      final message = describeUpdateCampError(error, stackTrace);
+      if (mounted) setState(() => _error = message);
     } finally {
       if (mounted) setState(() => _saving = false);
     }

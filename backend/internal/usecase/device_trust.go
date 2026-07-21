@@ -49,21 +49,22 @@ func (s *DeviceTrustService) RequestRegistration(
 	registrationCode string,
 	deviceName, deviceModel, displayName string,
 ) (string, *domain.DeviceRegistration, error) {
+
 	camp, err := s.camps.GetByRegistrationCode(ctx, registrationCode)
 	if err != nil {
-		return "", nil, err
+		return "", nil, withErrorContext("device.request_registration", "repository.get_camp_by_code", err, nil)
 	}
 	if camp == nil {
-		return "", nil, domain.ErrCampNotFound
+		return "", nil, withErrorContext("device.request_registration", "validate_camp", domain.ErrCampNotFound, map[string]any{"camp_found": false})
 	}
 	if camp.Status() == domain.CampEnded {
-		return "", nil, domain.ErrCampInvalidTransition
+		return "", nil, withErrorContext("device.request_registration", "validate_camp_status", domain.ErrCampInvalidTransition, map[string]any{"camp_id": string(camp.ID()), "camp_status": string(camp.Status())})
 	}
 	campID := camp.ID
 
 	plainToken, tokenHash, err := generateOpaqueToken()
 	if err != nil {
-		return "", nil, err
+		return "", nil, withErrorContext("device.request_registration", "generate_token", err, nil)
 	}
 
 	regID := domain.DeviceRegistrationID(s.uuidFn())
@@ -82,15 +83,18 @@ func (s *DeviceTrustService) RequestRegistration(
 	})
 
 	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
-		return s.devices.Save(ctx, reg)
+		if err := s.devices.Save(ctx, reg); err != nil {
+			return withErrorContext("device.request_registration", "repository.save_device", err, map[string]any{"device_id": string(reg.ID())})
+		}
+		return nil
 	})
 
 	if err != nil {
-		s.recordAuditLog(ctx, "anonymous", ActionDeviceRequest, "", false, map[string]any{"error": err.Error()})
+		s.recordAuditLog(ctx, "anonymous", ActionDeviceRequest, "", false, errorAuditMetadata(err, nil))
 		return "", nil, err
 	}
 
-	s.recordAuditLog(ctx, "anonymous", ActionDeviceRequest, string(reg.ID()), true, map[string]any{"campID()": string(campID())})
+	s.recordAuditLog(ctx, "anonymous", ActionDeviceRequest, string(reg.ID()), true, map[string]any{"campID": string(campID())})
 	_ = s.broadcaster.Broadcast(ctx, campID(), EventDeviceRegistrationUpdated, CampScope())
 	return plainToken, reg, nil
 }
@@ -100,21 +104,22 @@ func (s *DeviceTrustService) GetMyRegistrationStatus(
 	ctx context.Context,
 	deviceToken string,
 ) (*DeviceRegistrationStatusView, error) {
+
 	deviceTokenHash := hashSHA256(deviceToken)
 	device, err := s.devices.GetByTokenHash(ctx, deviceTokenHash)
 	if err != nil {
-		return nil, err
+		return nil, withErrorContext("device.get_status", "repository.get_device_by_token", err, nil)
 	}
 	if device == nil {
-		return nil, domain.ErrDeviceNotApproved // 혹은 NotFound 처리
+		return nil, withErrorContext("device.get_status", "validate_device", domain.ErrDeviceNotApproved, map[string]any{"device_found": false})
 	}
 
 	camp, err := s.camps.Get(ctx, device.CampID())
 	if err != nil {
-		return nil, err
+		return nil, withErrorContext("device.get_status", "repository.get_camp", err, map[string]any{"camp_id": string(device.CampID())})
 	}
 	if camp == nil {
-		return nil, domain.ErrCampNotFound
+		return nil, withErrorContext("device.get_status", "validate_camp", domain.ErrCampNotFound, map[string]any{"camp_id": string(device.CampID()), "camp_found": false})
 	}
 
 	return &DeviceRegistrationStatusView{Registration: device, CampStatus: camp.Status()}, nil
@@ -126,25 +131,29 @@ func (s *DeviceTrustService) ApproveDevice(
 	regID domain.DeviceRegistrationID,
 	actorAdminID domain.AdminID,
 ) (*domain.DeviceRegistration, error) {
+
 	now := s.nowFn()
 	device, err := s.devices.Get(ctx, regID)
 	if err != nil {
-		return nil, err
+		return nil, withErrorContext("device.approve", "repository.get_device", err, map[string]any{"device_id": string(regID)})
 	}
 	if device == nil {
-		return nil, domain.ErrDeviceInvalidTransition
+		return nil, withErrorContext("device.approve", "validate_device", domain.ErrDeviceInvalidTransition, map[string]any{"device_id": string(regID), "device_found": false})
 	}
 
 	if err := device.Approve(now); err != nil {
-		return nil, err
+		return nil, withErrorContext("device.approve", "domain.approve", err, map[string]any{"device_id": string(regID), "device_status": string(device.Status())})
 	}
 
 	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
-		return s.devices.Save(ctx, device)
+		if err := s.devices.Save(ctx, device); err != nil {
+			return withErrorContext("device.approve", "repository.save_device", err, map[string]any{"device_id": string(regID)})
+		}
+		return nil
 	})
 
 	if err != nil {
-		s.recordAuditLog(ctx, string(actorAdminID), ActionDeviceApproved, string(regID), false, map[string]any{"error": err.Error()})
+		s.recordAuditLog(ctx, string(actorAdminID), ActionDeviceApproved, string(regID), false, errorAuditMetadata(err, nil))
 		return nil, err
 	}
 
@@ -159,24 +168,28 @@ func (s *DeviceTrustService) RejectDevice(
 	regID domain.DeviceRegistrationID,
 	actorAdminID domain.AdminID,
 ) (*domain.DeviceRegistration, error) {
+
 	device, err := s.devices.Get(ctx, regID)
 	if err != nil {
-		return nil, err
+		return nil, withErrorContext("device.reject", "repository.get_device", err, map[string]any{"device_id": string(regID)})
 	}
 	if device == nil {
-		return nil, domain.ErrDeviceInvalidTransition
+		return nil, withErrorContext("device.reject", "validate_device", domain.ErrDeviceInvalidTransition, map[string]any{"device_id": string(regID), "device_found": false})
 	}
 
 	if err := device.Reject(); err != nil {
-		return nil, err
+		return nil, withErrorContext("device.reject", "domain.reject", err, map[string]any{"device_id": string(regID), "device_status": string(device.Status())})
 	}
 
 	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
-		return s.devices.Save(ctx, device)
+		if err := s.devices.Save(ctx, device); err != nil {
+			return withErrorContext("device.reject", "repository.save_device", err, map[string]any{"device_id": string(regID)})
+		}
+		return nil
 	})
 
 	if err != nil {
-		s.recordAuditLog(ctx, string(actorAdminID), ActionDeviceRejected, string(regID), false, map[string]any{"error": err.Error()})
+		s.recordAuditLog(ctx, string(actorAdminID), ActionDeviceRejected, string(regID), false, errorAuditMetadata(err, nil))
 		return nil, err
 	}
 
@@ -191,24 +204,28 @@ func (s *DeviceTrustService) RevokeDevice(
 	regID domain.DeviceRegistrationID,
 	actorAdminID domain.AdminID,
 ) (*domain.DeviceRegistration, error) {
+
 	device, err := s.devices.Get(ctx, regID)
 	if err != nil {
-		return nil, err
+		return nil, withErrorContext("device.revoke", "repository.get_device", err, map[string]any{"device_id": string(regID)})
 	}
 	if device == nil {
-		return nil, domain.ErrDeviceNotApproved
+		return nil, withErrorContext("device.revoke", "validate_device", domain.ErrDeviceNotApproved, map[string]any{"device_id": string(regID), "device_found": false})
 	}
 
 	if err := device.Revoke(); err != nil {
-		return nil, err
+		return nil, withErrorContext("device.revoke", "domain.revoke", err, map[string]any{"device_id": string(regID), "device_status": string(device.Status())})
 	}
 
 	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
-		return s.devices.Save(ctx, device)
+		if err := s.devices.Save(ctx, device); err != nil {
+			return withErrorContext("device.revoke", "repository.save_device", err, map[string]any{"device_id": string(regID)})
+		}
+		return nil
 	})
 
 	if err != nil {
-		s.recordAuditLog(ctx, string(actorAdminID), ActionDeviceRevoked, string(regID), false, map[string]any{"error": err.Error()})
+		s.recordAuditLog(ctx, string(actorAdminID), ActionDeviceRevoked, string(regID), false, errorAuditMetadata(err, nil))
 		return nil, err
 	}
 
@@ -223,23 +240,27 @@ func (s *DeviceTrustService) ResetPinFailures(
 	regID domain.DeviceRegistrationID,
 	actorAdminID domain.AdminID,
 ) error {
+
 	device, err := s.devices.Get(ctx, regID)
 	if err != nil {
-		return err
+		return withErrorContext("device.reset_failures", "repository.get_device", err, map[string]any{"device_id": string(regID)})
 	}
 	if device == nil {
-		return domain.ErrDeviceInvalidTransition
+		return withErrorContext("device.reset_failures", "validate_device", domain.ErrDeviceInvalidTransition, map[string]any{"device_id": string(regID), "device_found": false})
 	}
 
 	device.ResetPinFailures()
 
 	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
-		return s.devices.Save(ctx, device)
+		if err := s.devices.Save(ctx, device); err != nil {
+			return withErrorContext("device.reset_failures", "repository.save_device", err, map[string]any{"device_id": string(regID)})
+		}
+		return nil
 	})
 
 	if err != nil {
-		s.recordAuditLog(ctx, string(actorAdminID), ActionPinLockReset, string(regID), false, map[string]any{"error": err.Error()})
-		return err
+		s.recordAuditLog(ctx, string(actorAdminID), ActionPinLockReset, string(regID), false, errorAuditMetadata(err, nil))
+		return err // D-2 allowed: already wrapped or handled
 	}
 
 	s.recordAuditLog(ctx, string(actorAdminID), ActionPinLockReset, string(regID), true, nil)
@@ -252,28 +273,35 @@ func (s *DeviceTrustService) ListPending(
 	ctx context.Context,
 	campID domain.CampID,
 ) ([]*domain.DeviceRegistration, error) {
-	return s.devices.ListPendingByCamp(ctx, campID)
+
+	devices, err := s.devices.ListPendingByCamp(ctx, campID)
+	if err != nil {
+		return nil, withErrorContext("device.list_pending", "repository.list_pending_devices", err, map[string]any{"camp_id": string(campID)})
+	}
+	return devices, nil
 }
 
 // ReviewDeviceTrustRequests
 func (s *DeviceTrustService) ReviewDeviceTrustRequests(ctx context.Context, campID domain.CampID, status *domain.DeviceRegistrationStatus) ([]*domain.DeviceRegistration, error) {
-	if status == nil {
-		// 만약 전체 조회를 지원한다면 ListByCamp 등을 호출하겠지만, 요구사항 상 상태 필터링 조회가 주 목적이므로
-		// 현재 포트에서는 상태를 넣어서 조회하도록 작성되었습니다.
-		// 만약 status가 nil이면 전체 상태를 불러오는 메서드가 포트에 추가되어야 합니다.
-		// 일단 편의상 ListPendingByCamp를 재활용하거나 별도의 ListByCamp 호출이 필요할 수 있습니다.
-		// 여기서는 null 처리를 하지 않고 포트로 바로 넘깁니다.
-		return s.devices.ListByCampAndStatus(ctx, campID, nil)
+
+	devices, err := s.devices.ListByCampAndStatus(ctx, campID, status)
+	if err != nil {
+		var statusStr string
+		if status != nil {
+			statusStr = string(*status)
+		}
+		return nil, withErrorContext("device.review_requests", "repository.list_devices", err, map[string]any{"camp_id": string(campID), "status": statusStr})
 	}
-	return s.devices.ListByCampAndStatus(ctx, campID, status)
+	return devices, nil
 }
 
 // ListLockedDevices returns approved devices whose lockout window has not expired.
 func (s *DeviceTrustService) ListLockedDevices(ctx context.Context, campID domain.CampID) ([]*domain.DeviceRegistration, error) {
+
 	status := domain.DeviceApproved
 	devices, err := s.devices.ListByCampAndStatus(ctx, campID, &status)
 	if err != nil {
-		return nil, err
+		return nil, withErrorContext("device.list_locked", "repository.list_devices", err, map[string]any{"camp_id": string(campID)})
 	}
 	now := s.nowFn()
 	locked := make([]*domain.DeviceRegistration, 0, len(devices))
