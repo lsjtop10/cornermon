@@ -116,7 +116,7 @@ func TestFacilitatorAuthService_Login(t *testing.T) {
 		_, err := s.Login(context.Background(), deviceToken, "123456")
 
 		// Assert
-		if err != domain.ErrDeviceNotApproved {
+		if !errors.Is(err, domain.ErrDeviceNotApproved) {
 			t.Errorf("expected ErrDeviceNotApproved, got %v", err)
 		}
 	})
