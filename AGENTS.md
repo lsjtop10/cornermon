@@ -20,6 +20,11 @@ each part's developer guide — **read the relevant one before working there**:
 
 **New worktrees**: Always confirm with the user before creating a new worktree.
 
+**Test integrity**: Never delete, disable, skip, or weaken a failing test merely to make a
+test run pass. Fix the production code or the test's compatibility with the currently used
+library/version while preserving the scenario being verified. Removing a test requires an
+explicit user approval and a documented replacement or rationale.
+
 ---
 
 ## Monorepo Structure
