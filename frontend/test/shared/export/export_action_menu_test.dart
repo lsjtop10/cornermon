@@ -27,6 +27,12 @@ void main() {
     // assert
     expect(find.text('기기에 저장'), findsOneWidget);
     expect(find.text('다른 앱으로 공유'), findsOneWidget);
+    expect(
+      tester.getRect(find.text('기기에 저장')).top,
+      greaterThanOrEqualTo(
+        tester.getRect(find.text('PDF로 내보내기')).bottom,
+      ),
+    );
 
     // act
     await tester.tap(find.text('기기에 저장'));
