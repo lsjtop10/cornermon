@@ -53,6 +53,7 @@ type CornerView struct {
 	CampID             domain.CampID
 	Name               string
 	TargetMinutes      int
+	Status             domain.CornerOperationalStatus
 	AvgDurationSeconds int
 	SampleCount        int
 	ActiveTracks       []TrackView
