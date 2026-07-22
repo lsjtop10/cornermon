@@ -13,6 +13,42 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+func TestCreateCornerShouldReturnBadRequestWhenTargetMinutesIsNonPositive(t *testing.T) {
+	// Arrange
+	e := echo.New()
+	req := httptest.NewRequest(http.MethodPost, "/corners", strings.NewReader(`{"campId":"camp-1","name":"코너 1","targetMinutes":0}`))
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+
+	// Act
+	err := NewCornerHandler(nil, nil).CreateCorner(c)
+
+	// Assert
+	var httpErr *echo.HTTPError
+	if !errorsAsHTTPError(err, &httpErr) || httpErr.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400 for non-positive targetMinutes, got %v", err)
+	}
+}
+
+func TestBulkUpdateCornersShouldReturnBadRequestWhenTargetMinutesIsNonPositive(t *testing.T) {
+	// Arrange
+	e := echo.New()
+	req := httptest.NewRequest(http.MethodPut, "/corners/bulk-update", strings.NewReader(`{"corners":[{"id":"corner-1","name":"코너 1","targetMinutes":-1}]}`))
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+
+	// Act
+	err := NewCornerHandler(nil, nil).BulkUpdateCorners(c)
+
+	// Assert
+	var httpErr *echo.HTTPError
+	if !errorsAsHTTPError(err, &httpErr) || httpErr.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400 for non-positive targetMinutes, got %v", err)
+	}
+}
+
 type fakeCornerViewQuerier struct {
 	views []usecase.CornerView
 }
