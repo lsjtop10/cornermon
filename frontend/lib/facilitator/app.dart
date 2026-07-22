@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../shared/api/ids.dart';
 import '../shared/design_system/theme/facilitator_theme.dart';
-import 'features/main_track/track_event_coordinator.dart';
+import 'realtime/track_event_coordinator.dart';
 import 'router/facilitator_router.dart';
 import 'session/track_session_provider.dart';
 
