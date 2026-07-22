@@ -156,7 +156,7 @@ Future<TrackPin> regeneratePin(Ref ref, TrackId id) async {
   return data;
 }
 
-@riverpod
+@Riverpod(retry: noRetry)
 Future<ExportTracksResponse> exportAllTracksCsv(Ref ref, CampId campId) async {
   final apiInstance = ref.watch(campApiProvider);
   final response = await apiInstance.tracksExportGet(campId: campId.value);

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:cornermon/admin/features/dashboard/dashboard_screen.dart';
+import 'package:cornermon/admin/features/track_bulk_manage/track_pin_export_controller.dart';
 import 'package:cornermon/admin/features/track_direct/track_direct_providers.dart';
 import 'package:cornermon/admin/session/selected_camp_provider.dart';
 import 'package:cornermon/shared/api/ids.dart';
@@ -12,6 +13,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cornermon_api_gen/cornermon_api_gen.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:share_plus/share_plus.dart';
 
 class _SelectedCampId extends SelectedCampId {
   _SelectedCampId(this._id);
@@ -74,6 +76,8 @@ Future<void> _pumpDashboard(
   List<String>? deletedCornerIds,
   List<String>? createdCornerNames,
   CornerResponse? createdCorner,
+  Future<ExportTracksResponse> Function()? exportTracks,
+  ShareCsv? shareCsv,
 }) async {
   final router = GoRouter(
     initialLocation: '/dashboard',
@@ -128,6 +132,12 @@ Future<void> _pumpDashboard(
             return createdCorner ??
                 CornerResponse((b) => b..id = 'new-corner');
           }),
+        if (exportTracks != null)
+          exportAllTracksCsvProvider(
+            campId,
+          ).overrideWith((ref) => exportTracks()),
+        if (shareCsv != null)
+          trackPinCsvShareProvider.overrideWithValue(shareCsv),
       ],
       child: MaterialApp.router(routerConfig: router),
     ),
@@ -492,6 +502,72 @@ void main() {
 
       // assert: 전체 PIN 내보내기 액션이 대시보드 앱바로 옮겨와 있어야 한다
       expect(find.text('전체 PIN 내보내기'), findsOneWidget);
+    });
+
+    testWidgets('ShouldShareCsvAndShowSuccessWhenPinExportSucceeds', (
+      tester,
+    ) async {
+      // arrange
+      var shared = false;
+      await _pumpDashboard(
+        tester,
+        campId: CampId('camp-1'),
+        corners: [_corner('corner-1', '코너 1', CornerResponseStatusEnum.BUSY)],
+        exportTracks: () async =>
+            ExportTracksResponse((b) => b..tracks.replace([])),
+        shareCsv: (ShareParams params) async {
+          shared = true;
+          expect(params.fileNameOverrides, ['track-pins.csv']);
+        },
+      );
+
+      // act
+      await tester.tap(find.text('전체 PIN 내보내기'));
+      await tester.pumpAndSettle();
+
+      // assert
+      expect(shared, isTrue);
+      expect(find.text('PIN CSV를 내보냈습니다'), findsOneWidget);
+    });
+
+    testWidgets('ShouldShowFailureWhenPinCsvShareFails', (tester) async {
+      // arrange
+      await _pumpDashboard(
+        tester,
+        campId: CampId('camp-1'),
+        corners: [_corner('corner-1', '코너 1', CornerResponseStatusEnum.BUSY)],
+        exportTracks: () async =>
+            ExportTracksResponse((b) => b..tracks.replace([])),
+        shareCsv: (ShareParams params) async {
+          throw StateError('share unavailable');
+        },
+      );
+
+      // act
+      await tester.tap(find.text('전체 PIN 내보내기'));
+      await tester.pumpAndSettle();
+
+      // assert
+      expect(find.textContaining('PIN CSV 내보내기 실패:'), findsOneWidget);
+      expect(find.textContaining('share unavailable'), findsOneWidget);
+    });
+
+    testWidgets('ShouldShowFailureWhenPinExportRequestFails', (tester) async {
+      // arrange
+      await _pumpDashboard(
+        tester,
+        campId: CampId('camp-1'),
+        corners: [_corner('corner-1', '코너 1', CornerResponseStatusEnum.BUSY)],
+        exportTracks: () async => throw StateError('server unavailable'),
+      );
+
+      // act
+      await tester.tap(find.text('전체 PIN 내보내기'));
+      await tester.pumpAndSettle();
+
+      // assert
+      expect(find.textContaining('PIN CSV 내보내기 실패:'), findsOneWidget);
+      expect(find.textContaining('server unavailable'), findsOneWidget);
     });
 
     testWidgets('ShoudRefreshCornerAndSummaryProvidersWhenPulled', (

@@ -933,7 +933,7 @@ final class ExportAllTracksCsvProvider
     required ExportAllTracksCsvFamily super.from,
     required CampId super.argument,
   }) : super(
-         retry: null,
+         retry: noRetry,
          name: r'exportAllTracksCsvProvider',
          isAutoDispose: true,
          dependencies: null,
@@ -974,13 +974,13 @@ final class ExportAllTracksCsvProvider
 }
 
 String _$exportAllTracksCsvHash() =>
-    r'1de6abefff089d6e7979f8f72befe3823cd07e2e';
+    r'c66c84b7b3e6c6699671f740d4f8e1288c6c2439';
 
 final class ExportAllTracksCsvFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<ExportTracksResponse>, CampId> {
   ExportAllTracksCsvFamily._()
     : super(
-        retry: null,
+        retry: noRetry,
         name: r'exportAllTracksCsvProvider',
         dependencies: null,
         $allTransitiveDependencies: null,
