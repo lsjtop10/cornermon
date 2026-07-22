@@ -26,7 +26,6 @@ class TrackDirectScreen extends ConsumerStatefulWidget {
 class _TrackDirectScreenState extends ConsumerState<TrackDirectScreen> {
   final _inputController = TextEditingController();
   final _messageListController = ScrollController();
-  bool _scrollToBottomAfterSend = false;
 
   @override
   void dispose() {
@@ -63,8 +62,10 @@ class _TrackDirectScreenState extends ConsumerState<TrackDirectScreen> {
         if (next.hasValue) {
           ref.invalidate(unreadDirectMessageCountProvider(trackId));
         }
-        if (_scrollToBottomAfterSend && next.hasValue && !next.isLoading) {
-          _scrollToBottomAfterSend = false;
+        // 관리자 발송으로 SSE가 도착했을 때도 목록은 재조회되지만, ListView의 기존
+        // 위치는 자동으로 바뀌지 않는다. 최신 메시지가 화면 밖에 남지 않도록 목록
+        // 갱신이 완료된 뒤 항상 마지막 메시지로 이동한다.
+        if (next.hasValue && !next.isLoading) {
           WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
         }
       },
@@ -114,13 +115,11 @@ class _TrackDirectScreenState extends ConsumerState<TrackDirectScreen> {
             _QuickReplyRow(
               trackId: trackId,
               colors: colors,
-              onSendSucceeded: () => _scrollToBottomAfterSend = true,
             ),
             _MessageInputRow(
               trackId: trackId,
               controller: _inputController,
               colors: colors,
-              onSendSucceeded: () => _scrollToBottomAfterSend = true,
             ),
           ],
         ),
@@ -180,12 +179,10 @@ class _QuickReplyRow extends ConsumerWidget {
   const _QuickReplyRow({
     required this.trackId,
     required this.colors,
-    required this.onSendSucceeded,
   });
 
   final TrackId trackId;
   final AppColors colors;
-  final VoidCallback onSendSucceeded;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -215,7 +212,6 @@ class _QuickReplyRow extends ConsumerWidget {
                   ref,
                   trackId,
                   label,
-                  onSendSucceeded: onSendSucceeded,
                 ),
               ),
             )
@@ -230,13 +226,11 @@ class _MessageInputRow extends ConsumerWidget {
     required this.trackId,
     required this.controller,
     required this.colors,
-    required this.onSendSucceeded,
   });
 
   final TrackId trackId;
   final TextEditingController controller;
   final AppColors colors;
-  final VoidCallback onSendSucceeded;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -249,7 +243,6 @@ class _MessageInputRow extends ConsumerWidget {
         ref,
         trackId,
         text,
-        onSendSucceeded: onSendSucceeded,
       );
     }
 
@@ -294,16 +287,13 @@ Future<void> _send(
   BuildContext context,
   WidgetRef ref,
   TrackId trackId,
-  String content, {
-  VoidCallback? onSendSucceeded,
-}
+  String content,
 ) async {
   try {
     await ref.read(trackDirectActionsProvider(trackId).notifier).send(content);
     // 화면의 ref로 invalidate한다 — action notifier는 위젯이 watch하지 않는 autoDispose라
     // 전송 직후 폐기되어 그 안에서 invalidate하면 유실될 수 있다.
     if (!context.mounted) return;
-    onSendSucceeded?.call();
     ref.invalidate(trackMessageListProvider(trackId, background: true));
   } catch (_) {
     if (!context.mounted) return;
