@@ -3493,6 +3493,12 @@ const docTemplate = `{
         "CornerStatsResponse": {
             "type": "object",
             "properties": {
+                "avgDeviationSeconds": {
+                    "type": "number"
+                },
+                "avgDurationSeconds": {
+                    "type": "number"
+                },
                 "completedVisitCount": {
                     "type": "integer"
                 },

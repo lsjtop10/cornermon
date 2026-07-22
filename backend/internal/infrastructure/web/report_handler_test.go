@@ -44,12 +44,12 @@ func (s *reportQuerierSpy) QueryCampReport(_ context.Context, campID domain.Camp
 	return &usecase.CampReport{CampID: campID}, nil
 }
 
-func TestMapReportShouldMapOverDeviationRatioWhenCornerReportsProvided(t *testing.T) {
+func TestMapReportShouldMapCornerAveragesAndOverDeviationRatioWhenCornerReportsProvided(t *testing.T) {
 	// Arrange
 	report := &usecase.CampReport{
 		CampID: "camp-1",
 		CornerReports: []usecase.CornerReport{
-			{CornerID: "corner-1", CornerName: "코너 1", CompletedCount: 3, PositiveDeviationRatio: 2.0 / 3.0},
+			{CornerID: "corner-1", CornerName: "코너 1", CompletedCount: 3, AvgDurationSec: 640, AvgDeviationSec: 40, PositiveDeviationRatio: 2.0 / 3.0},
 			{CornerID: "corner-2", CornerName: "코너 2", CompletedCount: 0, PositiveDeviationRatio: 0},
 		},
 	}
@@ -63,6 +63,15 @@ func TestMapReportShouldMapOverDeviationRatioWhenCornerReportsProvided(t *testin
 	}
 	if got := res.CornerStats[0].OverDeviationRatio; got != float32(2.0/3.0) {
 		t.Errorf("expected corner-1 OverDeviationRatio %f, got %f", float32(2.0/3.0), got)
+	}
+	if got := res.CornerStats[0].AvgDurationSeconds; got == nil || *got != 640 {
+		t.Errorf("expected corner-1 AvgDurationSeconds 640, got %v", got)
+	}
+	if got := res.CornerStats[0].AvgDeviationSeconds; got == nil || *got != 40 {
+		t.Errorf("expected corner-1 AvgDeviationSeconds 40, got %v", got)
+	}
+	if res.CornerStats[1].AvgDurationSeconds != nil || res.CornerStats[1].AvgDeviationSeconds != nil {
+		t.Errorf("expected corner-2 averages to be omitted without completed visits")
 	}
 	if got := res.CornerStats[1].OverDeviationRatio; got != 0 {
 		t.Errorf("expected corner-2 OverDeviationRatio 0, got %f", got)
