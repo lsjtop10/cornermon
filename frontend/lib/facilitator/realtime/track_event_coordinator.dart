@@ -14,11 +14,16 @@ import 'package:cornermon/facilitator/session/track_session_provider.dart';
 
 part 'track_event_coordinator.g.dart';
 
-/// SSE 이벤트 분기는 위젯이 아니라 이 전용 Notifier에 둔다 — 위젯 build() 안에서 스트림
-/// 값에 반응해 동기적으로 ref.invalidate를 호출하면 빌드 사이클 도중 provider를 바꾸다 예외가
-/// 날 수 있다. ref.listen은 provider의 build() 안에서 쓰는 게 표준 패턴이고(콜백이 프레임
-/// 이후 비동기로 실행되어 "빌드 도중 변경" 제약이 없음), 화면(위젯)은 이 결과를 watch만 해서
-/// 생명주기(자동 dispose)만 공유한다(§04 plan).
+/// 인증된 트랙 세션의 SSE 수신·재조회 경계를 한 곳에서 관리한다.
+///
+/// 메시지·공지, 방문 상태, 세션 종료는 서로 다른 도메인 관심사지만, 현재는 모두 같은 트랙
+/// 세션의 단일 SSE 연결에서 도착하고 각 provider를 재조회시키는 얇은 어댑터다. 따라서 지금은
+/// 연결·재연결·세션 수명을 한 코디네이터에 둔다. 각 이벤트에 독자적인 정책 또는 화면별 구독
+/// 수명이 생길 때에만 메시지/방문/세션 코디네이터로 분리한다.
+///
+/// 이벤트 분기는 위젯이 아니라 이 Notifier에 둔다. 위젯 build() 안에서 스트림 값에 반응해
+/// 동기적으로 ref.invalidate를 호출하면 빌드 사이클 도중 provider를 바꾸다 예외가 날 수 있다.
+/// 화면은 이 결과만 watch하고, 앱 루트가 인증 세션 동안의 생명주기를 소유한다.
 @riverpod
 class TrackEventCoordinator extends _$TrackEventCoordinator {
   @override
