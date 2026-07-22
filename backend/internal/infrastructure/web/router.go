@@ -121,7 +121,6 @@ func RegisterRoutes(e *echo.Echo, h *Handlers, adminAuth AuthAdminUsecase, track
 	if h.Message != nil {
 		admin.POST("/camps/:campId/messages/broadcast", h.Message.SendBroadcast)
 		admin.GET("/messages/broadcast/:id/receipts", h.Message.GetBroadcastReceipts)
-		admin.POST("/tracks/:trackId/messages", h.Message.SendDirect)
 
 		// Both administrator and facilitator sessions may access these paths.
 		// They must be registered once because Echo routes by method and path
@@ -129,6 +128,7 @@ func RegisterRoutes(e *echo.Echo, h *Handlers, adminAuth AuthAdminUsecase, track
 		message := v1.Group("")
 		message.Use(MessageAuthMiddleware(adminAuth, trackAuth))
 		message.GET("/camps/:campId/messages/broadcast", h.Message.ListBroadcasts)
+		message.POST("/tracks/:trackId/messages", h.Message.SendDirect)
 		message.GET("/tracks/:trackId/messages", h.Message.ListDirectMessages)
 		message.GET("/tracks/:trackId/messages/unread-count", h.Message.GetUnreadCount)
 	}
@@ -160,8 +160,6 @@ func RegisterRoutes(e *echo.Echo, h *Handlers, adminAuth AuthAdminUsecase, track
 
 	if h.Message != nil {
 		track.POST("/messages/broadcast/:id/read", h.Message.ReadBroadcast)
-		// Track can also send/get direct messages
-		track.POST("/tracks/:trackId/messages/from-track", h.Message.SendDirect)
 	}
 
 	if h.Event != nil {

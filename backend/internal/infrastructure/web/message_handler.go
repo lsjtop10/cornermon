@@ -228,11 +228,13 @@ type DirectMessageRequest struct {
 // @Description  관리자가 특정 트랙에, 또는 특정 트랙이 관리자에게 DIRECT 메시지를 발송한다.
 // @Tags         E. Message
 // @Security     AdminAuth
+// @Security     TrackAuth
 // @Accept       json
 // @Produce      json
 // @Param        trackId path string true "트랙 ID"
 // @Param        request body DirectMessageRequest true "메시지 내용"
 // @Success      201 {object} MessageResponse
+// @Failure      403 {object} ErrorResponse "TRACK_SCOPE_FORBIDDEN: 세션 트랙과 요청 트랙이 불일치"
 // @Router       /tracks/{trackId}/messages [post]
 func (h *MessageHandler) SendDirect(c echo.Context) error {
 	trackID := domain.TrackID(c.Param("trackId"))

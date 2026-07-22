@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"cornermon/backend/internal/domain"
@@ -59,6 +60,56 @@ func TestMessageRoutesShoudAuthenticateAdminAndTrackWithoutDuplicateRouteRegistr
 				t.Fatalf("expected viewer role %s, got %s", tc.expected, uc.viewerRole)
 			}
 		})
+	}
+}
+
+func TestSendDirectRouteShoudAuthenticateAdminAndTrackWithoutDuplicateRouteRegistration(t *testing.T) {
+	// Arrange
+	uc := &messageUsecaseForHandler{}
+	e := echo.New()
+	RegisterRoutes(e, &Handlers{Auth: &AuthHandler{}, Device: &DeviceHandler{}, Message: NewMessageHandler(uc, nil, nil)}, adminAuthForMessageRoutes{}, trackAuthForMessageRoutes{})
+
+	for _, tc := range []struct {
+		name     string
+		token    string
+		expected domain.SenderRole
+	}{
+		{name: "admin", token: "admin-token", expected: domain.RoleAdmin},
+		{name: "track", token: "track-token", expected: domain.RoleTrack},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			// Act
+			req := httptest.NewRequest(http.MethodPost, "/api/v1/tracks/track-1/messages", strings.NewReader(`{"content":"hello"}`))
+			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+			req.Header.Set(echo.HeaderAuthorization, "Bearer "+tc.token)
+			rec := httptest.NewRecorder()
+			e.ServeHTTP(rec, req)
+
+			// Assert
+			if rec.Code != http.StatusCreated {
+				t.Fatalf("expected status 201, got %d: %s", rec.Code, rec.Body.String())
+			}
+			if uc.senderRole != tc.expected {
+				t.Fatalf("expected sender role %s, got %s", tc.expected, uc.senderRole)
+			}
+		})
+	}
+}
+
+func TestSendDirectRouteShoudRejectRequestWithoutSession(t *testing.T) {
+	// Arrange
+	e := echo.New()
+	RegisterRoutes(e, &Handlers{Auth: &AuthHandler{}, Device: &DeviceHandler{}, Message: NewMessageHandler(&messageUsecaseForHandler{}, nil, nil)}, adminAuthForMessageRoutes{}, trackAuthForMessageRoutes{})
+
+	// Act
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/tracks/track-1/messages", strings.NewReader(`{"content":"hello"}`))
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+	e.ServeHTTP(rec, req)
+
+	// Assert
+	if rec.Code != http.StatusUnauthorized {
+		t.Fatalf("expected status 401, got %d: %s", rec.Code, rec.Body.String())
 	}
 }
 
