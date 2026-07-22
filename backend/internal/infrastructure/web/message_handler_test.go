@@ -18,10 +18,19 @@ type messageUsecaseForHandler struct {
 	markRead   bool
 	after      domain.Optional[time.Time]
 	viewerRole domain.SenderRole
+	senderRole domain.SenderRole
 }
 
-func (m *messageUsecaseForHandler) SendDirect(context.Context, domain.TrackID, string, domain.SenderRole) (*domain.Message, error) {
-	return nil, nil
+func (m *messageUsecaseForHandler) SendDirect(_ context.Context, trackID domain.TrackID, content string, senderRole domain.SenderRole) (*domain.Message, error) {
+	m.senderRole = senderRole
+	return domain.NewMessageFromProps(domain.MessageProps{
+		ID:          "message-1",
+		ChannelType: domain.MessageDirect,
+		TrackID:     trackID,
+		SenderRole:  senderRole,
+		Content:     content,
+		SentAt:      time.Now(),
+	}), nil
 }
 
 func (m *messageUsecaseForHandler) ListDirectMessages(_ context.Context, _ domain.TrackID, viewerRole domain.SenderRole, after domain.Optional[time.Time], markRead bool) ([]*domain.Message, error) {
@@ -158,7 +167,7 @@ func TestGetUnreadCountShoudRejectRequestWhenSessionTrackDiffers(t *testing.T) {
 func TestSendDirectShoudRejectRequestWhenSessionTrackDiffers(t *testing.T) {
 	// Arrange
 	e := echo.New()
-	req := httptest.NewRequest(http.MethodPost, "/tracks/track-2/messages/from-track", strings.NewReader(`{"content":"hello"}`))
+	req := httptest.NewRequest(http.MethodPost, "/tracks/track-2/messages", strings.NewReader(`{"content":"hello"}`))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
