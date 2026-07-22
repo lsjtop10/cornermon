@@ -31,10 +31,13 @@ class ChatThreadPane extends ConsumerStatefulWidget {
 
 class _ChatThreadPaneState extends ConsumerState<ChatThreadPane> {
   final _input = TextEditingController();
+  final _messageListController = ScrollController();
+  bool _scrollToBottomAfterSend = false;
 
   @override
   void dispose() {
     _input.dispose();
+    _messageListController.dispose();
     super.dispose();
   }
 
@@ -59,11 +62,22 @@ class _ChatThreadPaneState extends ConsumerState<ChatThreadPane> {
     );
   }
 
+  void _scrollToBottom() {
+    if (!_messageListController.hasClients) return;
+
+    _messageListController.animateTo(
+      _messageListController.position.maxScrollExtent,
+      duration: const Duration(milliseconds: 250),
+      curve: Curves.easeOut,
+    );
+  }
+
   Future<void> _send() async {
     final text = _input.text.trim();
     if (text.isEmpty) return;
     _input.clear();
     await ref.read(sendDirectMessageProvider(widget.trackId, text).future);
+    _scrollToBottomAfterSend = true;
     ref.invalidate(trackMessageListProvider(widget.trackId, background: false));
     ref.invalidate(trackDirectSummariesProvider(widget.campId));
   }
@@ -83,6 +97,10 @@ class _ChatThreadPaneState extends ConsumerState<ChatThreadPane> {
       if (next.hasValue) {
         ref.invalidate(trackDirectSummariesProvider(widget.campId));
       }
+      if (_scrollToBottomAfterSend && next.hasValue && !next.isLoading) {
+        _scrollToBottomAfterSend = false;
+        WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
+      }
     });
 
     return Column(
@@ -96,6 +114,8 @@ class _ChatThreadPaneState extends ConsumerState<ChatThreadPane> {
                 return const EmptyState(message: '아직 나눈 대화가 없습니다');
               }
               return ListView.builder(
+                key: const Key('admin-direct-message-list'),
+                controller: _messageListController,
                 padding: const EdgeInsets.all(AppSpacing.space4),
                 itemCount: items.length,
                 itemBuilder: (context, index) =>
