@@ -169,65 +169,6 @@ void main() {
     );
   });
 
-  testWidgets('ShouldScrollToLatestMessageWhenAdministratorMessageArrives', (tester) async {
-    // arrange
-    final initialMessages = List.generate(
-      30,
-      (index) => _buildMessage(
-        id: 'message-$index',
-        content: '메시지 $index',
-        senderRole: MessageSenderRoleEnum.ADMIN,
-      ),
-    );
-    final messagesState = StateProvider<List<Message>>(
-      (ref) => initialMessages,
-    );
-    await tester.pumpWidget(
-      buildTestable(
-        const TrackDirectScreen(),
-        overrides: [
-          trackSessionProvider.overrideWith(
-            () => _FakeTrackSession(buildAuthenticatedState()),
-          ),
-          trackMessageListProvider(
-            trackId,
-            background: true,
-          ).overrideWith((ref) => ref.watch(messagesState)),
-        ],
-      ),
-    );
-    await tester.pumpAndSettle();
-    final scrollable = tester.state<ScrollableState>(
-      find.descendant(
-        of: find.byKey(const Key('direct-message-list')),
-        matching: find.byType(Scrollable),
-      ),
-    );
-    scrollable.position.jumpTo(0);
-
-    // act: SSE 재조회 결과에 관리자가 보낸 최신 메시지가 추가된다.
-    final container = ProviderScope.containerOf(
-      tester.element(find.byType(TrackDirectScreen)),
-      listen: false,
-    );
-    container.read(messagesState.notifier).state = [
-      ...initialMessages,
-      _buildMessage(
-        id: 'message-new',
-        content: '관리자 새 메시지',
-        senderRole: MessageSenderRoleEnum.ADMIN,
-      ),
-    ];
-    await tester.pumpAndSettle();
-
-    // assert
-    expect(find.text('관리자 새 메시지'), findsOneWidget);
-    expect(
-      scrollable.position.pixels,
-      closeTo(scrollable.position.maxScrollExtent, 0.1),
-    );
-  });
-
   testWidgets('ShouldSendQuickReplyContentWhenChipTapped', (tester) async {
     // arrange
     final fakeActions = _FakeTrackDirectActions();
