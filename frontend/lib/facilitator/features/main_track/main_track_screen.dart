@@ -13,7 +13,6 @@ import 'package:cornermon/facilitator/session/track_session_provider.dart';
 import '../visit_summary/visit_summary_overlay.dart';
 import '_main_track_body.dart';
 import '_main_track_header.dart';
-import 'track_event_coordinator.dart';
 
 /// B2. 진행자 메인 트랙 화면 — IDLE→BUSY→COMPLETED 핵심 루프(scenarios.md Feature 1).
 class MainTrackScreen extends ConsumerStatefulWidget {
@@ -36,11 +35,6 @@ class _MainTrackScreenState extends ConsumerState<MainTrackScreen> {
     }
 
     final trackId = TrackId(session.track.id!);
-
-    // 코디네이터는 watch만 해서 화면이 떠 있는 동안만 활성화한다 — @riverpod 기본값
-    // (autoDispose)이므로 화면이 unmount되면 코디네이터와 그 안의 trackEvents 구독도
-    // 함께 dispose된다(§04 plan). 반환값(void)은 쓰지 않는다.
-    ref.watch(trackEventCoordinatorProvider(trackId));
 
     final currentVisit = ref
         .watch(currentVisitProvider(trackId))

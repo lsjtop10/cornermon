@@ -20,6 +20,8 @@ import 'package:cornermon/shared/design_system/widgets/app_button.dart';
 import 'package:cornermon/facilitator/session/track_session_provider.dart';
 import 'package:cornermon/facilitator/widgets/qr_scan_frame.dart';
 
+const _failureScanCooldown = Duration(seconds: 1);
+
 /// B3 — QR 스캔(입장 전용). 퇴장은 트랙당 진행중 방문이 1개뿐이라 B2에서 바로 처리하고
 /// 이 화면을 거치지 않는다(§domain-model 2.6-d).
 class QrScanScreen extends ConsumerStatefulWidget {
@@ -69,8 +71,10 @@ class _QrScanScreenState extends ConsumerState<QrScanScreen> {
       setState(() => _frameState = QrScanFrameState.failure);
       await _showFailure(e);
       if (!mounted) return;
+      await Future<void>.delayed(_failureScanCooldown);
+      if (!mounted) return;
       setState(() => _frameState = QrScanFrameState.scanning);
-      _busy = false; // 바텀시트 닫힘 후 스캔 재개
+      _busy = false; // 바텀시트 닫힘 후 1초간 대기한 뒤 스캔 재개
     }
   }
 

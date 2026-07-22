@@ -1,6 +1,4 @@
-import 'dart:typed_data';
-
-import 'package:cornermon/admin/features/track_bulk_manage/track_csv_export.dart';
+import 'package:cornermon/admin/features/track_bulk_manage/track_pin_export_controller.dart';
 import 'package:cornermon/admin/features/track_direct/track_direct_providers.dart';
 import 'package:cornermon/admin/session/selected_camp_provider.dart';
 import 'package:cornermon/shared/api/domain_aliases.dart' as api;
@@ -18,11 +16,12 @@ import 'package:cornermon/shared/design_system/widgets/pill_tab_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:share_plus/share_plus.dart';
 
 enum CornerSortOption { cornerNo, name, avgDeviationDesc, avgDeviationAsc }
 
 enum CornerFilterChip { all, busy, idle, inactive, bottleneckOnly }
+
+final dashboardPinExportButtonKey = GlobalKey();
 
 final dashboardSortProvider = NotifierProvider<DashboardSort, CornerSortOption>(
   DashboardSort.new,
@@ -144,29 +143,6 @@ Future<void> _deleteCorner(
   }
 }
 
-Future<void> _exportAllTracksCsv(
-  BuildContext context,
-  WidgetRef ref,
-  CampId campId,
-) async {
-  final response = await ref.read(exportAllTracksCsvProvider(campId).future);
-  final bytes = buildTrackPinCsvBytes(
-    response.tracks ?? const <api.TrackPin>[],
-  );
-  await SharePlus.instance.share(
-    ShareParams(
-      files: [XFile.fromData(Uint8List.fromList(bytes), mimeType: 'text/csv')],
-      fileNameOverrides: ['track-pins.csv'],
-      subject: '트랙 PIN 목록',
-    ),
-  );
-  if (context.mounted) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('PIN CSV를 내보냈습니다')));
-  }
-}
-
 List<CornerDashboardEntry> buildDashboardEntries(
   List<api.Corner> corners,
   Iterable<api.BottleneckRanking> ranking,
@@ -250,6 +226,7 @@ class DashboardScreen extends ConsumerWidget {
     final corners = ref.watch(cornerListProvider(id));
     final summary = ref.watch(liveSummaryProvider(id));
     final selectedCamp = ref.watch(selectedCampProvider).asData?.value;
+    final exportState = ref.watch(trackPinExportControllerProvider);
     final isActive = selectedCamp?.status == api.CampStatus.ACTIVE;
     final directSummaries = isActive
         ? ref.watch(trackDirectSummariesProvider(id))
@@ -265,11 +242,41 @@ class DashboardScreen extends ConsumerWidget {
           Padding(
             padding: const EdgeInsets.only(right: 12),
             child: AppButton(
+              key: dashboardPinExportButtonKey,
               variant: AppButtonVariant.secondary,
               size: AppButtonSize.compact,
               icon: Icons.download_outlined,
               label: '전체 PIN 내보내기',
-              onPressed: () => _exportAllTracksCsv(context, ref, id),
+              onPressed: exportState.isLoading
+                  ? null
+                  : () async {
+                      final buttonBox =
+                          dashboardPinExportButtonKey.currentContext
+                                  ?.findRenderObject()
+                              as RenderBox?;
+                      final sharePositionOrigin =
+                          buttonBox != null && buttonBox.hasSize
+                          ? buttonBox.localToGlobal(Offset.zero) &
+                                buttonBox.size
+                          : null;
+                      await ref
+                          .read(trackPinExportControllerProvider.notifier)
+                          .exportAndShare(
+                            id,
+                            sharePositionOrigin: sharePositionOrigin,
+                          );
+                      if (!context.mounted) return;
+                      final result = ref.read(trackPinExportControllerProvider);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            result.hasError
+                                ? 'PIN 엑셀 내보내기 실패: ${result.error}'
+                                : 'PIN 엑셀을 내보냈습니다',
+                          ),
+                        ),
+                      );
+                    },
             ),
           ),
         ],

@@ -916,10 +916,10 @@ final class RegeneratePinFamily extends $Family
   String toString() => r'regeneratePinProvider';
 }
 
-@ProviderFor(exportAllTracksCsv)
-final exportAllTracksCsvProvider = ExportAllTracksCsvFamily._();
+@ProviderFor(exportAllTrackPins)
+final exportAllTrackPinsProvider = ExportAllTrackPinsFamily._();
 
-final class ExportAllTracksCsvProvider
+final class ExportAllTrackPinsProvider
     extends
         $FunctionalProvider<
           AsyncValue<ExportTracksResponse>,
@@ -929,23 +929,23 @@ final class ExportAllTracksCsvProvider
     with
         $FutureModifier<ExportTracksResponse>,
         $FutureProvider<ExportTracksResponse> {
-  ExportAllTracksCsvProvider._({
-    required ExportAllTracksCsvFamily super.from,
+  ExportAllTrackPinsProvider._({
+    required ExportAllTrackPinsFamily super.from,
     required CampId super.argument,
   }) : super(
-         retry: null,
-         name: r'exportAllTracksCsvProvider',
+         retry: noRetry,
+         name: r'exportAllTrackPinsProvider',
          isAutoDispose: true,
          dependencies: null,
          $allTransitiveDependencies: null,
        );
 
   @override
-  String debugGetCreateSourceHash() => _$exportAllTracksCsvHash();
+  String debugGetCreateSourceHash() => _$exportAllTrackPinsHash();
 
   @override
   String toString() {
-    return r'exportAllTracksCsvProvider'
+    return r'exportAllTrackPinsProvider'
         ''
         '($argument)';
   }
@@ -959,12 +959,12 @@ final class ExportAllTracksCsvProvider
   @override
   FutureOr<ExportTracksResponse> create(Ref ref) {
     final argument = this.argument as CampId;
-    return exportAllTracksCsv(ref, argument);
+    return exportAllTrackPins(ref, argument);
   }
 
   @override
   bool operator ==(Object other) {
-    return other is ExportAllTracksCsvProvider && other.argument == argument;
+    return other is ExportAllTrackPinsProvider && other.argument == argument;
   }
 
   @override
@@ -973,25 +973,25 @@ final class ExportAllTracksCsvProvider
   }
 }
 
-String _$exportAllTracksCsvHash() =>
-    r'1de6abefff089d6e7979f8f72befe3823cd07e2e';
+String _$exportAllTrackPinsHash() =>
+    r'6c7c6ae94eccfdef23c91bfc1f0d751a5000b386';
 
-final class ExportAllTracksCsvFamily extends $Family
+final class ExportAllTrackPinsFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<ExportTracksResponse>, CampId> {
-  ExportAllTracksCsvFamily._()
+  ExportAllTrackPinsFamily._()
     : super(
-        retry: null,
-        name: r'exportAllTracksCsvProvider',
+        retry: noRetry,
+        name: r'exportAllTrackPinsProvider',
         dependencies: null,
         $allTransitiveDependencies: null,
         isAutoDispose: true,
       );
 
-  ExportAllTracksCsvProvider call(CampId campId) =>
-      ExportAllTracksCsvProvider._(argument: campId, from: this);
+  ExportAllTrackPinsProvider call(CampId campId) =>
+      ExportAllTrackPinsProvider._(argument: campId, from: this);
 
   @override
-  String toString() => r'exportAllTracksCsvProvider';
+  String toString() => r'exportAllTrackPinsProvider';
 }
 
 @ProviderFor(exportTrackPdf)

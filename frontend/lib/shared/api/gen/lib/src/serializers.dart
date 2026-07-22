@@ -62,6 +62,7 @@ import 'package:cornermon_api_gen/src/model/sse_scope.dart';
 import 'package:cornermon_api_gen/src/model/scan_assign_badge_request.dart';
 import 'package:cornermon_api_gen/src/model/track_login_request.dart';
 import 'package:cornermon_api_gen/src/model/track_login_response.dart';
+import 'package:cornermon_api_gen/src/model/track_pin_export_response.dart';
 import 'package:cornermon_api_gen/src/model/track_pin_response.dart';
 import 'package:cornermon_api_gen/src/model/track_response.dart';
 import 'package:cornermon_api_gen/src/model/track_stats_response.dart';
@@ -122,6 +123,7 @@ part 'serializers.g.dart';
   ScanAssignBadgeRequest,
   TrackLoginRequest,
   TrackLoginResponse,
+  TrackPINExportResponse,
   TrackPinResponse,
   TrackResponse,
   TrackStatsResponse,

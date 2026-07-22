@@ -26,7 +26,7 @@ class TrackDirectScreen extends ConsumerStatefulWidget {
 class _TrackDirectScreenState extends ConsumerState<TrackDirectScreen> {
   final _inputController = TextEditingController();
   final _messageListController = ScrollController();
-  bool _scrollToBottomAfterSend = false;
+  bool _scrollToBottomAfterListUpdate = false;
 
   @override
   void dispose() {
@@ -38,11 +38,26 @@ class _TrackDirectScreenState extends ConsumerState<TrackDirectScreen> {
   void _scrollToBottom() {
     if (!_messageListController.hasClients) return;
 
+    final maxScrollExtent = _messageListController.position.maxScrollExtent;
     _messageListController.animateTo(
-      _messageListController.position.maxScrollExtent,
+      maxScrollExtent,
       duration: const Duration(milliseconds: 250),
       curve: Curves.easeOut,
     );
+    // lazy ListView는 첫 레이아웃 뒤에도 콘텐츠 추정치를 보정할 수 있다. 다음 두 프레임에
+    // 마지막 위치를 다시 맞춰, 새 항목이 화면 밖에 남지 않게 한다.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_messageListController.hasClients) return;
+      _messageListController.jumpTo(
+        _messageListController.position.maxScrollExtent,
+      );
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!_messageListController.hasClients) return;
+        _messageListController.jumpTo(
+          _messageListController.position.maxScrollExtent,
+        );
+      });
+    });
   }
 
   @override
@@ -57,18 +72,16 @@ class _TrackDirectScreenState extends ConsumerState<TrackDirectScreen> {
     }
     final trackId = TrackId(sessionState.track.id!);
 
-    ref.listen(
-      trackMessageListProvider(trackId, background: true),
-      (_, next) {
-        if (next.hasValue) {
-          ref.invalidate(unreadDirectMessageCountProvider(trackId));
-        }
-        if (_scrollToBottomAfterSend && next.hasValue && !next.isLoading) {
-          _scrollToBottomAfterSend = false;
-          WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
-        }
-      },
-    );
+    ref.listen(trackMessageListProvider(trackId, background: true), (_, next) {
+      if (next.hasValue) {
+        ref.invalidate(unreadDirectMessageCountProvider(trackId));
+      }
+      if (next.hasValue && !next.isLoading) {
+        // provider 알림은 ListView의 새 itemCount 레이아웃보다 먼저 온다. 이 플래그는
+        // data 분기에서 새 목록을 만든 뒤 post-frame 스크롤을 예약하는 데 쓴다.
+        _scrollToBottomAfterListUpdate = true;
+      }
+    });
     final messagesAsync = ref.watch(
       trackMessageListProvider(trackId, background: true),
     );
@@ -92,6 +105,14 @@ class _TrackDirectScreenState extends ConsumerState<TrackDirectScreen> {
                   final sorted = [...messages]
                     ..sort((a, b) => a.sentAt!.compareTo(b.sentAt!));
 
+                  if (_scrollToBottomAfterListUpdate) {
+                    _scrollToBottomAfterListUpdate = false;
+                    // ListView가 새 메시지를 포함해 레이아웃한 뒤 maxScrollExtent를 읽는다.
+                    WidgetsBinding.instance.addPostFrameCallback(
+                      (_) => _scrollToBottom(),
+                    );
+                  }
+
                   return ListView.builder(
                     key: const Key('direct-message-list'),
                     controller: _messageListController,
@@ -111,16 +132,11 @@ class _TrackDirectScreenState extends ConsumerState<TrackDirectScreen> {
               ),
             ),
             // 빈 스레드여도 입력창은 항상 노출 — 진행자가 먼저 말을 걸 수 있어야 한다.
-            _QuickReplyRow(
-              trackId: trackId,
-              colors: colors,
-              onSendSucceeded: () => _scrollToBottomAfterSend = true,
-            ),
+            _QuickReplyRow(trackId: trackId, colors: colors),
             _MessageInputRow(
               trackId: trackId,
               controller: _inputController,
               colors: colors,
-              onSendSucceeded: () => _scrollToBottomAfterSend = true,
             ),
           ],
         ),
@@ -177,15 +193,10 @@ class _MessageBubble extends StatelessWidget {
 }
 
 class _QuickReplyRow extends ConsumerWidget {
-  const _QuickReplyRow({
-    required this.trackId,
-    required this.colors,
-    required this.onSendSucceeded,
-  });
+  const _QuickReplyRow({required this.trackId, required this.colors});
 
   final TrackId trackId;
   final AppColors colors;
-  final VoidCallback onSendSucceeded;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -210,13 +221,7 @@ class _QuickReplyRow extends ConsumerWidget {
                 ),
                 backgroundColor: colors.bgSurfaceRaised,
                 side: BorderSide(color: colors.border),
-                onPressed: () => _send(
-                  context,
-                  ref,
-                  trackId,
-                  label,
-                  onSendSucceeded: onSendSucceeded,
-                ),
+                onPressed: () => _send(context, ref, trackId, label),
               ),
             )
             .toList(),
@@ -230,13 +235,11 @@ class _MessageInputRow extends ConsumerWidget {
     required this.trackId,
     required this.controller,
     required this.colors,
-    required this.onSendSucceeded,
   });
 
   final TrackId trackId;
   final TextEditingController controller;
   final AppColors colors;
-  final VoidCallback onSendSucceeded;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -244,13 +247,7 @@ class _MessageInputRow extends ConsumerWidget {
       final text = controller.text.trim();
       if (text.isEmpty) return;
       controller.clear();
-      await _send(
-        context,
-        ref,
-        trackId,
-        text,
-        onSendSucceeded: onSendSucceeded,
-      );
+      await _send(context, ref, trackId, text);
     }
 
     return Padding(
@@ -294,16 +291,13 @@ Future<void> _send(
   BuildContext context,
   WidgetRef ref,
   TrackId trackId,
-  String content, {
-  VoidCallback? onSendSucceeded,
-}
+  String content,
 ) async {
   try {
     await ref.read(trackDirectActionsProvider(trackId).notifier).send(content);
     // 화면의 ref로 invalidate한다 — action notifier는 위젯이 watch하지 않는 autoDispose라
     // 전송 직후 폐기되어 그 안에서 invalidate하면 유실될 수 있다.
     if (!context.mounted) return;
-    onSendSucceeded?.call();
     ref.invalidate(trackMessageListProvider(trackId, background: true));
   } catch (_) {
     if (!context.mounted) return;

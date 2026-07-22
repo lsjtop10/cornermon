@@ -58,7 +58,7 @@ func TestCalculateCampReport(t *testing.T) {
 				Status:        "COMPLETED",
 				InputMethod:   "MANUAL",
 				StartedAt:     pgtype.Timestamptz{Time: now.Add(-20 * time.Minute), Valid: true},
-				EndedAt:       pgtype.Timestamptz{Time: now.Add(-2 * time.Minute), Valid: true},
+				EndedAt:       pgtype.Timestamptz{Time: now, Valid: true},
 				TargetMinutes: 15,
 				CornerName:    "코너 2",
 			},
@@ -121,9 +121,9 @@ func TestCalculateCampReport(t *testing.T) {
 				g1Report = gr
 			}
 		}
-		// group-1: visit-1 duration 600s + visit-2 duration 1080s = 1680s
-		if g1Report.TotalDurationSec != 1680 {
-			t.Errorf("expected group-1 TotalDurationSec 1680, got %d", g1Report.TotalDurationSec)
+		// group-1: visit-1 duration 600s + visit-2 duration 1200s = 1800s
+		if g1Report.TotalDurationSec != 1800 {
+			t.Errorf("expected group-1 TotalDurationSec 1800, got %d", g1Report.TotalDurationSec)
 		}
 
 		var c1Report usecase.CornerReport

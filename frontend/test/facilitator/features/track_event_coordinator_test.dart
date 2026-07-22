@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:cornermon/facilitator/features/main_track/track_event_coordinator.dart';
+import 'package:cornermon/facilitator/realtime/track_event_coordinator.dart';
 import 'package:cornermon/facilitator/session/device_trust_provider.dart';
 import 'package:cornermon/facilitator/session/track_session_provider.dart';
 import 'package:cornermon/shared/api/domain_aliases.dart';
