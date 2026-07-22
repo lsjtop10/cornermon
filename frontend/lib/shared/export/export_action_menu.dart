@@ -1,4 +1,6 @@
 import 'package:cornermon/shared/design_system/widgets/app_button.dart';
+import 'package:cornermon/shared/design_system/tokens/colors.dart';
+import 'package:cornermon/shared/design_system/tokens/typography.dart';
 import 'package:flutter/material.dart';
 
 enum ExportAction { saveToDevice, shareWithApp }
@@ -44,6 +46,8 @@ Future<ExportAction?> showExportActionMenu(BuildContext context) {
   final anchor = context.findRenderObject()! as RenderBox;
   final overlay =
       Navigator.of(context).overlay!.context.findRenderObject()! as RenderBox;
+  final isDark = Theme.of(context).brightness == Brightness.dark;
+  final colors = isDark ? AppColors.dark : AppColors.light;
   final anchorRect = Rect.fromPoints(
     anchor.localToGlobal(Offset.zero, ancestor: overlay),
     anchor.localToGlobal(
@@ -58,9 +62,23 @@ Future<ExportAction?> showExportActionMenu(BuildContext context) {
       Rect.fromLTWH(anchorRect.left, anchorRect.bottom, anchorRect.width, 0),
       Offset.zero & overlay.size,
     ),
+    color: colors.bgSurfaceRaised,
+    surfaceTintColor: Colors.transparent,
+    elevation: isDark ? 0 : 4,
+    shadowColor: isDark
+        ? Colors.transparent
+        : Colors.black.withValues(alpha: .16),
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(12),
+      side: BorderSide(color: colors.border),
+    ),
+    menuPadding: const EdgeInsets.symmetric(vertical: 4),
+    constraints: const BoxConstraints.tightFor(width: 264),
     items: const [
       PopupMenuItem(
         value: ExportAction.saveToDevice,
+        height: 68,
+        padding: EdgeInsets.zero,
         child: _ExportActionMenuItem(
           icon: Icons.save_alt_outlined,
           title: '기기에 저장',
@@ -69,6 +87,8 @@ Future<ExportAction?> showExportActionMenu(BuildContext context) {
       ),
       PopupMenuItem(
         value: ExportAction.shareWithApp,
+        height: 68,
+        padding: EdgeInsets.zero,
         child: _ExportActionMenuItem(
           icon: Icons.share_outlined,
           title: '다른 앱으로 공유',
@@ -91,20 +111,38 @@ class _ExportActionMenuItem extends StatelessWidget {
   final String subtitle;
 
   @override
-  Widget build(BuildContext context) => Row(
-    children: [
-      Icon(icon),
-      const SizedBox(width: 12),
-      Expanded(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(title),
-            Text(subtitle, style: Theme.of(context).textTheme.bodySmall),
-          ],
-        ),
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colors = isDark ? AppColors.dark : AppColors.light;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      child: Row(
+        children: [
+          Icon(icon, size: 20, color: colors.textSecondary),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: AppTypography.bodyEmphasis.copyWith(
+                    color: colors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  style: AppTypography.caption.copyWith(
+                    color: colors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
-    ],
-  );
+    );
+  }
 }

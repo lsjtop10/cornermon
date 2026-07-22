@@ -39,6 +39,7 @@
 - [x] 저장 취소(null)는 error state와 오류 SnackBar를 만들지 않는다.
 - [x] 공유 선택은 기존 `Printing.sharePdf`/`SharePlus` 시트를 계속 사용한다.
 - [x] 저장/공유 선택 메뉴는 화면 하단 바텀시트가 아니라 트리거 버튼 바로 아래에서 연다.
+- [x] 선택 메뉴는 design-system.md의 raised surface·12px 모서리·테두리, 44pt 이상 터치 영역과 본문 강조/캡션 타이포 위계를 따른다.
 - [x] 기존 이미지 `cornermon-flutter:3.44.7`로 관련 테스트와 정적 분석을 실행하며 새 이미지를 pull하지 않는다.
 - [x] `flutter analyze lib` 통과, #193 관련 controller·widget 테스트 32건 통과.
 - [ ] 전체 `flutter test`는 #193 범위 밖 기존 실패 5건으로 통과하지 못함(변경하지 않음).

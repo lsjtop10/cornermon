@@ -29,9 +29,11 @@ void main() {
     expect(find.text('다른 앱으로 공유'), findsOneWidget);
     expect(
       tester.getRect(find.text('기기에 저장')).top,
-      greaterThanOrEqualTo(
-        tester.getRect(find.text('PDF로 내보내기')).bottom,
-      ),
+      greaterThanOrEqualTo(tester.getRect(find.text('PDF로 내보내기')).bottom),
+    );
+    expect(
+      tester.getSize(find.byType(PopupMenuItem<ExportAction>).first).height,
+      greaterThanOrEqualTo(44),
     );
 
     // act
