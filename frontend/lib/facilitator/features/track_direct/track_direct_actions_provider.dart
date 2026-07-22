@@ -19,7 +19,5 @@ class TrackDirectActions extends _$TrackDirectActions {
   /// 않던 문제).
   Future<void> send(String content) async {
     await ref.read(sendDirectMessageProvider(trackId, content).future);
-    ref.invalidate(trackMessageListProvider(trackId, background: true));
-    ref.invalidate(unreadDirectMessageCountProvider(trackId));
   }
 }

@@ -20,7 +20,7 @@
 | --- | --- | --- | --- |
 | **P0** | UC-184-1: 유휴 SSE 연결 유지 | 서버 heartbeat(15초)가 도착하는 동안 5초 REST receive timeout으로 SSE가 종료되지 않는다. | **프로덕션 핵심 전송 로직** |
 | **P0** | UC-184-2: 침묵 연결 복구 | 40초 동안 heartbeat/event가 없으면 기존 watchdog이 연결을 종료하고 재연결한다. 전송 timeout은 watchdog 장애 시 최후 안전망으로만 작동한다. | **프로덕션 핵심 복구 로직** |
-| **P0** | UC-184-3: 공지 피드백 유지 | camp scope `messages_changed` 후 공지 목록을 재조회해 기존 공지 배지를 갱신한다. | **기존 사용자 피드백 회귀 방지** |
+| **P0** | UC-184-3: 공지 피드백 유지 | camp scope `messages_changed` 후 실제 HTTP 목록 family를 재조회해 공지와 배지를 갱신한다. | **기존 사용자 피드백 회귀 방지** |
 | **P0** | UC-184-4: 다이렉트 메시지 피드백 | 해당 track scope `messages_changed` 후 메인 헤더가 미확인 다이렉트 메시지 수를 재조회·표시한다. | **프로덕션 핵심 UX** |
 | P1 | UC-184-5: 읽음 후 배지 정합성 | 진행자가 다이렉트 스레드를 열어 상대 메시지를 읽음 처리하면 미확인 수 배지가 즉시 갱신된다. | **UX 정합성** |
 
@@ -98,6 +98,7 @@ _IconWithBadge(
 
 - 기존 `unreadDirectMessageCountProvider`를 재사용한다. 새 API 또는 새 provider를 만들지 않는다.
 - `TrackEventCoordinator`의 own-track `messages_changed` 분기에서 `trackMessageListProvider(trackId)`와 함께 `unreadDirectMessageCountProvider(trackId)`를 invalidate한다.
+- camp scope `messages_changed`와 진행자 공지함의 읽음 처리 성공 뒤에는 facade인 `facilitatorBroadcastMessageListProvider`가 아니라, 캠프 ID를 인자로 받는 `broadcastMessageListProvider(campId)`를 invalidate한다. facade는 이 family를 watch하므로 새 HTTP 응답으로 자동 재계산된다.
 - `TrackDirectScreen`의 목록 조회는 진행자가 스레드를 실제로 연 시점에 상대 메시지를 읽음 처리하는 기존 API 의미를 명시적으로 사용하고, 완료 후 미확인 수 provider를 invalidate한다. 서버 API의 `background` query 의미는 바꾸지 않는다.
 - 공지 목록 및 공지 읽음 처리 흐름은 변경하지 않는다.
 
@@ -130,6 +131,21 @@ _IconWithBadge(
 | C-4 | **완료** — own-track `messages_changed`가 미확인 수 provider를 invalidate하는지 검증 | `/tmp/cornermon-issue-184/frontend/test/facilitator/features/track_event_coordinator_test.dart` (기존 파일 확장) |
 | C-5 | **완료** — 다이렉트 미확인 수가 양수일 때 헤더 배지를 렌더링하는지 검증 | `/tmp/cornermon-issue-184/frontend/test/facilitator/features/main_track_test.dart` (기존 파일 확장) |
 
+### Phase D: 공지 목록 캐시 정합성 (예상 30분)
+
+| 순서 | 작업 | 파일 |
+| --- | --- | --- |
+| D-1 | **완료** — 인증 세션에서 공지 family의 camp ID를 일관되게 구하는 순수 함수를 추가 | `/home/lsjtop10/projects/cornermon/frontend/lib/facilitator/session/facilitator_broadcast_provider.dart` (기존 파일 확장) |
+| D-2 | **완료** — camp scope `messages_changed`와 읽음 처리 성공 뒤 실제 HTTP 목록 family를 invalidate | `/home/lsjtop10/projects/cornermon/frontend/lib/facilitator/features/main_track/track_event_coordinator.dart`, `/home/lsjtop10/projects/cornermon/frontend/lib/facilitator/features/broadcast_inbox/broadcast_inbox_screen.dart` (기존 파일 확장) |
+| D-3 | **완료** — camp scope 이벤트가 facade가 아닌 실제 공지 목록 family를 invalidate하는지 검증 | `/home/lsjtop10/projects/cornermon/frontend/test/facilitator/features/track_event_coordinator_test.dart` (기존 파일 확장) |
+
+### Phase E: 다이렉트 전송 후 위치 정합성 (예상 20분)
+
+| 순서 | 작업 | 파일 |
+| --- | --- | --- |
+| E-1 | **완료** — 전송 성공 뒤 목록 재조회가 렌더링된 프레임에서만 최신 메시지로 스크롤 | `/home/lsjtop10/projects/cornermon/frontend/lib/facilitator/features/track_direct/track_direct_screen.dart` (기존 파일 확장) |
+| E-2 | **완료** — 성공 전송이 스크롤을 마지막 메시지 위치로 이동시키는지 검증 | `/home/lsjtop10/projects/cornermon/frontend/test/facilitator/features/track_direct_test.dart` (기존 파일 확장) |
+
 ## 5. 제외 범위
 
 - 백엔드의 15초 `SSE_HEARTBEAT_INTERVAL`, SSE payload, event scope, OpenAPI 계약은 변경하지 않는다.
@@ -150,9 +166,10 @@ _IconWithBadge(
 
 - [ ] UC-184-1: 이벤트가 없는 15초 이상 구간에도 SSE가 REST 5초 timeout으로 종료되지 않는다.
 - [ ] UC-184-2: heartbeat/event가 40초 동안 없으면 기존 재연결 경로가 작동하고, 45초 전송 timeout은 watchdog 이상 시의 안전망이다.
-- [ ] UC-184-3: 공지 `messages_changed` 수신 후 기존 공지 미확인 배지가 최신 목록을 반영한다.
+- [ ] UC-184-3: 공지 `messages_changed` 수신 후 실제 목록 GET이 발생하고 공지 미확인 배지가 최신 목록을 반영한다.
 - [ ] UC-184-4: 다이렉트 `messages_changed` 수신 후 진행자 메인 헤더에 미확인 수가 표시된다.
 - [ ] UC-184-5: 다이렉트 화면 열람 뒤 미확인 수 배지가 0 또는 서버 최신 값으로 갱신된다.
+- [ ] UC-184-6: 진행자가 다이렉트 메시지를 전송하면 목록 재조회 후 마지막 메시지가 보이도록 스크롤한다.
 
 ### 6.3 실행 검증
 

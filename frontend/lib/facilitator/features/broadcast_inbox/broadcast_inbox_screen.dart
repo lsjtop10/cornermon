@@ -10,6 +10,7 @@ import 'package:cornermon/shared/design_system/tokens/spacing.dart';
 import 'package:cornermon/shared/design_system/tokens/typography.dart';
 import 'package:cornermon/shared/design_system/widgets/empty_state.dart';
 import 'package:cornermon/facilitator/session/facilitator_broadcast_provider.dart';
+import 'package:cornermon/facilitator/session/track_session_provider.dart';
 import 'package:cornermon/shared/widgets/local_time_label.dart';
 
 /// B6 공지함 — 진입 시 안읽은 공지를 자동 읽음 처리한다(screen-spec-facilitator.md B6).
@@ -109,8 +110,14 @@ class _BroadcastInboxScreenState extends ConsumerState<BroadcastInboxScreen> {
       );
 
       if (!mounted) return;
-      // 개별 호출마다가 아니라 전부 끝난 뒤 한 번만 invalidate한다.
-      ref.invalidate(facilitatorBroadcastMessageListProvider);
+      // facade provider만 invalidate하면 내부 family의 HTTP 결과는 캐시된 채다.
+      // 개별 호출이 모두 끝난 뒤 실제 목록 provider를 한 번만 무효화한다.
+      final campId = facilitatorBroadcastCampId(
+        ref.read(trackSessionProvider),
+      );
+      if (campId != null) {
+        ref.invalidate(broadcastMessageListProvider(campId));
+      }
     } catch (error, stackTrace) {
       _readRequestedIds.removeAll(targets.map((m) => m.id!));
       debugPrint('broadcast read request failed: $error\n$stackTrace');

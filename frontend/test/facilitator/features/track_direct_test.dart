@@ -121,6 +121,49 @@ void main() {
     expect(fakeActions.sentContents, ['도와주세요']);
   });
 
+  testWidgets('ShouldScrollToLatestMessageWhenSendSucceeds', (tester) async {
+    // arrange
+    final fakeActions = _FakeTrackDirectActions();
+    final messages = List.generate(
+      30,
+      (index) => _buildMessage(
+        id: 'message-$index',
+        content: '메시지 $index',
+        senderRole: MessageSenderRoleEnum.ADMIN,
+      ),
+    );
+    await tester.pumpWidget(
+      buildTestable(
+        const TrackDirectScreen(),
+        overrides: [
+          trackSessionProvider.overrideWith(
+            () => _FakeTrackSession(buildAuthenticatedState()),
+          ),
+          trackMessageListProvider(
+            trackId,
+            background: true,
+          ).overrideWith((ref) async => messages),
+          trackDirectActionsProvider(trackId).overrideWith(() => fakeActions),
+        ],
+      ),
+    );
+    await tester.pumpAndSettle();
+    final scrollable = tester.state<ScrollableState>(find.byType(Scrollable));
+    scrollable.position.jumpTo(0);
+
+    // act
+    await tester.enterText(find.byType(TextField), '도와주세요');
+    await tester.tap(find.byIcon(Icons.send_rounded));
+    await tester.pumpAndSettle();
+
+    // assert
+    expect(fakeActions.sentContents, ['도와주세요']);
+    expect(
+      scrollable.position.pixels,
+      closeTo(scrollable.position.maxScrollExtent, 0.1),
+    );
+  });
+
   testWidgets('ShouldSendQuickReplyContentWhenChipTapped', (tester) async {
     // arrange
     final fakeActions = _FakeTrackDirectActions();

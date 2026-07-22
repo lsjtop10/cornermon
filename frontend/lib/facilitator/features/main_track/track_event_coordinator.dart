@@ -58,7 +58,14 @@ class TrackEventCoordinator extends _$TrackEventCoordinator {
         break;
       case SseEventEventEnum.messagesChanged:
         if (scope?.kind == SseScopeKind.camp) {
-          ref.invalidate(facilitatorBroadcastMessageListProvider);
+          final campId = facilitatorBroadcastCampId(
+            ref.read(trackSessionProvider),
+          );
+          if (campId != null) {
+            // facade provider만 invalidate하면 내부 family의 HTTP 결과는 캐시된 채다.
+            // 실제 목록 provider를 무효화해야 새 공지를 GET으로 다시 가져온다.
+            ref.invalidate(broadcastMessageListProvider(campId));
+          }
         } else if (isThisTrack) {
           ref.invalidate(trackMessageListProvider(trackId, background: true));
           ref.invalidate(unreadDirectMessageCountProvider(trackId));
