@@ -347,6 +347,9 @@ void main() {
               ),
             ),
             facilitatorBroadcastMessageListProvider.overrideWith((ref) => <Message>[]),
+            unreadDirectMessageCountProvider(
+              trackId,
+            ).overrideWith((ref) async => 0),
             trackEventsProvider(trackId).overrideWith((ref) => const Stream<SseEvent>.empty()),
           ],
         ),

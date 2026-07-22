@@ -120,6 +120,8 @@ void main() {
     );
     container.listen(unreadDirectMessageCountProvider(trackId), (_, _) {});
     container.listen(trackCornerProvider(trackId), (_, _) {});
+    // camp scope 메시지 테스트에서 state를 바꾸기 전에 fake notifier를 초기화한다.
+    container.read(trackSessionProvider);
   });
 
   test(
