@@ -184,6 +184,7 @@ Class | Method | HTTP request | Description
  - [ScanAssignBadgeRequest](doc/ScanAssignBadgeRequest.md)
  - [TrackLoginRequest](doc/TrackLoginRequest.md)
  - [TrackLoginResponse](doc/TrackLoginResponse.md)
+ - [TrackPINExportResponse](doc/TrackPINExportResponse.md)
  - [TrackPinResponse](doc/TrackPinResponse.md)
  - [TrackResponse](doc/TrackResponse.md)
  - [TrackStatsResponse](doc/TrackStatsResponse.md)

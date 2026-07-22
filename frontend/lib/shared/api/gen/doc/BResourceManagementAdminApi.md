@@ -1068,7 +1068,7 @@ void (empty response body)
 
 트랙 인증 정보 전체 내보내기
 
-인쇄를 위해 지정 캠프의 ACTIVE 트랙 PIN을 JSON으로 내려준다.
+인쇄 또는 스프레드시트 내보내기를 위해 지정 캠프 ACTIVE 트랙의 코너 이름, 트랙 번호, PIN을 JSON으로 내려준다.
 
 ### Example
 ```dart

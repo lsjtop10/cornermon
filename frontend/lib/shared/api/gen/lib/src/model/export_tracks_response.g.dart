@@ -1,5 +1,5 @@
-// @dart=2.18
 // GENERATED CODE - DO NOT MODIFY BY HAND
+// @dart=2.18
 
 part of 'export_tracks_response.dart';
 
@@ -9,7 +9,7 @@ part of 'export_tracks_response.dart';
 
 class _$ExportTracksResponse extends ExportTracksResponse {
   @override
-  final BuiltList<TrackPinResponse>? tracks;
+  final BuiltList<TrackPINExportResponse>? tracks;
 
   factory _$ExportTracksResponse(
           [void Function(ExportTracksResponseBuilder)? updates]) =>
@@ -51,10 +51,11 @@ class ExportTracksResponseBuilder
     implements Builder<ExportTracksResponse, ExportTracksResponseBuilder> {
   _$ExportTracksResponse? _$v;
 
-  ListBuilder<TrackPinResponse>? _tracks;
-  ListBuilder<TrackPinResponse> get tracks =>
-      _$this._tracks ??= ListBuilder<TrackPinResponse>();
-  set tracks(ListBuilder<TrackPinResponse>? tracks) => _$this._tracks = tracks;
+  ListBuilder<TrackPINExportResponse>? _tracks;
+  ListBuilder<TrackPINExportResponse> get tracks =>
+      _$this._tracks ??= ListBuilder<TrackPINExportResponse>();
+  set tracks(ListBuilder<TrackPINExportResponse>? tracks) =>
+      _$this._tracks = tracks;
 
   ExportTracksResponseBuilder() {
     ExportTracksResponse._defaults(this);

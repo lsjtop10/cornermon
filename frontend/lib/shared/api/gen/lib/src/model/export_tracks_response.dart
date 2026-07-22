@@ -5,7 +5,7 @@
 
 // ignore_for_file: unused_element
 import 'package:built_collection/built_collection.dart';
-import 'package:cornermon_api_gen/src/model/track_pin_response.dart';
+import 'package:cornermon_api_gen/src/model/track_pin_export_response.dart';
 import 'package:built_value/built_value.dart';
 import 'package:built_value/serializer.dart';
 
@@ -18,7 +18,7 @@ part 'export_tracks_response.g.dart';
 @BuiltValue()
 abstract class ExportTracksResponse implements Built<ExportTracksResponse, ExportTracksResponseBuilder> {
   @BuiltValueField(wireName: r'tracks')
-  BuiltList<TrackPinResponse>? get tracks;
+  BuiltList<TrackPINExportResponse>? get tracks;
 
   ExportTracksResponse._();
 
@@ -47,7 +47,7 @@ class _$ExportTracksResponseSerializer implements PrimitiveSerializer<ExportTrac
       yield r'tracks';
       yield serializers.serialize(
         object.tracks,
-        specifiedType: const FullType(BuiltList, [FullType(TrackPinResponse)]),
+        specifiedType: const FullType(BuiltList, [FullType(TrackPINExportResponse)]),
       );
     }
   }
@@ -76,8 +76,8 @@ class _$ExportTracksResponseSerializer implements PrimitiveSerializer<ExportTrac
         case r'tracks':
           final valueDes = serializers.deserialize(
             value,
-            specifiedType: const FullType(BuiltList, [FullType(TrackPinResponse)]),
-          ) as BuiltList<TrackPinResponse>;
+            specifiedType: const FullType(BuiltList, [FullType(TrackPINExportResponse)]),
+          ) as BuiltList<TrackPINExportResponse>;
           result.tracks.replace(valueDes);
           break;
         default:

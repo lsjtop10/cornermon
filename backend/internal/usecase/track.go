@@ -24,6 +24,14 @@ type TrackService struct {
 	uuidFn func() string
 }
 
+// TrackPINExport is the read model for a full PIN export. It deliberately
+// exposes only the fields needed to print an administrator PIN sheet.
+type TrackPINExport struct {
+	CornerName string
+	TrackNo    int
+	PIN        string
+}
+
 func NewTrackService(
 	camps CampRepository,
 	corners CornerRepository,
@@ -428,25 +436,39 @@ func (s *TrackService) ExportTrackPIN(ctx context.Context, trackID domain.TrackI
 	return track, pin, nil
 }
 
-func (s *TrackService) ExportTrackPINs(ctx context.Context, campID domain.CampID) ([]*domain.Track, []string, error) {
+func (s *TrackService) ExportTrackPINs(ctx context.Context, campID domain.CampID) ([]TrackPINExport, error) {
 	tracks, err := s.tracks.ListActiveByCamp(ctx, campID)
 	if err != nil {
-		return nil, nil, withErrorContext("track.export_pins", "repository.list_active_tracks", err, map[string]any{"camp_id": string(campID)})
+		return nil, withErrorContext("track.export_pins", "repository.list_active_tracks", err, map[string]any{"camp_id": string(campID)})
+	}
+	corners, err := s.corners.ListByCamp(ctx, campID)
+	if err != nil {
+		return nil, withErrorContext("track.export_pins", "repository.list_corners", err, map[string]any{"camp_id": string(campID)})
 	}
 	if s.pinProtector == nil {
-		return nil, nil, withErrorContext("track.export_pins", "validate_pin_protector", fmt.Errorf("track PIN export unavailable"), map[string]any{"camp_id": string(campID), "protector_configured": false})
+		return nil, withErrorContext("track.export_pins", "validate_pin_protector", fmt.Errorf("track PIN export unavailable"), map[string]any{"camp_id": string(campID), "protector_configured": false})
 	}
-	pins := make([]string, len(tracks))
+	cornerNames := make(map[domain.CornerID]string, len(corners))
+	for _, corner := range corners {
+		cornerNames[corner.ID()] = corner.Name()
+	}
+	exports := make([]TrackPINExport, len(tracks))
 	for i, track := range tracks {
+		cornerName, ok := cornerNames[track.CornerID()]
+		if !ok {
+			return nil, withErrorContext("track.export_pins", "validate_corner", domain.ErrCornerNotFound, map[string]any{"camp_id": string(campID), "corner_id": string(track.CornerID())})
+		}
 		if track.PINCiphertext() == "" {
-			return nil, nil, withErrorContext("track.export_pins", "validate_pin_export", fmt.Errorf("track PIN must be regenerated before export"), map[string]any{"track_id": string(track.ID()), "pin_ciphertext_present": false})
+			return nil, withErrorContext("track.export_pins", "validate_pin_export", fmt.Errorf("track PIN must be regenerated before export"), map[string]any{"track_id": string(track.ID()), "pin_ciphertext_present": false})
 		}
-		if pins[i], err = s.pinProtector.Decrypt(ctx, track.PINCiphertext()); err != nil {
-			return nil, nil, withErrorContext("track.export_pins", "protector.decrypt_pin", err, map[string]any{"track_id": string(track.ID())})
+		pin, err := s.pinProtector.Decrypt(ctx, track.PINCiphertext())
+		if err != nil {
+			return nil, withErrorContext("track.export_pins", "protector.decrypt_pin", err, map[string]any{"track_id": string(track.ID())})
 		}
+		exports[i] = TrackPINExport{CornerName: cornerName, TrackNo: track.TrackNo(), PIN: pin}
 	}
 	s.recordAuditLog(ctx, "admin", ActionTrackPinExport, string(campID), true, map[string]any{"count": len(tracks)})
-	return tracks, pins, nil
+	return exports, nil
 }
 
 func (s *TrackService) recordAuditLog(ctx context.Context, actor string, action AuditAction, target string, success bool, metadata map[string]any) {

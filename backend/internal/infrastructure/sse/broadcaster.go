@@ -2,6 +2,7 @@ package sse
 
 import (
 	"context"
+	"log/slog"
 	"sync"
 
 	"cornermon/backend/internal/domain"
@@ -32,15 +33,18 @@ func NewBroadcaster() *BroadcasterImpl {
 // 커밋된 알림을 취소해서는 안 되므로 여기서 사용하지 않고, 연결 수명은 구독 context가 관리한다.
 // 버퍼가 찬 구독자에게 서버가 메시지를 재시도·저장하지 않는 이유는 SSE 알림이 최신 상태를
 // REST로 다시 조회하라는 신호이기 때문이다. 해당 연결을 닫아 클라이언트가 재연결·resync하도록 한다.
-func (b *BroadcasterImpl) Broadcast(_ context.Context, campID domain.CampID, event usecase.NotificationEvent, scope usecase.Scope) error {
+func (b *BroadcasterImpl) Broadcast(ctx context.Context, campID domain.CampID, event usecase.NotificationEvent, scope usecase.Scope) error {
 	message := usecase.SSEMessage{Event: event, Scope: scope}
 	var fullAdminSubs []chan usecase.SSEMessage
 	var fullTrackSubs []chan usecase.SSEMessage
+	var deliveredAdminSubs int
+	var deliveredTrackSubs int
 
 	b.mu.RLock()
 	for ch := range b.adminSubs[campID] {
 		select {
 		case ch <- message:
+			deliveredAdminSubs++
 		default:
 			fullAdminSubs = append(fullAdminSubs, ch)
 		}
@@ -53,12 +57,26 @@ func (b *BroadcasterImpl) Broadcast(_ context.Context, campID domain.CampID, eve
 		for ch := range subscription.chans {
 			select {
 			case ch <- message:
+				deliveredTrackSubs++
 			default:
 				fullTrackSubs = append(fullTrackSubs, ch)
 			}
 		}
 	}
 	b.mu.RUnlock()
+
+	// 임시 진단 로그: #184 공지사항 messages_changed fan-out을 확인한 뒤 제거한다.
+	if event == usecase.EventMessagesChanged {
+		slog.DebugContext(ctx, "SSE broadcast dispatched",
+			"camp_id", campID,
+			"scope_kind", scope.Kind,
+			"scope_track_id", scope.TrackID,
+			"delivered_admin_subscribers", deliveredAdminSubs,
+			"delivered_track_subscribers", deliveredTrackSubs,
+			"full_admin_subscribers", len(fullAdminSubs),
+			"full_track_subscribers", len(fullTrackSubs),
+		)
+	}
 
 	if len(fullAdminSubs) > 0 || len(fullTrackSubs) > 0 {
 		b.removeFullSubscribers(campID, fullAdminSubs, fullTrackSubs)

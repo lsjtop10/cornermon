@@ -79,7 +79,7 @@ final class TrackEventCoordinatorProvider
 }
 
 String _$trackEventCoordinatorHash() =>
-    r'70e88a3457c7b7f4fbd13ec37f15a2fa301206f7';
+    r'8ce32258b2d8547ca0d84d484a23d7a5f23959ad';
 
 /// SSE 이벤트 분기는 위젯이 아니라 이 전용 Notifier에 둔다 — 위젯 build() 안에서 스트림
 /// 값에 반응해 동기적으로 ref.invalidate를 호출하면 빌드 사이클 도중 provider를 바꾸다 예외가

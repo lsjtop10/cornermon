@@ -1,5 +1,5 @@
-// @dart=2.18
 // GENERATED CODE - DO NOT MODIFY BY HAND
+// @dart=2.18
 
 part of 'serializers.dart';
 
@@ -72,6 +72,7 @@ Serializers _$serializers = (Serializers().toBuilder()
       ..add(ScanAssignBadgeRequest.serializer)
       ..add(TrackLoginRequest.serializer)
       ..add(TrackLoginResponse.serializer)
+      ..add(TrackPINExportResponse.serializer)
       ..add(TrackPinResponse.serializer)
       ..add(TrackResponse.serializer)
       ..add(TrackResponseOperationalStatusEnum.serializer)
@@ -120,8 +121,9 @@ Serializers _$serializers = (Serializers().toBuilder()
           const FullType(BuiltList, const [const FullType(String)]),
           () => ListBuilder<String>())
       ..addBuilderFactory(
-          const FullType(BuiltList, const [const FullType(TrackPinResponse)]),
-          () => ListBuilder<TrackPinResponse>())
+          const FullType(
+              BuiltList, const [const FullType(TrackPINExportResponse)]),
+          () => ListBuilder<TrackPINExportResponse>())
       ..addBuilderFactory(
           const FullType(
               BuiltList, const [const FullType(TrackSummaryResponse)]),

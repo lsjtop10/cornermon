@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:cornermon/admin/features/dashboard/dashboard_screen.dart';
+import 'package:cornermon/admin/features/track_bulk_manage/track_pin_export_controller.dart';
 import 'package:cornermon/admin/features/track_direct/track_direct_providers.dart';
 import 'package:cornermon/admin/session/selected_camp_provider.dart';
 import 'package:cornermon/shared/api/ids.dart';
@@ -12,6 +13,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cornermon_api_gen/cornermon_api_gen.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:share_plus/share_plus.dart';
 
 class _SelectedCampId extends SelectedCampId {
   _SelectedCampId(this._id);
@@ -74,6 +76,8 @@ Future<void> _pumpDashboard(
   List<String>? deletedCornerIds,
   List<String>? createdCornerNames,
   CornerResponse? createdCorner,
+  Future<ExportTracksResponse> Function()? exportTracks,
+  ShareFile? shareFile,
 }) async {
   final router = GoRouter(
     initialLocation: '/dashboard',
@@ -125,9 +129,14 @@ Future<void> _pumpDashboard(
         if (createdCornerNames != null)
           createCornerProvider(campId, '새 코너', 10).overrideWith((ref) async {
             createdCornerNames.add('새 코너');
-            return createdCorner ??
-                CornerResponse((b) => b..id = 'new-corner');
+            return createdCorner ?? CornerResponse((b) => b..id = 'new-corner');
           }),
+        if (exportTracks != null)
+          exportAllTrackPinsProvider(
+            campId,
+          ).overrideWith((ref) => exportTracks()),
+        if (shareFile != null)
+          trackPinExportShareProvider.overrideWithValue(shareFile),
       ],
       child: MaterialApp.router(routerConfig: router),
     ),
@@ -439,48 +448,47 @@ void main() {
       expect(createdNames, ['새 코너']);
     });
 
-    testWidgets(
-      'ShouldDeleteCornerWhenDeleteIconConfirmedAndBlockWhenBusy',
-      (tester) async {
-        // arrange: corner-1은 IDLE 트랙만 있어 삭제 가능, corner-2는 BUSY 트랙이 있어
-        // 하드 블록 대상이다
-        final campId = CampId('camp-1');
-        final deletedIds = <String>[];
-        await _pumpDashboard(
-          tester,
-          campId: campId,
-          corners: [
-            _corner('corner-1', '코너 1', CornerResponseStatusEnum.IDLE),
-            _corner(
-              'corner-2',
-              '코너 2',
-              CornerResponseStatusEnum.BUSY,
-              hasBusyTrack: true,
-            ),
-          ],
-          deletedCornerIds: deletedIds,
-        );
+    testWidgets('ShouldDeleteCornerWhenDeleteIconConfirmedAndBlockWhenBusy', (
+      tester,
+    ) async {
+      // arrange: corner-1은 IDLE 트랙만 있어 삭제 가능, corner-2는 BUSY 트랙이 있어
+      // 하드 블록 대상이다
+      final campId = CampId('camp-1');
+      final deletedIds = <String>[];
+      await _pumpDashboard(
+        tester,
+        campId: campId,
+        corners: [
+          _corner('corner-1', '코너 1', CornerResponseStatusEnum.IDLE),
+          _corner(
+            'corner-2',
+            '코너 2',
+            CornerResponseStatusEnum.BUSY,
+            hasBusyTrack: true,
+          ),
+        ],
+        deletedCornerIds: deletedIds,
+      );
 
-        // act: BUSY 트랙이 있는 코너는 하드 블록 모달만 뜨고 삭제되지 않아야 한다
-        final deleteButtons = find.byIcon(Icons.delete_outline);
-        expect(deleteButtons, findsNWidgets(2));
-        await tester.tap(deleteButtons.at(1));
-        await tester.pumpAndSettle();
-        expect(find.text('작업할 수 없습니다'), findsOneWidget);
-        await tester.tap(find.text('확인'));
-        await tester.pumpAndSettle();
-        expect(deletedIds, isEmpty);
+      // act: BUSY 트랙이 있는 코너는 하드 블록 모달만 뜨고 삭제되지 않아야 한다
+      final deleteButtons = find.byIcon(Icons.delete_outline);
+      expect(deleteButtons, findsNWidgets(2));
+      await tester.tap(deleteButtons.at(1));
+      await tester.pumpAndSettle();
+      expect(find.text('작업할 수 없습니다'), findsOneWidget);
+      await tester.tap(find.text('확인'));
+      await tester.pumpAndSettle();
+      expect(deletedIds, isEmpty);
 
-        // act: IDLE 트랙만 있는 코너는 소프트 확인 후 삭제된다
-        await tester.tap(deleteButtons.at(0));
-        await tester.pumpAndSettle();
-        await tester.tap(find.text('진행'));
-        await tester.pumpAndSettle();
+      // act: IDLE 트랙만 있는 코너는 소프트 확인 후 삭제된다
+      await tester.tap(deleteButtons.at(0));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('진행'));
+      await tester.pumpAndSettle();
 
-        // assert
-        expect(deletedIds, ['corner-1']);
-      },
-    );
+      // assert
+      expect(deletedIds, ['corner-1']);
+    });
 
     testWidgets('ShouldShowExportAllPinsActionInAppBar', (tester) async {
       // arrange
@@ -492,6 +500,74 @@ void main() {
 
       // assert: 전체 PIN 내보내기 액션이 대시보드 앱바로 옮겨와 있어야 한다
       expect(find.text('전체 PIN 내보내기'), findsOneWidget);
+    });
+
+    testWidgets('ShouldShareWorkbookAndShowSuccessWhenPinExportSucceeds', (
+      tester,
+    ) async {
+      // arrange
+      var shared = false;
+      await _pumpDashboard(
+        tester,
+        campId: CampId('camp-1'),
+        corners: [_corner('corner-1', '코너 1', CornerResponseStatusEnum.BUSY)],
+        exportTracks: () async =>
+            ExportTracksResponse((b) => b..tracks.replace([])),
+        shareFile: (ShareParams params) async {
+          shared = true;
+          expect(params.fileNameOverrides, ['track-pins.xlsx']);
+          expect(params.sharePositionOrigin, isNotNull);
+          expect(params.sharePositionOrigin!.size, isNot(Size.zero));
+        },
+      );
+
+      // act
+      await tester.tap(find.text('전체 PIN 내보내기'));
+      await tester.pumpAndSettle();
+
+      // assert
+      expect(shared, isTrue);
+      expect(find.text('PIN 엑셀을 내보냈습니다'), findsOneWidget);
+    });
+
+    testWidgets('ShouldShowFailureWhenPinWorkbookShareFails', (tester) async {
+      // arrange
+      await _pumpDashboard(
+        tester,
+        campId: CampId('camp-1'),
+        corners: [_corner('corner-1', '코너 1', CornerResponseStatusEnum.BUSY)],
+        exportTracks: () async =>
+            ExportTracksResponse((b) => b..tracks.replace([])),
+        shareFile: (ShareParams params) async {
+          throw StateError('share unavailable');
+        },
+      );
+
+      // act
+      await tester.tap(find.text('전체 PIN 내보내기'));
+      await tester.pumpAndSettle();
+
+      // assert
+      expect(find.textContaining('PIN 엑셀 내보내기 실패:'), findsOneWidget);
+      expect(find.textContaining('share unavailable'), findsOneWidget);
+    });
+
+    testWidgets('ShouldShowFailureWhenPinExportRequestFails', (tester) async {
+      // arrange
+      await _pumpDashboard(
+        tester,
+        campId: CampId('camp-1'),
+        corners: [_corner('corner-1', '코너 1', CornerResponseStatusEnum.BUSY)],
+        exportTracks: () async => throw StateError('server unavailable'),
+      );
+
+      // act
+      await tester.tap(find.text('전체 PIN 내보내기'));
+      await tester.pumpAndSettle();
+
+      // assert
+      expect(find.textContaining('PIN 엑셀 내보내기 실패:'), findsOneWidget);
+      expect(find.textContaining('server unavailable'), findsOneWidget);
     });
 
     testWidgets('ShoudRefreshCornerAndSummaryProvidersWhenPulled', (
