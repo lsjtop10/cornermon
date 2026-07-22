@@ -518,6 +518,8 @@ void main() {
         shareCsv: (ShareParams params) async {
           shared = true;
           expect(params.fileNameOverrides, ['track-pins.csv']);
+          expect(params.sharePositionOrigin, isNotNull);
+          expect(params.sharePositionOrigin!.size, isNot(Size.zero));
         },
       );
 

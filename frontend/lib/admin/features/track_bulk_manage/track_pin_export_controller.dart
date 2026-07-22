@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:typed_data';
+import 'dart:ui';
 
 import 'package:cornermon/admin/features/track_bulk_manage/track_csv_export.dart';
 import 'package:cornermon/shared/api/ids.dart';
@@ -26,7 +27,10 @@ class TrackPinExportController extends AsyncNotifier<void> {
   @override
   FutureOr<void> build() {}
 
-  Future<void> exportAndShare(CampId campId) async {
+  Future<void> exportAndShare(
+    CampId campId, {
+    Rect? sharePositionOrigin,
+  }) async {
     state = const AsyncLoading();
     final request = exportAllTracksCsvProvider(campId);
     final subscription = ref.listen(request, (_, _) {});
@@ -39,6 +43,7 @@ class TrackPinExportController extends AsyncNotifier<void> {
             XFile.fromData(Uint8List.fromList(bytes), mimeType: 'text/csv'),
           ],
           fileNameOverrides: ['track-pins.csv'],
+          sharePositionOrigin: sharePositionOrigin,
           subject: '트랙 PIN 목록',
         ),
       );

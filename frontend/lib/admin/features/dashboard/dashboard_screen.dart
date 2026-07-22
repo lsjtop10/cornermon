@@ -21,6 +21,8 @@ enum CornerSortOption { cornerNo, name, avgDeviationDesc, avgDeviationAsc }
 
 enum CornerFilterChip { all, busy, idle, inactive, bottleneckOnly }
 
+final dashboardPinExportButtonKey = GlobalKey();
+
 final dashboardSortProvider = NotifierProvider<DashboardSort, CornerSortOption>(
   DashboardSort.new,
 );
@@ -240,6 +242,7 @@ class DashboardScreen extends ConsumerWidget {
           Padding(
             padding: const EdgeInsets.only(right: 12),
             child: AppButton(
+              key: dashboardPinExportButtonKey,
               variant: AppButtonVariant.secondary,
               size: AppButtonSize.compact,
               icon: Icons.download_outlined,
@@ -247,9 +250,20 @@ class DashboardScreen extends ConsumerWidget {
               onPressed: exportState.isLoading
                   ? null
                   : () async {
+                      final buttonBox =
+                          dashboardPinExportButtonKey.currentContext
+                                  ?.findRenderObject()
+                              as RenderBox?;
+                      final sharePositionOrigin = buttonBox != null &&
+                              buttonBox.hasSize
+                          ? buttonBox.localToGlobal(Offset.zero) & buttonBox.size
+                          : null;
                       await ref
                           .read(trackPinExportControllerProvider.notifier)
-                          .exportAndShare(id);
+                          .exportAndShare(
+                            id,
+                            sharePositionOrigin: sharePositionOrigin,
+                          );
                       if (!context.mounted) return;
                       final result = ref.read(trackPinExportControllerProvider);
                       ScaffoldMessenger.of(context).showSnackBar(
