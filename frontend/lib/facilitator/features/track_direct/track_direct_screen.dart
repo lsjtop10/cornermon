@@ -25,11 +25,24 @@ class TrackDirectScreen extends ConsumerStatefulWidget {
 
 class _TrackDirectScreenState extends ConsumerState<TrackDirectScreen> {
   final _inputController = TextEditingController();
+  final _messageListController = ScrollController();
+  bool _scrollToBottomAfterSend = false;
 
   @override
   void dispose() {
     _inputController.dispose();
+    _messageListController.dispose();
     super.dispose();
+  }
+
+  void _scrollToBottom() {
+    if (!_messageListController.hasClients) return;
+
+    _messageListController.animateTo(
+      _messageListController.position.maxScrollExtent,
+      duration: const Duration(milliseconds: 250),
+      curve: Curves.easeOut,
+    );
   }
 
   @override
@@ -44,7 +57,21 @@ class _TrackDirectScreenState extends ConsumerState<TrackDirectScreen> {
     }
     final trackId = TrackId(sessionState.track.id!);
 
-    final messagesAsync = ref.watch(trackMessageListProvider(trackId));
+    ref.listen(
+      trackMessageListProvider(trackId, background: true),
+      (_, next) {
+        if (next.hasValue) {
+          ref.invalidate(unreadDirectMessageCountProvider(trackId));
+        }
+        if (_scrollToBottomAfterSend && next.hasValue && !next.isLoading) {
+          _scrollToBottomAfterSend = false;
+          WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
+        }
+      },
+    );
+    final messagesAsync = ref.watch(
+      trackMessageListProvider(trackId, background: true),
+    );
 
     return Scaffold(
       backgroundColor: colors.bgCanvas,
@@ -66,6 +93,8 @@ class _TrackDirectScreenState extends ConsumerState<TrackDirectScreen> {
                     ..sort((a, b) => a.sentAt!.compareTo(b.sentAt!));
 
                   return ListView.builder(
+                    key: const Key('direct-message-list'),
+                    controller: _messageListController,
                     padding: const EdgeInsets.all(AppSpacing.space4),
                     itemCount: sorted.length,
                     itemBuilder: (context, index) =>
@@ -82,11 +111,16 @@ class _TrackDirectScreenState extends ConsumerState<TrackDirectScreen> {
               ),
             ),
             // 빈 스레드여도 입력창은 항상 노출 — 진행자가 먼저 말을 걸 수 있어야 한다.
-            _QuickReplyRow(trackId: trackId, colors: colors),
+            _QuickReplyRow(
+              trackId: trackId,
+              colors: colors,
+              onSendSucceeded: () => _scrollToBottomAfterSend = true,
+            ),
             _MessageInputRow(
               trackId: trackId,
               controller: _inputController,
               colors: colors,
+              onSendSucceeded: () => _scrollToBottomAfterSend = true,
             ),
           ],
         ),
@@ -143,10 +177,15 @@ class _MessageBubble extends StatelessWidget {
 }
 
 class _QuickReplyRow extends ConsumerWidget {
-  const _QuickReplyRow({required this.trackId, required this.colors});
+  const _QuickReplyRow({
+    required this.trackId,
+    required this.colors,
+    required this.onSendSucceeded,
+  });
 
   final TrackId trackId;
   final AppColors colors;
+  final VoidCallback onSendSucceeded;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -171,7 +210,13 @@ class _QuickReplyRow extends ConsumerWidget {
                 ),
                 backgroundColor: colors.bgSurfaceRaised,
                 side: BorderSide(color: colors.border),
-                onPressed: () => _send(context, ref, trackId, label),
+                onPressed: () => _send(
+                  context,
+                  ref,
+                  trackId,
+                  label,
+                  onSendSucceeded: onSendSucceeded,
+                ),
               ),
             )
             .toList(),
@@ -185,11 +230,13 @@ class _MessageInputRow extends ConsumerWidget {
     required this.trackId,
     required this.controller,
     required this.colors,
+    required this.onSendSucceeded,
   });
 
   final TrackId trackId;
   final TextEditingController controller;
   final AppColors colors;
+  final VoidCallback onSendSucceeded;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -197,7 +244,13 @@ class _MessageInputRow extends ConsumerWidget {
       final text = controller.text.trim();
       if (text.isEmpty) return;
       controller.clear();
-      await _send(context, ref, trackId, text);
+      await _send(
+        context,
+        ref,
+        trackId,
+        text,
+        onSendSucceeded: onSendSucceeded,
+      );
     }
 
     return Padding(
@@ -241,14 +294,17 @@ Future<void> _send(
   BuildContext context,
   WidgetRef ref,
   TrackId trackId,
-  String content,
+  String content, {
+  VoidCallback? onSendSucceeded,
+}
 ) async {
   try {
     await ref.read(trackDirectActionsProvider(trackId).notifier).send(content);
     // 화면의 ref로 invalidate한다 — action notifier는 위젯이 watch하지 않는 autoDispose라
     // 전송 직후 폐기되어 그 안에서 invalidate하면 유실될 수 있다.
     if (!context.mounted) return;
-    ref.invalidate(trackMessageListProvider(trackId));
+    onSendSucceeded?.call();
+    ref.invalidate(trackMessageListProvider(trackId, background: true));
   } catch (_) {
     if (!context.mounted) return;
     ScaffoldMessenger.of(

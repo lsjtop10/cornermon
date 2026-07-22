@@ -36,4 +36,14 @@ void main() {
     // assert
     expect(heartbeatTimeoutSeconds, 40);
   });
+
+  test('ShouldKeepSseTransportTimeoutLongerThanHeartbeatWatchdog', () {
+    // arrange
+    const heartbeatTimeoutSeconds = AppEnv.sseHeartbeatTimeoutSeconds;
+    const transportTimeoutSeconds =
+        AppEnv.sseTransportReceiveTimeoutSeconds;
+
+    // act / assert
+    expect(transportTimeoutSeconds, greaterThan(heartbeatTimeoutSeconds));
+  });
 }

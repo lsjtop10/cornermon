@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:cornermon/shared/api/ids.dart';
+import 'package:cornermon/shared/api/providers/message_providers.dart';
 import 'package:cornermon/shared/api/providers/visit_providers.dart';
 import 'package:cornermon/shared/api/sse/track_event_stream.dart';
 import 'package:cornermon/facilitator/session/facilitator_broadcast_provider.dart';
@@ -31,6 +32,9 @@ class MainTrackHeader extends ConsumerWidget {
           data: (messages) => messages.where((m) => m.readAt == null).length,
           orElse: () => 0,
         );
+    final unreadDirectCount = ref
+        .watch(unreadDirectMessageCountProvider(trackId))
+        .maybeWhen(data: (count) => count, orElse: () => 0);
 
     // trackEvents 연결상태 매핑은 Phase 01의 TrackConnection이 이미 구현해뒀다(같은 파일,
     // trackEventsProvider를 build() 안 ref.listen으로 감싼 동일한 패턴) — 여기서 다시 만들지 않는다.
@@ -61,15 +65,15 @@ class MainTrackHeader extends ConsumerWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   _IconWithBadge(
+                    label: '공지',
                     icon: Icons.campaign_outlined,
                     count: unreadBroadcastCount,
                     onPressed: () => context.go('/main/broadcast'),
                   ),
-                  AppButton(
-                    variant: AppButtonVariant.iconOnly,
-                    size: AppButtonSize.comfortable,
+                  _IconWithBadge(
                     label: '다이렉트 메시지',
                     icon: Icons.chat_bubble_outline,
+                    count: unreadDirectCount,
                     onPressed: () => context.go('/main/direct'),
                   ),
                 ],
@@ -85,11 +89,13 @@ class MainTrackHeader extends ConsumerWidget {
 
 class _IconWithBadge extends StatelessWidget {
   const _IconWithBadge({
+    required this.label,
     required this.icon,
     required this.count,
     required this.onPressed,
   });
 
+  final String label;
   final IconData icon;
   final int count;
   final VoidCallback onPressed;
@@ -105,7 +111,7 @@ class _IconWithBadge extends StatelessWidget {
         AppButton(
           variant: AppButtonVariant.iconOnly,
           size: AppButtonSize.comfortable,
-          label: '공지',
+          label: label,
           icon: icon,
           onPressed: onPressed,
         ),

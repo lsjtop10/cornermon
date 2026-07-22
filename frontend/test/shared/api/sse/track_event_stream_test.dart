@@ -7,6 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:cornermon/shared/api/ids.dart';
 import 'package:cornermon/shared/api/sse/sse_client.dart';
+import 'package:cornermon/shared/api/sse/sse_transport.dart';
 import 'package:cornermon/shared/api/sse/track_event_stream.dart';
 import 'package:cornermon/shared/network/network_reachability.dart';
 
@@ -17,7 +18,8 @@ import 'package:cornermon/shared/network/network_reachability.dart';
 /// [onCall]로 "N번째 connect() 호출이 끝났다"는 신호를 내보내, 테스트가 지수 백오프의 실제
 /// 대기시간을 어림짐작해 sleep하지 않고도 정확한 시점에 상태를 검증할 수 있게 한다.
 class _ScriptedSseClient extends SseClient {
-  _ScriptedSseClient(this._script) : super(Dio());
+  _ScriptedSseClient(this._script)
+    : super(SseTransport(Dio(), receiveTimeout: const Duration(seconds: 45)));
 
   final List<bool> _script; // true=성공(연결 유지), false=실패
   int callCount = 0;

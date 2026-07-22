@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:cornermon/facilitator/features/main_track/track_event_coordinator.dart';
-import 'package:cornermon/facilitator/session/facilitator_broadcast_provider.dart';
 import 'package:cornermon/facilitator/session/device_trust_provider.dart';
 import 'package:cornermon/facilitator/session/track_session_provider.dart';
 import 'package:cornermon/shared/api/domain_aliases.dart';
@@ -20,6 +19,10 @@ class FakeTrackSession extends TrackSession {
 
   @override
   TrackSessionState build() => const TrackSessionUnauthenticated();
+
+  void setSession(TrackSessionState next) {
+    state = next;
+  }
 
   @override
   void handleTermination(TrackSessionTerminationReason reason) {
@@ -49,8 +52,9 @@ void main() {
   late FakeTrackSession fakeTrackSession;
   late FakeDeviceTrust fakeDeviceTrust;
   late int currentVisitBuildCount;
-  late int broadcastListBuildCount;
+  late int rawBroadcastListBuildCount;
   late int trackMessageListBuildCount;
+  late int unreadDirectCountBuildCount;
   late int trackCornerBuildCount;
 
   // 스트림 이벤트 전달 → AsyncValue 갱신 → ref.listen 콜백 → invalidate/rebuild가
@@ -66,8 +70,9 @@ void main() {
     fakeTrackSession = FakeTrackSession();
     fakeDeviceTrust = FakeDeviceTrust();
     currentVisitBuildCount = 0;
-    broadcastListBuildCount = 0;
+    rawBroadcastListBuildCount = 0;
     trackMessageListBuildCount = 0;
+    unreadDirectCountBuildCount = 0;
     trackCornerBuildCount = 0;
 
     container = ProviderContainer(
@@ -81,13 +86,19 @@ void main() {
           currentVisitBuildCount++;
           return null;
         }),
-        facilitatorBroadcastMessageListProvider.overrideWith((ref) {
-          broadcastListBuildCount++;
-          return <Message>[];
-        }),
-        trackMessageListProvider(trackId).overrideWith((ref) {
+        broadcastMessageListProvider(CampId('camp-1')).overrideWith(
+          (ref) async {
+            rawBroadcastListBuildCount++;
+            return <Message>[];
+          },
+        ),
+        trackMessageListProvider(trackId, background: true).overrideWith((ref) {
           trackMessageListBuildCount++;
           return <Message>[];
+        }),
+        unreadDirectMessageCountProvider(trackId).overrideWith((ref) async {
+          unreadDirectCountBuildCount++;
+          return 0;
         }),
         trackCornerProvider(trackId).overrideWith((ref) {
           trackCornerBuildCount++;
@@ -102,9 +113,15 @@ void main() {
     // 재빌드(카운터 증가)를 관찰할 수 있다 — 리스너가 없으면 즉시 dispose되어 버린다.
     container.listen(trackEventCoordinatorProvider(trackId), (_, _) {});
     container.listen(currentVisitProvider(trackId), (_, _) {});
-    container.listen(facilitatorBroadcastMessageListProvider, (_, _) {});
-    container.listen(trackMessageListProvider(trackId), (_, _) {});
+    container.listen(broadcastMessageListProvider(CampId('camp-1')), (_, _) {});
+    container.listen(
+      trackMessageListProvider(trackId, background: true),
+      (_, _) {},
+    );
+    container.listen(unreadDirectMessageCountProvider(trackId), (_, _) {});
     container.listen(trackCornerProvider(trackId), (_, _) {});
+    // camp scope 메시지 테스트에서 state를 바꾸기 전에 fake notifier를 초기화한다.
+    container.read(trackSessionProvider);
   });
 
   test(
@@ -180,10 +197,27 @@ void main() {
   });
 
   test(
-    'ShouldInvalidateBroadcastListWhenMessagesChangedScopeIsBroadcast',
+    'ShouldInvalidateRawBroadcastListWhenMessagesChangedScopeIsCamp',
     () async {
       // arrange
-      final baseline = broadcastListBuildCount;
+      fakeTrackSession.setSession(
+        TrackSessionAuthenticated(
+          trackToken: 'token',
+          track: Track(
+            (b) => b
+              ..id = trackId.value
+              ..cornerId = 'corner-1'
+              ..trackNo = 1
+              ..status = TrackStatus.ACTIVE,
+          ),
+          corner: Corner(
+            (b) => b
+              ..id = 'corner-1'
+              ..campId = 'camp-1',
+          ),
+        ),
+      );
+      final baseline = rawBroadcastListBuildCount;
       final event = SseEvent(
         (b) => b
           ..event = SseEventEventEnum.messagesChanged
@@ -194,7 +228,7 @@ void main() {
       await pushAndSettle(event);
 
       // assert
-      expect(broadcastListBuildCount, greaterThan(baseline));
+      expect(rawBroadcastListBuildCount, greaterThan(baseline));
     },
   );
 
@@ -215,6 +249,26 @@ void main() {
 
       // assert
       expect(trackMessageListBuildCount, greaterThan(baseline));
+    },
+  );
+
+  test(
+    'ShouldInvalidateUnreadDirectCountWhenMessagesChangedScopeIsOwnTrack',
+    () async {
+      // arrange
+      final baseline = unreadDirectCountBuildCount;
+      final event = SseEvent(
+        (b) => b
+          ..event = SseEventEventEnum.messagesChanged
+          ..scope.kind = SseScopeKind.track
+          ..scope.trackId = trackId.value,
+      );
+
+      // act
+      await pushAndSettle(event);
+
+      // assert
+      expect(unreadDirectCountBuildCount, greaterThan(baseline));
     },
   );
 

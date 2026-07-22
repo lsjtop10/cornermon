@@ -8,6 +8,7 @@ import 'package:cornermon_api_gen/cornermon_api_gen.dart';
 
 import '../../config/app_env.dart';
 import '../client/api_client.dart';
+import 'sse_transport.dart';
 
 part 'sse_client.g.dart';
 
@@ -16,11 +17,19 @@ part 'sse_client.g.dart';
 /// 자동 재연결은 하지 않는다 — 그건 이 클래스를 감싸는 호출측(track_event_stream.dart) 책임.
 class SseClient {
   SseClient(
-    this._dio, {
+    this._transport, {
     this.heartbeatTimeout = const Duration(seconds: AppEnv.sseHeartbeatTimeoutSeconds),
-  });
+  }) {
+    if (_transport.receiveTimeout <= heartbeatTimeout) {
+      throw ArgumentError.value(
+        _transport.receiveTimeout,
+        'receiveTimeout',
+        'must be longer than heartbeatTimeout',
+      );
+    }
+  }
 
-  final Dio _dio;
+  final SseTransport _transport;
   final Duration heartbeatTimeout;
 
   /// [path] 예: '/events/track/{trackId}', '/camps/{campId}/events/admin'.
@@ -120,13 +129,9 @@ class SseClient {
       onListen: () async {
         resetWatchdog();
         try {
-          final response = await _dio.get<ResponseBody>(
+          final response = await _transport.open(
             path,
             cancelToken: cancelToken,
-            options: Options(
-              responseType: ResponseType.stream,
-              headers: {'Accept': 'text/event-stream'},
-            ),
           );
           onConnected?.call();
           subscription = response.data!.stream.listen(
@@ -168,4 +173,11 @@ class SseClient {
 }
 
 @riverpod
-SseClient sseClient(Ref ref) => SseClient(ref.watch(apiClientProvider));
+SseClient sseClient(Ref ref) => SseClient(
+  SseTransport(
+    ref.watch(apiClientProvider),
+    receiveTimeout: const Duration(
+      seconds: AppEnv.sseTransportReceiveTimeoutSeconds,
+    ),
+  ),
+);
