@@ -194,5 +194,63 @@ void main() {
         expect(find.byType(TextField), findsNothing);
       },
     );
+
+    testWidgets('ShouldScrollToLatestMessageWhenSendSucceeds', (tester) async {
+      // arrange
+      final trackId = TrackId('t1');
+      final messages = List.generate(
+        30,
+        (index) => _msg(
+          MessageResponseSenderRoleEnum.TRACK,
+          '메시지 $index',
+          DateTime(2026, 1, 1, 0, index),
+        ),
+      );
+      await _pump(
+        tester,
+        campId: campId,
+        tracks: [_track(trackId.value, 1, 'c1')],
+        extraOverrides: [
+          trackMessageListProvider(
+            trackId,
+            background: true,
+          ).overrideWith((ref) async => messages),
+          trackMessageListProvider(
+            trackId,
+            background: false,
+          ).overrideWith((ref) async => messages),
+          sendDirectMessageProvider(
+            trackId,
+            '확인했습니다',
+          ).overrideWith(
+            (ref) async => _msg(
+              MessageResponseSenderRoleEnum.ADMIN,
+              '확인했습니다',
+              DateTime(2026, 1, 1),
+            ),
+          ),
+        ],
+      );
+      await tester.tap(find.text('코너 1 · 1번 트랙'));
+      await tester.pumpAndSettle();
+      final scrollable = tester.state<ScrollableState>(
+        find.descendant(
+          of: find.byKey(const Key('admin-direct-message-list')),
+          matching: find.byType(Scrollable),
+        ),
+      );
+      scrollable.position.jumpTo(0);
+
+      // act
+      await tester.enterText(find.byType(TextField), '확인했습니다');
+      await tester.tap(find.byIcon(Icons.send_rounded));
+      await tester.pumpAndSettle();
+
+      // assert
+      expect(
+        scrollable.position.pixels,
+        closeTo(scrollable.position.maxScrollExtent, 0.1),
+      );
+    });
   });
 }
