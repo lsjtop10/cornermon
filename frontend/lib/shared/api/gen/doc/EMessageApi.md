@@ -280,6 +280,10 @@ import 'package:cornermon_api_gen/api.dart';
 //defaultApiClient.getAuthentication<ApiKeyAuth>('AdminAuth').apiKey = 'YOUR_API_KEY';
 // uncomment below to setup prefix (e.g. Bearer) for API key, if needed
 //defaultApiClient.getAuthentication<ApiKeyAuth>('AdminAuth').apiKeyPrefix = 'Bearer';
+// TODO Configure API key authorization: TrackAuth
+//defaultApiClient.getAuthentication<ApiKeyAuth>('TrackAuth').apiKey = 'YOUR_API_KEY';
+// uncomment below to setup prefix (e.g. Bearer) for API key, if needed
+//defaultApiClient.getAuthentication<ApiKeyAuth>('TrackAuth').apiKeyPrefix = 'Bearer';
 
 final api = CornermonApiGen().getEMessageApi();
 final String trackId = trackId_example; // String | 트랙 ID
@@ -306,7 +310,7 @@ Name | Type | Description  | Notes
 
 ### Authorization
 
-[AdminAuth](../README.md#AdminAuth)
+[AdminAuth](../README.md#AdminAuth), [TrackAuth](../README.md#TrackAuth)
 
 ### HTTP request headers
 

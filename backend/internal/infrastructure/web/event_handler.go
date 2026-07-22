@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"os"
 	"time"
@@ -147,6 +148,14 @@ func (h *EventHandler) streamEvents(c echo.Context, ch <-chan usecase.SSEMessage
 				return err
 			}
 			c.Response().Flush()
+			// 임시 진단 로그: #184 공지사항 messages_changed SSE write를 확인한 뒤 제거한다.
+			if msg.Event == usecase.EventMessagesChanged {
+				slog.DebugContext(ctx, "SSE event written",
+					"event", msg.Event,
+					"scope_kind", msg.Scope.Kind,
+					"scope_track_id", msg.Scope.TrackID,
+				)
+			}
 		case <-ticker.C:
 			if _, err := c.Response().Write([]byte(":heartbeat\n\n")); err != nil {
 				return err

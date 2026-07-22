@@ -57,6 +57,7 @@ doc/SSEScope.md
 doc/ScanAssignBadgeRequest.md
 doc/TrackLoginRequest.md
 doc/TrackLoginResponse.md
+doc/TrackPINExportResponse.md
 doc/TrackPinResponse.md
 doc/TrackResponse.md
 doc/TrackStatsResponse.md
@@ -132,6 +133,7 @@ lib/src/model/sse_notification.dart
 lib/src/model/sse_scope.dart
 lib/src/model/track_login_request.dart
 lib/src/model/track_login_response.dart
+lib/src/model/track_pin_export_response.dart
 lib/src/model/track_pin_response.dart
 lib/src/model/track_response.dart
 lib/src/model/track_stats_response.dart
@@ -143,4 +145,4 @@ lib/src/model/visit_start_request.dart
 lib/src/model/visit_summary_response.dart
 lib/src/serializers.dart
 pubspec.yaml
-test/error_code_test.dart
+test/track_pin_export_response_test.dart

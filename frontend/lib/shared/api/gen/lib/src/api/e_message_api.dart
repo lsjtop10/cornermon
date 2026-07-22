@@ -488,6 +488,11 @@ class EMessageApi {
             'name': 'AdminAuth',
             'keyName': 'Authorization',
             'where': 'header',
+          },{
+            'type': 'apiKey',
+            'name': 'TrackAuth',
+            'keyName': 'Authorization',
+            'where': 'header',
           },
         ],
         ...?extra,

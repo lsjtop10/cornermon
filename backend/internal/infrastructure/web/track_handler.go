@@ -33,8 +33,18 @@ type TrackPinResponse struct {
 	Track TrackResponse `json:"track"`
 	PIN   string        `json:"pin" example:"482910"`
 } // @name TrackPinResponse
+
+// TrackPINExportResponse contains exactly the printable fields for one track.
+// It is intentionally separate from TrackPinResponse so regular track DTOs do
+// not become the contract for administrator exports.
+type TrackPINExportResponse struct {
+	CornerName string `json:"cornerName"`
+	TrackNo    int    `json:"trackNo"`
+	PIN        string `json:"pin" example:"482910"`
+} // @name TrackPINExportResponse
+
 type ExportTracksResponse struct {
-	Tracks []TrackPinResponse `json:"tracks"`
+	Tracks []TrackPINExportResponse `json:"tracks"`
 } // @name ExportTracksResponse
 
 func NewTrackHandler(svc *usecase.TrackService) *TrackHandler {
@@ -219,7 +229,7 @@ func (h *TrackHandler) RegeneratePin(c echo.Context) error {
 }
 
 // @Summary      트랙 인증 정보 전체 내보내기
-// @Description  인쇄를 위해 지정 캠프의 ACTIVE 트랙 PIN을 JSON으로 내려준다.
+// @Description  인쇄 또는 스프레드시트 내보내기를 위해 지정 캠프 ACTIVE 트랙의 코너 이름, 트랙 번호, PIN을 JSON으로 내려준다.
 // @Tags         B. Resource Management (Admin)
 // @Security     AdminAuth
 // @Produce      json
@@ -231,13 +241,17 @@ func (h *TrackHandler) ExportTracks(c echo.Context) error {
 	if campID == "" {
 		return echo.NewHTTPError(http.StatusBadRequest, "campId is required")
 	}
-	tracks, pins, err := h.svc.ExportTrackPINs(c.Request().Context(), campID)
+	exports, err := h.svc.ExportTrackPINs(c.Request().Context(), campID)
 	if err != nil {
 		return trackHTTPError(err)
 	}
-	res := make([]TrackPinResponse, len(tracks))
-	for i, track := range tracks {
-		res[i] = TrackPinResponse{Track: mapDomainTrackToDTO(track), PIN: pins[i]}
+	res := make([]TrackPINExportResponse, len(exports))
+	for i, export := range exports {
+		res[i] = TrackPINExportResponse{
+			CornerName: export.CornerName,
+			TrackNo:    export.TrackNo,
+			PIN:        export.PIN,
+		}
 	}
 	c.Response().Header().Set("Cache-Control", "no-store")
 	return c.JSON(http.StatusOK, ExportTracksResponse{Tracks: res})

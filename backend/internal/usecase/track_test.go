@@ -9,6 +9,47 @@ import (
 	"cornermon/backend/internal/domain"
 )
 
+type passthroughTrackPINProtector struct{}
+
+func (passthroughTrackPINProtector) Encrypt(_ context.Context, pin string) (string, error) {
+	return pin, nil
+}
+
+func (passthroughTrackPINProtector) Decrypt(_ context.Context, ciphertext string) (string, error) {
+	return ciphertext, nil
+}
+
+func TestTrackService_ExportTrackPINs(t *testing.T) {
+	// Arrange
+	corners := NewMockCornerRepository()
+	_ = corners.Save(context.Background(), domain.NewCornerFromProps(domain.CornerProps{
+		ID: "corner-1", CampID: "camp-1", Name: "과학 실험실",
+	}))
+	tracks := NewMockTrackRepository()
+	_ = tracks.Save(context.Background(), domain.NewTrackFromProps(domain.TrackProps{
+		ID: "track-1", CornerID: "corner-1", TrackNo: 7,
+		Status: domain.TrackActive, PINCiphertext: "482910",
+	}))
+	service := NewTrackService(
+		NewMockCampRepository(), corners, tracks, NewMockFacilitatorSessionRepository(),
+		&MockAuditLogRepository{}, &MockBroadcaster{}, &MockTxManager{}, passthroughTrackPINProtector{},
+	)
+
+	// Act
+	exports, err := service.ExportTrackPINs(context.Background(), "camp-1")
+
+	// Assert
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(exports) != 1 {
+		t.Fatalf("expected one export row, got %d", len(exports))
+	}
+	if got, want := exports[0], (TrackPINExport{CornerName: "과학 실험실", TrackNo: 7, PIN: "482910"}); got != want {
+		t.Fatalf("expected %+v, got %+v", want, got)
+	}
+}
+
 func TestTrackService_CreateTrack(t *testing.T) {
 	t.Run("ShouldCreateTrackWhenCampIsActive", func(t *testing.T) {
 		// Arrange

@@ -2362,7 +2362,7 @@ const docTemplate = `{
                         "AdminAuth": []
                     }
                 ],
-                "description": "인쇄를 위해 지정 캠프의 ACTIVE 트랙 PIN을 JSON으로 내려준다.",
+                "description": "인쇄 또는 스프레드시트 내보내기를 위해 지정 캠프 ACTIVE 트랙의 코너 이름, 트랙 번호, PIN을 JSON으로 내려준다.",
                 "produces": [
                     "application/json"
                 ],
@@ -3854,7 +3854,7 @@ const docTemplate = `{
                 "tracks": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/TrackPinResponse"
+                        "$ref": "#/definitions/TrackPINExportResponse"
                     }
                 }
             }
@@ -4067,6 +4067,21 @@ const docTemplate = `{
                 },
                 "trackToken": {
                     "type": "string"
+                }
+            }
+        },
+        "TrackPINExportResponse": {
+            "type": "object",
+            "properties": {
+                "cornerName": {
+                    "type": "string"
+                },
+                "pin": {
+                    "type": "string",
+                    "example": "482910"
+                },
+                "trackNo": {
+                    "type": "integer"
                 }
             }
         },

@@ -68,6 +68,7 @@ export 'package:cornermon_api_gen/src/model/sse_scope.dart';
 export 'package:cornermon_api_gen/src/model/scan_assign_badge_request.dart';
 export 'package:cornermon_api_gen/src/model/track_login_request.dart';
 export 'package:cornermon_api_gen/src/model/track_login_response.dart';
+export 'package:cornermon_api_gen/src/model/track_pin_export_response.dart';
 export 'package:cornermon_api_gen/src/model/track_pin_response.dart';
 export 'package:cornermon_api_gen/src/model/track_response.dart';
 export 'package:cornermon_api_gen/src/model/track_stats_response.dart';

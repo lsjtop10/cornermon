@@ -77,7 +77,7 @@ Future<void> _pumpDashboard(
   List<String>? createdCornerNames,
   CornerResponse? createdCorner,
   Future<ExportTracksResponse> Function()? exportTracks,
-  ShareCsv? shareCsv,
+  ShareFile? shareFile,
 }) async {
   final router = GoRouter(
     initialLocation: '/dashboard',
@@ -129,15 +129,14 @@ Future<void> _pumpDashboard(
         if (createdCornerNames != null)
           createCornerProvider(campId, '새 코너', 10).overrideWith((ref) async {
             createdCornerNames.add('새 코너');
-            return createdCorner ??
-                CornerResponse((b) => b..id = 'new-corner');
+            return createdCorner ?? CornerResponse((b) => b..id = 'new-corner');
           }),
         if (exportTracks != null)
-          exportAllTracksCsvProvider(
+          exportAllTrackPinsProvider(
             campId,
           ).overrideWith((ref) => exportTracks()),
-        if (shareCsv != null)
-          trackPinCsvShareProvider.overrideWithValue(shareCsv),
+        if (shareFile != null)
+          trackPinExportShareProvider.overrideWithValue(shareFile),
       ],
       child: MaterialApp.router(routerConfig: router),
     ),
@@ -449,48 +448,47 @@ void main() {
       expect(createdNames, ['새 코너']);
     });
 
-    testWidgets(
-      'ShouldDeleteCornerWhenDeleteIconConfirmedAndBlockWhenBusy',
-      (tester) async {
-        // arrange: corner-1은 IDLE 트랙만 있어 삭제 가능, corner-2는 BUSY 트랙이 있어
-        // 하드 블록 대상이다
-        final campId = CampId('camp-1');
-        final deletedIds = <String>[];
-        await _pumpDashboard(
-          tester,
-          campId: campId,
-          corners: [
-            _corner('corner-1', '코너 1', CornerResponseStatusEnum.IDLE),
-            _corner(
-              'corner-2',
-              '코너 2',
-              CornerResponseStatusEnum.BUSY,
-              hasBusyTrack: true,
-            ),
-          ],
-          deletedCornerIds: deletedIds,
-        );
+    testWidgets('ShouldDeleteCornerWhenDeleteIconConfirmedAndBlockWhenBusy', (
+      tester,
+    ) async {
+      // arrange: corner-1은 IDLE 트랙만 있어 삭제 가능, corner-2는 BUSY 트랙이 있어
+      // 하드 블록 대상이다
+      final campId = CampId('camp-1');
+      final deletedIds = <String>[];
+      await _pumpDashboard(
+        tester,
+        campId: campId,
+        corners: [
+          _corner('corner-1', '코너 1', CornerResponseStatusEnum.IDLE),
+          _corner(
+            'corner-2',
+            '코너 2',
+            CornerResponseStatusEnum.BUSY,
+            hasBusyTrack: true,
+          ),
+        ],
+        deletedCornerIds: deletedIds,
+      );
 
-        // act: BUSY 트랙이 있는 코너는 하드 블록 모달만 뜨고 삭제되지 않아야 한다
-        final deleteButtons = find.byIcon(Icons.delete_outline);
-        expect(deleteButtons, findsNWidgets(2));
-        await tester.tap(deleteButtons.at(1));
-        await tester.pumpAndSettle();
-        expect(find.text('작업할 수 없습니다'), findsOneWidget);
-        await tester.tap(find.text('확인'));
-        await tester.pumpAndSettle();
-        expect(deletedIds, isEmpty);
+      // act: BUSY 트랙이 있는 코너는 하드 블록 모달만 뜨고 삭제되지 않아야 한다
+      final deleteButtons = find.byIcon(Icons.delete_outline);
+      expect(deleteButtons, findsNWidgets(2));
+      await tester.tap(deleteButtons.at(1));
+      await tester.pumpAndSettle();
+      expect(find.text('작업할 수 없습니다'), findsOneWidget);
+      await tester.tap(find.text('확인'));
+      await tester.pumpAndSettle();
+      expect(deletedIds, isEmpty);
 
-        // act: IDLE 트랙만 있는 코너는 소프트 확인 후 삭제된다
-        await tester.tap(deleteButtons.at(0));
-        await tester.pumpAndSettle();
-        await tester.tap(find.text('진행'));
-        await tester.pumpAndSettle();
+      // act: IDLE 트랙만 있는 코너는 소프트 확인 후 삭제된다
+      await tester.tap(deleteButtons.at(0));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('진행'));
+      await tester.pumpAndSettle();
 
-        // assert
-        expect(deletedIds, ['corner-1']);
-      },
-    );
+      // assert
+      expect(deletedIds, ['corner-1']);
+    });
 
     testWidgets('ShouldShowExportAllPinsActionInAppBar', (tester) async {
       // arrange
@@ -504,7 +502,7 @@ void main() {
       expect(find.text('전체 PIN 내보내기'), findsOneWidget);
     });
 
-    testWidgets('ShouldShareCsvAndShowSuccessWhenPinExportSucceeds', (
+    testWidgets('ShouldShareWorkbookAndShowSuccessWhenPinExportSucceeds', (
       tester,
     ) async {
       // arrange
@@ -515,9 +513,9 @@ void main() {
         corners: [_corner('corner-1', '코너 1', CornerResponseStatusEnum.BUSY)],
         exportTracks: () async =>
             ExportTracksResponse((b) => b..tracks.replace([])),
-        shareCsv: (ShareParams params) async {
+        shareFile: (ShareParams params) async {
           shared = true;
-          expect(params.fileNameOverrides, ['track-pins.csv']);
+          expect(params.fileNameOverrides, ['track-pins.xlsx']);
           expect(params.sharePositionOrigin, isNotNull);
           expect(params.sharePositionOrigin!.size, isNot(Size.zero));
         },
@@ -529,10 +527,10 @@ void main() {
 
       // assert
       expect(shared, isTrue);
-      expect(find.text('PIN CSV를 내보냈습니다'), findsOneWidget);
+      expect(find.text('PIN 엑셀을 내보냈습니다'), findsOneWidget);
     });
 
-    testWidgets('ShouldShowFailureWhenPinCsvShareFails', (tester) async {
+    testWidgets('ShouldShowFailureWhenPinWorkbookShareFails', (tester) async {
       // arrange
       await _pumpDashboard(
         tester,
@@ -540,7 +538,7 @@ void main() {
         corners: [_corner('corner-1', '코너 1', CornerResponseStatusEnum.BUSY)],
         exportTracks: () async =>
             ExportTracksResponse((b) => b..tracks.replace([])),
-        shareCsv: (ShareParams params) async {
+        shareFile: (ShareParams params) async {
           throw StateError('share unavailable');
         },
       );
@@ -550,7 +548,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // assert
-      expect(find.textContaining('PIN CSV 내보내기 실패:'), findsOneWidget);
+      expect(find.textContaining('PIN 엑셀 내보내기 실패:'), findsOneWidget);
       expect(find.textContaining('share unavailable'), findsOneWidget);
     });
 
@@ -568,7 +566,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // assert
-      expect(find.textContaining('PIN CSV 내보내기 실패:'), findsOneWidget);
+      expect(find.textContaining('PIN 엑셀 내보내기 실패:'), findsOneWidget);
       expect(find.textContaining('server unavailable'), findsOneWidget);
     });
 

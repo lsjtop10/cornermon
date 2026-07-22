@@ -58,4 +58,4 @@ final class FacilitatorBroadcastMessageListProvider
 }
 
 String _$facilitatorBroadcastMessageListHash() =>
-    r'8c2465a5285f4fa3940ac2ee38d83104a5fef291';
+    r'1dcbbeacac30862135ef5119a0117d1d16b54210';

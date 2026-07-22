@@ -254,9 +254,10 @@ class DashboardScreen extends ConsumerWidget {
                           dashboardPinExportButtonKey.currentContext
                                   ?.findRenderObject()
                               as RenderBox?;
-                      final sharePositionOrigin = buttonBox != null &&
-                              buttonBox.hasSize
-                          ? buttonBox.localToGlobal(Offset.zero) & buttonBox.size
+                      final sharePositionOrigin =
+                          buttonBox != null && buttonBox.hasSize
+                          ? buttonBox.localToGlobal(Offset.zero) &
+                                buttonBox.size
                           : null;
                       await ref
                           .read(trackPinExportControllerProvider.notifier)
@@ -270,8 +271,8 @@ class DashboardScreen extends ConsumerWidget {
                         SnackBar(
                           content: Text(
                             result.hasError
-                                ? 'PIN CSV 내보내기 실패: ${result.error}'
-                                : 'PIN CSV를 내보냈습니다',
+                                ? 'PIN 엑셀 내보내기 실패: ${result.error}'
+                                : 'PIN 엑셀을 내보냈습니다',
                           ),
                         ),
                       );

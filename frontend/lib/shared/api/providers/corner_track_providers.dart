@@ -18,7 +18,9 @@ class CornerUpdateInput {
 @riverpod
 Future<List<Corner>> cornerList(Ref ref, CampId campId) async {
   final apiInstance = ref.watch(campApiProvider);
-  final response = await apiInstance.campsCampIdCornersGet(campId: campId.value);
+  final response = await apiInstance.campsCampIdCornersGet(
+    campId: campId.value,
+  );
   return response.data?.toList() ?? [];
 }
 
@@ -41,7 +43,9 @@ Future<Corner> cornerDetail(Ref ref, CornerId id) async {
 @riverpod
 Future<Corner> trackCorner(Ref ref, TrackId trackId) async {
   final apiInstance = ref.watch(visitScanFlowApiProvider);
-  final response = await apiInstance.tracksTrackIdCornerGet(trackId: trackId.value);
+  final response = await apiInstance.tracksTrackIdCornerGet(
+    trackId: trackId.value,
+  );
   final data = response.data;
   if (data == null) {
     throw Exception('Corner not found');
@@ -50,7 +54,12 @@ Future<Corner> trackCorner(Ref ref, TrackId trackId) async {
 }
 
 @Riverpod(retry: noRetry)
-Future<Corner> createCorner(Ref ref, CampId campId, String name, int targetMinutes) async {
+Future<Corner> createCorner(
+  Ref ref,
+  CampId campId,
+  String name,
+  int targetMinutes,
+) async {
   final apiInstance = ref.watch(campApiProvider);
   final response = await apiInstance.cornersPost(
     request: CreateCornerRequest(
@@ -68,7 +77,10 @@ Future<Corner> createCorner(Ref ref, CampId campId, String name, int targetMinut
 }
 
 @riverpod
-Future<List<Corner>> bulkUpdateCorners(Ref ref, List<CornerUpdateInput> updates) async {
+Future<List<Corner>> bulkUpdateCorners(
+  Ref ref,
+  List<CornerUpdateInput> updates,
+) async {
   final apiInstance = ref.watch(campApiProvider);
   final response = await apiInstance.cornersBulkUpdatePut(
     request: BulkUpdateCornersRequest(
@@ -103,12 +115,19 @@ Future<List<Track>> trackList(Ref ref, CampId campId) async {
 @riverpod
 Future<List<Track>> cornerTrackList(Ref ref, CornerId cornerId) async {
   final apiInstance = ref.watch(campApiProvider);
-  final response = await apiInstance.cornersCornerIdTracksGet(cornerId: cornerId.value);
+  final response = await apiInstance.cornersCornerIdTracksGet(
+    cornerId: cornerId.value,
+  );
   return response.data?.toList() ?? [];
 }
 
 @Riverpod(retry: noRetry)
-Future<List<TrackPin>> createTracksForCorner(Ref ref, CampId campId, CornerId cornerId, int count) async {
+Future<List<TrackPin>> createTracksForCorner(
+  Ref ref,
+  CampId campId,
+  CornerId cornerId,
+  int count,
+) async {
   final apiInstance = ref.watch(campApiProvider);
   final response = await apiInstance.tracksPost(
     request: CreateTracksRequest(
@@ -157,7 +176,7 @@ Future<TrackPin> regeneratePin(Ref ref, TrackId id) async {
 }
 
 @Riverpod(retry: noRetry)
-Future<ExportTracksResponse> exportAllTracksCsv(Ref ref, CampId campId) async {
+Future<ExportTracksResponse> exportAllTrackPins(Ref ref, CampId campId) async {
   final apiInstance = ref.watch(campApiProvider);
   final response = await apiInstance.tracksExportGet(campId: campId.value);
   final data = response.data;
