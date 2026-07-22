@@ -6,6 +6,8 @@ import 'package:cornermon/shared/api/providers/group_providers.dart';
 import 'package:cornermon/shared/design_system/widgets/app_button.dart';
 import 'package:cornermon/shared/design_system/widgets/empty_state.dart';
 import 'package:cornermon/shared/design_system/widgets/app_tag.dart';
+import 'package:cornermon/shared/export/export_action_menu.dart';
+import 'package:cornermon/shared/export/export_file.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -61,12 +63,16 @@ class _BadgePrecreateScreenState extends ConsumerState<BadgePrecreateScreen> {
     }
   }
 
-  Future<void> _export() async {
+  Future<void> _export(ExportAction action) async {
     setState(() => _busy = true);
     try {
-      final shared = await ref
-          .read(badgeExportControllerProvider.notifier)
-          .exportAndShare();
+      final controller = ref.read(badgeExportControllerProvider.notifier);
+      final saveResult = action == ExportAction.saveToDevice
+          ? await controller.exportAndSave()
+          : null;
+      final shared = action == ExportAction.shareWithApp
+          ? await controller.exportAndShare()
+          : saveResult != null;
       final result = ref.read(badgeExportControllerProvider);
       if (result.hasError) {
         throw result.error!;
@@ -78,6 +84,21 @@ class _BadgePrecreateScreenState extends ConsumerState<BadgePrecreateScreen> {
           ).showSnackBar(const SnackBar(content: Text('내보낼 미배정 배지가 없습니다')));
         }
         return;
+      }
+      if (action == ExportAction.saveToDevice &&
+          saveResult == ExportSaveResult.cancelled) {
+        return;
+      }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              action == ExportAction.saveToDevice
+                  ? 'PDF를 저장했습니다'
+                  : 'PDF를 내보냈습니다',
+            ),
+          ),
+        );
       }
     } catch (error) {
       if (mounted) {
@@ -148,12 +169,11 @@ class _BadgePrecreateScreenState extends ConsumerState<BadgePrecreateScreen> {
                           : null,
                       onPressed: _count == null || _busy ? null : _generate,
                     ),
-                    AppButton(
-                      variant: AppButtonVariant.secondary,
-                      size: AppButtonSize.compact,
+                    ExportActionButton(
                       icon: Icons.ios_share,
                       label: '스티커 PDF로 내보내기',
-                      onPressed: _busy ? null : _export,
+                      busy: _busy,
+                      onSelected: _export,
                     ),
                   ],
                 ),

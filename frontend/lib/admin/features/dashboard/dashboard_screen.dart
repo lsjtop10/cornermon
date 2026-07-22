@@ -13,6 +13,8 @@ import 'package:cornermon/shared/design_system/widgets/confirm_modal.dart';
 import 'package:cornermon/shared/design_system/widgets/empty_state.dart';
 import 'package:cornermon/shared/design_system/widgets/connection_banner.dart';
 import 'package:cornermon/shared/design_system/widgets/pill_tab_bar.dart';
+import 'package:cornermon/shared/export/export_action_menu.dart';
+import 'package:cornermon/shared/export/export_file.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -241,42 +243,51 @@ class DashboardScreen extends ConsumerWidget {
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 12),
-            child: AppButton(
+            child: ExportActionButton(
               key: dashboardPinExportButtonKey,
-              variant: AppButtonVariant.secondary,
-              size: AppButtonSize.compact,
               icon: Icons.download_outlined,
               label: '전체 PIN 내보내기',
-              onPressed: exportState.isLoading
-                  ? null
-                  : () async {
-                      final buttonBox =
-                          dashboardPinExportButtonKey.currentContext
-                                  ?.findRenderObject()
-                              as RenderBox?;
-                      final sharePositionOrigin =
-                          buttonBox != null && buttonBox.hasSize
-                          ? buttonBox.localToGlobal(Offset.zero) &
-                                buttonBox.size
-                          : null;
-                      await ref
-                          .read(trackPinExportControllerProvider.notifier)
-                          .exportAndShare(
-                            id,
-                            sharePositionOrigin: sharePositionOrigin,
-                          );
-                      if (!context.mounted) return;
-                      final result = ref.read(trackPinExportControllerProvider);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            result.hasError
-                                ? 'PIN 엑셀 내보내기 실패: ${result.error}'
-                                : 'PIN 엑셀을 내보냈습니다',
-                          ),
-                        ),
-                      );
-                    },
+              busy: exportState.isLoading,
+              onSelected: (action) async {
+                final buttonBox =
+                    dashboardPinExportButtonKey.currentContext
+                            ?.findRenderObject()
+                        as RenderBox?;
+                final sharePositionOrigin =
+                    buttonBox != null && buttonBox.hasSize
+                    ? buttonBox.localToGlobal(Offset.zero) & buttonBox.size
+                    : null;
+                final controller = ref.read(
+                  trackPinExportControllerProvider.notifier,
+                );
+                final saveResult = action == ExportAction.saveToDevice
+                    ? await controller.exportAndSave(id)
+                    : null;
+                if (action == ExportAction.shareWithApp) {
+                  await controller.exportAndShare(
+                    id,
+                    sharePositionOrigin: sharePositionOrigin,
+                  );
+                }
+                if (!context.mounted) return;
+                final result = ref.read(trackPinExportControllerProvider);
+                if (action == ExportAction.saveToDevice &&
+                    saveResult == ExportSaveResult.cancelled &&
+                    !result.hasError) {
+                  return;
+                }
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      result.hasError
+                          ? 'PIN 엑셀 내보내기 실패: ${result.error}'
+                          : action == ExportAction.saveToDevice
+                          ? 'PIN 엑셀을 저장했습니다'
+                          : 'PIN 엑셀을 내보냈습니다',
+                    ),
+                  ),
+                );
+              },
             ),
           ),
         ],
