@@ -51,10 +51,12 @@ class _FakeMobileScannerPlatform extends MobileScannerPlatform {
 
 /// VisitActions fake — startByQr 호출 횟수를 세고, Completer로 완료 시점을 제어한다.
 class _FakeVisitActions extends VisitActions {
-  _FakeVisitActions({this.errorToThrow});
+  _FakeVisitActions({this.errorToThrow, _VisitActionsCallLog? callLog})
+    : _callLog = callLog ?? _VisitActionsCallLog();
 
   final DioException? errorToThrow;
-  int startByQrCallCount = 0;
+  final _VisitActionsCallLog _callLog;
+  int get startByQrCallCount => _callLog.startByQrCallCount;
   final List<Completer<VisitSummary>> _pendingResults = [];
 
   @override
@@ -62,7 +64,7 @@ class _FakeVisitActions extends VisitActions {
 
   @override
   Future<VisitSummary> startByQr(String qrToken) async {
-    startByQrCallCount++;
+    _callLog.startByQrCallCount++;
     if (errorToThrow != null) {
       throw errorToThrow!;
     }
@@ -70,6 +72,10 @@ class _FakeVisitActions extends VisitActions {
     _pendingResults.add(completer);
     return completer.future;
   }
+}
+
+class _VisitActionsCallLog {
+  int startByQrCallCount = 0;
 }
 
 DioException _visitStartError(String code) {
@@ -96,7 +102,8 @@ void main() {
     MobileScannerPlatform.instance = fakePlatform;
   });
 
-  TrackSessionAuthenticated buildAuthenticatedState() => TrackSessionAuthenticated(
+  TrackSessionAuthenticated buildAuthenticatedState() =>
+      TrackSessionAuthenticated(
         trackToken: 'test-token',
         track: Track(
           (b) => b
@@ -112,39 +119,50 @@ void main() {
         ),
       );
 
-  testWidgets('ShouldCallStartByQrOnlyOnceWhenSameBarcodeDetectedTwiceQuickly', (tester) async {
-    // arrange
-    final fakeActions = _FakeVisitActions();
-    await tester.pumpWidget(
-      buildTestable(
-        const QrScanScreen(),
-        overrides: [
-          trackSessionProvider.overrideWith(() => _FakeTrackSession(buildAuthenticatedState())),
-          visitActionsProvider(trackId).overrideWith(() => fakeActions),
-        ],
-      ),
-    );
-    await tester.pump();
+  testWidgets(
+    'ShouldCallStartByQrOnlyOnceWhenSameBarcodeDetectedTwiceQuickly',
+    (tester) async {
+      // arrange
+      final fakeActions = _FakeVisitActions();
+      await tester.pumpWidget(
+        buildTestable(
+          const QrScanScreen(),
+          overrides: [
+            trackSessionProvider.overrideWith(
+              () => _FakeTrackSession(buildAuthenticatedState()),
+            ),
+            visitActionsProvider(trackId).overrideWith(() => fakeActions),
+          ],
+        ),
+      );
+      await tester.pump();
 
-    // act: 첫 startByQr가 아직 미완료(pending)인 상태에서 같은 바코드를 한 번 더 흘려보낸다.
-    fakePlatform.barcodesController.add(_capture('qr-token-1'));
-    await tester.pump();
-    fakePlatform.barcodesController.add(_capture('qr-token-1'));
-    await tester.pump();
+      // act: 첫 startByQr가 아직 미완료(pending)인 상태에서 같은 바코드를 한 번 더 흘려보낸다.
+      fakePlatform.barcodesController.add(_capture('qr-token-1'));
+      await tester.pump();
+      fakePlatform.barcodesController.add(_capture('qr-token-1'));
+      await tester.pump();
 
-    // assert: `_busy` 가드로 인해 1회만 호출된다.
-    expect(fakeActions.startByQrCallCount, 1);
-  });
+      // assert: `_busy` 가드로 인해 1회만 호출된다.
+      expect(fakeActions.startByQrCallCount, 1);
+    },
+  );
 
-  testWidgets('ShouldShowGenericMessageWhenUnrecognizedCodeReturned', (tester) async {
+  testWidgets('ShouldShowGenericMessageWhenUnrecognizedCodeReturned', (
+    tester,
+  ) async {
     // arrange — DUPLICATE_VISIT은 백엔드가 실제로 보내는 코드가 아니다(qr_scan_screen.dart
     // _messageFor 주석 참고). 클라이언트가 모르는 코드로 떨어졌을 때의 기본 분기를 검증한다.
-    final fakeActions = _FakeVisitActions(errorToThrow: _visitStartError('DUPLICATE_VISIT'));
+    final fakeActions = _FakeVisitActions(
+      errorToThrow: _visitStartError('DUPLICATE_VISIT'),
+    );
     await tester.pumpWidget(
       buildTestable(
         const QrScanScreen(),
         overrides: [
-          trackSessionProvider.overrideWith(() => _FakeTrackSession(buildAuthenticatedState())),
+          trackSessionProvider.overrideWith(
+            () => _FakeTrackSession(buildAuthenticatedState()),
+          ),
           visitActionsProvider(trackId).overrideWith(() => fakeActions),
         ],
       ),
@@ -160,14 +178,20 @@ void main() {
     expect(find.text('방문을 시작하지 못했습니다'), findsOneWidget);
   });
 
-  testWidgets('ShouldShowTrackBusyMessageWhenTrackBusyCodeReturned', (tester) async {
+  testWidgets('ShouldShowTrackBusyMessageWhenTrackBusyCodeReturned', (
+    tester,
+  ) async {
     // arrange
-    final fakeActions = _FakeVisitActions(errorToThrow: _visitStartError('TRACK_BUSY'));
+    final fakeActions = _FakeVisitActions(
+      errorToThrow: _visitStartError('TRACK_BUSY'),
+    );
     await tester.pumpWidget(
       buildTestable(
         const QrScanScreen(),
         overrides: [
-          trackSessionProvider.overrideWith(() => _FakeTrackSession(buildAuthenticatedState())),
+          trackSessionProvider.overrideWith(
+            () => _FakeTrackSession(buildAuthenticatedState()),
+          ),
           visitActionsProvider(trackId).overrideWith(() => fakeActions),
         ],
       ),
@@ -183,15 +207,62 @@ void main() {
     expect(find.text('현재 진행중인 조가 있습니다'), findsOneWidget);
   });
 
+  testWidgets('ShouldIgnoreBarcodeForOneSecondAfterFailureSheetIsDismissed', (
+    tester,
+  ) async {
+    // arrange
+    final callLog = _VisitActionsCallLog();
+    await tester.pumpWidget(
+      buildTestable(
+        const QrScanScreen(),
+        overrides: [
+          trackSessionProvider.overrideWith(
+            () => _FakeTrackSession(buildAuthenticatedState()),
+          ),
+          visitActionsProvider(trackId).overrideWith(
+            () => _FakeVisitActions(
+              errorToThrow: _visitStartError('TRACK_BUSY'),
+              callLog: callLog,
+            ),
+          ),
+        ],
+      ),
+    );
+    await tester.pump();
 
-  testWidgets('ShouldDisposeControllerExactlyOnceWhenScreenRemoved', (tester) async {
+    // act: 실패 안내를 닫은 뒤, 1초 쿨다운 중인 바코드를 인식시킨다.
+    fakePlatform.barcodesController.add(_capture('qr-token-1'));
+    await tester.pump();
+    await tester.pump();
+    Navigator.of(tester.element(find.text('확인'))).pop();
+    await tester.pump();
+    fakePlatform.barcodesController.add(_capture('qr-token-2'));
+    await tester.pump();
+
+    // assert: 쿨다운이 끝나기 전에는 새 방문 시작을 요청하지 않는다.
+    expect(callLog.startByQrCallCount, 1);
+
+    // act: 쿨다운이 끝난 뒤 같은 입력을 다시 인식시킨다.
+    await tester.pump(const Duration(seconds: 1));
+    fakePlatform.barcodesController.add(_capture('qr-token-2'));
+    await tester.pump();
+
+    // assert
+    expect(callLog.startByQrCallCount, 2);
+  });
+
+  testWidgets('ShouldDisposeControllerExactlyOnceWhenScreenRemoved', (
+    tester,
+  ) async {
     // arrange
     final fakeActions = _FakeVisitActions();
     await tester.pumpWidget(
       buildTestable(
         const QrScanScreen(),
         overrides: [
-          trackSessionProvider.overrideWith(() => _FakeTrackSession(buildAuthenticatedState())),
+          trackSessionProvider.overrideWith(
+            () => _FakeTrackSession(buildAuthenticatedState()),
+          ),
           visitActionsProvider(trackId).overrideWith(() => fakeActions),
         ],
       ),
