@@ -32,7 +32,7 @@ class ChatThreadPane extends ConsumerStatefulWidget {
 class _ChatThreadPaneState extends ConsumerState<ChatThreadPane> {
   final _input = TextEditingController();
   final _messageListController = ScrollController();
-  bool _scrollToBottomAfterSend = false;
+  bool _scrollToBottomAfterListUpdate = false;
 
   @override
   void dispose() {
@@ -65,11 +65,26 @@ class _ChatThreadPaneState extends ConsumerState<ChatThreadPane> {
   void _scrollToBottom() {
     if (!_messageListController.hasClients) return;
 
+    final maxScrollExtent = _messageListController.position.maxScrollExtent;
     _messageListController.animateTo(
-      _messageListController.position.maxScrollExtent,
+      maxScrollExtent,
       duration: const Duration(milliseconds: 250),
       curve: Curves.easeOut,
     );
+    // lazy ListView는 첫 레이아웃 뒤에도 콘텐츠 추정치를 보정할 수 있다. 다음 두 프레임에
+    // 마지막 위치를 다시 맞춰, 새 항목이 화면 밖에 남지 않게 한다.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_messageListController.hasClients) return;
+      _messageListController.jumpTo(
+        _messageListController.position.maxScrollExtent,
+      );
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!_messageListController.hasClients) return;
+        _messageListController.jumpTo(
+          _messageListController.position.maxScrollExtent,
+        );
+      });
+    });
   }
 
   Future<void> _send() async {
@@ -77,7 +92,6 @@ class _ChatThreadPaneState extends ConsumerState<ChatThreadPane> {
     if (text.isEmpty) return;
     _input.clear();
     await ref.read(sendDirectMessageProvider(widget.trackId, text).future);
-    _scrollToBottomAfterSend = true;
     ref.invalidate(trackMessageListProvider(widget.trackId, background: false));
     ref.invalidate(trackDirectSummariesProvider(widget.campId));
   }
@@ -97,9 +111,12 @@ class _ChatThreadPaneState extends ConsumerState<ChatThreadPane> {
       if (next.hasValue) {
         ref.invalidate(trackDirectSummariesProvider(widget.campId));
       }
-      if (_scrollToBottomAfterSend && next.hasValue && !next.isLoading) {
-        _scrollToBottomAfterSend = false;
-        WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
+      if (next.hasValue && !next.isLoading) {
+        // provider 알림은 ListView의 새 itemCount 레이아웃보다 먼저 온다. 이 플래그는
+        // data 분기에서 새 목록을 만든 뒤 post-frame 스크롤을 예약하는 데 쓴다. 관리자
+        // 자신의 발송뿐 아니라 진행자가 보낸 메시지가 SSE로 도착해 재조회될 때도 동일하게
+        // 최신 메시지가 화면 밖에 남지 않도록 항상 스크롤한다.
+        _scrollToBottomAfterListUpdate = true;
       }
     });
 
@@ -112,6 +129,13 @@ class _ChatThreadPaneState extends ConsumerState<ChatThreadPane> {
             data: (items) {
               if (items.isEmpty) {
                 return const EmptyState(message: '아직 나눈 대화가 없습니다');
+              }
+              if (_scrollToBottomAfterListUpdate) {
+                _scrollToBottomAfterListUpdate = false;
+                // ListView가 새 메시지를 포함해 레이아웃한 뒤 maxScrollExtent를 읽는다.
+                WidgetsBinding.instance.addPostFrameCallback(
+                  (_) => _scrollToBottom(),
+                );
               }
               return ListView.builder(
                 key: const Key('admin-direct-message-list'),

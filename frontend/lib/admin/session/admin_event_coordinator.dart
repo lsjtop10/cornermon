@@ -49,7 +49,11 @@ class AdminEventCoordinator extends _$AdminEventCoordinator {
         ref.invalidate(liveSummaryProvider(campId));
         break;
       case SseEventEventEnum.trackUpdated:
+        // 코너의 busy/idle 배지(A1 대시보드, cornerListProvider)는 개별 트랙 하나의 상태
+        // 전환만으로도 바뀔 수 있다 — corners_updated를 별도로 기다리지 않고 여기서도
+        // 갱신한다(track_deleted/trackReplaced와 동일한 이유).
         ref.invalidate(trackListProvider(campId));
+        ref.invalidate(cornerListProvider(campId));
         ref.invalidate(cornerDetailProvider);
         ref.invalidate(liveSummaryProvider(campId));
         break;
@@ -78,6 +82,7 @@ class AdminEventCoordinator extends _$AdminEventCoordinator {
         break;
       case SseEventEventEnum.trackReplaced:
         ref.invalidate(trackListProvider(campId));
+        ref.invalidate(cornerListProvider(campId));
         ref.invalidate(cornerDetailProvider);
         break;
       case SseEventEventEnum.sessionRevoked:
