@@ -245,6 +245,10 @@ Future<void> _send(
 ) async {
   try {
     await ref.read(trackDirectActionsProvider(trackId).notifier).send(content);
+    // 화면의 ref로 invalidate한다 — action notifier는 위젯이 watch하지 않는 autoDispose라
+    // 전송 직후 폐기되어 그 안에서 invalidate하면 유실될 수 있다.
+    if (!context.mounted) return;
+    ref.invalidate(trackMessageListProvider(trackId));
   } catch (_) {
     if (!context.mounted) return;
     ScaffoldMessenger.of(
