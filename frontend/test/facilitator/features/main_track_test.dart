@@ -86,6 +86,8 @@ void main() {
     expect(find.text('1'), findsOneWidget);
 
     // act
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump();
     await pumpHeader([read]);
     await tester.pump();
 

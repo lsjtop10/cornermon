@@ -93,6 +93,7 @@ class _TrackDirectScreenState extends ConsumerState<TrackDirectScreen> {
                     ..sort((a, b) => a.sentAt!.compareTo(b.sentAt!));
 
                   return ListView.builder(
+                    key: const Key('direct-message-list'),
                     controller: _messageListController,
                     padding: const EdgeInsets.all(AppSpacing.space4),
                     itemCount: sorted.length,

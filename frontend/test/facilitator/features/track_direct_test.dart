@@ -148,7 +148,12 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    final scrollable = tester.state<ScrollableState>(find.byType(Scrollable));
+    final scrollable = tester.state<ScrollableState>(
+      find.descendant(
+        of: find.byKey(const Key('direct-message-list')),
+        matching: find.byType(Scrollable),
+      ),
+    );
     scrollable.position.jumpTo(0);
 
     // act
