@@ -2635,8 +2635,13 @@ paths:
           description: Created
           schema:
             $ref: '#/definitions/MessageResponse'
+        "403":
+          description: 'TRACK_SCOPE_FORBIDDEN: 세션 트랙과 요청 트랙이 불일치'
+          schema:
+            $ref: '#/definitions/ErrorResponse'
       security:
       - AdminAuth: []
+      - TrackAuth: []
       summary: 다이렉트 메시지 발송
       tags:
       - E. Message

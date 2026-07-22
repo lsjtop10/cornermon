@@ -2769,6 +2769,9 @@ const docTemplate = `{
                 "security": [
                     {
                         "AdminAuth": []
+                    },
+                    {
+                        "TrackAuth": []
                     }
                 ],
                 "description": "관리자가 특정 트랙에, 또는 특정 트랙이 관리자에게 DIRECT 메시지를 발송한다.",
@@ -2805,6 +2808,12 @@ const docTemplate = `{
                         "description": "Created",
                         "schema": {
                             "$ref": "#/definitions/MessageResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "TRACK_SCOPE_FORBIDDEN: 세션 트랙과 요청 트랙이 불일치",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
