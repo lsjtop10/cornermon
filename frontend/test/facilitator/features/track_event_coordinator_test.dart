@@ -51,6 +51,7 @@ void main() {
   late int currentVisitBuildCount;
   late int broadcastListBuildCount;
   late int trackMessageListBuildCount;
+  late int unreadDirectCountBuildCount;
   late int trackCornerBuildCount;
 
   // 스트림 이벤트 전달 → AsyncValue 갱신 → ref.listen 콜백 → invalidate/rebuild가
@@ -68,6 +69,7 @@ void main() {
     currentVisitBuildCount = 0;
     broadcastListBuildCount = 0;
     trackMessageListBuildCount = 0;
+    unreadDirectCountBuildCount = 0;
     trackCornerBuildCount = 0;
 
     container = ProviderContainer(
@@ -85,9 +87,13 @@ void main() {
           broadcastListBuildCount++;
           return <Message>[];
         }),
-        trackMessageListProvider(trackId).overrideWith((ref) {
+        trackMessageListProvider(trackId, background: true).overrideWith((ref) {
           trackMessageListBuildCount++;
           return <Message>[];
+        }),
+        unreadDirectMessageCountProvider(trackId).overrideWith((ref) async {
+          unreadDirectCountBuildCount++;
+          return 0;
         }),
         trackCornerProvider(trackId).overrideWith((ref) {
           trackCornerBuildCount++;
@@ -103,7 +109,11 @@ void main() {
     container.listen(trackEventCoordinatorProvider(trackId), (_, _) {});
     container.listen(currentVisitProvider(trackId), (_, _) {});
     container.listen(facilitatorBroadcastMessageListProvider, (_, _) {});
-    container.listen(trackMessageListProvider(trackId), (_, _) {});
+    container.listen(
+      trackMessageListProvider(trackId, background: true),
+      (_, _) {},
+    );
+    container.listen(unreadDirectMessageCountProvider(trackId), (_, _) {});
     container.listen(trackCornerProvider(trackId), (_, _) {});
   });
 
@@ -215,6 +225,26 @@ void main() {
 
       // assert
       expect(trackMessageListBuildCount, greaterThan(baseline));
+    },
+  );
+
+  test(
+    'ShouldInvalidateUnreadDirectCountWhenMessagesChangedScopeIsOwnTrack',
+    () async {
+      // arrange
+      final baseline = unreadDirectCountBuildCount;
+      final event = SseEvent(
+        (b) => b
+          ..event = SseEventEventEnum.messagesChanged
+          ..scope.kind = SseScopeKind.track
+          ..scope.trackId = trackId.value,
+      );
+
+      // act
+      await pushAndSettle(event);
+
+      // assert
+      expect(unreadDirectCountBuildCount, greaterThan(baseline));
     },
   );
 

@@ -60,7 +60,8 @@ class TrackEventCoordinator extends _$TrackEventCoordinator {
         if (scope?.kind == SseScopeKind.camp) {
           ref.invalidate(facilitatorBroadcastMessageListProvider);
         } else if (isThisTrack) {
-          ref.invalidate(trackMessageListProvider(trackId));
+          ref.invalidate(trackMessageListProvider(trackId, background: true));
+          ref.invalidate(unreadDirectMessageCountProvider(trackId));
         }
         break;
       case SseEventEventEnum.trackDeleted:

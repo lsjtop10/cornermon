@@ -44,7 +44,17 @@ class _TrackDirectScreenState extends ConsumerState<TrackDirectScreen> {
     }
     final trackId = TrackId(sessionState.track.id!);
 
-    final messagesAsync = ref.watch(trackMessageListProvider(trackId));
+    ref.listen(
+      trackMessageListProvider(trackId, background: true),
+      (_, next) {
+        if (next.hasValue) {
+          ref.invalidate(unreadDirectMessageCountProvider(trackId));
+        }
+      },
+    );
+    final messagesAsync = ref.watch(
+      trackMessageListProvider(trackId, background: true),
+    );
 
     return Scaffold(
       backgroundColor: colors.bgCanvas,

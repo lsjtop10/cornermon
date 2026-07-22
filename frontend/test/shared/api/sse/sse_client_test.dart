@@ -7,6 +7,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:cornermon/shared/api/sse/sse_client.dart';
+import 'package:cornermon/shared/api/sse/sse_transport.dart';
 
 /// SseClient는 Dio(responseType: stream)를 통해 바이트를 받으므로,
 /// HttpClientAdapter 레벨에서 원하는 바이트 스트림을 그대로 응답으로 흘려보내는 fake adapter를 쓴다.
@@ -55,15 +56,36 @@ Dio _buildFakeDio(Stream<Uint8List> Function() streamFactory) {
   return dio;
 }
 
+SseClient _buildSseClient(Dio dio, {Duration? heartbeatTimeout}) {
+  return SseClient(
+    SseTransport(dio, receiveTimeout: const Duration(seconds: 45)),
+    heartbeatTimeout: heartbeatTimeout ?? const Duration(seconds: 40),
+  );
+}
+
 Uint8List _bytes(String s) => Uint8List.fromList(utf8.encode(s));
 
 void main() {
   group('SseClient.connect', () {
+    test('ShouldRejectTransportTimeoutNotLongerThanHeartbeatWatchdog', () {
+      // arrange / act / assert
+      expect(
+        () => SseClient(
+          SseTransport(
+            Dio(),
+            receiveTimeout: const Duration(seconds: 40),
+          ),
+          heartbeatTimeout: const Duration(seconds: 40),
+        ),
+        throwsArgumentError,
+      );
+    });
+
     test('ShouldParseDataLineIntoSseNotification', () async {
       // arrange — data: 라인 자체가 완전한 SSENotification JSON이다(00_overview.md §2.3).
       const frame = 'event: track_updated\ndata: {"event":"track_updated","scope":{"kind":"track","trackId":"t1"}}\n\n';
       final dio = _buildFakeDio(() => Stream.value(_bytes(frame)));
-      final sseClient = SseClient(dio);
+      final sseClient = _buildSseClient(dio);
 
       // act
       final events = await sseClient.connect('/events/track/t1').toList();
@@ -86,7 +108,7 @@ void main() {
           _bytes(heartbeat),
         ]),
       );
-      final sseClient = SseClient(dio);
+      final sseClient = _buildSseClient(dio);
 
       // act
       final events = await sseClient.connect('/events/track/t1').toList();
@@ -102,7 +124,10 @@ void main() {
       final neverEmitting = StreamController<Uint8List>();
       addTearDown(neverEmitting.close);
       final dio = _buildFakeDio(() => neverEmitting.stream);
-      final sseClient = SseClient(dio, heartbeatTimeout: const Duration(milliseconds: 50));
+      final sseClient = _buildSseClient(
+        dio,
+        heartbeatTimeout: const Duration(milliseconds: 50),
+      );
 
       // act
       final stream = sseClient.connect('/events/track/t1');
@@ -121,7 +146,7 @@ void main() {
       final dio = _buildFakeDio(
         () => Stream.value(_bytes('$malformedFrame$validFrame')),
       );
-      final sseClient = SseClient(dio);
+      final sseClient = _buildSseClient(dio);
 
       // act
       final events = await sseClient.connect('/events/track/t1').toList();
@@ -137,7 +162,10 @@ void main() {
       final neverEmitting = StreamController<Uint8List>();
       addTearDown(neverEmitting.close);
       final dio = _buildFakeDio(() => neverEmitting.stream);
-      final sseClient = SseClient(dio, heartbeatTimeout: const Duration(seconds: 5));
+      final sseClient = _buildSseClient(
+        dio,
+        heartbeatTimeout: const Duration(seconds: 5),
+      );
       var connectedCount = 0;
 
       // act
@@ -156,7 +184,10 @@ void main() {
       final neverEmitting = StreamController<Uint8List>();
       addTearDown(neverEmitting.close);
       final dio = _buildFakeDio(() => neverEmitting.stream);
-      final sseClient = SseClient(dio, heartbeatTimeout: const Duration(milliseconds: 50));
+      final sseClient = _buildSseClient(
+        dio,
+        heartbeatTimeout: const Duration(milliseconds: 50),
+      );
       var disconnectedCount = 0;
 
       // act
@@ -177,7 +208,7 @@ void main() {
       // arrange
       const frame = 'event: track_updated\ndata: {"event":"track_updated","scope":{"kind":"track","trackId":"t1"}}\n\n';
       final dio = _buildFakeDio(() => Stream.value(_bytes(frame)));
-      final sseClient = SseClient(dio);
+      final sseClient = _buildSseClient(dio);
       var connectedCount = 0;
       var disconnectedCount = 0;
 
@@ -200,7 +231,7 @@ void main() {
       // arrange
       final dio = Dio(BaseOptions(baseUrl: 'http://test.local'))
         ..httpClientAdapter = _ThrowingAdapter();
-      final sseClient = SseClient(dio);
+      final sseClient = _buildSseClient(dio);
       var disconnectedCount = 0;
 
       // act

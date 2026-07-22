@@ -9,6 +9,7 @@ import 'package:cornermon/shared/api/domain_aliases.dart';
 import 'package:cornermon/shared/api/ids.dart';
 import 'package:cornermon/shared/api/providers/corner_track_providers.dart';
 import 'package:cornermon/shared/api/providers/group_providers.dart';
+import 'package:cornermon/shared/api/providers/message_providers.dart';
 import 'package:cornermon/shared/api/providers/visit_providers.dart';
 import 'package:cornermon/shared/api/sse/track_event_stream.dart';
 import 'package:cornermon/shared/design_system/tokens/colors.dart';
@@ -67,6 +68,9 @@ void main() {
           facilitatorBroadcastMessageListProvider.overrideWith(
             (ref) => messages,
           ),
+          unreadDirectMessageCountProvider(
+            trackId,
+          ).overrideWith((ref) async => 0),
           trackConnectionProvider(
             trackId,
           ).overrideWithValue(TrackConnectionState.connected),
@@ -87,6 +91,33 @@ void main() {
 
     // assert
     expect(find.text('1'), findsNothing);
+  });
+
+  testWidgets('ShouldShowDirectMessageBadgeWhenUnreadMessagesExist', (
+    tester,
+  ) async {
+    // arrange & act
+    await tester.pumpWidget(
+      buildTestable(
+        MainTrackHeader(trackId: trackId),
+        overrides: [
+          currentVisitProvider(trackId).overrideWith((ref) => null),
+          facilitatorBroadcastMessageListProvider.overrideWith(
+            (ref) => <Message>[],
+          ),
+          unreadDirectMessageCountProvider(
+            trackId,
+          ).overrideWith((ref) async => 2),
+          trackConnectionProvider(
+            trackId,
+          ).overrideWithValue(TrackConnectionState.connected),
+        ],
+      ),
+    );
+    await tester.pump();
+
+    // assert
+    expect(find.text('2'), findsOneWidget);
   });
 
   Widget buildBusyBody({

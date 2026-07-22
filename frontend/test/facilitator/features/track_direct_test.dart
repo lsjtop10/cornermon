@@ -80,7 +80,10 @@ void main() {
         const TrackDirectScreen(),
         overrides: [
           trackSessionProvider.overrideWith(() => _FakeTrackSession(buildAuthenticatedState())),
-          trackMessageListProvider(trackId).overrideWith((ref) async => <Message>[]),
+          trackMessageListProvider(
+            trackId,
+            background: true,
+          ).overrideWith((ref) async => <Message>[]),
         ],
       ),
     );
@@ -99,7 +102,10 @@ void main() {
         const TrackDirectScreen(),
         overrides: [
           trackSessionProvider.overrideWith(() => _FakeTrackSession(buildAuthenticatedState())),
-          trackMessageListProvider(trackId).overrideWith((ref) async => <Message>[]),
+          trackMessageListProvider(
+            trackId,
+            background: true,
+          ).overrideWith((ref) async => <Message>[]),
           trackDirectActionsProvider(trackId).overrideWith(() => fakeActions),
         ],
       ),
@@ -123,7 +129,10 @@ void main() {
         const TrackDirectScreen(),
         overrides: [
           trackSessionProvider.overrideWith(() => _FakeTrackSession(buildAuthenticatedState())),
-          trackMessageListProvider(trackId).overrideWith((ref) async => <Message>[]),
+          trackMessageListProvider(
+            trackId,
+            background: true,
+          ).overrideWith((ref) async => <Message>[]),
           trackDirectActionsProvider(trackId).overrideWith(() => fakeActions),
         ],
       ),
@@ -159,7 +168,10 @@ void main() {
         const TrackDirectScreen(),
         overrides: [
           trackSessionProvider.overrideWith(() => _FakeTrackSession(buildAuthenticatedState())),
-          trackMessageListProvider(trackId).overrideWith((ref) async => [newer, older]),
+          trackMessageListProvider(
+            trackId,
+            background: true,
+          ).overrideWith((ref) async => [newer, older]),
         ],
       ),
     );
@@ -179,7 +191,10 @@ void main() {
         const TrackDirectScreen(),
         overrides: [
           trackSessionProvider.overrideWith(() => _FakeTrackSession(buildAuthenticatedState())),
-          trackMessageListProvider(trackId).overrideWith((ref) async => <Message>[]),
+          trackMessageListProvider(
+            trackId,
+            background: true,
+          ).overrideWith((ref) async => <Message>[]),
           trackDirectActionsProvider(trackId).overrideWith(() => fakeActions),
         ],
       ),
