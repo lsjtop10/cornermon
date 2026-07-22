@@ -21,13 +21,13 @@ func TestCornerServiceCommandRegression(t *testing.T) {
 	deletedAt := time.Date(2026, time.July, 21, 9, 0, 0, 0, time.UTC)
 	service.nowFn = func() time.Time { return deletedAt }
 
-	created, err := service.AddLearningCorner(ctx, "camp-1", "처음 이름")
-	if err != nil || created.ID() != "corner-1" {
+	created, err := service.AddLearningCorner(ctx, "camp-1", "처음 이름", 15)
+	if err != nil || created.ID() != "corner-1" || created.TargetMinutes() != 15 {
 		t.Fatalf("create failed: corner=%+v err=%v", created, err)
 	}
 
-	updated, err := service.ModifyCornerSpecification(ctx, created.ID(), "수정 이름")
-	if err != nil || updated.Name() != "수정 이름" {
+	updated, err := service.ModifyCornerSpecification(ctx, created.ID(), "수정 이름", 25)
+	if err != nil || updated.Name() != "수정 이름" || updated.TargetMinutes() != 25 {
 		t.Fatalf("update failed: corner=%+v err=%v", updated, err)
 	}
 
@@ -91,7 +91,7 @@ func TestAddLearningCornerShouldAppendNewCornerToExistingGroupItineraries(t *tes
 	service.uuidFn = func() string { return "corner-2" }
 
 	// Act
-	created, err := service.AddLearningCorner(ctx, "camp-1", "새 코너")
+	created, err := service.AddLearningCorner(ctx, "camp-1", "새 코너", 10)
 
 	// Assert
 	if err != nil || created.ID() != "corner-2" {

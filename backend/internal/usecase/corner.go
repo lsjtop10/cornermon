@@ -45,7 +45,7 @@ func NewCornerService(
 }
 
 // AddLearningCorner
-func (s *CornerService) AddLearningCorner(ctx context.Context, campID domain.CampID, name string) (*domain.Corner, error) {
+func (s *CornerService) AddLearningCorner(ctx context.Context, campID domain.CampID, name string, targetMinutes int) (*domain.Corner, error) {
 
 	camp, err := s.camps.Get(ctx, campID)
 	if err != nil {
@@ -56,9 +56,10 @@ func (s *CornerService) AddLearningCorner(ctx context.Context, campID domain.Cam
 	}
 
 	corner := domain.NewCornerFromProps(domain.CornerProps{
-		ID:     domain.CornerID(s.uuidFn()),
-		CampID: campID,
-		Name:   name,
+		ID:            domain.CornerID(s.uuidFn()),
+		CampID:        campID,
+		Name:          name,
+		TargetMinutes: targetMinutes,
 	})
 
 	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
@@ -126,7 +127,7 @@ func (s *CornerService) GetCornerByTrack(ctx context.Context, trackID domain.Tra
 }
 
 // ModifyCornerSpecification
-func (s *CornerService) ModifyCornerSpecification(ctx context.Context, id domain.CornerID, name string) (*domain.Corner, error) {
+func (s *CornerService) ModifyCornerSpecification(ctx context.Context, id domain.CornerID, name string, targetMinutes int) (*domain.Corner, error) {
 
 	corner, err := s.corners.Get(ctx, id)
 	if err != nil {
@@ -136,7 +137,8 @@ func (s *CornerService) ModifyCornerSpecification(ctx context.Context, id domain
 		return nil, withErrorContext("corner.modify", "validate_corner", domain.ErrCornerNotInItinerary, map[string]any{"corner_id": string(id), "corner_found": false})
 	}
 
-	corner.SetName(name) // assuming Name is modifiable
+	corner.SetName(name)
+	corner.SetTargetMinutes(targetMinutes)
 
 	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
 		if err := s.corners.Save(ctx, corner); err != nil {
@@ -150,7 +152,7 @@ func (s *CornerService) ModifyCornerSpecification(ctx context.Context, id domain
 		return nil, err
 	}
 
-	s.recordAuditLog(ctx, "admin", ActionCornerUpdate, string(id), true, map[string]any{"name": name})
+	s.recordAuditLog(ctx, "admin", ActionCornerUpdate, string(id), true, map[string]any{"name": name, "targetMinutes": targetMinutes})
 	_ = s.broadcaster.Broadcast(ctx, corner.CampID(), EventCornersUpdated, CampScope())
 
 	return corner, nil

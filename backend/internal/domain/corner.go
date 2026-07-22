@@ -63,6 +63,10 @@ func (c *Corner) SetName(name string) {
 	c.name = name
 }
 
+func (c *Corner) SetTargetMinutes(minutes int) {
+	c.targetMinutes = minutes
+}
+
 func (c *Corner) TargetMinutes() int {
 	return c.targetMinutes
 }
