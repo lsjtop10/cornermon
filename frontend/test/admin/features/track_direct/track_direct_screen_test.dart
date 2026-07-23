@@ -119,6 +119,38 @@ void main() {
     );
 
     testWidgets(
+      'ShouldStartMarkingReadWhenUnreadThreadIsTapped',
+      (tester) async {
+        // arrange
+        var markReadRequested = false;
+        await _pump(
+          tester,
+          campId: campId,
+          tracks: [_track('t1', 1, 'c1')],
+          extraOverrides: [
+            trackMessageListProvider(
+              TrackId('t1'),
+              background: false,
+            ).overrideWith((ref) async => []),
+            trackMessageListProvider(
+              TrackId('t1'),
+              background: true,
+            ).overrideWith((ref) async {
+              markReadRequested = true;
+              return [];
+            }),
+          ],
+        );
+
+        // act
+        await tester.tap(find.text('코너 1 · 1번 트랙'));
+
+        // assert — post-frame 스레드 렌더링을 기다리지 않고 탭 처리에서 읽음 요청을 시작한다.
+        expect(markReadRequested, isTrue);
+      },
+    );
+
+    testWidgets(
       'ShouldHighlightQuickReplyTagWhenTrackSendsFixedPhrase',
       (tester) async {
         // arrange

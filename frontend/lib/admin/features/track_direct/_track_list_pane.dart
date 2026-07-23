@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:cornermon/shared/api/domain_aliases.dart' as api;
 import 'package:cornermon/shared/api/ids.dart';
+import 'package:cornermon/shared/api/providers/message_providers.dart';
 import 'package:cornermon/shared/design_system/tokens/colors.dart';
 import 'package:cornermon/shared/design_system/tokens/typography.dart';
 import 'package:cornermon/shared/design_system/widgets/empty_state.dart';
@@ -13,6 +14,28 @@ class TrackListPane extends ConsumerWidget {
   const TrackListPane({required this.campId, super.key});
 
   final CampId campId;
+
+  Future<void> _openThread(
+    BuildContext context,
+    WidgetRef ref,
+    TrackId trackId,
+  ) async {
+    final readProvider = trackMessageListProvider(trackId, background: true);
+    final container = ProviderScope.containerOf(context, listen: false);
+    // 탭 직후에는 아직 ChatThreadPane이 provider를 watch하기 전일 수 있다. 임시 구독으로
+    // 자동 dispose를 막아 읽음 처리 GET이 취소되지 않도록 한다.
+    final subscription = container.listen(readProvider, (_, _) {});
+    ref.read(selectedDirectTrackIdProvider.notifier).select(trackId);
+    try {
+      await container.read(readProvider.future);
+      // 읽음 처리 응답은 스레드 provider에만 반영된다. 미리보기는 별도 family 인스턴스이므로
+      // 서버의 최신 isRead 값을 다시 받아 배지를 즉시 제거한다.
+      ref.invalidate(trackMessageListProvider(trackId, background: false));
+      ref.invalidate(trackDirectSummariesProvider(campId));
+    } finally {
+      subscription.close();
+    }
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -104,9 +127,11 @@ class TrackListPane extends ConsumerWidget {
                         ),
                       )
                     : null,
-                onTap: () => ref
-                    .read(selectedDirectTrackIdProvider.notifier)
-                    .select(TrackId(track.id ?? '')),
+                onTap: () => _openThread(
+                  context,
+                  ref,
+                  TrackId(track.id ?? ''),
+                ),
               ),
             );
           },
