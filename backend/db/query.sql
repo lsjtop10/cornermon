@@ -216,10 +216,11 @@ JOIN corners c ON t.corner_id = c.id
 WHERE c.camp_id = $1 AND c.deleted_at IS NULL AND f.revoked_at IS NULL;
 
 -- name: SaveFacilitatorSession :exec
-INSERT INTO facilitator_sessions (id, track_id, token_hash, created_at, revoked_at)
-VALUES ($1, $2, $3, $4, $5)
+INSERT INTO facilitator_sessions (id, track_id, token_hash, created_at, revoked_at, migration_target_track_id)
+VALUES ($1, $2, $3, $4, $5, $6)
 ON CONFLICT (id) DO UPDATE SET
-    revoked_at = EXCLUDED.revoked_at;
+    revoked_at = EXCLUDED.revoked_at,
+    migration_target_track_id = EXCLUDED.migration_target_track_id;
 
 -- name: GetAdmin :one
 SELECT * FROM admins WHERE id = $1;
