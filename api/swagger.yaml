@@ -538,6 +538,7 @@ definitions:
     - INVALID_TRANSITION
     - ITINERARY_CONFLICT
     - NOT_FOUND
+    - SESSION_MIGRATION_REQUIRED
     - SESSION_REVOKED
     - TRACK_BUSY
     - TRACK_CONFLICT
@@ -573,6 +574,7 @@ definitions:
     - CodeInvalidTransition
     - CodeItineraryConflict
     - CodeNotFound
+    - CodeSessionMigrationRequired
     - CodeSessionRevoked
     - CodeTrackBusy
     - CodeTrackConflict

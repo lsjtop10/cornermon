@@ -127,6 +127,7 @@ func RegisterRoutes(e *echo.Echo, h *Handlers, adminAuth AuthAdminUsecase, track
 		// before group middleware is evaluated.
 		message := v1.Group("")
 		message.Use(MessageAuthMiddleware(adminAuth, trackAuth))
+		message.Use(RequireNoPendingMigration())
 		message.GET("/camps/:campId/messages/broadcast", h.Message.ListBroadcasts)
 		message.POST("/tracks/:trackId/messages", h.Message.SendDirect)
 		message.GET("/tracks/:trackId/messages", h.Message.ListDirectMessages)
@@ -142,8 +143,15 @@ func RegisterRoutes(e *echo.Echo, h *Handlers, adminAuth AuthAdminUsecase, track
 	track := v1.Group("")
 	track.Use(TrackAuthMiddleware(trackAuth))
 
+	// 마이그레이션 대상이 지정된 세션도 여전히 호출할 수 있어야 하는 예외 라우트이므로
+	// RequireNoPendingMigration보다 먼저 등록한다.
 	track.POST("/auth/track/logout", h.Auth.TrackLogout)
 	track.POST("/tracks/:id/migrate-session", h.Auth.MigrateSession)
+
+	// 아래부터는 마이그레이션 대상이 지정된 세션의 접근을 막는다 — 새 라우트를 추가할 때
+	// 이 줄보다 위로 옮기지 않는 한 자동으로 가드가 적용된다.
+	track.Use(RequireNoPendingMigration())
+
 	if h.Group != nil {
 		track.GET("/tracks/:trackId/groups", h.Group.ListGroupsByTrack)
 	}

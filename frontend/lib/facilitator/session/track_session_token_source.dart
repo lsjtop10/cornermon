@@ -22,4 +22,8 @@ class TrackSessionTokenSource implements SessionTokenSource {
         .handleTermination(TrackSessionTerminationReason.forceLogout);
     await ref.read(deviceTrustProvider.notifier).recoverFromTrackUnauthorized();
   }
+
+  @override
+  Future<void> onSessionMigrationRequired() =>
+      ref.read(trackSessionProvider.notifier).migrateSession();
 }

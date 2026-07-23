@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import 'package:cornermon/shared/design_system/tokens/colors.dart';
 import 'package:cornermon/shared/design_system/tokens/spacing.dart';
@@ -44,14 +43,9 @@ class PinLoginScreen extends ConsumerWidget {
                   error: error,
                   onSubmitted: (pin) =>
                       ref.read(pinLoginErrorProvider.notifier).submit(pin),
+                  onCancelRegistration: () => _clearRegistration(context, ref),
                 ),
                 const SizedBox(height: AppSpacing.space8),
-                AppButton(
-                  variant: AppButtonVariant.secondary,
-                  size: AppButtonSize.comfortable,
-                  label: '기기 등록 취소',
-                  onPressed: () => _clearRegistration(context, ref),
-                ),
               ],
             ),
           ),
@@ -77,10 +71,15 @@ class PinLoginScreen extends ConsumerWidget {
 /// PinOtpInput + 상태별 안내 텍스트. DEVICE_LOCKED 카운트다운은 서버가 내려준
 /// retryAfterSeconds에서 시작해 로컬 타이머로 0까지 줄이고, 0이 되면 입력을 다시 활성화한다.
 class _PinLoginBody extends StatefulWidget {
-  const _PinLoginBody({required this.error, required this.onSubmitted});
+  const _PinLoginBody({
+    required this.error,
+    required this.onSubmitted,
+    required this.onCancelRegistration,
+  });
 
   final PinLoginUiError? error;
   final ValueChanged<String> onSubmitted;
+  final VoidCallback onCancelRegistration;
 
   @override
   State<_PinLoginBody> createState() => _PinLoginBodyState();
@@ -159,7 +158,12 @@ class _PinLoginBodyState extends State<_PinLoginBody> {
     final error = widget.error;
     switch (error) {
       case null:
-        return const SizedBox.shrink();
+        return AppButton(
+          variant: AppButtonVariant.secondary,
+          size: AppButtonSize.comfortable,
+          label: '기기 등록 취소',
+          onPressed: widget.onCancelRegistration,
+        );
       case PinInvalid(:final retryAfterSeconds):
         return Column(
           mainAxisSize: MainAxisSize.min,
@@ -194,12 +198,6 @@ class _PinLoginBodyState extends State<_PinLoginBody> {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: AppSpacing.space4),
-            AppButton(
-              variant: AppButtonVariant.secondary,
-              size: AppButtonSize.comfortable,
-              label: '기기 등록 화면으로',
-              onPressed: () => context.go('/device-pending'),
-            ),
           ],
         );
       case CampNotActiveYet():
