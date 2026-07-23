@@ -23,6 +23,7 @@ class TrackDirectScreen extends ConsumerWidget {
     final summaries = ref.watch(trackDirectSummariesProvider(campId));
 
     final selectedSummary = summaries.maybeWhen(
+      skipLoadingOnReload: true,
       data: (items) =>
           items.firstWhereOrNull((s) => s.track.id == selectedTrackId?.value),
       orElse: () => null,

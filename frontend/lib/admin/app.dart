@@ -3,9 +3,11 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:cornermon/admin/router/admin_router.dart';
+import 'package:cornermon/admin/session/admin_event_coordinator.dart';
 import 'package:cornermon/admin/theme/admin_theme_mode_provider.dart';
 import 'package:cornermon/admin/widgets/admin_scaffold_messenger_key.dart';
 import 'package:cornermon/shared/design_system/theme/admin_theme.dart';
+import 'package:cornermon/shared/design_system/widgets/connection_banner.dart';
 
 class AdminApp extends ConsumerWidget {
   const AdminApp({super.key});
@@ -25,6 +27,15 @@ class AdminApp extends ConsumerWidget {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
+      builder: (context, child) {
+        final bannerState = ref.watch(adminConnectionBannerStateProvider);
+        return Column(
+          children: [
+            ConnectionBanner(state: bannerState),
+            Expanded(child: child ?? const SizedBox.shrink()),
+          ],
+        );
+      },
     );
   }
 }

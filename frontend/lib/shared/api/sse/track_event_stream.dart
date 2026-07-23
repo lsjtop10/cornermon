@@ -1,13 +1,13 @@
 import 'dart:async';
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:cornermon_api_gen/cornermon_api_gen.dart';
 
 import '../../config/app_env.dart';
 import '../../network/network_reachability.dart';
 import '../ids.dart';
 import 'reconnect_backoff.dart';
 import 'sse_client.dart';
+import 'sse_event_receipt.dart';
 
 part 'track_event_stream.g.dart';
 
@@ -44,8 +44,9 @@ class TrackConnection extends _$TrackConnection {
 /// 끊기지 않는 스트림처럼 보이게 한다(좀비연결 감지는 SseClient 책임). 연결 상태(배너 표시)는
 /// 도메인 알림 도착 여부가 아니라 SseClient의 연결/해제 콜백으로 직접 판단한다(TrackConnection).
 @riverpod
-Stream<SSENotification> trackEvents(Ref ref, TrackId trackId) async* {
+Stream<SseEventReceipt> trackEvents(Ref ref, TrackId trackId) async* {
   var disposed = false;
+  var sequence = 0;
   ref.onDispose(() => disposed = true);
 
   final client = ref.watch(sseClientProvider);
@@ -56,14 +57,19 @@ Stream<SSENotification> trackEvents(Ref ref, TrackId trackId) async* {
 
   while (!disposed) {
     try {
-      yield* client.connect(
+      await for (final notification in client.connect(
         path,
         onConnected: () {
           backoff.reset();
           connection._markConnected();
         },
         onDisconnected: connection._markDisconnected,
-      );
+      )) {
+        yield SseEventReceipt(
+          sequence: ++sequence,
+          notification: notification,
+        );
+      }
       // 서버가 정상적으로 스트림을 끝내도(done) 계속 살아있어야 하므로 재연결 루프로 진입.
     } catch (_) {
       // 실패 원인과 무관하게 SseClient가 실패 시점에 이미 onDisconnected를 호출한 뒤

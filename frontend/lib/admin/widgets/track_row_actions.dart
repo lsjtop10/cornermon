@@ -4,6 +4,8 @@ import 'package:cornermon/shared/api/ids.dart';
 import 'package:cornermon/shared/api/providers/corner_track_providers.dart';
 import 'package:cornermon/shared/design_system/widgets/app_button.dart';
 import 'package:cornermon/shared/design_system/widgets/confirm_modal.dart';
+import 'package:cornermon/shared/export/export_action_menu.dart';
+import 'package:cornermon/shared/export/export_file.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -42,19 +44,47 @@ Future<void> showTrackPinDialog(
           icon: const Icon(Icons.copy),
           label: const Text('복사'),
         ),
-        TextButton.icon(
-          onPressed: () async {
-            final bytes = await buildTrackPinPdf(
-              trackNo: '${track.trackNo ?? '-'}',
-              pin: result.pin ?? '-',
-            );
-            await Printing.sharePdf(
-              bytes: bytes,
-              filename: 'track-${track.trackNo ?? 'pin'}-pin.pdf',
-            );
-          },
-          icon: const Icon(Icons.picture_as_pdf_outlined),
-          label: const Text('PDF 내보내기'),
+        Builder(
+          builder: (buttonContext) => TextButton.icon(
+            onPressed: () async {
+              final action = await showExportActionMenu(buttonContext);
+              if (action == null || !context.mounted) return;
+              try {
+                final file = ExportFile.pdf(
+                  name: 'track-${track.trackNo ?? 'pin'}-pin',
+                  bytes: await buildTrackPinPdf(
+                    trackNo: '${track.trackNo ?? '-'}',
+                    pin: result.pin ?? '-',
+                  ),
+                );
+                if (action == ExportAction.saveToDevice) {
+                  final saveResult = await ref.read(saveExportFileProvider)(
+                    file,
+                  );
+                  if (saveResult == ExportSaveResult.cancelled ||
+                      !context.mounted) {
+                    return;
+                  }
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(const SnackBar(content: Text('PDF를 저장했습니다')));
+                  return;
+                }
+                await Printing.sharePdf(
+                  bytes: file.bytes,
+                  filename: file.filename,
+                );
+              } catch (error) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('PDF 내보내기 실패: $error')),
+                  );
+                }
+              }
+            },
+            icon: const Icon(Icons.picture_as_pdf_outlined),
+            label: const Text('PDF 내보내기'),
+          ),
         ),
         TextButton(
           onPressed: () => Navigator.pop(dialogContext),

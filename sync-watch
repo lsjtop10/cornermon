@@ -15,14 +15,10 @@ RSYNC_EXCLUDES=(
     --exclude='frontend/ios/Flutter/ephemeral/'
     --exclude='frontend/ios/Pods/'
     --exclude='frontend/ios/.symlinks/'
-    --exclude='frontend/ios/Flutter/Generated.xcconfig'
-    --exclude='frontend/ios/Flutter/flutter_export_environment.sh'
-    --exclude='frontend/android/local.properties'
-    --exclude='frontend/.flutter-plugins-dependencies'
 )
 
 # 제외 대상 변경은 동기화를 다시 시작할 필요도 없으므로 감시에서 함께 제외한다.
-WATCH_EXCLUDE='(^|/)frontend/(\.dart_tool|build|\.flutter-plugins-dependencies|ios/Flutter/ephemeral|ios/Pods|ios/\.symlinks|ios/Flutter/Generated\.xcconfig|ios/Flutter/flutter_export_environment\.sh|android/local\.properties)(/|$)'
+WATCH_EXCLUDE='(^|/)(\|frontend/(\.dart_tool|build|ios/Flutter/ephemeral|ios/Pods|ios/\.symlinks))(/|$)'
 
 # 스크립트 실행 시 비밀번호 입력받음
 read -sp "SSH Password: " REMOTE_PASS

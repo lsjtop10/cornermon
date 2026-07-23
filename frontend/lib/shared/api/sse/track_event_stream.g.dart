@@ -120,11 +120,11 @@ final trackEventsProvider = TrackEventsFamily._();
 final class TrackEventsProvider
     extends
         $FunctionalProvider<
-          AsyncValue<SSENotification>,
-          SSENotification,
-          Stream<SSENotification>
+          AsyncValue<SseEventReceipt>,
+          SseEventReceipt,
+          Stream<SseEventReceipt>
         >
-    with $FutureModifier<SSENotification>, $StreamProvider<SSENotification> {
+    with $FutureModifier<SseEventReceipt>, $StreamProvider<SseEventReceipt> {
   /// 원시 이벤트 스트림 — 에러/종료 시 지수 백오프(+지터) 후 재연결을 반복해 구독자에게는
   /// 끊기지 않는 스트림처럼 보이게 한다(좀비연결 감지는 SseClient 책임). 연결 상태(배너 표시)는
   /// 도메인 알림 도착 여부가 아니라 SseClient의 연결/해제 콜백으로 직접 판단한다(TrackConnection).
@@ -151,12 +151,12 @@ final class TrackEventsProvider
 
   @$internal
   @override
-  $StreamProviderElement<SSENotification> $createElement(
+  $StreamProviderElement<SseEventReceipt> $createElement(
     $ProviderPointer pointer,
   ) => $StreamProviderElement(pointer);
 
   @override
-  Stream<SSENotification> create(Ref ref) {
+  Stream<SseEventReceipt> create(Ref ref) {
     final argument = this.argument as TrackId;
     return trackEvents(ref, argument);
   }
@@ -179,7 +179,7 @@ String _$trackEventsHash() => r'20f4c2d565465610cdc0f0cf7a619d332901370d';
 /// 도메인 알림 도착 여부가 아니라 SseClient의 연결/해제 콜백으로 직접 판단한다(TrackConnection).
 
 final class TrackEventsFamily extends $Family
-    with $FunctionalFamilyOverride<Stream<SSENotification>, TrackId> {
+    with $FunctionalFamilyOverride<Stream<SseEventReceipt>, TrackId> {
   TrackEventsFamily._()
     : super(
         retry: null,

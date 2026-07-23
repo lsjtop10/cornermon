@@ -1,13 +1,13 @@
 import 'dart:async';
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:cornermon_api_gen/cornermon_api_gen.dart';
 
 import '../../config/app_env.dart';
 import '../../network/network_reachability.dart';
 import '../ids.dart';
 import 'reconnect_backoff.dart';
 import 'sse_client.dart';
+import 'sse_event_receipt.dart';
 
 part 'admin_event_stream.g.dart';
 
@@ -48,8 +48,9 @@ class AdminConnection extends _$AdminConnection {
 }
 
 @riverpod
-Stream<SSENotification> adminEvents(Ref ref, CampId campId) async* {
+Stream<SseEventReceipt> adminEvents(Ref ref, CampId campId) async* {
   var disposed = false;
+  var sequence = 0;
   ref.onDispose(() => disposed = true);
 
   final client = ref.watch(sseClientProvider);
@@ -60,14 +61,19 @@ Stream<SSENotification> adminEvents(Ref ref, CampId campId) async* {
 
   while (!disposed) {
     try {
-      yield* client.connect(
+      await for (final notification in client.connect(
         path,
         onConnected: () {
           backoff.reset();
           connection._markConnected();
         },
         onDisconnected: connection._markDisconnected,
-      );
+      )) {
+        yield SseEventReceipt(
+          sequence: ++sequence,
+          notification: notification,
+        );
+      }
     } catch (_) {
       // 실패 원인과 무관하게 SseClient가 실패 시점에 이미 onDisconnected를 호출한 뒤
       // 에러를 던진다 — 여기서 다시 _markDisconnected()를 부르면 같은 실패를 두 번 세게
