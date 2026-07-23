@@ -183,7 +183,6 @@ class TraceIdInterceptor extends Interceptor {
 ```
 
 #### `lib/shared/api/client/logging_interceptor.dart` (신규)
-
 ```dart
 /// 책임: 모든 Dio 에러를 AppLogger로 통일 기록한다(§UC-1). AuthInterceptor와 동일하게
 /// shared 하위 provider만 참조하며 admin/facilitator를 알지 못한다(00_overview.md §4-a).

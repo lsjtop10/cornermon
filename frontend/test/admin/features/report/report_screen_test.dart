@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:cornermon/admin/features/report/report_screen.dart';
 import 'package:cornermon/admin/session/selected_camp_provider.dart';
 import 'package:cornermon/shared/api/ids.dart';
-import 'package:cornermon/shared/api/providers/corner_track_providers.dart';
 import 'package:cornermon/shared/api/providers/report_providers.dart';
 import 'package:cornermon_api_gen/cornermon_api_gen.dart';
 import 'package:flutter/material.dart';
@@ -77,6 +76,8 @@ CampReportResponse _report() => CampReportResponse(
           ..cornerId = 'c-a'
           ..cornerName = '코너 A'
           ..completedVisitCount = 5
+          ..avgDurationSeconds = 720
+          ..avgDeviationSeconds = 120
           ..overDeviationRatio = 0.4
           ..unvisitedGroups.replace([_unvisited('g2', '2조')]),
       ),
@@ -85,6 +86,8 @@ CampReportResponse _report() => CampReportResponse(
           ..cornerId = 'c-b'
           ..cornerName = '코너 B'
           ..completedVisitCount = 2,
+          ..avgDurationSeconds = 1170
+          ..avgDeviationSeconds = -30,
       ),
     ])
     ..groupStats.replace([
@@ -105,11 +108,6 @@ CampReportResponse _report() => CampReportResponse(
     ]),
 );
 
-List<CornerResponse> _corners() => [
-  CornerResponse((b) => b..id = 'c-a'..name = '코너 A'..targetMinutes = 10),
-  CornerResponse((b) => b..id = 'c-b'..name = '코너 B'..targetMinutes = 20),
-];
-
 Future<void> _pump(
   WidgetTester tester, {
   required CampId campId,
@@ -125,7 +123,6 @@ Future<void> _pump(
         ),
         if (currentReport != null)
           currentReportProvider(campId).overrideWith(currentReport),
-        cornerListProvider(campId).overrideWith((ref) async => _corners()),
       ],
       child: const MaterialApp(home: ReportScreen()),
     ),
@@ -249,8 +246,8 @@ void main() {
       // assert — c-a는 overDeviationRatio=0.4 → "40%", c-b는 null → "-".
       expect(find.text('40%'), findsOneWidget);
       expect(find.text('-'), findsOneWidget);
-      // 평균 소요시간(편차)도 함께 렌더링된다: targetMinutes(10) + avgDeviationSeconds(150).
-      expect(find.text('12:30 (+2:30)'), findsOneWidget);
+      // bottleneckRanking과 무관하게 코너 통계의 정식 평균값을 렌더링한다.
+      expect(find.text('12:00 (+2:00)'), findsOneWidget);
     },
   );
 

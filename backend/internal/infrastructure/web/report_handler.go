@@ -32,6 +32,8 @@ type CornerStatsResponse struct {
 	CornerID            string                   `json:"cornerId" format:"uuid"`
 	CornerName          string                   `json:"cornerName"`
 	CompletedVisitCount int                      `json:"completedVisitCount"`
+	AvgDurationSeconds  *float32                 `json:"avgDurationSeconds,omitempty"`
+	AvgDeviationSeconds *float32                 `json:"avgDeviationSeconds,omitempty"`
 	OverDeviationRatio  float32                  `json:"overDeviationRatio"`
 	UnvisitedGroups     []UnvisitedGroupResponse `json:"unvisitedGroups"`
 } // @name CornerStatsResponse
@@ -124,10 +126,19 @@ func mapReport(r *usecase.CampReport) CampReportResponse {
 	}
 
 	for _, cr := range r.CornerReports {
+		var avgDurationSeconds, avgDeviationSeconds *float32
+		if cr.CompletedCount > 0 {
+			avgDuration := float32(cr.AvgDurationSec)
+			avgDeviation := float32(cr.AvgDeviationSec)
+			avgDurationSeconds = &avgDuration
+			avgDeviationSeconds = &avgDeviation
+		}
 		res.CornerStats = append(res.CornerStats, CornerStatsResponse{
 			CornerID:            string(cr.CornerID),
 			CornerName:          cr.CornerName,
 			CompletedVisitCount: cr.CompletedCount,
+			AvgDurationSeconds:  avgDurationSeconds,
+			AvgDeviationSeconds: avgDeviationSeconds,
 			OverDeviationRatio:  float32(cr.PositiveDeviationRatio),
 		})
 	}
