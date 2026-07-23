@@ -406,7 +406,7 @@ class _SummaryBar extends StatelessWidget {
       final tiles = [
         ('완주율', '${((item.completionRate ?? 0) * 100).round()}%'),
         (
-          '진행중 조',
+          '미완주 조',
           '${(item.totalGroups ?? 0) - (item.finishedGroupCount ?? 0)}',
         ),
         (
