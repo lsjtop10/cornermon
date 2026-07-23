@@ -30,13 +30,11 @@ func TestTrackService_ExportTrackPINs(t *testing.T) {
 		ID: "track-1", CornerID: "corner-1", TrackNo: 7,
 		Status: domain.TrackActive, PINCiphertext: "482910",
 	}))
-	service := NewTrackService(
-		NewMockCampRepository(), corners, tracks, NewMockFacilitatorSessionRepository(),
-		&MockAuditLogRepository{}, &MockBroadcaster{}, &MockTxManager{}, passthroughTrackPINProtector{},
-	)
+	service := NewTrackService(NewMockCampRepository(), corners, tracks, NewMockFacilitatorSessionRepository(), NewMockAdminRepository(),
+		&MockAuditLogRepository{}, &MockBroadcaster{}, &MockTxManager{}, passthroughTrackPINProtector{})
 
 	// Act
-	exports, err := service.ExportTrackPINs(context.Background(), "camp-1")
+	exports, err := service.ExportTrackPINs(context.Background(), "camp-1", "admin-1")
 
 	// Assert
 	if err != nil {
@@ -67,13 +65,15 @@ func TestTrackService_CreateTrack(t *testing.T) {
 		auditLogs := &MockAuditLogRepository{}
 		broadcaster := &MockBroadcaster{}
 		tx := &MockTxManager{}
+		admins := NewMockAdminRepository()
+		admins.Admins["admin-1"] = domain.NewAdminFromProps(domain.AdminProps{ID: "admin-1", Username: "김관리"})
 
-		s := NewTrackService(camps, corners, tracks, sessions, auditLogs, broadcaster, tx)
+		s := NewTrackService(camps, corners, tracks, sessions, admins, auditLogs, broadcaster, tx)
 		s.nowFn = func() time.Time { return now }
 		s.uuidFn = func() string { return "track-uuid-1" }
 
 		// Act
-		track, plainPIN, err := s.CreateTrack(context.Background(), "camp-1", "corner-1")
+		track, plainPIN, err := s.CreateTrack(context.Background(), "camp-1", "corner-1", "admin-1")
 
 		// Assert
 		if err != nil {
@@ -97,6 +97,15 @@ func TestTrackService_CreateTrack(t *testing.T) {
 			broadcaster.Broadcasts[0].Scope != CampScope() {
 			t.Errorf("expected EventTracksUpdated broadcast with scope 'camp', got %v", broadcaster.Broadcasts)
 		}
+		if len(auditLogs.Logs) != 1 {
+			t.Fatalf("expected 1 audit log, got %d", len(auditLogs.Logs))
+		}
+		if auditLogs.Logs[0].Actor() != "admin-1" {
+			t.Errorf("expected Actor to remain raw admin ID 'admin-1', got %q", auditLogs.Logs[0].Actor())
+		}
+		if auditLogs.Logs[0].ActorName() != "김관리" {
+			t.Errorf("expected ActorName '김관리', got %q", auditLogs.Logs[0].ActorName())
+		}
 	})
 
 	t.Run("ShouldFailCreateTrackWhenCampIsEnded", func(t *testing.T) {
@@ -115,10 +124,10 @@ func TestTrackService_CreateTrack(t *testing.T) {
 		broadcaster := &MockBroadcaster{}
 		tx := &MockTxManager{}
 
-		s := NewTrackService(camps, corners, tracks, sessions, auditLogs, broadcaster, tx)
+		s := NewTrackService(camps, corners, tracks, sessions, NewMockAdminRepository(), auditLogs, broadcaster, tx)
 
 		// Act
-		_, _, err := s.CreateTrack(context.Background(), "camp-1", "corner-1")
+		_, _, err := s.CreateTrack(context.Background(), "camp-1", "corner-1", "admin-1")
 
 		// Assert
 		if !errors.Is(err, domain.ErrCampInvalidTransition) {
@@ -156,12 +165,12 @@ func TestTrackService_DeleteTrack(t *testing.T) {
 		broadcaster := &MockBroadcaster{}
 		tx := &MockTxManager{}
 
-		s := NewTrackService(camps, corners, tracks, sessions, auditLogs, broadcaster, tx)
+		s := NewTrackService(camps, corners, tracks, sessions, NewMockAdminRepository(), auditLogs, broadcaster, tx)
 		s.nowFn = func() time.Time { return now }
 		s.uuidFn = func() string { return "audit-uuid" }
 
 		// Act
-		isLast, err := s.DeleteTrack(context.Background(), "track-1")
+		isLast, err := s.DeleteTrack(context.Background(), "track-1", "admin-1")
 
 		// Assert
 		if err != nil {
@@ -206,11 +215,11 @@ func TestTrackService_DeleteTrack(t *testing.T) {
 		broadcaster := &MockBroadcaster{}
 		tx := &MockTxManager{}
 
-		s := NewTrackService(camps, corners, tracks, sessions, auditLogs, broadcaster, tx)
+		s := NewTrackService(camps, corners, tracks, sessions, NewMockAdminRepository(), auditLogs, broadcaster, tx)
 		s.nowFn = func() time.Time { return now }
 
 		// Act
-		_, err := s.DeleteTrack(context.Background(), "track-1")
+		_, err := s.DeleteTrack(context.Background(), "track-1", "admin-1")
 
 		// Assert
 		if !errors.Is(err, domain.ErrTrackDeleteBlocked) {
@@ -230,12 +239,12 @@ func TestReplaceTrackShoudMigrateSessionAndBroadcastAfterSuccess(t *testing.T) {
 	sessions := NewMockFacilitatorSessionRepository()
 	_ = sessions.Save(context.Background(), domain.NewFacilitatorSessionFromProps(domain.FacilitatorSessionProps{ID: "session-1", TrackID: "track-old", CreatedAt: now}))
 	broadcaster := &MockBroadcaster{}
-	service := NewTrackService(NewMockCampRepository(), corners, tracks, sessions, &MockAuditLogRepository{}, broadcaster, &MockTxManager{})
+	service := NewTrackService(NewMockCampRepository(), corners, tracks, sessions, NewMockAdminRepository(), &MockAuditLogRepository{}, broadcaster, &MockTxManager{})
 	service.nowFn = func() time.Time { return now }
 	service.uuidFn = func() string { return "track-new" }
 
 	// Act
-	track, pin, err := service.ReplaceTrack(context.Background(), "track-old", "corner-new")
+	track, pin, err := service.ReplaceTrack(context.Background(), "track-old", "corner-new", "admin-1")
 
 	// Assert
 	if err != nil {
@@ -263,10 +272,10 @@ func TestReplaceTrackShoudRejectDifferentCampBeforeMutation(t *testing.T) {
 	original := domain.NewTrackFromProps(domain.TrackProps{ID: "track-old", CornerID: "corner-old", Status: domain.TrackActive})
 	_ = tracks.Save(context.Background(), original)
 	broadcaster := &MockBroadcaster{}
-	service := NewTrackService(NewMockCampRepository(), corners, tracks, NewMockFacilitatorSessionRepository(), &MockAuditLogRepository{}, broadcaster, &MockTxManager{})
+	service := NewTrackService(NewMockCampRepository(), corners, tracks, NewMockFacilitatorSessionRepository(), NewMockAdminRepository(), &MockAuditLogRepository{}, broadcaster, &MockTxManager{})
 
 	// Act
-	_, _, err := service.ReplaceTrack(context.Background(), "track-old", "corner-new")
+	_, _, err := service.ReplaceTrack(context.Background(), "track-old", "corner-new", "admin-1")
 
 	// Assert
 	if !errors.Is(err, domain.ErrTrackCampMismatch) {
@@ -285,10 +294,10 @@ func TestReplaceTrackShoudPreserveBusyTrackWhenRejected(t *testing.T) {
 	tracks := NewMockTrackRepository()
 	original := domain.NewTrackFromProps(domain.TrackProps{ID: "track-old", CornerID: "corner-old", Status: domain.TrackActive, CurrentVisitID: domain.Some[domain.VisitID]("visit-1")})
 	_ = tracks.Save(context.Background(), original)
-	service := NewTrackService(NewMockCampRepository(), corners, tracks, NewMockFacilitatorSessionRepository(), &MockAuditLogRepository{}, &MockBroadcaster{}, &MockTxManager{})
+	service := NewTrackService(NewMockCampRepository(), corners, tracks, NewMockFacilitatorSessionRepository(), NewMockAdminRepository(), &MockAuditLogRepository{}, &MockBroadcaster{}, &MockTxManager{})
 
 	// Act
-	_, _, err := service.ReplaceTrack(context.Background(), "track-old", "corner-new")
+	_, _, err := service.ReplaceTrack(context.Background(), "track-old", "corner-new", "admin-1")
 
 	// Assert
 	if !errors.Is(err, domain.ErrTrackDeleteBlocked) {

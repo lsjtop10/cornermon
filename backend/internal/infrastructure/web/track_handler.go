@@ -112,9 +112,10 @@ func (h *TrackHandler) CreateTracks(c echo.Context) error {
 	if err := c.Bind(&req); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, ErrorResponse{Code: CodeBadRequest, Message: "Invalid request body"}).SetInternal(err)
 	}
+	actorAdminID := getAdminID(c)
 	var res []TrackPinResponse
 	for i := 0; i < req.Count; i++ {
-		track, pin, err := h.svc.CreateTrack(c.Request().Context(), domain.CampID(req.CampID), domain.CornerID(req.CornerID))
+		track, pin, err := h.svc.CreateTrack(c.Request().Context(), domain.CampID(req.CampID), domain.CornerID(req.CornerID), actorAdminID)
 		if err != nil {
 			return trackHTTPError(err)
 		}
@@ -167,8 +168,9 @@ func (h *TrackHandler) BulkDeleteTracks(c echo.Context) error {
 	if err := c.Bind(&req); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, ErrorResponse{Code: CodeBadRequest, Message: "Invalid request body"}).SetInternal(err)
 	}
+	actorAdminID := getAdminID(c)
 	for _, id := range req.TrackIDs {
-		_, err := h.svc.DeleteTrack(c.Request().Context(), domain.TrackID(id))
+		_, err := h.svc.DeleteTrack(c.Request().Context(), domain.TrackID(id), actorAdminID)
 		if err != nil {
 			return trackHTTPError(err)
 		}
@@ -203,6 +205,7 @@ func (h *TrackHandler) ReplaceTrack(c echo.Context) error {
 		c.Request().Context(),
 		domain.TrackID(c.Param("id")),
 		domain.CornerID(req.NewCornerID),
+		getAdminID(c),
 	)
 	if err != nil {
 		return trackHTTPError(err)
@@ -221,7 +224,7 @@ func (h *TrackHandler) ReplaceTrack(c echo.Context) error {
 // @Router       /tracks/{id}/regenerate-pin [post]
 func (h *TrackHandler) RegeneratePin(c echo.Context) error {
 	id := domain.TrackID(c.Param("id"))
-	track, plainPIN, err := h.svc.RegeneratePIN(c.Request().Context(), id)
+	track, plainPIN, err := h.svc.RegeneratePIN(c.Request().Context(), id, getAdminID(c))
 	if err != nil {
 		return trackHTTPError(err)
 	}
@@ -241,7 +244,7 @@ func (h *TrackHandler) ExportTracks(c echo.Context) error {
 	if campID == "" {
 		return echo.NewHTTPError(http.StatusBadRequest, "campId is required")
 	}
-	exports, err := h.svc.ExportTrackPINs(c.Request().Context(), campID)
+	exports, err := h.svc.ExportTrackPINs(c.Request().Context(), campID, getAdminID(c))
 	if err != nil {
 		return trackHTTPError(err)
 	}
