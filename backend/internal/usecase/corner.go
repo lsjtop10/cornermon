@@ -14,6 +14,7 @@ type CornerService struct {
 	corners     CornerRepository
 	tracks      TrackRepository
 	groups      GroupRepository
+	admins      AdminRepository
 	auditLogs   AuditLogRepository
 	broadcaster Broadcaster
 	tx          TxManager
@@ -27,6 +28,7 @@ func NewCornerService(
 	corners CornerRepository,
 	tracks TrackRepository,
 	groups GroupRepository,
+	admins AdminRepository,
 	auditLogs AuditLogRepository,
 	broadcaster Broadcaster,
 	tx TxManager,
@@ -36,6 +38,7 @@ func NewCornerService(
 		corners:     corners,
 		tracks:      tracks,
 		groups:      groups,
+		admins:      admins,
 		auditLogs:   auditLogs,
 		broadcaster: broadcaster,
 		tx:          tx,
@@ -45,7 +48,7 @@ func NewCornerService(
 }
 
 // AddLearningCorner
-func (s *CornerService) AddLearningCorner(ctx context.Context, campID domain.CampID, name string, targetMinutes int) (*domain.Corner, error) {
+func (s *CornerService) AddLearningCorner(ctx context.Context, campID domain.CampID, name string, targetMinutes int, actorAdminID domain.AdminID) (*domain.Corner, error) {
 
 	camp, err := s.camps.Get(ctx, campID)
 	if err != nil {
@@ -75,11 +78,11 @@ func (s *CornerService) AddLearningCorner(ctx context.Context, campID domain.Cam
 	})
 
 	if err != nil {
-		s.recordAuditLog(ctx, "admin", ActionCornerCreate, "", false, errorAuditMetadata(err, nil))
+		s.recordAuditLog(ctx, string(actorAdminID), adminActorLabel(ctx, s.admins, actorAdminID, nil), ActionCornerCreate, "", false, errorAuditMetadata(err, nil))
 		return nil, err
 	}
 
-	s.recordAuditLog(ctx, "admin", ActionCornerCreate, string(corner.ID()), true, map[string]any{"campID": string(campID), "name": name})
+	s.recordAuditLog(ctx, string(actorAdminID), adminActorLabel(ctx, s.admins, actorAdminID, nil), ActionCornerCreate, string(corner.ID()), true, map[string]any{"campID": string(campID), "name": name})
 	_ = s.broadcaster.Broadcast(ctx, campID, EventCornersUpdated, CampScope())
 
 	return corner, nil
@@ -127,7 +130,7 @@ func (s *CornerService) GetCornerByTrack(ctx context.Context, trackID domain.Tra
 }
 
 // ModifyCornerSpecification
-func (s *CornerService) ModifyCornerSpecification(ctx context.Context, id domain.CornerID, name string, targetMinutes int) (*domain.Corner, error) {
+func (s *CornerService) ModifyCornerSpecification(ctx context.Context, id domain.CornerID, name string, targetMinutes int, actorAdminID domain.AdminID) (*domain.Corner, error) {
 
 	corner, err := s.corners.Get(ctx, id)
 	if err != nil {
@@ -148,18 +151,18 @@ func (s *CornerService) ModifyCornerSpecification(ctx context.Context, id domain
 	})
 
 	if err != nil {
-		s.recordAuditLog(ctx, "admin", ActionCornerUpdate, string(id), false, errorAuditMetadata(err, nil))
+		s.recordAuditLog(ctx, string(actorAdminID), adminActorLabel(ctx, s.admins, actorAdminID, nil), ActionCornerUpdate, string(id), false, errorAuditMetadata(err, nil))
 		return nil, err
 	}
 
-	s.recordAuditLog(ctx, "admin", ActionCornerUpdate, string(id), true, map[string]any{"name": name, "targetMinutes": targetMinutes})
+	s.recordAuditLog(ctx, string(actorAdminID), adminActorLabel(ctx, s.admins, actorAdminID, nil), ActionCornerUpdate, string(id), true, map[string]any{"name": name, "targetMinutes": targetMinutes})
 	_ = s.broadcaster.Broadcast(ctx, corner.CampID(), EventCornersUpdated, CampScope())
 
 	return corner, nil
 }
 
 // RemoveCornerFromCamp
-func (s *CornerService) RemoveCornerFromCamp(ctx context.Context, id domain.CornerID) error {
+func (s *CornerService) RemoveCornerFromCamp(ctx context.Context, id domain.CornerID, actorAdminID domain.AdminID) error {
 
 	corner, err := s.corners.Get(ctx, id)
 	if err != nil {
@@ -182,11 +185,11 @@ func (s *CornerService) RemoveCornerFromCamp(ctx context.Context, id domain.Corn
 	})
 
 	if err != nil {
-		s.recordAuditLog(ctx, "admin", ActionCornerDelete, string(id), false, errorAuditMetadata(err, nil))
+		s.recordAuditLog(ctx, string(actorAdminID), adminActorLabel(ctx, s.admins, actorAdminID, nil), ActionCornerDelete, string(id), false, errorAuditMetadata(err, nil))
 		return err // D-2 allowed: already wrapped or handled
 	}
 
-	s.recordAuditLog(ctx, "admin", ActionCornerDelete, string(id), true, nil)
+	s.recordAuditLog(ctx, string(actorAdminID), adminActorLabel(ctx, s.admins, actorAdminID, nil), ActionCornerDelete, string(id), true, nil)
 	_ = s.broadcaster.Broadcast(ctx, corner.CampID(), EventCornersUpdated, CampScope())
 
 	return nil
@@ -206,10 +209,11 @@ func (s *CornerService) syncGroupItineraries(ctx context.Context, campID domain.
 	return s.groups.SaveBulk(ctx, groups)
 }
 
-func (s *CornerService) recordAuditLog(ctx context.Context, actor string, action AuditAction, target string, success bool, metadata map[string]any) {
+func (s *CornerService) recordAuditLog(ctx context.Context, actor, actorName string, action AuditAction, target string, success bool, metadata map[string]any) {
 	log := domain.NewAuditLogFromProps(domain.AuditLogProps{
 		ID:         domain.AuditLogID(s.uuidFn()),
 		Actor:      actor,
+		ActorName:  actorName,
 		Action:     string(action),
 		Target:     target,
 		Success:    success,
