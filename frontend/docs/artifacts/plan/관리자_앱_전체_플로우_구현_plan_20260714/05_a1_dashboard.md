@@ -13,7 +13,7 @@
 
 - **확인 필요 — 해소함(백엔드에 선반영 완료)**: 이전 버전은 `Corner`에 평균 소요시간/표본 수가 전혀 없다고 서술했으나, `api/swagger.yaml`에 `CornerResponse.cornerMetric: CornerMetricResponse{avgDurationSeconds: int, sampleCount: int}`가 신설되었다(코드젠 후 `Corner.cornerMetric`). 이제 카드 문구 `"평균 10:40 (+2:30) · 최근 10건"`을 절반은 정식 필드로, 절반(편차)은 기존 `bottleneckRanking.avgDeviationSeconds` 조인으로 완성할 수 있다: **"평균"과 "N건"은 `corner.cornerMetric`에서, "편차"는 여전히 `bottleneckRanking` 조인 필요**(이 필드는 `CornerMetricResponse`에 없다 — `bottleneckRanking`에 해당 코너가 없으면 편차 부분만 생략하고 평균/표본 수는 그대로 표시). §2.2 `CornerDashboardEntry`에 `avgDurationSeconds`/`sampleCount`를 `corner.cornerMetric`에서 직접 꺼내 추가하고, §2.3 포맷 함수를 "평균 M:SS (편차 있으면 (+/-M:SS)) · 최근 N건" 전체 문구로 되돌린다(§2.3 참고). 단, `10_a12_report.md`(A12 리포트, `CornerStatsResponse` 사용)에는 이 필드가 추가되지 않았다 — A1과 A12는 서로 다른 응답 스키마를 쓰므로 그쪽 갭은 별도다.
 - **확인 필요 — 해소함**: 상단 요약 바의 "안읽은 다이렉트 메시지 수"는 `09_a10_a11_messages.md` §2.7이 확정한 방식을 그대로 재사용한다 — 전용 `unread-count` 엔드포인트(아직 `501`, Issue #69)에 의존하지 않고, `trackMessageList(trackId, background: true)`(부수효과 없는 조회, §2.7 확정)의 `isFromTrack && !isRead` 파생값을 트랙별로 합산한다. 이 화면은 캠프 전체 트랙 합계가 필요하므로 `09`가 이미 만든 `trackDirectSummariesProvider(campId)`(트랙별 요약, 이미 이 파생값을 `unreadCount`로 갖고 있음)를 그대로 watch해 `unreadCount` 합만 더하면 된다 — 별도 N+1 호출을 새로 만들 필요 없음(§2.4 참고).
-- "진행중 조 수"는 `CampSummaryStatsResponse.totalGroups - finishedGroupCount`로 파생한다(§2.3). 이 값은 "완주 못한 조 전체"이며 그중 아직 배지도 안 찍은 조까지 포함할 수 있다 — screen-spec 문구가 "진행중"이라 미묘하게 다를 수 있으나, 조 단위 "지금 어느 코너에서 진행 중인가"를 판별할 별도 API가 없어 이 파생값을 쓴다. **확인 필요**: 정확히 "IN_PROGRESS 방문이 있는 조"만 세고 싶다면 `GET /camps/{campId}/groups`를 전부 가져와 `itinerary`에 `IN_PROGRESS`가 하나라도 있는 조만 카운트해야 하는데, 코너 수만큼 N배 느려질 그리드 로딩과 별개로 조 목록 전체를 매번 불러오는 비용이 든다 — 1차 구현은 요약 API의 파생값을 쓰고, 필요시 `07_a5_a6_group_status.md`의 `groupList(campId)` 캐시를 재사용하는 2차 개선으로 남긴다.
+- "미완주 조 수"는 `CampSummaryStatsResponse.totalGroups - finishedGroupCount`로 파생한다(§2.3). 아직 완주하지 못한 조 전체(코너 이동 중/미시작 포함)를 세는 지표로, "지금 이 순간 코너에서 활동 중인 조"(`GroupAtCorner`)만 세는 좁은 지표가 아니다 — 스태프가 "남은 일감"을 파악하는 용도이므로 의도적으로 이 정의를 쓴다(라벨을 "진행중 조"에서 "미완주 조"로 변경해 혼동 소지 제거, PR #192 후속 논의).
 
 ## 1. 유즈케이스
 
@@ -23,7 +23,7 @@
 | **P0** | UC-2: 정렬 드롭다운 4종 | 코너번호순(기본)/이름순/평균편차높은순/평균편차낮은순, 미가동은 방향 무관 항상 맨 뒤 | screen-spec A1 "정렬(신규)" |
 | **P0** | UC-3: 필터 칩 5종 | 전체/BUSY/IDLE/미가동/병목만 | screen-spec A1 "구성 요소" |
 | **P0** | UC-4: 카드 탭 → `/corners/:cornerId`(A2) 이동 | `context.go` 네비게이션만 담당, A2 내부는 `06_a2_a2b_a3_a4_corner_track.md` | screen-spec A1 "인터랙션" |
-| **P0** | UC-5: 상단 요약 바(완주율/진행중 조 수/경과시간/안읽은 다이렉트) | `liveSummary(campId)` 소비, 안읽은 다이렉트 탭 → A11 | screen-spec A1 "레이아웃" |
+| **P0** | UC-5: 상단 요약 바(완주율/미완주 조 수/경과시간/안읽은 다이렉트) | `liveSummary(campId)` 소비, 안읽은 다이렉트 탭 → A11 | screen-spec A1 "레이아웃" |
 | P1 | UC-6: "트랙 일괄 관리 →" 링크, "공지 발송" 퀵 액션 | `/corner-track-manage`(A2B), `/messages/broadcast`(A10)로 이동만 담당 | screen-spec A1 |
 | P1 | UC-7: 풀to리프레시 + 로딩 스켈레톤 | `RefreshIndicator` + 최초 로딩 시 스켈레톤 카드 | §0 SSE 유예로 인한 1차 재조회 전략 |
 | P2 | UC-8: 연결 배너 슬롯 | `ConnectionBanner` 자리 미리 배치(hidden 고정), 실제 상태 연결은 `12` | §00 §2.3 |
@@ -161,7 +161,7 @@ class _SummaryBar extends ConsumerWidget {
   const _SummaryBar({required this.summaryAsync, required this.campId});
   final AsyncValue<api.CampSummaryStats> summaryAsync;
   final CampId campId;
-  // 4개 타일: 완주율(completionRate*100 → "72%"), 진행중 조 수(totalGroups - finishedGroupCount, §0),
+  // 4개 타일: 완주율(completionRate*100 → "72%"), 미완주 조 수(totalGroups - finishedGroupCount, §0),
   // 경과시간(programDurationSeconds → "2시간 14분" 포맷), 안읽은 다이렉트(§2.4 provider, 탭 시 context.go('/messages/direct')).
   // summaryAsync가 loading이면 4개 타일 모두 스켈레톤 박스(§2.8).
 }

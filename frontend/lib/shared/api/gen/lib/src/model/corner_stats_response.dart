@@ -14,6 +14,8 @@ part 'corner_stats_response.g.dart';
 /// CornerStatsResponse
 ///
 /// Properties:
+/// * [avgDeviationSeconds]
+/// * [avgDurationSeconds]
 /// * [completedVisitCount] 
 /// * [cornerId] 
 /// * [cornerName] 
@@ -21,6 +23,12 @@ part 'corner_stats_response.g.dart';
 /// * [unvisitedGroups] 
 @BuiltValue()
 abstract class CornerStatsResponse implements Built<CornerStatsResponse, CornerStatsResponseBuilder> {
+  @BuiltValueField(wireName: r'avgDeviationSeconds')
+  num? get avgDeviationSeconds;
+
+  @BuiltValueField(wireName: r'avgDurationSeconds')
+  num? get avgDurationSeconds;
+
   @BuiltValueField(wireName: r'completedVisitCount')
   int? get completedVisitCount;
 
@@ -59,6 +67,20 @@ class _$CornerStatsResponseSerializer implements PrimitiveSerializer<CornerStats
     CornerStatsResponse object, {
     FullType specifiedType = FullType.unspecified,
   }) sync* {
+    if (object.avgDeviationSeconds != null) {
+      yield r'avgDeviationSeconds';
+      yield serializers.serialize(
+        object.avgDeviationSeconds,
+        specifiedType: const FullType(num),
+      );
+    }
+    if (object.avgDurationSeconds != null) {
+      yield r'avgDurationSeconds';
+      yield serializers.serialize(
+        object.avgDurationSeconds,
+        specifiedType: const FullType(num),
+      );
+    }
     if (object.completedVisitCount != null) {
       yield r'completedVisitCount';
       yield serializers.serialize(
@@ -117,6 +139,20 @@ class _$CornerStatsResponseSerializer implements PrimitiveSerializer<CornerStats
       final key = serializedList[i] as String;
       final value = serializedList[i + 1];
       switch (key) {
+        case r'avgDeviationSeconds':
+          final valueDes = serializers.deserialize(
+            value,
+            specifiedType: const FullType(num),
+          ) as num;
+          result.avgDeviationSeconds = valueDes;
+          break;
+        case r'avgDurationSeconds':
+          final valueDes = serializers.deserialize(
+            value,
+            specifiedType: const FullType(num),
+          ) as num;
+          result.avgDurationSeconds = valueDes;
+          break;
         case r'completedVisitCount':
           final valueDes = serializers.deserialize(
             value,
