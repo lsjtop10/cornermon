@@ -82,11 +82,8 @@ func NewCampHandler(svc *usecase.CampService) *CampHandler {
 }
 
 func getAdminID(c echo.Context) domain.AdminID {
-	val := c.Get("adminId")
-	if val != nil {
-		if s, ok := val.(string); ok {
-			return domain.AdminID(s)
-		}
+	if session, ok := c.Get("adminSession").(*domain.AdminSession); ok && session != nil {
+		return session.AdminID()
 	}
 	return domain.AdminID("admin")
 }
@@ -149,7 +146,7 @@ func (h *CampHandler) CreateCamp(c echo.Context) error {
 	if err := c.Bind(&req); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, ErrorResponse{Code: CodeBadRequest, Message: "Invalid request body"}).SetInternal(err)
 	}
-	camp, err := h.svc.OpenNewCamp(c.Request().Context(), req.Name, req.StartAt, req.EndAt)
+	camp, err := h.svc.OpenNewCamp(c.Request().Context(), req.Name, req.StartAt, req.EndAt, getAdminID(c))
 	if err != nil {
 		return campHTTPError(err)
 	}

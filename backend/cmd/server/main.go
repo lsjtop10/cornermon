@@ -163,7 +163,7 @@ func main() {
 	messageService := usecase.NewMessageService(cornerRepo, trackRepo, messageRepo, auditLogRepo, broadcaster, txManager)
 	announcementService := usecase.NewAnnouncementService(announcementRepo, announcementReceiptRepo, campRepo, trackRepo, facilitatorSessionRepo, txManager, auditLogRepo, broadcaster)
 	announcementQueryService := usecase.NewAnnouncementQueryService(announcementQuerier, trackRepo, cornerRepo)
-	campService := usecase.NewCampService(campRepo, trackRepo, deviceRepo, visitRepo, groupRepo, facilitatorSessionRepo, auditLogRepo, broadcaster, txManager)
+	campService := usecase.NewCampService(campRepo, trackRepo, deviceRepo, visitRepo, groupRepo, facilitatorSessionRepo, adminRepo, auditLogRepo, broadcaster, txManager)
 
 	// Initialize Handlers
 	authHandler := web.NewAuthHandler(authAdminService, authFacilitatorService, deviceTrustService)
