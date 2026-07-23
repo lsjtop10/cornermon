@@ -74,7 +74,7 @@ func TestShouldReturnCornerMetricsWhenListingCornerViews(t *testing.T) {
 	c.SetParamNames("campId")
 	c.SetParamValues("camp-1")
 	h := NewCornerHandler(nil, fakeCornerViewQuerier{views: []usecase.CornerView{{
-		ID: "corner-1", CampID: "camp-1", Name: "코너 1", TargetMinutes: 10, AvgDurationSeconds: 640, SampleCount: 15,
+		ID: "corner-1", CampID: "camp-1", Name: "코너 1", TargetMinutes: 10, Status: domain.CornerBusy, AvgDurationSeconds: 640, SampleCount: 15,
 		ActiveTracks: []usecase.TrackView{{ID: "track-1", CornerID: "corner-1", TrackNo: 1, Status: domain.TrackActive, OperationalStatus: domain.TrackBusy}},
 	}}})
 
@@ -86,7 +86,7 @@ func TestShouldReturnCornerMetricsWhenListingCornerViews(t *testing.T) {
 		t.Fatalf("expected no error, got %v", err)
 	}
 	body := rec.Body.String()
-	if rec.Code != http.StatusOK || !containsAll(body, `"cornerMetric"`, `"avgDurationSeconds":640`, `"sampleCount":15`, `"activeTracks"`, `"id":"track-1"`, `"operationalStatus":"BUSY"`) {
+	if rec.Code != http.StatusOK || !containsAll(body, `"cornerMetric"`, `"avgDurationSeconds":640`, `"sampleCount":15`, `"activeTracks"`, `"id":"track-1"`, `"operationalStatus":"BUSY"`, `"campId":"camp-1"`, `"status":"BUSY"`) {
 		t.Fatalf("expected documented metric response, status=%d body=%s", rec.Code, body)
 	}
 }
@@ -101,14 +101,14 @@ func TestGetCornerShouldReturnViewAndNotFound(t *testing.T) {
 		c.SetParamNames("id")
 		c.SetParamValues("corner-1")
 		h := NewCornerHandler(nil, fakeCornerViewQuerier{views: []usecase.CornerView{{
-			ID: "corner-1", CampID: "camp-1", Name: "코너 1", TargetMinutes: 10, AvgDurationSeconds: 600, SampleCount: 2,
+			ID: "corner-1", CampID: "camp-1", Name: "코너 1", TargetMinutes: 10, Status: domain.CornerIdle, AvgDurationSeconds: 600, SampleCount: 2,
 			ActiveTracks: []usecase.TrackView{{ID: "track-2", CornerID: "corner-1", TrackNo: 2, Status: domain.TrackActive, OperationalStatus: domain.TrackIdle}},
 		}}})
 
 		if err := h.GetCorner(c); err != nil {
 			t.Fatalf("expected no error, got %v", err)
 		}
-		if rec.Code != http.StatusOK || !containsAll(rec.Body.String(), `"sampleCount":2`, `"id":"track-2"`, `"operationalStatus":"IDLE"`) {
+		if rec.Code != http.StatusOK || !containsAll(rec.Body.String(), `"sampleCount":2`, `"id":"track-2"`, `"operationalStatus":"IDLE"`, `"status":"IDLE"`) {
 			t.Fatalf("expected complete corner view, status=%d body=%s", rec.Code, rec.Body.String())
 		}
 	})
