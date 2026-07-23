@@ -36,17 +36,28 @@ func TestGroupService_AssignBadge(t *testing.T) {
 		visits := NewMockVisitRepository()
 		auditLogs := &MockAuditLogRepository{}
 		tx := &MockTxManager{}
+		admins := NewMockAdminRepository()
+		admins.Admins["admin-1"] = domain.NewAdminFromProps(domain.AdminProps{ID: "admin-1", Username: "김관리"})
 
-		s := NewGroupService(camps, corners, NewMockTrackRepository(), groups, badges, visits, auditLogs, tx)
+		s := NewGroupService(camps, corners, NewMockTrackRepository(), groups, badges, visits, admins, auditLogs, tx)
 		s.nowFn = func() time.Time { return now }
 		s.uuidFn = func() string { return "group-uuid" }
 
 		// Act
-		group, err := s.AssignBadge(context.Background(), "badge-1", "1조")
+		group, err := s.AssignBadge(context.Background(), "badge-1", "1조", "admin-1")
 
 		// Assert
 		if err != nil {
 			t.Fatalf("expected no error, got %v", err)
+		}
+		if len(auditLogs.Logs) != 1 {
+			t.Fatalf("expected 1 audit log, got %d", len(auditLogs.Logs))
+		}
+		if auditLogs.Logs[0].Actor() != "admin-1" {
+			t.Errorf("expected Actor to remain raw admin ID 'admin-1', got %q", auditLogs.Logs[0].Actor())
+		}
+		if auditLogs.Logs[0].ActorName() != "김관리" {
+			t.Errorf("expected ActorName '김관리', got %q", auditLogs.Logs[0].ActorName())
 		}
 		if group == nil {
 			t.Fatal("expected group, got nil")
@@ -84,11 +95,11 @@ func TestGroupService_AssignBadge(t *testing.T) {
 		auditLogs := &MockAuditLogRepository{}
 		tx := &MockTxManager{}
 
-		s := NewGroupService(camps, corners, NewMockTrackRepository(), groups, badges, visits, auditLogs, tx)
+		s := NewGroupService(camps, corners, NewMockTrackRepository(), groups, badges, visits, NewMockAdminRepository(), auditLogs, tx)
 		s.uuidFn = func() string { return "group-uuid" }
 
 		// Act
-		group, err := s.AssignBadge(context.Background(), "badge-1", "1조")
+		group, err := s.AssignBadge(context.Background(), "badge-1", "1조", "admin-1")
 
 		// Assert
 		if err != nil {
@@ -105,10 +116,10 @@ func TestGroupService_AssignBadge(t *testing.T) {
 		_ = camps.Save(context.Background(), domain.NewCampFromProps(domain.CampProps{ID: "camp-1", Status: domain.CampEnded}))
 		badges := NewMockBadgeRepository()
 		_ = badges.Save(context.Background(), domain.NewBadgeFromProps(domain.BadgeProps{ID: "badge-1", QRPayload: "qr-1", Status: domain.BadgeUnassigned}))
-		service := NewGroupService(camps, NewMockCornerRepository(), NewMockTrackRepository(), NewMockGroupRepository(), badges, NewMockVisitRepository(), &MockAuditLogRepository{}, &MockTxManager{})
+		service := NewGroupService(camps, NewMockCornerRepository(), NewMockTrackRepository(), NewMockGroupRepository(), badges, NewMockVisitRepository(), NewMockAdminRepository(), &MockAuditLogRepository{}, &MockTxManager{})
 
 		// Act
-		_, err := service.AssignBadge(context.Background(), "badge-1", "1조")
+		_, err := service.AssignBadge(context.Background(), "badge-1", "1조", "admin-1")
 
 		// Assert
 		if !errors.Is(err, domain.ErrCampNotFound) {
@@ -122,11 +133,11 @@ func TestGroupService_AssignBadge(t *testing.T) {
 		_ = camps.Save(context.Background(), domain.NewCampFromProps(domain.CampProps{ID: "camp-1", Status: domain.CampActive}))
 		badges := NewMockBadgeRepository()
 		_ = badges.Save(context.Background(), domain.NewBadgeFromProps(domain.BadgeProps{ID: "badge-1", QRPayload: "qr-1", Status: domain.BadgeUnassigned}))
-		service := NewGroupService(camps, NewMockCornerRepository(), NewMockTrackRepository(), NewMockGroupRepository(), badges, NewMockVisitRepository(), &MockAuditLogRepository{}, &MockTxManager{})
+		service := NewGroupService(camps, NewMockCornerRepository(), NewMockTrackRepository(), NewMockGroupRepository(), badges, NewMockVisitRepository(), NewMockAdminRepository(), &MockAuditLogRepository{}, &MockTxManager{})
 		service.uuidFn = func() string { return "group-uuid" }
 
 		// Act
-		group, err := service.ScanAssignBadge(context.Background(), "qr-1", "1조")
+		group, err := service.ScanAssignBadge(context.Background(), "qr-1", "1조", "admin-1")
 
 		// Assert
 		if err != nil {
@@ -147,7 +158,7 @@ func TestListGroupsByTrackShoudReturnOnlyDerivedCampGroupsWhenTrackExists(t *tes
 	groups := NewMockGroupRepository()
 	_ = groups.Save(context.Background(), domain.NewGroupFromProps(domain.GroupProps{ID: "group-1", CampID: "camp-1"}))
 	_ = groups.Save(context.Background(), domain.NewGroupFromProps(domain.GroupProps{ID: "group-other", CampID: "camp-2"}))
-	service := NewGroupService(nil, corners, tracks, groups, nil, nil, nil, nil)
+	service := NewGroupService(nil, corners, tracks, groups, nil, nil, nil, nil, nil)
 
 	// Act
 	result, err := service.ListGroupsByTrack(context.Background(), "track-1")
@@ -176,7 +187,7 @@ func TestGroupServiceShouldExcludeDeletedCornersWhenListingGroups(t *testing.T) 
 		},
 	})
 	_ = groups.Save(ctx, stored)
-	service := NewGroupService(nil, corners, nil, groups, nil, nil, nil, nil)
+	service := NewGroupService(nil, corners, nil, groups, nil, nil, nil, nil, nil)
 
 	// Act
 	result, err := service.ListGroups(ctx, "camp-1")
@@ -213,7 +224,7 @@ func TestGroupServiceShouldExcludeDeletedCornersWhenRetrievingGroupSchedule(t *t
 			domain.NewCornerProgressValFromProps(domain.CornerProgressProps{CornerID: "corner-deleted", Status: domain.VisitNotVisited}),
 		},
 	}))
-	service := NewGroupService(nil, corners, nil, groups, nil, nil, nil, nil)
+	service := NewGroupService(nil, corners, nil, groups, nil, nil, nil, nil, nil)
 
 	// Act
 	result, err := service.RetrieveGroupRotationSchedule(ctx, "group-1")
@@ -245,7 +256,7 @@ func TestGroupServiceShouldExcludeDeletedCornersWhenListingGroupsByTrack(t *test
 			domain.NewCornerProgressValFromProps(domain.CornerProgressProps{CornerID: "corner-deleted", Status: domain.VisitNotVisited}),
 		},
 	}))
-	service := NewGroupService(nil, corners, tracks, groups, nil, nil, nil, nil)
+	service := NewGroupService(nil, corners, tracks, groups, nil, nil, nil, nil, nil)
 
 	// Act
 	result, err := service.ListGroupsByTrack(ctx, "track-1")
@@ -276,7 +287,7 @@ func TestListGroupsByTrackShoudReturnNotFoundWhenRelationMissing(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			// Arrange
-			service := NewGroupService(nil, tc.corners, tc.tracks, NewMockGroupRepository(), nil, nil, nil, nil)
+			service := NewGroupService(nil, tc.corners, tc.tracks, NewMockGroupRepository(), nil, nil, nil, nil, nil)
 
 			// Act
 			_, err := service.ListGroupsByTrack(context.Background(), "track-1")

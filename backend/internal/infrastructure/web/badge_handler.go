@@ -84,7 +84,7 @@ func (h *BadgeHandler) BulkGenerateBadges(c echo.Context) error {
 	if err := c.Bind(&req); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, ErrorResponse{Code: CodeBadRequest, Message: "invalid request"}).SetInternal(err)
 	}
-	badges, err := h.badgeUC.IssueInitialBadges(c.Request().Context(), req.Count)
+	badges, err := h.badgeUC.IssueInitialBadges(c.Request().Context(), req.Count, getAdminID(c))
 	if err != nil {
 		return err
 	}
@@ -107,7 +107,7 @@ type ExportBadgesResponse struct {
 // @Success      200 {object} ExportBadgesResponse "미배정 배지 목록"
 // @Router       /badges/export [get]
 func (h *BadgeHandler) ExportBadges(c echo.Context) error {
-	badges, err := h.badgeUC.ExportBadges(c.Request().Context())
+	badges, err := h.badgeUC.ExportBadges(c.Request().Context(), getAdminID(c))
 	if err != nil {
 		return err
 	}
@@ -141,7 +141,7 @@ func (h *BadgeHandler) AssignBadge(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, ErrorResponse{Code: CodeBadRequest, Message: "invalid request"}).SetInternal(err)
 	}
 
-	group, err := h.groupUC.AssignBadge(c.Request().Context(), id, req.GroupName)
+	group, err := h.groupUC.AssignBadge(c.Request().Context(), id, req.GroupName, getAdminID(c))
 	if err != nil {
 		return badgeAssignmentHTTPError(err)
 	}
@@ -169,7 +169,7 @@ func (h *BadgeHandler) ScanAssignBadge(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, ErrorResponse{Code: CodeBadRequest, Message: "invalid request"}).SetInternal(err)
 	}
 
-	group, err := h.groupUC.ScanAssignBadge(c.Request().Context(), req.QRPayload, req.GroupName)
+	group, err := h.groupUC.ScanAssignBadge(c.Request().Context(), req.QRPayload, req.GroupName, getAdminID(c))
 	if err != nil {
 		return badgeAssignmentHTTPError(err)
 	}

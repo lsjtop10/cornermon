@@ -12,6 +12,7 @@ import (
 type BadgeService struct {
 	badges    BadgeRepository
 	groups    GroupRepository
+	admins    AdminRepository
 	auditLogs AuditLogRepository
 	tx        TxManager
 
@@ -22,12 +23,14 @@ type BadgeService struct {
 func NewBadgeService(
 	badges BadgeRepository,
 	groups GroupRepository,
+	admins AdminRepository,
 	auditLogs AuditLogRepository,
 	tx TxManager,
 ) *BadgeService {
 	return &BadgeService{
 		badges:    badges,
 		groups:    groups,
+		admins:    admins,
 		auditLogs: auditLogs,
 		tx:        tx,
 		nowFn:     func() time.Time { return time.Now().UTC() },
@@ -36,7 +39,7 @@ func NewBadgeService(
 }
 
 // IssueInitialBadges
-func (s *BadgeService) IssueInitialBadges(ctx context.Context, count int) ([]*domain.Badge, error) {
+func (s *BadgeService) IssueInitialBadges(ctx context.Context, count int, actorAdminID domain.AdminID) ([]*domain.Badge, error) {
 
 	var badges []*domain.Badge
 	for i := 0; i < count; i++ {
@@ -58,11 +61,11 @@ func (s *BadgeService) IssueInitialBadges(ctx context.Context, count int) ([]*do
 	})
 
 	if err != nil {
-		s.recordAuditLog(ctx, "admin", ActionBadgeBulkGenerate, "", false, errorAuditMetadata(err, nil))
+		s.recordAuditLog(ctx, string(actorAdminID), adminActorLabel(ctx, s.admins, actorAdminID, nil), ActionBadgeBulkGenerate, "", false, errorAuditMetadata(err, nil))
 		return nil, err
 	}
 
-	s.recordAuditLog(ctx, "admin", ActionBadgeBulkGenerate, "", true, map[string]any{"count": count})
+	s.recordAuditLog(ctx, string(actorAdminID), adminActorLabel(ctx, s.admins, actorAdminID, nil), ActionBadgeBulkGenerate, "", true, map[string]any{"count": count})
 
 	return badges, nil
 }
@@ -73,7 +76,7 @@ func (s *BadgeService) ListBadges(ctx context.Context) ([]*domain.Badge, error) 
 }
 
 // ExportBadges returns unassigned badges for client printing
-func (s *BadgeService) ExportBadges(ctx context.Context) ([]*domain.Badge, error) {
+func (s *BadgeService) ExportBadges(ctx context.Context, actorAdminID domain.AdminID) ([]*domain.Badge, error) {
 
 	badges, err := s.badges.ListAll(ctx)
 	if err != nil {
@@ -87,21 +90,21 @@ func (s *BadgeService) ExportBadges(ctx context.Context) ([]*domain.Badge, error
 		}
 	}
 
-	s.recordAuditLog(ctx, "admin", ActionBadgeExport, "", true, nil)
+	s.recordAuditLog(ctx, string(actorAdminID), adminActorLabel(ctx, s.admins, actorAdminID, nil), ActionBadgeExport, "", true, nil)
 
 	return unassigned, nil
 }
 
 // AssignBadge
-func (s *BadgeService) AssignBadge(ctx context.Context, badgeID domain.BadgeID, groupID domain.GroupID) (*domain.Badge, error) {
-	return s.assignBadgeInternal(ctx, groupID, func(ctx context.Context) (*domain.Badge, error) {
+func (s *BadgeService) AssignBadge(ctx context.Context, badgeID domain.BadgeID, groupID domain.GroupID, actorAdminID domain.AdminID) (*domain.Badge, error) {
+	return s.assignBadgeInternal(ctx, groupID, actorAdminID, func(ctx context.Context) (*domain.Badge, error) {
 		return s.badges.Get(ctx, badgeID)
 	})
 }
 
 // ScanAssignBadge
-func (s *BadgeService) ScanAssignBadge(ctx context.Context, qrPayload string, groupID domain.GroupID) (*domain.Badge, error) {
-	return s.assignBadgeInternal(ctx, groupID, func(ctx context.Context) (*domain.Badge, error) {
+func (s *BadgeService) ScanAssignBadge(ctx context.Context, qrPayload string, groupID domain.GroupID, actorAdminID domain.AdminID) (*domain.Badge, error) {
+	return s.assignBadgeInternal(ctx, groupID, actorAdminID, func(ctx context.Context) (*domain.Badge, error) {
 		return s.badges.GetByQRPayload(ctx, qrPayload)
 	})
 }
@@ -109,6 +112,7 @@ func (s *BadgeService) ScanAssignBadge(ctx context.Context, qrPayload string, gr
 func (s *BadgeService) assignBadgeInternal(
 	ctx context.Context,
 	groupID domain.GroupID,
+	actorAdminID domain.AdminID,
 	getBadgeFn func(ctx context.Context) (*domain.Badge, error),
 ) (*domain.Badge, error) {
 	var targetBadge *domain.Badge
@@ -164,19 +168,20 @@ func (s *BadgeService) assignBadgeInternal(
 	})
 
 	if err != nil {
-		s.recordAuditLog(ctx, "admin", ActionBadgeAssign, string(groupID), false, errorAuditMetadata(err, nil))
+		s.recordAuditLog(ctx, string(actorAdminID), adminActorLabel(ctx, s.admins, actorAdminID, nil), ActionBadgeAssign, string(groupID), false, errorAuditMetadata(err, nil))
 		return nil, err
 	}
 
-	s.recordAuditLog(ctx, "admin", ActionBadgeAssign, string(targetBadge.ID()), true, map[string]any{"groupID": string(groupID)})
+	s.recordAuditLog(ctx, string(actorAdminID), adminActorLabel(ctx, s.admins, actorAdminID, nil), ActionBadgeAssign, string(targetBadge.ID()), true, map[string]any{"groupID": string(groupID)})
 
 	return targetBadge, nil
 }
 
-func (s *BadgeService) recordAuditLog(ctx context.Context, actor string, action AuditAction, target string, success bool, metadata map[string]any) {
+func (s *BadgeService) recordAuditLog(ctx context.Context, actor, actorName string, action AuditAction, target string, success bool, metadata map[string]any) {
 	log := domain.NewAuditLogFromProps(domain.AuditLogProps{
 		ID:         domain.AuditLogID(s.uuidFn()),
 		Actor:      actor,
+		ActorName:  actorName,
 		Action:     string(action),
 		Target:     target,
 		Success:    success,
