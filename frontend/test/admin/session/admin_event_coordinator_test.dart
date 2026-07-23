@@ -60,6 +60,12 @@ void main() {
         trackMessageListProvider(trackId, background: false).overrideWith((ref) async {
           return <Message>[];
         }),
+        // 하위 message family에 의존하지 않는 독립 provider로 override한다. 이 상태에서도
+        // messages_changed가 unread 집계 provider 자체를 무효화해야 한다.
+        trackDirectSummariesProvider(campId).overrideWith((ref) async {
+          summariesBuildCount++;
+          return <TrackDirectSummary>[];
+        }),
       ],
     );
     addTearDown(container.dispose);
@@ -114,8 +120,8 @@ void main() {
       await pushAndSettle(event);
       await container.read(trackDirectSummariesProvider(campId).future);
 
-      // assert — family 전체 invalidate(trackMessageListProvider)가 trackDirectSummaries가
-      // 의존하는 background:false 인스턴스도 무효화해 파생 provider가 다시 계산되어야 한다.
+      // assert — 메시지 family 의존성 전파 여부와 무관하게 unread 집계 provider 자체가
+      // 명시적으로 무효화되어야 한다.
       expect(summariesBuildCount, greaterThan(baseline));
     },
   );

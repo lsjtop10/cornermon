@@ -1,5 +1,6 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import 'package:cornermon/admin/features/track_direct/track_direct_providers.dart';
 import 'package:cornermon/shared/api/domain_aliases.dart';
 import 'package:cornermon/shared/api/ids.dart';
 import 'package:cornermon/shared/api/providers/auth_device_trust_providers.dart';
@@ -74,6 +75,10 @@ class AdminEventCoordinator extends _$AdminEventCoordinator {
       case SseEventEventEnum.messagesChanged:
         ref.invalidate(broadcastMessageListProvider(campId));
         ref.invalidate(trackMessageListProvider);
+        // 대시보드/메시지 탭의 unread는 이 파생 provider가 직접 소비한다. 하위 메시지
+        // family의 의존성 전파에만 맡기면 활성 구독 상태에 따라 재조회가 누락될 수 있으므로
+        // 메시지 이벤트마다 집계 자체를 명시적으로 갱신한다.
+        ref.invalidate(trackDirectSummariesProvider(campId));
         break;
       case SseEventEventEnum.trackDeleted:
         ref.invalidate(trackListProvider(campId));
@@ -117,6 +122,7 @@ class AdminEventCoordinator extends _$AdminEventCoordinator {
     ref.invalidate(selectedCampProvider);
     ref.invalidate(broadcastMessageListProvider(campId));
     ref.invalidate(trackMessageListProvider);
+    ref.invalidate(trackDirectSummariesProvider(campId));
     ref.invalidate(adminSessionListProvider);
     ref.invalidate(deviceRegistrationListProvider(campId));
     ref.invalidate(lockedDeviceListProvider(campId));
