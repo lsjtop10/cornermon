@@ -69,11 +69,11 @@ type AuditLog struct {
 	OccurredAt pgtype.Timestamptz `json:"occurred_at"`
 	// 이벤트와 관련된 추가 정보 (JSON)
 	Metadata []byte `json:"metadata"`
-	// 연관된 캠프 ID. 캠프와 무관한 계정 단위 행위(예: ADMIN_LOGIN)는 NULL
+	// 이벤트가 속한 캠프 식별자 (캠프 미소속 이벤트는 NULL, 예: 관리자 로그인)
 	CampID pgtype.Text `json:"camp_id"`
-	// 기록 시점 대상 표시 이름 스냅샷
+	// 대상의 사람이 읽을 수 있는 스냅샷 (기록 시점 이름, 화면 표시용). target은 원시 식별자로 유지
 	TargetName pgtype.Text `json:"target_name"`
-	// 기록 시점 행위자 표시 이름 스냅샷(admin username 또는 "{코너명}·{트랙번호}번 트랙")
+	// 행위자의 사람이 읽을 수 있는 스냅샷 (기록 시점 username/트랙 레이블, 화면 표시용). actor는 원시 식별자로 유지
 	ActorName pgtype.Text `json:"actor_name"`
 }
 
