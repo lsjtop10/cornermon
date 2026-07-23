@@ -1,4 +1,4 @@
-.PHONY: build run test clean docker-build swag cleanup-corners start-postgres reset-postgres stop-postgres
+.PHONY: build run test clean docker-build swag cleanup-corners start-postgres reset-postgres stop-postgres migrate-up migrate-down
 
 MAKEFILE_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 POSTGRES_COMPOSE_FILE := $(MAKEFILE_DIR)db/docker-compose.yml
@@ -30,6 +30,12 @@ swag:
 
 cleanup-corners:
 	go run ./cmd/cleanup-corners
+
+migrate-up:
+	go run ./cmd/migrate-tool up
+
+migrate-down:
+	go run ./cmd/migrate-tool down
 
 start-postgres:
 	docker compose --file "$(POSTGRES_COMPOSE_FILE)" up

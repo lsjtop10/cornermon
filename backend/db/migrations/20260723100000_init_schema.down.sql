@@ -1,0 +1,14 @@
+DROP TABLE IF EXISTS audit_logs;
+DROP TABLE IF EXISTS announcement_receipts;
+DROP TABLE IF EXISTS announcements;
+DROP TABLE IF EXISTS messages;
+DROP TABLE IF EXISTS admin_sessions;
+DROP TABLE IF EXISTS admins;
+DROP TABLE IF EXISTS facilitator_sessions;
+DROP TABLE IF EXISTS device_registrations;
+DROP TABLE IF EXISTS badges;
+DROP TABLE IF EXISTS visits;
+DROP TABLE IF EXISTS groups;
+DROP TABLE IF EXISTS tracks;
+DROP TABLE IF EXISTS corners;
+DROP TABLE IF EXISTS camps;
