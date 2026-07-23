@@ -1,5 +1,8 @@
+import 'package:cornermon_api_gen/cornermon_api_gen.dart';
+import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../shared/api/dio_error.dart';
 import '../../shared/auth/session_token_source.dart';
 import 'device_trust_provider.dart';
 import 'track_session_provider.dart';
@@ -21,5 +24,17 @@ class TrackSessionTokenSource implements SessionTokenSource {
         .read(trackSessionProvider.notifier)
         .handleTermination(TrackSessionTerminationReason.forceLogout);
     await ref.read(deviceTrustProvider.notifier).recoverFromTrackUnauthorized();
+  }
+
+  /// 트랙 삭제 후에도 세션 토큰이 남아있으면 track-scope API가 404 TRACK_NOT_FOUND를
+  /// 돌려준다(이슈 #200) — SSE trackDeleted와 달리 이 경로는 REST 호출 시점에만 감지된다.
+  @override
+  Future<bool> onResourceNotFound(DioException error) async {
+    if (errorCodeOf(error) != ErrorCode.CodeTrackNotFound) return false;
+
+    ref
+        .read(trackSessionProvider.notifier)
+        .handleTermination(TrackSessionTerminationReason.trackNotFound);
+    return true;
   }
 }

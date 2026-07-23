@@ -22,6 +22,15 @@ class AuthInterceptor extends Interceptor {
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) async {
     final response = err.response;
+
+    // 404는 재시도 대상이 아니다 — 각 앱이 필요하면 처리(세션 종료 등)하고 원래 에러는
+    // 그대로 호출부에 흘려보낸다(이슈 #200: TRACK_NOT_FOUND).
+    if (response?.statusCode == 404) {
+      await ref.read(sessionTokenSourceProvider).onResourceNotFound(err);
+      handler.next(err);
+      return;
+    }
+
     // 기기 상태 조회는 트랙 401의 복구 수단이다. 이 요청 자체가 401이면 다시
     // onUnauthorized()를 호출해 같은 `/me` 요청을 재귀적으로 만들지 않는다.
     final isDeviceStatusRequest = err.requestOptions.path.endsWith(
