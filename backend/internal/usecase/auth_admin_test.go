@@ -82,6 +82,12 @@ func TestAdminAuthService_Login(t *testing.T) {
 		if got.ActorName() != "김관리" {
 			t.Errorf("expected ActorName '김관리', got %q", got.ActorName())
 		}
+		if _, ok := got.CampID().Value(); ok {
+			t.Errorf("expected CampID None for account-level ADMIN_LOGIN, got %v", got.CampID())
+		}
+		if got.TargetName() != "admin-1" {
+			t.Errorf("expected TargetName 'admin-1', got %q", got.TargetName())
+		}
 	})
 
 	t.Run("ShouldFailLoginAdminWhenPasswordIsIncorrect", func(t *testing.T) {

@@ -59,6 +59,12 @@ func TestGroupService_AssignBadge(t *testing.T) {
 		if auditLogs.Logs[0].ActorName() != "김관리" {
 			t.Errorf("expected ActorName '김관리', got %q", auditLogs.Logs[0].ActorName())
 		}
+		if campID, ok := auditLogs.Logs[0].CampID().Value(); !ok || campID != "camp-1" {
+			t.Errorf("expected CampID Some('camp-1'), got %v (set=%v)", campID, ok)
+		}
+		if auditLogs.Logs[0].TargetName() != "1조" {
+			t.Errorf("expected TargetName '1조', got %q", auditLogs.Logs[0].TargetName())
+		}
 		if group == nil {
 			t.Fatal("expected group, got nil")
 		}

@@ -115,6 +115,9 @@ func TestVisitService_StartVisitByQR(t *testing.T) {
 		if auditLogs.Logs[0].ActorName() != "체험 코너 · 4번 트랙" {
 			t.Errorf("expected ActorName '체험 코너 · 4번 트랙', got %q", auditLogs.Logs[0].ActorName())
 		}
+		if campID, ok := auditLogs.Logs[0].CampID().Value(); !ok || campID != "camp-1" {
+			t.Errorf("expected CampID Some('camp-1'), got %v (set=%v)", campID, ok)
+		}
 	})
 
 	t.Run("ShouldFailStartVisitWhenSessionIsRevoked", func(t *testing.T) {

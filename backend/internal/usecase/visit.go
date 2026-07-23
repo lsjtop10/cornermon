@@ -67,19 +67,19 @@ func (s *VisitService) StartVisitByQR(
 	session, err := s.sessions.GetByTokenHash(ctx, tokenHash)
 	if err != nil {
 		err = withErrorContext("visit.start_qr", "repository.get_session", err, nil)
-		s.recordAuditLog(ctx, "anonymous", "anonymous", ActionVisitStart, "token:provided", false, errorAuditMetadata(err, nil))
+		s.recordAuditLog(ctx, domain.None[domain.CampID](), "anonymous", "anonymous", ActionVisitStart, "token:provided", "", false, errorAuditMetadata(err, nil))
 		return nil, err
 	}
 	if session == nil || !session.IsActive() {
 		err = withErrorContext("visit.start_qr", "validate_session", domain.ErrSessionRevoked, map[string]any{"session_found": session != nil})
-		s.recordAuditLog(ctx, "anonymous", "anonymous", ActionVisitStart, "session:inactive", false, errorAuditMetadata(err, nil))
+		s.recordAuditLog(ctx, domain.None[domain.CampID](), "anonymous", "anonymous", ActionVisitStart, "session:inactive", "", false, errorAuditMetadata(err, nil))
 		return nil, err
 	}
 
 	actor := string(session.TrackID())
 
 	var visit *domain.Visit
-	var groupCampID domain.CampID
+	groupCampID := domain.None[domain.CampID]()
 
 	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
 		track, err := s.tracks.Get(ctx, session.TrackID())
@@ -124,11 +124,12 @@ func (s *VisitService) StartVisitByQR(
 				"group_id": string(assignedGroupID), "group_found": false,
 			})
 		}
-		groupCampID = group.CampID()
+		groupCampID = domain.Some(group.CampID())
+		campID, _ := groupCampID.Value()
 
-		camp, err := s.camps.Get(ctx, groupCampID)
+		camp, err := s.camps.Get(ctx, campID)
 		if err != nil {
-			return withErrorContext("visit.start_qr", "repository.get_camp", err, map[string]any{"camp_id": string(groupCampID)})
+			return withErrorContext("visit.start_qr", "repository.get_camp", err, map[string]any{"camp_id": string(campID)})
 		}
 		if camp == nil || !camp.IsActive() {
 			var status string
@@ -136,7 +137,7 @@ func (s *VisitService) StartVisitByQR(
 				status = string(camp.Status())
 			}
 			return withErrorContext("visit.start_qr", "validate_camp_active", domain.ErrCampInvalidTransition, map[string]any{
-				"camp_id": string(groupCampID), "camp_found": camp != nil, "camp_status": status,
+				"camp_id": string(campID), "camp_found": camp != nil, "camp_status": status,
 			})
 		}
 
@@ -169,15 +170,17 @@ func (s *VisitService) StartVisitByQR(
 	})
 
 	if err != nil {
-		s.recordAuditLog(ctx, actor, trackDisplayLabel(ctx, s.tracks, s.corners, session.TrackID(), nil), ActionVisitStart, "badge:qr_scanned", false, errorAuditMetadata(err, nil))
+		s.recordAuditLog(ctx, groupCampID, actor, trackDisplayLabel(ctx, s.tracks, s.corners, session.TrackID(), nil), ActionVisitStart, "badge:qr_scanned", "", false, errorAuditMetadata(err, nil))
 		return nil, err
 	}
 
-	s.recordAuditLog(ctx, actor, trackDisplayLabel(ctx, s.tracks, s.corners, session.TrackID(), nil), ActionVisitStart, string(visit.ID()), true, map[string]any{"method": string(domain.VisitQRScan), "groupID": string(visit.GroupID())})
-	_ = s.broadcaster.Broadcast(ctx, groupCampID, EventCornersUpdated, CampScope())
-	_ = s.broadcaster.Broadcast(ctx, groupCampID, EventGroupsUpdated, CampScope())
-	_ = s.broadcaster.Broadcast(ctx, groupCampID, EventTracksUpdated, CampScope())
-	_ = s.broadcaster.Broadcast(ctx, groupCampID, EventTrackUpdated, TrackScope(session.TrackID()))
+	s.recordAuditLog(ctx, groupCampID, actor, trackDisplayLabel(ctx, s.tracks, s.corners, session.TrackID(), nil), ActionVisitStart, string(visit.ID()), "", true, map[string]any{"method": string(domain.VisitQRScan), "groupID": string(visit.GroupID())})
+	if campID, ok := groupCampID.Value(); ok {
+		_ = s.broadcaster.Broadcast(ctx, campID, EventCornersUpdated, CampScope())
+		_ = s.broadcaster.Broadcast(ctx, campID, EventGroupsUpdated, CampScope())
+		_ = s.broadcaster.Broadcast(ctx, campID, EventTracksUpdated, CampScope())
+		_ = s.broadcaster.Broadcast(ctx, campID, EventTrackUpdated, TrackScope(session.TrackID()))
+	}
 
 	return visit, nil
 }
@@ -195,18 +198,18 @@ func (s *VisitService) StartVisitManual(
 	session, err := s.sessions.GetByTokenHash(ctx, tokenHash)
 	if err != nil {
 		err = withErrorContext("visit.start_manual", "repository.get_session", err, nil)
-		s.recordAuditLog(ctx, "anonymous", "anonymous", ActionVisitStart, "token:provided", false, errorAuditMetadata(err, nil))
+		s.recordAuditLog(ctx, domain.None[domain.CampID](), "anonymous", "anonymous", ActionVisitStart, "token:provided", "", false, errorAuditMetadata(err, nil))
 		return nil, err
 	}
 	if session == nil || !session.IsActive() {
 		err = withErrorContext("visit.start_manual", "validate_session", domain.ErrSessionRevoked, map[string]any{"session_found": session != nil})
-		s.recordAuditLog(ctx, "anonymous", "anonymous", ActionVisitStart, "session:inactive", false, errorAuditMetadata(err, nil))
+		s.recordAuditLog(ctx, domain.None[domain.CampID](), "anonymous", "anonymous", ActionVisitStart, "session:inactive", "", false, errorAuditMetadata(err, nil))
 		return nil, err
 	}
 
 	actor := string(session.TrackID())
 	var visit *domain.Visit
-	var groupCampID domain.CampID
+	groupCampID := domain.None[domain.CampID]()
 
 	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
 		track, err := s.tracks.Get(ctx, session.TrackID())
@@ -237,11 +240,12 @@ func (s *VisitService) StartVisitManual(
 				"group_id": string(groupID), "group_found": false,
 			})
 		}
-		groupCampID = group.CampID()
+		groupCampID = domain.Some(group.CampID())
+		campID, _ := groupCampID.Value()
 
-		camp, err := s.camps.Get(ctx, groupCampID)
+		camp, err := s.camps.Get(ctx, campID)
 		if err != nil {
-			return withErrorContext("visit.start_manual", "repository.get_camp", err, map[string]any{"camp_id": string(groupCampID)})
+			return withErrorContext("visit.start_manual", "repository.get_camp", err, map[string]any{"camp_id": string(campID)})
 		}
 		if camp == nil || !camp.IsActive() {
 			var status string
@@ -249,7 +253,7 @@ func (s *VisitService) StartVisitManual(
 				status = string(camp.Status())
 			}
 			return withErrorContext("visit.start_manual", "validate_camp_active", domain.ErrCampInvalidTransition, map[string]any{
-				"camp_id": string(groupCampID), "camp_found": camp != nil, "camp_status": status,
+				"camp_id": string(campID), "camp_found": camp != nil, "camp_status": status,
 			})
 		}
 
@@ -282,15 +286,17 @@ func (s *VisitService) StartVisitManual(
 	})
 
 	if err != nil {
-		s.recordAuditLog(ctx, actor, trackDisplayLabel(ctx, s.tracks, s.corners, session.TrackID(), nil), ActionVisitStart, string(groupID), false, errorAuditMetadata(err, nil))
+		s.recordAuditLog(ctx, groupCampID, actor, trackDisplayLabel(ctx, s.tracks, s.corners, session.TrackID(), nil), ActionVisitStart, string(groupID), "", false, errorAuditMetadata(err, nil))
 		return nil, err
 	}
 
-	s.recordAuditLog(ctx, actor, trackDisplayLabel(ctx, s.tracks, s.corners, session.TrackID(), nil), ActionVisitStart, string(visit.ID()), true, map[string]any{"method": string(domain.VisitManual), "groupID": string(visit.GroupID())})
-	_ = s.broadcaster.Broadcast(ctx, groupCampID, EventCornersUpdated, CampScope())
-	_ = s.broadcaster.Broadcast(ctx, groupCampID, EventGroupsUpdated, CampScope())
-	_ = s.broadcaster.Broadcast(ctx, groupCampID, EventTracksUpdated, CampScope())
-	_ = s.broadcaster.Broadcast(ctx, groupCampID, EventTrackUpdated, TrackScope(session.TrackID()))
+	s.recordAuditLog(ctx, groupCampID, actor, trackDisplayLabel(ctx, s.tracks, s.corners, session.TrackID(), nil), ActionVisitStart, string(visit.ID()), "", true, map[string]any{"method": string(domain.VisitManual), "groupID": string(visit.GroupID())})
+	if campID, ok := groupCampID.Value(); ok {
+		_ = s.broadcaster.Broadcast(ctx, campID, EventCornersUpdated, CampScope())
+		_ = s.broadcaster.Broadcast(ctx, campID, EventGroupsUpdated, CampScope())
+		_ = s.broadcaster.Broadcast(ctx, campID, EventTracksUpdated, CampScope())
+		_ = s.broadcaster.Broadcast(ctx, campID, EventTrackUpdated, TrackScope(session.TrackID()))
+	}
 
 	return visit, nil
 }
@@ -307,18 +313,18 @@ func (s *VisitService) CompleteVisit(
 	session, err := s.sessions.GetByTokenHash(ctx, tokenHash)
 	if err != nil {
 		err = withErrorContext("visit.complete", "repository.get_session", err, nil)
-		s.recordAuditLog(ctx, "anonymous", "anonymous", ActionVisitComplete, "token:provided", false, errorAuditMetadata(err, nil))
+		s.recordAuditLog(ctx, domain.None[domain.CampID](), "anonymous", "anonymous", ActionVisitComplete, "token:provided", "", false, errorAuditMetadata(err, nil))
 		return nil, err
 	}
 	if session == nil || !session.IsActive() {
 		err = withErrorContext("visit.complete", "validate_session", domain.ErrSessionRevoked, map[string]any{"session_found": session != nil})
-		s.recordAuditLog(ctx, "anonymous", "anonymous", ActionVisitComplete, "session:inactive", false, errorAuditMetadata(err, nil))
+		s.recordAuditLog(ctx, domain.None[domain.CampID](), "anonymous", "anonymous", ActionVisitComplete, "session:inactive", "", false, errorAuditMetadata(err, nil))
 		return nil, err
 	}
 
 	actor := string(session.TrackID())
 	var visit *domain.Visit
-	var groupCampID domain.CampID
+	groupCampID := domain.None[domain.CampID]()
 
 	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
 		track, err := s.tracks.Get(ctx, session.TrackID())
@@ -359,7 +365,7 @@ func (s *VisitService) CompleteVisit(
 				"group_id": string(visit.GroupID()), "group_found": false,
 			})
 		}
-		groupCampID = group.CampID()
+		groupCampID = domain.Some(group.CampID())
 
 		if err := visit.Complete(now); err != nil {
 			return withErrorContext("visit.complete", "domain.visit_complete", err, map[string]any{"visit_id": string(visit.ID())})
@@ -389,15 +395,17 @@ func (s *VisitService) CompleteVisit(
 	})
 
 	if err != nil {
-		s.recordAuditLog(ctx, actor, trackDisplayLabel(ctx, s.tracks, s.corners, session.TrackID(), nil), ActionVisitComplete, "", false, errorAuditMetadata(err, nil))
+		s.recordAuditLog(ctx, groupCampID, actor, trackDisplayLabel(ctx, s.tracks, s.corners, session.TrackID(), nil), ActionVisitComplete, "", "", false, errorAuditMetadata(err, nil))
 		return nil, err
 	}
 
-	s.recordAuditLog(ctx, actor, trackDisplayLabel(ctx, s.tracks, s.corners, session.TrackID(), nil), ActionVisitComplete, string(visit.ID()), true, map[string]any{"groupID": string(visit.GroupID())})
-	_ = s.broadcaster.Broadcast(ctx, groupCampID, EventCornersUpdated, CampScope())
-	_ = s.broadcaster.Broadcast(ctx, groupCampID, EventGroupsUpdated, CampScope())
-	_ = s.broadcaster.Broadcast(ctx, groupCampID, EventTracksUpdated, CampScope())
-	_ = s.broadcaster.Broadcast(ctx, groupCampID, EventTrackUpdated, TrackScope(session.TrackID()))
+	s.recordAuditLog(ctx, groupCampID, actor, trackDisplayLabel(ctx, s.tracks, s.corners, session.TrackID(), nil), ActionVisitComplete, string(visit.ID()), "", true, map[string]any{"groupID": string(visit.GroupID())})
+	if campID, ok := groupCampID.Value(); ok {
+		_ = s.broadcaster.Broadcast(ctx, campID, EventCornersUpdated, CampScope())
+		_ = s.broadcaster.Broadcast(ctx, campID, EventGroupsUpdated, CampScope())
+		_ = s.broadcaster.Broadcast(ctx, campID, EventTracksUpdated, CampScope())
+		_ = s.broadcaster.Broadcast(ctx, campID, EventTrackUpdated, TrackScope(session.TrackID()))
+	}
 
 	return visit, nil
 }
@@ -427,16 +435,18 @@ func (s *VisitService) GetCurrentVisit(
 	return visit, nil
 }
 
-func (s *VisitService) recordAuditLog(ctx context.Context, actor, actorName string, action AuditAction, target string, success bool, metadata map[string]any) {
+func (s *VisitService) recordAuditLog(ctx context.Context, campID domain.Optional[domain.CampID], actor, actorName string, action AuditAction, target, targetName string, success bool, metadata map[string]any) {
 	log := domain.NewAuditLogFromProps(domain.AuditLogProps{
 		ID:         domain.AuditLogID(s.uuidFn()),
+		CampID:     campID,
 		Actor:      actor,
 		ActorName:  actorName,
 		Action:     string(action),
 		Target:     target,
+		TargetName: targetName,
 		Success:    success,
 		OccurredAt: s.nowFn(),
-		Metadata:   metadata,
+		Metadata:   filterErrorAttributes(metadata),
 	})
 	_ = s.auditLogs.Save(ctx, log)
 }

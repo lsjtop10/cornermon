@@ -84,6 +84,12 @@ func TestAddLearningCornerShoudRecordAdminIDAsActorAndUsernameAsActorNameWhenSuc
 	if got.ActorName() != "김관리" {
 		t.Errorf("expected ActorName '김관리', got %q", got.ActorName())
 	}
+	if campID, ok := got.CampID().Value(); !ok || campID != "camp-1" {
+		t.Errorf("expected CampID Some('camp-1'), got %v (set=%v)", campID, ok)
+	}
+	if got.TargetName() != "처음 이름" {
+		t.Errorf("expected TargetName '처음 이름', got %q", got.TargetName())
+	}
 }
 
 func TestShouldPurgeCornersAfterSevenDaysWhenCleanupRuns(t *testing.T) {

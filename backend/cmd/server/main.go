@@ -167,7 +167,7 @@ func main() {
 	reportService := usecase.NewReportService(campRepo, reportQuerier)
 	authFacilitatorService := usecase.NewFacilitatorAuthService(campRepo, cornerRepo, trackRepo, deviceRepo, facilitatorSessionRepo, auditLogRepo, broadcaster, txManager)
 	messageService := usecase.NewMessageService(cornerRepo, trackRepo, messageRepo, auditLogRepo, broadcaster, txManager)
-	announcementService := usecase.NewAnnouncementService(announcementRepo, announcementReceiptRepo, campRepo, trackRepo, facilitatorSessionRepo, txManager, auditLogRepo, broadcaster)
+	announcementService := usecase.NewAnnouncementService(announcementRepo, announcementReceiptRepo, campRepo, trackRepo, facilitatorSessionRepo, adminRepo, txManager, auditLogRepo, broadcaster)
 	announcementQueryService := usecase.NewAnnouncementQueryService(announcementQuerier, trackRepo, cornerRepo)
 	campService := usecase.NewCampService(campRepo, trackRepo, deviceRepo, visitRepo, groupRepo, facilitatorSessionRepo, adminRepo, auditLogRepo, broadcaster, txManager)
 

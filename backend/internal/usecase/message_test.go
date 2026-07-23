@@ -122,6 +122,9 @@ func TestMessageService_SendDirect(t *testing.T) {
 		if got.ActorName() != "체험 코너 · 2번 트랙" {
 			t.Errorf("expected ActorName '체험 코너 · 2번 트랙', got %q", got.ActorName())
 		}
+		if campID, ok := got.CampID().Value(); !ok || campID != "camp-1" {
+			t.Errorf("expected CampID Some('camp-1'), got %v (set=%v)", campID, ok)
+		}
 	})
 }
 

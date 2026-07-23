@@ -61,11 +61,11 @@ func (s *BadgeService) IssueInitialBadges(ctx context.Context, count int, actorA
 	})
 
 	if err != nil {
-		s.recordAuditLog(ctx, string(actorAdminID), adminActorLabel(ctx, s.admins, actorAdminID, nil), ActionBadgeBulkGenerate, "", false, errorAuditMetadata(err, nil))
+		s.recordAuditLog(ctx, domain.None[domain.CampID](), string(actorAdminID), adminActorLabel(ctx, s.admins, actorAdminID, nil), ActionBadgeBulkGenerate, "", "", false, errorAuditMetadata(err, nil))
 		return nil, err
 	}
 
-	s.recordAuditLog(ctx, string(actorAdminID), adminActorLabel(ctx, s.admins, actorAdminID, nil), ActionBadgeBulkGenerate, "", true, map[string]any{"count": count})
+	s.recordAuditLog(ctx, domain.None[domain.CampID](), string(actorAdminID), adminActorLabel(ctx, s.admins, actorAdminID, nil), ActionBadgeBulkGenerate, "", "", true, map[string]any{"count": count})
 
 	return badges, nil
 }
@@ -90,7 +90,7 @@ func (s *BadgeService) ExportBadges(ctx context.Context, actorAdminID domain.Adm
 		}
 	}
 
-	s.recordAuditLog(ctx, string(actorAdminID), adminActorLabel(ctx, s.admins, actorAdminID, nil), ActionBadgeExport, "", true, nil)
+	s.recordAuditLog(ctx, domain.None[domain.CampID](), string(actorAdminID), adminActorLabel(ctx, s.admins, actorAdminID, nil), ActionBadgeExport, "", "", true, nil)
 
 	return unassigned, nil
 }
@@ -116,6 +116,8 @@ func (s *BadgeService) assignBadgeInternal(
 	getBadgeFn func(ctx context.Context) (*domain.Badge, error),
 ) (*domain.Badge, error) {
 	var targetBadge *domain.Badge
+	groupCampID := domain.None[domain.CampID]()
+	var groupName string
 
 	err := s.tx.RunInTx(ctx, func(ctx context.Context) error {
 		group, err := s.groups.Get(ctx, groupID)
@@ -125,6 +127,8 @@ func (s *BadgeService) assignBadgeInternal(
 		if group == nil {
 			return withErrorContext("badge.assign", "validate_group", domain.ErrCornerNotInItinerary, map[string]any{"group_id": string(groupID), "group_found": false})
 		}
+		groupCampID = domain.Some(group.CampID())
+		groupName = group.Name()
 
 		targetBadge, err = getBadgeFn(ctx)
 		if err != nil {
@@ -168,25 +172,27 @@ func (s *BadgeService) assignBadgeInternal(
 	})
 
 	if err != nil {
-		s.recordAuditLog(ctx, string(actorAdminID), adminActorLabel(ctx, s.admins, actorAdminID, nil), ActionBadgeAssign, string(groupID), false, errorAuditMetadata(err, nil))
+		s.recordAuditLog(ctx, groupCampID, string(actorAdminID), adminActorLabel(ctx, s.admins, actorAdminID, nil), ActionBadgeAssign, string(groupID), groupName, false, errorAuditMetadata(err, nil))
 		return nil, err
 	}
 
-	s.recordAuditLog(ctx, string(actorAdminID), adminActorLabel(ctx, s.admins, actorAdminID, nil), ActionBadgeAssign, string(targetBadge.ID()), true, map[string]any{"groupID": string(groupID)})
+	s.recordAuditLog(ctx, groupCampID, string(actorAdminID), adminActorLabel(ctx, s.admins, actorAdminID, nil), ActionBadgeAssign, string(targetBadge.ID()), targetBadge.ShortID(), true, map[string]any{"groupID": string(groupID)})
 
 	return targetBadge, nil
 }
 
-func (s *BadgeService) recordAuditLog(ctx context.Context, actor, actorName string, action AuditAction, target string, success bool, metadata map[string]any) {
+func (s *BadgeService) recordAuditLog(ctx context.Context, campID domain.Optional[domain.CampID], actor, actorName string, action AuditAction, target, targetName string, success bool, metadata map[string]any) {
 	log := domain.NewAuditLogFromProps(domain.AuditLogProps{
 		ID:         domain.AuditLogID(s.uuidFn()),
+		CampID:     campID,
 		Actor:      actor,
 		ActorName:  actorName,
 		Action:     string(action),
 		Target:     target,
+		TargetName: targetName,
 		Success:    success,
 		OccurredAt: s.nowFn(),
-		Metadata:   metadata,
+		Metadata:   filterErrorAttributes(metadata),
 	})
 	_ = s.auditLogs.Save(ctx, log)
 }

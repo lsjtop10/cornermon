@@ -17,7 +17,7 @@ func TestAnnouncementService_SendAnnouncement(t *testing.T) {
 	repo := NewMockAnnouncementRepository()
 	receipts := NewMockAnnouncementReceiptRepository()
 	broadcaster := &MockBroadcaster{}
-	s := NewAnnouncementService(repo, receipts, camps, tracks, NewMockFacilitatorSessionRepository(), &MockTxManager{}, &MockAuditLogRepository{}, broadcaster)
+	s := NewAnnouncementService(repo, receipts, camps, tracks, NewMockFacilitatorSessionRepository(), NewMockAdminRepository(), &MockTxManager{}, &MockAuditLogRepository{}, broadcaster)
 	s.uuidFn = func() string { return "announcement-1" }
 	s.nowFn = func() time.Time { return time.Date(2026, 7, 14, 0, 0, 0, 0, time.UTC) }
 
@@ -90,7 +90,7 @@ func TestAnnouncementService_ShouldPreserveFirstReadAtWhenNoticeIsMarkedReadTwic
 	sessions := NewMockFacilitatorSessionRepository()
 	const token = "facilitator-token"
 	_ = sessions.Save(context.Background(), domain.NewFacilitatorSessionFromProps(domain.FacilitatorSessionProps{ID: "session-1", TrackID: "track-1", TokenHash: hashSHA256(token)}))
-	service := NewAnnouncementService(NewMockAnnouncementRepository(), receipts, NewMockCampRepository(), NewMockTrackRepository(), sessions, &MockTxManager{}, nil, nil)
+	service := NewAnnouncementService(NewMockAnnouncementRepository(), receipts, NewMockCampRepository(), NewMockTrackRepository(), sessions, NewMockAdminRepository(), &MockTxManager{}, nil, nil)
 	firstReadAt := time.Date(2026, 7, 20, 1, 2, 3, 0, time.UTC)
 	service.nowFn = func() time.Time { return firstReadAt }
 

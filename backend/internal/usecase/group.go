@@ -141,11 +141,11 @@ func (s *GroupService) registerBadge(ctx context.Context, badge *domain.Badge, g
 	})
 
 	if err != nil {
-		s.recordAuditLog(ctx, string(actorAdminID), adminActorLabel(ctx, s.admins, actorAdminID, nil), ActionGroupCreate, "", false, errorAuditMetadata(err, nil))
+		s.recordAuditLog(ctx, domain.Some(campID), string(actorAdminID), adminActorLabel(ctx, s.admins, actorAdminID, nil), ActionGroupCreate, "", groupName, false, errorAuditMetadata(err, nil))
 		return nil, err
 	}
 
-	s.recordAuditLog(ctx, string(actorAdminID), adminActorLabel(ctx, s.admins, actorAdminID, nil), ActionGroupCreate, string(groupID), true, map[string]any{"campID": string(campID), "badgeID": string(badge.ID())})
+	s.recordAuditLog(ctx, domain.Some(campID), string(actorAdminID), adminActorLabel(ctx, s.admins, actorAdminID, nil), ActionGroupCreate, string(groupID), groupName, true, map[string]any{"badgeID": string(badge.ID())})
 	return group, nil
 }
 
@@ -312,16 +312,18 @@ func (s *GroupService) ListGroupVisitDetails(ctx context.Context, groupID domain
 	return details, nil
 }
 
-func (s *GroupService) recordAuditLog(ctx context.Context, actor, actorName string, action AuditAction, target string, success bool, metadata map[string]any) {
+func (s *GroupService) recordAuditLog(ctx context.Context, campID domain.Optional[domain.CampID], actor, actorName string, action AuditAction, target, targetName string, success bool, metadata map[string]any) {
 	log := domain.NewAuditLogFromProps(domain.AuditLogProps{
 		ID:         domain.AuditLogID(s.uuidFn()),
+		CampID:     campID,
 		Actor:      actor,
 		ActorName:  actorName,
 		Action:     string(action),
 		Target:     target,
+		TargetName: targetName,
 		Success:    success,
 		OccurredAt: s.nowFn(),
-		Metadata:   metadata,
+		Metadata:   filterErrorAttributes(metadata),
 	})
 	_ = s.auditLogs.Save(ctx, log)
 }

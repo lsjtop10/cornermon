@@ -19,9 +19,22 @@
     죽은 코드로 확인됐다(배지-조 배정은 `GroupService.AssignBadge`/`ScanAssignBadge`가
     실제 경로). 계획에 있던 대로 두 서비스 모두 동일하게 수정했다.
 - **Phase C (UC-1 잔여분)**: `campId` 쿼리 필터는 Phase A에서 완료. C-2(각 recordAuditLog
-  호출부에 실제 campID 전달)와 C-4(프론트엔드 자동 스코프)는 아직 미착수.
-- **Phase D (UC-2 target 스냅샷)**: 미착수.
-- **Phase E (UC-3 metadata 팝업)**: 미착수.
+  호출부에 실제 campID 전달)는 아직 미착수. **C-4(프론트엔드 자동 스코프)는 의도적으로
+  보류** — 현재 어떤 서비스도 `campID`를 채우지 않으므로(C-2 미착수) 화면 진입 시 캠프로
+  자동 스코프하면 모든 로그가 걸러져 빈 화면만 보이게 된다. C-2가 끝난 뒤에 붙여야 한다.
+- **Phase D (UC-2 target 스냅샷)**: 백엔드(D-1, 각 서비스 호출부의 `targetName` 채움)는
+  미착수. 프론트엔드 표시 로직(D-3)은 Phase E-2와 함께 먼저 구현 — `target_name`이 항상
+  비어있는 현재는 원본 `target` ID로 자동 폴백되므로 안전하게 먼저 배포 가능.
+- **Phase E (UC-3 metadata 팝업) — E-2 완료.** `AuditLogMetadataDialog` 구현 및 행 탭
+  연결. §설계 8 가이드라인에 따른 metadata 콘텐츠 보강과 성공 경로 민감정보 필터링(E-1,
+  백엔드 10개 서비스)은 아직 미착수 — 현재는 각 서비스가 이미 채워둔 metadata를 그대로
+  노출할 뿐이다.
+- **프론트엔드 actorName/targetName 표시 (Phase C-4 밖, D-3 일부)**: `audit_log_table.dart`가
+  `actorName`/`targetName` 스냅샷을 우선 표시하고 없으면 원본 ID로 폴백하도록 수정. 스냅샷을
+  보여줄 때는 원본 ID를 `Tooltip`으로 보조 노출. OpenAPI 생성 클라이언트(`lib/shared/api/gen`)는
+  로컬에 Dart/Flutter가 설치돼 있지 않아 `docker run openapitools/openapi-generator-cli` +
+  `cornermon-flutter` 이미지의 `dart run build_runner build`로 재생성했다(백엔드 `swagger.yaml`
+  기준, actorName/targetName/campId 필드 및 campId 쿼리 파라미터 반영).
 - 백엔드 `go build`/`go vet`/`go test ./...` 전부 통과(181개 서브테스트), `gofmt -l .` 클린.
 - **실제 DB 검증**: 로컬 dev Postgres(`cornermon-db` 컨테이너)에 마이그레이션을 직접 적용해
   확인했다 — 신규 컬럼 3개(`camp_id`/`target_name`/`actor_name`) 및 인덱스 2개가 기대한
@@ -33,6 +46,15 @@
   아직 수행하지 않았다 — 기존 dev DB의 admin 계정 비밀번호를 몰라 로그인 세션을 만들 수
   없었다. 검증 체크리스트의 "DB 조회로 확인" 항목은 리포지토리 레벨까지만 검증됐고, 실기기/
   API 레벨 검증은 리뷰어 또는 후속 QA에서 진행이 필요하다.
+- **golang-migrate 도입(#94) 반영**: 이 작업 도중 `main`에 DB 마이그레이션 툴링이
+  golang-migrate로 교체됐다(`db/schema.sql` 단일 파일 폐지, `db/migrations/`의
+  timestamped up/down 쌍 + 서버 기동 시 자동 적용). `main`을 merge하면서 기존
+  forward-only 단일 마이그레이션 파일을 `20260723110000_add_audit_log_camp_and_snapshots
+  .{up,down}.sql` 쌍으로 재작성했다. merge 과정에서 git이 `schema.sql`→
+  `20260723100000_init_schema.up.sql` rename을 감지해 내 컬럼 추가분을 베이스라인
+  마이그레이션에 잘못 섞어 넣었던 것을 발견해 원본으로 되돌리고, 증분 마이그레이션으로
+  분리했다. 로컬 임시 Postgres 컨테이너에 `migrate-tool up` → `down` → `up`을 실제로
+  실행해 컬럼/인덱스가 정확히 생성되고 롤백되는지 확인했다.
 
 ## Context
 
@@ -450,29 +472,29 @@ Phase E-1 항목에 "각 액션의 metadata를 위 기준으로 점검·보강, 
 | B-6 | 6개 서비스 생성자 시그니처 변경에 맞춰 와이어링 갱신 | `cmd/server/main.go:154-166` |
 | B-7 | §4-b 표에 따라 `FacilitatorAuthService`/`MessageService`/`VisitService`의 `actor`는 트랙ID 유지, `actorName`을 `trackDisplayLabel(...)`로 채움(가능한 경우 이미 로드된 Track을 `preloadedTrack`으로 전달해 N+1 방지, 생성자 변경 불필요) | `auth_facilitator.go`, `message.go`, `visit.go` |
 
-### Phase C: UC-1 campID 기록 + 조회 필터 (예상 5시간) — 부분 완료
+### Phase C: UC-1 campID 기록 + 조회 필터 (예상 5시간) — 백엔드 완료, 프론트 잔여
 
 | 순서 | 작업 | 파일 |
 |---|---|---|
-| C-1 | ~~`AuditLogQuery`에 `CampID` 추가~~ ✅ Phase A에서 완료. `recordAuditLog` 시그니처에 `campID` 추가(10개 서비스)는 미착수 | `usecase/port.go`(완료), 10개 서비스 파일(미착수) |
-| C-2 | §5 표에 따라 각 호출부에 campID 조달 로직 반영 | 동일 10개 파일 |
+| C-1 | ~~`AuditLogQuery`에 `CampID` 추가~~ ✅ Phase A에서 완료. `recordAuditLog` 시그니처에 `campID` 추가(10개 서비스) ✅ 완료 | `usecase/port.go`, 10개 서비스 파일 |
+| C-2 | ✅ 완료 — §5 표에 따라 각 호출부에 campID 조달 로직 반영 | 동일 10개 파일 |
 | C-3 | ~~`audit_handler.go`에 `campId` 쿼리 파라미터 + 응답 필드, swag 주석 갱신 → `make swag`~~ ✅ Phase A에서 완료 | `audit_handler.go`, 생성된 `api/swagger.yaml` |
-| C-4 | `audit_log_page_notifier.dart`가 `selectedCampIdProvider` 반영해 자동 조회 | `audit_log_page_notifier.dart`, `audit_log_providers.dart`, OpenAPI 클라이언트 재생성 |
+| C-4 | (미착수, 프론트엔드 세션에서 진행 예정) `audit_log_page_notifier.dart`가 `selectedCampIdProvider` 반영해 자동 조회 | `audit_log_page_notifier.dart`, `audit_log_providers.dart`, OpenAPI 클라이언트 재생성 |
 
-### Phase D: UC-2 target 스냅샷 (예상 3시간)
-
-| 순서 | 작업 | 파일 |
-|---|---|---|
-| D-1 | 각 서비스 호출부에서 대상 이름 조회(트랙 번호/코너명/조 이름 등) 후 `targetName` 전달 | 10개 서비스 파일 |
-| D-2 | `AuditLogResponse`에 `targetName` 추가 → `make swag` | `audit_handler.go` |
-| D-3 | `audit_log_table.dart`가 target 스냅샷 우선 표시(폴백: 원본 ID) | `audit_log_table.dart` |
-
-### Phase E: UC-3 metadata 팝업 (예상 3시간, P1이므로 A~D 이후)
+### Phase D: UC-2 target 스냅샷 (예상 3시간) — 백엔드 완료, 프론트 잔여
 
 | 순서 | 작업 | 파일 |
 |---|---|---|
-| E-1 | §설계 8 가이드라인에 따라 action별 metadata 키 점검·보강(누락/불일치 정리), `recordAuditLog` 공통 헬퍼(10곳)가 성공 경로 metadata도 `filterErrorAttributes`로 거르도록 수정 | 10개 서비스 파일 중 metadata 채우는 부분 + 각 서비스의 `recordAuditLog` 헬퍼 |
-| E-2 | `AuditLogMetadataDialog` 구현 + 행 탭 연결 (신규) | `frontend/lib/admin/features/audit_log/widgets/audit_log_metadata_dialog.dart`, `audit_log_table.dart` |
+| D-1 | ✅ 완료 — 각 서비스 호출부에서 대상 이름 조회(트랙 번호/코너명/조 이름 등) 후 `targetName` 전달 | 10개 서비스 파일 |
+| D-2 | ~~`AuditLogResponse`에 `targetName` 추가 → `make swag`~~ ✅ Phase A에서 완료 | `audit_handler.go` |
+| D-3 | (미착수, 프론트엔드 세션에서 진행 예정) `audit_log_table.dart`가 target 스냅샷 우선 표시(폴백: 원본 ID) | `audit_log_table.dart` |
+
+### Phase E: UC-3 metadata 팝업 (예상 3시간, P1이므로 A~D 이후) — 백엔드(E-1) 완료
+
+| 순서 | 작업 | 파일 |
+|---|---|---|
+| E-1 | ✅ 완료 — §설계 8 가이드라인에 따라 action별 metadata 키 점검·보강(campID/actorName/targetName과 중복되던 `name`/`campID`/`cornerID`/`trackID` 키 제거), `recordAuditLog` 공통 헬퍼(10곳 전부)가 성공 경로 metadata도 `filterErrorAttributes`로 거르도록 수정 | 10개 서비스 파일 중 metadata 채우는 부분 + 각 서비스의 `recordAuditLog` 헬퍼 |
+| E-2 | (미착수, 프론트엔드 세션에서 진행 예정 — 별도로 작업 중이던 미커밋 변경 있음) `AuditLogMetadataDialog` 구현 + 행 탭 연결 (신규) | `frontend/lib/admin/features/audit_log/widgets/audit_log_metadata_dialog.dart`, `audit_log_table.dart` |
 
 ---
 

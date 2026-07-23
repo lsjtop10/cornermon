@@ -73,6 +73,12 @@ func TestCampService_OpenNewCamp(t *testing.T) {
 		if got.ActorName() != "김관리" {
 			t.Errorf("expected ActorName '김관리', got %q", got.ActorName())
 		}
+		if campID, ok := got.CampID().Value(); !ok || campID != "camp-1" {
+			t.Errorf("expected CampID Some('camp-1'), got %v (set=%v)", campID, ok)
+		}
+		if got.TargetName() != "New Camp" {
+			t.Errorf("expected TargetName 'New Camp', got %q", got.TargetName())
+		}
 	})
 
 	t.Run("ShoudReturnInvalidSettingsWithoutSavingWhenPeriodMissing", func(t *testing.T) {
