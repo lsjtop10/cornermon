@@ -22,7 +22,7 @@ func TestDeviceTrustService_RequestRegistration(t *testing.T) {
 		broadcaster := &MockBroadcaster{}
 		tx := &MockTxManager{}
 
-		s := NewDeviceTrustService(camps, devices, auditLogs, broadcaster, tx)
+		s := NewDeviceTrustService(camps, devices, NewMockAdminRepository(), auditLogs, broadcaster, tx)
 		s.nowFn = func() time.Time { return now }
 		s.uuidFn = func() string { return "device-uuid" }
 
@@ -67,7 +67,7 @@ func TestDeviceTrustService_RequestRegistration(t *testing.T) {
 		broadcaster := &MockBroadcaster{}
 		tx := &MockTxManager{}
 
-		s := NewDeviceTrustService(camps, devices, auditLogs, broadcaster, tx)
+		s := NewDeviceTrustService(camps, devices, NewMockAdminRepository(), auditLogs, broadcaster, tx)
 
 		// Act
 		_, _, err := s.RequestRegistration(context.Background(), "UNKNOWN1", "iPad-1", "iPad Pro", "1번 태블릿")
@@ -89,7 +89,7 @@ func TestDeviceTrustService_RequestRegistration(t *testing.T) {
 		broadcaster := &MockBroadcaster{}
 		tx := &MockTxManager{}
 
-		s := NewDeviceTrustService(camps, devices, auditLogs, broadcaster, tx)
+		s := NewDeviceTrustService(camps, devices, NewMockAdminRepository(), auditLogs, broadcaster, tx)
 
 		// Act
 		_, registration, err := s.RequestRegistration(context.Background(), "REGCODE1", "iPad-1", "iPad Pro", "1번 태블릿")
@@ -131,8 +131,10 @@ func TestDeviceTrustService_ShouldReturnUpdatedRegistrationWhenDeviceStatusChang
 			auditLogs := &MockAuditLogRepository{}
 			broadcaster := &MockBroadcaster{}
 			tx := &MockTxManager{}
+			admins := NewMockAdminRepository()
+			admins.Admins["admin-1"] = domain.NewAdminFromProps(domain.AdminProps{ID: "admin-1", Username: "김관리"})
 
-			s := NewDeviceTrustService(camps, devices, auditLogs, broadcaster, tx)
+			s := NewDeviceTrustService(camps, devices, admins, auditLogs, broadcaster, tx)
 			s.nowFn = func() time.Time { return now }
 			s.uuidFn = func() string { return "audit-uuid" }
 
@@ -158,6 +160,16 @@ func TestDeviceTrustService_ShouldReturnUpdatedRegistrationWhenDeviceStatusChang
 				broadcaster.Broadcasts[0].Scope != CampScope() {
 				t.Errorf("expected EventDeviceRegistrationUpdated broadcast, got %v", broadcaster.Broadcasts)
 			}
+
+			if len(auditLogs.Logs) != 1 {
+				t.Fatalf("expected 1 audit log, got %d", len(auditLogs.Logs))
+			}
+			if auditLogs.Logs[0].Actor() != "admin-1" {
+				t.Errorf("expected Actor to remain raw admin ID 'admin-1', got %q", auditLogs.Logs[0].Actor())
+			}
+			if auditLogs.Logs[0].ActorName() != "김관리" {
+				t.Errorf("expected ActorName '김관리', got %q", auditLogs.Logs[0].ActorName())
+			}
 		})
 	}
 }
@@ -175,7 +187,7 @@ func TestDeviceTrustService_GetMyRegistrationStatus(t *testing.T) {
 		broadcaster := &MockBroadcaster{}
 		tx := &MockTxManager{}
 
-		s := NewDeviceTrustService(camps, devices, auditLogs, broadcaster, tx)
+		s := NewDeviceTrustService(camps, devices, NewMockAdminRepository(), auditLogs, broadcaster, tx)
 		s.nowFn = func() time.Time { return now }
 		s.uuidFn = func() string { return "device-uuid" }
 
