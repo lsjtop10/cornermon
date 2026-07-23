@@ -23,7 +23,15 @@ BCampCornerTrackApi trackMigrationApi(Ref ref) {
 }
 
 /// §2.4 — B2 안내 문구가 사유별로 갈린다("트랙 삭제됨" / "강제 로그아웃됨" / "캠프 종료됨").
-enum TrackSessionTerminationReason { trackDeleted, forceLogout, campEnded }
+/// trackNotFound·loggedOut은 이슈 #200에서 추가 — 각각 track-scope API의 404
+/// TRACK_NOT_FOUND 감지, 진행자의 수동 로그아웃(B2 메뉴)에 대응한다.
+enum TrackSessionTerminationReason {
+  trackDeleted,
+  forceLogout,
+  campEnded,
+  trackNotFound,
+  loggedOut,
+}
 
 sealed class TrackSessionState {
   const TrackSessionState();
@@ -178,6 +186,16 @@ class TrackSession extends _$TrackSession {
     await api.authTrackLogoutPost();
 
     state = const TrackSessionUnauthenticated();
+  }
+
+  /// B2 메뉴 "로그아웃" — 세션 마이그레이션 실패 등 예외 상황에서 진행자가 스스로 트랙
+  /// 세션을 종료할 수 있게 한다(이슈 #200). rejectAssignment()와 같은 API를 쓰지만
+  /// 트리거 화면·종료 사유가 다르다.
+  Future<void> logout() async {
+    final api = ref.read(authDeviceTrustApiProvider);
+    await api.authTrackLogoutPost();
+
+    handleTermination(TrackSessionTerminationReason.loggedOut);
   }
 
   /// track_replaced SSE 수신, 또는 다른 요청이 409 SESSION_MIGRATION_REQUIRED로 실패했을 때

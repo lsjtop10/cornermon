@@ -1,6 +1,7 @@
 import 'package:cornermon/facilitator/features/pin_login/pin_login_error_provider.dart';
 import 'package:cornermon/facilitator/features/pin_login/pin_login_screen.dart';
 import 'package:cornermon/facilitator/session/device_trust_provider.dart';
+import 'package:cornermon/facilitator/session/track_session_provider.dart';
 import 'package:cornermon/facilitator/widgets/pin_otp_input.dart';
 import 'package:cornermon/shared/api/domain_aliases.dart';
 import 'package:cornermon/shared/api/providers/auth_device_trust_providers.dart';
@@ -266,4 +267,72 @@ void main() {
     // assert
     expect(await store.read('device_trust_token'), 'device-token');
   });
+
+  // screen-spec-facilitator.md:45 — 강제종료 사유별 안내 문구가 서로 달라야 한다.
+  // trackNotFound는 이슈 #200에서 추가된 사유.
+  const bannerCases = {
+    TrackSessionTerminationReason.trackDeleted: '이 트랙이 삭제되어 로그아웃되었습니다',
+    TrackSessionTerminationReason.forceLogout: '관리자에 의해 로그아웃되었습니다',
+    TrackSessionTerminationReason.campEnded: '코너학습이 종료되어 로그아웃되었습니다',
+    TrackSessionTerminationReason.trackNotFound: '이 트랙을 찾을 수 없습니다. 다시 로그인해주세요',
+  };
+
+  for (final entry in bannerCases.entries) {
+    testWidgets(
+      'ShouldShowBannerTextWhenTerminationReasonIs${entry.key.name}',
+      (tester) async {
+        // arrange
+        await tester.pumpWidget(
+          buildTestable(
+            const PinLoginScreen(),
+            overrides: [
+              trackSessionProvider.overrideWith(
+                () => _FixedTrackSession(
+                  TrackSessionUnauthenticated(lastTerminationReason: entry.key),
+                ),
+              ),
+            ],
+          ),
+        );
+        await tester.pump();
+
+        // assert
+        expect(find.text(entry.value), findsOneWidget);
+      },
+    );
+  }
+
+  testWidgets('ShouldShowNoBannerWhenUserManuallyLoggedOut', (tester) async {
+    // arrange: 본인이 누른 로그아웃(loggedOut)은 안내가 필요 없다.
+    await tester.pumpWidget(
+      buildTestable(
+        const PinLoginScreen(),
+        overrides: [
+          trackSessionProvider.overrideWith(
+            () => _FixedTrackSession(
+              const TrackSessionUnauthenticated(
+                lastTerminationReason: TrackSessionTerminationReason.loggedOut,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+    await tester.pump();
+
+    // assert
+    expect(find.text('트랙 PIN을 입력하세요'), findsOneWidget);
+    expect(find.textContaining('로그아웃되었습니다'), findsNothing);
+    expect(find.textContaining('찾을 수 없습니다'), findsNothing);
+  });
+}
+
+/// TrackSession fake — 복원(_restore) 없이 곧바로 원하는 상태로 시작한다.
+class _FixedTrackSession extends TrackSession {
+  _FixedTrackSession(this._state);
+
+  final TrackSessionState _state;
+
+  @override
+  TrackSessionState build() => _state;
 }
