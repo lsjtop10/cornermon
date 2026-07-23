@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cornermon/shared/api/providers/auth_device_trust_providers.dart';
 import 'package:cornermon/shared/api/providers/camp_providers.dart';
 import 'package:cornermon/shared/auth/secure_token_store.dart';
+import 'selected_camp_provider.dart';
 
 const _accessTokenKey = 'admin_access_token';
 const _adminIdKey = 'admin_id';
@@ -91,6 +92,7 @@ class AdminSession extends Notifier<AdminSessionState> {
     final store = ref.read(secureTokenStoreProvider);
     await store.delete(_accessTokenKey);
     await store.delete(_adminIdKey);
+    ref.read(selectedCampIdProvider.notifier).clear();
     state = const AdminSessionUnauthenticated();
   }
 }
