@@ -16,6 +16,7 @@ import 'package:cornermon/shared/api/sse/sse_event_receipt.dart';
 import 'package:cornermon/shared/design_system/tokens/colors.dart';
 import 'package:cornermon/shared/design_system/tokens/spacing.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../test_utils/widget_test_helpers.dart';
@@ -420,6 +421,102 @@ void main() {
 
       final headerTopLeft = tester.getTopLeft(find.byType(MainTrackHeader));
       expect(headerTopLeft.dy, AppSpacing.space2 + 24.0);
+    });
+
+    testWidgets('ShouldShowSingleAckNoticeModalWhenTrackSessionMigratesToNewCorner', (
+      tester,
+    ) async {
+      // arrange
+      final oldTrackId = trackId;
+      final newTrackId = TrackId('track-2');
+      final oldTrack = Track(
+        (b) => b
+          ..id = oldTrackId.value
+          ..cornerId = 'corner-1'
+          ..trackNo = 3
+          ..status = TrackStatus.ACTIVE,
+      );
+      final oldCorner = AuthTrackLoginPost200ResponseCorner(
+        (b) => b
+          ..id = 'corner-1'
+          ..name = '입장',
+      );
+      final newTrack = Track(
+        (b) => b
+          ..id = newTrackId.value
+          ..cornerId = 'corner-2'
+          ..trackNo = 5
+          ..status = TrackStatus.ACTIVE,
+      );
+      final newCorner = AuthTrackLoginPost200ResponseCorner(
+        (b) => b
+          ..id = 'corner-2'
+          ..name = '피자',
+      );
+      final authenticatedState = TrackSessionAuthenticated(
+        trackToken: 'old-token',
+        track: oldTrack,
+        corner: oldCorner,
+      );
+      final fakeSession = _FakeTrackSession(authenticatedState);
+
+      final container = ProviderContainer(
+        overrides: [
+          trackSessionProvider.overrideWith(() => fakeSession),
+          currentVisitProvider(oldTrackId).overrideWith((ref) => null),
+          currentVisitProvider(newTrackId).overrideWith((ref) => null),
+          trackCornerProvider(oldTrackId).overrideWith(
+            (ref) => Corner(
+              (b) => b
+                ..id = 'corner-1'
+                ..name = '입장'
+                ..targetMinutes = 10
+                ..status = CornerOperationalStatus.IDLE,
+            ),
+          ),
+          trackCornerProvider(newTrackId).overrideWith(
+            (ref) => Corner(
+              (b) => b
+                ..id = 'corner-2'
+                ..name = '피자'
+                ..targetMinutes = 15
+                ..status = CornerOperationalStatus.IDLE,
+            ),
+          ),
+          facilitatorBroadcastMessageListProvider.overrideWith((ref) => <Message>[]),
+          unreadDirectMessageCountProvider(oldTrackId).overrideWith((ref) async => 0),
+          unreadDirectMessageCountProvider(newTrackId).overrideWith((ref) async => 0),
+          trackEventsProvider(
+            oldTrackId,
+          ).overrideWith((ref) => const Stream<SseEventReceipt>.empty()),
+          trackEventsProvider(
+            newTrackId,
+          ).overrideWith((ref) => const Stream<SseEventReceipt>.empty()),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const MaterialApp(home: MainTrackScreen()),
+        ),
+      );
+      await tester.pump();
+      expect(find.text('코너가 피자(으)로 변경되었습니다. 계속하시겠습니까?'), findsNothing);
+
+      // act — 트랙 교체 자동 마이그레이션(track_session_provider.migrateSession)이
+      // 완료된 결과를 흉내낸다.
+      fakeSession.state = TrackSessionAuthenticated(
+        trackToken: 'new-token',
+        track: newTrack,
+        corner: newCorner,
+      );
+      await tester.pump();
+
+      // assert
+      expect(find.text('코너가 피자(으)로 변경되었습니다. 계속하시겠습니까?'), findsOneWidget);
+      expect(find.text('확인'), findsOneWidget);
     });
   });
 }

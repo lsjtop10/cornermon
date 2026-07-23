@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"cornermon/backend/internal/domain"
+	"cornermon/backend/internal/usecase"
 
 	"github.com/labstack/echo/v4"
 )
@@ -28,7 +29,34 @@ func (trackAuthForMessageRoutes) ValidateSession(_ context.Context, token string
 	if token == "track-token" {
 		return domain.NewFacilitatorSessionFromProps(domain.FacilitatorSessionProps{TrackID: "track-1"}), nil
 	}
+	if token == "migrating-token" {
+		session := domain.NewFacilitatorSessionFromProps(domain.FacilitatorSessionProps{TrackID: "track-1"})
+		session.SetMigrationTarget("track-2")
+		return session, nil
+	}
 	return nil, errors.New("invalid track token")
+}
+
+type facilitatorAuthForMigrationRoutes struct{}
+
+func (facilitatorAuthForMigrationRoutes) Login(_ context.Context, _, _ string) (*usecase.TrackLoginResult, error) {
+	return nil, errors.New("not implemented")
+}
+
+func (facilitatorAuthForMigrationRoutes) Logout(_ context.Context, _ domain.FacilitatorSessionID) error {
+	return nil
+}
+
+func (facilitatorAuthForMigrationRoutes) MigrateSession(_ context.Context, _ string) (*usecase.TrackLoginResult, error) {
+	return &usecase.TrackLoginResult{
+		TrackToken: "new-track-token",
+		Track:      domain.NewTrackFromProps(domain.TrackProps{ID: "track-2", CornerID: "corner-1", Status: domain.TrackActive}),
+		Corner:     domain.NewCornerFromProps(domain.CornerProps{ID: "corner-1", CampID: "camp-1"}),
+	}, nil
+}
+
+func (facilitatorAuthForMigrationRoutes) ListActiveSessions(_ context.Context, _ domain.CampID) ([]*domain.FacilitatorSession, error) {
+	return nil, nil
 }
 
 func TestMessageRoutesShoudAuthenticateAdminAndTrackWithoutDuplicateRouteRegistration(t *testing.T) {
@@ -110,6 +138,56 @@ func TestSendDirectRouteShoudRejectRequestWithoutSession(t *testing.T) {
 	// Assert
 	if rec.Code != http.StatusUnauthorized {
 		t.Fatalf("expected status 401, got %d: %s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestSendDirectRouteShoudRejectSessionWithPendingMigration(t *testing.T) {
+	// Arrange
+	uc := &messageUsecaseForHandler{}
+	e := echo.New()
+	RegisterRoutes(e, &Handlers{Auth: &AuthHandler{}, Device: &DeviceHandler{}, Message: NewMessageHandler(uc, nil, nil)}, adminAuthForMessageRoutes{}, trackAuthForMessageRoutes{})
+
+	// Act
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/tracks/track-1/messages", strings.NewReader(`{"content":"hello"}`))
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	req.Header.Set(echo.HeaderAuthorization, "Bearer migrating-token")
+	rec := httptest.NewRecorder()
+	e.ServeHTTP(rec, req)
+
+	// Assert
+	if rec.Code != http.StatusConflict {
+		t.Fatalf("expected status 409, got %d: %s", rec.Code, rec.Body.String())
+	}
+	if !strings.Contains(rec.Body.String(), string(CodeSessionMigrationRequired)) {
+		t.Fatalf("expected body to contain %s, got %s", CodeSessionMigrationRequired, rec.Body.String())
+	}
+}
+
+func TestMigrateSessionAndLogoutRoutesShoudBeExemptFromPendingMigrationGate(t *testing.T) {
+	// Arrange
+	e := echo.New()
+	RegisterRoutes(e, &Handlers{Auth: NewAuthHandler(nil, facilitatorAuthForMigrationRoutes{}, nil), Device: &DeviceHandler{}}, adminAuthForMessageRoutes{}, trackAuthForMessageRoutes{})
+
+	for _, tc := range []struct {
+		name   string
+		method string
+		path   string
+	}{
+		{name: "migrate-session", method: http.MethodPost, path: "/api/v1/tracks/track-1/migrate-session"},
+		{name: "logout", method: http.MethodPost, path: "/api/v1/auth/track/logout"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			// Act
+			req := httptest.NewRequest(tc.method, tc.path, nil)
+			req.Header.Set(echo.HeaderAuthorization, "Bearer migrating-token")
+			rec := httptest.NewRecorder()
+			e.ServeHTTP(rec, req)
+
+			// Assert
+			if rec.Code == http.StatusConflict {
+				t.Fatalf("expected route to be exempt from the migration gate, got 409: %s", rec.Body.String())
+			}
+		})
 	}
 }
 

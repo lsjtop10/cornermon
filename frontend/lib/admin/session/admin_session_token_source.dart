@@ -20,4 +20,10 @@ class AdminSessionTokenSource implements SessionTokenSource {
   /// 관리자 앱은 트랙 스코프 개념이 없어 404를 특별 취급하지 않는다(이슈 #200은 진행자 전용).
   @override
   Future<bool> onResourceNotFound(DioException error) async => false;
+
+  @override
+  Future<void> onSessionMigrationRequired() async {
+    // 관리자 세션은 트랙 마이그레이션 대상이 될 수 없다(백엔드가 facilitatorSession에만
+    // 게이트를 건다) — 도달할 일이 없는 분기라 no-op.
+  }
 }

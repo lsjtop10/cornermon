@@ -37,4 +37,8 @@ class TrackSessionTokenSource implements SessionTokenSource {
         .handleTermination(TrackSessionTerminationReason.trackNotFound);
     return true;
   }
+
+  @override
+  Future<void> onSessionMigrationRequired() =>
+      ref.read(trackSessionProvider.notifier).migrateSession();
 }

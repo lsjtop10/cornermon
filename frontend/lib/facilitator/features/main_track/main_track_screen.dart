@@ -9,6 +9,7 @@ import 'package:cornermon/shared/api/providers/visit_providers.dart';
 import 'package:cornermon/shared/design_system/tokens/colors.dart';
 import 'package:cornermon/shared/design_system/tokens/spacing.dart';
 import 'package:cornermon/shared/design_system/widgets/app_button.dart';
+import 'package:cornermon/shared/design_system/widgets/confirm_modal.dart';
 import 'package:cornermon/facilitator/session/track_session_provider.dart';
 import '../visit_summary/visit_summary_overlay.dart';
 import '_main_track_body.dart';
@@ -29,6 +30,23 @@ class _MainTrackScreenState extends ConsumerState<MainTrackScreen> {
   @override
   Widget build(BuildContext context) {
     final session = ref.watch(trackSessionProvider);
+
+    // 트랙 교체 자동 마이그레이션(이슈 #204)은 재PIN 없이 조용히 세션을 갈아타지만,
+    // design-system.md §4.4 "트랙 교체 연속성 확인 모달"에 따라 진행자에게는 통보해야 한다 —
+    // 전환 자체를 막지는 않으므로(취소 개념 없음) 마이그레이션 완료 후 사후 통보로 띄운다.
+    ref.listen<TrackSessionState>(trackSessionProvider, (previous, next) {
+      if (previous is TrackSessionAuthenticated &&
+          next is TrackSessionAuthenticated &&
+          previous.track.id != next.track.id) {
+        final cornerName = next.corner.name ?? '';
+        showConfirmModal(
+          context,
+          kind: ConfirmModalKind.singleAckOnly,
+          title: '코너가 $cornerName(으)로 변경되었습니다. 계속하시겠습니까?',
+        );
+      }
+    });
+
     if (session is! TrackSessionAuthenticated) {
       // 라우터 가드가 정상 동작하면 이 상태로 진입하지 않는다(위젯 테스트 등 예외 상황 방어).
       return const SizedBox.shrink();

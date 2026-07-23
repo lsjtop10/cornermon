@@ -17,6 +17,10 @@ abstract interface class SessionTokenSource {
   /// 감지했을 때 위임한다. true = 이 앱이 처리함(추가 동작 없이 원래 에러를 그대로 흘려보낸다),
   /// false = 이 앱과 무관한 404(관리자는 항상 false).
   Future<bool> onResourceNotFound(DioException error);
+
+  /// 409 SESSION_MIGRATION_REQUIRED 수신 시 처리를 위임한다(이슈 #204).
+  /// 트랙 교체 세션만 도달할 수 있는 응답이라 관리자 쪽은 no-op이다.
+  Future<void> onSessionMigrationRequired();
 }
 
 @riverpod
