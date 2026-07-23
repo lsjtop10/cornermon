@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cornermon/admin/features/track_direct/track_direct_screen.dart';
 import 'package:cornermon/admin/session/selected_camp_provider.dart';
 import 'package:cornermon/shared/api/ids.dart';
@@ -147,6 +149,56 @@ void main() {
 
         // assert — post-frame 스레드 렌더링을 기다리지 않고 탭 처리에서 읽음 요청을 시작한다.
         expect(markReadRequested, isTrue);
+      },
+    );
+
+    testWidgets(
+      'ShouldKeepTrackListVisibleWhileMessagePreviewReloads',
+      (tester) async {
+        // arrange
+        final reload = Completer<List<MessageResponse>>();
+        var messageRequestCount = 0;
+        await _pump(
+          tester,
+          campId: campId,
+          tracks: [_track('t1', 1, 'c1')],
+          extraOverrides: [
+            trackMessageListProvider(
+              TrackId('t1'),
+              background: false,
+            ).overrideWith((ref) async {
+              messageRequestCount++;
+              if (messageRequestCount == 1) {
+                return [
+                  _msg(
+                    MessageResponseSenderRoleEnum.TRACK,
+                    '첫 메시지',
+                    DateTime(2026, 1, 1),
+                  ),
+                ];
+              }
+              return reload.future;
+            }),
+          ],
+        );
+        final container = ProviderScope.containerOf(
+          tester.element(find.byType(TrackDirectScreen)),
+          listen: false,
+        );
+
+        // act — SSE가 무효화하는 동일한 preview provider를 재조회한다.
+        container.invalidate(
+          trackMessageListProvider(TrackId('t1'), background: false),
+        );
+        await tester.pump();
+
+        // assert — 최신순 summary가 준비될 때까지 이전 행을 유지하고 spinner를 표시하지 않는다.
+        expect(find.text('첫 메시지'), findsOneWidget);
+        expect(find.byType(CircularProgressIndicator), findsNothing);
+
+        // cleanup — 진행 중인 Future를 완료해 테스트 컨테이너를 정상 종료한다.
+        reload.complete(<MessageResponse>[]);
+        await tester.pumpAndSettle();
       },
     );
 

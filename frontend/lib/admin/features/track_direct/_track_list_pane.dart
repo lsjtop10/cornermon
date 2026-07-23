@@ -45,6 +45,9 @@ class TrackListPane extends ConsumerWidget {
     final selected = ref.watch(selectedDirectTrackIdProvider);
 
     return summaries.when(
+      // 마지막 메시지 변경은 summary의 하위 메시지 provider를 재조회시키므로 reload 상태가
+      // 된다. 이전 목록을 계속 보여야 최신순 재정렬 전의 spinner 깜빡임이 없다.
+      skipLoadingOnReload: true,
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (error, _) => Center(child: Text('트랙 목록을 불러오지 못했습니다.\n$error')),
       data: (items) {

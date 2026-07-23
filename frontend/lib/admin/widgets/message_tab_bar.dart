@@ -21,6 +21,7 @@ class MessageTabBar extends ConsumerWidget {
     if (campId != null) {
       final summaries = ref.watch(trackDirectSummariesProvider(campId));
       unreadTotal = summaries.maybeWhen(
+        skipLoadingOnReload: true,
         data: (items) => items.fold<int>(0, (sum, s) => sum + s.unreadCount),
         orElse: () => 0,
       );

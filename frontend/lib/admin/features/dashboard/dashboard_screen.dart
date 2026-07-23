@@ -234,6 +234,7 @@ class DashboardScreen extends ConsumerWidget {
         ? ref.watch(trackDirectSummariesProvider(id))
         : null;
     final unreadDirectCount = directSummaries?.maybeWhen(
+      skipLoadingOnReload: true,
       data: (items) => items.fold<int>(0, (sum, s) => sum + s.unreadCount),
       orElse: () => 0,
     );
