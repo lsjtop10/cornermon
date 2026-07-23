@@ -14,9 +14,9 @@ import 'bottleneck_top3.dart';
 /// 완주율 — analytics-model.md §1.1 "전체 완주율"과 대응). `visitCompletionRate`는 별개로
 /// `CompletedVisits / TotalVisits * 100`(방문 단위)이라 이 카드가 요구하는 값이 아니다.
 /// `manualVisitRatio`도 동일하게 이미 0~100 퍼센트다. **`CornerStatsResponse.overDeviationRatio`
-/// (0~1 비율)와 스케일이 다르므로 혼동해서 다시 ×100 하지 않는다** — 이미 병합된
-/// `dashboard_screen.dart`의 `_SummaryBar`가 `completionRate`에 ×100을 한 번 더 하고 있는데,
-/// 이는 A1 범위의 기존 이슈이며 이 작업(A12)의 범위가 아니라 여기서 고치지 않는다.
+/// (0~1 비율)와 스케일이 다르므로 혼동해서 다시 ×100 하지 않는다** — `dashboard_screen.dart`의
+/// `_SummaryBar`가 `completionRate`에 ×100을 한 번 더 하던 버그(완주율이 100%를 넘게
+/// 표시되던 원인, 이슈 #201)는 수정 완료.
 /// `completionRate`가 없을 때만 `finishedGroupCount/totalGroups`를 직접 계산해 퍼센트로
 /// 변환한 값으로 폴백한다(둘 다 없으면 0%).
 class ReportSummaryTab extends StatelessWidget {

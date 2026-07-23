@@ -62,7 +62,7 @@ CornerResponse _corner(
 
 CampSummaryStatsResponse _summary() => CampSummaryStatsResponse(
   (b) => b
-    ..completionRate = 0.7
+    ..completionRate = 70
     ..totalGroups = 10
     ..finishedGroupCount = 3
     ..programDurationSeconds = 3600,
@@ -265,6 +265,20 @@ void main() {
   });
 
   group('Dashboard screen', () {
+    testWidgets('ShoudRenderCompletionRateWithoutDoublingPercent', (
+      tester,
+    ) async {
+      // arrange: 백엔드 completionRate는 이미 0~100 스케일의 퍼센트 값이다
+      await _pumpDashboard(
+        tester,
+        campId: CampId('camp-1'),
+        corners: [_corner('corner-1', '코너 1', CornerResponseStatusEnum.BUSY)],
+      );
+
+      // act / assert: ×100을 다시 하지 않고 그대로 반올림해 표시해야 한다 (이슈 #201)
+      expect(find.text('70%'), findsOneWidget);
+    });
+
     testWidgets('ShoudRenderBottleneckBorderWhenCornerIsBottleneck', (
       tester,
     ) async {
