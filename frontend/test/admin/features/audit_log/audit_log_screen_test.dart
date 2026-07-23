@@ -12,17 +12,25 @@ import '../../../test_utils/widget_test_helpers.dart';
 AuditLog _log({
   required String id,
   String actor = 'admin1',
+  String? actorName,
   AuditLogResponseActionEnum action = AuditLogResponseActionEnum.ADMIN_LOGIN,
   String target = 'track-1',
+  String? targetName,
   bool success = true,
+  Map<String, Object?>? metadata,
 }) => AuditLogResponse(
   (b) => b
     ..id = id
     ..actor = actor
+    ..actorName = actorName
     ..action = action
     ..target = target
+    ..targetName = targetName
     ..success = success
-    ..occurredAt = DateTime.utc(2026, 7, 17, 10, 0, 0),
+    ..occurredAt = DateTime.utc(2026, 7, 17, 10, 0, 0)
+    ..metadata.replace(
+      metadata?.map((k, v) => MapEntry(k, JsonObject(v))) ?? {},
+    ),
 );
 
 AuditLogPage _page(List<AuditLog> logs, {String? nextCursor}) =>
@@ -229,4 +237,99 @@ void main() {
     expect(find.text('마지막 로그입니다.'), findsOneWidget);
     expect(find.text('더 보기'), findsNothing);
   });
+
+  testWidgets(
+    'ShoudShowActorNameSnapshotFallbackToRawIdWhenActorNameMissing',
+    (tester) async {
+      // arrange
+      await tester.pumpWidget(
+        buildTestable(
+          const AuditLogScreen(),
+          overrides: [
+            auditLogListProvider(
+              limit: auditLogPageLimit,
+              before: null,
+              action: null,
+              actor: null,
+              result: null,
+            ).overrideWith(
+              (ref) async => _page([
+                _log(id: '1', actor: 'admin-1', actorName: 'admin1'),
+                _log(id: '2', actor: 'track-9', targetName: null),
+              ]),
+            ),
+          ],
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // assert — actorName이 있으면 스냅샷 표시, 없으면 원시 actor로 폴백
+      expect(find.text('admin1'), findsOneWidget);
+      expect(find.text('track-9'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'ShoudOpenMetadataDialogWithKeyValuesWhenRowTapped',
+    (tester) async {
+      // arrange
+      await tester.pumpWidget(
+        buildTestable(
+          const AuditLogScreen(),
+          overrides: [
+            auditLogListProvider(
+              limit: auditLogPageLimit,
+              before: null,
+              action: null,
+              actor: null,
+              result: null,
+            ).overrideWith(
+              (ref) async => _page([
+                _log(id: '1', metadata: {'reason': 'invalid_pin'}),
+              ]),
+            ),
+          ],
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // act
+      await tester.tap(find.text('admin1'));
+      await tester.pumpAndSettle();
+
+      // assert
+      expect(find.text('상세 정보'), findsOneWidget);
+      expect(find.text('reason'), findsOneWidget);
+      expect(find.text('invalid_pin'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'ShoudShowEmptyMetadataMessageWhenMetadataMissingAndRowTapped',
+    (tester) async {
+      // arrange
+      await tester.pumpWidget(
+        buildTestable(
+          const AuditLogScreen(),
+          overrides: [
+            auditLogListProvider(
+              limit: auditLogPageLimit,
+              before: null,
+              action: null,
+              actor: null,
+              result: null,
+            ).overrideWith((ref) async => _page([_log(id: '1')])),
+          ],
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // act
+      await tester.tap(find.text('admin1'));
+      await tester.pumpAndSettle();
+
+      // assert
+      expect(find.text('추가 정보 없음'), findsOneWidget);
+    },
+  );
 }
