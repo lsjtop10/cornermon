@@ -314,14 +314,14 @@ func (s *DeviceTrustService) ListLockedDevices(ctx context.Context, campID domai
 }
 
 func (s *DeviceTrustService) recordAuditLog(ctx context.Context, actor string, action AuditAction, target string, success bool, metadata map[string]any) {
-	log := domain.NewAuditLog(
-		domain.AuditLogID(s.uuidFn()),
-		actor,
-		string(action),
-		target,
-		success,
-		s.nowFn(),
-		metadata,
-	)
+	log := domain.NewAuditLogFromProps(domain.AuditLogProps{
+		ID:         domain.AuditLogID(s.uuidFn()),
+		Actor:      actor,
+		Action:     string(action),
+		Target:     target,
+		Success:    success,
+		OccurredAt: s.nowFn(),
+		Metadata:   metadata,
+	})
 	_ = s.auditLogs.Save(ctx, log)
 }

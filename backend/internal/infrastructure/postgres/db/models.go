@@ -57,7 +57,7 @@ type AnnouncementReceipt struct {
 type AuditLog struct {
 	// 감사 로그 고유 식별자
 	ID string `json:"id"`
-	// 행위자 (관리자 ID, 진행자 ID 등)
+	// 행위자 식별자(admin UUID 또는 트랙 ID/anonymous). 조회·통계는 이 컬럼 기준
 	Actor string `json:"actor"`
 	// 수행한 동작 (예: APPROVED_DEVICE, FAILED_PIN 등)
 	Action string `json:"action"`
@@ -69,6 +69,12 @@ type AuditLog struct {
 	OccurredAt pgtype.Timestamptz `json:"occurred_at"`
 	// 이벤트와 관련된 추가 정보 (JSON)
 	Metadata []byte `json:"metadata"`
+	// 연관된 캠프 ID. 캠프와 무관한 계정 단위 행위(예: ADMIN_LOGIN)는 NULL
+	CampID pgtype.Text `json:"camp_id"`
+	// 기록 시점 대상 표시 이름 스냅샷
+	TargetName pgtype.Text `json:"target_name"`
+	// 기록 시점 행위자 표시 이름 스냅샷(admin username 또는 "{코너명}·{트랙번호}번 트랙")
+	ActorName pgtype.Text `json:"actor_name"`
 }
 
 // 물리적 QR 배지 정보를 관리하는 테이블

@@ -124,6 +124,14 @@ func oppositeRole(role domain.SenderRole) domain.SenderRole {
 
 func (s *MessageService) recordAuditLog(ctx context.Context, actor string, action AuditAction, target string, success bool, metadata map[string]any) {
 	if s.auditLogs != nil {
-		_ = s.auditLogs.Save(ctx, domain.NewAuditLog(domain.AuditLogID(s.uuidFn()), actor, string(action), target, success, s.nowFn(), metadata))
+		_ = s.auditLogs.Save(ctx, domain.NewAuditLogFromProps(domain.AuditLogProps{
+			ID:         domain.AuditLogID(s.uuidFn()),
+			Actor:      actor,
+			Action:     string(action),
+			Target:     target,
+			Success:    success,
+			OccurredAt: s.nowFn(),
+			Metadata:   metadata,
+		}))
 	}
 }

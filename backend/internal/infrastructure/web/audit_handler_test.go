@@ -60,6 +60,45 @@ func TestListAuditLogsShoudApplyFiltersAndCursorWhenValid(t *testing.T) {
 	}
 }
 
+func TestListAuditLogsShoudForwardCampIDWhenProvided(t *testing.T) {
+	// arrange
+	e := echo.New()
+	stub := &auditLogQuerierStub{page: &usecase.AuditLogPage{Logs: []*domain.AuditLog{}, NextCursor: domain.None[usecase.AuditLogCursor]()}}
+	req := httptest.NewRequest(http.MethodGet, "/audit-logs?campId=camp-1", nil)
+	rec := httptest.NewRecorder()
+
+	// act
+	err := NewAuditHandler(stub).ListAuditLogs(e.NewContext(req, rec))
+
+	// assert
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	campID, ok := stub.query.CampID.Value()
+	if !ok || campID != domain.CampID("camp-1") {
+		t.Fatalf("campId was not forwarded: %+v", stub.query.CampID)
+	}
+}
+
+func TestListAuditLogsShoudLeaveCampIDUnsetWhenNotProvided(t *testing.T) {
+	// arrange
+	e := echo.New()
+	stub := &auditLogQuerierStub{page: &usecase.AuditLogPage{Logs: []*domain.AuditLog{}, NextCursor: domain.None[usecase.AuditLogCursor]()}}
+	req := httptest.NewRequest(http.MethodGet, "/audit-logs", nil)
+	rec := httptest.NewRecorder()
+
+	// act
+	err := NewAuditHandler(stub).ListAuditLogs(e.NewContext(req, rec))
+
+	// assert
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if _, ok := stub.query.CampID.Value(); ok {
+		t.Fatalf("expected CampID to be unset, got %+v", stub.query.CampID)
+	}
+}
+
 func TestListAuditLogsShoudRejectInvalidParametersWhenMalformed(t *testing.T) {
 	tests := []string{
 		"/audit-logs?limit=0",
@@ -85,6 +124,40 @@ func TestListAuditLogsShoudRejectInvalidParametersWhenMalformed(t *testing.T) {
 				t.Fatalf("expected 400 HTTP error, got %v", err)
 			}
 		})
+	}
+}
+
+func TestListAuditLogsShoudIncludeSnapshotFieldsInResponseWhenSet(t *testing.T) {
+	// arrange
+	e := echo.New()
+	stub := &auditLogQuerierStub{page: &usecase.AuditLogPage{
+		Logs: []*domain.AuditLog{domain.NewAuditLogFromProps(domain.AuditLogProps{
+			ID: "audit-1", Actor: "admin-1", ActorName: "김관리",
+			Action: "CORNER_DELETE", Target: "corner-1", TargetName: "체험 코너",
+			CampID: domain.Some(domain.CampID("camp-1")), Success: true,
+		})},
+		NextCursor: domain.None[usecase.AuditLogCursor](),
+	}}
+	req := httptest.NewRequest(http.MethodGet, "/audit-logs", nil)
+	rec := httptest.NewRecorder()
+
+	// act
+	err := NewAuditHandler(stub).ListAuditLogs(e.NewContext(req, rec))
+
+	// assert
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	var response AuditLogPageResponse
+	if err := json.Unmarshal(rec.Body.Bytes(), &response); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if len(response.Logs) != 1 {
+		t.Fatalf("expected 1 log, got %d", len(response.Logs))
+	}
+	got := response.Logs[0]
+	if got.ActorName != "김관리" || got.TargetName != "체험 코너" || got.CampID == nil || *got.CampID != "camp-1" {
+		t.Fatalf("unexpected snapshot fields: %+v", got)
 	}
 }
 

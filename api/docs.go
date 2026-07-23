@@ -309,6 +309,12 @@ const docTemplate = `{
                         "in": "query"
                     },
                     {
+                        "type": "string",
+                        "description": "캠프 ID로 범위 제한",
+                        "name": "campId",
+                        "in": "query"
+                    },
+                    {
                         "type": "integer",
                         "default": 50,
                         "description": "조회 개수",
@@ -3150,6 +3156,13 @@ const docTemplate = `{
                 "actor": {
                     "type": "string"
                 },
+                "actorName": {
+                    "type": "string"
+                },
+                "campId": {
+                    "type": "string",
+                    "format": "uuid"
+                },
                 "id": {
                     "type": "string",
                     "format": "uuid"
@@ -3166,6 +3179,9 @@ const docTemplate = `{
                     "type": "boolean"
                 },
                 "target": {
+                    "type": "string"
+                },
+                "targetName": {
                     "type": "string"
                 }
             }

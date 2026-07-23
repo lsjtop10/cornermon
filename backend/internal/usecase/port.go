@@ -193,6 +193,7 @@ type AuditLogQuery struct {
 	Actor   string
 	Action  string
 	Success *bool
+	CampID  domain.Optional[domain.CampID]
 	Before  domain.Optional[AuditLogCursor]
 	Limit   int
 }

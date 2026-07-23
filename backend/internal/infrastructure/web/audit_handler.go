@@ -25,8 +25,11 @@ type AuditHandler struct {
 type AuditLogResponse struct {
 	ID         string                 `json:"id" format:"uuid"`
 	Actor      string                 `json:"actor"`
+	ActorName  string                 `json:"actorName,omitempty"`
 	Action     string                 `json:"action" enums:"ADMIN_LOGIN,ADMIN_CREATE,ADMIN_PASSWORD_CHANGE,ADMIN_DELETE,ADMIN_SESSION_REVOKE,TRACK_FORCE_LOGOUT,FACILITATOR_LOGIN,SESSION_MIGRATE,FACILITATOR_LOGOUT,BADGE_ASSIGN,BADGE_BULK_GENERATE,BADGE_EXPORT,CAMP_ACTIVATE,CAMP_END,CAMP_CREATE,CAMP_SETTINGS_UPDATE,CORNER_UPDATE,CORNER_DELETE,CORNER_CREATE,DEVICE_APPROVED,DEVICE_REJECTED,DEVICE_REVOKED,PIN_LOCK_RESET,DEVICE_REQUEST,GROUP_CREATE,MESSAGE_DIRECT,MESSAGE_BROADCAST,TRACK_CREATE,TRACK_DELETE,TRACK_REPLACE,PIN_REGENERATE,TRACK_PIN_EXPORT,VISIT_START,VISIT_COMPLETE"`
 	Target     string                 `json:"target"`
+	TargetName string                 `json:"targetName,omitempty"`
+	CampID     *string                `json:"campId,omitempty" format:"uuid"`
 	Success    bool                   `json:"success"`
 	OccurredAt time.Time              `json:"occurredAt" format:"date-time"`
 	Metadata   map[string]interface{} `json:"metadata,omitempty"`
@@ -46,6 +49,7 @@ func NewAuditHandler(querier AuditLogQuerier) *AuditHandler {
 // @Param        actor query string false "행위자 부분 일치"
 // @Param        action query string false "행위 종류 정확히 일치" Enums(ADMIN_LOGIN,ADMIN_CREATE,ADMIN_PASSWORD_CHANGE,ADMIN_DELETE,ADMIN_SESSION_REVOKE,TRACK_FORCE_LOGOUT,FACILITATOR_LOGIN,SESSION_MIGRATE,FACILITATOR_LOGOUT,BADGE_ASSIGN,BADGE_BULK_GENERATE,BADGE_EXPORT,CAMP_ACTIVATE,CAMP_END,CAMP_CREATE,CAMP_SETTINGS_UPDATE,CORNER_UPDATE,CORNER_DELETE,CORNER_CREATE,DEVICE_APPROVED,DEVICE_REJECTED,DEVICE_REVOKED,PIN_LOCK_RESET,DEVICE_REQUEST,GROUP_CREATE,MESSAGE_DIRECT,MESSAGE_BROADCAST,TRACK_CREATE,TRACK_DELETE,TRACK_REPLACE,PIN_REGENERATE,TRACK_PIN_EXPORT,VISIT_START,VISIT_COMPLETE)
 // @Param        result query string false "처리 결과" Enums(success,failure)
+// @Param        campId query string false "캠프 ID로 범위 제한"
 // @Param        limit query int false "조회 개수" default(50)
 // @Param        before query string false "이전 응답의 불투명 nextCursor"
 // @Success      200 {object} AuditLogPageResponse
@@ -81,6 +85,9 @@ func (h *AuditHandler) ListAuditLogs(c echo.Context) error {
 			return echo.NewHTTPError(http.StatusBadRequest, "result must be success or failure")
 		}
 	}
+	if campID := c.QueryParam("campId"); campID != "" {
+		query.CampID = domain.Some(domain.CampID(campID))
+	}
 	if raw := c.QueryParam("before"); raw != "" {
 		cursor, err := decodeAuditLogCursor(raw)
 		if err != nil {
@@ -103,11 +110,17 @@ func (h *AuditHandler) ListAuditLogs(c echo.Context) error {
 		dtos[i] = AuditLogResponse{
 			ID:         string(log.ID()),
 			Actor:      log.Actor(),
+			ActorName:  log.ActorName(),
 			Action:     log.Action(),
 			Target:     log.Target(),
+			TargetName: log.TargetName(),
 			Success:    log.Success(),
 			OccurredAt: log.OccurredAt(),
 			Metadata:   log.Metadata(),
+		}
+		if campID, ok := log.CampID().Value(); ok {
+			id := string(campID)
+			dtos[i].CampID = &id
 		}
 	}
 
