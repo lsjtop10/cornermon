@@ -6,6 +6,7 @@ import 'package:printing/printing.dart';
 
 import 'package:cornermon/shared/api/ids.dart';
 import 'package:cornermon/shared/api/providers/report_providers.dart';
+import 'package:cornermon/shared/export/export_file.dart';
 import 'report_pdf.dart';
 
 typedef SharePdf =
@@ -38,5 +39,23 @@ class ReportExportController extends AsyncNotifier<void> {
             'cornermon-report-${campId.value}-${DateTime.now().millisecondsSinceEpoch}.pdf',
       );
     });
+  }
+
+  /// PDF를 생성한 뒤 사용자가 선택한 기기 위치에 저장한다.
+  Future<ExportSaveResult?> exportAndSave(CampId campId) async {
+    state = const AsyncLoading();
+    ExportSaveResult? result;
+    state = await AsyncValue.guard(() async {
+      final report = await ref.read(exportReportProvider(campId).future);
+      final bytes = await buildReportPdf(report);
+      result = await ref.read(saveExportFileProvider)(
+        ExportFile.pdf(
+          name:
+              'cornermon-report-${campId.value}-${DateTime.now().millisecondsSinceEpoch}',
+          bytes: bytes,
+        ),
+      );
+    });
+    return result;
   }
 }

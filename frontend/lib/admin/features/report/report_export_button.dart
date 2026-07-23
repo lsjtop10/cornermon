@@ -3,7 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:cornermon/shared/api/domain_aliases.dart' as api;
 import 'package:cornermon/shared/api/ids.dart';
-import 'package:cornermon/shared/design_system/widgets/app_button.dart';
+import 'package:cornermon/shared/export/export_action_menu.dart';
+import 'package:cornermon/shared/export/export_file.dart';
 import 'report_export_controller.dart';
 
 /// 탭 우측 고정 PDF 내보내기 버튼. `campId`는 `selectedCampIdProvider`를 다시 watch하지
@@ -17,17 +18,30 @@ class ReportExportButton extends ConsumerWidget {
     final exportState = ref.watch(reportExportControllerProvider);
     final busy = exportState.isLoading;
 
-    Future<void> onPressed() async {
+    Future<void> onSelected(ExportAction action) async {
       final campId = CampId(report.campId ?? '');
-      await ref
-          .read(reportExportControllerProvider.notifier)
-          .exportAndShare(campId);
+      final controller = ref.read(reportExportControllerProvider.notifier);
+      final saveResult = action == ExportAction.saveToDevice
+          ? await controller.exportAndSave(campId)
+          : null;
+      if (action == ExportAction.shareWithApp) {
+        await controller.exportAndShare(campId);
+      }
       if (!context.mounted) return;
       final result = ref.read(reportExportControllerProvider);
+      if (action == ExportAction.saveToDevice &&
+          saveResult == ExportSaveResult.cancelled &&
+          !result.hasError) {
+        return;
+      }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            result.hasError ? 'PDF 내보내기 실패: ${result.error}' : 'PDF를 내보냈습니다',
+            result.hasError
+                ? 'PDF 내보내기 실패: ${result.error}'
+                : action == ExportAction.saveToDevice
+                ? 'PDF를 저장했습니다'
+                : 'PDF를 내보냈습니다',
           ),
         ),
       );
@@ -36,12 +50,11 @@ class ReportExportButton extends ConsumerWidget {
     return Stack(
       alignment: Alignment.center,
       children: [
-        AppButton(
-          variant: AppButtonVariant.secondary,
-          size: AppButtonSize.compact,
+        ExportActionButton(
           icon: Icons.ios_share,
           label: 'PDF로 내보내기',
-          onPressed: busy ? null : onPressed,
+          busy: busy,
+          onSelected: onSelected,
         ),
         if (busy)
           const SizedBox(

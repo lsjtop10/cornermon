@@ -1,6 +1,7 @@
 import 'package:cornermon/admin/features/report/report_export_controller.dart';
 import 'package:cornermon/shared/api/ids.dart';
 import 'package:cornermon/shared/api/providers/report_providers.dart';
+import 'package:cornermon/shared/export/export_file.dart';
 import 'package:cornermon_api_gen/cornermon_api_gen.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -67,5 +68,56 @@ void main() {
     // assert
     expect(shareCalls, 0);
     expect(container.read(reportExportControllerProvider).hasError, isTrue);
+  });
+
+  test('ShoudSavePdfWithPdfMetadataWhenExportAndSaveSucceeds', () async {
+    // arrange
+    final campId = CampId('camp-1');
+    ExportFile? savedFile;
+    final container = ProviderContainer(
+      overrides: [
+        exportReportProvider(campId).overrideWith((ref) async => _report()),
+        saveExportFileProvider.overrideWithValue((file) async {
+          savedFile = file;
+          return ExportSaveResult.saved;
+        }),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    // act
+    final result = await container
+        .read(reportExportControllerProvider.notifier)
+        .exportAndSave(campId);
+
+    // assert
+    expect(result, ExportSaveResult.saved);
+    expect(savedFile!.filename, startsWith('cornermon-report-camp-1-'));
+    expect(savedFile!.fileExtension, 'pdf');
+    expect(savedFile!.mimeType.name, 'PDF');
+    expect(container.read(reportExportControllerProvider).hasError, isFalse);
+  });
+
+  test('ShoudNotSetErrorWhenSaveIsCancelled', () async {
+    // arrange
+    final campId = CampId('camp-1');
+    final container = ProviderContainer(
+      overrides: [
+        exportReportProvider(campId).overrideWith((ref) async => _report()),
+        saveExportFileProvider.overrideWithValue(
+          (_) async => ExportSaveResult.cancelled,
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    // act
+    final result = await container
+        .read(reportExportControllerProvider.notifier)
+        .exportAndSave(campId);
+
+    // assert
+    expect(result, ExportSaveResult.cancelled);
+    expect(container.read(reportExportControllerProvider).hasError, isFalse);
   });
 }

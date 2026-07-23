@@ -5,6 +5,7 @@ import 'dart:ui';
 import 'package:cornermon/admin/features/track_bulk_manage/track_excel_export.dart';
 import 'package:cornermon/shared/api/ids.dart';
 import 'package:cornermon/shared/api/providers/corner_track_providers.dart';
+import 'package:cornermon/shared/export/export_file.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
 
@@ -57,5 +58,28 @@ class TrackPinExportController extends AsyncNotifier<void> {
     } finally {
       subscription.close();
     }
+  }
+
+  /// 전체 PIN XLSX를 생성한 뒤 사용자가 선택한 기기 위치에 저장한다.
+  Future<ExportSaveResult?> exportAndSave(CampId campId) async {
+    state = const AsyncLoading();
+    final request = exportAllTrackPinsProvider(campId);
+    final subscription = ref.listen(request, (_, _) {});
+    ExportSaveResult? result;
+    try {
+      final response = await ref.read(request.future);
+      final bytes = Uint8List.fromList(
+        buildTrackPinWorkbookBytes(response.tracks ?? const []),
+      );
+      result = await ref.read(saveExportFileProvider)(
+        ExportFile.xlsx(name: 'track-pins', bytes: bytes),
+      );
+      state = const AsyncData(null);
+    } catch (error, stackTrace) {
+      state = AsyncError(error, stackTrace);
+    } finally {
+      subscription.close();
+    }
+    return result;
   }
 }

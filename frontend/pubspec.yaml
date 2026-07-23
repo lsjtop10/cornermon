@@ -46,6 +46,7 @@ dependencies:
   pdf: ^3.11.1
   printing: ^5.13.4
   share_plus: ^12.0.1
+  file_saver: ^0.4.0
   cornermon_api_gen:
     path: lib/shared/api/gen
   device_info_plus: ^12.4.0
