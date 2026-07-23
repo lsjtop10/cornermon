@@ -355,7 +355,7 @@ func (q *Queries) GetDeviceRegistrationByTokenHash(ctx context.Context, tokenHas
 }
 
 const getFacilitatorSession = `-- name: GetFacilitatorSession :one
-SELECT id, track_id, token_hash, created_at, revoked_at FROM facilitator_sessions WHERE id = $1
+SELECT id, track_id, token_hash, created_at, revoked_at, migration_target_track_id FROM facilitator_sessions WHERE id = $1
 `
 
 func (q *Queries) GetFacilitatorSession(ctx context.Context, id string) (FacilitatorSession, error) {
@@ -367,12 +367,13 @@ func (q *Queries) GetFacilitatorSession(ctx context.Context, id string) (Facilit
 		&i.TokenHash,
 		&i.CreatedAt,
 		&i.RevokedAt,
+		&i.MigrationTargetTrackID,
 	)
 	return i, err
 }
 
 const getFacilitatorSessionByTokenHash = `-- name: GetFacilitatorSessionByTokenHash :one
-SELECT id, track_id, token_hash, created_at, revoked_at FROM facilitator_sessions WHERE token_hash = $1
+SELECT id, track_id, token_hash, created_at, revoked_at, migration_target_track_id FROM facilitator_sessions WHERE token_hash = $1
 `
 
 func (q *Queries) GetFacilitatorSessionByTokenHash(ctx context.Context, tokenHash string) (FacilitatorSession, error) {
@@ -384,6 +385,7 @@ func (q *Queries) GetFacilitatorSessionByTokenHash(ctx context.Context, tokenHas
 		&i.TokenHash,
 		&i.CreatedAt,
 		&i.RevokedAt,
+		&i.MigrationTargetTrackID,
 	)
 	return i, err
 }
@@ -524,7 +526,7 @@ func (q *Queries) IncrementTrackUnreadCount(ctx context.Context, arg IncrementTr
 }
 
 const listActiveFacilitatorSessionsByCamp = `-- name: ListActiveFacilitatorSessionsByCamp :many
-SELECT f.id, f.track_id, f.token_hash, f.created_at, f.revoked_at FROM facilitator_sessions f
+SELECT f.id, f.track_id, f.token_hash, f.created_at, f.revoked_at, f.migration_target_track_id FROM facilitator_sessions f
 JOIN tracks t ON f.track_id = t.id
 JOIN corners c ON t.corner_id = c.id
 WHERE c.camp_id = $1 AND c.deleted_at IS NULL AND f.revoked_at IS NULL
@@ -545,6 +547,7 @@ func (q *Queries) ListActiveFacilitatorSessionsByCamp(ctx context.Context, campI
 			&i.TokenHash,
 			&i.CreatedAt,
 			&i.RevokedAt,
+			&i.MigrationTargetTrackID,
 		); err != nil {
 			return nil, err
 		}
@@ -557,7 +560,7 @@ func (q *Queries) ListActiveFacilitatorSessionsByCamp(ctx context.Context, campI
 }
 
 const listActiveFacilitatorSessionsByTrack = `-- name: ListActiveFacilitatorSessionsByTrack :many
-SELECT id, track_id, token_hash, created_at, revoked_at FROM facilitator_sessions WHERE track_id = $1 AND revoked_at IS NULL
+SELECT id, track_id, token_hash, created_at, revoked_at, migration_target_track_id FROM facilitator_sessions WHERE track_id = $1 AND revoked_at IS NULL
 `
 
 func (q *Queries) ListActiveFacilitatorSessionsByTrack(ctx context.Context, trackID string) ([]FacilitatorSession, error) {
@@ -575,6 +578,7 @@ func (q *Queries) ListActiveFacilitatorSessionsByTrack(ctx context.Context, trac
 			&i.TokenHash,
 			&i.CreatedAt,
 			&i.RevokedAt,
+			&i.MigrationTargetTrackID,
 		); err != nil {
 			return nil, err
 		}
@@ -1757,18 +1761,20 @@ func (q *Queries) SaveDeviceRegistration(ctx context.Context, arg SaveDeviceRegi
 }
 
 const saveFacilitatorSession = `-- name: SaveFacilitatorSession :exec
-INSERT INTO facilitator_sessions (id, track_id, token_hash, created_at, revoked_at)
-VALUES ($1, $2, $3, $4, $5)
+INSERT INTO facilitator_sessions (id, track_id, token_hash, created_at, revoked_at, migration_target_track_id)
+VALUES ($1, $2, $3, $4, $5, $6)
 ON CONFLICT (id) DO UPDATE SET
-    revoked_at = EXCLUDED.revoked_at
+    revoked_at = EXCLUDED.revoked_at,
+    migration_target_track_id = EXCLUDED.migration_target_track_id
 `
 
 type SaveFacilitatorSessionParams struct {
-	ID        string             `json:"id"`
-	TrackID   string             `json:"track_id"`
-	TokenHash string             `json:"token_hash"`
-	CreatedAt pgtype.Timestamptz `json:"created_at"`
-	RevokedAt pgtype.Timestamptz `json:"revoked_at"`
+	ID                     string             `json:"id"`
+	TrackID                string             `json:"track_id"`
+	TokenHash              string             `json:"token_hash"`
+	CreatedAt              pgtype.Timestamptz `json:"created_at"`
+	RevokedAt              pgtype.Timestamptz `json:"revoked_at"`
+	MigrationTargetTrackID pgtype.Text        `json:"migration_target_track_id"`
 }
 
 func (q *Queries) SaveFacilitatorSession(ctx context.Context, arg SaveFacilitatorSessionParams) error {
@@ -1778,6 +1784,7 @@ func (q *Queries) SaveFacilitatorSession(ctx context.Context, arg SaveFacilitato
 		arg.TokenHash,
 		arg.CreatedAt,
 		arg.RevokedAt,
+		arg.MigrationTargetTrackID,
 	)
 	return err
 }

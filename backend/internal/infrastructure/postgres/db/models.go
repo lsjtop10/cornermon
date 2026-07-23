@@ -169,6 +169,8 @@ type FacilitatorSession struct {
 	CreatedAt pgtype.Timestamptz `json:"created_at"`
 	// 세션이 무효화(로그아웃/강제종료)된 시간
 	RevokedAt pgtype.Timestamptz `json:"revoked_at"`
+	// 트랙 교체로 인해 마이그레이션해야 할 대상 트랙 ID (없으면 마이그레이션 불필요)
+	MigrationTargetTrackID pgtype.Text `json:"migration_target_track_id"`
 }
 
 // 캠프에 참가하여 코너를 순회하는 단위인 조(그룹) 테이블
