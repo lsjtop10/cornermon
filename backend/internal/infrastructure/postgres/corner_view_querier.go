@@ -44,7 +44,24 @@ func mapCornerView(id, campID, name string, targetMinutes int32, avgDurationSeco
 	if err := json.Unmarshal(activeTracksJSON, &view.ActiveTracks); err != nil {
 		return usecase.CornerView{}, err
 	}
+	view.Status = deriveCornerStatus(view.ActiveTracks)
 	return view, nil
+}
+
+// deriveCornerStatus는 domain.Corner.OperationalStatus와 동일한 규칙(활성 트랙 없음=INACTIVE,
+// BUSY 트랙 존재=BUSY, 그 외 IDLE)을 이미 조회된 ActiveTracks에서 다시 계산한다. 도메인 메서드는
+// []*domain.Track을 받는데 이 조회 경로는 jsonb_agg로 이미 TrackView를 얻으므로 도메인 엔티티를
+// 다시 로드하지 않고 여기서 같은 규칙을 적용한다.
+func deriveCornerStatus(tracks []usecase.TrackView) domain.CornerOperationalStatus {
+	if len(tracks) == 0 {
+		return domain.CornerInactive
+	}
+	for _, t := range tracks {
+		if t.OperationalStatus == domain.TrackBusy {
+			return domain.CornerBusy
+		}
+	}
+	return domain.CornerIdle
 }
 
 func (r *pgCornerViewQuerier) ListCornerViewsByCamp(ctx context.Context, campID domain.CampID) ([]usecase.CornerView, error) {
