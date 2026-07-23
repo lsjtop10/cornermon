@@ -12,6 +12,7 @@ import 'package:cornermon/shared/api/ids.dart';
 import 'package:cornermon/shared/api/providers/corner_track_providers.dart';
 import 'package:cornermon/shared/api/providers/visit_providers.dart';
 import 'package:cornermon/shared/api/sse/track_event_stream.dart';
+import 'package:cornermon/shared/api/sse/sse_event_receipt.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
@@ -227,7 +228,9 @@ void main() {
             ),
           ),
           facilitatorBroadcastMessageListProvider.overrideWith((ref) => <Message>[]),
-          trackEventsProvider(trackId).overrideWith((ref) => const Stream<SseEvent>.empty()),
+          trackEventsProvider(
+            trackId,
+          ).overrideWith((ref) => const Stream<SseEventReceipt>.empty()),
         ]),
       );
       await tester.pump();

@@ -234,6 +234,7 @@ class DashboardScreen extends ConsumerWidget {
         ? ref.watch(trackDirectSummariesProvider(id))
         : null;
     final unreadDirectCount = directSummaries?.maybeWhen(
+      skipLoadingOnReload: true,
       data: (items) => items.fold<int>(0, (sum, s) => sum + s.unreadCount),
       orElse: () => 0,
     );
@@ -406,7 +407,7 @@ class _SummaryBar extends StatelessWidget {
       final tiles = [
         ('완주율', '${((item.completionRate ?? 0) * 100).round()}%'),
         (
-          '진행중 조',
+          '미완주 조',
           '${(item.totalGroups ?? 0) - (item.finishedGroupCount ?? 0)}',
         ),
         (

@@ -338,6 +338,10 @@ definitions:
     type: object
   CornerStatsResponse:
     properties:
+      avgDeviationSeconds:
+        type: number
+      avgDurationSeconds:
+        type: number
       completedVisitCount:
         type: integer
       cornerId:

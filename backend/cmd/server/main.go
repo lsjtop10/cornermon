@@ -9,6 +9,7 @@ import (
 	"os"
 	"time"
 
+	"cornermon/backend/db"
 	"cornermon/backend/internal/errs"
 	trackcrypto "cornermon/backend/internal/infrastructure/crypto"
 	"cornermon/backend/internal/infrastructure/postgres"
@@ -119,6 +120,11 @@ func main() {
 	}
 
 	defer pool.Close()
+
+	if err := db.RunMigrations(dbctx, dbURL); err != nil {
+		cancel()
+		log.Fatalf("Unable to apply database migrations: %v\n", err)
+	}
 
 	// Initialize Repositories
 	adminRepo := postgres.NewAdminRepository(pool)

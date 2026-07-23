@@ -15,8 +15,6 @@ import 'package:cornermon/shared/util/duration_format.dart';
 /// 아니다(10_a12_report.md §0.1/§2.6의 예전 "확인 필요" 서술은 해소됨 — 문서에도 반영함).
 DataRow buildCornerStatsRow({
   required api.CornerStats stats,
-  required num? avgDeviationSeconds,
-  required int? targetMinutes,
   required int? totalGroups,
 }) {
   final completed = stats.completedVisitCount ?? 0;
@@ -24,9 +22,12 @@ DataRow buildCornerStatsRow({
       ? '$completed'
       : '$completed/$totalGroups';
 
-  final durationLabel = (avgDeviationSeconds != null && targetMinutes != null)
+  final avgDurationSeconds = stats.avgDurationSeconds;
+  final avgDeviationSeconds = stats.avgDeviationSeconds;
+  final durationLabel =
+      (avgDurationSeconds != null && avgDeviationSeconds != null)
       ? formatDurationWithDeviation(
-          targetMinutes * 60 + avgDeviationSeconds.round(),
+          avgDurationSeconds.round(),
           avgDeviationSeconds,
         )
       : '-';

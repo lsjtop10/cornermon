@@ -46,12 +46,12 @@ Future<List<TrackDirectSummary>> trackDirectSummaries(
 
   final summaries = await Future.wait(
     tracks.map((t) async {
-      // background: true — 좌측 목록 미리보기 조회일 뿐 스레드를 "열람"한 게 아니므로
-      // 읽음 처리되면 안 된다.
+      // background: false — 좌측 목록 미리보기 조회일 뿐 스레드를 "열람"한 게 아니므로
+      // 읽음 처리하면 안 된다. 서버에서 true만 읽음 처리한다.
       final messages = await ref.watch(
         trackMessageListProvider(
           TrackId(t.id ?? ''),
-          background: true,
+          background: false,
         ).future,
       );
       final unread = messages.where((m) => m.isFromTrack && m.isRead != true).length;

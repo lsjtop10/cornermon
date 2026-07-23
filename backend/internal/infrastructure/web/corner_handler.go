@@ -49,7 +49,8 @@ func mapCornerViewToDTO(view usecase.CornerView) CornerResponse {
 		}
 	}
 	return CornerResponse{
-		ID: string(view.ID), Name: view.Name, TargetMinutes: view.TargetMinutes,
+		ID: string(view.ID), CampID: string(view.CampID), Name: view.Name, TargetMinutes: view.TargetMinutes,
+		Status:       string(view.Status),
 		ActiveTracks: activeTracks,
 		Metric:       CornerMetricResponse{AvgDurationSeconds: view.AvgDurationSeconds, SampleCount: view.SampleCount},
 	}

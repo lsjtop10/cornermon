@@ -9,6 +9,10 @@ part of 'corner_stats_response.dart';
 
 class _$CornerStatsResponse extends CornerStatsResponse {
   @override
+  final num? avgDeviationSeconds;
+  @override
+  final num? avgDurationSeconds;
+  @override
   final int? completedVisitCount;
   @override
   final String? cornerId;
@@ -24,7 +28,9 @@ class _$CornerStatsResponse extends CornerStatsResponse {
       (CornerStatsResponseBuilder()..update(updates))._build();
 
   _$CornerStatsResponse._(
-      {this.completedVisitCount,
+      {this.avgDeviationSeconds,
+      this.avgDurationSeconds,
+      this.completedVisitCount,
       this.cornerId,
       this.cornerName,
       this.overDeviationRatio,
@@ -43,6 +49,8 @@ class _$CornerStatsResponse extends CornerStatsResponse {
   bool operator ==(Object other) {
     if (identical(other, this)) return true;
     return other is CornerStatsResponse &&
+        avgDeviationSeconds == other.avgDeviationSeconds &&
+        avgDurationSeconds == other.avgDurationSeconds &&
         completedVisitCount == other.completedVisitCount &&
         cornerId == other.cornerId &&
         cornerName == other.cornerName &&
@@ -53,6 +61,8 @@ class _$CornerStatsResponse extends CornerStatsResponse {
   @override
   int get hashCode {
     var _$hash = 0;
+    _$hash = $jc(_$hash, avgDeviationSeconds.hashCode);
+    _$hash = $jc(_$hash, avgDurationSeconds.hashCode);
     _$hash = $jc(_$hash, completedVisitCount.hashCode);
     _$hash = $jc(_$hash, cornerId.hashCode);
     _$hash = $jc(_$hash, cornerName.hashCode);
@@ -65,6 +75,8 @@ class _$CornerStatsResponse extends CornerStatsResponse {
   @override
   String toString() {
     return (newBuiltValueToStringHelper(r'CornerStatsResponse')
+          ..add('avgDeviationSeconds', avgDeviationSeconds)
+          ..add('avgDurationSeconds', avgDurationSeconds)
           ..add('completedVisitCount', completedVisitCount)
           ..add('cornerId', cornerId)
           ..add('cornerName', cornerName)
@@ -77,6 +89,16 @@ class _$CornerStatsResponse extends CornerStatsResponse {
 class CornerStatsResponseBuilder
     implements Builder<CornerStatsResponse, CornerStatsResponseBuilder> {
   _$CornerStatsResponse? _$v;
+
+  num? _avgDeviationSeconds;
+  num? get avgDeviationSeconds => _$this._avgDeviationSeconds;
+  set avgDeviationSeconds(num? avgDeviationSeconds) =>
+      _$this._avgDeviationSeconds = avgDeviationSeconds;
+
+  num? _avgDurationSeconds;
+  num? get avgDurationSeconds => _$this._avgDurationSeconds;
+  set avgDurationSeconds(num? avgDurationSeconds) =>
+      _$this._avgDurationSeconds = avgDurationSeconds;
 
   int? _completedVisitCount;
   int? get completedVisitCount => _$this._completedVisitCount;
@@ -109,6 +131,8 @@ class CornerStatsResponseBuilder
   CornerStatsResponseBuilder get _$this {
     final $v = _$v;
     if ($v != null) {
+      _avgDeviationSeconds = $v.avgDeviationSeconds;
+      _avgDurationSeconds = $v.avgDurationSeconds;
       _completedVisitCount = $v.completedVisitCount;
       _cornerId = $v.cornerId;
       _cornerName = $v.cornerName;
@@ -137,6 +161,8 @@ class CornerStatsResponseBuilder
     try {
       _$result = _$v ??
           _$CornerStatsResponse._(
+            avgDeviationSeconds: avgDeviationSeconds,
+            avgDurationSeconds: avgDurationSeconds,
             completedVisitCount: completedVisitCount,
             cornerId: cornerId,
             cornerName: cornerName,
