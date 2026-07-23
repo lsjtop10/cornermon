@@ -39,7 +39,7 @@ void main() {
   final campId = CampId('camp-1');
 
   group('trackDirectSummaries', () {
-    test('ShouldQueryTrackMessagesInBackgroundModeForPreview', () async {
+    test('ShouldQueryTrackMessagesWithoutMarkingReadForPreview', () async {
       // arrange
       bool? capturedBackground;
       final container = ProviderContainer(
@@ -52,9 +52,9 @@ void main() {
           ),
           trackMessageListProvider(
             TrackId('t1'),
-            background: true,
+            background: false,
           ).overrideWith((ref) async {
-            capturedBackground = true;
+            capturedBackground = false;
             return <MessageResponse>[];
           }),
         ],
@@ -65,7 +65,7 @@ void main() {
       await container.read(trackDirectSummariesProvider(campId).future);
 
       // assert
-      expect(capturedBackground, isTrue);
+      expect(capturedBackground, isFalse);
     });
 
     test('ShouldCountOnlyUnreadTrackMessagesAsUnreadCount', () async {
@@ -80,7 +80,7 @@ void main() {
           ),
           trackMessageListProvider(
             TrackId('t1'),
-            background: true,
+            background: false,
           ).overrideWith(
             (ref) async => [
               _msg(
@@ -121,7 +121,7 @@ void main() {
           cornerListProvider(campId).overrideWith((ref) async => []),
           trackMessageListProvider(
             TrackId('t1'),
-            background: true,
+            background: false,
           ).overrideWith((ref) async => []),
         ],
       );
@@ -148,11 +148,11 @@ void main() {
           ),
           trackMessageListProvider(
             TrackId('empty'),
-            background: true,
+            background: false,
           ).overrideWith((ref) async => []),
           trackMessageListProvider(
             TrackId('active'),
-            background: true,
+            background: false,
           ).overrideWith(
             (ref) async => [
               _msg(

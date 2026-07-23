@@ -56,9 +56,9 @@ class _ChatThreadPaneState extends ConsumerState<ChatThreadPane> {
   }
 
   void _markRead() {
-    // 스레드를 실제로 여는 시점이므로 background: false로 호출해 읽음 처리한다.
+    // 스레드를 실제로 여는 시점이므로 background: true로 호출해 읽음 처리한다.
     ref.read(
-      trackMessageListProvider(widget.trackId, background: false).future,
+      trackMessageListProvider(widget.trackId, background: true).future,
     );
   }
 
@@ -92,7 +92,7 @@ class _ChatThreadPaneState extends ConsumerState<ChatThreadPane> {
     if (text.isEmpty) return;
     _input.clear();
     await ref.read(sendDirectMessageProvider(widget.trackId, text).future);
-    ref.invalidate(trackMessageListProvider(widget.trackId, background: false));
+    ref.invalidate(trackMessageListProvider(widget.trackId, background: true));
     ref.invalidate(trackDirectSummariesProvider(widget.campId));
   }
 
@@ -101,10 +101,10 @@ class _ChatThreadPaneState extends ConsumerState<ChatThreadPane> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final colors = isDark ? AppColors.dark : AppColors.light;
     final messages = ref.watch(
-      trackMessageListProvider(widget.trackId, background: false),
+      trackMessageListProvider(widget.trackId, background: true),
     );
 
-    ref.listen(trackMessageListProvider(widget.trackId, background: false), (
+    ref.listen(trackMessageListProvider(widget.trackId, background: true), (
       previous,
       next,
     ) {

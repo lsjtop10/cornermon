@@ -41,8 +41,8 @@ void main() {
           broadcastListBuildCount++;
           return <Message>[];
         }),
-        // ChatThreadPane이 실제로 watch하는 것과 동일한 인자(trackId, background: false).
-        trackMessageListProvider(trackId, background: false).overrideWith((ref) async {
+        // ChatThreadPane이 실제로 watch하는 것과 동일한 인자(trackId, background: true).
+        trackMessageListProvider(trackId, background: true).overrideWith((ref) async {
           threadMessageListBuildCount++;
           return <Message>[];
         }),
@@ -55,9 +55,9 @@ void main() {
         cornerListProvider(campId).overrideWith(
           (ref) async => [Corner((b) => b..id = 'corner-1'..name = '1번')],
         ),
-        // 좌측 목록 미리보기가 실제로 watch하는 인자(background: true) — messages_changed는
+        // 좌측 목록 미리보기가 실제로 watch하는 인자(background: false) — messages_changed는
         // family 전체를 무효화하므로 이 인스턴스도 함께 무효화되는지가 검증 대상이다.
-        trackMessageListProvider(trackId, background: true).overrideWith((ref) async {
+        trackMessageListProvider(trackId, background: false).overrideWith((ref) async {
           return <Message>[];
         }),
       ],
@@ -69,7 +69,7 @@ void main() {
     // 재빌드(카운터 증가)를 관찰할 수 있다 — 리스너가 없으면 즉시 dispose되어 버린다.
     container.listen(adminEventCoordinatorProvider(campId), (_, _) {});
     container.listen(broadcastMessageListProvider(campId), (_, _) {});
-    container.listen(trackMessageListProvider(trackId, background: false), (_, _) {});
+    container.listen(trackMessageListProvider(trackId, background: true), (_, _) {});
     container.listen(trackDirectSummariesProvider(campId), (_, next) {
       if (next.hasValue) summariesBuildCount++;
     });
@@ -78,8 +78,8 @@ void main() {
   test(
     'ShouldInvalidateOpenThreadMessageListWhenMessagesChangedArrives',
     () async {
-      // arrange — ChatThreadPane과 동일하게 open thread(background:false)를 먼저 한 번 읽는다.
-      await container.read(trackMessageListProvider(trackId, background: false).future);
+      // arrange — ChatThreadPane과 동일하게 open thread(background:true)를 먼저 한 번 읽는다.
+      await container.read(trackMessageListProvider(trackId, background: true).future);
       final baseline = threadMessageListBuildCount;
       final event = SseEvent(
         (b) => b
@@ -90,7 +90,7 @@ void main() {
 
       // act
       await pushAndSettle(event);
-      await container.read(trackMessageListProvider(trackId, background: false).future);
+      await container.read(trackMessageListProvider(trackId, background: true).future);
 
       // assert
       expect(threadMessageListBuildCount, greaterThan(baseline));
@@ -115,7 +115,7 @@ void main() {
       await container.read(trackDirectSummariesProvider(campId).future);
 
       // assert — family 전체 invalidate(trackMessageListProvider)가 trackDirectSummaries가
-      // 의존하는 background:true 인스턴스도 무효화해 파생 provider가 다시 계산되어야 한다.
+      // 의존하는 background:false 인스턴스도 무효화해 파생 provider가 다시 계산되어야 한다.
       expect(summariesBuildCount, greaterThan(baseline));
     },
   );

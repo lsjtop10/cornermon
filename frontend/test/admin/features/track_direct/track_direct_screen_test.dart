@@ -80,7 +80,7 @@ void main() {
         extraOverrides: [
           trackMessageListProvider(
             TrackId('t1'),
-            background: true,
+            background: false,
           ).overrideWith((ref) async => []),
         ],
       );
@@ -100,11 +100,11 @@ void main() {
           extraOverrides: [
             trackMessageListProvider(
               TrackId('t1'),
-              background: true,
+              background: false,
             ).overrideWith((ref) async => []),
             trackMessageListProvider(
               TrackId('t1'),
-              background: false,
+              background: true,
             ).overrideWith((ref) async => []),
           ],
         );
@@ -129,7 +129,7 @@ void main() {
           extraOverrides: [
             trackMessageListProvider(
               TrackId('t1'),
-              background: true,
+              background: false,
             ).overrideWith(
               (ref) async => [
                 _msg(
@@ -141,7 +141,7 @@ void main() {
             ),
             trackMessageListProvider(
               TrackId('t1'),
-              background: false,
+              background: true,
             ).overrideWith(
               (ref) async => [
                 _msg(
@@ -176,11 +176,11 @@ void main() {
           extraOverrides: [
             trackMessageListProvider(
               TrackId('t1'),
-              background: true,
+              background: false,
             ).overrideWith((ref) async => []),
             trackMessageListProvider(
               TrackId('t1'),
-              background: false,
+              background: true,
             ).overrideWith((ref) async => []),
           ],
         );
@@ -213,11 +213,11 @@ void main() {
         extraOverrides: [
           trackMessageListProvider(
             trackId,
-            background: true,
+            background: false,
           ).overrideWith((ref) async => messages),
           trackMessageListProvider(
             trackId,
-            background: false,
+            background: true,
           ).overrideWith((ref) async => messages),
           sendDirectMessageProvider(
             trackId,
