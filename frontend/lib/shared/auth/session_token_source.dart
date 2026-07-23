@@ -11,6 +11,10 @@ abstract interface class SessionTokenSource {
   /// 401 수신 시 처리를 각 앱의 세션 로직에 위임한다.
   /// 관리자: silent refresh, 진행자: 세션 강제종료.
   Future<void> onUnauthorized();
+
+  /// 409 SESSION_MIGRATION_REQUIRED 수신 시 처리를 위임한다(이슈 #204).
+  /// 트랙 교체 세션만 도달할 수 있는 응답이라 관리자 쪽은 no-op이다.
+  Future<void> onSessionMigrationRequired();
 }
 
 @riverpod
