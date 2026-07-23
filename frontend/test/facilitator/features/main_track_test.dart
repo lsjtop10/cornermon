@@ -123,6 +123,55 @@ void main() {
     expect(find.text('2'), findsOneWidget);
   });
 
+  Widget pumpHeaderWithSession(TrackSession fakeSession) => buildTestable(
+    MainTrackHeader(trackId: trackId),
+    overrides: [
+      trackSessionProvider.overrideWith(() => fakeSession),
+      currentVisitProvider(trackId).overrideWith((ref) => null),
+      facilitatorBroadcastMessageListProvider.overrideWith(
+        (ref) => <Message>[],
+      ),
+      unreadDirectMessageCountProvider(trackId).overrideWith((ref) async => 0),
+      trackConnectionProvider(
+        trackId,
+      ).overrideWithValue(TrackConnectionState.connected),
+    ],
+  );
+
+  testWidgets('ShouldCallLogoutWhenLogoutConfirmed', (tester) async {
+    // arrange — B2 메뉴 "로그아웃"(이슈 #200): 확인 모달에서 "진행"을 누르면 세션을 종료한다.
+    final fakeSession = _RecordingLogoutTrackSession();
+    await tester.pumpWidget(pumpHeaderWithSession(fakeSession));
+    await tester.pump();
+
+    // act
+    await tester.tap(find.byIcon(Icons.logout));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('진행'));
+    await tester.pumpAndSettle();
+
+    // assert
+    expect(fakeSession.logoutCallCount, 1);
+  });
+
+  testWidgets('ShouldNotCallLogoutWhenLogoutConfirmationCancelled', (
+    tester,
+  ) async {
+    // arrange
+    final fakeSession = _RecordingLogoutTrackSession();
+    await tester.pumpWidget(pumpHeaderWithSession(fakeSession));
+    await tester.pump();
+
+    // act
+    await tester.tap(find.byIcon(Icons.logout));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('취소'));
+    await tester.pumpAndSettle();
+
+    // assert
+    expect(fakeSession.logoutCallCount, 0);
+  });
+
   Widget buildBusyBody({
     required VisitSummary visit,
     required int? targetMinutes,
@@ -397,4 +446,18 @@ class _FakeTrackSession extends TrackSession {
 
   @override
   TrackSessionState build() => _state;
+}
+
+/// 실제 로그아웃 API 호출 없이 MainTrackHeader의 로그아웃 버튼 → 확인 모달
+/// 연결만 검증한다(이슈 #200).
+class _RecordingLogoutTrackSession extends TrackSession {
+  int logoutCallCount = 0;
+
+  @override
+  TrackSessionState build() => const TrackSessionUnauthenticated();
+
+  @override
+  Future<void> logout() async {
+    logoutCallCount++;
+  }
 }
