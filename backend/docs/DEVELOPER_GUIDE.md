@@ -266,6 +266,38 @@ gofmt -w . && go vet ./...                       # 커밋 전
 
 - 필드에 접근해야 할 때는 직접 참조(`entity.Status`) 대신 반드시 Getter 메서드(`entity.Status()`)를 사용합니다.
 - 상태 변경 로직은 Usecase나 Handler 등 외부에서 직접 필드 값을 조작해서는 안 되며, 도메인 내부에 캡슐화된 상태 전이 메서드(예: `StartVisit()`, `Complete()`)를 통해서만 변경해야 합니다.
+
+## 9. DB 마이그레이션
+
+DB 스키마는 `db/migrations/`의 golang-migrate 형식 SQL 파일로 버전 관리한다(Issue #94).
+`db/schema.sql` 단일 파일 방식은 더 이상 쓰지 않는다.
+
+### 9.1 새 마이그레이션 작성
+
+- 파일명은 `{6자리 순번}_{설명}.up.sql` / `{6자리 순번}_{설명}.down.sql` 쌍으로 만든다
+  (예: `000002_add_track_note.up.sql`). 순번은 반드시 오름차순 정렬되어야 하며, sqlc가
+  이 디렉토리를 읽어 최종 스키마를 추론하므로 순번이 어긋나면 sqlc 생성 결과가 틀어진다.
+- `down.sql`은 항상 `DROP ... IF EXISTS`처럼 존재하지 않아도 안전한 형태로 작성한다.
+  sqlc가 스키마를 추론할 때 같은 디렉토리의 모든 `.sql` 파일을 읽기 때문에, down이 실수로
+  에러를 내면 sqlc 실행 자체가 깨질 수 있다.
+- 마이그레이션을 추가한 뒤 `sqlc generate`를 실행해 `internal/infrastructure/postgres/db`
+  생성물을 갱신한다.
+- **데이터 백필(도메인 로직이 필요한 데이터 이관)은 마이그레이션 파일에 넣지 않는다.**
+  golang-migrate는 순수 SQL만 지원하므로 이 문제 자체가 없지만, 원칙을 명시해둔다 — 필요하면
+  `cmd/cleanup-corners`와 같은 패턴으로 `cmd/` 아래 별도 원샷 배치 커맨드를 만든다.
+
+### 9.2 실행
+
+```bash
+go run ./cmd/server/main.go   # 서버 기동 시 db.RunMigrations가 미적용 마이그레이션을 자동 적용
+make migrate-up               # 수동으로 최신까지 적용
+make migrate-down             # 최근 1단계 롤백
+go run ./cmd/migrate-tool force <version>  # dirty 상태 등 강제 버전 고정(비상용)
+```
+
+서버는 `pool.Ping` 성공 직후, 리포지토리 생성 이전에 마이그레이션을 적용하고 실패 시
+`log.Fatalf`로 기동을 중단한다(기존 DB 연결 실패 처리와 동일한 fail-fast 컨벤션).
+
 ### 5. 재시도 전략 (Dual-Layer Retry)
 
 재시도 로직은 **발생 계층**에 따라 분리합니다.
