@@ -1,0 +1,15 @@
+# Android SDK와 Linux Flutter 도구가 필요한 로컬 검증용 기반 이미지.
+ARG ANDROID_SDK_IMAGE=ghcr.io/cirruslabs/android-sdk:36
+FROM ${ANDROID_SDK_IMAGE}
+
+ARG FLUTTER_VERSION=3.44.7
+ENV FLUTTER_ROOT=/opt/flutter
+ENV PATH=${FLUTTER_ROOT}/bin:${FLUTTER_ROOT}/bin/cache/dart-sdk/bin:${PATH}
+
+# Flutter가 함께 제공하는 Dart SDK를 사용한다. Flutter 3.44.7은 프로젝트의
+# pubspec.yaml SDK 하한(Dart 3.12.2)을 충족한다.
+RUN git clone --depth 1 --branch "${FLUTTER_VERSION}" https://github.com/flutter/flutter.git "${FLUTTER_ROOT}" \
+    && flutter config --no-analytics \
+    && flutter precache --linux \
+    && flutter --version \
+    && dart --version

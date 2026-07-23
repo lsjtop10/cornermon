@@ -524,6 +524,8 @@ void main() {
       // act
       await tester.tap(find.text('전체 PIN 내보내기'));
       await tester.pumpAndSettle();
+      await tester.tap(find.text('다른 앱으로 공유'));
+      await tester.pumpAndSettle();
 
       // assert
       expect(shared, isTrue);
@@ -546,6 +548,8 @@ void main() {
       // act
       await tester.tap(find.text('전체 PIN 내보내기'));
       await tester.pumpAndSettle();
+      await tester.tap(find.text('다른 앱으로 공유'));
+      await tester.pumpAndSettle();
 
       // assert
       expect(find.textContaining('PIN 엑셀 내보내기 실패:'), findsOneWidget);
@@ -563,6 +567,8 @@ void main() {
 
       // act
       await tester.tap(find.text('전체 PIN 내보내기'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('다른 앱으로 공유'));
       await tester.pumpAndSettle();
 
       // assert

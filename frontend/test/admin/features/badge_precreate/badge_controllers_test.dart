@@ -1,5 +1,6 @@
 import 'package:cornermon/admin/features/badge_precreate/badge_controllers.dart';
 import 'package:cornermon/shared/api/providers/badge_providers.dart';
+import 'package:cornermon/shared/export/export_file.dart';
 import 'package:cornermon_api_gen/cornermon_api_gen.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -90,5 +91,36 @@ void main() {
     expect(shared, isTrue);
     expect(shareCalls, 1);
     expect(sharedFilename, startsWith('cornermon-badges-'));
+  });
+
+  test('ShoudNotSetErrorWhenBadgePdfSaveIsCancelled', () async {
+    // arrange
+    final container = ProviderContainer(
+      overrides: [
+        exportUnassignedBadgesProvider.overrideWith(
+          (_) async => [
+            BadgeResponse(
+              (b) => b
+                ..id = 'badge-1'
+                ..shortId = 'B-0001'
+                ..qrPayload = 'payload',
+            ),
+          ],
+        ),
+        saveExportFileProvider.overrideWithValue(
+          (_) async => ExportSaveResult.cancelled,
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    // act
+    final result = await container
+        .read(badgeExportControllerProvider.notifier)
+        .exportAndSave();
+
+    // assert
+    expect(result, ExportSaveResult.cancelled);
+    expect(container.read(badgeExportControllerProvider).hasError, isFalse);
   });
 }
