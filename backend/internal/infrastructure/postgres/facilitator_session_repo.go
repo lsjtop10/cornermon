@@ -41,6 +41,12 @@ func mapFacilitatorSession(row db.FacilitatorSession) *domain.FacilitatorSession
 		s.SetRevokedAt(domain.None[time.Time]())
 	}
 
+	if row.MigrationTargetTrackID.Valid {
+		s.SetMigrationTargetTrackID(domain.Some(domain.TrackID(row.MigrationTargetTrackID.String)))
+	} else {
+		s.SetMigrationTargetTrackID(domain.None[domain.TrackID]())
+	}
+
 	return s
 }
 
@@ -102,6 +108,10 @@ func (r *pgFacilitatorSessionRepository) Save(ctx context.Context, session *doma
 
 	if val, ok := session.RevokedAt().Value(); ok {
 		params.RevokedAt = pgtype.Timestamptz{Time: val, Valid: true}
+	}
+
+	if val, ok := session.MigrationTargetTrackID().Value(); ok {
+		params.MigrationTargetTrackID = pgtype.Text{String: string(val), Valid: true}
 	}
 
 	err := r.queries(ctx).SaveFacilitatorSession(ctx, params)

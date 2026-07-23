@@ -59,6 +59,12 @@ func (f *FacilitatorSession) MigrationTargetTrackID() Optional[TrackID] {
 	return f.migrationTargetTrackID
 }
 
+// SetMigrationTargetTrackID는 리포지토리가 DB row로부터 세션 상태를 복원할 때만 사용합니다.
+// 트랙 교체 전이는 SetMigrationTarget을 사용하세요.
+func (s *FacilitatorSession) SetMigrationTargetTrackID(t Optional[TrackID]) {
+	s.migrationTargetTrackID = t
+}
+
 type FacilitatorSessionProps struct {
 	ID                     FacilitatorSessionID
 	TrackID                TrackID
