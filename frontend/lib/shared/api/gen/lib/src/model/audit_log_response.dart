@@ -16,11 +16,14 @@ part 'audit_log_response.g.dart';
 /// Properties:
 /// * [action] 
 /// * [actor] 
+/// * [actorName] 
+/// * [campId] 
 /// * [id] 
 /// * [metadata] 
 /// * [occurredAt] 
 /// * [success] 
 /// * [target] 
+/// * [targetName] 
 @BuiltValue()
 abstract class AuditLogResponse implements Built<AuditLogResponse, AuditLogResponseBuilder> {
   @BuiltValueField(wireName: r'action')
@@ -29,6 +32,12 @@ abstract class AuditLogResponse implements Built<AuditLogResponse, AuditLogRespo
 
   @BuiltValueField(wireName: r'actor')
   String? get actor;
+
+  @BuiltValueField(wireName: r'actorName')
+  String? get actorName;
+
+  @BuiltValueField(wireName: r'campId')
+  String? get campId;
 
   @BuiltValueField(wireName: r'id')
   String? get id;
@@ -44,6 +53,9 @@ abstract class AuditLogResponse implements Built<AuditLogResponse, AuditLogRespo
 
   @BuiltValueField(wireName: r'target')
   String? get target;
+
+  @BuiltValueField(wireName: r'targetName')
+  String? get targetName;
 
   AuditLogResponse._();
 
@@ -82,6 +94,20 @@ class _$AuditLogResponseSerializer implements PrimitiveSerializer<AuditLogRespon
         specifiedType: const FullType(String),
       );
     }
+    if (object.actorName != null) {
+      yield r'actorName';
+      yield serializers.serialize(
+        object.actorName,
+        specifiedType: const FullType(String),
+      );
+    }
+    if (object.campId != null) {
+      yield r'campId';
+      yield serializers.serialize(
+        object.campId,
+        specifiedType: const FullType(String),
+      );
+    }
     if (object.id != null) {
       yield r'id';
       yield serializers.serialize(
@@ -114,6 +140,13 @@ class _$AuditLogResponseSerializer implements PrimitiveSerializer<AuditLogRespon
       yield r'target';
       yield serializers.serialize(
         object.target,
+        specifiedType: const FullType(String),
+      );
+    }
+    if (object.targetName != null) {
+      yield r'targetName';
+      yield serializers.serialize(
+        object.targetName,
         specifiedType: const FullType(String),
       );
     }
@@ -154,6 +187,20 @@ class _$AuditLogResponseSerializer implements PrimitiveSerializer<AuditLogRespon
           ) as String;
           result.actor = valueDes;
           break;
+        case r'actorName':
+          final valueDes = serializers.deserialize(
+            value,
+            specifiedType: const FullType(String),
+          ) as String;
+          result.actorName = valueDes;
+          break;
+        case r'campId':
+          final valueDes = serializers.deserialize(
+            value,
+            specifiedType: const FullType(String),
+          ) as String;
+          result.campId = valueDes;
+          break;
         case r'id':
           final valueDes = serializers.deserialize(
             value,
@@ -188,6 +235,13 @@ class _$AuditLogResponseSerializer implements PrimitiveSerializer<AuditLogRespon
             specifiedType: const FullType(String),
           ) as String;
           result.target = valueDes;
+          break;
+        case r'targetName':
+          final valueDes = serializers.deserialize(
+            value,
+            specifiedType: const FullType(String),
+          ) as String;
+          result.targetName = valueDes;
           break;
         default:
           unhandled.add(key);

@@ -299,6 +299,10 @@ class _$AuditLogResponse extends AuditLogResponse {
   @override
   final String? actor;
   @override
+  final String? actorName;
+  @override
+  final String? campId;
+  @override
   final String? id;
   @override
   final BuiltMap<String, JsonObject?>? metadata;
@@ -308,6 +312,8 @@ class _$AuditLogResponse extends AuditLogResponse {
   final bool? success;
   @override
   final String? target;
+  @override
+  final String? targetName;
 
   factory _$AuditLogResponse(
           [void Function(AuditLogResponseBuilder)? updates]) =>
@@ -316,11 +322,14 @@ class _$AuditLogResponse extends AuditLogResponse {
   _$AuditLogResponse._(
       {this.action,
       this.actor,
+      this.actorName,
+      this.campId,
       this.id,
       this.metadata,
       this.occurredAt,
       this.success,
-      this.target})
+      this.target,
+      this.targetName})
       : super._();
   @override
   AuditLogResponse rebuild(void Function(AuditLogResponseBuilder) updates) =>
@@ -336,11 +345,14 @@ class _$AuditLogResponse extends AuditLogResponse {
     return other is AuditLogResponse &&
         action == other.action &&
         actor == other.actor &&
+        actorName == other.actorName &&
+        campId == other.campId &&
         id == other.id &&
         metadata == other.metadata &&
         occurredAt == other.occurredAt &&
         success == other.success &&
-        target == other.target;
+        target == other.target &&
+        targetName == other.targetName;
   }
 
   @override
@@ -348,11 +360,14 @@ class _$AuditLogResponse extends AuditLogResponse {
     var _$hash = 0;
     _$hash = $jc(_$hash, action.hashCode);
     _$hash = $jc(_$hash, actor.hashCode);
+    _$hash = $jc(_$hash, actorName.hashCode);
+    _$hash = $jc(_$hash, campId.hashCode);
     _$hash = $jc(_$hash, id.hashCode);
     _$hash = $jc(_$hash, metadata.hashCode);
     _$hash = $jc(_$hash, occurredAt.hashCode);
     _$hash = $jc(_$hash, success.hashCode);
     _$hash = $jc(_$hash, target.hashCode);
+    _$hash = $jc(_$hash, targetName.hashCode);
     _$hash = $jf(_$hash);
     return _$hash;
   }
@@ -362,11 +377,14 @@ class _$AuditLogResponse extends AuditLogResponse {
     return (newBuiltValueToStringHelper(r'AuditLogResponse')
           ..add('action', action)
           ..add('actor', actor)
+          ..add('actorName', actorName)
+          ..add('campId', campId)
           ..add('id', id)
           ..add('metadata', metadata)
           ..add('occurredAt', occurredAt)
           ..add('success', success)
-          ..add('target', target))
+          ..add('target', target)
+          ..add('targetName', targetName))
         .toString();
   }
 }
@@ -382,6 +400,14 @@ class AuditLogResponseBuilder
   String? _actor;
   String? get actor => _$this._actor;
   set actor(String? actor) => _$this._actor = actor;
+
+  String? _actorName;
+  String? get actorName => _$this._actorName;
+  set actorName(String? actorName) => _$this._actorName = actorName;
+
+  String? _campId;
+  String? get campId => _$this._campId;
+  set campId(String? campId) => _$this._campId = campId;
 
   String? _id;
   String? get id => _$this._id;
@@ -405,6 +431,10 @@ class AuditLogResponseBuilder
   String? get target => _$this._target;
   set target(String? target) => _$this._target = target;
 
+  String? _targetName;
+  String? get targetName => _$this._targetName;
+  set targetName(String? targetName) => _$this._targetName = targetName;
+
   AuditLogResponseBuilder() {
     AuditLogResponse._defaults(this);
   }
@@ -414,11 +444,14 @@ class AuditLogResponseBuilder
     if ($v != null) {
       _action = $v.action;
       _actor = $v.actor;
+      _actorName = $v.actorName;
+      _campId = $v.campId;
       _id = $v.id;
       _metadata = $v.metadata?.toBuilder();
       _occurredAt = $v.occurredAt;
       _success = $v.success;
       _target = $v.target;
+      _targetName = $v.targetName;
       _$v = null;
     }
     return this;
@@ -444,11 +477,14 @@ class AuditLogResponseBuilder
           _$AuditLogResponse._(
             action: action,
             actor: actor,
+            actorName: actorName,
+            campId: campId,
             id: id,
             metadata: _metadata?.build(),
             occurredAt: occurredAt,
             success: success,
             target: target,
+            targetName: targetName,
           );
     } catch (_) {
       late String _$failedField;

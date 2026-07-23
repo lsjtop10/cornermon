@@ -145,4 +145,3 @@ lib/src/model/visit_start_request.dart
 lib/src/model/visit_summary_response.dart
 lib/src/serializers.dart
 pubspec.yaml
-test/track_pin_export_response_test.dart
