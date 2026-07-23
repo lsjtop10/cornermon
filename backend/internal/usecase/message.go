@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"cornermon/backend/internal/domain"
@@ -38,6 +39,16 @@ func (s *MessageService) SendDirect(ctx context.Context, trackID domain.TrackID,
 		}
 		return nil, withErrorContext("message.send_direct", "validate_track", domain.ErrTrackNotActive, map[string]any{"track_id": string(trackID), "track_found": track != nil, "track_status": status})
 	}
+
+	corner, err := s.corners.Get(ctx, track.CornerID())
+	if err != nil {
+		return nil, withErrorContext("message.send_direct", "repository.get_corner", err, map[string]any{"corner_id": string(track.CornerID())})
+	}
+	if corner == nil {
+		return nil, withErrorContext("message.send_direct", "validate_corner", domain.ErrCornerNotInItinerary, map[string]any{"corner_id": string(track.CornerID()), "corner_found": false})
+	}
+	trackLabel := fmt.Sprintf("%s · %d번 트랙", corner.Name(), track.TrackNo())
+
 	msg := domain.NewMessageFromProps(domain.MessageProps{ID: domain.MessageID(s.uuidFn()), ChannelType: domain.MessageDirect, TrackID: trackID, SenderRole: senderRole, Content: content, SentAt: s.nowFn()})
 	if err := s.tx.RunInTx(ctx, func(ctx context.Context) error {
 		if err := s.tracks.IncrementUnreadCount(ctx, trackID, oppositeRole(senderRole)); err != nil {
@@ -48,19 +59,11 @@ func (s *MessageService) SendDirect(ctx context.Context, trackID domain.TrackID,
 		}
 		return nil
 	}); err != nil {
-		s.recordAuditLog(ctx, string(trackID), ActionMessageDirect, "", false, errorAuditMetadata(err, nil))
+		s.recordAuditLog(ctx, domain.Some(corner.CampID()), string(trackID), trackLabel, ActionMessageDirect, "", "", false, errorAuditMetadata(err, nil))
 		return nil, err
 	}
 
-	corner, err := s.corners.Get(ctx, track.CornerID())
-	if err != nil {
-		return nil, withErrorContext("message.send_direct", "repository.get_corner", err, map[string]any{"corner_id": string(track.CornerID())})
-	}
-	if corner == nil {
-		return nil, withErrorContext("message.send_direct", "validate_corner", domain.ErrCornerNotInItinerary, map[string]any{"corner_id": string(track.CornerID()), "corner_found": false})
-	}
-
-	s.recordAuditLog(ctx, string(trackID), ActionMessageDirect, string(msg.ID()), true, map[string]any{"trackID": string(trackID)})
+	s.recordAuditLog(ctx, domain.Some(corner.CampID()), string(trackID), trackLabel, ActionMessageDirect, string(msg.ID()), "", true, nil)
 	_ = s.broadcaster.Broadcast(ctx, corner.CampID(), EventMessagesChanged, TrackScope(trackID))
 	return msg, nil
 }
@@ -122,8 +125,19 @@ func oppositeRole(role domain.SenderRole) domain.SenderRole {
 	return domain.RoleAdmin
 }
 
-func (s *MessageService) recordAuditLog(ctx context.Context, actor string, action AuditAction, target string, success bool, metadata map[string]any) {
+func (s *MessageService) recordAuditLog(ctx context.Context, campID domain.Optional[domain.CampID], actor, actorName string, action AuditAction, target, targetName string, success bool, metadata map[string]any) {
 	if s.auditLogs != nil {
-		_ = s.auditLogs.Save(ctx, domain.NewAuditLog(domain.AuditLogID(s.uuidFn()), actor, string(action), target, success, s.nowFn(), metadata))
+		_ = s.auditLogs.Save(ctx, domain.NewAuditLogFromProps(domain.AuditLogProps{
+			ID:         domain.AuditLogID(s.uuidFn()),
+			CampID:     campID,
+			Actor:      actor,
+			ActorName:  actorName,
+			Action:     string(action),
+			Target:     target,
+			TargetName: targetName,
+			Success:    success,
+			OccurredAt: s.nowFn(),
+			Metadata:   filterErrorAttributes(metadata),
+		}))
 	}
 }

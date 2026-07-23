@@ -2,8 +2,47 @@ package web
 
 import (
 	"encoding/json"
+	"net/http"
+	"net/http/httptest"
 	"testing"
+
+	"cornermon/backend/internal/domain"
+
+	"github.com/labstack/echo/v4"
 )
+
+func TestGetAdminIDShoudReturnSessionAdminIDWhenAdminSessionSet(t *testing.T) {
+	// Arrange
+	e := echo.New()
+	req := httptest.NewRequest(http.MethodPost, "/camps", nil)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+	c.Set("adminSession", domain.NewAdminSessionFromProps(domain.AdminSessionProps{AdminID: "admin-42"}))
+
+	// Act
+	got := getAdminID(c)
+
+	// Assert
+	if got != domain.AdminID("admin-42") {
+		t.Errorf("expected 'admin-42', got %q", got)
+	}
+}
+
+func TestGetAdminIDShoudFallBackToLiteralWhenAdminSessionMissing(t *testing.T) {
+	// Arrange
+	e := echo.New()
+	req := httptest.NewRequest(http.MethodPost, "/camps", nil)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+
+	// Act
+	got := getAdminID(c)
+
+	// Assert
+	if got != domain.AdminID("admin") {
+		t.Errorf("expected fallback 'admin', got %q", got)
+	}
+}
 
 func TestUpdateCampRequestShoudDistinguishOmittedFieldsFromZeroValues(t *testing.T) {
 	// Arrange

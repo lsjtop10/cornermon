@@ -12,9 +12,9 @@ part 'track_pin_export_response.g.dart';
 /// TrackPINExportResponse
 ///
 /// Properties:
-/// * [cornerName]
-/// * [pin]
-/// * [trackNo]
+/// * [cornerName] 
+/// * [pin] 
+/// * [trackNo] 
 @BuiltValue()
 abstract class TrackPINExportResponse implements Built<TrackPINExportResponse, TrackPINExportResponseBuilder> {
   @BuiltValueField(wireName: r'cornerName')

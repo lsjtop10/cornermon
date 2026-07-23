@@ -12,6 +12,7 @@ import (
 type BadgeService struct {
 	badges    BadgeRepository
 	groups    GroupRepository
+	admins    AdminRepository
 	auditLogs AuditLogRepository
 	tx        TxManager
 
@@ -22,12 +23,14 @@ type BadgeService struct {
 func NewBadgeService(
 	badges BadgeRepository,
 	groups GroupRepository,
+	admins AdminRepository,
 	auditLogs AuditLogRepository,
 	tx TxManager,
 ) *BadgeService {
 	return &BadgeService{
 		badges:    badges,
 		groups:    groups,
+		admins:    admins,
 		auditLogs: auditLogs,
 		tx:        tx,
 		nowFn:     func() time.Time { return time.Now().UTC() },
@@ -36,7 +39,7 @@ func NewBadgeService(
 }
 
 // IssueInitialBadges
-func (s *BadgeService) IssueInitialBadges(ctx context.Context, count int) ([]*domain.Badge, error) {
+func (s *BadgeService) IssueInitialBadges(ctx context.Context, count int, actorAdminID domain.AdminID) ([]*domain.Badge, error) {
 
 	var badges []*domain.Badge
 	for i := 0; i < count; i++ {
@@ -58,11 +61,11 @@ func (s *BadgeService) IssueInitialBadges(ctx context.Context, count int) ([]*do
 	})
 
 	if err != nil {
-		s.recordAuditLog(ctx, "admin", ActionBadgeBulkGenerate, "", false, errorAuditMetadata(err, nil))
+		s.recordAuditLog(ctx, domain.None[domain.CampID](), string(actorAdminID), adminActorLabel(ctx, s.admins, actorAdminID, nil), ActionBadgeBulkGenerate, "", "", false, errorAuditMetadata(err, nil))
 		return nil, err
 	}
 
-	s.recordAuditLog(ctx, "admin", ActionBadgeBulkGenerate, "", true, map[string]any{"count": count})
+	s.recordAuditLog(ctx, domain.None[domain.CampID](), string(actorAdminID), adminActorLabel(ctx, s.admins, actorAdminID, nil), ActionBadgeBulkGenerate, "", "", true, map[string]any{"count": count})
 
 	return badges, nil
 }
@@ -73,7 +76,7 @@ func (s *BadgeService) ListBadges(ctx context.Context) ([]*domain.Badge, error) 
 }
 
 // ExportBadges returns unassigned badges for client printing
-func (s *BadgeService) ExportBadges(ctx context.Context) ([]*domain.Badge, error) {
+func (s *BadgeService) ExportBadges(ctx context.Context, actorAdminID domain.AdminID) ([]*domain.Badge, error) {
 
 	badges, err := s.badges.ListAll(ctx)
 	if err != nil {
@@ -87,21 +90,21 @@ func (s *BadgeService) ExportBadges(ctx context.Context) ([]*domain.Badge, error
 		}
 	}
 
-	s.recordAuditLog(ctx, "admin", ActionBadgeExport, "", true, nil)
+	s.recordAuditLog(ctx, domain.None[domain.CampID](), string(actorAdminID), adminActorLabel(ctx, s.admins, actorAdminID, nil), ActionBadgeExport, "", "", true, nil)
 
 	return unassigned, nil
 }
 
 // AssignBadge
-func (s *BadgeService) AssignBadge(ctx context.Context, badgeID domain.BadgeID, groupID domain.GroupID) (*domain.Badge, error) {
-	return s.assignBadgeInternal(ctx, groupID, func(ctx context.Context) (*domain.Badge, error) {
+func (s *BadgeService) AssignBadge(ctx context.Context, badgeID domain.BadgeID, groupID domain.GroupID, actorAdminID domain.AdminID) (*domain.Badge, error) {
+	return s.assignBadgeInternal(ctx, groupID, actorAdminID, func(ctx context.Context) (*domain.Badge, error) {
 		return s.badges.Get(ctx, badgeID)
 	})
 }
 
 // ScanAssignBadge
-func (s *BadgeService) ScanAssignBadge(ctx context.Context, qrPayload string, groupID domain.GroupID) (*domain.Badge, error) {
-	return s.assignBadgeInternal(ctx, groupID, func(ctx context.Context) (*domain.Badge, error) {
+func (s *BadgeService) ScanAssignBadge(ctx context.Context, qrPayload string, groupID domain.GroupID, actorAdminID domain.AdminID) (*domain.Badge, error) {
+	return s.assignBadgeInternal(ctx, groupID, actorAdminID, func(ctx context.Context) (*domain.Badge, error) {
 		return s.badges.GetByQRPayload(ctx, qrPayload)
 	})
 }
@@ -109,9 +112,12 @@ func (s *BadgeService) ScanAssignBadge(ctx context.Context, qrPayload string, gr
 func (s *BadgeService) assignBadgeInternal(
 	ctx context.Context,
 	groupID domain.GroupID,
+	actorAdminID domain.AdminID,
 	getBadgeFn func(ctx context.Context) (*domain.Badge, error),
 ) (*domain.Badge, error) {
 	var targetBadge *domain.Badge
+	groupCampID := domain.None[domain.CampID]()
+	var groupName string
 
 	err := s.tx.RunInTx(ctx, func(ctx context.Context) error {
 		group, err := s.groups.Get(ctx, groupID)
@@ -121,6 +127,8 @@ func (s *BadgeService) assignBadgeInternal(
 		if group == nil {
 			return withErrorContext("badge.assign", "validate_group", domain.ErrCornerNotInItinerary, map[string]any{"group_id": string(groupID), "group_found": false})
 		}
+		groupCampID = domain.Some(group.CampID())
+		groupName = group.Name()
 
 		targetBadge, err = getBadgeFn(ctx)
 		if err != nil {
@@ -164,24 +172,27 @@ func (s *BadgeService) assignBadgeInternal(
 	})
 
 	if err != nil {
-		s.recordAuditLog(ctx, "admin", ActionBadgeAssign, string(groupID), false, errorAuditMetadata(err, nil))
+		s.recordAuditLog(ctx, groupCampID, string(actorAdminID), adminActorLabel(ctx, s.admins, actorAdminID, nil), ActionBadgeAssign, string(groupID), groupName, false, errorAuditMetadata(err, nil))
 		return nil, err
 	}
 
-	s.recordAuditLog(ctx, "admin", ActionBadgeAssign, string(targetBadge.ID()), true, map[string]any{"groupID": string(groupID)})
+	s.recordAuditLog(ctx, groupCampID, string(actorAdminID), adminActorLabel(ctx, s.admins, actorAdminID, nil), ActionBadgeAssign, string(targetBadge.ID()), targetBadge.ShortID(), true, map[string]any{"groupID": string(groupID)})
 
 	return targetBadge, nil
 }
 
-func (s *BadgeService) recordAuditLog(ctx context.Context, actor string, action AuditAction, target string, success bool, metadata map[string]any) {
-	log := domain.NewAuditLog(
-		domain.AuditLogID(s.uuidFn()),
-		actor,
-		string(action),
-		target,
-		success,
-		s.nowFn(),
-		metadata,
-	)
+func (s *BadgeService) recordAuditLog(ctx context.Context, campID domain.Optional[domain.CampID], actor, actorName string, action AuditAction, target, targetName string, success bool, metadata map[string]any) {
+	log := domain.NewAuditLogFromProps(domain.AuditLogProps{
+		ID:         domain.AuditLogID(s.uuidFn()),
+		CampID:     campID,
+		Actor:      actor,
+		ActorName:  actorName,
+		Action:     string(action),
+		Target:     target,
+		TargetName: targetName,
+		Success:    success,
+		OccurredAt: s.nowFn(),
+		Metadata:   filterErrorAttributes(metadata),
+	})
 	_ = s.auditLogs.Save(ctx, log)
 }

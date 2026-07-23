@@ -121,7 +121,7 @@ func (h *CornerHandler) CreateCorner(c echo.Context) error {
 	if req.TargetMinutes <= 0 {
 		return echo.NewHTTPError(http.StatusBadRequest, ErrorResponse{Code: CodeBadRequest, Message: "targetMinutes must be positive"})
 	}
-	corner, err := h.svc.AddLearningCorner(c.Request().Context(), domain.CampID(req.CampID), req.Name, req.TargetMinutes)
+	corner, err := h.svc.AddLearningCorner(c.Request().Context(), domain.CampID(req.CampID), req.Name, req.TargetMinutes, getAdminID(c))
 	if err != nil {
 		return cornerHTTPError(err)
 	}
@@ -193,7 +193,7 @@ func (h *CornerHandler) GetCornerByTrack(c echo.Context) error {
 // @Router       /corners/{id} [delete]
 func (h *CornerHandler) DeleteCorner(c echo.Context) error {
 	id := domain.CornerID(c.Param("id"))
-	err := h.svc.RemoveCornerFromCamp(c.Request().Context(), id)
+	err := h.svc.RemoveCornerFromCamp(c.Request().Context(), id, getAdminID(c))
 	if err != nil {
 		return cornerHTTPError(err)
 	}
@@ -225,12 +225,13 @@ func (h *CornerHandler) BulkUpdateCorners(c echo.Context) error {
 	if err := c.Bind(&req); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, ErrorResponse{Code: CodeBadRequest, Message: "Invalid request body"}).SetInternal(err)
 	}
+	actorAdminID := getAdminID(c)
 	res := make([]CornerResponse, len(req.Corners))
 	for i, cr := range req.Corners {
 		if cr.TargetMinutes <= 0 {
 			return echo.NewHTTPError(http.StatusBadRequest, ErrorResponse{Code: CodeBadRequest, Message: "targetMinutes must be positive"})
 		}
-		updated, err := h.svc.ModifyCornerSpecification(c.Request().Context(), domain.CornerID(cr.ID), cr.Name, cr.TargetMinutes)
+		updated, err := h.svc.ModifyCornerSpecification(c.Request().Context(), domain.CornerID(cr.ID), cr.Name, cr.TargetMinutes, actorAdminID)
 		if err != nil {
 			return cornerHTTPError(err)
 		}

@@ -28,6 +28,7 @@ class GAuditLogsApi {
   /// * [actor] - 행위자 부분 일치
   /// * [action] - 행위 종류 정확히 일치
   /// * [result] - 처리 결과
+  /// * [campId] - 캠프 ID로 범위 제한
   /// * [limit] - 조회 개수
   /// * [before] - 이전 응답의 불투명 nextCursor
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
@@ -43,6 +44,7 @@ class GAuditLogsApi {
     String? actor,
     String? action,
     String? result,
+    String? campId,
     int? limit = 50,
     String? before,
     CancelToken? cancelToken,
@@ -76,6 +78,7 @@ class GAuditLogsApi {
       if (actor != null) r'actor': encodeQueryParameter(_serializers, actor, const FullType(String)),
       if (action != null) r'action': encodeQueryParameter(_serializers, action, const FullType(String)),
       if (result != null) r'result': encodeQueryParameter(_serializers, result, const FullType(String)),
+      if (campId != null) r'campId': encodeQueryParameter(_serializers, campId, const FullType(String)),
       if (limit != null) r'limit': encodeQueryParameter(_serializers, limit, const FullType(int)),
       if (before != null) r'before': encodeQueryParameter(_serializers, before, const FullType(String)),
     };

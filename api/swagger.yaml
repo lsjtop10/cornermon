@@ -97,6 +97,11 @@ definitions:
         type: string
       actor:
         type: string
+      actorName:
+        type: string
+      campId:
+        format: uuid
+        type: string
       id:
         format: uuid
         type: string
@@ -109,6 +114,8 @@ definitions:
       success:
         type: boolean
       target:
+        type: string
+      targetName:
         type: string
     type: object
   BadgeResponse:
@@ -1120,6 +1127,10 @@ paths:
         - failure
         in: query
         name: result
+        type: string
+      - description: 캠프 ID로 범위 제한
+        in: query
+        name: campId
         type: string
       - default: 50
         description: 조회 개수

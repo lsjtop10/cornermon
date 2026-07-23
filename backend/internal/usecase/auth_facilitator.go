@@ -84,7 +84,11 @@ func (s *FacilitatorAuthService) Login(
 			status = string(device.Status())
 		}
 		err = withErrorContext("auth_facil.login", "validate_device", domain.ErrDeviceNotApproved, map[string]any{"device_found": device != nil, "device_status": status})
-		s.recordAuditLog(ctx, "anonymous", ActionFacilitatorLogin, "", false, errorAuditMetadata(err, nil))
+		deviceCampID := domain.None[domain.CampID]()
+		if device != nil {
+			deviceCampID = domain.Some(device.CampID())
+		}
+		s.recordAuditLog(ctx, deviceCampID, "anonymous", "anonymous", ActionFacilitatorLogin, "", "", false, errorAuditMetadata(err, nil))
 		return nil, err
 	}
 
@@ -92,7 +96,7 @@ func (s *FacilitatorAuthService) Login(
 		lockedUntil, _ := device.LockedUntil().Value()
 		errLocked := domain.NewDeviceLockedErrorFromProps(domain.DeviceLockedErrorProps{LockedUntil: lockedUntil})
 		err = withErrorContext("auth_facil.login", "validate_device_locked", errLocked, map[string]any{"locked_until": lockedUntil})
-		s.recordAuditLog(ctx, "anonymous", ActionFacilitatorLogin, "", false, errorAuditMetadata(err, nil))
+		s.recordAuditLog(ctx, domain.Some(device.CampID()), "anonymous", "anonymous", ActionFacilitatorLogin, "", "", false, errorAuditMetadata(err, nil))
 		return nil, err
 	}
 
@@ -108,7 +112,7 @@ func (s *FacilitatorAuthService) Login(
 
 	if camp.Status() == domain.CampEnded {
 		err = withErrorContext("auth_facil.login", "validate_camp_status", domain.ErrCampInvalidTransition, map[string]any{"camp_id": string(campID), "camp_status": string(camp.Status())})
-		s.recordAuditLog(ctx, "anonymous", ActionFacilitatorLogin, "", false, errorAuditMetadata(err, nil))
+		s.recordAuditLog(ctx, domain.Some(campID), "anonymous", "anonymous", ActionFacilitatorLogin, "", "", false, errorAuditMetadata(err, nil))
 		return nil, err
 	}
 
@@ -142,7 +146,7 @@ func (s *FacilitatorAuthService) Login(
 		}
 		errInvalid := domain.NewInvalidPinErrorFromProps(domain.InvalidPinErrorProps{LockedUntil: optLocked})
 		err = withErrorContext("auth_facil.login", "validate_pin", errInvalid, map[string]any{"device_id": string(device.ID()), "failures": device.FailedPinAttempts()})
-		s.recordAuditLog(ctx, "anonymous", ActionFacilitatorLogin, "", false, errorAuditMetadata(err, map[string]any{"device_failures": device.FailedPinAttempts()}))
+		s.recordAuditLog(ctx, domain.Some(campID), "anonymous", "anonymous", ActionFacilitatorLogin, "", "", false, errorAuditMetadata(err, map[string]any{"device_failures": device.FailedPinAttempts()}))
 		return nil, err
 	}
 
@@ -183,11 +187,11 @@ func (s *FacilitatorAuthService) Login(
 	})
 
 	if err != nil {
-		s.recordAuditLog(ctx, "anonymous", ActionFacilitatorLogin, string(trackID), false, errorAuditMetadata(err, nil))
+		s.recordAuditLog(ctx, domain.Some(campID), "anonymous", "anonymous", ActionFacilitatorLogin, string(trackID), fmt.Sprintf("%s · %d번 트랙", corner.Name(), track.TrackNo()), false, errorAuditMetadata(err, nil))
 		return nil, err
 	}
 
-	s.recordAuditLog(ctx, string(trackID), ActionFacilitatorLogin, string(session.ID()), true, nil)
+	s.recordAuditLog(ctx, domain.Some(campID), string(trackID), trackDisplayLabel(ctx, s.tracks, s.corners, trackID, track), ActionFacilitatorLogin, string(session.ID()), "", true, nil)
 	return &TrackLoginResult{
 		TrackToken: plainToken,
 		Track:      track,
@@ -264,11 +268,11 @@ func (s *FacilitatorAuthService) MigrateSession(
 	})
 
 	if err != nil {
-		s.recordAuditLog(ctx, string(oldSession.TrackID()), ActionSessionMigrate, string(newTrackID), false, errorAuditMetadata(err, nil))
+		s.recordAuditLog(ctx, domain.Some(corner.CampID()), string(oldSession.TrackID()), trackDisplayLabel(ctx, s.tracks, s.corners, oldSession.TrackID(), nil), ActionSessionMigrate, string(newTrackID), fmt.Sprintf("%s · %d번 트랙", corner.Name(), newTrack.TrackNo()), false, errorAuditMetadata(err, nil))
 		return nil, err
 	}
 
-	s.recordAuditLog(ctx, string(oldSession.TrackID()), ActionSessionMigrate, string(newSession.ID()), true, nil)
+	s.recordAuditLog(ctx, domain.Some(corner.CampID()), string(oldSession.TrackID()), trackDisplayLabel(ctx, s.tracks, s.corners, oldSession.TrackID(), nil), ActionSessionMigrate, string(newSession.ID()), "", true, nil)
 	return &TrackLoginResult{
 		TrackToken: plainToken,
 		Track:      newTrack,
@@ -318,6 +322,13 @@ func (s *FacilitatorAuthService) Logout(
 		return withErrorContext("auth_facil.logout", "domain.revoke", err, map[string]any{"session_id": string(sessionID)})
 	}
 
+	campID := domain.None[domain.CampID]()
+	if track, terr := s.tracks.Get(ctx, session.TrackID()); terr == nil && track != nil {
+		if corner, cerr := s.corners.Get(ctx, track.CornerID()); cerr == nil && corner != nil {
+			campID = domain.Some(corner.CampID())
+		}
+	}
+
 	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
 		if err := s.sessions.Save(ctx, session); err != nil {
 			return withErrorContext("auth_facil.logout", "repository.save_session", err, map[string]any{"session_id": string(sessionID)})
@@ -326,24 +337,27 @@ func (s *FacilitatorAuthService) Logout(
 	})
 
 	if err != nil {
-		s.recordAuditLog(ctx, string(session.TrackID()), ActionFacilitatorLogout, string(sessionID), false, errorAuditMetadata(err, nil))
+		s.recordAuditLog(ctx, campID, string(session.TrackID()), trackDisplayLabel(ctx, s.tracks, s.corners, session.TrackID(), nil), ActionFacilitatorLogout, string(sessionID), "", false, errorAuditMetadata(err, nil))
 		return err // D-2 allowed: already wrapped or handled
 	}
 
-	s.recordAuditLog(ctx, string(session.TrackID()), ActionFacilitatorLogout, string(sessionID), true, nil)
+	s.recordAuditLog(ctx, campID, string(session.TrackID()), trackDisplayLabel(ctx, s.tracks, s.corners, session.TrackID(), nil), ActionFacilitatorLogout, string(sessionID), "", true, nil)
 	return nil
 }
 
-func (s *FacilitatorAuthService) recordAuditLog(ctx context.Context, actor string, action AuditAction, target string, success bool, metadata map[string]any) {
+func (s *FacilitatorAuthService) recordAuditLog(ctx context.Context, campID domain.Optional[domain.CampID], actor, actorName string, action AuditAction, target, targetName string, success bool, metadata map[string]any) {
 
-	log := domain.NewAuditLog(
-		domain.AuditLogID(s.uuidFn()),
-		actor,
-		string(action),
-		target,
-		success,
-		s.nowFn(),
-		metadata,
-	)
+	log := domain.NewAuditLogFromProps(domain.AuditLogProps{
+		ID:         domain.AuditLogID(s.uuidFn()),
+		CampID:     campID,
+		Actor:      actor,
+		ActorName:  actorName,
+		Action:     string(action),
+		Target:     target,
+		TargetName: targetName,
+		Success:    success,
+		OccurredAt: s.nowFn(),
+		Metadata:   filterErrorAttributes(metadata),
+	})
 	_ = s.auditLogs.Save(ctx, log)
 }

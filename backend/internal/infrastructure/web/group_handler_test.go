@@ -74,7 +74,7 @@ func TestListGroupsByTrackShoudReturnGroupsWhenSessionTrackMatchesPath(t *testin
 		cornerRepoForGroupHandler{corner: domain.NewCornerFromProps(domain.CornerProps{ID: "corner-1", CampID: "camp-1"})},
 		trackRepoForGroupHandler{track: domain.NewTrackFromProps(domain.TrackProps{ID: "track-1", CornerID: "corner-1"})},
 		groupRepoForGroupHandler{groups: []*domain.Group{domain.NewGroupFromProps(domain.GroupProps{ID: "group-1", CampID: "camp-1", Name: "1조"})}},
-		nil, nil, nil, nil,
+		nil, nil, nil, nil, nil,
 	)
 	e := echo.New()
 	req := httptest.NewRequest(http.MethodGet, "/tracks/track-1/groups", nil)

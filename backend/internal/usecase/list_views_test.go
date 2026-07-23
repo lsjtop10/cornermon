@@ -16,7 +16,7 @@ func TestShouldListOnlyCurrentlyLockedApprovedDevicesWhenCampIsRequested(t *test
 	devices.Devices["expired"] = domain.NewDeviceRegistrationFromProps(domain.DeviceRegistrationProps{ID: "expired", CampID: "camp-1", Status: domain.DeviceApproved, LockedUntil: domain.Some(now.Add(-time.Minute))})
 	devices.Devices["pending"] = domain.NewDeviceRegistrationFromProps(domain.DeviceRegistrationProps{ID: "pending", CampID: "camp-1", Status: domain.DevicePending, LockedUntil: domain.Some(now.Add(time.Minute))})
 	devices.Devices["other-camp"] = domain.NewDeviceRegistrationFromProps(domain.DeviceRegistrationProps{ID: "other-camp", CampID: "camp-2", Status: domain.DeviceApproved, LockedUntil: domain.Some(now.Add(time.Minute))})
-	service := NewDeviceTrustService(NewMockCampRepository(), devices, &MockAuditLogRepository{}, &MockBroadcaster{}, &MockTxManager{})
+	service := NewDeviceTrustService(NewMockCampRepository(), devices, NewMockAdminRepository(), &MockAuditLogRepository{}, &MockBroadcaster{}, &MockTxManager{})
 	service.nowFn = func() time.Time { return now }
 
 	// Act

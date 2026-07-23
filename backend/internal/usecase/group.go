@@ -16,6 +16,7 @@ type GroupService struct {
 	groups    GroupRepository
 	badges    BadgeRepository
 	visits    VisitRepository
+	admins    AdminRepository
 	auditLogs AuditLogRepository
 	tx        TxManager
 
@@ -30,6 +31,7 @@ func NewGroupService(
 	groups GroupRepository,
 	badges BadgeRepository,
 	visits VisitRepository,
+	admins AdminRepository,
 	auditLogs AuditLogRepository,
 	tx TxManager,
 ) *GroupService {
@@ -40,6 +42,7 @@ func NewGroupService(
 		groups:    groups,
 		badges:    badges,
 		visits:    visits,
+		admins:    admins,
 		auditLogs: auditLogs,
 		tx:        tx,
 		nowFn:     func() time.Time { return time.Now().UTC() },
@@ -53,6 +56,7 @@ func (s *GroupService) AssignBadge(
 	ctx context.Context,
 	badgeID domain.BadgeID,
 	groupName string,
+	actorAdminID domain.AdminID,
 ) (*domain.Group, error) {
 
 	badge, err := s.badges.Get(ctx, badgeID)
@@ -63,7 +67,7 @@ func (s *GroupService) AssignBadge(
 		return nil, withErrorContext("group.assign_badge", "validate_badge", domain.ErrBadgeNotAssigned, map[string]any{"badge_id": string(badgeID), "badge_found": false})
 	}
 
-	return s.registerBadge(ctx, badge, groupName)
+	return s.registerBadge(ctx, badge, groupName, actorAdminID)
 }
 
 // ScanAssignBadge creates a group and assigns the badge identified by its QR payload.
@@ -72,6 +76,7 @@ func (s *GroupService) ScanAssignBadge(
 	ctx context.Context,
 	qrPayload string,
 	groupName string,
+	actorAdminID domain.AdminID,
 ) (*domain.Group, error) {
 
 	badge, err := s.badges.GetByQRPayload(ctx, qrPayload)
@@ -82,10 +87,10 @@ func (s *GroupService) ScanAssignBadge(
 		return nil, withErrorContext("group.scan_assign_badge", "validate_badge", domain.ErrBadgeNotAssigned, map[string]any{"badge_found": false})
 	}
 
-	return s.registerBadge(ctx, badge, groupName)
+	return s.registerBadge(ctx, badge, groupName, actorAdminID)
 }
 
-func (s *GroupService) registerBadge(ctx context.Context, badge *domain.Badge, groupName string) (*domain.Group, error) {
+func (s *GroupService) registerBadge(ctx context.Context, badge *domain.Badge, groupName string, actorAdminID domain.AdminID) (*domain.Group, error) {
 
 	camp, err := s.registrationCamp(ctx)
 	if err != nil {
@@ -136,11 +141,11 @@ func (s *GroupService) registerBadge(ctx context.Context, badge *domain.Badge, g
 	})
 
 	if err != nil {
-		s.recordAuditLog(ctx, "admin", ActionGroupCreate, "", false, errorAuditMetadata(err, nil))
+		s.recordAuditLog(ctx, domain.Some(campID), string(actorAdminID), adminActorLabel(ctx, s.admins, actorAdminID, nil), ActionGroupCreate, "", groupName, false, errorAuditMetadata(err, nil))
 		return nil, err
 	}
 
-	s.recordAuditLog(ctx, "admin", ActionGroupCreate, string(groupID), true, map[string]any{"campID": string(campID), "badgeID": string(badge.ID())})
+	s.recordAuditLog(ctx, domain.Some(campID), string(actorAdminID), adminActorLabel(ctx, s.admins, actorAdminID, nil), ActionGroupCreate, string(groupID), groupName, true, map[string]any{"badgeID": string(badge.ID())})
 	return group, nil
 }
 
@@ -307,15 +312,18 @@ func (s *GroupService) ListGroupVisitDetails(ctx context.Context, groupID domain
 	return details, nil
 }
 
-func (s *GroupService) recordAuditLog(ctx context.Context, actor string, action AuditAction, target string, success bool, metadata map[string]any) {
-	log := domain.NewAuditLog(
-		domain.AuditLogID(s.uuidFn()),
-		actor,
-		string(action),
-		target,
-		success,
-		s.nowFn(),
-		metadata,
-	)
+func (s *GroupService) recordAuditLog(ctx context.Context, campID domain.Optional[domain.CampID], actor, actorName string, action AuditAction, target, targetName string, success bool, metadata map[string]any) {
+	log := domain.NewAuditLogFromProps(domain.AuditLogProps{
+		ID:         domain.AuditLogID(s.uuidFn()),
+		CampID:     campID,
+		Actor:      actor,
+		ActorName:  actorName,
+		Action:     string(action),
+		Target:     target,
+		TargetName: targetName,
+		Success:    success,
+		OccurredAt: s.nowFn(),
+		Metadata:   filterErrorAttributes(metadata),
+	})
 	_ = s.auditLogs.Save(ctx, log)
 }

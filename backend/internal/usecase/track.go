@@ -15,6 +15,7 @@ type TrackService struct {
 	corners      CornerRepository
 	tracks       TrackRepository
 	sessions     FacilitatorSessionRepository
+	admins       AdminRepository
 	auditLogs    AuditLogRepository
 	broadcaster  Broadcaster
 	tx           TxManager
@@ -37,6 +38,7 @@ func NewTrackService(
 	corners CornerRepository,
 	tracks TrackRepository,
 	sessions FacilitatorSessionRepository,
+	admins AdminRepository,
 	auditLogs AuditLogRepository,
 	broadcaster Broadcaster,
 	tx TxManager,
@@ -51,6 +53,7 @@ func NewTrackService(
 		corners:      corners,
 		tracks:       tracks,
 		sessions:     sessions,
+		admins:       admins,
 		auditLogs:    auditLogs,
 		broadcaster:  broadcaster,
 		tx:           tx,
@@ -65,6 +68,7 @@ func (s *TrackService) CreateTrack(
 	ctx context.Context,
 	campID domain.CampID,
 	cornerID domain.CornerID,
+	actorAdminID domain.AdminID,
 ) (*domain.Track, string, error) {
 
 	camp, err := s.camps.Get(ctx, campID)
@@ -127,11 +131,11 @@ func (s *TrackService) CreateTrack(
 	})
 
 	if err != nil {
-		s.recordAuditLog(ctx, "admin", ActionTrackCreate, "", false, errorAuditMetadata(err, nil))
+		s.recordAuditLog(ctx, domain.Some(campID), string(actorAdminID), adminActorLabel(ctx, s.admins, actorAdminID, nil), ActionTrackCreate, "", corner.Name(), false, errorAuditMetadata(err, nil))
 		return nil, "", err
 	}
 
-	s.recordAuditLog(ctx, "admin", ActionTrackCreate, string(track.ID()), true, map[string]any{"campID": string(campID), "cornerID": string(cornerID)})
+	s.recordAuditLog(ctx, domain.Some(campID), string(actorAdminID), adminActorLabel(ctx, s.admins, actorAdminID, nil), ActionTrackCreate, string(track.ID()), fmt.Sprintf("%s · %d번 트랙", corner.Name(), track.TrackNo()), true, nil)
 	_ = s.broadcaster.Broadcast(ctx, campID, EventTracksUpdated, CampScope())
 
 	return track, plainPIN, nil
@@ -141,6 +145,7 @@ func (s *TrackService) CreateTrack(
 func (s *TrackService) DeleteTrack(
 	ctx context.Context,
 	trackID domain.TrackID,
+	actorAdminID domain.AdminID,
 ) (bool, error) {
 
 	now := s.nowFn()
@@ -153,7 +158,8 @@ func (s *TrackService) DeleteTrack(
 	}
 
 	var isLastTrack bool
-	var cornerCampID domain.CampID
+	cornerCampID := domain.None[domain.CampID]()
+	var targetLabel string
 
 	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
 		if _, err := track.Delete(now); err != nil {
@@ -178,7 +184,8 @@ func (s *TrackService) DeleteTrack(
 			return withErrorContext("track.delete", "repository.get_corner", err, map[string]any{"corner_id": string(track.CornerID())})
 		}
 		if corner != nil {
-			cornerCampID = corner.CampID()
+			cornerCampID = domain.Some(corner.CampID())
+			targetLabel = fmt.Sprintf("%s · %d번 트랙", corner.Name(), track.TrackNo())
 		}
 
 		sessions, err := s.sessions.ListActiveByTrack(ctx, trackID)
@@ -200,14 +207,14 @@ func (s *TrackService) DeleteTrack(
 	})
 
 	if err != nil {
-		s.recordAuditLog(ctx, "admin", ActionTrackDelete, string(trackID), false, errorAuditMetadata(err, nil))
+		s.recordAuditLog(ctx, cornerCampID, string(actorAdminID), adminActorLabel(ctx, s.admins, actorAdminID, nil), ActionTrackDelete, string(trackID), targetLabel, false, errorAuditMetadata(err, nil))
 		return false, err
 	}
 
-	s.recordAuditLog(ctx, "admin", ActionTrackDelete, string(trackID), true, map[string]any{"isLastTrack": isLastTrack})
-	if cornerCampID != "" {
-		_ = s.broadcaster.Broadcast(ctx, cornerCampID, EventTracksUpdated, CampScope())
-		_ = s.broadcaster.Broadcast(ctx, cornerCampID, EventTrackDeleted, TrackScope(trackID))
+	s.recordAuditLog(ctx, cornerCampID, string(actorAdminID), adminActorLabel(ctx, s.admins, actorAdminID, nil), ActionTrackDelete, string(trackID), targetLabel, true, map[string]any{"isLastTrack": isLastTrack})
+	if campID, ok := cornerCampID.Value(); ok {
+		_ = s.broadcaster.Broadcast(ctx, campID, EventTracksUpdated, CampScope())
+		_ = s.broadcaster.Broadcast(ctx, campID, EventTrackDeleted, TrackScope(trackID))
 	}
 
 	return isLastTrack, nil
@@ -218,6 +225,7 @@ func (s *TrackService) ReplaceTrack(
 	ctx context.Context,
 	oldTrackID domain.TrackID,
 	newCornerID domain.CornerID,
+	actorAdminID domain.AdminID,
 ) (*domain.Track, string, error) {
 
 	now := s.nowFn()
@@ -311,11 +319,11 @@ func (s *TrackService) ReplaceTrack(
 	})
 
 	if err != nil {
-		s.recordAuditLog(ctx, "admin", ActionTrackReplace, string(oldTrackID), false, errorAuditMetadata(err, nil))
+		s.recordAuditLog(ctx, domain.Some(oldCorner.CampID()), string(actorAdminID), adminActorLabel(ctx, s.admins, actorAdminID, nil), ActionTrackReplace, string(oldTrackID), fmt.Sprintf("%s · %d번 트랙", oldCorner.Name(), oldTrack.TrackNo()), false, errorAuditMetadata(err, nil))
 		return nil, "", err
 	}
 
-	s.recordAuditLog(ctx, "admin", ActionTrackReplace, string(newTrack.ID()), true, map[string]any{"oldTrackID": string(oldTrackID)})
+	s.recordAuditLog(ctx, domain.Some(newCorner.CampID()), string(actorAdminID), adminActorLabel(ctx, s.admins, actorAdminID, nil), ActionTrackReplace, string(newTrack.ID()), fmt.Sprintf("%s · %d번 트랙", newCorner.Name(), newTrack.TrackNo()), true, map[string]any{"oldTrackID": string(oldTrackID)})
 	_ = s.broadcaster.Broadcast(ctx, newCorner.CampID(), EventTracksUpdated, CampScope())
 	_ = s.broadcaster.Broadcast(ctx, newCorner.CampID(), EventTrackReplaced, TrackScope(oldTrackID))
 
@@ -326,6 +334,7 @@ func (s *TrackService) ReplaceTrack(
 func (s *TrackService) RegeneratePIN(
 	ctx context.Context,
 	trackID domain.TrackID,
+	actorAdminID domain.AdminID,
 ) (*domain.Track, string, error) {
 
 	now := s.nowFn()
@@ -350,7 +359,8 @@ func (s *TrackService) RegeneratePIN(
 		return nil, "", withErrorContext("track.regenerate_pin", "protector.encrypt_pin", err, nil)
 	}
 
-	var cornerCampID domain.CampID
+	cornerCampID := domain.None[domain.CampID]()
+	var targetLabel string
 
 	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
 		if _, err := track.RegeneratePIN(hashPIN, now); err != nil {
@@ -363,7 +373,8 @@ func (s *TrackService) RegeneratePIN(
 			return withErrorContext("track.regenerate_pin", "repository.get_corner", err, map[string]any{"corner_id": string(track.CornerID())})
 		}
 		if corner != nil {
-			cornerCampID = corner.CampID()
+			cornerCampID = domain.Some(corner.CampID())
+			targetLabel = fmt.Sprintf("%s · %d번 트랙", corner.Name(), track.TrackNo())
 		}
 
 		sessions, err := s.sessions.ListActiveByTrack(ctx, trackID)
@@ -385,14 +396,14 @@ func (s *TrackService) RegeneratePIN(
 	})
 
 	if err != nil {
-		s.recordAuditLog(ctx, "admin", ActionPinRegenerate, string(trackID), false, errorAuditMetadata(err, nil))
+		s.recordAuditLog(ctx, cornerCampID, string(actorAdminID), adminActorLabel(ctx, s.admins, actorAdminID, nil), ActionPinRegenerate, string(trackID), targetLabel, false, errorAuditMetadata(err, nil))
 		return nil, "", err
 	}
 
-	s.recordAuditLog(ctx, "admin", ActionPinRegenerate, string(trackID), true, nil)
-	if cornerCampID != "" {
-		_ = s.broadcaster.Broadcast(ctx, cornerCampID, EventTracksUpdated, CampScope())
-		_ = s.broadcaster.Broadcast(ctx, cornerCampID, EventSessionRevoked, TrackScope(trackID))
+	s.recordAuditLog(ctx, cornerCampID, string(actorAdminID), adminActorLabel(ctx, s.admins, actorAdminID, nil), ActionPinRegenerate, string(trackID), targetLabel, true, nil)
+	if campID, ok := cornerCampID.Value(); ok {
+		_ = s.broadcaster.Broadcast(ctx, campID, EventTracksUpdated, CampScope())
+		_ = s.broadcaster.Broadcast(ctx, campID, EventSessionRevoked, TrackScope(trackID))
 	}
 
 	return track, plainPIN, nil
@@ -436,7 +447,7 @@ func (s *TrackService) ExportTrackPIN(ctx context.Context, trackID domain.TrackI
 	return track, pin, nil
 }
 
-func (s *TrackService) ExportTrackPINs(ctx context.Context, campID domain.CampID) ([]TrackPINExport, error) {
+func (s *TrackService) ExportTrackPINs(ctx context.Context, campID domain.CampID, actorAdminID domain.AdminID) ([]TrackPINExport, error) {
 	tracks, err := s.tracks.ListActiveByCamp(ctx, campID)
 	if err != nil {
 		return nil, withErrorContext("track.export_pins", "repository.list_active_tracks", err, map[string]any{"camp_id": string(campID)})
@@ -467,19 +478,22 @@ func (s *TrackService) ExportTrackPINs(ctx context.Context, campID domain.CampID
 		}
 		exports[i] = TrackPINExport{CornerName: cornerName, TrackNo: track.TrackNo(), PIN: pin}
 	}
-	s.recordAuditLog(ctx, "admin", ActionTrackPinExport, string(campID), true, map[string]any{"count": len(tracks)})
+	s.recordAuditLog(ctx, domain.Some(campID), string(actorAdminID), adminActorLabel(ctx, s.admins, actorAdminID, nil), ActionTrackPinExport, string(campID), "", true, map[string]any{"count": len(tracks)})
 	return exports, nil
 }
 
-func (s *TrackService) recordAuditLog(ctx context.Context, actor string, action AuditAction, target string, success bool, metadata map[string]any) {
-	log := domain.NewAuditLog(
-		domain.AuditLogID(s.uuidFn()),
-		actor,
-		string(action),
-		target,
-		success,
-		s.nowFn(),
-		metadata,
-	)
+func (s *TrackService) recordAuditLog(ctx context.Context, campID domain.Optional[domain.CampID], actor, actorName string, action AuditAction, target, targetName string, success bool, metadata map[string]any) {
+	log := domain.NewAuditLogFromProps(domain.AuditLogProps{
+		ID:         domain.AuditLogID(s.uuidFn()),
+		CampID:     campID,
+		Actor:      actor,
+		ActorName:  actorName,
+		Action:     string(action),
+		Target:     target,
+		TargetName: targetName,
+		Success:    success,
+		OccurredAt: s.nowFn(),
+		Metadata:   filterErrorAttributes(metadata),
+	})
 	_ = s.auditLogs.Save(ctx, log)
 }

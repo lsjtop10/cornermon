@@ -837,22 +837,24 @@ func (q *Queries) ListAnnouncementsByCamp(ctx context.Context, campID string) ([
 }
 
 const listAuditLogs = `-- name: ListAuditLogs :many
-SELECT id, actor, action, target, success, occurred_at, metadata FROM audit_logs
+SELECT id, actor, action, target, success, occurred_at, metadata, camp_id, target_name, actor_name FROM audit_logs
 WHERE ($1::VARCHAR IS NULL OR actor ILIKE '%' || $1::VARCHAR || '%')
   AND ($2::VARCHAR IS NULL OR action = $2::VARCHAR)
   AND ($3::BOOLEAN IS NULL OR success = $3::BOOLEAN)
+  AND ($4::VARCHAR IS NULL OR camp_id = $4::VARCHAR)
   AND (
-    $4::TIMESTAMPTZ IS NULL
-    OR (occurred_at, id) < ($4::TIMESTAMPTZ, $5::VARCHAR)
+    $5::TIMESTAMPTZ IS NULL
+    OR (occurred_at, id) < ($5::TIMESTAMPTZ, $6::VARCHAR)
   )
 ORDER BY occurred_at DESC, id DESC
-LIMIT $6
+LIMIT $7
 `
 
 type ListAuditLogsParams struct {
 	Actor            pgtype.Text        `json:"actor"`
 	Action           pgtype.Text        `json:"action"`
 	Success          pgtype.Bool        `json:"success"`
+	CampID           pgtype.Text        `json:"camp_id"`
 	BeforeOccurredAt pgtype.Timestamptz `json:"before_occurred_at"`
 	BeforeID         pgtype.Text        `json:"before_id"`
 	PageLimit        int32              `json:"page_limit"`
@@ -863,6 +865,7 @@ func (q *Queries) ListAuditLogs(ctx context.Context, arg ListAuditLogsParams) ([
 		arg.Actor,
 		arg.Action,
 		arg.Success,
+		arg.CampID,
 		arg.BeforeOccurredAt,
 		arg.BeforeID,
 		arg.PageLimit,
@@ -882,6 +885,9 @@ func (q *Queries) ListAuditLogs(ctx context.Context, arg ListAuditLogsParams) ([
 			&i.Success,
 			&i.OccurredAt,
 			&i.Metadata,
+			&i.CampID,
+			&i.TargetName,
+			&i.ActorName,
 		); err != nil {
 			return nil, err
 		}
@@ -1582,8 +1588,8 @@ func (q *Queries) SaveAnnouncementReceipt(ctx context.Context, arg SaveAnnouncem
 }
 
 const saveAuditLog = `-- name: SaveAuditLog :exec
-INSERT INTO audit_logs (id, actor, action, target, success, occurred_at, metadata)
-VALUES ($1, $2, $3, $4, $5, $6, $7)
+INSERT INTO audit_logs (id, actor, action, target, success, occurred_at, metadata, camp_id, target_name, actor_name)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 `
 
 type SaveAuditLogParams struct {
@@ -1594,6 +1600,9 @@ type SaveAuditLogParams struct {
 	Success    bool               `json:"success"`
 	OccurredAt pgtype.Timestamptz `json:"occurred_at"`
 	Metadata   []byte             `json:"metadata"`
+	CampID     pgtype.Text        `json:"camp_id"`
+	TargetName pgtype.Text        `json:"target_name"`
+	ActorName  pgtype.Text        `json:"actor_name"`
 }
 
 func (q *Queries) SaveAuditLog(ctx context.Context, arg SaveAuditLogParams) error {
@@ -1605,6 +1614,9 @@ func (q *Queries) SaveAuditLog(ctx context.Context, arg SaveAuditLogParams) erro
 		arg.Success,
 		arg.OccurredAt,
 		arg.Metadata,
+		arg.CampID,
+		arg.TargetName,
+		arg.ActorName,
 	)
 	return err
 }

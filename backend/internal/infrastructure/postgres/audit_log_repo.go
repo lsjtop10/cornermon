@@ -33,7 +33,7 @@ func (r *pgAuditLogRepository) Save(ctx context.Context, log *domain.AuditLog) e
 		return errs.Wrap(ctx, err)
 	}
 
-	err = r.queries(ctx).SaveAuditLog(ctx, db.SaveAuditLogParams{
+	params := db.SaveAuditLogParams{
 		ID:         string(log.ID()),
 		Actor:      log.Actor(),
 		Action:     log.Action(),
@@ -41,7 +41,14 @@ func (r *pgAuditLogRepository) Save(ctx context.Context, log *domain.AuditLog) e
 		Success:    log.Success(),
 		OccurredAt: pgtype.Timestamptz{Time: log.OccurredAt(), Valid: !log.OccurredAt().IsZero()},
 		Metadata:   metaJSON,
-	})
+		TargetName: pgtype.Text{String: log.TargetName(), Valid: log.TargetName() != ""},
+		ActorName:  pgtype.Text{String: log.ActorName(), Valid: log.ActorName() != ""},
+	}
+	if campID, ok := log.CampID().Value(); ok {
+		params.CampID = pgtype.Text{String: string(campID), Valid: true}
+	}
+
+	err = r.queries(ctx).SaveAuditLog(ctx, params)
 	if err != nil {
 		return errs.Wrap(ctx, err)
 	}
@@ -59,6 +66,9 @@ func (r *pgAuditLogRepository) List(ctx context.Context, query usecase.AuditLogQ
 	if query.Success != nil {
 		params.Success = pgtype.Bool{Bool: *query.Success, Valid: true}
 	}
+	if campID, ok := query.CampID.Value(); ok {
+		params.CampID = pgtype.Text{String: string(campID), Valid: true}
+	}
 	if cursor, ok := query.Before.Value(); ok {
 		params.BeforeOccurredAt = pgtype.Timestamptz{Time: cursor.OccurredAt, Valid: true}
 		params.BeforeID = pgtype.Text{String: string(cursor.ID), Valid: true}
@@ -75,21 +85,11 @@ func (r *pgAuditLogRepository) List(ctx context.Context, query usecase.AuditLogQ
 
 	logs := make([]*domain.AuditLog, len(rows))
 	for i, row := range rows {
-		var metadata map[string]any
-		if len(row.Metadata) > 0 {
-			if err := json.Unmarshal(row.Metadata, &metadata); err != nil {
-				return nil, errs.Wrap(ctx, err)
-			}
+		log, err := mapAuditLog(row)
+		if err != nil {
+			return nil, errs.Wrap(ctx, err)
 		}
-		logs[i] = domain.NewAuditLogFromProps(domain.AuditLogProps{
-			ID:         domain.AuditLogID(row.ID),
-			Actor:      row.Actor,
-			Action:     row.Action,
-			Target:     row.Target,
-			Success:    row.Success,
-			OccurredAt: row.OccurredAt.Time,
-			Metadata:   metadata,
-		})
+		logs[i] = log
 	}
 	page := &usecase.AuditLogPage{Logs: logs, NextCursor: domain.None[usecase.AuditLogCursor]()}
 	if hasMore && len(logs) > 0 {
@@ -97,4 +97,33 @@ func (r *pgAuditLogRepository) List(ctx context.Context, query usecase.AuditLogQ
 		page.NextCursor = domain.Some(usecase.AuditLogCursor{OccurredAt: last.OccurredAt(), ID: last.ID()})
 	}
 	return page, nil
+}
+
+func mapAuditLog(row db.AuditLog) (*domain.AuditLog, error) {
+	var metadata map[string]any
+	if len(row.Metadata) > 0 {
+		if err := json.Unmarshal(row.Metadata, &metadata); err != nil {
+			return nil, err
+		}
+	}
+	props := domain.AuditLogProps{
+		ID:         domain.AuditLogID(row.ID),
+		Actor:      row.Actor,
+		Action:     row.Action,
+		Target:     row.Target,
+		Success:    row.Success,
+		OccurredAt: row.OccurredAt.Time,
+		Metadata:   metadata,
+		CampID:     domain.None[domain.CampID](),
+	}
+	if row.TargetName.Valid {
+		props.TargetName = row.TargetName.String
+	}
+	if row.ActorName.Valid {
+		props.ActorName = row.ActorName.String
+	}
+	if row.CampID.Valid {
+		props.CampID = domain.Some(domain.CampID(row.CampID.String))
+	}
+	return domain.NewAuditLogFromProps(props), nil
 }

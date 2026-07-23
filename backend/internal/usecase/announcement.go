@@ -16,6 +16,7 @@ type AnnouncementService struct {
 	camps         CampRepository
 	tracks        TrackRepository
 	sessions      FacilitatorSessionRepository
+	admins        AdminRepository
 	tx            TxManager
 	auditLogs     AuditLogRepository
 	broadcaster   Broadcaster
@@ -23,8 +24,8 @@ type AnnouncementService struct {
 	uuidFn        func() string
 }
 
-func NewAnnouncementService(announcements AnnouncementRepository, receipts AnnouncementReceiptRepository, camps CampRepository, tracks TrackRepository, sessions FacilitatorSessionRepository, tx TxManager, auditLogs AuditLogRepository, broadcaster Broadcaster) *AnnouncementService {
-	return &AnnouncementService{announcements: announcements, receipts: receipts, camps: camps, tracks: tracks, sessions: sessions, tx: tx, auditLogs: auditLogs, broadcaster: broadcaster, nowFn: func() time.Time { return time.Now().UTC() }, uuidFn: uuid.NewString}
+func NewAnnouncementService(announcements AnnouncementRepository, receipts AnnouncementReceiptRepository, camps CampRepository, tracks TrackRepository, sessions FacilitatorSessionRepository, admins AdminRepository, tx TxManager, auditLogs AuditLogRepository, broadcaster Broadcaster) *AnnouncementService {
+	return &AnnouncementService{announcements: announcements, receipts: receipts, camps: camps, tracks: tracks, sessions: sessions, admins: admins, tx: tx, auditLogs: auditLogs, broadcaster: broadcaster, nowFn: func() time.Time { return time.Now().UTC() }, uuidFn: uuid.NewString}
 }
 
 func (s *AnnouncementService) SendAnnouncement(ctx context.Context, campID domain.CampID, content string, actorAdminID domain.AdminID) (*domain.Announcement, error) {
@@ -57,10 +58,30 @@ func (s *AnnouncementService) SendAnnouncement(ctx context.Context, campID domai
 		return nil
 	})
 	if err != nil && s.auditLogs != nil {
-		_ = s.auditLogs.Save(ctx, domain.NewAuditLog(domain.AuditLogID(s.uuidFn()), string(actorAdminID), string(ActionMessageBroadcast), "", false, s.nowFn(), errorAuditMetadata(err, nil)))
+		_ = s.auditLogs.Save(ctx, domain.NewAuditLogFromProps(domain.AuditLogProps{
+			ID:         domain.AuditLogID(s.uuidFn()),
+			CampID:     domain.Some(campID),
+			Actor:      string(actorAdminID),
+			ActorName:  adminActorLabel(ctx, s.admins, actorAdminID, nil),
+			Action:     string(ActionMessageBroadcast),
+			Target:     "",
+			Success:    false,
+			OccurredAt: s.nowFn(),
+			Metadata:   filterErrorAttributes(errorAuditMetadata(err, nil)),
+		}))
 	}
 	if err == nil && s.auditLogs != nil {
-		_ = s.auditLogs.Save(ctx, domain.NewAuditLog(domain.AuditLogID(s.uuidFn()), string(actorAdminID), string(ActionMessageBroadcast), string(a.ID()), true, s.nowFn(), map[string]any{"campID": string(campID)}))
+		_ = s.auditLogs.Save(ctx, domain.NewAuditLogFromProps(domain.AuditLogProps{
+			ID:         domain.AuditLogID(s.uuidFn()),
+			CampID:     domain.Some(campID),
+			Actor:      string(actorAdminID),
+			ActorName:  adminActorLabel(ctx, s.admins, actorAdminID, nil),
+			Action:     string(ActionMessageBroadcast),
+			Target:     string(a.ID()),
+			Success:    true,
+			OccurredAt: s.nowFn(),
+			Metadata:   nil,
+		}))
 	}
 	if err == nil && s.broadcaster != nil {
 		_ = s.broadcaster.Broadcast(ctx, campID, EventMessagesChanged, CampScope())

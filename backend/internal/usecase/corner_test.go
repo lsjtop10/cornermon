@@ -16,22 +16,22 @@ func TestCornerServiceCommandRegression(t *testing.T) {
 	corners := NewMockCornerRepository()
 	auditLogs := &MockAuditLogRepository{}
 	broadcaster := &MockBroadcaster{}
-	service := NewCornerService(camps, corners, NewMockTrackRepository(), NewMockGroupRepository(), auditLogs, broadcaster, &MockTxManager{})
+	service := NewCornerService(camps, corners, NewMockTrackRepository(), NewMockGroupRepository(), NewMockAdminRepository(), auditLogs, broadcaster, &MockTxManager{})
 	service.uuidFn = func() string { return "corner-1" }
 	deletedAt := time.Date(2026, time.July, 21, 9, 0, 0, 0, time.UTC)
 	service.nowFn = func() time.Time { return deletedAt }
 
-	created, err := service.AddLearningCorner(ctx, "camp-1", "처음 이름", 15)
+	created, err := service.AddLearningCorner(ctx, "camp-1", "처음 이름", 15, "admin-1")
 	if err != nil || created.ID() != "corner-1" || created.TargetMinutes() != 15 {
 		t.Fatalf("create failed: corner=%+v err=%v", created, err)
 	}
 
-	updated, err := service.ModifyCornerSpecification(ctx, created.ID(), "수정 이름", 25)
+	updated, err := service.ModifyCornerSpecification(ctx, created.ID(), "수정 이름", 25, "admin-1")
 	if err != nil || updated.Name() != "수정 이름" || updated.TargetMinutes() != 25 {
 		t.Fatalf("update failed: corner=%+v err=%v", updated, err)
 	}
 
-	if err := service.RemoveCornerFromCamp(ctx, created.ID()); err != nil {
+	if err := service.RemoveCornerFromCamp(ctx, created.ID(), "admin-1"); err != nil {
 		t.Fatalf("delete failed: %v", err)
 	}
 	deleted, err := corners.Get(ctx, created.ID())
@@ -48,11 +48,47 @@ func TestCornerServiceCommandRegression(t *testing.T) {
 		t.Fatalf("expected corners_updated after deletion, got %+v", broadcaster.Broadcasts)
 	}
 
-	if err := service.RemoveCornerFromCamp(ctx, created.ID()); err != nil {
+	if err := service.RemoveCornerFromCamp(ctx, created.ID(), "admin-1"); err != nil {
 		t.Fatalf("repeat delete should be idempotent: %v", err)
 	}
 	if len(auditLogs.Logs) != 3 || len(broadcaster.Broadcasts) != 3 {
 		t.Fatalf("repeat delete must not emit new side effects")
+	}
+}
+
+func TestAddLearningCornerShoudRecordAdminIDAsActorAndUsernameAsActorNameWhenSucceeded(t *testing.T) {
+	// Arrange
+	ctx := context.Background()
+	camps := NewMockCampRepository()
+	_ = camps.Save(ctx, domain.NewCampFromProps(domain.CampProps{ID: "camp-1", Status: domain.CampPending}))
+	admins := NewMockAdminRepository()
+	admins.Admins["admin-1"] = domain.NewAdminFromProps(domain.AdminProps{ID: "admin-1", Username: "김관리"})
+	auditLogs := &MockAuditLogRepository{}
+	service := NewCornerService(camps, NewMockCornerRepository(), NewMockTrackRepository(), NewMockGroupRepository(), admins, auditLogs, &MockBroadcaster{}, &MockTxManager{})
+	service.uuidFn = func() string { return "corner-1" }
+
+	// Act
+	_, err := service.AddLearningCorner(ctx, "camp-1", "처음 이름", 15, "admin-1")
+
+	// Assert
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+	if len(auditLogs.Logs) != 1 {
+		t.Fatalf("expected 1 audit log, got %d", len(auditLogs.Logs))
+	}
+	got := auditLogs.Logs[0]
+	if got.Actor() != "admin-1" {
+		t.Errorf("expected Actor to remain raw admin ID 'admin-1', got %q", got.Actor())
+	}
+	if got.ActorName() != "김관리" {
+		t.Errorf("expected ActorName '김관리', got %q", got.ActorName())
+	}
+	if campID, ok := got.CampID().Value(); !ok || campID != "camp-1" {
+		t.Errorf("expected CampID Some('camp-1'), got %v (set=%v)", campID, ok)
+	}
+	if got.TargetName() != "처음 이름" {
+		t.Errorf("expected TargetName '처음 이름', got %q", got.TargetName())
 	}
 }
 
@@ -87,11 +123,11 @@ func TestAddLearningCornerShouldAppendNewCornerToExistingGroupItineraries(t *tes
 		},
 	}))
 	_ = groups.Save(ctx, domain.NewGroupFromProps(domain.GroupProps{ID: "group-2", CampID: "camp-1"}))
-	service := NewCornerService(camps, NewMockCornerRepository(), NewMockTrackRepository(), groups, &MockAuditLogRepository{}, &MockBroadcaster{}, &MockTxManager{})
+	service := NewCornerService(camps, NewMockCornerRepository(), NewMockTrackRepository(), groups, NewMockAdminRepository(), &MockAuditLogRepository{}, &MockBroadcaster{}, &MockTxManager{})
 	service.uuidFn = func() string { return "corner-2" }
 
 	// Act
-	created, err := service.AddLearningCorner(ctx, "camp-1", "새 코너", 10)
+	created, err := service.AddLearningCorner(ctx, "camp-1", "새 코너", 10, "admin-1")
 
 	// Assert
 	if err != nil || created.ID() != "corner-2" {
@@ -131,10 +167,10 @@ func TestRemoveCornerFromCampShouldRemoveCornerFromExistingGroupItineraries(t *t
 			domain.NewCornerProgressValFromProps(domain.CornerProgressProps{CornerID: "corner-2", Status: domain.VisitNotVisited}),
 		},
 	}))
-	service := NewCornerService(NewMockCampRepository(), corners, NewMockTrackRepository(), groups, &MockAuditLogRepository{}, &MockBroadcaster{}, &MockTxManager{})
+	service := NewCornerService(NewMockCampRepository(), corners, NewMockTrackRepository(), groups, NewMockAdminRepository(), &MockAuditLogRepository{}, &MockBroadcaster{}, &MockTxManager{})
 
 	// Act
-	err := service.RemoveCornerFromCamp(ctx, "corner-1")
+	err := service.RemoveCornerFromCamp(ctx, "corner-1", "admin-1")
 
 	// Assert
 	if err != nil {
@@ -159,7 +195,7 @@ func TestGetCornerByTrackShouldReturnCornerWhenTrackAndCornerExist(t *testing.T)
 	_ = corners.Save(ctx, domain.NewCornerFromProps(domain.CornerProps{ID: "corner-1", CampID: "camp-1", Name: "코너 1"}))
 	tracks := NewMockTrackRepository()
 	_ = tracks.Save(ctx, domain.NewTrackFromProps(domain.TrackProps{ID: "track-1", CornerID: "corner-1"}))
-	service := NewCornerService(NewMockCampRepository(), corners, tracks, NewMockGroupRepository(), &MockAuditLogRepository{}, &MockBroadcaster{}, &MockTxManager{})
+	service := NewCornerService(NewMockCampRepository(), corners, tracks, NewMockGroupRepository(), NewMockAdminRepository(), &MockAuditLogRepository{}, &MockBroadcaster{}, &MockTxManager{})
 
 	// Act
 	corner, err := service.GetCornerByTrack(ctx, "track-1")
@@ -173,7 +209,7 @@ func TestGetCornerByTrackShouldReturnCornerWhenTrackAndCornerExist(t *testing.T)
 func TestGetCornerByTrackShouldReturnTrackNotFoundWhenTrackMissing(t *testing.T) {
 	// Arrange
 	ctx := context.Background()
-	service := NewCornerService(NewMockCampRepository(), NewMockCornerRepository(), NewMockTrackRepository(), NewMockGroupRepository(), &MockAuditLogRepository{}, &MockBroadcaster{}, &MockTxManager{})
+	service := NewCornerService(NewMockCampRepository(), NewMockCornerRepository(), NewMockTrackRepository(), NewMockGroupRepository(), NewMockAdminRepository(), &MockAuditLogRepository{}, &MockBroadcaster{}, &MockTxManager{})
 
 	// Act
 	corner, err := service.GetCornerByTrack(ctx, "missing-track")
@@ -189,7 +225,7 @@ func TestGetCornerByTrackShouldReturnCornerNotFoundWhenCornerMissing(t *testing.
 	ctx := context.Background()
 	tracks := NewMockTrackRepository()
 	_ = tracks.Save(ctx, domain.NewTrackFromProps(domain.TrackProps{ID: "track-1", CornerID: "missing-corner"}))
-	service := NewCornerService(NewMockCampRepository(), NewMockCornerRepository(), tracks, NewMockGroupRepository(), &MockAuditLogRepository{}, &MockBroadcaster{}, &MockTxManager{})
+	service := NewCornerService(NewMockCampRepository(), NewMockCornerRepository(), tracks, NewMockGroupRepository(), NewMockAdminRepository(), &MockAuditLogRepository{}, &MockBroadcaster{}, &MockTxManager{})
 
 	// Act
 	corner, err := service.GetCornerByTrack(ctx, "track-1")

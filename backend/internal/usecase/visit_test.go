@@ -18,12 +18,13 @@ func TestVisitService_StartVisitByQR(t *testing.T) {
 		camps.Save(context.Background(), camp)
 
 		corners := NewMockCornerRepository()
-		corner := domain.NewCornerFromProps(domain.CornerProps{ID: "corner-1", CampID: "camp-1"})
+		corner := domain.NewCornerFromProps(domain.CornerProps{ID: "corner-1", CampID: "camp-1", Name: "체험 코너"})
 		corners.Save(context.Background(), corner)
 
 		tracks := NewMockTrackRepository()
 		track := domain.NewTrackFromProps(domain.TrackProps{ID: "track-1",
 			CornerID:       "corner-1",
+			TrackNo:        4,
 			Status:         domain.TrackActive,
 			CurrentVisitID: domain.None[domain.VisitID](),
 		})
@@ -107,6 +108,15 @@ func TestVisitService_StartVisitByQR(t *testing.T) {
 
 		if len(auditLogs.Logs) != 1 || !auditLogs.Logs[0].Success() {
 			t.Errorf("expected successful audit log to be recorded")
+		}
+		if auditLogs.Logs[0].Actor() != "track-1" {
+			t.Errorf("expected Actor to remain raw track ID 'track-1', got %q", auditLogs.Logs[0].Actor())
+		}
+		if auditLogs.Logs[0].ActorName() != "체험 코너 · 4번 트랙" {
+			t.Errorf("expected ActorName '체험 코너 · 4번 트랙', got %q", auditLogs.Logs[0].ActorName())
+		}
+		if campID, ok := auditLogs.Logs[0].CampID().Value(); !ok || campID != "camp-1" {
+			t.Errorf("expected CampID Some('camp-1'), got %v (set=%v)", campID, ok)
 		}
 	})
 

@@ -13,7 +13,7 @@ Method | HTTP request | Description
 
 
 # **auditLogsGet**
-> AuditLogPageResponse auditLogsGet(actor, action, result, limit, before)
+> AuditLogPageResponse auditLogsGet(actor, action, result, campId, limit, before)
 
 감사 로그 조회
 
@@ -31,11 +31,12 @@ final api = CornermonApiGen().getGAuditLogsApi();
 final String actor = actor_example; // String | 행위자 부분 일치
 final String action = action_example; // String | 행위 종류 정확히 일치
 final String result = result_example; // String | 처리 결과
+final String campId = campId_example; // String | 캠프 ID로 범위 제한
 final int limit = 56; // int | 조회 개수
 final String before = before_example; // String | 이전 응답의 불투명 nextCursor
 
 try {
-    final response = api.auditLogsGet(actor, action, result, limit, before);
+    final response = api.auditLogsGet(actor, action, result, campId, limit, before);
     print(response);
 } on DioException catch (e) {
     print('Exception when calling GAuditLogsApi->auditLogsGet: $e\n');
@@ -49,6 +50,7 @@ Name | Type | Description  | Notes
  **actor** | **String**| 행위자 부분 일치 | [optional] 
  **action** | **String**| 행위 종류 정확히 일치 | [optional] 
  **result** | **String**| 처리 결과 | [optional] 
+ **campId** | **String**| 캠프 ID로 범위 제한 | [optional] 
  **limit** | **int**| 조회 개수 | [optional] [default to 50]
  **before** | **String**| 이전 응답의 불투명 nextCursor | [optional] 
 

@@ -315,8 +315,8 @@ WHERE ar.announcement_id = $1
 ORDER BY t.track_no;
 
 -- name: SaveAuditLog :exec
-INSERT INTO audit_logs (id, actor, action, target, success, occurred_at, metadata)
-VALUES ($1, $2, $3, $4, $5, $6, $7);
+INSERT INTO audit_logs (id, actor, action, target, success, occurred_at, metadata, camp_id, target_name, actor_name)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10);
 
 -- name: ListCamps :many
 SELECT * FROM camps;
@@ -360,6 +360,7 @@ SELECT * FROM audit_logs
 WHERE (sqlc.narg(actor)::VARCHAR IS NULL OR actor ILIKE '%' || sqlc.narg(actor)::VARCHAR || '%')
   AND (sqlc.narg(action)::VARCHAR IS NULL OR action = sqlc.narg(action)::VARCHAR)
   AND (sqlc.narg(success)::BOOLEAN IS NULL OR success = sqlc.narg(success)::BOOLEAN)
+  AND (sqlc.narg(camp_id)::VARCHAR IS NULL OR camp_id = sqlc.narg(camp_id)::VARCHAR)
   AND (
     sqlc.narg(before_occurred_at)::TIMESTAMPTZ IS NULL
     OR (occurred_at, id) < (sqlc.narg(before_occurred_at)::TIMESTAMPTZ, sqlc.narg(before_id)::VARCHAR)

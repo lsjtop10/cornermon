@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"cornermon/backend/internal/domain"
@@ -66,13 +67,13 @@ func (s *AdminAuthService) Login(
 	}
 	if admin == nil {
 		err = withErrorContext("auth_admin.login", "validate_admin", errors.New("invalid username or password"), map[string]any{"username": username, "admin_found": false})
-		s.recordAuditLog(ctx, "anonymous", ActionAdminLogin, username, false, errorAuditMetadata(err, nil))
+		s.recordAuditLog(ctx, domain.None[domain.CampID](), "anonymous", "anonymous", ActionAdminLogin, username, username, false, errorAuditMetadata(err, nil))
 		return "", nil, err
 	}
 
 	if err := verifyPassword(admin.PasswordHash(), password); err != nil {
 		err = withErrorContext("auth_admin.login", "validate_password", errors.New("invalid username or password"), map[string]any{"username": username})
-		s.recordAuditLog(ctx, "anonymous", ActionAdminLogin, username, false, errorAuditMetadata(err, nil))
+		s.recordAuditLog(ctx, domain.None[domain.CampID](), "anonymous", "anonymous", ActionAdminLogin, username, username, false, errorAuditMetadata(err, nil))
 		return "", nil, err
 	}
 
@@ -100,11 +101,11 @@ func (s *AdminAuthService) Login(
 	})
 
 	if err != nil {
-		s.recordAuditLog(ctx, "anonymous", ActionAdminLogin, username, false, errorAuditMetadata(err, nil))
+		s.recordAuditLog(ctx, domain.None[domain.CampID](), "anonymous", "anonymous", ActionAdminLogin, username, username, false, errorAuditMetadata(err, nil))
 		return "", nil, err
 	}
 
-	s.recordAuditLog(ctx, string(admin.ID()), ActionAdminLogin, string(session.ID()), true, nil)
+	s.recordAuditLog(ctx, domain.None[domain.CampID](), string(admin.ID()), adminActorLabel(ctx, s.admins, admin.ID(), admin), ActionAdminLogin, string(session.ID()), username, true, nil)
 	return plainAccess, session, nil
 }
 
@@ -154,7 +155,8 @@ func (s *AdminAuthService) CreateAdmin(
 	role domain.AdminRole,
 ) (*domain.Admin, error) {
 
-	if _, err := s.authorizeSystemAdmin(ctx, actorAdminID); err != nil {
+	actorAdmin, err := s.authorizeSystemAdmin(ctx, actorAdminID)
+	if err != nil {
 		return nil, err
 	}
 	if role != domain.AdminRoleCornerOperator {
@@ -186,10 +188,10 @@ func (s *AdminAuthService) CreateAdmin(
 		}
 		return nil
 	}); err != nil {
-		s.recordAuditLog(ctx, string(actorAdminID), ActionAdminCreate, username, false, errorAuditMetadata(err, nil))
+		s.recordAuditLog(ctx, domain.None[domain.CampID](), string(actorAdminID), adminActorLabel(ctx, s.admins, actorAdminID, actorAdmin), ActionAdminCreate, username, username, false, errorAuditMetadata(err, nil))
 		return nil, err
 	}
-	s.recordAuditLog(ctx, string(actorAdminID), ActionAdminCreate, string(admin.ID()), true, map[string]any{"role": string(role)})
+	s.recordAuditLog(ctx, domain.None[domain.CampID](), string(actorAdminID), adminActorLabel(ctx, s.admins, actorAdminID, actorAdmin), ActionAdminCreate, string(admin.ID()), username, true, map[string]any{"role": string(role)})
 	return admin, nil
 }
 
@@ -215,16 +217,20 @@ func (s *AdminAuthService) ChangeAdminPassword(
 		return withErrorContext("auth_admin.change_password", "hash_password", err, nil)
 	}
 	admin.SetPasswordHash(passwordHash)
+	var preloadedActor *domain.Admin
+	if actorAdminID == targetAdminID {
+		preloadedActor = admin
+	}
 	if err := s.tx.RunInTx(ctx, func(ctx context.Context) error {
 		if err := s.admins.Save(ctx, admin); err != nil {
 			return withErrorContext("auth_admin.change_password", "repository.save_admin", err, map[string]any{"admin_id": string(admin.ID())})
 		}
 		return nil
 	}); err != nil {
-		s.recordAuditLog(ctx, string(actorAdminID), ActionAdminPasswordChange, string(targetAdminID), false, errorAuditMetadata(err, nil))
+		s.recordAuditLog(ctx, domain.None[domain.CampID](), string(actorAdminID), adminActorLabel(ctx, s.admins, actorAdminID, preloadedActor), ActionAdminPasswordChange, string(targetAdminID), admin.Username(), false, errorAuditMetadata(err, nil))
 		return err // D-2 allowed: already wrapped or handled
 	}
-	s.recordAuditLog(ctx, string(actorAdminID), ActionAdminPasswordChange, string(targetAdminID), true, map[string]any{"self": actorAdminID == targetAdminID})
+	s.recordAuditLog(ctx, domain.None[domain.CampID](), string(actorAdminID), adminActorLabel(ctx, s.admins, actorAdminID, preloadedActor), ActionAdminPasswordChange, string(targetAdminID), admin.Username(), true, map[string]any{"self": actorAdminID == targetAdminID})
 	return nil
 }
 
@@ -262,10 +268,10 @@ func (s *AdminAuthService) DeleteAdmin(
 		}
 		return nil
 	}); err != nil {
-		s.recordAuditLog(ctx, string(actorAdminID), ActionAdminDelete, string(targetAdminID), false, errorAuditMetadata(err, nil))
+		s.recordAuditLog(ctx, domain.None[domain.CampID](), string(actorAdminID), adminActorLabel(ctx, s.admins, actorAdminID, nil), ActionAdminDelete, string(targetAdminID), target.Username(), false, errorAuditMetadata(err, nil))
 		return err // D-2 allowed: already wrapped or handled
 	}
-	s.recordAuditLog(ctx, string(actorAdminID), ActionAdminDelete, string(targetAdminID), true, nil)
+	s.recordAuditLog(ctx, domain.None[domain.CampID](), string(actorAdminID), adminActorLabel(ctx, s.admins, actorAdminID, nil), ActionAdminDelete, string(targetAdminID), target.Username(), true, nil)
 	return nil
 }
 
@@ -321,24 +327,27 @@ func (s *AdminAuthService) RevokeSession(
 	})
 
 	if err != nil {
-		s.recordAuditLog(ctx, string(actorAdminID), ActionAdminSessionRevoke, string(sessionID), false, errorAuditMetadata(err, nil))
+		s.recordAuditLog(ctx, domain.None[domain.CampID](), string(actorAdminID), adminActorLabel(ctx, s.admins, actorAdminID, nil), ActionAdminSessionRevoke, string(sessionID), "", false, errorAuditMetadata(err, nil))
 		return err // D-2 allowed: already wrapped or handled
 	}
 
-	s.recordAuditLog(ctx, string(actorAdminID), ActionAdminSessionRevoke, string(sessionID), true, nil)
+	s.recordAuditLog(ctx, domain.None[domain.CampID](), string(actorAdminID), adminActorLabel(ctx, s.admins, actorAdminID, nil), ActionAdminSessionRevoke, string(sessionID), "", true, nil)
 	return nil
 }
 
-func (s *AdminAuthService) recordAuditLog(ctx context.Context, actor string, action AuditAction, target string, success bool, metadata map[string]any) {
-	log := domain.NewAuditLog(
-		domain.AuditLogID(s.uuidFn()),
-		actor,
-		string(action),
-		target,
-		success,
-		s.nowFn(),
-		metadata,
-	)
+func (s *AdminAuthService) recordAuditLog(ctx context.Context, campID domain.Optional[domain.CampID], actor, actorName string, action AuditAction, target, targetName string, success bool, metadata map[string]any) {
+	log := domain.NewAuditLogFromProps(domain.AuditLogProps{
+		ID:         domain.AuditLogID(s.uuidFn()),
+		CampID:     campID,
+		Actor:      actor,
+		ActorName:  actorName,
+		Action:     string(action),
+		Target:     target,
+		TargetName: targetName,
+		Success:    success,
+		OccurredAt: s.nowFn(),
+		Metadata:   filterErrorAttributes(metadata),
+	})
 	_ = s.auditLogs.Save(ctx, log)
 }
 
@@ -384,11 +393,11 @@ func (s *AdminAuthService) ForceTrackLogout(ctx context.Context, trackID domain.
 	})
 
 	if err != nil {
-		s.recordAuditLog(ctx, string(actorAdminID), ActionTrackForceLogout, string(trackID), false, errorAuditMetadata(err, nil))
+		s.recordAuditLog(ctx, domain.Some(corner.CampID()), string(actorAdminID), adminActorLabel(ctx, s.admins, actorAdminID, nil), ActionTrackForceLogout, string(trackID), fmt.Sprintf("%s · %d번 트랙", corner.Name(), track.TrackNo()), false, errorAuditMetadata(err, nil))
 		return err // D-2 allowed: already wrapped or handled
 	}
 
-	s.recordAuditLog(ctx, string(actorAdminID), ActionTrackForceLogout, string(trackID), true, nil)
+	s.recordAuditLog(ctx, domain.Some(corner.CampID()), string(actorAdminID), adminActorLabel(ctx, s.admins, actorAdminID, nil), ActionTrackForceLogout, string(trackID), fmt.Sprintf("%s · %d번 트랙", corner.Name(), track.TrackNo()), true, nil)
 	_ = s.broadcaster.Broadcast(ctx, corner.CampID(), EventSessionRevoked, TrackScope(trackID))
 	return nil
 }

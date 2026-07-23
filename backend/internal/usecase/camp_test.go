@@ -23,11 +23,11 @@ func TestCampService_OpenNewCamp(t *testing.T) {
 		broadcaster := &MockBroadcaster{}
 		tx := &MockTxManager{}
 
-		s := NewCampService(camps, nil, NewMockDeviceRegistrationRepository(), NewMockVisitRepository(), NewMockGroupRepository(), NewMockFacilitatorSessionRepository(), auditLogs, broadcaster, tx)
+		s := NewCampService(camps, nil, NewMockDeviceRegistrationRepository(), NewMockVisitRepository(), NewMockGroupRepository(), NewMockFacilitatorSessionRepository(), NewMockAdminRepository(), auditLogs, broadcaster, tx)
 		s.uuidFn = func() string { return "camp-1" }
 
 		// Act
-		camp, err := s.OpenNewCamp(context.Background(), "New Camp", start, end)
+		camp, err := s.OpenNewCamp(context.Background(), "New Camp", start, end, "admin-1")
 
 		// Assert
 		if err != nil {
@@ -42,14 +42,53 @@ func TestCampService_OpenNewCamp(t *testing.T) {
 		}
 	})
 
-	t.Run("ShoudReturnInvalidSettingsWithoutSavingWhenPeriodMissing", func(t *testing.T) {
+	t.Run("ShoudRecordAdminIDAsActorAndUsernameAsActorNameWhenSucceeded", func(t *testing.T) {
 		// Arrange
+		start := time.Date(2026, 7, 20, 9, 0, 0, 0, time.UTC)
+		end := start.Add(2 * time.Hour)
 		camps := NewMockCampRepository()
-		s := NewCampService(camps, nil, NewMockDeviceRegistrationRepository(), NewMockVisitRepository(), NewMockGroupRepository(), NewMockFacilitatorSessionRepository(), &MockAuditLogRepository{}, &MockBroadcaster{}, &MockTxManager{})
+		auditLogs := &MockAuditLogRepository{}
+		broadcaster := &MockBroadcaster{}
+		tx := &MockTxManager{}
+		admins := NewMockAdminRepository()
+		admins.Admins["admin-1"] = domain.NewAdminFromProps(domain.AdminProps{ID: "admin-1", Username: "김관리"})
+
+		s := NewCampService(camps, nil, NewMockDeviceRegistrationRepository(), NewMockVisitRepository(), NewMockGroupRepository(), NewMockFacilitatorSessionRepository(), admins, auditLogs, broadcaster, tx)
 		s.uuidFn = func() string { return "camp-1" }
 
 		// Act
-		camp, err := s.OpenNewCamp(context.Background(), "New Camp", time.Time{}, time.Time{})
+		_, err := s.OpenNewCamp(context.Background(), "New Camp", start, end, "admin-1")
+
+		// Assert
+		if err != nil {
+			t.Fatalf("expected no error, got %v", err)
+		}
+		if len(auditLogs.Logs) != 1 {
+			t.Fatalf("expected 1 audit log, got %d", len(auditLogs.Logs))
+		}
+		got := auditLogs.Logs[0]
+		if got.Actor() != "admin-1" {
+			t.Errorf("expected Actor to remain raw admin ID 'admin-1', got %q", got.Actor())
+		}
+		if got.ActorName() != "김관리" {
+			t.Errorf("expected ActorName '김관리', got %q", got.ActorName())
+		}
+		if campID, ok := got.CampID().Value(); !ok || campID != "camp-1" {
+			t.Errorf("expected CampID Some('camp-1'), got %v (set=%v)", campID, ok)
+		}
+		if got.TargetName() != "New Camp" {
+			t.Errorf("expected TargetName 'New Camp', got %q", got.TargetName())
+		}
+	})
+
+	t.Run("ShoudReturnInvalidSettingsWithoutSavingWhenPeriodMissing", func(t *testing.T) {
+		// Arrange
+		camps := NewMockCampRepository()
+		s := NewCampService(camps, nil, NewMockDeviceRegistrationRepository(), NewMockVisitRepository(), NewMockGroupRepository(), NewMockFacilitatorSessionRepository(), NewMockAdminRepository(), &MockAuditLogRepository{}, &MockBroadcaster{}, &MockTxManager{})
+		s.uuidFn = func() string { return "camp-1" }
+
+		// Act
+		camp, err := s.OpenNewCamp(context.Background(), "New Camp", time.Time{}, time.Time{}, "admin-1")
 
 		// Assert
 		if !errors.Is(err, domain.ErrCampInvalidSettings) {
@@ -77,7 +116,7 @@ func TestCampService_ActivateCamp(t *testing.T) {
 		broadcaster := &MockBroadcaster{}
 		tx := &MockTxManager{}
 
-		s := NewCampService(camps, nil, NewMockDeviceRegistrationRepository(), NewMockVisitRepository(), NewMockGroupRepository(), sessions, auditLogs, broadcaster, tx)
+		s := NewCampService(camps, nil, NewMockDeviceRegistrationRepository(), NewMockVisitRepository(), NewMockGroupRepository(), sessions, NewMockAdminRepository(), auditLogs, broadcaster, tx)
 		s.nowFn = func() time.Time { return now }
 		s.uuidFn = func() string { return "audit-uuid" }
 
@@ -149,7 +188,7 @@ func TestCampService_EndCamp(t *testing.T) {
 		broadcaster := &MockBroadcaster{}
 		tx := &MockTxManager{}
 
-		s := NewCampService(camps, tracks, devices, visits, groups, sessions, auditLogs, broadcaster, tx)
+		s := NewCampService(camps, tracks, devices, visits, groups, sessions, NewMockAdminRepository(), auditLogs, broadcaster, tx)
 		s.nowFn = func() time.Time { return now }
 		s.uuidFn = func() string { return "audit-uuid" }
 
@@ -213,7 +252,7 @@ func TestCampService_EndCamp(t *testing.T) {
 		_ = camps.Save(context.Background(), domain.NewCampFromProps(domain.CampProps{ID: "camp-1", Status: domain.CampActive}))
 		broadcaster := &MockBroadcaster{}
 		txErr := errors.New("transaction failed")
-		service := NewCampService(camps, NewMockTrackRepository(), NewMockDeviceRegistrationRepository(), NewMockVisitRepository(), NewMockGroupRepository(), NewMockFacilitatorSessionRepository(), &MockAuditLogRepository{}, broadcaster, failingTxManager{err: txErr})
+		service := NewCampService(camps, NewMockTrackRepository(), NewMockDeviceRegistrationRepository(), NewMockVisitRepository(), NewMockGroupRepository(), NewMockFacilitatorSessionRepository(), NewMockAdminRepository(), &MockAuditLogRepository{}, broadcaster, failingTxManager{err: txErr})
 
 		// Act
 		err := service.EndCamp(context.Background(), "camp-1", "admin-1")
@@ -235,7 +274,7 @@ func TestUpdateCampSettingsShoudAuditAndBroadcastWhenSaveSucceeds(t *testing.T) 
 	_ = camps.Save(context.Background(), camp)
 	audits := &MockAuditLogRepository{}
 	broadcaster := &MockBroadcaster{}
-	service := NewCampService(camps, nil, NewMockDeviceRegistrationRepository(), NewMockVisitRepository(), NewMockGroupRepository(), NewMockFacilitatorSessionRepository(), audits, broadcaster, &MockTxManager{})
+	service := NewCampService(camps, nil, NewMockDeviceRegistrationRepository(), NewMockVisitRepository(), NewMockGroupRepository(), NewMockFacilitatorSessionRepository(), NewMockAdminRepository(), audits, broadcaster, &MockTxManager{})
 	service.uuidFn = func() string { return "audit-1" }
 
 	// Act
@@ -260,7 +299,7 @@ func TestUpdateCampSettingsShoudAuditFailureWithoutBroadcastWhenTransactionFails
 	audits := &MockAuditLogRepository{}
 	broadcaster := &MockBroadcaster{}
 	txErr := errors.New("save failed")
-	service := NewCampService(camps, nil, NewMockDeviceRegistrationRepository(), NewMockVisitRepository(), NewMockGroupRepository(), NewMockFacilitatorSessionRepository(), audits, broadcaster, failingTxManager{err: txErr})
+	service := NewCampService(camps, nil, NewMockDeviceRegistrationRepository(), NewMockVisitRepository(), NewMockGroupRepository(), NewMockFacilitatorSessionRepository(), NewMockAdminRepository(), audits, broadcaster, failingTxManager{err: txErr})
 	service.uuidFn = func() string { return "audit-1" }
 
 	// Act
@@ -280,7 +319,7 @@ func TestUpdateCampSettingsShoudAuditFailureWithoutBroadcastWhenTransactionFails
 
 func TestUpdateCampSettingsShoudReturnNotFoundWhenCampMissing(t *testing.T) {
 	// Arrange
-	service := NewCampService(NewMockCampRepository(), nil, NewMockDeviceRegistrationRepository(), NewMockVisitRepository(), NewMockGroupRepository(), NewMockFacilitatorSessionRepository(), &MockAuditLogRepository{}, &MockBroadcaster{}, &MockTxManager{})
+	service := NewCampService(NewMockCampRepository(), nil, NewMockDeviceRegistrationRepository(), NewMockVisitRepository(), NewMockGroupRepository(), NewMockFacilitatorSessionRepository(), NewMockAdminRepository(), &MockAuditLogRepository{}, &MockBroadcaster{}, &MockTxManager{})
 
 	// Act
 	_, err := service.UpdateCampSettings(context.Background(), "missing", "admin-1", domain.CampSettingsPatch{})
