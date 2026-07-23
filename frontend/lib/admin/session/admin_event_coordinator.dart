@@ -38,7 +38,7 @@ class AdminEventCoordinator extends _$AdminEventCoordinator {
     );
 
     ref.listen(adminEventsProvider(campId), (previous, next) {
-      next.whenData((event) => _handle(campId, event));
+      next.whenData((event) => _handle(campId, event.notification));
     });
   }
 

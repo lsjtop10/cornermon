@@ -112,11 +112,11 @@ final adminEventsProvider = AdminEventsFamily._();
 final class AdminEventsProvider
     extends
         $FunctionalProvider<
-          AsyncValue<SSENotification>,
-          SSENotification,
-          Stream<SSENotification>
+          AsyncValue<SseEventReceipt>,
+          SseEventReceipt,
+          Stream<SseEventReceipt>
         >
-    with $FutureModifier<SSENotification>, $StreamProvider<SSENotification> {
+    with $FutureModifier<SseEventReceipt>, $StreamProvider<SseEventReceipt> {
   AdminEventsProvider._({
     required AdminEventsFamily super.from,
     required CampId super.argument,
@@ -140,12 +140,12 @@ final class AdminEventsProvider
 
   @$internal
   @override
-  $StreamProviderElement<SSENotification> $createElement(
+  $StreamProviderElement<SseEventReceipt> $createElement(
     $ProviderPointer pointer,
   ) => $StreamProviderElement(pointer);
 
   @override
-  Stream<SSENotification> create(Ref ref) {
+  Stream<SseEventReceipt> create(Ref ref) {
     final argument = this.argument as CampId;
     return adminEvents(ref, argument);
   }
@@ -164,7 +164,7 @@ final class AdminEventsProvider
 String _$adminEventsHash() => r'bec489d99a5a5a2d3f00c030966632b201e1c4b4';
 
 final class AdminEventsFamily extends $Family
-    with $FunctionalFamilyOverride<Stream<SSENotification>, CampId> {
+    with $FunctionalFamilyOverride<Stream<SseEventReceipt>, CampId> {
   AdminEventsFamily._()
     : super(
         retry: null,

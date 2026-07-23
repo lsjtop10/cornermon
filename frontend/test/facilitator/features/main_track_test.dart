@@ -12,6 +12,7 @@ import 'package:cornermon/shared/api/providers/group_providers.dart';
 import 'package:cornermon/shared/api/providers/message_providers.dart';
 import 'package:cornermon/shared/api/providers/visit_providers.dart';
 import 'package:cornermon/shared/api/sse/track_event_stream.dart';
+import 'package:cornermon/shared/api/sse/sse_event_receipt.dart';
 import 'package:cornermon/shared/design_system/tokens/colors.dart';
 import 'package:cornermon/shared/design_system/tokens/spacing.dart';
 import 'package:flutter/material.dart';
@@ -352,7 +353,9 @@ void main() {
             unreadDirectMessageCountProvider(
               trackId,
             ).overrideWith((ref) async => 0),
-            trackEventsProvider(trackId).overrideWith((ref) => const Stream<SseEvent>.empty()),
+            trackEventsProvider(
+              trackId,
+            ).overrideWith((ref) => const Stream<SseEventReceipt>.empty()),
           ],
         ),
       );

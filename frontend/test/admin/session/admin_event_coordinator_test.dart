@@ -7,6 +7,7 @@ import 'package:cornermon/shared/api/ids.dart';
 import 'package:cornermon/shared/api/providers/corner_track_providers.dart';
 import 'package:cornermon/shared/api/providers/message_providers.dart';
 import 'package:cornermon/shared/api/sse/admin_event_stream.dart';
+import 'package:cornermon/shared/api/sse/sse_event_receipt.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -14,7 +15,7 @@ void main() {
   final campId = CampId('camp-1');
   final trackId = TrackId('track-1');
 
-  late StreamController<SseEvent> eventController;
+  late StreamController<SseEventReceipt> eventController;
   late ProviderContainer container;
   late int broadcastListBuildCount;
   late int threadMessageListBuildCount;
@@ -22,14 +23,19 @@ void main() {
 
   // 스트림 이벤트 전달 → AsyncValue 갱신 → ref.listen 콜백 → invalidate/rebuild가
   // 모두 마이크로태스크를 거쳐 일어나므로, 한 틱을 흘려보내야 결과를 관찰할 수 있다.
+  var eventSequence = 0;
+
   Future<void> pushAndSettle(SseEvent event) async {
-    eventController.add(event);
+    eventController.add(
+      SseEventReceipt(sequence: ++eventSequence, notification: event),
+    );
     await Future<void>.delayed(Duration.zero);
     await Future<void>.delayed(Duration.zero);
   }
 
   setUp(() {
-    eventController = StreamController<SseEvent>();
+    eventController = StreamController<SseEventReceipt>();
+    eventSequence = 0;
     broadcastListBuildCount = 0;
     threadMessageListBuildCount = 0;
     summariesBuildCount = 0;
@@ -123,6 +129,30 @@ void main() {
       // assert — 메시지 family 의존성 전파 여부와 무관하게 unread 집계 provider 자체가
       // 명시적으로 무효화되어야 한다.
       expect(summariesBuildCount, greaterThan(baseline));
+    },
+  );
+
+  test(
+    'ShouldRebuildTrackDirectSummariesForEachRepeatedMessagesChanged',
+    () async {
+      // arrange — 서버의 payload는 같은 track scope에서 반복돼도 내용이 동일하다.
+      await container.read(trackDirectSummariesProvider(campId).future);
+      final baseline = summariesBuildCount;
+      final event = SseEvent(
+        (b) => b
+          ..event = SseEventEventEnum.messagesChanged
+          ..scope.kind = SseScopeKind.track
+          ..scope.trackId = trackId.value,
+      );
+
+      // act
+      await pushAndSettle(event);
+      await container.read(trackDirectSummariesProvider(campId).future);
+      await pushAndSettle(event);
+      await container.read(trackDirectSummariesProvider(campId).future);
+
+      // assert — 두 번째 동일 알림도 first event처럼 집계를 갱신해야 한다.
+      expect(summariesBuildCount, greaterThanOrEqualTo(baseline + 2));
     },
   );
 

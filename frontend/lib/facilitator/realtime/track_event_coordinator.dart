@@ -29,7 +29,7 @@ class TrackEventCoordinator extends _$TrackEventCoordinator {
   @override
   void build(TrackId trackId) {
     ref.listen(trackEventsProvider(trackId), (previous, next) {
-      next.whenData((event) => _handle(trackId, event));
+      next.whenData((event) => _handle(trackId, event.notification));
     });
   }
 
