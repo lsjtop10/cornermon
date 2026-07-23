@@ -45,6 +45,45 @@ func TestAdminAuthService_Login(t *testing.T) {
 		}
 	})
 
+	t.Run("ShouldRecordAdminIDAsActorAndUsernameAsActorNameWhenSucceeded", func(t *testing.T) {
+		// Arrange
+		now := time.Now()
+		admins := NewMockAdminRepository()
+		passwordHash, _ := hashPassword("admin-password")
+		admin := domain.NewAdminFromProps(domain.AdminProps{ID: "admin-1", Username: "김관리", PasswordHash: passwordHash})
+		admins.Admins["admin-1"] = admin
+
+		sessions := NewMockAdminSessionRepository()
+		auditLogs := &MockAuditLogRepository{}
+		tx := &MockTxManager{}
+		facSessions := NewMockFacilitatorSessionRepository()
+		tracks := NewMockTrackRepository()
+		corners := NewMockCornerRepository()
+		broadcaster := &MockBroadcaster{}
+
+		s := NewAdminAuthService(admins, sessions, facSessions, tracks, corners, broadcaster, auditLogs, tx)
+		s.nowFn = func() time.Time { return now }
+		s.uuidFn = func() string { return "session-uuid" }
+
+		// Act
+		_, _, err := s.Login(context.Background(), "admin-1", "admin-password", "PC")
+
+		// Assert
+		if err != nil {
+			t.Fatalf("expected no error, got %v", err)
+		}
+		if len(auditLogs.Logs) != 1 {
+			t.Fatalf("expected 1 audit log, got %d", len(auditLogs.Logs))
+		}
+		got := auditLogs.Logs[0]
+		if got.Actor() != "admin-1" {
+			t.Errorf("expected Actor to remain raw admin ID 'admin-1', got %q", got.Actor())
+		}
+		if got.ActorName() != "김관리" {
+			t.Errorf("expected ActorName '김관리', got %q", got.ActorName())
+		}
+	})
+
 	t.Run("ShouldFailLoginAdminWhenPasswordIsIncorrect", func(t *testing.T) {
 		// Arrange
 		admins := NewMockAdminRepository()
