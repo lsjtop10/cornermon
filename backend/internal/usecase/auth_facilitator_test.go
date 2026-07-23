@@ -76,6 +76,65 @@ func TestFacilitatorAuthService_Login(t *testing.T) {
 		}
 	})
 
+	t.Run("ShoudRecordTrackIDAsActorAndCornerTrackLabelAsActorNameWhenSucceeded", func(t *testing.T) {
+		// Arrange
+		now := time.Now()
+		camps := NewMockCampRepository()
+		camp := domain.NewCampFromProps(domain.CampProps{ID: "camp-1", Status: domain.CampActive})
+		camps.Save(context.Background(), camp)
+
+		corners := NewMockCornerRepository()
+		corner := domain.NewCornerFromProps(domain.CornerProps{ID: "corner-1", CampID: "camp-1", Name: "체험 코너"})
+		corners.Save(context.Background(), corner)
+
+		tracks := NewMockTrackRepository()
+		pinHash, _ := hashPassword("123456")
+		track := domain.NewTrackFromProps(domain.TrackProps{ID: "track-1",
+			CornerID: "corner-1",
+			TrackNo:  3,
+			Status:   domain.TrackActive,
+			PINHash:  pinHash,
+		})
+		tracks.Save(context.Background(), track)
+
+		devices := NewMockDeviceRegistrationRepository()
+		deviceToken := "device-token-1"
+		deviceTokenHash := hashSHA256(deviceToken)
+		device := domain.NewDeviceRegistrationFromProps(domain.DeviceRegistrationProps{ID: "device-1",
+			CampID:    "camp-1",
+			Status:    domain.DeviceApproved,
+			TokenHash: deviceTokenHash,
+		})
+		devices.Save(context.Background(), device)
+
+		sessions := NewMockFacilitatorSessionRepository()
+		auditLogs := &MockAuditLogRepository{}
+		broadcaster := &MockBroadcaster{}
+		tx := &MockTxManager{}
+
+		s := NewFacilitatorAuthService(camps, corners, tracks, devices, sessions, auditLogs, broadcaster, tx)
+		s.nowFn = func() time.Time { return now }
+		s.uuidFn = func() string { return "session-uuid" }
+
+		// Act
+		_, err := s.Login(context.Background(), deviceToken, "123456")
+
+		// Assert
+		if err != nil {
+			t.Fatalf("expected no error, got %v", err)
+		}
+		if len(auditLogs.Logs) != 1 {
+			t.Fatalf("expected 1 audit log, got %d", len(auditLogs.Logs))
+		}
+		got := auditLogs.Logs[0]
+		if got.Actor() != "track-1" {
+			t.Errorf("expected Actor to remain raw track ID 'track-1', got %q", got.Actor())
+		}
+		if got.ActorName() != "체험 코너 · 3번 트랙" {
+			t.Errorf("expected ActorName '체험 코너 · 3번 트랙', got %q", got.ActorName())
+		}
+	})
+
 	t.Run("ShouldFailLoginWhenDeviceIsNotApproved", func(t *testing.T) {
 		// Arrange
 		now := time.Now()

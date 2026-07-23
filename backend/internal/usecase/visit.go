@@ -67,12 +67,12 @@ func (s *VisitService) StartVisitByQR(
 	session, err := s.sessions.GetByTokenHash(ctx, tokenHash)
 	if err != nil {
 		err = withErrorContext("visit.start_qr", "repository.get_session", err, nil)
-		s.recordAuditLog(ctx, "anonymous", ActionVisitStart, "token:provided", false, errorAuditMetadata(err, nil))
+		s.recordAuditLog(ctx, "anonymous", "anonymous", ActionVisitStart, "token:provided", false, errorAuditMetadata(err, nil))
 		return nil, err
 	}
 	if session == nil || !session.IsActive() {
 		err = withErrorContext("visit.start_qr", "validate_session", domain.ErrSessionRevoked, map[string]any{"session_found": session != nil})
-		s.recordAuditLog(ctx, "anonymous", ActionVisitStart, "session:inactive", false, errorAuditMetadata(err, nil))
+		s.recordAuditLog(ctx, "anonymous", "anonymous", ActionVisitStart, "session:inactive", false, errorAuditMetadata(err, nil))
 		return nil, err
 	}
 
@@ -169,11 +169,11 @@ func (s *VisitService) StartVisitByQR(
 	})
 
 	if err != nil {
-		s.recordAuditLog(ctx, actor, ActionVisitStart, "badge:qr_scanned", false, errorAuditMetadata(err, nil))
+		s.recordAuditLog(ctx, actor, trackDisplayLabel(ctx, s.tracks, s.corners, session.TrackID(), nil), ActionVisitStart, "badge:qr_scanned", false, errorAuditMetadata(err, nil))
 		return nil, err
 	}
 
-	s.recordAuditLog(ctx, actor, ActionVisitStart, string(visit.ID()), true, map[string]any{"method": string(domain.VisitQRScan), "groupID": string(visit.GroupID())})
+	s.recordAuditLog(ctx, actor, trackDisplayLabel(ctx, s.tracks, s.corners, session.TrackID(), nil), ActionVisitStart, string(visit.ID()), true, map[string]any{"method": string(domain.VisitQRScan), "groupID": string(visit.GroupID())})
 	_ = s.broadcaster.Broadcast(ctx, groupCampID, EventCornersUpdated, CampScope())
 	_ = s.broadcaster.Broadcast(ctx, groupCampID, EventGroupsUpdated, CampScope())
 	_ = s.broadcaster.Broadcast(ctx, groupCampID, EventTracksUpdated, CampScope())
@@ -195,12 +195,12 @@ func (s *VisitService) StartVisitManual(
 	session, err := s.sessions.GetByTokenHash(ctx, tokenHash)
 	if err != nil {
 		err = withErrorContext("visit.start_manual", "repository.get_session", err, nil)
-		s.recordAuditLog(ctx, "anonymous", ActionVisitStart, "token:provided", false, errorAuditMetadata(err, nil))
+		s.recordAuditLog(ctx, "anonymous", "anonymous", ActionVisitStart, "token:provided", false, errorAuditMetadata(err, nil))
 		return nil, err
 	}
 	if session == nil || !session.IsActive() {
 		err = withErrorContext("visit.start_manual", "validate_session", domain.ErrSessionRevoked, map[string]any{"session_found": session != nil})
-		s.recordAuditLog(ctx, "anonymous", ActionVisitStart, "session:inactive", false, errorAuditMetadata(err, nil))
+		s.recordAuditLog(ctx, "anonymous", "anonymous", ActionVisitStart, "session:inactive", false, errorAuditMetadata(err, nil))
 		return nil, err
 	}
 
@@ -282,11 +282,11 @@ func (s *VisitService) StartVisitManual(
 	})
 
 	if err != nil {
-		s.recordAuditLog(ctx, actor, ActionVisitStart, string(groupID), false, errorAuditMetadata(err, nil))
+		s.recordAuditLog(ctx, actor, trackDisplayLabel(ctx, s.tracks, s.corners, session.TrackID(), nil), ActionVisitStart, string(groupID), false, errorAuditMetadata(err, nil))
 		return nil, err
 	}
 
-	s.recordAuditLog(ctx, actor, ActionVisitStart, string(visit.ID()), true, map[string]any{"method": string(domain.VisitManual), "groupID": string(visit.GroupID())})
+	s.recordAuditLog(ctx, actor, trackDisplayLabel(ctx, s.tracks, s.corners, session.TrackID(), nil), ActionVisitStart, string(visit.ID()), true, map[string]any{"method": string(domain.VisitManual), "groupID": string(visit.GroupID())})
 	_ = s.broadcaster.Broadcast(ctx, groupCampID, EventCornersUpdated, CampScope())
 	_ = s.broadcaster.Broadcast(ctx, groupCampID, EventGroupsUpdated, CampScope())
 	_ = s.broadcaster.Broadcast(ctx, groupCampID, EventTracksUpdated, CampScope())
@@ -307,12 +307,12 @@ func (s *VisitService) CompleteVisit(
 	session, err := s.sessions.GetByTokenHash(ctx, tokenHash)
 	if err != nil {
 		err = withErrorContext("visit.complete", "repository.get_session", err, nil)
-		s.recordAuditLog(ctx, "anonymous", ActionVisitComplete, "token:provided", false, errorAuditMetadata(err, nil))
+		s.recordAuditLog(ctx, "anonymous", "anonymous", ActionVisitComplete, "token:provided", false, errorAuditMetadata(err, nil))
 		return nil, err
 	}
 	if session == nil || !session.IsActive() {
 		err = withErrorContext("visit.complete", "validate_session", domain.ErrSessionRevoked, map[string]any{"session_found": session != nil})
-		s.recordAuditLog(ctx, "anonymous", ActionVisitComplete, "session:inactive", false, errorAuditMetadata(err, nil))
+		s.recordAuditLog(ctx, "anonymous", "anonymous", ActionVisitComplete, "session:inactive", false, errorAuditMetadata(err, nil))
 		return nil, err
 	}
 
@@ -389,11 +389,11 @@ func (s *VisitService) CompleteVisit(
 	})
 
 	if err != nil {
-		s.recordAuditLog(ctx, actor, ActionVisitComplete, "", false, errorAuditMetadata(err, nil))
+		s.recordAuditLog(ctx, actor, trackDisplayLabel(ctx, s.tracks, s.corners, session.TrackID(), nil), ActionVisitComplete, "", false, errorAuditMetadata(err, nil))
 		return nil, err
 	}
 
-	s.recordAuditLog(ctx, actor, ActionVisitComplete, string(visit.ID()), true, map[string]any{"groupID": string(visit.GroupID())})
+	s.recordAuditLog(ctx, actor, trackDisplayLabel(ctx, s.tracks, s.corners, session.TrackID(), nil), ActionVisitComplete, string(visit.ID()), true, map[string]any{"groupID": string(visit.GroupID())})
 	_ = s.broadcaster.Broadcast(ctx, groupCampID, EventCornersUpdated, CampScope())
 	_ = s.broadcaster.Broadcast(ctx, groupCampID, EventGroupsUpdated, CampScope())
 	_ = s.broadcaster.Broadcast(ctx, groupCampID, EventTracksUpdated, CampScope())
@@ -427,10 +427,11 @@ func (s *VisitService) GetCurrentVisit(
 	return visit, nil
 }
 
-func (s *VisitService) recordAuditLog(ctx context.Context, actor string, action AuditAction, target string, success bool, metadata map[string]any) {
+func (s *VisitService) recordAuditLog(ctx context.Context, actor, actorName string, action AuditAction, target string, success bool, metadata map[string]any) {
 	log := domain.NewAuditLogFromProps(domain.AuditLogProps{
 		ID:         domain.AuditLogID(s.uuidFn()),
 		Actor:      actor,
+		ActorName:  actorName,
 		Action:     string(action),
 		Target:     target,
 		Success:    success,

@@ -84,6 +84,45 @@ func TestMessageService_SendDirect(t *testing.T) {
 			t.Errorf("expected EventMessagesChanged broadcast with scope 'track:track-1', got %v", broadcaster.Broadcasts)
 		}
 	})
+
+	t.Run("ShoudRecordTrackIDAsActorAndCornerTrackLabelAsActorNameWhenSucceeded", func(t *testing.T) {
+		// Arrange
+		now := time.Now()
+		corners := NewMockCornerRepository()
+		corner := domain.NewCornerFromProps(domain.CornerProps{ID: "corner-1", CampID: "camp-1", Name: "체험 코너"})
+		corners.Save(context.Background(), corner)
+
+		tracks := NewMockTrackRepository()
+		track := domain.NewTrackFromProps(domain.TrackProps{ID: "track-1", CornerID: "corner-1", TrackNo: 2, Status: domain.TrackActive})
+		tracks.Save(context.Background(), track)
+
+		messages := NewMockMessageRepository()
+		auditLogs := &MockAuditLogRepository{}
+		broadcaster := &MockBroadcaster{}
+		tx := &MockTxManager{}
+
+		s := NewMessageService(corners, tracks, messages, auditLogs, broadcaster, tx)
+		s.nowFn = func() time.Time { return now }
+		s.uuidFn = func() string { return "msg-uuid" }
+
+		// Act
+		_, err := s.SendDirect(context.Background(), "track-1", "Hello Track", domain.RoleAdmin)
+
+		// Assert
+		if err != nil {
+			t.Fatalf("expected no error, got %v", err)
+		}
+		if len(auditLogs.Logs) != 1 {
+			t.Fatalf("expected 1 audit log, got %d", len(auditLogs.Logs))
+		}
+		got := auditLogs.Logs[0]
+		if got.Actor() != "track-1" {
+			t.Errorf("expected Actor to remain raw track ID 'track-1', got %q", got.Actor())
+		}
+		if got.ActorName() != "체험 코너 · 2번 트랙" {
+			t.Errorf("expected ActorName '체험 코너 · 2번 트랙', got %q", got.ActorName())
+		}
+	})
 }
 
 func TestShouldMarkOnlyOppositeMessagesWhenBackgroundIsTrue(t *testing.T) {
