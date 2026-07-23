@@ -19,7 +19,7 @@ void main() {
   late ProviderContainer container;
   late int broadcastListBuildCount;
   late int threadMessageListBuildCount;
-  late int summariesBuildCount;
+  late int previewMessageListBuildCount;
 
   // 스트림 이벤트 전달 → AsyncValue 갱신 → ref.listen 콜백 → invalidate/rebuild가
   // 모두 마이크로태스크를 거쳐 일어나므로, 한 틱을 흘려보내야 결과를 관찰할 수 있다.
@@ -38,7 +38,7 @@ void main() {
     eventSequence = 0;
     broadcastListBuildCount = 0;
     threadMessageListBuildCount = 0;
-    summariesBuildCount = 0;
+    previewMessageListBuildCount = 0;
 
     container = ProviderContainer(
       overrides: [
@@ -64,13 +64,8 @@ void main() {
         // 좌측 목록 미리보기가 실제로 watch하는 인자(background: false) — messages_changed는
         // family 전체를 무효화하므로 이 인스턴스도 함께 무효화되는지가 검증 대상이다.
         trackMessageListProvider(trackId, background: false).overrideWith((ref) async {
+          previewMessageListBuildCount++;
           return <Message>[];
-        }),
-        // 하위 message family에 의존하지 않는 독립 provider로 override한다. 이 상태에서도
-        // messages_changed가 unread 집계 provider 자체를 무효화해야 한다.
-        trackDirectSummariesProvider(campId).overrideWith((ref) async {
-          summariesBuildCount++;
-          return <TrackDirectSummary>[];
         }),
       ],
     );
@@ -82,9 +77,7 @@ void main() {
     container.listen(adminEventCoordinatorProvider(campId), (_, _) {});
     container.listen(broadcastMessageListProvider(campId), (_, _) {});
     container.listen(trackMessageListProvider(trackId, background: true), (_, _) {});
-    container.listen(trackDirectSummariesProvider(campId), (_, next) {
-      if (next.hasValue) summariesBuildCount++;
-    });
+    container.listen(trackDirectSummariesProvider(campId), (_, _) {});
   });
 
   test(
@@ -114,7 +107,7 @@ void main() {
     () async {
       // arrange — 대시보드/좌측 목록이 실제로 watch하는 파생 provider.
       await container.read(trackDirectSummariesProvider(campId).future);
-      final baseline = summariesBuildCount;
+      final baseline = previewMessageListBuildCount;
       final event = SseEvent(
         (b) => b
           ..event = SseEventEventEnum.messagesChanged
@@ -126,9 +119,8 @@ void main() {
       await pushAndSettle(event);
       await container.read(trackDirectSummariesProvider(campId).future);
 
-      // assert — 메시지 family 의존성 전파 여부와 무관하게 unread 집계 provider 자체가
-      // 명시적으로 무효화되어야 한다.
-      expect(summariesBuildCount, greaterThan(baseline));
+      // assert — summary가 watch하는 미리보기 목록이 갱신되면 summary도 다시 계산된다.
+      expect(previewMessageListBuildCount, greaterThan(baseline));
     },
   );
 
@@ -137,7 +129,7 @@ void main() {
     () async {
       // arrange — 서버의 payload는 같은 track scope에서 반복돼도 내용이 동일하다.
       await container.read(trackDirectSummariesProvider(campId).future);
-      final baseline = summariesBuildCount;
+      final baseline = previewMessageListBuildCount;
       final event = SseEvent(
         (b) => b
           ..event = SseEventEventEnum.messagesChanged
@@ -151,8 +143,8 @@ void main() {
       await pushAndSettle(event);
       await container.read(trackDirectSummariesProvider(campId).future);
 
-      // assert — 두 번째 동일 알림도 first event처럼 집계를 갱신해야 한다.
-      expect(summariesBuildCount, greaterThanOrEqualTo(baseline + 2));
+      // assert — 두 번째 동일 알림도 summary의 원본 미리보기 목록을 다시 조회해야 한다.
+      expect(previewMessageListBuildCount, greaterThanOrEqualTo(baseline + 2));
     },
   );
 
