@@ -521,6 +521,14 @@ func (r *MockAdminRepository) CountByRole(ctx context.Context, role domain.Admin
 	return count, nil
 }
 
+func (r *MockAdminRepository) List(ctx context.Context) ([]*domain.Admin, error) {
+	admins := make([]*domain.Admin, 0, len(r.Admins))
+	for _, admin := range r.Admins {
+		admins = append(admins, admin)
+	}
+	return admins, nil
+}
+
 // MockAdminSessionRepository
 type MockAdminSessionRepository struct {
 	Sessions map[domain.AdminSessionID]*domain.AdminSession

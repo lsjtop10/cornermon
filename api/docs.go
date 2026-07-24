@@ -18,6 +18,38 @@ const docTemplate = `{
     "basePath": "{{.BasePath}}",
     "paths": {
         "/admins": {
+            "get": {
+                "security": [
+                    {
+                        "AdminAuth": []
+                    }
+                ],
+                "description": "SYSTEM_ADMIN만 호출할 수 있습니다. 전체 관리자 목록을 반환합니다.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "A. Auth \u0026 Device Trust"
+                ],
+                "summary": "관리자 목록 조회",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/AdminResponse"
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            },
             "post": {
                 "security": [
                     {
@@ -68,6 +100,37 @@ const docTemplate = `{
                 }
             }
         },
+        "/admins/me": {
+            "get": {
+                "security": [
+                    {
+                        "AdminAuth": []
+                    }
+                ],
+                "description": "로그인한 관리자 본인의 id/username/role을 반환합니다.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "A. Auth \u0026 Device Trust"
+                ],
+                "summary": "내 관리자 정보 조회",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/AdminResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/admins/{id}": {
             "delete": {
                 "security": [
@@ -75,7 +138,7 @@ const docTemplate = `{
                         "AdminAuth": []
                     }
                 ],
-                "description": "SYSTEM_ADMIN만 호출할 수 있습니다. 자기 자신은 삭제할 수 없으므로 마지막 SYSTEM_ADMIN 삭제 요청은 성립하지 않습니다. 삭제 시 admin_sessions는 DB foreign key cascade로 함께 제거됩니다.",
+                "description": "SYSTEM_ADMIN은 다른 관리자를 삭제할 수 있습니다. CORNER_OPERATOR는 본인 계정만 탈퇴할 수 있습니다. SYSTEM_ADMIN은 자기 자신을 삭제할 수 없으므로(마지막 SYSTEM_ADMIN 보호) 그 요청은 성립하지 않습니다. 삭제 시 admin_sessions는 DB foreign key cascade로 함께 제거됩니다.",
                 "tags": [
                     "A. Auth \u0026 Device Trust"
                 ],

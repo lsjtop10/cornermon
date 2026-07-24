@@ -47,6 +47,8 @@ func RegisterRoutes(e *echo.Echo, h *Handlers, adminAuth AuthAdminUsecase, track
 	admin.GET("/auth/admin/sessions", h.Auth.ListAdminSessions)
 	admin.POST("/auth/admin/sessions/:id/revoke", h.Auth.RevokeAdminSession)
 	if h.AdminManagement != nil {
+		admin.GET("/admins/me", h.AdminManagement.GetMyAdmin)
+		admin.GET("/admins", h.AdminManagement.ListAdmins)
 		admin.POST("/admins", h.AdminManagement.CreateAdmin)
 		admin.PATCH("/admins/:id/password", h.AdminManagement.ChangeAdminPassword)
 		admin.DELETE("/admins/:id", h.AdminManagement.DeleteAdmin)
