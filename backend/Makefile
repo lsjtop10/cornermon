@@ -26,7 +26,8 @@ docker-build:
 	docker build -t cornermon-backend -f Dockerfile .
 
 docker-export:docker-build
-	docker save cornermon-backend | gzip > cornermon-backend.tar.gz 
+	mkdir -p bin
+	docker save cornermon-backend | gzip > ./bin/cornermon-backend.tar.gz 
 
 swag:
 	swag init -g internal/infrastructure/web/doc.go -d . -o ../api --parseDependency --parseInternal
