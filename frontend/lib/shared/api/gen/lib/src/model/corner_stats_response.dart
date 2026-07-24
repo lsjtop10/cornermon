@@ -14,8 +14,8 @@ part 'corner_stats_response.g.dart';
 /// CornerStatsResponse
 ///
 /// Properties:
-/// * [avgDeviationSeconds]
-/// * [avgDurationSeconds]
+/// * [avgDeviationSeconds] 
+/// * [avgDurationSeconds] 
 /// * [completedVisitCount] 
 /// * [cornerId] 
 /// * [cornerName] 

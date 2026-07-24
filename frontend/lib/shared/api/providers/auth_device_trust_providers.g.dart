@@ -171,6 +171,304 @@ final class AdminLogoutProvider
 
 String _$adminLogoutHash() => r'581075dbca3f7720c54b47388cb1b8ffedcee6dd';
 
+@ProviderFor(currentAdmin)
+final currentAdminProvider = CurrentAdminProvider._();
+
+final class CurrentAdminProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<AdminResponse>,
+          AdminResponse,
+          FutureOr<AdminResponse>
+        >
+    with $FutureModifier<AdminResponse>, $FutureProvider<AdminResponse> {
+  CurrentAdminProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'currentAdminProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$currentAdminHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<AdminResponse> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<AdminResponse> create(Ref ref) {
+    return currentAdmin(ref);
+  }
+}
+
+String _$currentAdminHash() => r'95adc4724ea393e719eff98268bcce82ddc84173';
+
+@ProviderFor(adminList)
+final adminListProvider = AdminListProvider._();
+
+final class AdminListProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<AdminResponse>>,
+          List<AdminResponse>,
+          FutureOr<List<AdminResponse>>
+        >
+    with
+        $FutureModifier<List<AdminResponse>>,
+        $FutureProvider<List<AdminResponse>> {
+  AdminListProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'adminListProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$adminListHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<List<AdminResponse>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<List<AdminResponse>> create(Ref ref) {
+    return adminList(ref);
+  }
+}
+
+String _$adminListHash() => r'a891237775b28e7ea1fa6b85a9b815642cfffe24';
+
+@ProviderFor(createAdmin)
+final createAdminProvider = CreateAdminFamily._();
+
+final class CreateAdminProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<AdminResponse>,
+          AdminResponse,
+          FutureOr<AdminResponse>
+        >
+    with $FutureModifier<AdminResponse>, $FutureProvider<AdminResponse> {
+  CreateAdminProvider._({
+    required CreateAdminFamily super.from,
+    required (String, String) super.argument,
+  }) : super(
+         retry: noRetry,
+         name: r'createAdminProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$createAdminHash();
+
+  @override
+  String toString() {
+    return r'createAdminProvider'
+        ''
+        '$argument';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<AdminResponse> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<AdminResponse> create(Ref ref) {
+    final argument = this.argument as (String, String);
+    return createAdmin(ref, argument.$1, argument.$2);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is CreateAdminProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$createAdminHash() => r'9e3bdb506832213f2c753c287245a804cc6fabf7';
+
+final class CreateAdminFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<AdminResponse>, (String, String)> {
+  CreateAdminFamily._()
+    : super(
+        retry: noRetry,
+        name: r'createAdminProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  CreateAdminProvider call(String username, String password) =>
+      CreateAdminProvider._(argument: (username, password), from: this);
+
+  @override
+  String toString() => r'createAdminProvider';
+}
+
+@ProviderFor(deleteAdminAccount)
+final deleteAdminAccountProvider = DeleteAdminAccountFamily._();
+
+final class DeleteAdminAccountProvider
+    extends $FunctionalProvider<AsyncValue<void>, void, FutureOr<void>>
+    with $FutureModifier<void>, $FutureProvider<void> {
+  DeleteAdminAccountProvider._({
+    required DeleteAdminAccountFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: noRetry,
+         name: r'deleteAdminAccountProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$deleteAdminAccountHash();
+
+  @override
+  String toString() {
+    return r'deleteAdminAccountProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<void> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<void> create(Ref ref) {
+    final argument = this.argument as String;
+    return deleteAdminAccount(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is DeleteAdminAccountProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$deleteAdminAccountHash() =>
+    r'f6791581140ef629ffc442291f115e036d4a8521';
+
+final class DeleteAdminAccountFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<void>, String> {
+  DeleteAdminAccountFamily._()
+    : super(
+        retry: noRetry,
+        name: r'deleteAdminAccountProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  DeleteAdminAccountProvider call(String adminId) =>
+      DeleteAdminAccountProvider._(argument: adminId, from: this);
+
+  @override
+  String toString() => r'deleteAdminAccountProvider';
+}
+
+@ProviderFor(changeAdminPassword)
+final changeAdminPasswordProvider = ChangeAdminPasswordFamily._();
+
+final class ChangeAdminPasswordProvider
+    extends $FunctionalProvider<AsyncValue<void>, void, FutureOr<void>>
+    with $FutureModifier<void>, $FutureProvider<void> {
+  ChangeAdminPasswordProvider._({
+    required ChangeAdminPasswordFamily super.from,
+    required (String, String) super.argument,
+  }) : super(
+         retry: noRetry,
+         name: r'changeAdminPasswordProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$changeAdminPasswordHash();
+
+  @override
+  String toString() {
+    return r'changeAdminPasswordProvider'
+        ''
+        '$argument';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<void> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<void> create(Ref ref) {
+    final argument = this.argument as (String, String);
+    return changeAdminPassword(ref, argument.$1, argument.$2);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is ChangeAdminPasswordProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$changeAdminPasswordHash() =>
+    r'16b5cd04f5ca634e465237e3326f2539cfee7430';
+
+final class ChangeAdminPasswordFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<void>, (String, String)> {
+  ChangeAdminPasswordFamily._()
+    : super(
+        retry: noRetry,
+        name: r'changeAdminPasswordProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  ChangeAdminPasswordProvider call(String adminId, String newPassword) =>
+      ChangeAdminPasswordProvider._(
+        argument: (adminId, newPassword),
+        from: this,
+      );
+
+  @override
+  String toString() => r'changeAdminPasswordProvider';
+}
+
 @ProviderFor(adminSessionList)
 final adminSessionListProvider = AdminSessionListProvider._();
 

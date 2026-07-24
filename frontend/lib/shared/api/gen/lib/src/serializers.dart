@@ -136,6 +136,22 @@ part 'serializers.g.dart';
 ])
 Serializers serializers = (_$serializers.toBuilder()
       ..addBuilderFactory(
+        const FullType(BuiltList, [FullType(DeviceRegistrationResponse)]),
+        () => ListBuilder<DeviceRegistrationResponse>(),
+      )
+      ..addBuilderFactory(
+        const FullType(BuiltList, [FullType(AdminSessionResponse)]),
+        () => ListBuilder<AdminSessionResponse>(),
+      )
+      ..addBuilderFactory(
+        const FullType(BuiltList, [FullType(VisitSummaryResponse)]),
+        () => ListBuilder<VisitSummaryResponse>(),
+      )
+      ..addBuilderFactory(
+        const FullType(BuiltList, [FullType(MessageResponse)]),
+        () => ListBuilder<MessageResponse>(),
+      )
+      ..addBuilderFactory(
         const FullType(BuiltList, [FullType(TrackPinResponse)]),
         () => ListBuilder<TrackPinResponse>(),
       )
@@ -152,10 +168,6 @@ Serializers serializers = (_$serializers.toBuilder()
         () => ListBuilder<FacilitatorSessionResponse>(),
       )
       ..addBuilderFactory(
-        const FullType(BuiltList, [FullType(DeviceRegistrationResponse)]),
-        () => ListBuilder<DeviceRegistrationResponse>(),
-      )
-      ..addBuilderFactory(
         const FullType(BuiltList, [FullType(CornerResponse)]),
         () => ListBuilder<CornerResponse>(),
       )
@@ -168,20 +180,12 @@ Serializers serializers = (_$serializers.toBuilder()
         () => ListBuilder<TrackResponse>(),
       )
       ..addBuilderFactory(
-        const FullType(BuiltList, [FullType(AdminSessionResponse)]),
-        () => ListBuilder<AdminSessionResponse>(),
-      )
-      ..addBuilderFactory(
-        const FullType(BuiltList, [FullType(VisitSummaryResponse)]),
-        () => ListBuilder<VisitSummaryResponse>(),
+        const FullType(BuiltList, [FullType(AdminResponse)]),
+        () => ListBuilder<AdminResponse>(),
       )
       ..addBuilderFactory(
         const FullType(BuiltList, [FullType(BadgeResponse)]),
         () => ListBuilder<BadgeResponse>(),
-      )
-      ..addBuilderFactory(
-        const FullType(BuiltList, [FullType(MessageResponse)]),
-        () => ListBuilder<MessageResponse>(),
       )
       ..add(const OneOfSerializer())
       ..add(const AnyOfSerializer())

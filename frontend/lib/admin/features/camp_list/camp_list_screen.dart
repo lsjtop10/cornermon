@@ -21,6 +21,12 @@ class CampListScreen extends ConsumerWidget {
         title: const Text('캠프 목록'),
         actions: [
           TextButton.icon(
+            onPressed: () => context.go('/admins'),
+            icon: const Icon(Icons.admin_panel_settings_outlined),
+            label: const Text('관리자 계정 관리'),
+          ),
+          const SizedBox(width: 8),
+          TextButton.icon(
             onPressed: () => context.go('/badges'),
             icon: const Icon(Icons.qr_code),
             label: const Text('QR 배지 관리'),

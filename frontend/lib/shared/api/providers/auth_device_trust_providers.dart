@@ -39,6 +39,57 @@ Future<void> adminLogout(Ref ref) async {
 }
 
 @riverpod
+Future<AdminResponse> currentAdmin(Ref ref) async {
+  final apiInstance = ref.watch(authDeviceTrustApiProvider);
+  final response = await apiInstance.adminsMeGet();
+  final data = response.data;
+  if (data == null) {
+    throw Exception('Current admin response was empty');
+  }
+  return data;
+}
+
+@riverpod
+Future<List<AdminResponse>> adminList(Ref ref) async {
+  final apiInstance = ref.watch(authDeviceTrustApiProvider);
+  final response = await apiInstance.adminsGet();
+  return response.data?.toList() ?? [];
+}
+
+@Riverpod(retry: noRetry)
+Future<AdminResponse> createAdmin(Ref ref, String username, String password) async {
+  final apiInstance = ref.watch(authDeviceTrustApiProvider);
+  final response = await apiInstance.adminsPost(
+    request: CreateAdminRequest(
+      (b) => b
+        ..username = username
+        ..password = password
+        ..role = CreateAdminRequestRoleEnum.CORNER_OPERATOR,
+    ),
+  );
+  final data = response.data;
+  if (data == null) {
+    throw Exception('Create admin response was empty');
+  }
+  return data;
+}
+
+@Riverpod(retry: noRetry)
+Future<void> deleteAdminAccount(Ref ref, String adminId) async {
+  final apiInstance = ref.watch(authDeviceTrustApiProvider);
+  await apiInstance.adminsIdDelete(id: adminId);
+}
+
+@Riverpod(retry: noRetry)
+Future<void> changeAdminPassword(Ref ref, String adminId, String newPassword) async {
+  final apiInstance = ref.watch(authDeviceTrustApiProvider);
+  await apiInstance.adminsIdPasswordPatch(
+    id: adminId,
+    request: ChangeAdminPasswordRequest((b) => b..password = newPassword),
+  );
+}
+
+@riverpod
 Future<List<AdminSession>> adminSessionList(Ref ref) async {
   final apiInstance = ref.watch(authDeviceTrustApiProvider);
   final response = await apiInstance.authAdminSessionsGet();

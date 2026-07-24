@@ -193,3 +193,7 @@ admin.GET("/admins", h.AdminManagement.ListAdmins)
 - [ ] 로컬 서버 기동 후 `curl`로 `GET /admins/me`, `GET /admins`, `DELETE /admins/{자기id}`(CORNER_OPERATOR
       세션) 실제 호출해 응답 확인
 - [ ] 마지막 SYSTEM_ADMIN 보호가 여전히 동작하는지 확인(회귀 없음)
+
+> 샌드박스에 이미 다른 워크트리가 쓰고 있을 수 있는 고정 이름 컨테이너(`cornermon-db`)가 있어
+> 공유 상태를 건드리지 않기 위해 이번 세션에서는 **위 두 항목을 실행하지 않았다** — 자동 테스트
+> (§5.2)만으로 검증된 상태다. 병합 전 사용자가 직접 서버를 띄워 확인 필요.

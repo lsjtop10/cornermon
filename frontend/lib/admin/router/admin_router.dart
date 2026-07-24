@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:cornermon/admin/features/admin_management/admin_management_screen.dart';
 import 'package:cornermon/admin/features/admin_stub_screen.dart';
 import 'package:cornermon/admin/features/login/login_screen.dart';
 import 'package:cornermon/admin/features/camp_list/camp_list_screen.dart';
@@ -30,6 +31,7 @@ const _campIndependentLocations = {
   '/setup-wizard',
   '/camps',
   '/badges',
+  '/admins',
 };
 const _preparingLocations = {
   '/dashboard',
@@ -52,6 +54,7 @@ final adminRouterProvider = Provider<GoRouter>((ref) {
       _route('/camps', (_, _) => const CampListScreen()),
       _plainRoute('/camps/start', 'A0-e 코너학습 시작'),
       _route('/badges', (_, _) => const BadgePrecreateScreen()),
+      _route('/admins', (_, _) => const AdminManagementScreen()),
       _route(
         '/dashboard',
         (_, _) => const AdminScaffold(body: DashboardScreen()),

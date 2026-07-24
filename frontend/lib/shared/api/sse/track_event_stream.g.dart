@@ -172,7 +172,7 @@ final class TrackEventsProvider
   }
 }
 
-String _$trackEventsHash() => r'20f4c2d565465610cdc0f0cf7a619d332901370d';
+String _$trackEventsHash() => r'a263c17e75a1209afbe132534478915b032c604b';
 
 /// 원시 이벤트 스트림 — 에러/종료 시 지수 백오프(+지터) 후 재연결을 반복해 구독자에게는
 /// 끊기지 않는 스트림처럼 보이게 한다(좀비연결 감지는 SseClient 책임). 연결 상태(배너 표시)는
