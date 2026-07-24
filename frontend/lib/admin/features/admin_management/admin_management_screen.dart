@@ -23,6 +23,9 @@ class AdminManagementScreen extends ConsumerWidget {
     final connectionLost = ref.watch(adminManagementConnectionLostProvider);
 
     return Scaffold(
+      // 뒤로가기 버튼은 명시하지 않는다 — 캠프 목록에서 context.push('/admins')로 들어와
+      // Navigator 스택이 쌓이므로, AppBar가 Navigator.canPop()을 보고 자동으로 넣어주는
+      // 기본 back 버튼(Navigator.pop)이 어디서 진입했든 항상 정확히 돌아간다.
       appBar: AppBar(title: const Text('관리자 계정 관리')),
       body: Column(
         children: [

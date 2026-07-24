@@ -140,6 +140,43 @@ void main() {
     expect(find.text('setup'), findsOneWidget);
   });
 
+  testWidgets(
+    'ShoudPushAdminManagementAndReturnViaBackButtonWhenEntryTapped',
+    (tester) async {
+      // arrange: '/admins'는 push로 진입해야 뒤로가기 버튼이 특정 경로를
+      // 하드코딩하지 않고도 캠프 목록으로 정확히 돌아갈 수 있다.
+      final router = GoRouter(
+        initialLocation: '/camps',
+        routes: [
+          GoRoute(path: '/camps', builder: (_, _) => const CampListScreen()),
+          GoRoute(
+            path: '/admins',
+            builder: (_, _) =>
+                Scaffold(appBar: AppBar(title: const Text('admins'))),
+          ),
+        ],
+      );
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [campListProvider.overrideWith((ref) async => const [])],
+          child: MaterialApp.router(routerConfig: router),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // act
+      await tester.tap(find.text('관리자 계정 관리'));
+      await tester.pumpAndSettle();
+      expect(find.text('admins'), findsOneWidget);
+
+      await tester.tap(find.byType(BackButton));
+      await tester.pumpAndSettle();
+
+      // assert
+      expect(find.text('캠프 목록'), findsOneWidget);
+    },
+  );
+
   testWidgets('ShoudRetryWhenCampListProviderFails', (tester) async {
     // arrange
     var calls = 0;
