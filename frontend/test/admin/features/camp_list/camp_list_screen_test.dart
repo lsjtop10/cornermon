@@ -1,4 +1,5 @@
 import 'package:cornermon/admin/features/camp_list/camp_list_screen.dart';
+import 'package:cornermon/admin/session/admin_session_provider.dart';
 import 'package:cornermon/admin/session/selected_camp_provider.dart';
 import 'package:cornermon/shared/api/domain_aliases.dart' as api;
 import 'package:cornermon/shared/api/ids.dart';
@@ -200,4 +201,68 @@ void main() {
     // assert
     expect(calls, 2);
   });
+
+  testWidgets('ShoudCallLogoutWhenLogoutConfirmed', (tester) async {
+    // arrange
+    final fakeSession = _RecordingLogoutAdminSession();
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          campListProvider.overrideWith((ref) async => const []),
+          adminSessionProvider.overrideWith(() => fakeSession),
+        ],
+        child: const MaterialApp(home: CampListScreen()),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // act
+    await tester.tap(find.text('로그아웃'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('진행'));
+    await tester.pumpAndSettle();
+
+    // assert
+    expect(fakeSession.logoutCallCount, 1);
+  });
+
+  testWidgets('ShoudNotCallLogoutWhenLogoutConfirmationCancelled', (
+    tester,
+  ) async {
+    // arrange
+    final fakeSession = _RecordingLogoutAdminSession();
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          campListProvider.overrideWith((ref) async => const []),
+          adminSessionProvider.overrideWith(() => fakeSession),
+        ],
+        child: const MaterialApp(home: CampListScreen()),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // act
+    await tester.tap(find.text('로그아웃'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('취소'));
+    await tester.pumpAndSettle();
+
+    // assert
+    expect(fakeSession.logoutCallCount, 0);
+  });
+}
+
+/// 실제 로그아웃 API 호출 없이 CampListScreen의 로그아웃 버튼 → 확인 모달 연결만
+/// 검증한다.
+class _RecordingLogoutAdminSession extends AdminSession {
+  int logoutCallCount = 0;
+
+  @override
+  AdminSessionState build() => const AdminSessionUnauthenticated();
+
+  @override
+  Future<void> logout() async {
+    logoutCallCount++;
+  }
 }
