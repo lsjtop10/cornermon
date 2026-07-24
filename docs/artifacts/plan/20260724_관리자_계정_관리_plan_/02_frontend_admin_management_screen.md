@@ -37,27 +37,33 @@
 
 ## 3. 설계
 
-### 3.1 세션 상태 확장 (`lib/admin/session/admin_session_provider.dart`)
+### 3.1 (구현 중 변경) `AdminSession`은 건드리지 않는다
+
+최초 계획은 `AdminSession`(`admin_session_provider.dart`)에 `adminId`/`username`/`role`을
+추가하고 `login()`/`_restore()` 이후 `GET /admins/me`로 채우는 `_loadSelf()`를 도입하는
+것이었다. 구현하며 두 가지 문제가 드러나 **되돌렸다**:
+
+1. `login()`이 `_loadSelf()` 실패를 그대로 전파하면, 자격증명은 유효했고 토큰도 이미
+   로컬에 저장됐는데도 뒤이은 프로필 조회 한 번의 일시적 실패(타임아웃 등)로 로그인 자체가
+   실패한 것처럼 보이는 사용자 경험이 생긴다.
+2. 실제로 `AdminSession`의 `role`/`adminId`를 읽는 소비자가 이 기능 범위 안에 없다 —
+   `AdminManagementScreen`은 본인 정보를 `AdminSession`이 아니라 `currentAdminProvider`를
+   **화면에서 직접** 구독해서 얻는다(§3.3). 즉 세션에 캐싱해 둘 이유가 없었다.
+
+이 변경을 시도하다 기존 `test/admin/features/login/login_test.dart`가 실패하는 것으로
+실제 확인됨(`currentAdminProvider` 미오버라이드 시 `login()`이 타임아웃) — `AdminSession`은
+원래 형태(`accessToken`/`adminId`만, `adminId`는 로그인 아이디 그대로) 그대로 유지한다.
+본인 탈퇴 후 로컬 세션 정리는 기존에 이미 있던 `AdminSession.invalidate()`(서버 재호출 없이
+로컬 토큰만 삭제)를 그대로 재사용한다.
+
+### 3.2 API Provider (`lib/shared/api/providers/auth_device_trust_providers.dart` 기존 파일 확장)
+
+기존 `adminLogin`/`adminLogout`/`revokeAdminSession` 등과 동일한 관례(`AAuthDeviceTrustApi` 재사용,
+쓰기 액션은 `@Riverpod(retry: noRetry)`)를 따른다.
 
 ```dart
-class AdminSessionAuthenticated extends AdminSessionState {
-  const AdminSessionAuthenticated({
-    required this.accessToken,
-    required this.adminId,   // 실제 서버 ID로 의미 변경 (기존: username 임시값)
-    required this.username,
-    required this.role,      // AdminResponseRoleEnum
-  });
-}
-
-class AdminSession extends Notifier<AdminSessionState> {
-  // 책임: 토큰 확보(_restore 또는 login) 이후 GET /admins/me로 본인 정보를 채운다.
-  Future<void> _loadSelf(String accessToken) async { ... }
-}
-```
-
-`_restore()`/`login()` 모두 토큰을 얻은 뒤 `_loadSelf`를 호출하도록 리팩터링한다. `/admins/me`
-호출 실패(예: 토큰 만료)는 기존 401 처리 경로(`admin_session_token_source.dart`의 자동
-`invalidate()`)에 자연스럽게 위임된다.
+@riverpod
+Future<AdminResponse> currentAdmin(Ref ref) async { ... } // GET /admins/me
 
 ### 3.2 API Provider (`lib/shared/api/providers/auth_device_trust_providers.dart` 기존 파일 확장)
 
@@ -139,7 +145,7 @@ TextButton.icon(
 | 순서 | 작업 | 파일 | 예상 소요 |
 |---|---|---|---|
 | F-1 | 백엔드 `swagger.yaml` 갱신분으로 `openapi-generator` 재생성 | `lib/shared/api/gen/**` (자동 생성) | 10분 |
-| F-2 | `AdminSessionAuthenticated`에 `username`/`role` 추가, `_loadSelf()` 도입해 `_restore()`/`login()` 리팩터 | `lib/admin/session/admin_session_provider.dart` | 1시간 |
+| F-2 | ~~`AdminSession` 리팩터~~ — §3.1에서 취소, 변경 없음 | - | - |
 | F-3 | `currentAdmin`/`adminList`/`createAdmin`/`deleteAdminAccount`/`changeAdminPassword` provider 추가 | `lib/shared/api/providers/auth_device_trust_providers.dart` (기존 파일 확장) | 40분 |
 | F-4 | `AdminManagementScreen` + 목록/추가 다이얼로그(SYSTEM_ADMIN 경로) | `lib/admin/features/admin_management/admin_management_screen.dart`, `widgets/_create_admin_dialog.dart`, `widgets/_admin_list_tile.dart` (신규) | 2시간 |
 | F-5 | `_MyAccountCard`(비밀번호 변경 + 본인 탈퇴, 두 role 공통) | `lib/admin/features/admin_management/widgets/_my_account_card.dart` (신규) | 1.5시간 |
@@ -164,6 +170,10 @@ TextButton.icon(
 - [ ] CORNER_OPERATOR 본인 비밀번호 변경 성공
 - [ ] **CORNER_OPERATOR 본인 탈퇴 → 확인 모달 → 성공 시 즉시 로그인 화면으로 이동, 재로그인 시도 시
       실패(계정 삭제 확인)**
-- [ ] 앱 완전 종료 후 재실행 → 로그인 화면 없이 세션 복원되며 역할별 UI가 올바르게(예: 사이드바/화면
-      분기) 유지되는지 확인 (`_restore()` → `_loadSelf()` 경로 검증)
+- [ ] 앱 완전 종료 후 재실행 → 로그인 화면 없이 세션 복원되고, `/admins` 재진입 시
+      `currentAdminProvider`가 정상적으로 다시 조회되는지 확인
 - [ ] 네트워크 끊긴 상태에서 목록 조회 시도 → 상단 배너, 삭제 실패 시 SnackBar로 구분 표시되는지 확인
+
+> 위 실기기/데스크톱 항목은 샌드박스 환경(디스플레이·에뮬레이터 없음)에서는 실행할 수 없어
+> **미검증 상태**다 — 코드 검증(§5.1)과 위젯 테스트만 자동으로 확인했다. 병합 전 사용자가
+> `make run-admin`으로 직접 확인 필요.
