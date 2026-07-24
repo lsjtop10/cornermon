@@ -6,19 +6,36 @@ REMOTE_IP="100.101.91.104"
 LOCAL_DIR="."
 REMOTE_DIR="~/projects/cornermon-clone"
 
-# Flutter/Xcode가 머신별로 생성하는 파일은 Mac mini에서 다시 만들어야 한다.
-# 이를 동기화하면 iOS Swift Package Manager가 Linux의 ephemeral 경로를 참조해
-# 패키지를 찾지 못할 수 있다. --delete와 함께 써도 exclude 대상은 원격에서 지우지 않는다.
+# Flutter/Gradle/Xcode가 머신별로 생성하는 파일(gradlew, Flutter.podspec, 각 플랫폼의
+# ephemeral/ 등)은 어차피 Mac mini에서 flutter pub get/create/pod install로 다시 만들어야
+# 한다. 이를 동기화 대상에 두면 두 가지 문제가 생긴다: (1) Linux에는 애초에 없는
+# 파일(gradlew 등)이라 동기화해도 못 채워주고, (2) linux/flutter/ephemeral처럼 Flutter
+# 툴이 빌드마다 통째로 지우고 재생성하는 디렉터리는 rsync가 같은 타이밍에 건드리면
+# "Directory not empty" 레이스로 flutter 명령 자체가 죽는다(실제 발생 사례).
+# --delete와 함께 써도 exclude 대상은 원격에서 지우지 않는다.
 RSYNC_EXCLUDES=(
     --exclude='frontend/.dart_tool/'
     --exclude='frontend/build/'
     --exclude='frontend/ios/Flutter/ephemeral/'
+    --exclude='frontend/ios/Flutter/Flutter.podspec'
+    --exclude='frontend/ios/Flutter/Generated.xcconfig'
     --exclude='frontend/ios/Pods/'
     --exclude='frontend/ios/.symlinks/'
+    --exclude='frontend/macos/Flutter/ephemeral/'
+    --exclude='frontend/macos/Pods/'
+    --exclude='frontend/linux/flutter/ephemeral/'
+    --exclude='frontend/windows/flutter/ephemeral/'
+    --exclude='frontend/android/gradlew'
+    --exclude='frontend/android/gradlew.bat'
+    --exclude='frontend/android/.gradle/'
+    --exclude='frontend/android/app/build/'
+    --exclude='frontend/android/build/'
+    --exclude='frontend/android/.cxx/'
+    --exclude='frontend/android/local.properties'
 )
 
 # 제외 대상 변경은 동기화를 다시 시작할 필요도 없으므로 감시에서 함께 제외한다.
-WATCH_EXCLUDE='(^|/)(\|frontend/(\.dart_tool|build|ios/Flutter/ephemeral|ios/Pods|ios/\.symlinks))(/|$)'
+WATCH_EXCLUDE='(^|/)frontend/(\.dart_tool|build|ios/Flutter/(ephemeral|Flutter\.podspec|Generated\.xcconfig)|ios/Pods|ios/\.symlinks|macos/Flutter/ephemeral|macos/Pods|linux/flutter/ephemeral|windows/flutter/ephemeral|android/gradlew(\.bat)?|android/\.gradle|android/app/build|android/build|android/\.cxx|android/local\.properties)(/|$)'
 
 # 스크립트 실행 시 비밀번호 입력받음
 read -sp "SSH Password: " REMOTE_PASS

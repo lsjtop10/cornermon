@@ -1,11 +1,15 @@
 import 'package:cornermon/admin/entities/camp_ext.dart';
+import 'package:cornermon/admin/session/admin_session_provider.dart';
 import 'package:cornermon/admin/session/selected_camp_provider.dart';
+import 'package:cornermon/shared/api/dio_error.dart';
 import 'package:cornermon/shared/api/domain_aliases.dart' as api;
 import 'package:cornermon/shared/api/ids.dart';
 import 'package:cornermon/shared/api/providers/camp_providers.dart';
 import 'package:cornermon/shared/design_system/widgets/app_button.dart';
+import 'package:cornermon/shared/design_system/widgets/confirm_modal.dart';
 import 'package:cornermon/shared/design_system/widgets/empty_state.dart';
 import 'package:cornermon/shared/design_system/widgets/app_tag.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -38,6 +42,12 @@ class CampListScreen extends ConsumerWidget {
             icon: Icons.add,
             label: '새 캠프 시작',
             onPressed: () => context.go('/setup-wizard'),
+          ),
+          const SizedBox(width: 8),
+          TextButton.icon(
+            onPressed: () => _confirmLogout(context, ref),
+            icon: const Icon(Icons.logout),
+            label: const Text('로그아웃'),
           ),
           const SizedBox(width: 18),
         ],
@@ -82,6 +92,33 @@ class CampListScreen extends ConsumerWidget {
         },
       ),
     );
+  }
+}
+
+/// 로그아웃 성공/실패와 무관하게 `AdminSession.logout()`이 로컬 세션을 항상 정리하므로
+/// (best-effort 서버 revoke), 라우터가 곧 `/login`으로 리다이렉트한다 — 여기서 직접
+/// 내비게이션하지 않는다.
+Future<void> _confirmLogout(BuildContext context, WidgetRef ref) async {
+  final confirmed = await showConfirmModal(
+    context,
+    kind: ConfirmModalKind.softConfirm,
+    title: '로그아웃하시겠습니까?',
+    body: '다시 사용하려면 로그인이 필요합니다.',
+  );
+  if (!confirmed) return;
+
+  try {
+    await ref.read(adminSessionProvider.notifier).logout();
+  } on DioException catch (error, stackTrace) {
+    debugPrint(
+      '[camp_list] logout failed: type=${error.type} '
+      'statusCode=${error.response?.statusCode}\n$stackTrace',
+    );
+    if (isConnectionLost(error)) return;
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('로그아웃 처리 중 오류가 발생했습니다.')));
   }
 }
 
