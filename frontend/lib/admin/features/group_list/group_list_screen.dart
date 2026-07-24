@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cornermon/admin/entities/group_ext.dart';
 import 'package:cornermon/admin/session/selected_camp_provider.dart';
 import 'package:cornermon/shared/api/domain_aliases.dart' as api;
@@ -9,6 +11,7 @@ import 'package:cornermon/shared/design_system/tokens/typography.dart';
 import 'package:cornermon/shared/design_system/widgets/app_button.dart';
 import 'package:cornermon/shared/design_system/widgets/app_tag.dart';
 import 'package:cornermon/shared/design_system/widgets/pill_tab_bar.dart';
+import 'package:cornermon/shared/design_system/widgets/qr_scan_frame.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -259,6 +262,8 @@ class _RegisterGroupDialog extends ConsumerStatefulWidget {
 class _RegisterGroupDialogState extends ConsumerState<_RegisterGroupDialog> {
   final _name = TextEditingController();
   final _payload = TextEditingController();
+  final MobileScannerController _scannerController =
+      MobileScannerController();
   int _tab = 0;
   bool _busy = false;
   bool _scanned = false;
@@ -266,7 +271,24 @@ class _RegisterGroupDialogState extends ConsumerState<_RegisterGroupDialog> {
   void dispose() {
     _name.dispose();
     _payload.dispose();
+    unawaited(_scannerController.dispose());
     super.dispose();
+  }
+
+  // 카메라 프리뷰(MobileScanner) 위젯을 트리에서 통째로 스왑하면, 아직 처리 중인 네이티브
+  // 프레임 콜백이 이미 dispose된 카메라를 참조해 "Attempt to invoke virtual method ...
+  // on a null object reference"로 프로덕션에서 죽었다(mobile_scanner Android 플랫폼 뷰
+  // 언마운트 레이스). 위젯은 계속 마운트해 두고 controller.stop()으로만 카메라를 멈춘다
+  // — 진행자 QrScanScreen과 동일한 패턴(qr_scan_screen.dart 참고).
+  void _onDetect(BarcodeCapture capture) {
+    if (_scanned) return;
+    final token = capture.barcodes.firstOrNull?.rawValue;
+    if (token == null) return;
+    unawaited(_scannerController.stop());
+    setState(() {
+      _payload.text = token;
+      _scanned = true;
+    });
   }
 
   Future<void> _submit() async {
@@ -318,20 +340,57 @@ class _RegisterGroupDialogState extends ConsumerState<_RegisterGroupDialog> {
             if (_tab == 0)
               SizedBox(
                 height: 220,
-                child: _scanned
-                    ? Center(child: Text('QR 인식 완료: ${_payload.text}'))
-                    : MobileScanner(
-                        onDetect: (capture) {
-                          if (!mounted || _scanned) return;
-                          final token = capture.barcodes.firstOrNull?.rawValue;
-                          if (token != null) {
-                            setState(() {
-                              _payload.text = token;
-                              _scanned = true;
-                            });
-                          }
-                        },
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Stack(
+                    fit: StackFit.expand,
+                    alignment: Alignment.center,
+                    children: [
+                      ColoredBox(
+                        color: Colors.black,
+                        child: MobileScanner(
+                          controller: _scannerController,
+                          onDetect: _onDetect,
+                          errorBuilder: (context, error) => Center(
+                            child: Padding(
+                              padding: const EdgeInsets.all(
+                                AppSpacing.space4,
+                              ),
+                              child: Text(
+                                '카메라를 사용할 수 없습니다. 카메라 권한을 확인해주세요.',
+                                textAlign: TextAlign.center,
+                                style: AppTypography.body.copyWith(
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
                       ),
+                      IgnorePointer(
+                        child: QrScanFrame(
+                          state: _scanned
+                              ? QrScanFrameState.success
+                              : QrScanFrameState.scanning,
+                          size: 160,
+                        ),
+                      ),
+                      if (_scanned)
+                        Positioned(
+                          bottom: 8,
+                          left: 8,
+                          right: 8,
+                          child: Text(
+                            'QR 인식 완료: ${_payload.text}',
+                            textAlign: TextAlign.center,
+                            style: AppTypography.caption.copyWith(
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
               )
             else if (_tab == 1)
               SizedBox(
