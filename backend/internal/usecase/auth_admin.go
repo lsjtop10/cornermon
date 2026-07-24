@@ -240,18 +240,33 @@ func (s *AdminAuthService) DeleteAdmin(
 	targetAdminID domain.AdminID,
 ) error {
 
-	if _, err := s.authorizeSystemAdmin(ctx, actorAdminID); err != nil {
-		return err // D-2 allowed: already wrapped or handled
+	actor, err := s.admins.Get(ctx, actorAdminID)
+	if err != nil {
+		return withErrorContext("auth_admin.delete_admin", "repository.get_actor", err, map[string]any{"actor_admin_id": string(actorAdminID)})
 	}
-	if actorAdminID == targetAdminID {
+	if actor == nil {
+		return withErrorContext("auth_admin.delete_admin", "validate_actor", domain.ErrAdminNotFound, map[string]any{"actor_admin_id": string(actorAdminID), "admin_found": false})
+	}
+
+	isSelf := actorAdminID == targetAdminID
+	// 운영 관리자(CORNER_OPERATOR)는 본인 계정을 탈퇴할 수 있다. 시스템 관리자의 본인 삭제는
+	// 마지막 시스템 관리자 보호와 무관하게 계속 금지한다.
+	if isSelf && !actor.IsCornerOperator() {
 		return withErrorContext("auth_admin.delete_admin", "validate_self_delete", domain.ErrAdminSelfDeleteForbidden, map[string]any{"admin_id": string(actorAdminID)})
 	}
-	target, err := s.admins.Get(ctx, targetAdminID)
-	if err != nil {
-		return withErrorContext("auth_admin.delete_admin", "repository.get_admin", err, map[string]any{"target_admin_id": string(targetAdminID)})
+	if !isSelf && !actor.IsSystemAdmin() {
+		return withErrorContext("auth_admin.delete_admin", "validate_system_admin", domain.ErrAdminForbidden, map[string]any{"actor_admin_id": string(actorAdminID), "role": string(actor.Role())})
 	}
-	if target == nil {
-		return withErrorContext("auth_admin.delete_admin", "validate_admin", domain.ErrAdminNotFound, map[string]any{"target_admin_id": string(targetAdminID), "admin_found": false})
+
+	target := actor
+	if !isSelf {
+		target, err = s.admins.Get(ctx, targetAdminID)
+		if err != nil {
+			return withErrorContext("auth_admin.delete_admin", "repository.get_admin", err, map[string]any{"target_admin_id": string(targetAdminID)})
+		}
+		if target == nil {
+			return withErrorContext("auth_admin.delete_admin", "validate_admin", domain.ErrAdminNotFound, map[string]any{"target_admin_id": string(targetAdminID), "admin_found": false})
+		}
 	}
 	if target.IsSystemAdmin() {
 		count, err := s.admins.CountByRole(ctx, domain.AdminRoleSystemAdmin)
@@ -268,11 +283,35 @@ func (s *AdminAuthService) DeleteAdmin(
 		}
 		return nil
 	}); err != nil {
-		s.recordAuditLog(ctx, domain.None[domain.CampID](), string(actorAdminID), adminActorLabel(ctx, s.admins, actorAdminID, nil), ActionAdminDelete, string(targetAdminID), target.Username(), false, errorAuditMetadata(err, nil))
+		s.recordAuditLog(ctx, domain.None[domain.CampID](), string(actorAdminID), adminActorLabel(ctx, s.admins, actorAdminID, actor), ActionAdminDelete, string(targetAdminID), target.Username(), false, errorAuditMetadata(err, nil))
 		return err // D-2 allowed: already wrapped or handled
 	}
-	s.recordAuditLog(ctx, domain.None[domain.CampID](), string(actorAdminID), adminActorLabel(ctx, s.admins, actorAdminID, nil), ActionAdminDelete, string(targetAdminID), target.Username(), true, nil)
+	s.recordAuditLog(ctx, domain.None[domain.CampID](), string(actorAdminID), adminActorLabel(ctx, s.admins, actorAdminID, actor), ActionAdminDelete, string(targetAdminID), target.Username(), true, map[string]any{"self": isSelf})
 	return nil
+}
+
+// GetAdmin - 세션 소유자 본인 정보를 조회한다. 별도 역할 인가는 필요하지 않다.
+func (s *AdminAuthService) GetAdmin(ctx context.Context, actorAdminID domain.AdminID) (*domain.Admin, error) {
+	admin, err := s.admins.Get(ctx, actorAdminID)
+	if err != nil {
+		return nil, withErrorContext("auth_admin.get_admin", "repository.get_admin", err, map[string]any{"actor_admin_id": string(actorAdminID)})
+	}
+	if admin == nil {
+		return nil, withErrorContext("auth_admin.get_admin", "validate_admin", domain.ErrAdminNotFound, map[string]any{"actor_admin_id": string(actorAdminID), "admin_found": false})
+	}
+	return admin, nil
+}
+
+// ListAdmins - 전체 관리자 목록을 조회한다. SYSTEM_ADMIN만 호출할 수 있다.
+func (s *AdminAuthService) ListAdmins(ctx context.Context, actorAdminID domain.AdminID) ([]*domain.Admin, error) {
+	if _, err := s.authorizeSystemAdmin(ctx, actorAdminID); err != nil {
+		return nil, err // D-2 allowed: already wrapped or handled
+	}
+	admins, err := s.admins.List(ctx)
+	if err != nil {
+		return nil, withErrorContext("auth_admin.list_admins", "repository.list_admins", err, nil)
+	}
+	return admins, nil
 }
 
 func (s *AdminAuthService) authorizeSystemAdmin(ctx context.Context, actorAdminID domain.AdminID) (*domain.Admin, error) {

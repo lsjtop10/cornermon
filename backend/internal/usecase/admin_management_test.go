@@ -135,6 +135,81 @@ func TestAdminAuthService_AdminManagement(t *testing.T) {
 			t.Fatalf("expected self-delete forbidden, got %v", err)
 		}
 	})
+
+	t.Run("ShouldAllowCornerOperatorToDeleteSelf", func(t *testing.T) {
+		// Arrange
+		admins := NewMockAdminRepository()
+		admins.Admins["operator"] = domain.NewAdminFromProps(domain.AdminProps{ID: "operator", Role: domain.AdminRoleCornerOperator})
+
+		// Act
+		err := newAdminManagementService(admins).DeleteAdmin(context.Background(), "operator", "operator")
+
+		// Assert
+		if err != nil {
+			t.Fatalf("expected corner operator self-withdrawal to succeed, got %v", err)
+		}
+		if _, ok := admins.Admins["operator"]; ok {
+			t.Fatal("expected operator to be removed after self-withdrawal")
+		}
+	})
+
+	t.Run("ShouldReturnForbiddenWhenCornerOperatorDeletesAnother", func(t *testing.T) {
+		// Arrange
+		admins := NewMockAdminRepository()
+		admins.Admins["operator"] = domain.NewAdminFromProps(domain.AdminProps{ID: "operator", Role: domain.AdminRoleCornerOperator})
+		admins.Admins["other"] = domain.NewAdminFromProps(domain.AdminProps{ID: "other", Role: domain.AdminRoleCornerOperator})
+
+		// Act
+		err := newAdminManagementService(admins).DeleteAdmin(context.Background(), "operator", "other")
+
+		// Assert
+		if !errors.Is(err, domain.ErrAdminForbidden) {
+			t.Fatalf("expected forbidden, got %v", err)
+		}
+	})
+
+	t.Run("ShouldReturnSelfAdminWhenGetAdminCalled", func(t *testing.T) {
+		// Arrange
+		admins := NewMockAdminRepository()
+		admins.Admins["operator"] = domain.NewAdminFromProps(domain.AdminProps{ID: "operator", Username: "operator", Role: domain.AdminRoleCornerOperator})
+
+		// Act
+		admin, err := newAdminManagementService(admins).GetAdmin(context.Background(), "operator")
+
+		// Assert
+		if err != nil || admin.Username() != "operator" {
+			t.Fatalf("expected self admin info, got admin=%+v err=%v", admin, err)
+		}
+	})
+
+	t.Run("ShouldListAllAdminsWhenActorIsSystemAdmin", func(t *testing.T) {
+		// Arrange
+		admins := NewMockAdminRepository()
+		admins.Admins["system"] = domain.NewAdminFromProps(domain.AdminProps{ID: "system", Role: domain.AdminRoleSystemAdmin})
+		admins.Admins["operator"] = domain.NewAdminFromProps(domain.AdminProps{ID: "operator", Role: domain.AdminRoleCornerOperator})
+
+		// Act
+		list, err := newAdminManagementService(admins).ListAdmins(context.Background(), "system")
+
+		// Assert
+		if err != nil || len(list) != 2 {
+			t.Fatalf("expected 2 admins listed, got list=%+v err=%v", list, err)
+		}
+	})
+
+	t.Run("ShouldReturnForbiddenWhenCornerOperatorListsAdmins", func(t *testing.T) {
+		// Arrange
+		admins := NewMockAdminRepository()
+		admins.Admins["operator"] = domain.NewAdminFromProps(domain.AdminProps{ID: "operator", Role: domain.AdminRoleCornerOperator})
+
+		// Act
+		_, err := newAdminManagementService(admins).ListAdmins(context.Background(), "operator")
+
+		// Assert
+		if !errors.Is(err, domain.ErrAdminForbidden) {
+			t.Fatalf("expected forbidden, got %v", err)
+		}
+	})
 }
 
 func TestBootstrapAdmin(t *testing.T) {

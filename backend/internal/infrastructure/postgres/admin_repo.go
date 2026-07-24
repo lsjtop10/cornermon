@@ -78,3 +78,15 @@ func (r *pgAdminRepository) CountByRole(ctx context.Context, role domain.AdminRo
 	count, err := r.queries(ctx).CountAdminsByRole(ctx, string(role))
 	return int(count), err
 }
+
+func (r *pgAdminRepository) List(ctx context.Context) ([]*domain.Admin, error) {
+	rows, err := r.queries(ctx).ListAdmins(ctx)
+	if err != nil {
+		return nil, errs.Wrap(ctx, err)
+	}
+	admins := make([]*domain.Admin, 0, len(rows))
+	for _, row := range rows {
+		admins = append(admins, mapAdmin(row))
+	}
+	return admins, nil
+}

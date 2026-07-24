@@ -140,6 +140,7 @@ type AdminRepository interface {
 	Delete(ctx context.Context, id domain.AdminID) error
 	Count(ctx context.Context) (int, error)
 	CountByRole(ctx context.Context, role domain.AdminRole) (int, error)
+	List(ctx context.Context) ([]*domain.Admin, error)
 }
 
 // AdminSessionRepository는 관리자 세션 엔티티의 지속성을 담당하는 포트입니다.

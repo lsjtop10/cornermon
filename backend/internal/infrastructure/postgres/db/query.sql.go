@@ -660,6 +660,35 @@ func (q *Queries) ListAdminSessionsByAdmin(ctx context.Context, adminID string) 
 	return items, nil
 }
 
+const listAdmins = `-- name: ListAdmins :many
+SELECT id, username, password_hash, role FROM admins ORDER BY username
+`
+
+func (q *Queries) ListAdmins(ctx context.Context) ([]Admin, error) {
+	rows, err := q.db.Query(ctx, listAdmins)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Admin
+	for rows.Next() {
+		var i Admin
+		if err := rows.Scan(
+			&i.ID,
+			&i.Username,
+			&i.PasswordHash,
+			&i.Role,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listAllBadges = `-- name: ListAllBadges :many
 SELECT id, short_id, qr_payload, status, assigned_group_id FROM badges
 `
