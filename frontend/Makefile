@@ -29,6 +29,13 @@ run-admin:unlock-keychain
 run-facilitator:unlock-keychain
 	flutter run --dart-define-from-file=env/dev.json -t lib/main_facilitator.dart --flavor facilitator
 
+run-admin-prod:unlock-keychain
+	flutter run --release --dart-define-from-file=env/prod.json -t lib/main_admin.dart --flavor admin
+
+run-facilitator-prod:unlock-keychain
+	flutter run --release --dart-define-from-file=env/prod.json -t lib/main_facilitator.dart --flavor facilitator
+
+
 # pubspec.yaml의 Dart SDK 하한을 만족하는 Flutter/Dart 도구 이미지를 만든다.
 # 빌드 컨텍스트에는 Dockerfile만 전달하므로 앱 소스는 이미지에 포함하지 않는다.
 docker-build:
