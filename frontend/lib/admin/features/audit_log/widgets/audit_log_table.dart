@@ -7,6 +7,7 @@ import 'package:cornermon/shared/design_system/tokens/typography.dart';
 import 'package:cornermon/shared/design_system/widgets/empty_state.dart';
 
 import '../audit_log_action_labels.dart';
+import 'audit_log_metadata_dialog.dart';
 
 const _columnFlex = [3, 2, 2, 2, 2];
 
@@ -74,65 +75,96 @@ class _AuditLogRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isFailure = log.success == false;
-    return Container(
-      decoration: BoxDecoration(
-        border: Border(
-          left: BorderSide(
-            width: 4,
-            color: isFailure ? colors.danger : Colors.transparent,
+    return InkWell(
+      onTap: () => AuditLogMetadataDialog.show(context, log),
+      child: Container(
+        decoration: BoxDecoration(
+          border: Border(
+            left: BorderSide(
+              width: 4,
+              color: isFailure ? colors.danger : Colors.transparent,
+            ),
+            bottom: BorderSide(color: colors.border),
           ),
-          bottom: BorderSide(color: colors.border),
+          color: isFailure
+              // ignore: deprecated_member_use
+              ? colors.danger.withOpacity(isDark(context) ? 0.10 : 0.06)
+              : null,
         ),
-        color: isFailure
-            // ignore: deprecated_member_use
-            ? colors.danger.withOpacity(isDark(context) ? 0.10 : 0.06)
-            : null,
-      ),
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.space4,
-        vertical: AppSpacing.space3,
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            flex: _columnFlex[0],
-            child: Text(
-              _formatOccurredAt(log.occurredAt),
-              style: AppTypography.body.copyWith(color: colors.textPrimary),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.space4,
+          vertical: AppSpacing.space3,
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              flex: _columnFlex[0],
+              child: Text(
+                _formatOccurredAt(log.occurredAt),
+                style: AppTypography.body.copyWith(color: colors.textPrimary),
+              ),
             ),
-          ),
-          Expanded(
-            flex: _columnFlex[1],
-            child: Text(
-              log.actor ?? '-',
-              style: AppTypography.body.copyWith(color: colors.textPrimary),
+            Expanded(
+              flex: _columnFlex[1],
+              child: _SnapshotLabel(
+                snapshot: log.actorName,
+                rawId: log.actor,
+                colors: colors,
+              ),
             ),
-          ),
-          Expanded(
-            flex: _columnFlex[2],
-            child: Text(
-              auditLogActionLabel(log.action?.name),
-              style: AppTypography.body.copyWith(color: colors.textPrimary),
+            Expanded(
+              flex: _columnFlex[2],
+              child: Text(
+                auditLogActionLabel(log.action?.name),
+                style: AppTypography.body.copyWith(color: colors.textPrimary),
+              ),
             ),
-          ),
-          Expanded(
-            flex: _columnFlex[3],
-            child: Text(
-              log.target ?? '-',
-              style: AppTypography.body.copyWith(color: colors.textPrimary),
+            Expanded(
+              flex: _columnFlex[3],
+              child: _SnapshotLabel(
+                snapshot: log.targetName,
+                rawId: log.target,
+                colors: colors,
+              ),
             ),
-          ),
-          Expanded(
-            flex: _columnFlex[4],
-            child: _ResultBadge(success: log.success, colors: colors),
-          ),
-        ],
+            Expanded(
+              flex: _columnFlex[4],
+              child: _ResultBadge(success: log.success, colors: colors),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   static bool isDark(BuildContext context) =>
       Theme.of(context).brightness == Brightness.dark;
+}
+
+/// 스냅샷(사람이 읽을 수 있는 이름) 우선 표시, 없으면 원시 ID로 폴백.
+/// 스냅샷을 표시할 때는 원시 ID를 Tooltip으로 보조 노출한다.
+class _SnapshotLabel extends StatelessWidget {
+  const _SnapshotLabel({
+    required this.snapshot,
+    required this.rawId,
+    required this.colors,
+  });
+
+  final String? snapshot;
+  final String? rawId;
+  final AppColors colors;
+
+  @override
+  Widget build(BuildContext context) {
+    final hasSnapshot = snapshot != null && snapshot!.isNotEmpty;
+    final text = Text(
+      hasSnapshot ? snapshot! : (rawId ?? '-'),
+      style: AppTypography.body.copyWith(color: colors.textPrimary),
+      overflow: TextOverflow.ellipsis,
+    );
+    if (!hasSnapshot || rawId == null || rawId!.isEmpty) return text;
+    return Tooltip(message: rawId!, child: text);
+  }
 }
 
 class _ResultBadge extends StatelessWidget {
