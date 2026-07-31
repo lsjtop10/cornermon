@@ -307,7 +307,7 @@ class BResourceManagementAdminApi {
   ///
   /// Parameters:
   /// * [id] - 배지 ID
-  /// * [request] - 배정할 조 ID
+  /// * [request] - 배정할 캠프와 조 이름
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
   /// * [headers] - Can be used to add additional headers to the request
   /// * [extras] - Can be used to add flags to the request

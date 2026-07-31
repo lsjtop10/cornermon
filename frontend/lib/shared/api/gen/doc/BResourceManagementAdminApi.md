@@ -189,7 +189,7 @@ import 'package:cornermon_api_gen/api.dart';
 
 final api = CornermonApiGen().getBResourceManagementAdminApi();
 final String id = id_example; // String | 배지 ID
-final AssignBadgeRequest request = ; // AssignBadgeRequest | 배정할 조 ID
+final AssignBadgeRequest request = ; // AssignBadgeRequest | 배정할 캠프와 조 이름
 
 try {
     final response = api.badgesIdRegisterPost(id, request);
@@ -204,7 +204,7 @@ try {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **id** | **String**| 배지 ID | 
- **request** | [**AssignBadgeRequest**](AssignBadgeRequest.md)| 배정할 조 ID | 
+ **request** | [**AssignBadgeRequest**](AssignBadgeRequest.md)| 배정할 캠프와 조 이름 | 
 
 ### Return type
 

@@ -172,7 +172,7 @@ final class RegisterBadgeProvider
     with $FutureModifier<Badge>, $FutureProvider<Badge> {
   RegisterBadgeProvider._({
     required RegisterBadgeFamily super.from,
-    required (String, String) super.argument,
+    required (String, String, String) super.argument,
   }) : super(
          retry: null,
          name: r'registerBadgeProvider',
@@ -198,8 +198,8 @@ final class RegisterBadgeProvider
 
   @override
   FutureOr<Badge> create(Ref ref) {
-    final argument = this.argument as (String, String);
-    return registerBadge(ref, argument.$1, argument.$2);
+    final argument = this.argument as (String, String, String);
+    return registerBadge(ref, argument.$1, argument.$2, argument.$3);
   }
 
   @override
@@ -213,10 +213,10 @@ final class RegisterBadgeProvider
   }
 }
 
-String _$registerBadgeHash() => r'76dbd6c08c461f7ebbb99ee796518bb070d25f95';
+String _$registerBadgeHash() => r'd979c5536e3eb380c6deab760206a55b394811e1';
 
 final class RegisterBadgeFamily extends $Family
-    with $FunctionalFamilyOverride<FutureOr<Badge>, (String, String)> {
+    with $FunctionalFamilyOverride<FutureOr<Badge>, (String, String, String)> {
   RegisterBadgeFamily._()
     : super(
         retry: null,
@@ -226,8 +226,11 @@ final class RegisterBadgeFamily extends $Family
         isAutoDispose: true,
       );
 
-  RegisterBadgeProvider call(String badgeId, String groupId) =>
-      RegisterBadgeProvider._(argument: (badgeId, groupId), from: this);
+  RegisterBadgeProvider call(String badgeId, String campId, String groupName) =>
+      RegisterBadgeProvider._(
+        argument: (badgeId, campId, groupName),
+        from: this,
+      );
 
   @override
   String toString() => r'registerBadgeProvider';
@@ -241,7 +244,7 @@ final class ScanRegisterBadgeProvider
     with $FutureModifier<Group>, $FutureProvider<Group> {
   ScanRegisterBadgeProvider._({
     required ScanRegisterBadgeFamily super.from,
-    required (String, String) super.argument,
+    required (String, String, String) super.argument,
   }) : super(
          retry: null,
          name: r'scanRegisterBadgeProvider',
@@ -267,8 +270,8 @@ final class ScanRegisterBadgeProvider
 
   @override
   FutureOr<Group> create(Ref ref) {
-    final argument = this.argument as (String, String);
-    return scanRegisterBadge(ref, argument.$1, argument.$2);
+    final argument = this.argument as (String, String, String);
+    return scanRegisterBadge(ref, argument.$1, argument.$2, argument.$3);
   }
 
   @override
@@ -282,10 +285,10 @@ final class ScanRegisterBadgeProvider
   }
 }
 
-String _$scanRegisterBadgeHash() => r'2d69ad079620acee51fe77a950d835ae26e3ee58';
+String _$scanRegisterBadgeHash() => r'f768b431f627c64553ee458446240410e2b9a30c';
 
 final class ScanRegisterBadgeFamily extends $Family
-    with $FunctionalFamilyOverride<FutureOr<Group>, (String, String)> {
+    with $FunctionalFamilyOverride<FutureOr<Group>, (String, String, String)> {
   ScanRegisterBadgeFamily._()
     : super(
         retry: null,
@@ -295,8 +298,14 @@ final class ScanRegisterBadgeFamily extends $Family
         isAutoDispose: true,
       );
 
-  ScanRegisterBadgeProvider call(String qrPayload, String groupName) =>
-      ScanRegisterBadgeProvider._(argument: (qrPayload, groupName), from: this);
+  ScanRegisterBadgeProvider call(
+    String campId,
+    String qrPayload,
+    String groupName,
+  ) => ScanRegisterBadgeProvider._(
+    argument: (campId, qrPayload, groupName),
+    from: this,
+  );
 
   @override
   String toString() => r'scanRegisterBadgeProvider';
