@@ -245,6 +245,9 @@ SELECT COUNT(*) FROM admins;
 -- name: CountAdminsByRole :one
 SELECT COUNT(*) FROM admins WHERE role = $1;
 
+-- name: ListAdmins :many
+SELECT * FROM admins ORDER BY username;
+
 -- name: GetAdminSession :one
 SELECT * FROM admin_sessions WHERE id = $1;
 

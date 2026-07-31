@@ -50,10 +50,11 @@ func NewGroupService(
 	}
 }
 
-// AssignBadge creates a group and assigns the badge identified by its ID to it.
-// The group belongs to the current registration camp (PENDING or ACTIVE).
+// AssignBadge creates a group in the given camp and assigns the badge
+// identified by its ID to it.
 func (s *GroupService) AssignBadge(
 	ctx context.Context,
+	campID domain.CampID,
 	badgeID domain.BadgeID,
 	groupName string,
 	actorAdminID domain.AdminID,
@@ -67,13 +68,14 @@ func (s *GroupService) AssignBadge(
 		return nil, withErrorContext("group.assign_badge", "validate_badge", domain.ErrBadgeNotAssigned, map[string]any{"badge_id": string(badgeID), "badge_found": false})
 	}
 
-	return s.registerBadge(ctx, badge, groupName, actorAdminID)
+	return s.registerBadge(ctx, campID, badge, groupName, actorAdminID)
 }
 
-// ScanAssignBadge creates a group and assigns the badge identified by its QR payload.
-// The group belongs to the current registration camp (PENDING or ACTIVE).
+// ScanAssignBadge creates a group in the given camp and assigns the badge
+// identified by its QR payload.
 func (s *GroupService) ScanAssignBadge(
 	ctx context.Context,
+	campID domain.CampID,
 	qrPayload string,
 	groupName string,
 	actorAdminID domain.AdminID,
@@ -87,23 +89,25 @@ func (s *GroupService) ScanAssignBadge(
 		return nil, withErrorContext("group.scan_assign_badge", "validate_badge", domain.ErrBadgeNotAssigned, map[string]any{"badge_found": false})
 	}
 
-	return s.registerBadge(ctx, badge, groupName, actorAdminID)
+	return s.registerBadge(ctx, campID, badge, groupName, actorAdminID)
 }
 
-func (s *GroupService) registerBadge(ctx context.Context, badge *domain.Badge, groupName string, actorAdminID domain.AdminID) (*domain.Group, error) {
+func (s *GroupService) registerBadge(ctx context.Context, campID domain.CampID, badge *domain.Badge, groupName string, actorAdminID domain.AdminID) (*domain.Group, error) {
 
-	camp, err := s.registrationCamp(ctx)
+	camp, err := s.camps.Get(ctx, campID)
 	if err != nil {
-		return nil, withErrorContext("group.register_badge", "usecase.registration_camp", err, nil)
+		return nil, withErrorContext("group.register_badge", "repository.get_camp", err, map[string]any{"camp_id": string(campID)})
 	}
 	if camp == nil {
-		return nil, withErrorContext("group.register_badge", "validate_camp", domain.ErrCampNotFound, map[string]any{"camp_found": false})
+		return nil, withErrorContext("group.register_badge", "validate_camp", domain.ErrCampNotFound, map[string]any{"camp_id": string(campID), "camp_found": false})
+	}
+	if camp.Status() == domain.CampEnded {
+		return nil, withErrorContext("group.register_badge", "validate_camp", domain.ErrCampInvalidTransition, map[string]any{"camp_id": string(campID), "camp_status": string(camp.Status())})
 	}
 	if badge.Status() == domain.BadgeAssigned {
 		return nil, withErrorContext("group.register_badge", "validate_badge_status", domain.ErrBadgeAlreadyAssigned, map[string]any{"badge_id": string(badge.ID()), "badge_status": string(badge.Status())})
 	}
 
-	campID := camp.ID()
 	corners, err := s.corners.ListByCamp(ctx, campID)
 	if err != nil {
 		return nil, withErrorContext("group.register_badge", "repository.list_corners", err, map[string]any{"camp_id": string(campID)})
@@ -147,25 +151,6 @@ func (s *GroupService) registerBadge(ctx context.Context, badge *domain.Badge, g
 
 	s.recordAuditLog(ctx, domain.Some(campID), string(actorAdminID), adminActorLabel(ctx, s.admins, actorAdminID, nil), ActionGroupCreate, string(groupID), groupName, true, map[string]any{"badgeID": string(badge.ID())})
 	return group, nil
-}
-
-func (s *GroupService) registrationCamp(ctx context.Context) (*domain.Camp, error) {
-
-	camps, err := s.camps.List(ctx)
-	if err != nil {
-		return nil, withErrorContext("group.registration_camp", "repository.list_camps", err, nil)
-	}
-
-	var pendingCamp *domain.Camp
-	for _, camp := range camps {
-		switch camp.Status() {
-		case domain.CampActive:
-			return camp, nil
-		case domain.CampPending:
-			pendingCamp = camp
-		}
-	}
-	return pendingCamp, nil
 }
 
 // ListGroups

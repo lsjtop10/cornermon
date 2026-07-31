@@ -10,6 +10,7 @@ import 'package:cornermon/shared/api/providers/message_providers.dart';
 import 'package:cornermon/shared/api/providers/report_providers.dart';
 import 'package:cornermon/shared/api/sse/admin_event_stream.dart';
 import 'package:cornermon/shared/design_system/widgets/connection_banner.dart';
+import 'admin_session_provider.dart';
 import 'selected_camp_provider.dart';
 
 part 'admin_event_coordinator.g.dart';
@@ -131,6 +132,12 @@ class AdminEventCoordinator extends _$AdminEventCoordinator {
 ConnectionBannerState adminConnectionBannerState(Ref ref) {
   final campId = ref.watch(selectedCampIdProvider);
   if (campId == null) return ConnectionBannerState.hidden;
+
+  // 세션이 없으면 SSE를 아예 시작하지 않는다 — 그렇지 않으면 로그인 화면에서도
+  // 토큰 없는 admin SSE 재연결이 계속 시도된다.
+  if (ref.watch(adminSessionProvider) is AdminSessionUnauthenticated) {
+    return ConnectionBannerState.hidden;
+  }
 
   // 디스패처를 살려 둬서 구독이 유지되도록 한다(캠프 선택 중엔 정확히 하나만 구독).
   ref.watch(adminEventCoordinatorProvider(campId));

@@ -43,6 +43,8 @@ const ErrorCode _$CodeInvalidTransition =
 const ErrorCode _$CodeItineraryConflict =
     const ErrorCode._('CodeItineraryConflict');
 const ErrorCode _$CodeNotFound = const ErrorCode._('CodeNotFound');
+const ErrorCode _$CodeSessionMigrationRequired =
+    const ErrorCode._('CodeSessionMigrationRequired');
 const ErrorCode _$CodeSessionRevoked = const ErrorCode._('CodeSessionRevoked');
 const ErrorCode _$CodeTrackBusy = const ErrorCode._('CodeTrackBusy');
 const ErrorCode _$CodeTrackConflict = const ErrorCode._('CodeTrackConflict');
@@ -105,6 +107,8 @@ ErrorCode _$valueOf(String name) {
       return _$CodeItineraryConflict;
     case 'CodeNotFound':
       return _$CodeNotFound;
+    case 'CodeSessionMigrationRequired':
+      return _$CodeSessionMigrationRequired;
     case 'CodeSessionRevoked':
       return _$CodeSessionRevoked;
     case 'CodeTrackBusy':
@@ -152,6 +156,7 @@ final BuiltSet<ErrorCode> _$values = BuiltSet<ErrorCode>(const <ErrorCode>[
   _$CodeInvalidTransition,
   _$CodeItineraryConflict,
   _$CodeNotFound,
+  _$CodeSessionMigrationRequired,
   _$CodeSessionRevoked,
   _$CodeTrackBusy,
   _$CodeTrackConflict,
@@ -189,6 +194,7 @@ class _$ErrorCodeMeta {
   ErrorCode get CodeInvalidTransition => _$CodeInvalidTransition;
   ErrorCode get CodeItineraryConflict => _$CodeItineraryConflict;
   ErrorCode get CodeNotFound => _$CodeNotFound;
+  ErrorCode get CodeSessionMigrationRequired => _$CodeSessionMigrationRequired;
   ErrorCode get CodeSessionRevoked => _$CodeSessionRevoked;
   ErrorCode get CodeTrackBusy => _$CodeTrackBusy;
   ErrorCode get CodeTrackConflict => _$CodeTrackConflict;
@@ -235,6 +241,7 @@ class _$ErrorCodeSerializer implements PrimitiveSerializer<ErrorCode> {
     'CodeInvalidTransition': 'INVALID_TRANSITION',
     'CodeItineraryConflict': 'ITINERARY_CONFLICT',
     'CodeNotFound': 'NOT_FOUND',
+    'CodeSessionMigrationRequired': 'SESSION_MIGRATION_REQUIRED',
     'CodeSessionRevoked': 'SESSION_REVOKED',
     'CodeTrackBusy': 'TRACK_BUSY',
     'CodeTrackConflict': 'TRACK_CONFLICT',
@@ -270,6 +277,7 @@ class _$ErrorCodeSerializer implements PrimitiveSerializer<ErrorCode> {
     'INVALID_TRANSITION': 'CodeInvalidTransition',
     'ITINERARY_CONFLICT': 'CodeItineraryConflict',
     'NOT_FOUND': 'CodeNotFound',
+    'SESSION_MIGRATION_REQUIRED': 'CodeSessionMigrationRequired',
     'SESSION_REVOKED': 'CodeSessionRevoked',
     'TRACK_BUSY': 'CodeTrackBusy',
     'TRACK_CONFLICT': 'CodeTrackConflict',

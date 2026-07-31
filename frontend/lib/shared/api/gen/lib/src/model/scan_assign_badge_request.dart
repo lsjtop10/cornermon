@@ -12,10 +12,14 @@ part 'scan_assign_badge_request.g.dart';
 /// ScanAssignBadgeRequest
 ///
 /// Properties:
+/// * [campId] 
 /// * [groupName] 
 /// * [qrPayload] 
 @BuiltValue()
 abstract class ScanAssignBadgeRequest implements Built<ScanAssignBadgeRequest, ScanAssignBadgeRequestBuilder> {
+  @BuiltValueField(wireName: r'campId')
+  String? get campId;
+
   @BuiltValueField(wireName: r'groupName')
   String? get groupName;
 
@@ -45,6 +49,13 @@ class _$ScanAssignBadgeRequestSerializer implements PrimitiveSerializer<ScanAssi
     ScanAssignBadgeRequest object, {
     FullType specifiedType = FullType.unspecified,
   }) sync* {
+    if (object.campId != null) {
+      yield r'campId';
+      yield serializers.serialize(
+        object.campId,
+        specifiedType: const FullType(String),
+      );
+    }
     if (object.groupName != null) {
       yield r'groupName';
       yield serializers.serialize(
@@ -82,6 +93,13 @@ class _$ScanAssignBadgeRequestSerializer implements PrimitiveSerializer<ScanAssi
       final key = serializedList[i] as String;
       final value = serializedList[i + 1];
       switch (key) {
+        case r'campId':
+          final valueDes = serializers.deserialize(
+            value,
+            specifiedType: const FullType(String),
+          ) as String;
+          result.campId = valueDes;
+          break;
         case r'groupName':
           final valueDes = serializers.deserialize(
             value,

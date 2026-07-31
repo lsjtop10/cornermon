@@ -9,8 +9,10 @@ All URIs are relative to */api/v1*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
+[**adminsGet**](AAuthDeviceTrustApi.md#adminsget) | **GET** /admins | 관리자 목록 조회
 [**adminsIdDelete**](AAuthDeviceTrustApi.md#adminsiddelete) | **DELETE** /admins/{id} | 관리자 삭제
 [**adminsIdPasswordPatch**](AAuthDeviceTrustApi.md#adminsidpasswordpatch) | **PATCH** /admins/{id}/password | 관리자 비밀번호 변경
+[**adminsMeGet**](AAuthDeviceTrustApi.md#adminsmeget) | **GET** /admins/me | 내 관리자 정보 조회
 [**adminsPost**](AAuthDeviceTrustApi.md#adminspost) | **POST** /admins | 관리자 생성
 [**authAdminLoginPost**](AAuthDeviceTrustApi.md#authadminloginpost) | **POST** /auth/admin/login | 관리자 로그인
 [**authAdminLogoutPost**](AAuthDeviceTrustApi.md#authadminlogoutpost) | **POST** /auth/admin/logout | 관리자 로그아웃
@@ -30,12 +32,55 @@ Method | HTTP request | Description
 [**deviceRegistrationsPost**](AAuthDeviceTrustApi.md#deviceregistrationspost) | **POST** /device-registrations | 기기 등록 요청 (최초 앱 실행 시)
 
 
+# **adminsGet**
+> BuiltList<AdminResponse> adminsGet()
+
+관리자 목록 조회
+
+SYSTEM_ADMIN만 호출할 수 있습니다. 전체 관리자 목록을 반환합니다.
+
+### Example
+```dart
+import 'package:cornermon_api_gen/api.dart';
+// TODO Configure API key authorization: AdminAuth
+//defaultApiClient.getAuthentication<ApiKeyAuth>('AdminAuth').apiKey = 'YOUR_API_KEY';
+// uncomment below to setup prefix (e.g. Bearer) for API key, if needed
+//defaultApiClient.getAuthentication<ApiKeyAuth>('AdminAuth').apiKeyPrefix = 'Bearer';
+
+final api = CornermonApiGen().getAAuthDeviceTrustApi();
+
+try {
+    final response = api.adminsGet();
+    print(response);
+} on DioException catch (e) {
+    print('Exception when calling AAuthDeviceTrustApi->adminsGet: $e\n');
+}
+```
+
+### Parameters
+This endpoint does not need any parameter.
+
+### Return type
+
+[**BuiltList&lt;AdminResponse&gt;**](AdminResponse.md)
+
+### Authorization
+
+[AdminAuth](../README.md#AdminAuth)
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
 # **adminsIdDelete**
 > adminsIdDelete(id)
 
 관리자 삭제
 
-SYSTEM_ADMIN만 호출할 수 있습니다. 자기 자신은 삭제할 수 없으므로 마지막 SYSTEM_ADMIN 삭제 요청은 성립하지 않습니다. 삭제 시 admin_sessions는 DB foreign key cascade로 함께 제거됩니다.
+SYSTEM_ADMIN은 다른 관리자를 삭제할 수 있습니다. CORNER_OPERATOR는 본인 계정만 탈퇴할 수 있습니다. SYSTEM_ADMIN은 자기 자신을 삭제할 수 없으므로(마지막 SYSTEM_ADMIN 보호) 그 요청은 성립하지 않습니다. 삭제 시 admin_sessions는 DB foreign key cascade로 함께 제거됩니다.
 
 ### Example
 ```dart
@@ -121,6 +166,49 @@ void (empty response body)
 
  - **Content-Type**: application/json
  - **Accept**: */*
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **adminsMeGet**
+> AdminResponse adminsMeGet()
+
+내 관리자 정보 조회
+
+로그인한 관리자 본인의 id/username/role을 반환합니다.
+
+### Example
+```dart
+import 'package:cornermon_api_gen/api.dart';
+// TODO Configure API key authorization: AdminAuth
+//defaultApiClient.getAuthentication<ApiKeyAuth>('AdminAuth').apiKey = 'YOUR_API_KEY';
+// uncomment below to setup prefix (e.g. Bearer) for API key, if needed
+//defaultApiClient.getAuthentication<ApiKeyAuth>('AdminAuth').apiKeyPrefix = 'Bearer';
+
+final api = CornermonApiGen().getAAuthDeviceTrustApi();
+
+try {
+    final response = api.adminsMeGet();
+    print(response);
+} on DioException catch (e) {
+    print('Exception when calling AAuthDeviceTrustApi->adminsMeGet: $e\n');
+}
+```
+
+### Parameters
+This endpoint does not need any parameter.
+
+### Return type
+
+[**AdminResponse**](AdminResponse.md)
+
+### Authorization
+
+[AdminAuth](../README.md#AdminAuth)
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 

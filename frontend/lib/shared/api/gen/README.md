@@ -48,12 +48,12 @@ import 'package:cornermon_api_gen/cornermon_api_gen.dart';
 
 
 final api = CornermonApiGen().getAAuthDeviceTrustApi();
-final String id = id_example; // String | 관리자 ID
 
 try {
-    api.adminsIdDelete(id);
+    final response = await api.adminsGet();
+    print(response);
 } on DioException catch (e) {
-    print("Exception when calling AAuthDeviceTrustApi->adminsIdDelete: $e\n");
+    print("Exception when calling AAuthDeviceTrustApi->adminsGet: $e\n");
 }
 
 ```
@@ -64,8 +64,10 @@ All URIs are relative to */api/v1*
 
 Class | Method | HTTP request | Description
 ------------ | ------------- | ------------- | -------------
+[*AAuthDeviceTrustApi*](doc/AAuthDeviceTrustApi.md) | [**adminsGet**](doc/AAuthDeviceTrustApi.md#adminsget) | **GET** /admins | 관리자 목록 조회
 [*AAuthDeviceTrustApi*](doc/AAuthDeviceTrustApi.md) | [**adminsIdDelete**](doc/AAuthDeviceTrustApi.md#adminsiddelete) | **DELETE** /admins/{id} | 관리자 삭제
 [*AAuthDeviceTrustApi*](doc/AAuthDeviceTrustApi.md) | [**adminsIdPasswordPatch**](doc/AAuthDeviceTrustApi.md#adminsidpasswordpatch) | **PATCH** /admins/{id}/password | 관리자 비밀번호 변경
+[*AAuthDeviceTrustApi*](doc/AAuthDeviceTrustApi.md) | [**adminsMeGet**](doc/AAuthDeviceTrustApi.md#adminsmeget) | **GET** /admins/me | 내 관리자 정보 조회
 [*AAuthDeviceTrustApi*](doc/AAuthDeviceTrustApi.md) | [**adminsPost**](doc/AAuthDeviceTrustApi.md#adminspost) | **POST** /admins | 관리자 생성
 [*AAuthDeviceTrustApi*](doc/AAuthDeviceTrustApi.md) | [**authAdminLoginPost**](doc/AAuthDeviceTrustApi.md#authadminloginpost) | **POST** /auth/admin/login | 관리자 로그인
 [*AAuthDeviceTrustApi*](doc/AAuthDeviceTrustApi.md) | [**authAdminLogoutPost**](doc/AAuthDeviceTrustApi.md#authadminlogoutpost) | **POST** /auth/admin/logout | 관리자 로그아웃

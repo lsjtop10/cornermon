@@ -405,7 +405,7 @@ class _SummaryBar extends StatelessWidget {
     error: (_, _) => const Text('요약을 불러오지 못했습니다'),
     data: (item) {
       final tiles = [
-        ('완주율', '${((item.completionRate ?? 0) * 100).round()}%'),
+        ('완주율', '${(item.completionRate ?? 0).round()}%'),
         (
           '미완주 조',
           '${(item.totalGroups ?? 0) - (item.finishedGroupCount ?? 0)}',

@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:cornermon_api_gen/cornermon_api_gen.dart';
 
+import 'package:cornermon/shared/api/client/api_client.dart';
 import 'package:cornermon/shared/api/domain_aliases.dart';
 import 'package:cornermon/shared/api/providers/auth_device_trust_providers.dart';
 import 'package:cornermon/shared/auth/secure_token_store.dart';
@@ -11,8 +12,26 @@ import 'device_trust_provider.dart';
 
 part 'track_session_provider.g.dart';
 
+/// migrate-session(POST /tracks/{id}/migrate-session)만 쓰는 전용 클라이언트다.
+/// 이 오퍼레이션만 `BCampCornerTrackApi`(swagger 태그가 다른 트랙/코너 CRUD API와 갈려서
+/// 별도 클래스로 생성됨)에 속해 있어, 다른 트랙 세션 API처럼 authDeviceTrustApiProvider에
+/// 얹을 수 없다.
+@riverpod
+BCampCornerTrackApi trackMigrationApi(Ref ref) {
+  final dio = ref.watch(apiClientProvider);
+  return BCampCornerTrackApi(dio, standardSerializers);
+}
+
 /// §2.4 — B2 안내 문구가 사유별로 갈린다("트랙 삭제됨" / "강제 로그아웃됨" / "캠프 종료됨").
-enum TrackSessionTerminationReason { trackDeleted, forceLogout, campEnded }
+/// trackNotFound·loggedOut은 이슈 #200에서 추가 — 각각 track-scope API의 404
+/// TRACK_NOT_FOUND 감지, 진행자의 수동 로그아웃(B2 메뉴)에 대응한다.
+enum TrackSessionTerminationReason {
+  trackDeleted,
+  forceLogout,
+  campEnded,
+  trackNotFound,
+  loggedOut,
+}
 
 sealed class TrackSessionState {
   const TrackSessionState();
@@ -167,6 +186,61 @@ class TrackSession extends _$TrackSession {
     await api.authTrackLogoutPost();
 
     state = const TrackSessionUnauthenticated();
+  }
+
+  /// B2 메뉴 "로그아웃" — 세션 마이그레이션 실패 등 예외 상황에서 진행자가 스스로 트랙
+  /// 세션을 종료할 수 있게 한다(이슈 #200). rejectAssignment()와 같은 API를 쓰지만
+  /// 트리거 화면·종료 사유가 다르다.
+  Future<void> logout() async {
+    final api = ref.read(authDeviceTrustApiProvider);
+    await api.authTrackLogoutPost();
+
+    handleTermination(TrackSessionTerminationReason.loggedOut);
+  }
+
+  /// track_replaced SSE 수신, 또는 다른 요청이 409 SESSION_MIGRATION_REQUIRED로 실패했을 때
+  /// 호출한다(POST /tracks/{id}/migrate-session). 이미 B1-b 확인을 거친 트랙이 관리자에 의해
+  /// 다른 코너로 옮겨진 것뿐이므로, 재확인 없이 곧바로 새 세션으로 교체하고 영구 저장한다.
+  /// path의 트랙 ID는 백엔드가 Authorization 토큰 해시로 옛 세션을 찾으므로 실제로는
+  /// 쓰이지 않는다(auth_facilitator.go MigrateSession 참고) — 그래도 계약상 값은 채운다.
+  Future<void> migrateSession() async {
+    final current = state;
+    if (current is! TrackSessionAuthenticated) return;
+
+    final api = ref.read(trackMigrationApiProvider);
+    final response = await api.tracksIdMigrateSessionPost(
+      id: current.track.id ?? '',
+    );
+
+    final trackToken = response.data?.trackToken;
+    final track = response.data?.track;
+    final corner = response.data?.corner;
+    if (trackToken == null || track == null || corner == null) {
+      throw Exception('마이그레이션 응답이 올바르지 않습니다.');
+    }
+
+    final store = ref.read(secureTokenStoreProvider);
+    final loginResponse = AuthTrackLoginPost200Response(
+      (AuthTrackLoginPost200ResponseBuilder b) => b
+        ..trackToken = trackToken
+        ..track = track.toBuilder()
+        ..corner = corner.toBuilder(),
+    );
+    await store.write(
+      _trackSessionStorageKey,
+      jsonEncode(
+        standardSerializers.serializeWith(
+          AuthTrackLoginPost200Response.serializer,
+          loginResponse,
+        ),
+      ),
+    );
+
+    state = TrackSessionAuthenticated(
+      trackToken: trackToken,
+      track: track,
+      corner: corner,
+    );
   }
 
   /// SSE 감지 또는 401 응답 시 BUSY 여부와 무관하게 즉시 세션을 종료한다(§2.4 "유예 없이").

@@ -20,6 +20,8 @@ type Admin struct {
 
 func (a *Admin) IsSystemAdmin() bool { return a.role == AdminRoleSystemAdmin }
 
+func (a *Admin) IsCornerOperator() bool { return a.role == AdminRoleCornerOperator }
+
 type AdminSession struct {
 	id              AdminSessionID
 	adminID         AdminID

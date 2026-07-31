@@ -9,6 +9,8 @@ part of 'scan_assign_badge_request.dart';
 
 class _$ScanAssignBadgeRequest extends ScanAssignBadgeRequest {
   @override
+  final String? campId;
+  @override
   final String? groupName;
   @override
   final String? qrPayload;
@@ -17,7 +19,8 @@ class _$ScanAssignBadgeRequest extends ScanAssignBadgeRequest {
           [void Function(ScanAssignBadgeRequestBuilder)? updates]) =>
       (ScanAssignBadgeRequestBuilder()..update(updates))._build();
 
-  _$ScanAssignBadgeRequest._({this.groupName, this.qrPayload}) : super._();
+  _$ScanAssignBadgeRequest._({this.campId, this.groupName, this.qrPayload})
+      : super._();
   @override
   ScanAssignBadgeRequest rebuild(
           void Function(ScanAssignBadgeRequestBuilder) updates) =>
@@ -31,6 +34,7 @@ class _$ScanAssignBadgeRequest extends ScanAssignBadgeRequest {
   bool operator ==(Object other) {
     if (identical(other, this)) return true;
     return other is ScanAssignBadgeRequest &&
+        campId == other.campId &&
         groupName == other.groupName &&
         qrPayload == other.qrPayload;
   }
@@ -38,6 +42,7 @@ class _$ScanAssignBadgeRequest extends ScanAssignBadgeRequest {
   @override
   int get hashCode {
     var _$hash = 0;
+    _$hash = $jc(_$hash, campId.hashCode);
     _$hash = $jc(_$hash, groupName.hashCode);
     _$hash = $jc(_$hash, qrPayload.hashCode);
     _$hash = $jf(_$hash);
@@ -47,6 +52,7 @@ class _$ScanAssignBadgeRequest extends ScanAssignBadgeRequest {
   @override
   String toString() {
     return (newBuiltValueToStringHelper(r'ScanAssignBadgeRequest')
+          ..add('campId', campId)
           ..add('groupName', groupName)
           ..add('qrPayload', qrPayload))
         .toString();
@@ -56,6 +62,10 @@ class _$ScanAssignBadgeRequest extends ScanAssignBadgeRequest {
 class ScanAssignBadgeRequestBuilder
     implements Builder<ScanAssignBadgeRequest, ScanAssignBadgeRequestBuilder> {
   _$ScanAssignBadgeRequest? _$v;
+
+  String? _campId;
+  String? get campId => _$this._campId;
+  set campId(String? campId) => _$this._campId = campId;
 
   String? _groupName;
   String? get groupName => _$this._groupName;
@@ -72,6 +82,7 @@ class ScanAssignBadgeRequestBuilder
   ScanAssignBadgeRequestBuilder get _$this {
     final $v = _$v;
     if ($v != null) {
+      _campId = $v.campId;
       _groupName = $v.groupName;
       _qrPayload = $v.qrPayload;
       _$v = null;
@@ -95,6 +106,7 @@ class ScanAssignBadgeRequestBuilder
   _$ScanAssignBadgeRequest _build() {
     final _$result = _$v ??
         _$ScanAssignBadgeRequest._(
+          campId: campId,
           groupName: groupName,
           qrPayload: qrPayload,
         );

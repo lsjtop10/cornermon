@@ -62,6 +62,8 @@ class ErrorCode extends EnumClass {
   static const ErrorCode CodeItineraryConflict = _$CodeItineraryConflict;
   @BuiltValueEnumConst(wireName: r'NOT_FOUND')
   static const ErrorCode CodeNotFound = _$CodeNotFound;
+  @BuiltValueEnumConst(wireName: r'SESSION_MIGRATION_REQUIRED')
+  static const ErrorCode CodeSessionMigrationRequired = _$CodeSessionMigrationRequired;
   @BuiltValueEnumConst(wireName: r'SESSION_REVOKED')
   static const ErrorCode CodeSessionRevoked = _$CodeSessionRevoked;
   @BuiltValueEnumConst(wireName: r'TRACK_BUSY')

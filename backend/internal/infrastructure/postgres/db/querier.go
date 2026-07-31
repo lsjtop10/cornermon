@@ -41,6 +41,7 @@ type Querier interface {
 	ListActiveFacilitatorSessionsByTrack(ctx context.Context, trackID string) ([]FacilitatorSession, error)
 	ListActiveTracksByCamp(ctx context.Context, campID string) ([]Track, error)
 	ListAdminSessionsByAdmin(ctx context.Context, adminID string) ([]AdminSession, error)
+	ListAdmins(ctx context.Context) ([]Admin, error)
 	ListAllBadges(ctx context.Context) ([]Badge, error)
 	ListAnnouncementReceiptViews(ctx context.Context, announcementID string) ([]ListAnnouncementReceiptViewsRow, error)
 	ListAnnouncementReceiptsByAnnouncement(ctx context.Context, announcementID string) ([]AnnouncementReceipt, error)

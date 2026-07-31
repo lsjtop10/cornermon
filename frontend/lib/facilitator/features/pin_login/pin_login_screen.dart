@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import 'package:cornermon/shared/design_system/tokens/colors.dart';
 import 'package:cornermon/shared/design_system/tokens/spacing.dart';
@@ -10,8 +9,23 @@ import 'package:cornermon/shared/design_system/tokens/typography.dart';
 import 'package:cornermon/shared/design_system/widgets/app_button.dart';
 import 'package:cornermon/shared/design_system/widgets/confirm_modal.dart';
 import 'package:cornermon/facilitator/session/device_trust_provider.dart';
+import 'package:cornermon/facilitator/session/track_session_provider.dart';
 import 'package:cornermon/facilitator/widgets/pin_otp_input.dart';
 import 'pin_login_error_provider.dart';
+
+/// 세션 강제종료 사유별 B1 안내 문구(screen-spec-facilitator.md:45, 이슈 #200).
+/// loggedOut(본인이 누른 로그아웃)은 안내가 필요 없어 null을 반환한다.
+String? _terminationBannerText(TrackSessionTerminationReason? reason) =>
+    switch (reason) {
+      null => null,
+      TrackSessionTerminationReason.trackDeleted =>
+        '이 트랙이 삭제되어 로그아웃되었습니다',
+      TrackSessionTerminationReason.forceLogout => '관리자에 의해 로그아웃되었습니다',
+      TrackSessionTerminationReason.campEnded => '코너학습이 종료되어 로그아웃되었습니다',
+      TrackSessionTerminationReason.trackNotFound =>
+        '이 트랙을 찾을 수 없습니다. 다시 로그인해주세요',
+      TrackSessionTerminationReason.loggedOut => null,
+    };
 
 /// B1. 트랙 PIN 6자리로 트랙 세션 인증.
 class PinLoginScreen extends ConsumerWidget {
@@ -22,6 +36,11 @@ class PinLoginScreen extends ConsumerWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final colors = isDark ? AppColors.dark : AppColors.light;
     final error = ref.watch(pinLoginErrorProvider);
+
+    final trackSession = ref.watch(trackSessionProvider);
+    final terminationBannerText = trackSession is TrackSessionUnauthenticated
+        ? _terminationBannerText(trackSession.lastTerminationReason)
+        : null;
 
     return Scaffold(
       backgroundColor: colors.bgCanvas,
@@ -39,19 +58,24 @@ class PinLoginScreen extends ConsumerWidget {
                   ),
                   textAlign: TextAlign.center,
                 ),
+                if (terminationBannerText != null) ...[
+                  const SizedBox(height: AppSpacing.space3),
+                  Text(
+                    terminationBannerText,
+                    style: AppTypography.body.copyWith(
+                      color: colors.textSecondary,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
                 const SizedBox(height: AppSpacing.space8),
                 _PinLoginBody(
                   error: error,
                   onSubmitted: (pin) =>
                       ref.read(pinLoginErrorProvider.notifier).submit(pin),
+                  onCancelRegistration: () => _clearRegistration(context, ref),
                 ),
                 const SizedBox(height: AppSpacing.space8),
-                AppButton(
-                  variant: AppButtonVariant.secondary,
-                  size: AppButtonSize.comfortable,
-                  label: '기기 등록 취소',
-                  onPressed: () => _clearRegistration(context, ref),
-                ),
               ],
             ),
           ),
@@ -77,10 +101,15 @@ class PinLoginScreen extends ConsumerWidget {
 /// PinOtpInput + 상태별 안내 텍스트. DEVICE_LOCKED 카운트다운은 서버가 내려준
 /// retryAfterSeconds에서 시작해 로컬 타이머로 0까지 줄이고, 0이 되면 입력을 다시 활성화한다.
 class _PinLoginBody extends StatefulWidget {
-  const _PinLoginBody({required this.error, required this.onSubmitted});
+  const _PinLoginBody({
+    required this.error,
+    required this.onSubmitted,
+    required this.onCancelRegistration,
+  });
 
   final PinLoginUiError? error;
   final ValueChanged<String> onSubmitted;
+  final VoidCallback onCancelRegistration;
 
   @override
   State<_PinLoginBody> createState() => _PinLoginBodyState();
@@ -159,7 +188,12 @@ class _PinLoginBodyState extends State<_PinLoginBody> {
     final error = widget.error;
     switch (error) {
       case null:
-        return const SizedBox.shrink();
+        return AppButton(
+          variant: AppButtonVariant.secondary,
+          size: AppButtonSize.comfortable,
+          label: '기기 등록 취소',
+          onPressed: widget.onCancelRegistration,
+        );
       case PinInvalid(:final retryAfterSeconds):
         return Column(
           mainAxisSize: MainAxisSize.min,
@@ -194,12 +228,6 @@ class _PinLoginBodyState extends State<_PinLoginBody> {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: AppSpacing.space4),
-            AppButton(
-              variant: AppButtonVariant.secondary,
-              size: AppButtonSize.comfortable,
-              label: '기기 등록 화면으로',
-              onPressed: () => context.go('/device-pending'),
-            ),
           ],
         );
       case CampNotActiveYet():

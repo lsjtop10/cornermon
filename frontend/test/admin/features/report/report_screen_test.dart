@@ -85,7 +85,7 @@ CampReportResponse _report() => CampReportResponse(
         (c) => c
           ..cornerId = 'c-b'
           ..cornerName = '코너 B'
-          ..completedVisitCount = 2,
+          ..completedVisitCount = 2
           ..avgDurationSeconds = 1170
           ..avgDeviationSeconds = -30,
       ),

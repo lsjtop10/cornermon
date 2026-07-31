@@ -17,6 +17,7 @@ import 'package:flutter_test/flutter_test.dart';
 /// 올바른 사유로 호출되는지만 기록하는 가짜 세션으로 대체한다.
 class FakeTrackSession extends TrackSession {
   final terminationCalls = <TrackSessionTerminationReason>[];
+  int migrateSessionCalls = 0;
 
   @override
   TrackSessionState build() => const TrackSessionUnauthenticated();
@@ -28,6 +29,11 @@ class FakeTrackSession extends TrackSession {
   @override
   void handleTermination(TrackSessionTerminationReason reason) {
     terminationCalls.add(reason);
+  }
+
+  @override
+  Future<void> migrateSession() async {
+    migrateSessionCalls++;
   }
 }
 
@@ -315,6 +321,44 @@ void main() {
       expect(fakeTrackSession.terminationCalls, [
         TrackSessionTerminationReason.trackDeleted,
       ]);
+    },
+  );
+
+  test(
+    'ShouldCallMigrateSessionWhenTrackReplacedScopeMatchesOwnTrack',
+    () async {
+      // arrange
+      final event = SseEvent(
+        (b) => b
+          ..event = SseEventEventEnum.trackReplaced
+          ..scope.kind = SseScopeKind.track
+          ..scope.trackId = trackId.value,
+      );
+
+      // act
+      await pushAndSettle(event);
+
+      // assert
+      expect(fakeTrackSession.migrateSessionCalls, 1);
+    },
+  );
+
+  test(
+    'ShouldNotCallMigrateSessionWhenTrackReplacedScopeIsAnotherTrack',
+    () async {
+      // arrange
+      final event = SseEvent(
+        (b) => b
+          ..event = SseEventEventEnum.trackReplaced
+          ..scope.kind = SseScopeKind.track
+          ..scope.trackId = otherTrackId.value,
+      );
+
+      // act
+      await pushAndSettle(event);
+
+      // assert
+      expect(fakeTrackSession.migrateSessionCalls, 0);
     },
   );
 

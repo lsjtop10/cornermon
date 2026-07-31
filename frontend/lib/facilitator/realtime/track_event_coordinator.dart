@@ -77,10 +77,18 @@ class TrackEventCoordinator extends _$TrackEventCoordinator {
         }
         break;
       case SseEventEventEnum.trackDeleted:
-        // 트랙 삭제·교체(§00 §0-c 결정, 재PIN 없는 자동전환 계약 미비) 모두 이 분기로 흡수한다.
+        // 순수 삭제(교체가 아닌 경우)만 이 분기로 처리한다. 트랙 교체는 trackReplaced로
+        // 별도 통지되어 마이그레이션되므로 더 이상 이 분기로 흡수되지 않는다(이슈 #204).
         ref
             .read(trackSessionProvider.notifier)
             .handleTermination(TrackSessionTerminationReason.trackDeleted);
+        break;
+      case SseEventEventEnum.trackReplaced:
+        // 관리자가 이 트랙을 다른 코너로 교체했다 — 세션은 여전히 유효하지만 옛 트랙을
+        // 가리키므로, 재PIN 없이 조용히 새 트랙 세션으로 갈아탄다(이슈 #199/#204).
+        if (isThisTrack) {
+          unawaited(ref.read(trackSessionProvider.notifier).migrateSession());
+        }
         break;
       case SseEventEventEnum.sessionRevoked:
         ref

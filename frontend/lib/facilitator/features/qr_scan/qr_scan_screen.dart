@@ -18,7 +18,7 @@ import 'package:cornermon/shared/design_system/tokens/typography.dart';
 import 'package:cornermon/shared/design_system/widgets/app_button.dart';
 
 import 'package:cornermon/facilitator/session/track_session_provider.dart';
-import 'package:cornermon/facilitator/widgets/qr_scan_frame.dart';
+import 'package:cornermon/shared/design_system/widgets/qr_scan_frame.dart';
 
 const _failureScanCooldown = Duration(seconds: 1);
 

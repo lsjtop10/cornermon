@@ -8,6 +8,7 @@ import 'package:cornermon_api_gen/api.dart';
 ## Properties
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
+**campId** | **String** |  | [optional] 
 **groupName** | **String** |  | [optional] 
 **qrPayload** | **String** |  | [optional] 
 
