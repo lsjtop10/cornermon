@@ -1,6 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:cornermon/admin/session/selected_camp_provider.dart';
 import 'package:cornermon/shared/api/domain_aliases.dart';
+import 'package:cornermon/shared/api/ids.dart';
 import 'package:cornermon/shared/api/providers/audit_log_providers.dart';
 
 import 'audit_log_filter_state.dart';
@@ -45,9 +47,11 @@ final auditLogPageNotifierProvider =
 class AuditLogPageNotifier extends AsyncNotifier<AuditLogPageState> {
   @override
   Future<AuditLogPageState> build() async {
-    // 필터가 바뀌면 이 build()가 다시 실행되어 자동으로 처음부터(before: null) 재조회된다.
+    // 필터 또는 선택된 캠프가 바뀌면 이 build()가 다시 실행되어 자동으로
+    // 처음부터(before: null) 재조회된다.
     final filter = ref.watch(auditLogFilterProvider);
-    return _fetch(filter: filter, before: null, previous: const []);
+    final campId = ref.watch(selectedCampIdProvider);
+    return _fetch(filter: filter, campId: campId, before: null, previous: const []);
   }
 
   Future<void> loadMore() async {
@@ -59,8 +63,10 @@ class AuditLogPageNotifier extends AsyncNotifier<AuditLogPageState> {
     busy.set(true);
     try {
       final filter = ref.read(auditLogFilterProvider);
+      final campId = ref.read(selectedCampIdProvider);
       final next = await _fetch(
         filter: filter,
+        campId: campId,
         before: current.nextCursor,
         previous: current.logs,
       );
@@ -77,6 +83,7 @@ class AuditLogPageNotifier extends AsyncNotifier<AuditLogPageState> {
 
   Future<AuditLogPageState> _fetch({
     required AuditLogFilter filter,
+    required CampId? campId,
     required String? before,
     required List<AuditLog> previous,
   }) async {
@@ -87,6 +94,7 @@ class AuditLogPageNotifier extends AsyncNotifier<AuditLogPageState> {
         action: filter.action,
         actor: filter.actor,
         result: filter.result,
+        campId: campId?.value,
       ).future,
     );
     final logs = page.logs?.toList() ?? const <AuditLog>[];

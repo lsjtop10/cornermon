@@ -134,7 +134,7 @@ final class TrackDirectSummariesProvider
 }
 
 String _$trackDirectSummariesHash() =>
-    r'465d7a6e6bc600638fb1ad9726194e8b75a93ff4';
+    r'52fae8fbc0471fe46e08dafcb43323c151772ce3';
 
 /// 캠프의 전체 트랙(ACTIVE + DELETED) × 트랙별 메시지 목록을 조합해
 /// 좌측 목록에 필요한 미리보기·안읽음 카운트를 만든다.

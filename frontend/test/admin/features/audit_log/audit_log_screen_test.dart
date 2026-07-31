@@ -1,3 +1,4 @@
+import 'package:built_value/json_object.dart';
 import 'package:cornermon/admin/features/audit_log/audit_log_page_notifier.dart';
 import 'package:cornermon/admin/features/audit_log/audit_log_screen.dart';
 import 'package:cornermon/shared/api/domain_aliases.dart';

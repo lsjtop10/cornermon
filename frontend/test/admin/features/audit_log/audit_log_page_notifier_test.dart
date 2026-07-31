@@ -1,7 +1,9 @@
 import 'package:cornermon/admin/features/audit_log/audit_log_filter_state.dart';
 import 'package:cornermon/admin/features/audit_log/audit_log_known_actions.dart';
 import 'package:cornermon/admin/features/audit_log/audit_log_page_notifier.dart';
+import 'package:cornermon/admin/session/selected_camp_provider.dart';
 import 'package:cornermon/shared/api/domain_aliases.dart';
+import 'package:cornermon/shared/api/ids.dart';
 import 'package:cornermon/shared/api/providers/audit_log_providers.dart';
 import 'package:cornermon_api_gen/cornermon_api_gen.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -127,6 +129,50 @@ void main() {
       // assert
       expect(state.logs.map((l) => l.id), ['3']);
       expect(state.totalLoaded, 1);
+    },
+  );
+
+  test(
+    'ShoudScopeToSelectedCampIdAndRefetchWhenSelectedCampChanges',
+    () async {
+      // arrange
+      final container = ProviderContainer(
+        overrides: [
+          auditLogListProvider(
+            limit: auditLogPageLimit,
+            before: null,
+            action: null,
+            actor: null,
+            result: null,
+            campId: null,
+          ).overrideWith((ref) async => _page([_log(id: '1')])),
+          auditLogListProvider(
+            limit: auditLogPageLimit,
+            before: null,
+            action: null,
+            actor: null,
+            result: null,
+            campId: 'camp-1',
+          ).overrideWith((ref) async => _page([_log(id: '2')])),
+        ],
+      );
+      addTearDown(container.dispose);
+      await container.read(auditLogPageNotifierProvider.future);
+      expect(
+        container.read(auditLogPageNotifierProvider).value!.logs.map(
+          (l) => l.id,
+        ),
+        ['1'],
+      );
+
+      // act — 선택된 캠프가 바뀌면 build()가 재실행되어 campId로 스코프된 재조회가 일어난다
+      container
+          .read(selectedCampIdProvider.notifier)
+          .select(CampId('camp-1'));
+      final state = await container.read(auditLogPageNotifierProvider.future);
+
+      // assert
+      expect(state.logs.map((l) => l.id), ['2']);
     },
   );
 

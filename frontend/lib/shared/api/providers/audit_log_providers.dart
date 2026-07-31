@@ -19,6 +19,7 @@ Future<AuditLogPage> auditLogList(
   String? action,
   String? actor,
   String? result, // "success" | "failure"
+  String? campId,
 }) async {
   final apiInstance = ref.watch(auditLogApiProvider);
   final response = await apiInstance.auditLogsGet(
@@ -27,6 +28,7 @@ Future<AuditLogPage> auditLogList(
     action: action,
     actor: actor,
     result: result,
+    campId: campId,
   );
   final data = response.data;
   if (data == null) {

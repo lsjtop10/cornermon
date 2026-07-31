@@ -161,7 +161,7 @@ final class AdminEventsProvider
   }
 }
 
-String _$adminEventsHash() => r'bec489d99a5a5a2d3f00c030966632b201e1c4b4';
+String _$adminEventsHash() => r'61029c9e7fe4dbf411742cf636d71acdb4c37cfb';
 
 final class AdminEventsFamily extends $Family
     with $FunctionalFamilyOverride<Stream<SseEventReceipt>, CampId> {
