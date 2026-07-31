@@ -49,7 +49,7 @@ dependencies:
   share_plus: ^12.0.1
   file_saver: ^0.4.0
   cornermon_api_gen:
-    path: lib/shared/api/gen
+    path: packages/cornermon_api_gen
   device_info_plus: ^12.4.0
   connectivity_plus: ^7.3.0
   excel: ^4.0.6

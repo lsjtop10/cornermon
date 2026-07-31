@@ -24,20 +24,19 @@ flutter test test/admin/features/setup_wizard/   # 디렉터리 단위
 dart analyze lib/
 ```
 
-### `lib/shared/api/gen`을 건드리지 않도록 주의
+### `packages/cornermon_api_gen`을 건드리지 않도록 주의
 
-`lib/shared/api/gen`은 `api/swagger.yaml`에서 `openapi-generator`로 생성되는 별도 패키지
-(`cornermon_api_gen`, `frontend/openapitools.json` 참고)이지만, `dart run build_runner build`를
+`packages/cornermon_api_gen`은 `api/swagger.yaml`에서 `openapi-generator`로 생성되는 별도 패키지
+(`frontend/openapitools.json` 참고)다. `lib/` 트리 밖의 형제 디렉터리로 둔 이유는 `lib/` 안에
+중첩되면 `package:` URI가 부모 패키지(`cornermon`)로 잘못 해석되어 `.g.dart` part의 language
+version이 라이브러리와 어긋나는 컴파일 에러가 났기 때문이다(#76). `dart run build_runner build`를
 돌리면 **가끔 이 안의 `.g.dart` 파일들을 삭제**하는 현상이 있다(원인 미상, riverpod_generator와
 무관한 별개 이슈로 추정). `build_runner` 실행 직후에는 항상 확인하고 필요하면 복구한다:
 
 ```bash
-git status --porcelain lib/shared/api/gen
-git checkout -- lib/shared/api/gen   # 삭제/변경됐으면 복구
+git status --porcelain packages/cornermon_api_gen
+git checkout -- packages/cornermon_api_gen   # 삭제/변경됐으면 복구
 ```
-
-`build.yaml`에서 `lib/shared/api/gen/**`을 riverpod_generator 대상에서 명시적으로 제외하고
-있지만 이 현상 자체는 막지 못한다.
 
 ### git worktree 여러 개일 때: 코드 수정이 반영 안 되는 것처럼 보이면
 
