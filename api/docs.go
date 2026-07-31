@@ -898,7 +898,7 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "description": "배정할 조 ID",
+                        "description": "배정할 캠프와 조 이름",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -3155,7 +3155,10 @@ const docTemplate = `{
         "AssignBadgeRequest": {
             "type": "object",
             "properties": {
-                "groupId": {
+                "campId": {
+                    "type": "string"
+                },
+                "groupName": {
                     "type": "string"
                 }
             }
@@ -4124,6 +4127,9 @@ const docTemplate = `{
         "ScanAssignBadgeRequest": {
             "type": "object",
             "properties": {
+                "campId": {
+                    "type": "string"
+                },
                 "groupName": {
                     "type": "string"
                 },

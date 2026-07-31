@@ -44,7 +44,7 @@ func TestGroupService_AssignBadge(t *testing.T) {
 		s.uuidFn = func() string { return "group-uuid" }
 
 		// Act
-		group, err := s.AssignBadge(context.Background(), "badge-1", "1조", "admin-1")
+		group, err := s.AssignBadge(context.Background(), "camp-1", "badge-1", "1조", "admin-1")
 
 		// Assert
 		if err != nil {
@@ -105,7 +105,7 @@ func TestGroupService_AssignBadge(t *testing.T) {
 		s.uuidFn = func() string { return "group-uuid" }
 
 		// Act
-		group, err := s.AssignBadge(context.Background(), "badge-1", "1조", "admin-1")
+		group, err := s.AssignBadge(context.Background(), "camp-1", "badge-1", "1조", "admin-1")
 
 		// Assert
 		if err != nil {
@@ -116,7 +116,23 @@ func TestGroupService_AssignBadge(t *testing.T) {
 		}
 	})
 
-	t.Run("ShouldReturnCampNotFoundWhenNoPendingOrActiveCampExists", func(t *testing.T) {
+	t.Run("ShouldReturnCampNotFoundWhenTargetCampDoesNotExist", func(t *testing.T) {
+		// Arrange
+		camps := NewMockCampRepository()
+		badges := NewMockBadgeRepository()
+		_ = badges.Save(context.Background(), domain.NewBadgeFromProps(domain.BadgeProps{ID: "badge-1", QRPayload: "qr-1", Status: domain.BadgeUnassigned}))
+		service := NewGroupService(camps, NewMockCornerRepository(), NewMockTrackRepository(), NewMockGroupRepository(), badges, NewMockVisitRepository(), NewMockAdminRepository(), &MockAuditLogRepository{}, &MockTxManager{})
+
+		// Act
+		_, err := service.AssignBadge(context.Background(), "camp-missing", "badge-1", "1조", "admin-1")
+
+		// Assert
+		if !errors.Is(err, domain.ErrCampNotFound) {
+			t.Fatalf("expected ErrCampNotFound, got %v", err)
+		}
+	})
+
+	t.Run("ShouldRejectAssignBadgeWhenTargetCampHasEnded", func(t *testing.T) {
 		// Arrange
 		camps := NewMockCampRepository()
 		_ = camps.Save(context.Background(), domain.NewCampFromProps(domain.CampProps{ID: "camp-1", Status: domain.CampEnded}))
@@ -125,11 +141,11 @@ func TestGroupService_AssignBadge(t *testing.T) {
 		service := NewGroupService(camps, NewMockCornerRepository(), NewMockTrackRepository(), NewMockGroupRepository(), badges, NewMockVisitRepository(), NewMockAdminRepository(), &MockAuditLogRepository{}, &MockTxManager{})
 
 		// Act
-		_, err := service.AssignBadge(context.Background(), "badge-1", "1조", "admin-1")
+		_, err := service.AssignBadge(context.Background(), "camp-1", "badge-1", "1조", "admin-1")
 
 		// Assert
-		if !errors.Is(err, domain.ErrCampNotFound) {
-			t.Fatalf("expected ErrCampNotFound, got %v", err)
+		if !errors.Is(err, domain.ErrCampInvalidTransition) {
+			t.Fatalf("expected ErrCampInvalidTransition, got %v", err)
 		}
 	})
 
@@ -143,7 +159,7 @@ func TestGroupService_AssignBadge(t *testing.T) {
 		service.uuidFn = func() string { return "group-uuid" }
 
 		// Act
-		group, err := service.ScanAssignBadge(context.Background(), "qr-1", "1조", "admin-1")
+		group, err := service.ScanAssignBadge(context.Background(), "camp-1", "qr-1", "1조", "admin-1")
 
 		// Assert
 		if err != nil {
@@ -151,6 +167,30 @@ func TestGroupService_AssignBadge(t *testing.T) {
 		}
 		if group == nil || group.BadgeID() != "badge-1" {
 			t.Fatalf("expected badge assignment from QR payload, got %+v", group)
+		}
+	})
+
+	t.Run("ShouldAssignBadgeToRequestedCampWhenMultipleCampsExist", func(t *testing.T) {
+		// Arrange: an ACTIVE camp exists elsewhere in the system, but the
+		// caller explicitly targets a different PENDING camp — the group
+		// must land in the requested camp, not the globally active one.
+		camps := NewMockCampRepository()
+		_ = camps.Save(context.Background(), domain.NewCampFromProps(domain.CampProps{ID: "camp-active", Status: domain.CampActive}))
+		_ = camps.Save(context.Background(), domain.NewCampFromProps(domain.CampProps{ID: "camp-pending", Status: domain.CampPending}))
+		badges := NewMockBadgeRepository()
+		_ = badges.Save(context.Background(), domain.NewBadgeFromProps(domain.BadgeProps{ID: "badge-1", QRPayload: "qr-1", Status: domain.BadgeUnassigned}))
+		service := NewGroupService(camps, NewMockCornerRepository(), NewMockTrackRepository(), NewMockGroupRepository(), badges, NewMockVisitRepository(), NewMockAdminRepository(), &MockAuditLogRepository{}, &MockTxManager{})
+		service.uuidFn = func() string { return "group-uuid" }
+
+		// Act
+		group, err := service.AssignBadge(context.Background(), "camp-pending", "badge-1", "1조", "admin-1")
+
+		// Assert
+		if err != nil {
+			t.Fatalf("expected no error, got %v", err)
+		}
+		if group == nil || group.CampID() != "camp-pending" {
+			t.Fatalf("expected group assigned to requested camp-pending, got %+v", group)
 		}
 	})
 }

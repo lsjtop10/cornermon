@@ -12,11 +12,15 @@ part 'assign_badge_request.g.dart';
 /// AssignBadgeRequest
 ///
 /// Properties:
-/// * [groupId] 
+/// * [campId] 
+/// * [groupName] 
 @BuiltValue()
 abstract class AssignBadgeRequest implements Built<AssignBadgeRequest, AssignBadgeRequestBuilder> {
-  @BuiltValueField(wireName: r'groupId')
-  String? get groupId;
+  @BuiltValueField(wireName: r'campId')
+  String? get campId;
+
+  @BuiltValueField(wireName: r'groupName')
+  String? get groupName;
 
   AssignBadgeRequest._();
 
@@ -41,10 +45,17 @@ class _$AssignBadgeRequestSerializer implements PrimitiveSerializer<AssignBadgeR
     AssignBadgeRequest object, {
     FullType specifiedType = FullType.unspecified,
   }) sync* {
-    if (object.groupId != null) {
-      yield r'groupId';
+    if (object.campId != null) {
+      yield r'campId';
       yield serializers.serialize(
-        object.groupId,
+        object.campId,
+        specifiedType: const FullType(String),
+      );
+    }
+    if (object.groupName != null) {
+      yield r'groupName';
+      yield serializers.serialize(
+        object.groupName,
         specifiedType: const FullType(String),
       );
     }
@@ -71,12 +82,19 @@ class _$AssignBadgeRequestSerializer implements PrimitiveSerializer<AssignBadgeR
       final key = serializedList[i] as String;
       final value = serializedList[i + 1];
       switch (key) {
-        case r'groupId':
+        case r'campId':
           final valueDes = serializers.deserialize(
             value,
             specifiedType: const FullType(String),
           ) as String;
-          result.groupId = valueDes;
+          result.campId = valueDes;
+          break;
+        case r'groupName':
+          final valueDes = serializers.deserialize(
+            value,
+            specifiedType: const FullType(String),
+          ) as String;
+          result.groupName = valueDes;
           break;
         default:
           unhandled.add(key);

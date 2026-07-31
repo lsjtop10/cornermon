@@ -44,7 +44,9 @@ definitions:
     type: object
   AssignBadgeRequest:
     properties:
-      groupId:
+      campId:
+        type: string
+      groupName:
         type: string
     type: object
   AuditLogPageResponse:
@@ -746,6 +748,8 @@ definitions:
     type: object
   ScanAssignBadgeRequest:
     properties:
+      campId:
+        type: string
       groupName:
         type: string
       qrPayload:
@@ -1432,7 +1436,7 @@ paths:
         name: id
         required: true
         type: string
-      - description: 배정할 조 ID
+      - description: 배정할 캠프와 조 이름
         in: body
         name: request
         required: true
