@@ -72,7 +72,7 @@ docker-check:
 		docker create --name "$$container" --workdir /app \
 			-v '$(FLUTTER_PUB_CACHE_VOLUME):/root/.pub-cache' \
 			--entrypoint sh '$(FLUTTER_DOCKER_IMAGE)' \
-			-lc 'flutter pub get && flutter analyze && flutter test' >/dev/null; \
+			-lc 'flutter pub get && (cd packages/cornermon_api_gen && dart pub get) && flutter analyze && flutter test' >/dev/null; \
 		tar --exclude='./.dart_tool' --exclude='./build' --exclude='./.git' -cf - . \
 			| docker cp - "$$container:/app"; \
 		docker start -a "$$container"
