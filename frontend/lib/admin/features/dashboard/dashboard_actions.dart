@@ -8,6 +8,17 @@ import 'package:cornermon/shared/design_system/widgets/confirm_modal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+/// BuildContext로 사용자 확인/입력을 받은 뒤 mutating API(POST/DELETE) provider를
+/// 호출하고, 성공 시 관련 목록을 invalidate하는 함수만 이 파일에 둔다. 순수 로직은
+/// dashboard_entries.dart, 상태는 dashboard_state.dart로 간다.
+
+/// Riverpod은 조회(GET)와 액션(POST/DELETE)을 똑같이 FutureProvider로 표현하기
+/// 때문에 `ref.read(provider.future)`만 보면 "이미 있는 값을 읽는다"인지 "지금
+/// 부수효과를 처음 실행시킨다"인지 코드만으로 구분이 안 된다(autoDispose
+/// FutureProvider는 listener가 없으면 read하는 순간 처음 build되어 실행된다).
+/// 이 헬퍼는 그 실행 의도를 이름으로 드러낸다.
+Future<T> runAction<T>(Future<T> Function() invoke) => invoke();
+
 Future<void> showAddCornerDialog(
   BuildContext context,
   WidgetRef ref,
@@ -61,7 +72,9 @@ Future<void> showAddCornerDialog(
   final name = nameController.text.trim();
   final minutes = int.tryParse(minutesController.text) ?? 10;
   if (name.isEmpty) return;
-  await ref.read(createCornerProvider(campId, name, minutes).future);
+  await runAction(
+    () => ref.read(createCornerProvider(campId, name, minutes).future),
+  );
   ref.invalidate(cornerListProvider(campId));
 }
 
@@ -88,7 +101,9 @@ Future<void> deleteCorner(
   );
   if (!confirmed) return;
   try {
-    await ref.read(deleteCornerProvider(CornerId(entry.corner.id!)).future);
+    await runAction(
+      () => ref.read(deleteCornerProvider(CornerId(entry.corner.id!)).future),
+    );
     ref.invalidate(cornerListProvider(campId));
   } catch (_) {
     if (context.mounted) {
