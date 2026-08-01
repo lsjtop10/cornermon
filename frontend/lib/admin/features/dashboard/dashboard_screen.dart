@@ -1,15 +1,18 @@
+import 'package:cornermon/admin/features/dashboard/dashboard_actions.dart';
+import 'package:cornermon/admin/features/dashboard/dashboard_entries.dart';
+import 'package:cornermon/admin/features/dashboard/dashboard_state.dart';
 import 'package:cornermon/admin/features/track_bulk_manage/track_pin_export_controller.dart';
 import 'package:cornermon/admin/features/track_direct/track_direct_providers.dart';
 import 'package:cornermon/admin/session/selected_camp_provider.dart';
 import 'package:cornermon/shared/api/domain_aliases.dart' as api;
 import 'package:cornermon/shared/api/ids.dart';
-import 'package:cornermon/shared/api/providers/corner_track_providers.dart';
+import 'package:cornermon/shared/api/providers/corner_track_providers.dart'
+    hide deleteCorner;
 import 'package:cornermon/shared/api/providers/report_providers.dart';
 import 'package:cornermon/shared/design_system/tokens/colors.dart';
 import 'package:cornermon/shared/design_system/tokens/typography.dart';
 import 'package:cornermon/shared/design_system/widgets/app_button.dart';
 import 'package:cornermon/shared/design_system/widgets/app_dropdown.dart';
-import 'package:cornermon/shared/design_system/widgets/confirm_modal.dart';
 import 'package:cornermon/shared/design_system/widgets/empty_state.dart';
 import 'package:cornermon/shared/design_system/widgets/connection_banner.dart';
 import 'package:cornermon/shared/design_system/widgets/pill_tab_bar.dart';
@@ -19,203 +22,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-enum CornerSortOption { cornerNo, name, avgDeviationDesc, avgDeviationAsc }
-
-enum CornerFilterChip { all, busy, idle, inactive, bottleneckOnly }
-
 final dashboardPinExportButtonKey = GlobalKey();
-
-final dashboardSortProvider = NotifierProvider<DashboardSort, CornerSortOption>(
-  DashboardSort.new,
-);
-
-class DashboardSort extends Notifier<CornerSortOption> {
-  @override
-  CornerSortOption build() => CornerSortOption.cornerNo;
-  void select(CornerSortOption value) => state = value;
-}
-
-final dashboardFilterProvider =
-    NotifierProvider<DashboardFilter, CornerFilterChip>(DashboardFilter.new);
-
-class DashboardFilter extends Notifier<CornerFilterChip> {
-  @override
-  CornerFilterChip build() => CornerFilterChip.all;
-  void select(CornerFilterChip value) => state = value;
-}
-
-class CornerDashboardEntry {
-  const CornerDashboardEntry(this.corner, {this.avgDeviationSeconds});
-  final api.Corner corner;
-  final num? avgDeviationSeconds;
-  bool get inactive => corner.status == api.CornerOperationalStatus.INACTIVE;
-  bool get hasBusyTrack => (corner.activeTracks?.toList() ?? const []).any(
-    (track) => track.operationalStatus?.name == 'BUSY',
-  );
-}
-
-Future<void> _showAddCornerDialog(
-  BuildContext context,
-  WidgetRef ref,
-  CampId campId,
-) async {
-  final nameController = TextEditingController();
-  final minutesController = TextEditingController(text: '10');
-  final confirmed = await showDialog<bool>(
-    context: context,
-    builder: (context) {
-      final isDark = Theme.of(context).brightness == Brightness.dark;
-      final colors = isDark ? AppColors.dark : AppColors.light;
-      return AlertDialog(
-        title: Text(
-          '코너 추가',
-          style: AppTypography.title3.copyWith(color: colors.textPrimary),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            TextField(
-              controller: nameController,
-              autofocus: true,
-              decoration: const InputDecoration(labelText: '코너 이름'),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: minutesController,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(labelText: '목표시간(분)'),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('취소'),
-          ),
-          AppButton(
-            variant: AppButtonVariant.primary,
-            size: AppButtonSize.compact,
-            label: '추가',
-            onPressed: () => Navigator.pop(context, true),
-          ),
-        ],
-      );
-    },
-  );
-  if (confirmed != true) return;
-  final name = nameController.text.trim();
-  final minutes = int.tryParse(minutesController.text) ?? 10;
-  if (name.isEmpty) return;
-  await ref.read(createCornerProvider(campId, name, minutes).future);
-  ref.invalidate(cornerListProvider(campId));
-}
-
-Future<void> _deleteCorner(
-  BuildContext context,
-  WidgetRef ref,
-  CampId campId,
-  CornerDashboardEntry entry,
-) async {
-  if (entry.hasBusyTrack) {
-    await showConfirmModal(
-      context,
-      kind: ConfirmModalKind.hardBlock,
-      title: '작업할 수 없습니다',
-      body: '진행 중인 방문이 있어 삭제할 수 없습니다',
-    );
-    return;
-  }
-  final confirmed = await showConfirmModal(
-    context,
-    kind: ConfirmModalKind.softConfirm,
-    title: '코너 "${entry.corner.name ?? entry.corner.id}"를 삭제하시겠습니까?',
-    body: '연결된 트랙과 방문 기록도 함께 삭제됩니다.',
-  );
-  if (!confirmed) return;
-  try {
-    await ref.read(deleteCornerProvider(CornerId(entry.corner.id!)).future);
-    ref.invalidate(cornerListProvider(campId));
-  } catch (_) {
-    if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('코너 삭제에 실패했습니다. 잠시 후 다시 시도해주세요.')),
-      );
-    }
-  }
-}
-
-List<CornerDashboardEntry> buildDashboardEntries(
-  List<api.Corner> corners,
-  Iterable<api.BottleneckRanking> ranking,
-) {
-  final deviations = {
-    for (final item in ranking) item.cornerId: item.avgDeviationSeconds,
-  };
-  return [
-    for (final corner in corners)
-      CornerDashboardEntry(corner, avgDeviationSeconds: deviations[corner.id]),
-  ];
-}
-
-List<CornerDashboardEntry> filterEntries(
-  List<CornerDashboardEntry> entries,
-  CornerFilterChip filter,
-) => entries
-    .where(
-      (entry) => switch (filter) {
-        CornerFilterChip.all => true,
-        CornerFilterChip.busy =>
-          entry.corner.status == api.CornerOperationalStatus.BUSY,
-        CornerFilterChip.idle =>
-          entry.corner.status == api.CornerOperationalStatus.IDLE,
-        CornerFilterChip.inactive => entry.inactive,
-        CornerFilterChip.bottleneckOnly => entry.corner.isBottleneck ?? false,
-      },
-    )
-    .toList();
-List<CornerDashboardEntry> sortEntries(
-  List<CornerDashboardEntry> entries,
-  CornerSortOption option,
-) {
-  final result = [...entries];
-  int number(CornerDashboardEntry value) =>
-      int.tryParse(
-        RegExp(r'\d+').firstMatch(value.corner.name ?? '')?.group(0) ?? '',
-      ) ??
-      1 << 30;
-  result.sort((a, b) {
-    if (a.inactive != b.inactive) return a.inactive ? 1 : -1;
-    return switch (option) {
-      CornerSortOption.cornerNo => number(a).compareTo(number(b)),
-      CornerSortOption.name => (a.corner.name ?? '').compareTo(
-        b.corner.name ?? '',
-      ),
-      CornerSortOption.avgDeviationDesc =>
-        (b.avgDeviationSeconds ?? double.negativeInfinity).compareTo(
-          a.avgDeviationSeconds ?? double.negativeInfinity,
-        ),
-      CornerSortOption.avgDeviationAsc =>
-        (a.avgDeviationSeconds ?? double.infinity).compareTo(
-          b.avgDeviationSeconds ?? double.infinity,
-        ),
-    };
-  });
-  return result;
-}
-
-String formatCornerCardSubtitle({
-  required int avgDurationSeconds,
-  required int sampleCount,
-  num? avgDeviationSeconds,
-}) {
-  String duration(num seconds) =>
-      '${seconds ~/ 60}:${(seconds % 60).round().toString().padLeft(2, '0')}';
-  final deviation = avgDeviationSeconds == null
-      ? ''
-      : ' (${avgDeviationSeconds >= 0 ? '+' : '-'}${duration(avgDeviationSeconds.abs())})';
-  return '평균 ${duration(avgDurationSeconds)}$deviation · 최근 $sampleCount건';
-}
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
@@ -350,7 +157,7 @@ class DashboardScreen extends ConsumerWidget {
                           : Icons.filter_alt_off,
                       actionLabel: noCorners ? '코너 추가' : null,
                       onAction: noCorners
-                          ? () => _showAddCornerDialog(context, ref, id)
+                          ? () => showAddCornerDialog(context, ref, id)
                           : null,
                     ),
                   );
@@ -376,7 +183,7 @@ class DashboardScreen extends ConsumerWidget {
                               '/dashboard/corners/${entry.corner.id}',
                             )
                           : null,
-                      onDelete: () => _deleteCorner(context, ref, id, entry),
+                      onDelete: () => deleteCorner(context, ref, id, entry),
                     );
                   },
                 );
@@ -502,7 +309,7 @@ class _Controls extends ConsumerWidget {
         size: AppButtonSize.compact,
         icon: Icons.add,
         label: '코너 추가',
-        onPressed: () => _showAddCornerDialog(context, ref, campId),
+        onPressed: () => showAddCornerDialog(context, ref, campId),
       ),
       AppButton(
         variant: AppButtonVariant.secondary,
