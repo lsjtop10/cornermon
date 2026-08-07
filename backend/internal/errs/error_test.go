@@ -12,6 +12,32 @@ import (
 	"cornermon/backend/internal/errs"
 )
 
+func TestTraceIDFromContextShouldReturnEmptyStringWhenTraceIDMissing(t *testing.T) {
+	// arrange
+	ctx := context.Background()
+
+	// act
+	got := errs.TraceIDFromContext(ctx)
+
+	// assert
+	if got != "" {
+		t.Errorf("expected empty string, got %q", got)
+	}
+}
+
+func TestTraceIDFromContextShouldReturnValueWhenTraceIDPresent(t *testing.T) {
+	// arrange
+	ctx := context.WithValue(context.Background(), errs.TraceIDKey, "trace-xyz")
+
+	// act
+	got := errs.TraceIDFromContext(ctx)
+
+	// assert
+	if got != "trace-xyz" {
+		t.Errorf("expected 'trace-xyz', got %q", got)
+	}
+}
+
 func TestWrap(t *testing.T) {
 	// arrange
 	originalErr := errors.New("something went wrong")

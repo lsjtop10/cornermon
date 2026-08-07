@@ -54,6 +54,19 @@ func (e *AppError) FormatStack() []string {
 	return lines
 }
 
+// TraceIDFromContext는 context에 저장된 trace_id를 안전하게 추출합니다. ctx가 nil이거나
+// 값이 없으면 빈 문자열을 반환합니다. web/postgres/sse 등 인프라 계층이 로그에 trace_id를
+// 명시적으로 남기고 싶을 때(예: SSE broadcast의 "무엇이 이 알림을 유발했는가" 기록) 이 헬퍼를 씁니다.
+func TraceIDFromContext(ctx context.Context) string {
+	if ctx == nil {
+		return ""
+	}
+	if traceID, ok := ctx.Value(TraceIDKey).(string); ok {
+		return traceID
+	}
+	return ""
+}
+
 // Wrap은 에러가 발생한 현재 호출 위치 기준의 스택 트레이스와 Context의 trace_id를 캡처하여 AppError로 반환합니다.
 // ⚠️ 성능을 위해 예상치 못한 5xx 인프라 에러 상황에만 제한적으로 사용하십시오.
 func Wrap(ctx context.Context, err error) error {
@@ -65,19 +78,10 @@ func Wrap(ctx context.Context, err error) error {
 	var appErr *AppError
 	if errors.As(err, &appErr) {
 		// Context에 trace_id가 세팅되어 있으나 에러 객체에 비어있는 경우 보완
-		if appErr.TraceID == "" && ctx != nil {
-			if traceID, ok := ctx.Value(TraceIDKey).(string); ok {
-				appErr.TraceID = traceID
-			}
+		if appErr.TraceID == "" {
+			appErr.TraceID = TraceIDFromContext(ctx)
 		}
 		return err
-	}
-
-	var traceID string
-	if ctx != nil {
-		if tid, ok := ctx.Value(TraceIDKey).(string); ok {
-			traceID = tid
-		}
 	}
 
 	pcs := make([]uintptr, 32)
@@ -85,7 +89,7 @@ func Wrap(ctx context.Context, err error) error {
 
 	return &AppError{
 		Err:     err,
-		TraceID: traceID,
+		TraceID: TraceIDFromContext(ctx),
 		Stack:   pcs[:n],
 	}
 }

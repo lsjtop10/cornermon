@@ -66,9 +66,37 @@ SSE fan-out 로그를 `trace_id`로 상관 분석할 수 없다.
 
 ### 체크리스트
 
-- [ ] `postgres.SlogQueryTracer`가 에러/느린쿼리/디버그 로그 모두 `*Context` 계열로 전환됨
-- [ ] `sse.BroadcasterImpl.Broadcast`가 모든 이벤트에 대해 상시 구조화 로그를 남김 (임시 진단 로그 제거)
-- [ ] `EventHandler.streamEvents`가 write 실패 시 trace_id 포함 경고 로그를 남김
-- [ ] DEVELOPER_GUIDE.md에 trace_id 상관관계 한계 문서화
-- [ ] 토큰/헤더/메시지 본문 등 민감 정보가 새로 로그에 노출되지 않음
-- [ ] `go test ./...`, `gofmt -w .`, `go vet ./...` 통과
+- [x] `postgres.SlogQueryTracer`가 에러/느린쿼리/디버그 로그 모두 `*Context` 계열로 전환됨
+- [x] `sse.BroadcasterImpl.Broadcast`가 모든 이벤트에 대해 상시 구조화 로그를 남김 (임시 진단 로그 제거)
+- [x] `EventHandler.streamEvents`가 write 실패 시 trace_id 포함 경고 로그를 남김
+- [x] DEVELOPER_GUIDE.md에 trace_id 상관관계 한계 문서화
+- [x] 토큰/헤더/메시지 본문 등 민감 정보가 새로 로그에 노출되지 않음
+- [x] `go test ./...`, `gofmt -w .`, `go vet ./...` 통과
+
+## Addendum: connection_id / cause_trace_id 분리 (PR 리뷰 피드백)
+
+최초 구현은 요청 trace_id와 SSE 연결 trace_id의 수명이 다르다는 점을 **문서로만** 경고했다.
+리뷰 중 "결국 남는 건 로그뿐이니 어떤 요청이 이벤트를 발행했는지 로그만으로 추적 가능해야
+한다"는 피드백을 받아, 필드 자체를 명시적으로 분리했다.
+
+- `usecase.SSEMessage`에 `CauseTraceID string` 필드 추가 — `BroadcasterImpl.Broadcast`가
+  `ctx`에서 추출해 채운다. 클라이언트에 노출되는 `SSENotification` payload에는 포함하지
+  않는다(`formatSSEMessage`가 별도 DTO를 구성하므로 자동으로 격리됨).
+- `errs.TraceIDFromContext(ctx)` 헬퍼 추가 — 기존 `Wrap`의 중복 타입 단언 로직도 이걸로
+  정리.
+- `EventHandler.streamEvents`가 연결 시점의 trace_id를 `connection_id`로, 메시지에 실려온
+  `CauseTraceID`를 `cause_trace_id`로 명시적으로 로그. `SSE event delivered`(신규, 성공
+  경로) / `SSE event write failed`(기존) 모두 두 필드를 함께 남긴다.
+- `Broadcast`도 자신의 로그에 `cause_trace_id`를 명시적으로 추가해, 두 계층의 로그를
+  `cause_trace_id`로 조인할 수 있게 했다(자동 주입되는 `trace_id`와 값은 같지만, 필드명을
+  통일해 검색 가능하게 하는 것이 목적).
+- DEVELOPER_GUIDE.md §4.3.1 갱신: `trace_id`/`connection_id`/`cause_trace_id` 세 필드의
+  의미와 조인 방법을 명시.
+
+### 추가 검증
+- [x] `errs.TraceIDFromContext` 단위 테스트 추가
+- [x] `broadcaster_test.go`: `message.CauseTraceID`가 채워지는지, 로그에 `cause_trace_id`가
+      남는지 검증
+- [x] `event_handler_test.go`: `connection_id`와 `cause_trace_id`가 서로 다른 값으로
+      로그에 남는지(write 실패/정상 delivered 양쪽) 검증
+- [x] `go test ./...`, `gofmt -w .`, `go vet ./...` 재통과

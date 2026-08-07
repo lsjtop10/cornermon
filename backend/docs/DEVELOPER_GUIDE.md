@@ -215,21 +215,28 @@ func (r *pgBadgeRepository) queries(ctx context.Context) *db.Queries {
 usecase는 이 구현을 모르고 인터페이스로만 호출하므로, 브로드캐스터 구현을 교체해도(예: Redis
 pub/sub로 전환) usecase 코드는 변경되지 않습니다.
 
-#### 4.3.1 trace_id 상관관계 한계 (Issue #187)
+#### 4.3.1 trace_id 상관관계 한계와 cause_trace_id (Issue #187)
 
-인프라 로그(Postgres tracer, SSE broadcaster/event handler)는 `*Context` 계열 slog 호출로
-`ctx`의 `trace_id`를 전파하지만, 두 경로의 `ctx` 수명이 다르다는 점을 알고 상관 분석해야 합니다.
+요청 trace_id(HTTP 요청 1건 단위)와 SSE 연결의 ctx(연결 수명 전체, 여러 요청에 걸침)는
+서로 다른 수명을 가지므로 같은 이름(`trace_id`)이라고 해서 같은 것을 가리키지 않습니다.
+이 혼동을 막기 위해 SSE 관련 로그는 세 필드를 구분해서 씁니다.
 
-- **요청 trace_id**: `web.Logger()`가 HTTP 요청 1건마다 생성/전파합니다. `Broadcast(ctx, ...)`
-  호출은 usecase가 트랜잭션 커밋 이후 이 요청 ctx로 호출하므로, "무엇이 이 알림을 유발했는가"는
-  `BroadcasterImpl.Broadcast`의 `SSE broadcast dispatched` 로그 trace_id로 추적할 수 있습니다.
-- **SSE 연결 trace_id**: `EventHandler.streamEvents`의 `ctx`는 SSE 연결이 열린 시점(구독
-  요청)의 ctx로, 연결이 유지되는 동안 고정됩니다. 이후 그 연결로 전달되는 모든 이벤트의 write
-  로그(`SSE event write failed` 등)는 연결 시점의 trace_id를 공유할 뿐, 알림을 유발한 원본
-  요청의 trace_id와는 다릅니다.
-- 따라서 "어떤 요청이 어떤 클라이언트에게 무엇을 언제 전달했는가"를 추적하려면 두 로그를
-  `trace_id`가 아니라 `event`/`scope`/타임스탬프로 연결해야 합니다. 두 trace_id를 동일시하지
-  마세요.
+- **`trace_id`** (모든 `*Context` slog 호출에 `errs.SlogWrappedHandler`가 자동 주입): 그
+  로그 라인을 호출한 시점의 ctx가 가진 trace_id — 의미는 호출 위치마다 다릅니다.
+- **`connection_id`** (`EventHandler.streamEvents`가 명시적으로 남김): SSE 연결이 열릴 때
+  (구독 요청) 발급된 trace_id로, 그 연결이 살아있는 동안 고정됩니다. 이 연결로 전달되는
+  모든 이벤트의 로그가 같은 `connection_id`를 공유합니다. `EventHandler` 로그의 `trace_id`는
+  결국 이 값과 동일합니다.
+- **`cause_trace_id`** (`usecase.SSEMessage.CauseTraceID`, `BroadcasterImpl.Broadcast`가
+  `ctx`에서 추출해 message에 실음): 이 알림을 유발한 원본 요청(상태를 변경해 커밋한 요청)의
+  trace_id. `Broadcast`가 호출된 시점의 `trace_id`와 동일한 값이지만, 이후 메시지에 실려
+  SSE 연결(다른 `connection_id`를 가진 여러 구독자)에까지 전달되어 `EventHandler`의
+  `SSE event delivered`/`SSE event write failed` 로그에도 그대로 남습니다.
+
+즉 "어떤 요청이 발행한 알림을 어떤 연결이 언제 받았는가"는 `cause_trace_id`로 두 계층의
+로그를 조인해서 추적하고, "이 연결 자체에 무슨 일이 있었는가"는 `connection_id`로 봅니다.
+`trace_id`만 보고 두 로그를 엮으면 안 됩니다 — SSE 쪽 `trace_id`는 발행 요청이 아니라
+연결 자신을 가리키기 때문입니다.
 
 ## 5. 인증
 

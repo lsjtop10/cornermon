@@ -23,7 +23,7 @@ func withCapturedLogger(t *testing.T) *bytes.Buffer {
 	return buf
 }
 
-func TestShouldLogTraceID_WhenBroadcastDispatched(t *testing.T) {
+func TestShouldLogCauseTraceID_WhenBroadcastDispatched(t *testing.T) {
 	// Arrange
 	buf := withCapturedLogger(t)
 	broadcaster := NewBroadcaster()
@@ -36,12 +36,34 @@ func TestShouldLogTraceID_WhenBroadcastDispatched(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Broadcast() error = %v", err)
 	}
-	if !strings.Contains(buf.String(), `"trace_id":"trace-broadcast"`) {
-		t.Errorf("expected log to contain trace_id, got: %s", buf.String())
+	logLine := buf.String()
+	// trace_id는 SlogWrappedHandler가 ctx로부터 자동 주입한 값(=발행 요청 자신),
+	// cause_trace_id는 Broadcast가 message에 실어 SSE 연결까지 전달하는 동일한 값이다.
+	if !strings.Contains(logLine, `"trace_id":"trace-broadcast"`) {
+		t.Errorf("expected log to contain trace_id, got: %s", logLine)
+	}
+	if !strings.Contains(logLine, `"cause_trace_id":"trace-broadcast"`) {
+		t.Errorf("expected log to contain cause_trace_id, got: %s", logLine)
 	}
 }
 
-func TestShouldLogTraceID_WhenSubscriberBufferFull(t *testing.T) {
+func TestShouldSetCauseTraceIDOnMessage_WhenBroadcastDispatched(t *testing.T) {
+	// Arrange
+	broadcaster := NewBroadcaster()
+	admin, _ := broadcaster.SubscribeAdmin(context.Background(), "camp-a")
+	ctx := context.WithValue(context.Background(), errs.TraceIDKey, "trace-message")
+
+	// Act
+	_ = broadcaster.Broadcast(ctx, "camp-a", usecase.EventCampUpdated, usecase.CampScope())
+
+	// Assert
+	message := <-admin
+	if message.CauseTraceID != "trace-message" {
+		t.Errorf("expected message.CauseTraceID = %q, got %q", "trace-message", message.CauseTraceID)
+	}
+}
+
+func TestShouldLogCauseTraceID_WhenSubscriberBufferFull(t *testing.T) {
 	// Arrange
 	broadcaster := NewBroadcaster()
 	admin, _ := broadcaster.SubscribeAdmin(context.Background(), "camp-a")
@@ -58,8 +80,8 @@ func TestShouldLogTraceID_WhenSubscriberBufferFull(t *testing.T) {
 	for range subscriberBufferSize {
 		<-admin
 	}
-	if !strings.Contains(buf.String(), `"trace_id":"trace-full"`) {
-		t.Errorf("expected buffer-full warning log to contain trace_id, got: %s", buf.String())
+	if !strings.Contains(buf.String(), `"cause_trace_id":"trace-full"`) {
+		t.Errorf("expected buffer-full warning log to contain cause_trace_id, got: %s", buf.String())
 	}
 }
 

@@ -262,6 +262,11 @@ func TrackScope(trackID domain.TrackID) Scope {
 type SSEMessage struct {
 	Event NotificationEvent
 	Scope Scope
+	// CauseTraceID는 이 알림을 유발한 원본 요청의 trace_id입니다(Broadcaster 구현체가 채움).
+	// SSE 연결 자체의 trace_id(연결 수명 동안 고정)와는 다른 값이며, 로그에서 어떤 요청이
+	// 이 이벤트를 발행했는지 추적하는 용도로만 씁니다 — 클라이언트에 노출되는 SSE payload에는
+	// 포함하지 않습니다(internal/infrastructure/web.formatSSEMessage 참고).
+	CauseTraceID string
 }
 
 // Broadcaster는 트랜잭션 성공 후 SSE 클라이언트에게 실시간 알림을 푸시하는 포트입니다.
