@@ -385,3 +385,14 @@ SELECT * FROM visits WHERE group_id = $1 ORDER BY started_at ASC;
 -- 캠프 결과 리포트(사후 배치 집계) 전용 — AuditLogQuerier.List(관리자 UI 페이지네이션)와 달리
 -- 커서/limit 없이 캠프 범위 전체를 반환한다.
 SELECT * FROM audit_logs WHERE camp_id = $1;
+
+-- name: ListAnnouncementReceiptSummaryByCamp :many
+-- 공지별 읽음 도달률(analytics-model.md §1.6) 집계 전용. 수신 대상이 없던 공지(발송 시점에
+-- 트랙이 하나도 없던 경우)도 LEFT JOIN으로 0/0 행이 남는다.
+SELECT a.id AS announcement_id, a.content AS announcement_content,
+       COUNT(r.track_id) AS total_recipients,
+       COUNT(r.track_id) FILTER (WHERE r.read_at IS NOT NULL) AS read_count
+FROM announcements a
+LEFT JOIN announcement_receipts r ON r.announcement_id = a.id
+WHERE a.camp_id = $1
+GROUP BY a.id, a.content;

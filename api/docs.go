@@ -3111,6 +3111,21 @@ const docTemplate = `{
                 }
             }
         },
+        "AdminOperationCountResponse": {
+            "type": "object",
+            "properties": {
+                "adminId": {
+                    "type": "string",
+                    "format": "uuid"
+                },
+                "adminName": {
+                    "type": "string"
+                },
+                "count": {
+                    "type": "integer"
+                }
+            }
+        },
         "AdminResponse": {
             "type": "object",
             "properties": {
@@ -3149,6 +3164,24 @@ const docTemplate = `{
                 "lastUsedAt": {
                     "type": "string",
                     "format": "date-time"
+                }
+            }
+        },
+        "AnnouncementReadStatResponse": {
+            "type": "object",
+            "properties": {
+                "announcementContent": {
+                    "type": "string"
+                },
+                "announcementId": {
+                    "type": "string",
+                    "format": "uuid"
+                },
+                "readCount": {
+                    "type": "integer"
+                },
+                "totalRecipients": {
+                    "type": "integer"
                 }
             }
         },
@@ -4071,7 +4104,45 @@ const docTemplate = `{
             }
         },
         "OperationalStatsResponse": {
-            "type": "object"
+            "type": "object",
+            "properties": {
+                "adminOperationCounts": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/AdminOperationCountResponse"
+                    }
+                },
+                "announcementReadStats": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/AnnouncementReadStatResponse"
+                    }
+                },
+                "deviceApprovedCount": {
+                    "type": "integer"
+                },
+                "deviceRejectedCount": {
+                    "type": "integer"
+                },
+                "deviceRequestCount": {
+                    "type": "integer"
+                },
+                "deviceRevokedCount": {
+                    "type": "integer"
+                },
+                "pinLoginFailureCount": {
+                    "type": "integer"
+                },
+                "pinLoginSuccessCount": {
+                    "type": "integer"
+                },
+                "trackDirectMessageCounts": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/TrackMessageCountResponse"
+                    }
+                }
+            }
         },
         "ReplaceTrackRequest": {
             "type": "object",
@@ -4182,6 +4253,21 @@ const docTemplate = `{
                     "$ref": "#/definitions/TrackResponse"
                 },
                 "trackToken": {
+                    "type": "string"
+                }
+            }
+        },
+        "TrackMessageCountResponse": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "integer"
+                },
+                "trackId": {
+                    "type": "string",
+                    "format": "uuid"
+                },
+                "trackLabel": {
                     "type": "string"
                 }
             }

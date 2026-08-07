@@ -92,3 +92,45 @@ func IsValidAuditAction(raw string) bool {
 	}
 	return false
 }
+
+// adminAuditActions는 actor가 관리자 ID인 액션의 집합이다. 캠프 결과 리포트의 "관리자별
+// 조작 횟수"(analytics-model.md §1.6) 집계 시 진행자/익명 주체 액션(FACILITATOR_LOGIN,
+// MESSAGE_DIRECT, VISIT_START/COMPLETE 등)을 가려내는 데 쓰인다. 새 액션을 추가할 때
+// actor가 관리자 ID인지 여부에 따라 반드시 여기 포함 여부를 결정한다 —
+// TestAdminAuditActionsShoudPartitionAllActions가 누락을 감지한다.
+func adminAuditActions() map[AuditAction]bool {
+	return map[AuditAction]bool{
+		ActionAdminLogin:          true,
+		ActionAdminCreate:         true,
+		ActionAdminPasswordChange: true,
+		ActionAdminDelete:         true,
+		ActionAdminSessionRevoke:  true,
+		ActionTrackForceLogout:    true,
+		ActionBadgeAssign:         true,
+		ActionBadgeBulkGenerate:   true,
+		ActionBadgeExport:         true,
+		ActionCampActivate:        true,
+		ActionCampEnd:             true,
+		ActionCampCreate:          true,
+		ActionCampSettingsUpdate:  true,
+		ActionCornerUpdate:        true,
+		ActionCornerDelete:        true,
+		ActionCornerCreate:        true,
+		ActionDeviceApproved:      true,
+		ActionDeviceRejected:      true,
+		ActionDeviceRevoked:       true,
+		ActionPinLockReset:        true,
+		ActionGroupCreate:         true,
+		ActionMessageBroadcast:    true,
+		ActionTrackCreate:         true,
+		ActionTrackDelete:         true,
+		ActionTrackReplace:        true,
+		ActionPinRegenerate:       true,
+		ActionTrackPinExport:      true,
+	}
+}
+
+// IsAdminAuditAction은 action의 주체가 관리자인지 여부를 반환한다.
+func IsAdminAuditAction(action AuditAction) bool {
+	return adminAuditActions()[action]
+}

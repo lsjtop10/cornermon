@@ -27,7 +27,36 @@ type TimelineBucketResponse struct {
 	CumulativeCompleted int       `json:"cumulativeCompleted"`
 } // @name TimelineBucketResponse
 
-type OperationalStatsResponse struct{} // @name OperationalStatsResponse
+type OperationalStatsResponse struct {
+	PinLoginSuccessCount     int                            `json:"pinLoginSuccessCount"`
+	PinLoginFailureCount     int                            `json:"pinLoginFailureCount"`
+	DeviceRequestCount       int                            `json:"deviceRequestCount"`
+	DeviceApprovedCount      int                            `json:"deviceApprovedCount"`
+	DeviceRejectedCount      int                            `json:"deviceRejectedCount"`
+	DeviceRevokedCount       int                            `json:"deviceRevokedCount"`
+	AdminOperationCounts     []AdminOperationCountResponse  `json:"adminOperationCounts"`
+	TrackDirectMessageCounts []TrackMessageCountResponse    `json:"trackDirectMessageCounts"`
+	AnnouncementReadStats    []AnnouncementReadStatResponse `json:"announcementReadStats"`
+} // @name OperationalStatsResponse
+
+type AdminOperationCountResponse struct {
+	AdminID   string `json:"adminId" format:"uuid"`
+	AdminName string `json:"adminName"`
+	Count     int    `json:"count"`
+} // @name AdminOperationCountResponse
+
+type TrackMessageCountResponse struct {
+	TrackID    string `json:"trackId" format:"uuid"`
+	TrackLabel string `json:"trackLabel"`
+	Count      int    `json:"count"`
+} // @name TrackMessageCountResponse
+
+type AnnouncementReadStatResponse struct {
+	AnnouncementID      string `json:"announcementId" format:"uuid"`
+	AnnouncementContent string `json:"announcementContent"`
+	TotalRecipients     int    `json:"totalRecipients"`
+	ReadCount           int    `json:"readCount"`
+} // @name AnnouncementReadStatResponse
 
 type TrackStatsResponse struct {
 	TrackID             string  `json:"trackId" format:"uuid"`
@@ -201,7 +230,41 @@ func mapReport(r *usecase.CampReport) CampReportResponse {
 		})
 	}
 	res.Timeline = TimelineStatsResponse{Buckets: timelineBuckets}
+	res.OperationalStats = mapOperationalStats(r.Operational)
 	return res
+}
+
+// mapOperationalStats maps usecase.OperationalStats to OperationalStatsResponse.
+func mapOperationalStats(o usecase.OperationalStats) OperationalStatsResponse {
+	adminOps := make([]AdminOperationCountResponse, 0, len(o.AdminOperationCounts))
+	for _, a := range o.AdminOperationCounts {
+		adminOps = append(adminOps, AdminOperationCountResponse{AdminID: a.AdminID, AdminName: a.AdminName, Count: a.Count})
+	}
+	trackMsgs := make([]TrackMessageCountResponse, 0, len(o.TrackDirectMessageCounts))
+	for _, m := range o.TrackDirectMessageCounts {
+		trackMsgs = append(trackMsgs, TrackMessageCountResponse{TrackID: string(m.TrackID), TrackLabel: m.TrackLabel, Count: m.Count})
+	}
+	announcementStats := make([]AnnouncementReadStatResponse, 0, len(o.AnnouncementReadStats))
+	for _, a := range o.AnnouncementReadStats {
+		announcementStats = append(announcementStats, AnnouncementReadStatResponse{
+			AnnouncementID:      a.AnnouncementID,
+			AnnouncementContent: a.AnnouncementContent,
+			TotalRecipients:     a.TotalRecipients,
+			ReadCount:           a.ReadCount,
+		})
+	}
+
+	return OperationalStatsResponse{
+		PinLoginSuccessCount:     o.PinLoginSuccessCount,
+		PinLoginFailureCount:     o.PinLoginFailureCount,
+		DeviceRequestCount:       o.DeviceRequestCount,
+		DeviceApprovedCount:      o.DeviceApprovedCount,
+		DeviceRejectedCount:      o.DeviceRejectedCount,
+		DeviceRevokedCount:       o.DeviceRevokedCount,
+		AdminOperationCounts:     adminOps,
+		TrackDirectMessageCounts: trackMsgs,
+		AnnouncementReadStats:    announcementStats,
+	}
 }
 
 // @Summary      라이브 서머리 (대시보드 상단)

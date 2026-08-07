@@ -266,6 +266,60 @@ func TestCalculateCampReport(t *testing.T) {
 	})
 }
 
+func TestCalculateCampReportShouldAggregateOperationalStatsWhenAuditLogsAndReceiptsProvided(t *testing.T) {
+	// Arrange
+	campID := domain.CampID("camp-3")
+	dbCamp := db.Camp{ID: "camp-3"}
+	scope := pgtype.Text{String: "camp-3", Valid: true}
+	dbAuditLogs := []db.AuditLog{
+		{ID: "log-10", Actor: "anonymous", Action: string(usecase.ActionFacilitatorLogin), Success: true, CampID: scope},
+		{ID: "log-11", Actor: "anonymous", Action: string(usecase.ActionFacilitatorLogin), Success: true, CampID: scope},
+		{ID: "log-12", Actor: "anonymous", Action: string(usecase.ActionFacilitatorLogin), Success: false, CampID: scope},
+		{ID: "log-13", Actor: "anonymous", Action: string(usecase.ActionDeviceRequest), Success: true, CampID: scope},
+		{ID: "log-14", Actor: "admin-1", Action: string(usecase.ActionDeviceApproved), Success: true, CampID: scope, ActorName: pgtype.Text{String: "admin1", Valid: true}},
+		{ID: "log-15", Actor: "admin-1", Action: string(usecase.ActionDeviceRejected), Success: true, CampID: scope, ActorName: pgtype.Text{String: "admin1", Valid: true}},
+		{ID: "log-16", Actor: "admin-2", Action: string(usecase.ActionDeviceRevoked), Success: true, CampID: scope, ActorName: pgtype.Text{String: "admin2", Valid: true}},
+		{ID: "log-17", Actor: "track-1", Action: string(usecase.ActionMessageDirect), Success: true, CampID: scope, ActorName: pgtype.Text{String: "코너1 · 1번 트랙", Valid: true}},
+		{ID: "log-18", Actor: "track-1", Action: string(usecase.ActionMessageDirect), Success: true, CampID: scope, ActorName: pgtype.Text{String: "코너1 · 1번 트랙", Valid: true}},
+		{ID: "log-19", Actor: "admin-1", Action: string(usecase.ActionCornerUpdate), Success: true, CampID: scope, ActorName: pgtype.Text{String: "admin1", Valid: true}},
+		{ID: "log-20", Actor: "admin-2", Action: string(usecase.ActionCampEnd), Success: true, CampID: scope, ActorName: pgtype.Text{String: "admin2", Valid: true}},
+	}
+	dbAnnouncementReceipts := []db.ListAnnouncementReceiptSummaryByCampRow{
+		{AnnouncementID: "ann-1", AnnouncementContent: "공지 내용", TotalRecipients: 5, ReadCount: 3},
+	}
+
+	// Act
+	report, err := calculateCampReport(campReportSource{
+		campID: campID, camp: dbCamp, auditLogs: dbAuditLogs, announcementReceipts: dbAnnouncementReceipts, now: time.Now(),
+	})
+
+	// Assert
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+	op := report.Operational
+	if op.PinLoginSuccessCount != 2 || op.PinLoginFailureCount != 1 {
+		t.Errorf("expected PIN success=2 failure=1, got success=%d failure=%d", op.PinLoginSuccessCount, op.PinLoginFailureCount)
+	}
+	if op.DeviceRequestCount != 1 || op.DeviceApprovedCount != 1 || op.DeviceRejectedCount != 1 || op.DeviceRevokedCount != 1 {
+		t.Errorf("expected device counts all 1, got %+v", op)
+	}
+	if len(op.TrackDirectMessageCounts) != 1 || op.TrackDirectMessageCounts[0].Count != 2 {
+		t.Errorf("expected 1 track with 2 direct messages, got %+v", op.TrackDirectMessageCounts)
+	}
+	// admin-1: DeviceApproved + DeviceRejected + CornerUpdate = 3, admin-2: DeviceRevoked + CampEnd = 2
+	adminCounts := map[string]int{}
+	for _, a := range op.AdminOperationCounts {
+		adminCounts[a.AdminID] = a.Count
+	}
+	if adminCounts["admin-1"] != 3 || adminCounts["admin-2"] != 2 {
+		t.Errorf("expected admin-1=3 admin-2=2, got %+v", adminCounts)
+	}
+	if len(op.AnnouncementReadStats) != 1 || op.AnnouncementReadStats[0].TotalRecipients != 5 || op.AnnouncementReadStats[0].ReadCount != 3 {
+		t.Errorf("expected 1 announcement stat {5,3}, got %+v", op.AnnouncementReadStats)
+	}
+}
+
 func TestBuildTimeline(t *testing.T) {
 	t.Run("ShouldReturnNilWhenNoVisitOverlapsRange", func(t *testing.T) {
 		// Arrange
