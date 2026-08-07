@@ -305,6 +305,16 @@ type CampReport struct {
 	RuleOverrideCount int
 	// TrackOperationCount는 캠프 기간 중 성공한 트랙 생성/삭제/교체 감사 로그 수입니다.
 	TrackOperationCount int
+	Timeline            []TimelineBucket
+}
+
+// TimelineBucket은 5분 단위 시계열 버킷 DTO입니다(analytics-model.md §1.5).
+type TimelineBucket struct {
+	BucketStart time.Time
+	// InProgressCount는 버킷 시작 시각 기준 IN_PROGRESS였던 방문 수입니다.
+	InProgressCount int
+	// CumulativeCompleted는 버킷 종료 시각까지 COMPLETED로 누적된 방문 수입니다.
+	CumulativeCompleted int
 }
 
 // CornerReport는 코너별 분석 집계 DTO입니다.

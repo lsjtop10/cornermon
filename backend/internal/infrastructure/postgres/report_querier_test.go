@@ -260,3 +260,53 @@ func TestCalculateCampReport(t *testing.T) {
 		}
 	})
 }
+
+func TestBuildTimeline(t *testing.T) {
+	t.Run("ShouldReturnNilWhenNoVisitOverlapsRange", func(t *testing.T) {
+		// Arrange
+		anchor := time.Date(2026, 1, 1, 10, 0, 0, 0, time.UTC)
+
+		// Act
+		buckets := buildTimeline(nil, anchor, anchor)
+
+		// Assert
+		if buckets != nil {
+			t.Errorf("expected nil buckets when start is not before end, got %+v", buckets)
+		}
+	})
+
+	t.Run("ShouldBucketInProgressAndCumulativeCompletedWhenVisitsSpanMultipleBuckets", func(t *testing.T) {
+		// Arrange — 5분 버킷 경계에 이미 정렬된 anchor 사용해 Truncate 부작용을 배제한다.
+		anchor := time.Date(2026, 1, 1, 10, 0, 0, 0, time.UTC)
+		dbVisits := []db.ListVisitsByCampRow{
+			{ // 10:00~10:07 COMPLETED
+				ID: "visit-a", Status: "COMPLETED",
+				StartedAt: pgtype.Timestamptz{Time: anchor, Valid: true},
+				EndedAt:   pgtype.Timestamptz{Time: anchor.Add(7 * time.Minute), Valid: true},
+			},
+			{ // 10:06~ 아직 IN_PROGRESS(EndedAt 없음)
+				ID: "visit-b", Status: "IN_PROGRESS",
+				StartedAt: pgtype.Timestamptz{Time: anchor.Add(6 * time.Minute), Valid: true},
+			},
+		}
+
+		// Act — end를 12분 뒤로 잡아 [10:00,10:05,10:10) 3개 버킷을 만든다.
+		buckets := buildTimeline(dbVisits, anchor, anchor.Add(12*time.Minute))
+
+		// Assert
+		if len(buckets) != 3 {
+			t.Fatalf("expected 3 buckets, got %d: %+v", len(buckets), buckets)
+		}
+		want := []usecase.TimelineBucket{
+			{BucketStart: anchor, InProgressCount: 1, CumulativeCompleted: 0},
+			{BucketStart: anchor.Add(5 * time.Minute), InProgressCount: 1, CumulativeCompleted: 1},
+			{BucketStart: anchor.Add(10 * time.Minute), InProgressCount: 1, CumulativeCompleted: 1},
+		}
+		for i, w := range want {
+			got := buckets[i]
+			if !got.BucketStart.Equal(w.BucketStart) || got.InProgressCount != w.InProgressCount || got.CumulativeCompleted != w.CumulativeCompleted {
+				t.Errorf("bucket[%d]: expected %+v, got %+v", i, w, got)
+			}
+		}
+	})
+}

@@ -152,6 +152,7 @@ func calculateCampReport(campID domain.CampID, dbCamp db.Camp, dbGroups []db.Gro
 	}
 
 	programDurationSec := 0
+	var timeline []usecase.TimelineBucket
 	var firstVisitStart time.Time
 	hasFirstVisit := false
 	for _, v := range dbVisits {
@@ -168,6 +169,7 @@ func calculateCampReport(campID domain.CampID, dbCamp db.Camp, dbGroups []db.Gro
 		if endRef.After(firstVisitStart) {
 			programDurationSec = int(endRef.Sub(firstVisitStart).Seconds())
 		}
+		timeline = buildTimeline(dbVisits, firstVisitStart, endRef)
 	}
 
 	cornerReports := make([]usecase.CornerReport, 0, len(dbCorners))
@@ -286,7 +288,49 @@ func calculateCampReport(campID domain.CampID, dbCamp db.Camp, dbGroups []db.Gro
 		TrackReports:        trackReports,
 		RuleOverrideCount:   ruleOverrideCount,
 		TrackOperationCount: trackOperationCount,
+		Timeline:            timeline,
 	}
 
 	return report, nil
+}
+
+// buildTimeline은 5분 단위 버킷 시계열을 만든다(analytics-model.md §1.5). start를 5분 단위로
+// 내림(floor) 정렬해 첫 버킷을 잡고, end 이전까지 버킷을 채운다. 사후 배치 집계라 버킷×방문
+// 완전탐색(O(n·m))으로 충분하다(analytics-model.md §0.2).
+func buildTimeline(dbVisits []db.ListVisitsByCampRow, start, end time.Time) []usecase.TimelineBucket {
+	if !start.Before(end) {
+		return nil
+	}
+
+	const bucketSize = 5 * time.Minute
+	buckets := make([]usecase.TimelineBucket, 0)
+	for bucketStart := start.Truncate(bucketSize); bucketStart.Before(end); bucketStart = bucketStart.Add(bucketSize) {
+		bucketEnd := bucketStart.Add(bucketSize)
+
+		inProgressCount := 0
+		cumulativeCompleted := 0
+		for _, v := range dbVisits {
+			if !v.StartedAt.Valid || v.StartedAt.Time.After(bucketStart) {
+				continue
+			}
+			if v.Status == "COMPLETED" && v.EndedAt.Valid {
+				if v.EndedAt.Time.After(bucketStart) {
+					inProgressCount++
+				}
+				if !v.EndedAt.Time.After(bucketEnd) {
+					cumulativeCompleted++
+				}
+				continue
+			}
+			// ended_at이 없는(아직 진행 중이던) 방문은 버킷 시작 시각 기준 계속 진행 중이었다.
+			inProgressCount++
+		}
+
+		buckets = append(buckets, usecase.TimelineBucket{
+			BucketStart:         bucketStart,
+			InProgressCount:     inProgressCount,
+			CumulativeCompleted: cumulativeCompleted,
+		})
+	}
+	return buckets
 }

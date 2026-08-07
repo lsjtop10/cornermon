@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"sync"
 	"testing"
+	"time"
 
 	"cornermon/backend/internal/domain"
 	"cornermon/backend/internal/usecase"
@@ -170,6 +171,48 @@ func TestMapReportShouldMapTrackStatsAndManualRatioWhenTrackReportsProvided(t *t
 	}
 	if got := res.TrackStats[1].ManualVisitRatio; got != 0 {
 		t.Errorf("expected track-2 ManualVisitRatio 0 (no completed visits), got %f", got)
+	}
+}
+
+func TestMapReportShouldMapTimelineBucketsWhenReportProvidesTimeline(t *testing.T) {
+	// Arrange
+	anchor := time.Date(2026, 1, 1, 10, 0, 0, 0, time.UTC)
+	report := &usecase.CampReport{
+		CampID: "camp-1",
+		Timeline: []usecase.TimelineBucket{
+			{BucketStart: anchor, InProgressCount: 2, CumulativeCompleted: 0},
+			{BucketStart: anchor.Add(5 * time.Minute), InProgressCount: 1, CumulativeCompleted: 2},
+		},
+	}
+
+	// Act
+	res := mapReport(report)
+
+	// Assert
+	if len(res.Timeline.Buckets) != 2 {
+		t.Fatalf("expected 2 timeline buckets, got %d", len(res.Timeline.Buckets))
+	}
+	if !res.Timeline.Buckets[0].BucketStart.Equal(anchor) {
+		t.Errorf("expected bucket[0].BucketStart %v, got %v", anchor, res.Timeline.Buckets[0].BucketStart)
+	}
+	if res.Timeline.Buckets[1].InProgressCount != 1 || res.Timeline.Buckets[1].CumulativeCompleted != 2 {
+		t.Errorf("expected bucket[1] {1,2}, got %+v", res.Timeline.Buckets[1])
+	}
+}
+
+func TestMapReportShouldKeepTimelineBucketsEmptyWhenNoVisitsOccurred(t *testing.T) {
+	// Arrange
+	report := &usecase.CampReport{CampID: "camp-1"}
+
+	// Act
+	res := mapReport(report)
+
+	// Assert
+	if res.Timeline.Buckets == nil {
+		t.Error("expected non-nil (possibly empty) Buckets slice for stable JSON []")
+	}
+	if len(res.Timeline.Buckets) != 0 {
+		t.Errorf("expected 0 timeline buckets, got %d", len(res.Timeline.Buckets))
 	}
 }
 
