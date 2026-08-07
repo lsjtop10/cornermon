@@ -297,35 +297,46 @@ class DiagnosticsExportController extends AsyncNotifier<void> {
 
 ---
 
+## 진행 현황 (2026-08-07)
+
+P0(UC-1~3, Phase A~C)까지 구현 완료, 3개 PR로 분할(각 500 LOC 이내, 순서대로 스택):
+
+- [x] Phase A — 로깅 코어 (#223)
+- [x] Phase B — 네트워크 계층 통합 (#224)
+- [x] Phase C — 전역 예외 포착 + 기존 14곳 이관 (#225, 이슈 본문 4곳 + 조사로 확인된 10곳 전부)
+
+P1(UC-4 진단 내보내기, UC-5 레벨 재분류 화면 노출)은 사용자와 협의해 이번 범위에서 제외 —
+필요 시 별도 이슈로 진행한다.
+
 ## 검증 체크리스트
 
 ### 아키텍처 검증
 
-- [ ] `lib/shared/logging/`가 `lib/admin/**`, `lib/facilitator/**`를 import하지 않음
-- [ ] `lib/shared/api/gen/**` 무수정
-- [ ] `LoggingInterceptor`/`TraceIdInterceptor`가 `AuthInterceptor`와 동일하게 `SessionTokenSource` 등 추상 인터페이스만 참조(admin/facilitator 세션 직접 참조 금지)
-- [ ] 로그 어디에도 `Authorization` 헤더 원문, PIN/등록코드 원문이 포함되지 않음(§목표⑦) — 코드 리뷰 시 `LoggingInterceptor` 구현에서 헤더/민감 필드 제외 여부 확인
+- [x] `lib/shared/logging/`가 `lib/admin/**`, `lib/facilitator/**`를 import하지 않음
+- [x] `lib/shared/api/gen/**` 무수정
+- [x] `LoggingInterceptor`/`TraceIdInterceptor`가 `AuthInterceptor`와 동일하게 `Ref`만 참조(admin/facilitator 세션 직접 참조 금지)
+- [x] 로그 어디에도 `Authorization` 헤더 원문, PIN/등록코드 원문이 포함되지 않음(§목표⑦) — `LoggingInterceptor`는 `describeDioError()`(type/statusCode/message/error)만 기록하고 헤더를 다루지 않음
 
 ### 유즈케이스 검증
 
-- [ ] UC-1: `device_manage_screen.dart`, `pin_login_error_provider.dart`처럼 기존에 로깅이 없던 화면에서도 API 실패 시 로그가 자동으로 남는지 확인(수동 재현: 네트워크 차단 후 액션 수행)
-- [ ] UC-2: 실패 요청의 프론트 로그와 백엔드 `trace_id` 로그가 동일 값으로 매칭되는지 확인(백엔드 로그 tail + 프론트 로그 export 비교)
-- [ ] UC-3: `FlutterError.onError`를 유발하는 위젯 빌드 예외를 의도적으로 발생시켜 `AppLogger`에 기록되는지 단위/위젯 테스트로 확인
-- [ ] UC-4: release 모드 빌드에서 API 실패 재현 → 진단 내보내기 실행 → 공유된 텍스트에 해당 에러 라인이 포함되는지 실기기 확인
-- [ ] UC-5: `debug`/`info` 레벨 로그가 release 빌드의 `exportSnapshot()` 결과에 포함되지 않는지 단위테스트로 확인
+- [x] UC-1: `LoggingInterceptor`가 `apiClient`의 모든 `DioException`을 자동 기록하므로 `device_manage_screen.dart` 등 기존에 로깅이 없던 화면도 구조적으로 커버됨(단위테스트로 확인). 실기기 수동 재현은 미실시.
+- [ ] UC-2: 실패 요청의 프론트 로그와 백엔드 `trace_id` 로그가 동일 값으로 매칭되는지 실기기/실서버로 확인 — 후속 필요
+- [x] UC-3: `main_admin.dart`/`main_facilitator.dart`에 `runZonedGuarded`+`FlutterError.onError`+`PlatformDispatcher.onError` 연결 완료(정적 리뷰로 확인, 위젯 예외 유발 테스트는 미작성)
+- [ ] UC-4: 범위 밖(P1)으로 이연
+- [x] UC-5: `AppLogger` 단위테스트로 `debug`/`info`가 `exportSnapshot()`에서 빠짐을 확인
 
 ### 자동화 테스트
 
-- `LogRingBuffer`: capacity 초과 시 FIFO 정상 동작, `exportAsText()` 포맷
-- `AppLogger`: 레벨별 콘솔 출력/버퍼 적재 분기(`kDebugMode` 모킹 또는 조건 주입)
-- `describeDioError`/`traceIdOf`: 커넥션 타임아웃/4xx/5xx/헤더 없음 등 케이스별 단위테스트(`dio_error_test.dart`류 기존 패턴 참고)
-- `LoggingInterceptor`/`TraceIdInterceptor`: 기존 `AuthInterceptor` 테스트 패턴(Dio `MockAdapter` 또는 `DioAdapter`) 참고해 요청/에러 흐름 검증
-- 기존 10개 파일의 화면/컨트롤러 테스트: 로깅 제거 후에도 사용자 피드백(SnackBar/배너) 분기가 기존과 동일하게 동작하는지 회귀 확인(`flutter test` 전체)
+- [x] `LogRingBuffer`: capacity 초과 시 FIFO 정상 동작, `exportAsText()` 포맷
+- [x] `AppLogger`: 레벨별 콘솔 출력/버퍼 적재 분기
+- [x] `describeDioError`/`traceIdOf`: 커넥션 타임아웃/4xx/5xx/헤더 없음 등 케이스별 단위테스트
+- [x] `LoggingInterceptor`/`TraceIdInterceptor`: Dio + fake `HttpClientAdapter`(기존 `sse_client_test.dart` 패턴)로 요청/에러 흐름 검증
+- [x] 기존 14개 파일 회귀: `flutter test` 전체 314 passed / 2 failed(둘 다 main에도 있던 사전 실패, 이 변경과 무관함을 baseline 비교로 확인)
 
-### 실기기 테스트
+### 실기기 테스트 (미실시 — 후속 필요)
 
-- facilitator 실기기에서 Tailscale/네트워크 차단으로 connectionTimeout 재현 → 로그 export로 원인이 명확히 드러나는지 확인(#131의 원 계기였던 시나리오 재현)
-- admin(iPad)에서 동일 절차 확인
+- [ ] facilitator 실기기에서 Tailscale/네트워크 차단으로 connectionTimeout 재현 → 로그가 warn으로 남는지 확인(#131의 원 계기였던 시나리오 재현)
+- [ ] admin(iPad)에서 동일 절차 확인
 
 ---
 
