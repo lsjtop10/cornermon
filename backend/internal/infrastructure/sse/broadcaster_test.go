@@ -23,7 +23,7 @@ func withCapturedLogger(t *testing.T) *bytes.Buffer {
 	return buf
 }
 
-func TestShouldLogCauseTraceID_WhenBroadcastDispatched(t *testing.T) {
+func TestShouldLogCausationID_WhenBroadcastDispatched(t *testing.T) {
 	// Arrange
 	buf := withCapturedLogger(t)
 	broadcaster := NewBroadcaster()
@@ -38,16 +38,17 @@ func TestShouldLogCauseTraceID_WhenBroadcastDispatched(t *testing.T) {
 	}
 	logLine := buf.String()
 	// trace_id는 SlogWrappedHandler가 ctx로부터 자동 주입한 값(=발행 요청 자신),
-	// cause_trace_id는 Broadcast가 message에 실어 SSE 연결까지 전달하는 동일한 값이다.
+	// causation_id는 Broadcast가 message에 실어 SSE 연결까지 전달하는 이벤트 계보 정보다.
+	// 지금은 우연히 같은 trace_id 값을 재사용할 뿐, 개념적으로는 서로 다른 질문에 대한 답이다.
 	if !strings.Contains(logLine, `"trace_id":"trace-broadcast"`) {
 		t.Errorf("expected log to contain trace_id, got: %s", logLine)
 	}
-	if !strings.Contains(logLine, `"cause_trace_id":"trace-broadcast"`) {
-		t.Errorf("expected log to contain cause_trace_id, got: %s", logLine)
+	if !strings.Contains(logLine, `"causation_id":"trace-broadcast"`) {
+		t.Errorf("expected log to contain causation_id, got: %s", logLine)
 	}
 }
 
-func TestShouldSetCauseTraceIDOnMessage_WhenBroadcastDispatched(t *testing.T) {
+func TestShouldSetCausationIDOnMessage_WhenBroadcastDispatched(t *testing.T) {
 	// Arrange
 	broadcaster := NewBroadcaster()
 	admin, _ := broadcaster.SubscribeAdmin(context.Background(), "camp-a")
@@ -58,12 +59,12 @@ func TestShouldSetCauseTraceIDOnMessage_WhenBroadcastDispatched(t *testing.T) {
 
 	// Assert
 	message := <-admin
-	if message.CauseTraceID != "trace-message" {
-		t.Errorf("expected message.CauseTraceID = %q, got %q", "trace-message", message.CauseTraceID)
+	if message.CausationID != "trace-message" {
+		t.Errorf("expected message.CausationID = %q, got %q", "trace-message", message.CausationID)
 	}
 }
 
-func TestShouldLogCauseTraceID_WhenSubscriberBufferFull(t *testing.T) {
+func TestShouldLogCausationID_WhenSubscriberBufferFull(t *testing.T) {
 	// Arrange
 	broadcaster := NewBroadcaster()
 	admin, _ := broadcaster.SubscribeAdmin(context.Background(), "camp-a")
@@ -80,8 +81,8 @@ func TestShouldLogCauseTraceID_WhenSubscriberBufferFull(t *testing.T) {
 	for range subscriberBufferSize {
 		<-admin
 	}
-	if !strings.Contains(buf.String(), `"cause_trace_id":"trace-full"`) {
-		t.Errorf("expected buffer-full warning log to contain cause_trace_id, got: %s", buf.String())
+	if !strings.Contains(buf.String(), `"causation_id":"trace-full"`) {
+		t.Errorf("expected buffer-full warning log to contain causation_id, got: %s", buf.String())
 	}
 }
 

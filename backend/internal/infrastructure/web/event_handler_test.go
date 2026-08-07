@@ -106,12 +106,12 @@ func withCapturedLogger(t *testing.T) *bytes.Buffer {
 	return buf
 }
 
-func TestShouldLogConnectionIDAndCauseTraceIDWhenSSEEventWriteFails(t *testing.T) {
+func TestShouldLogConnectionIDAndCausationIDWhenSSEEventWriteFails(t *testing.T) {
 	// Arrange
 	buf := withCapturedLogger(t)
 	writer := &failAfterNWriter{header: http.Header{}, n: 1} // 최초 "connected" write만 허용
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/events/track/track-1", nil)
-	// connection_id(연결 자신)와 cause_trace_id(알림을 유발한 원본 요청)가 서로 다른
+	// connection_id(연결 자신)와 causation_id(알림을 유발한 원본 요청의 계보)가 서로 다른
 	// 값이라는 것을 로그에서 구분해서 볼 수 있어야 한다.
 	ctx := context.WithValue(req.Context(), errs.TraceIDKey, "trace-connection")
 	req = req.WithContext(ctx)
@@ -120,7 +120,7 @@ func TestShouldLogConnectionIDAndCauseTraceIDWhenSSEEventWriteFails(t *testing.T
 	c.Response().Writer = writer
 
 	ch := make(chan usecase.SSEMessage, 1)
-	ch <- usecase.SSEMessage{Event: usecase.EventTrackUpdated, Scope: usecase.TrackScope("track-1"), CauseTraceID: "trace-cause"}
+	ch <- usecase.SSEMessage{Event: usecase.EventTrackUpdated, Scope: usecase.TrackScope("track-1"), CausationID: "trace-cause"}
 	h := NewEventHandler(nil, nil, nil)
 
 	// Act
@@ -134,15 +134,15 @@ func TestShouldLogConnectionIDAndCauseTraceIDWhenSSEEventWriteFails(t *testing.T
 	if !strings.Contains(logLine, `"connection_id":"trace-connection"`) {
 		t.Errorf("expected write-failure log to contain connection_id, got: %s", logLine)
 	}
-	if !strings.Contains(logLine, `"cause_trace_id":"trace-cause"`) {
-		t.Errorf("expected write-failure log to contain cause_trace_id, got: %s", logLine)
+	if !strings.Contains(logLine, `"causation_id":"trace-cause"`) {
+		t.Errorf("expected write-failure log to contain causation_id, got: %s", logLine)
 	}
 	if !strings.Contains(logLine, "SSE event write failed") {
 		t.Errorf("expected write-failure log message, got: %s", logLine)
 	}
 }
 
-func TestShouldLogConnectionIDAndCauseTraceIDWhenSSEEventDelivered(t *testing.T) {
+func TestShouldLogConnectionIDAndCausationIDWhenSSEEventDelivered(t *testing.T) {
 	// Arrange
 	buf := withCapturedLogger(t)
 	writer := &failAfterNWriter{header: http.Header{}, n: 2} // "connected" + 이벤트 write 모두 허용
@@ -154,7 +154,7 @@ func TestShouldLogConnectionIDAndCauseTraceIDWhenSSEEventDelivered(t *testing.T)
 	c.Response().Writer = writer
 
 	ch := make(chan usecase.SSEMessage, 1)
-	ch <- usecase.SSEMessage{Event: usecase.EventTrackUpdated, Scope: usecase.TrackScope("track-1"), CauseTraceID: "trace-cause"}
+	ch <- usecase.SSEMessage{Event: usecase.EventTrackUpdated, Scope: usecase.TrackScope("track-1"), CausationID: "trace-cause"}
 	close(ch) // 두 번째 for-select 순회에서 채널 닫힘으로 streamEvents가 정상 반환하도록 함
 	h := NewEventHandler(nil, nil, nil)
 
@@ -172,8 +172,8 @@ func TestShouldLogConnectionIDAndCauseTraceIDWhenSSEEventDelivered(t *testing.T)
 	if !strings.Contains(logLine, `"connection_id":"trace-connection"`) {
 		t.Errorf("expected delivered log to contain connection_id, got: %s", logLine)
 	}
-	if !strings.Contains(logLine, `"cause_trace_id":"trace-cause"`) {
-		t.Errorf("expected delivered log to contain cause_trace_id, got: %s", logLine)
+	if !strings.Contains(logLine, `"causation_id":"trace-cause"`) {
+		t.Errorf("expected delivered log to contain causation_id, got: %s", logLine)
 	}
 }
 

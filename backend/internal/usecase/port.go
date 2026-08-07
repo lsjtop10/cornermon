@@ -262,11 +262,20 @@ func TrackScope(trackID domain.TrackID) Scope {
 type SSEMessage struct {
 	Event NotificationEvent
 	Scope Scope
-	// CauseTraceID는 이 알림을 유발한 원본 요청의 trace_id입니다(Broadcaster 구현체가 채움).
-	// SSE 연결 자체의 trace_id(연결 수명 동안 고정)와는 다른 값이며, 로그에서 어떤 요청이
-	// 이 이벤트를 발행했는지 추적하는 용도로만 씁니다 — 클라이언트에 노출되는 SSE payload에는
-	// 포함하지 않습니다(internal/infrastructure/web.formatSSEMessage 참고).
-	CauseTraceID string
+	// CausationID는 이 알림을 유발한 원본 요청/커맨드를 가리키는 식별자입니다(CQRS/이벤트
+	// 소싱의 Causation ID 패턴 — "이 이벤트가 왜 존재하는가"에 대한 이벤트 자신의 계보
+	// 메타데이터이지, 로그 상관분석을 위한 부가 정보가 아닙니다). SSEMessage는 커밋된 상태
+	// 변경을 알리는 best-effort 도메인 이벤트 알림이므로, 자신을 있게 한 원인을 아는 것은
+	// EventID·발생 시각처럼 이벤트 자체의 정상적인 메타데이터에 속합니다.
+	//
+	// Broadcaster 구현체(현재는 BroadcasterImpl)가 채웁니다. 지금은 HTTP 요청의 trace_id를
+	// 그대로 재사용하고 있지만 — 이 요청이 SSE 알림을 발행하기까지 이어진 유일한 식별자가
+	// 우연히 trace_id뿐이라서 재사용한 구현 디테일일 뿐, CausationID의 정의가 "trace_id"인
+	// 것은 아닙니다. 별도의 커맨드 ID/이벤트 ID 체계가 생기면 그쪽으로 교체될 수 있습니다.
+	// SSE 연결 자체의 trace_id(연결 수명 동안 고정, 이 이벤트의 causation과 무관)와는
+	// 다른 값이며, 클라이언트에 노출되는 SSE payload에는 포함하지 않습니다
+	// (internal/infrastructure/web.formatSSEMessage 참고).
+	CausationID string
 }
 
 // Broadcaster는 트랜잭션 성공 후 SSE 클라이언트에게 실시간 알림을 푸시하는 포트입니다.

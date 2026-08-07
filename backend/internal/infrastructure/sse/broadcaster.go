@@ -35,8 +35,12 @@ func NewBroadcaster() *BroadcasterImpl {
 // 버퍼가 찬 구독자에게 서버가 메시지를 재시도·저장하지 않는 이유는 SSE 알림이 최신 상태를
 // REST로 다시 조회하라는 신호이기 때문이다. 해당 연결을 닫아 클라이언트가 재연결·resync하도록 한다.
 func (b *BroadcasterImpl) Broadcast(ctx context.Context, campID domain.CampID, event usecase.NotificationEvent, scope usecase.Scope) error {
-	causeTraceID := errs.TraceIDFromContext(ctx)
-	message := usecase.SSEMessage{Event: event, Scope: scope, CauseTraceID: causeTraceID}
+	// 이 알림의 CausationID로 HTTP 요청 trace_id를 재사용한다 — 커밋까지 이어진 이 요청을
+	// 가리키는 식별자가 현재 코드베이스에 trace_id 말고는 없기 때문에 택한 구현 디테일이다.
+	// (usecase.SSEMessage.CausationID 주석 참고. 별도 커맨드/이벤트 ID 체계가 생기면 교체될
+	// 수 있는 자리다.)
+	causationID := errs.TraceIDFromContext(ctx)
+	message := usecase.SSEMessage{Event: event, Scope: scope, CausationID: causationID}
 	var fullAdminSubs []chan usecase.SSEMessage
 	var fullTrackSubs []chan usecase.SSEMessage
 	var deliveredAdminSubs int
@@ -69,8 +73,8 @@ func (b *BroadcasterImpl) Broadcast(ctx context.Context, campID domain.CampID, e
 
 	// ctx는 usecase 계층이 커밋 이후 전달하는 요청 ctx이므로 trace_id를 그대로 담고 있다
 	// (DEVELOPER_GUIDE.md §3.2). "trace_id"는 errs.SlogWrappedHandler가 ctx로부터 자동
-	// 주입하는 이 로그 라인(=발행 요청) 자신의 trace_id이고, "cause_trace_id"는 message에
-	// 실려 SSE 연결 쪽 로그까지 전달되는 동일한 값이다 — 두 계층의 로그를 cause_trace_id로
+	// 주입하는 이 로그 라인(=발행 요청) 자신의 trace_id이고, "causation_id"는 message에
+	// 실려 SSE 연결 쪽 로그까지 전달되는 동일한 값이다 — 두 계층의 로그를 causation_id로
 	// 조인할 수 있게 하기 위해 명시적으로 남긴다(§4.3.1 참고). event 종류와 무관하게 모든
 	// broadcast에 상시 기록한다 — 과거 #184 진단 목적으로 messages_changed에만 걸려있던
 	// 임시 로그를 일반화한 것이다.
@@ -79,7 +83,7 @@ func (b *BroadcasterImpl) Broadcast(ctx context.Context, campID domain.CampID, e
 		"camp_id", campID,
 		"scope_kind", scope.Kind,
 		"scope_track_id", scope.TrackID,
-		"cause_trace_id", causeTraceID,
+		"causation_id", causationID,
 		"delivered_admin_subscribers", deliveredAdminSubs,
 		"delivered_track_subscribers", deliveredTrackSubs,
 		"full_admin_subscribers", len(fullAdminSubs),
@@ -92,7 +96,7 @@ func (b *BroadcasterImpl) Broadcast(ctx context.Context, campID domain.CampID, e
 		slog.WarnContext(ctx, "SSE subscriber buffer full, disconnecting",
 			"event", event,
 			"camp_id", campID,
-			"cause_trace_id", causeTraceID,
+			"causation_id", causationID,
 			"full_admin_subscribers", len(fullAdminSubs),
 			"full_track_subscribers", len(fullTrackSubs),
 		)

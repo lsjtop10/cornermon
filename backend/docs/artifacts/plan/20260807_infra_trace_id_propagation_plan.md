@@ -73,7 +73,7 @@ SSE fan-out 로그를 `trace_id`로 상관 분석할 수 없다.
 - [x] 토큰/헤더/메시지 본문 등 민감 정보가 새로 로그에 노출되지 않음
 - [x] `go test ./...`, `gofmt -w .`, `go vet ./...` 통과
 
-## Addendum: connection_id / cause_trace_id 분리 (PR 리뷰 피드백)
+## Addendum 1: connection_id / cause_trace_id 분리 (PR 리뷰 피드백)
 
 최초 구현은 요청 trace_id와 SSE 연결 trace_id의 수명이 다르다는 점을 **문서로만** 경고했다.
 리뷰 중 "결국 남는 건 로그뿐이니 어떤 요청이 이벤트를 발행했는지 로그만으로 추적 가능해야
@@ -99,4 +99,27 @@ SSE fan-out 로그를 `trace_id`로 상관 분석할 수 없다.
       남는지 검증
 - [x] `event_handler_test.go`: `connection_id`와 `cause_trace_id`가 서로 다른 값으로
       로그에 남는지(write 실패/정상 delivered 양쪽) 검증
+- [x] `go test ./...`, `gofmt -w .`, `go vet ./...` 재통과
+
+## Addendum 2: CauseTraceID → CausationID 리네이밍 (레이어링 논의)
+
+Addendum 1에서 `usecase.SSEMessage`에 로깅 전용 필드를 얹은 게 "usecase 포트가 옵저버빌리티
+관심사를 안다"는 레이어링 위반 아니냐는 논의가 있었다. 결론은 위반이 아니라는 쪽이었지만
+(usecase는 이 값을 생성·해석하지 않고 그냥 통과시킬 뿐이며, `sse` ↔ `web` 두 infra 패키지가
+공유하는 채널 타입이 이 필드가 지나갈 유일한 통로다), 이름이 `*TraceID`라서 "trace_id를
+로깅용으로 복붙한 것"처럼 읽히는 게 문제였다.
+
+이를 CQRS/이벤트 소싱의 **Causation ID** 패턴("이 이벤트가 왜 존재하는가"를 나타내는, 이벤트
+자신의 정상적인 계보 메타데이터 — `CorrelationID`의 자매 개념)으로 명시적으로 재프레이밍했다.
+
+- `SSEMessage.CauseTraceID` → `SSEMessage.CausationID`로 리네이밍.
+- 필드 주석에 "왜 이 정보가 usecase까지 넘어오는가"(위 레이어링 논의 요약)와 "지금은 HTTP
+  요청의 trace_id를 우연히 재사용하는 구현 디테일일 뿐, CausationID의 정의 자체가 trace_id는
+  아니다"를 명시.
+- 로그 필드명도 `cause_trace_id` → `causation_id`로 통일.
+- DEVELOPER_GUIDE.md §4.3.1 제목/본문을 causation_id 기준으로 갱신.
+- 관련 테스트/plan 문서 전부 리네이밍 반영.
+
+### 추가 검증
+- [x] `CauseTraceID`/`cause_trace_id` 잔존 참조 없음 (`grep -rl` 확인)
 - [x] `go test ./...`, `gofmt -w .`, `go vet ./...` 재통과
