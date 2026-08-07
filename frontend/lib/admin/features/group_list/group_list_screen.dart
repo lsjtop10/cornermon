@@ -297,6 +297,7 @@ class _RegisterGroupDialogState extends ConsumerState<_RegisterGroupDialog> {
     try {
       await ref.read(
         scanRegisterBadgeProvider(
+          widget.campId.value,
           _payload.text.trim(),
           _name.text.trim(),
         ).future,

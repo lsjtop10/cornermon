@@ -15,5 +15,3 @@ targets:
             - lib/facilitator/router/*.dart
             - lib/admin/session/*.dart
             - lib/admin/features/**/*.dart
-          exclude:
-            - lib/shared/api/gen/**

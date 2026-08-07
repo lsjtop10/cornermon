@@ -69,6 +69,7 @@ final class AuditLogListProvider
       String? action,
       String? actor,
       String? result,
+      String? campId,
     })
     super.argument,
   }) : super(
@@ -105,6 +106,7 @@ final class AuditLogListProvider
               String? action,
               String? actor,
               String? result,
+              String? campId,
             });
     return auditLogList(
       ref,
@@ -113,6 +115,7 @@ final class AuditLogListProvider
       action: argument.action,
       actor: argument.actor,
       result: argument.result,
+      campId: argument.campId,
     );
   }
 
@@ -127,7 +130,7 @@ final class AuditLogListProvider
   }
 }
 
-String _$auditLogListHash() => r'd2eb0ac65c0a2a09092ebab0b3b1590162d8f7ac';
+String _$auditLogListHash() => r'b69fc8bdf935d005ab0062482c52606173cc30a0';
 
 final class AuditLogListFamily extends $Family
     with
@@ -139,6 +142,7 @@ final class AuditLogListFamily extends $Family
             String? action,
             String? actor,
             String? result,
+            String? campId,
           })
         > {
   AuditLogListFamily._()
@@ -156,6 +160,7 @@ final class AuditLogListFamily extends $Family
     String? action,
     String? actor,
     String? result,
+    String? campId,
   }) => AuditLogListProvider._(
     argument: (
       limit: limit,
@@ -163,6 +168,7 @@ final class AuditLogListFamily extends $Family
       action: action,
       actor: actor,
       result: result,
+      campId: campId,
     ),
     from: this,
   );

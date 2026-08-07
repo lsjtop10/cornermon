@@ -119,7 +119,8 @@ func (h *BadgeHandler) ExportBadges(c echo.Context) error {
 }
 
 type AssignBadgeRequest struct {
-	GroupID string `json:"groupId"`
+	CampID    string `json:"campId"`
+	GroupName string `json:"groupName"`
 } // @name AssignBadgeRequest
 
 // @Summary      배지를 특정 조에 배정 (수동)
@@ -129,19 +130,17 @@ type AssignBadgeRequest struct {
 // @Accept       json
 // @Produce      json
 // @Param        id path string true "배지 ID"
-// @Param        request body AssignBadgeRequest true "배정할 조 ID"
+// @Param        request body AssignBadgeRequest true "배정할 캠프와 조 이름"
 // @Success      200 {object} BadgeResponse
 // @Router       /badges/{id}/register [post]
 func (h *BadgeHandler) AssignBadge(c echo.Context) error {
 	id := domain.BadgeID(c.Param("id"))
-	var req struct {
-		GroupName string `json:"groupName"`
-	}
+	var req AssignBadgeRequest
 	if err := c.Bind(&req); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, ErrorResponse{Code: CodeBadRequest, Message: "invalid request"}).SetInternal(err)
 	}
 
-	group, err := h.groupUC.AssignBadge(c.Request().Context(), id, req.GroupName, getAdminID(c))
+	group, err := h.groupUC.AssignBadge(c.Request().Context(), domain.CampID(req.CampID), id, req.GroupName, getAdminID(c))
 	if err != nil {
 		return badgeAssignmentHTTPError(err)
 	}
@@ -150,6 +149,7 @@ func (h *BadgeHandler) AssignBadge(c echo.Context) error {
 }
 
 type ScanAssignBadgeRequest struct {
+	CampID    string `json:"campId"`
 	QRPayload string `json:"qrPayload"`
 	GroupName string `json:"groupName"`
 } // @name ScanAssignBadgeRequest
@@ -169,7 +169,7 @@ func (h *BadgeHandler) ScanAssignBadge(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, ErrorResponse{Code: CodeBadRequest, Message: "invalid request"}).SetInternal(err)
 	}
 
-	group, err := h.groupUC.ScanAssignBadge(c.Request().Context(), req.QRPayload, req.GroupName, getAdminID(c))
+	group, err := h.groupUC.ScanAssignBadge(c.Request().Context(), domain.CampID(req.CampID), req.QRPayload, req.GroupName, getAdminID(c))
 	if err != nil {
 		return badgeAssignmentHTTPError(err)
 	}
@@ -181,6 +181,8 @@ func badgeAssignmentHTTPError(err error) error {
 	switch {
 	case errors.Is(err, domain.ErrCampNotFound):
 		return echo.NewHTTPError(http.StatusNotFound, ErrorResponse{Code: CodeCampNotFound, Message: err.Error()}).SetInternal(err)
+	case errors.Is(err, domain.ErrCampInvalidTransition):
+		return echo.NewHTTPError(http.StatusConflict, ErrorResponse{Code: CodeCampStateConflict, Message: "camp is not available for badge registration"}).SetInternal(err)
 	case errors.Is(err, domain.ErrBadgeNotAssigned):
 		return echo.NewHTTPError(http.StatusNotFound, ErrorResponse{Code: CodeBadgeNotFound, Message: err.Error()}).SetInternal(err)
 	case errors.Is(err, domain.ErrBadgeAlreadyAssigned):

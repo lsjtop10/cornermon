@@ -7,7 +7,7 @@
       "cornermon-dart-client": {
         "generatorName": "dart-dio",
         "inputSpec": "../api/swagger.yaml",
-        "output": "lib/shared/api/gen",
+        "output": "packages/cornermon_api_gen",
         "skipValidateSpec": true,
         "additionalProperties": {
           "pubName": "cornermon_api_gen",

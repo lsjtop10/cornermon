@@ -29,11 +29,20 @@ Future<List<Badge>> exportUnassignedBadges(Ref ref) async {
 }
 
 @riverpod
-Future<Badge> registerBadge(Ref ref, String badgeId, String groupId) async {
+Future<Badge> registerBadge(
+  Ref ref,
+  String badgeId,
+  String campId,
+  String groupName,
+) async {
   final apiInstance = ref.watch(campApiProvider);
   final response = await apiInstance.badgesIdRegisterPost(
     id: badgeId,
-    request: AssignBadgeRequest((b) => b..groupId = groupId),
+    request: AssignBadgeRequest(
+      (b) => b
+        ..campId = campId
+        ..groupName = groupName,
+    ),
   );
   final data = response.data;
   if (data == null) {
@@ -43,11 +52,17 @@ Future<Badge> registerBadge(Ref ref, String badgeId, String groupId) async {
 }
 
 @riverpod
-Future<Group> scanRegisterBadge(Ref ref, String qrPayload, String groupName) async {
+Future<Group> scanRegisterBadge(
+  Ref ref,
+  String campId,
+  String qrPayload,
+  String groupName,
+) async {
   final apiInstance = ref.watch(campApiProvider);
   final response = await apiInstance.badgesScanRegisterPost(
     request: ScanAssignBadgeRequest(
       (b) => b
+        ..campId = campId
         ..qrPayload = qrPayload
         ..groupName = groupName,
     ),
