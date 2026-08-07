@@ -7,7 +7,7 @@ FLUTTER_DOCKER_CONTAINER ?= cornermon-flutter-check
 FLUTTER_PUB_CACHE_VOLUME ?= cornermon-flutter-pub-cache
 UNAME_S := $(shell uname -s)
 
-.PHONY: unlock-keychain run-admin run-facilitator docker-build docker-check build-admin-ios build-admin-android build-facilitator-ios build-facilitator-android
+.PHONY: unlock-keychain run-admin run-facilitator docker-build docker-check build-admin build-facilitator
 
 unlock-keychain:
 ifeq ($(UNAME_S),Darwin)
@@ -36,19 +36,20 @@ run-admin-prod:unlock-keychain
 run-facilitator-prod:unlock-keychain
 	flutter run --release --dart-define-from-file=env/prod.json -t lib/main_facilitator.dart --flavor facilitator
 
-build-admin-ios:unlock-keychain
-	flutter build ios --release --dart-define-from-file=env/prod.json -t lib/main_admin.dart --flavor admin
+build-admin:unlock-keychain
+	flutter build ipa --release --dart-define-from-file=env/prod.json -t lib/main_admin.dart --flavor admin
+	flutter build apk --release --dart-define-from-file=env/prod.json -t lib/main_admin.dart --flavor admin
+	mv build/ios/ipa/cornermon.ipa build/ios/ipa/cornermon-admin.ipa
 
-build-admin-android:unlock-keychain
-	flutter build android --release --dart-define-from-file=env/prod.json -t lib/main_admin.dart --flavor admin
 
-build-facilitator-ios:unlock-keychain
-	flutter build ios --release --dart-define-from-file=env/prod.json -t lib/main_facilitator.dart --flavor facilitator
+build-facilitator:unlock-keychain
+	flutter build ipa --release --dart-define-from-file=env/prod.json -t lib/main_facilitator.dart --flavor facilitator
+	flutter build apk --release --dart-define-from-file=env/prod.json -t lib/main_facilitator.dart --flavor facilitator
+	mv build/ios/ipa/cornermon.ipa build/ios/ipa/cornermon-facilitator.ipa
 
-build-facilitator-android:unlock-keychain
-	flutter build android --release --dart-define-from-file=env/prod.json -t lib/main_facilitator.dart --flavor facilitator
 
-build-all: build-admin-ios build-admin-android build-facilitator-ios build-facilitator-android
+
+build-all: build-admin build-facilitator
 
 # pubspec.yaml의 Dart SDK 하한을 만족하는 Flutter/Dart 도구 이미지를 만든다.
 # 빌드 컨텍스트에는 Dockerfile만 전달하므로 앱 소스는 이미지에 포함하지 않는다.
