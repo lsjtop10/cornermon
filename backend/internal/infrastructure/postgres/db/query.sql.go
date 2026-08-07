@@ -928,6 +928,43 @@ func (q *Queries) ListAuditLogs(ctx context.Context, arg ListAuditLogsParams) ([
 	return items, nil
 }
 
+const listAuditLogsByCamp = `-- name: ListAuditLogsByCamp :many
+SELECT id, actor, action, target, success, occurred_at, metadata, camp_id, target_name, actor_name FROM audit_logs WHERE camp_id = $1
+`
+
+// 캠프 결과 리포트(사후 배치 집계) 전용 — AuditLogQuerier.List(관리자 UI 페이지네이션)와 달리
+// 커서/limit 없이 캠프 범위 전체를 반환한다.
+func (q *Queries) ListAuditLogsByCamp(ctx context.Context, campID pgtype.Text) ([]AuditLog, error) {
+	rows, err := q.db.Query(ctx, listAuditLogsByCamp, campID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []AuditLog
+	for rows.Next() {
+		var i AuditLog
+		if err := rows.Scan(
+			&i.ID,
+			&i.Actor,
+			&i.Action,
+			&i.Target,
+			&i.Success,
+			&i.OccurredAt,
+			&i.Metadata,
+			&i.CampID,
+			&i.TargetName,
+			&i.ActorName,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listCamps = `-- name: ListCamps :many
 SELECT id, name, start_at, end_at, activated_at, ended_at, status, bottleneck_min_samples, bottleneck_ratio_pct, registration_code FROM camps
 `

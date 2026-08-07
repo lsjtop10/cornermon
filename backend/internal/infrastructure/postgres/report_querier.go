@@ -10,6 +10,7 @@ import (
 	"cornermon/backend/internal/errs"
 	"cornermon/backend/internal/infrastructure/postgres/db"
 	"cornermon/backend/internal/usecase"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -52,16 +53,27 @@ func (r *pgReportQuerier) QueryCampReport(ctx context.Context, campID domain.Cam
 		return nil, errs.Wrap(ctx, err)
 	}
 
-	return calculateCampReport(campID, dbCamp, dbGroups, dbCorners, dbVisits, r.nowFn())
+	dbTracks, err := q.ListTracksByCamp(ctx, string(campID))
+	if err != nil {
+		return nil, errs.Wrap(ctx, err)
+	}
+
+	dbAuditLogs, err := q.ListAuditLogsByCamp(ctx, pgtype.Text{String: string(campID), Valid: true})
+	if err != nil {
+		return nil, errs.Wrap(ctx, err)
+	}
+
+	return calculateCampReport(campID, dbCamp, dbGroups, dbCorners, dbVisits, dbTracks, dbAuditLogs, r.nowFn())
 }
 
-func calculateCampReport(campID domain.CampID, dbCamp db.Camp, dbGroups []db.Group, dbCorners []db.Corner, dbVisits []db.ListVisitsByCampRow, now time.Time) (*usecase.CampReport, error) {
+func calculateCampReport(campID domain.CampID, dbCamp db.Camp, dbGroups []db.Group, dbCorners []db.Corner, dbVisits []db.ListVisitsByCampRow, dbTracks []db.Track, dbAuditLogs []db.AuditLog, now time.Time) (*usecase.CampReport, error) {
 	totalGroups := len(dbGroups)
 	finishedGroupsCount := 0
 
 	groupReports := make([]usecase.GroupReport, 0, len(dbGroups))
 	groupCompletedVisits := make(map[string][]db.ListVisitsByCampRow)
 	cornerDurations := make(map[string][]float64)
+	trackCompletedVisits := make(map[string][]db.ListVisitsByCampRow)
 
 	for _, dbG := range dbGroups {
 		g, err := mapGroup(dbG)
@@ -86,6 +98,7 @@ func calculateCampReport(campID domain.CampID, dbCamp db.Camp, dbGroups []db.Gro
 	for _, v := range dbVisits {
 		if v.Status == "COMPLETED" {
 			groupCompletedVisits[v.GroupID] = append(groupCompletedVisits[v.GroupID], v)
+			trackCompletedVisits[v.TrackID] = append(trackCompletedVisits[v.TrackID], v)
 
 			if v.EndedAt.Valid {
 				duration := v.EndedAt.Time.Sub(v.StartedAt.Time).Seconds()
@@ -214,17 +227,65 @@ func calculateCampReport(campID domain.CampID, dbCamp db.Camp, dbGroups []db.Gro
 		})
 	}
 
+	trackReports := make([]usecase.TrackReport, 0, len(dbTracks))
+	for _, dbT := range dbTracks {
+		completedVisits := trackCompletedVisits[dbT.ID]
+		completedCount := len(completedVisits)
+
+		var manualCount int
+		var deviationSum float64
+		for _, cv := range completedVisits {
+			if cv.InputMethod == "MANUAL" {
+				manualCount++
+			}
+			if cv.EndedAt.Valid {
+				duration := cv.EndedAt.Time.Sub(cv.StartedAt.Time).Seconds()
+				targetSec := float64(cv.TargetMinutes * 60)
+				deviationSum += duration - targetSec
+			}
+		}
+
+		avgDeviation := 0.0
+		if completedCount > 0 {
+			avgDeviation = deviationSum / float64(completedCount)
+		}
+
+		trackReports = append(trackReports, usecase.TrackReport{
+			TrackID:         domain.TrackID(dbT.ID),
+			TrackNo:         int(dbT.TrackNo),
+			CompletedCount:  completedCount,
+			ManualCount:     manualCount,
+			AvgDeviationSec: avgDeviation,
+		})
+	}
+
+	ruleOverrideCount, trackOperationCount := 0, 0
+	for _, log := range dbAuditLogs {
+		if !log.Success {
+			continue
+		}
+		switch usecase.AuditAction(log.Action) {
+		case usecase.ActionCornerUpdate:
+			ruleOverrideCount++
+		case usecase.ActionTrackCreate, usecase.ActionTrackDelete, usecase.ActionTrackReplace:
+			trackOperationCount++
+		}
+	}
+
 	report := &usecase.CampReport{
-		CampID:             campID,
-		TotalGroups:        totalGroups,
-		FinishedGroups:     finishedGroupsCount,
-		TotalVisits:        totalVisits,
-		CompletedVisits:    completedVisitsCount,
-		ManualVisits:       manualVisitsCount,
-		ProgramDurationSec: programDurationSec,
-		AvgDeviationSec:    avgDeviationSec,
-		CornerReports:      cornerReports,
-		GroupReports:       groupReports,
+		CampID:              campID,
+		TotalGroups:         totalGroups,
+		FinishedGroups:      finishedGroupsCount,
+		TotalVisits:         totalVisits,
+		CompletedVisits:     completedVisitsCount,
+		ManualVisits:        manualVisitsCount,
+		ProgramDurationSec:  programDurationSec,
+		AvgDeviationSec:     avgDeviationSec,
+		CornerReports:       cornerReports,
+		GroupReports:        groupReports,
+		TrackReports:        trackReports,
+		RuleOverrideCount:   ruleOverrideCount,
+		TrackOperationCount: trackOperationCount,
 	}
 
 	return report, nil

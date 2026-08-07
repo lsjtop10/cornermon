@@ -48,6 +48,9 @@ type Querier interface {
 	ListAnnouncementViewsByCampAndTrack(ctx context.Context, arg ListAnnouncementViewsByCampAndTrackParams) ([]ListAnnouncementViewsByCampAndTrackRow, error)
 	ListAnnouncementsByCamp(ctx context.Context, campID string) ([]Announcement, error)
 	ListAuditLogs(ctx context.Context, arg ListAuditLogsParams) ([]AuditLog, error)
+	// 캠프 결과 리포트(사후 배치 집계) 전용 — AuditLogQuerier.List(관리자 UI 페이지네이션)와 달리
+	// 커서/limit 없이 캠프 범위 전체를 반환한다.
+	ListAuditLogsByCamp(ctx context.Context, campID pgtype.Text) ([]AuditLog, error)
 	ListCamps(ctx context.Context) ([]Camp, error)
 	ListCornerViewsByCamp(ctx context.Context, campID string) ([]ListCornerViewsByCampRow, error)
 	ListCornersByCamp(ctx context.Context, campID string) ([]Corner, error)

@@ -380,3 +380,8 @@ SELECT * FROM facilitator_sessions WHERE id = $1;
 
 -- name: ListVisitsByGroup :many
 SELECT * FROM visits WHERE group_id = $1 ORDER BY started_at ASC;
+
+-- name: ListAuditLogsByCamp :many
+-- 캠프 결과 리포트(사후 배치 집계) 전용 — AuditLogQuerier.List(관리자 UI 페이지네이션)와 달리
+-- 커서/limit 없이 캠프 범위 전체를 반환한다.
+SELECT * FROM audit_logs WHERE camp_id = $1;

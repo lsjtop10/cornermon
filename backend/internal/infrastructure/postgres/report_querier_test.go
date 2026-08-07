@@ -76,8 +76,20 @@ func TestCalculateCampReport(t *testing.T) {
 			},
 		}
 
+		dbTracks := []db.Track{
+			{ID: "track-1", CornerID: "corner-1", TrackNo: 1, Status: "ACTIVE", PinHash: "h1"},
+			{ID: "track-2", CornerID: "corner-2", TrackNo: 1, Status: "ACTIVE", PinHash: "h2"},
+		}
+		dbAuditLogs := []db.AuditLog{
+			{ID: "log-1", Actor: "admin-1", Action: string(usecase.ActionCornerUpdate), Success: true, CampID: pgtype.Text{String: "camp-1", Valid: true}},
+			{ID: "log-2", Actor: "admin-1", Action: string(usecase.ActionCornerUpdate), Success: false, CampID: pgtype.Text{String: "camp-1", Valid: true}},
+			{ID: "log-3", Actor: "admin-1", Action: string(usecase.ActionTrackCreate), Success: true, CampID: pgtype.Text{String: "camp-1", Valid: true}},
+			{ID: "log-4", Actor: "admin-1", Action: string(usecase.ActionTrackDelete), Success: true, CampID: pgtype.Text{String: "camp-1", Valid: true}},
+			{ID: "log-5", Actor: "admin-1", Action: string(usecase.ActionAdminLogin), Success: true, CampID: pgtype.Text{String: "camp-1", Valid: true}},
+		}
+
 		// Act
-		report, err := calculateCampReport(campID, dbCamp, dbGroups, dbCorners, dbVisits, now)
+		report, err := calculateCampReport(campID, dbCamp, dbGroups, dbCorners, dbVisits, dbTracks, dbAuditLogs, now)
 
 		// Assert
 		if err != nil {
@@ -146,6 +158,45 @@ func TestCalculateCampReport(t *testing.T) {
 		if c1Report.PositiveDeviationRatio != 0 {
 			t.Errorf("expected corner-1 PositiveDeviationRatio 0, got %f", c1Report.PositiveDeviationRatio)
 		}
+
+		var t1Report, t2Report usecase.TrackReport
+		for _, tr := range report.TrackReports {
+			switch tr.TrackID {
+			case "track-1":
+				t1Report = tr
+			case "track-2":
+				t2Report = tr
+			}
+		}
+		// track-1: visit-1 (deviation 0) + visit-3 (deviation -120) -> avg -60
+		if t1Report.CompletedCount != 2 {
+			t.Errorf("expected track-1 CompletedCount 2, got %d", t1Report.CompletedCount)
+		}
+		if t1Report.ManualCount != 0 {
+			t.Errorf("expected track-1 ManualCount 0, got %d", t1Report.ManualCount)
+		}
+		if t1Report.AvgDeviationSec != -60 {
+			t.Errorf("expected track-1 AvgDeviationSec -60, got %f", t1Report.AvgDeviationSec)
+		}
+		// track-2: visit-2 (MANUAL, deviation +300)
+		if t2Report.CompletedCount != 1 {
+			t.Errorf("expected track-2 CompletedCount 1, got %d", t2Report.CompletedCount)
+		}
+		if t2Report.ManualCount != 1 {
+			t.Errorf("expected track-2 ManualCount 1, got %d", t2Report.ManualCount)
+		}
+		if t2Report.AvgDeviationSec != 300 {
+			t.Errorf("expected track-2 AvgDeviationSec 300, got %f", t2Report.AvgDeviationSec)
+		}
+
+		// log-2(CORNER_UPDATE)는 실패라 제외 -> RuleOverrideCount는 log-1만 카운트.
+		if report.RuleOverrideCount != 1 {
+			t.Errorf("expected RuleOverrideCount 1, got %d", report.RuleOverrideCount)
+		}
+		// log-3(TRACK_CREATE) + log-4(TRACK_DELETE), log-5(ADMIN_LOGIN)는 무관 액션이라 제외.
+		if report.TrackOperationCount != 2 {
+			t.Errorf("expected TrackOperationCount 2, got %d", report.TrackOperationCount)
+		}
 	})
 
 	t.Run("ShouldCalculateOverDeviationRatioWhenSomeVisitsExceedTarget", func(t *testing.T) {
@@ -189,7 +240,7 @@ func TestCalculateCampReport(t *testing.T) {
 		}
 
 		// Act
-		report, err := calculateCampReport(campID, dbCamp, dbGroups, dbCorners, dbVisits, now)
+		report, err := calculateCampReport(campID, dbCamp, dbGroups, dbCorners, dbVisits, nil, nil, now)
 
 		// Assert
 		if err != nil {

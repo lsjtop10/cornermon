@@ -3,6 +3,7 @@ package web
 import (
 	"errors"
 	"net/http"
+	"sort"
 	"time"
 
 	"cornermon/backend/internal/domain"
@@ -106,6 +107,20 @@ func mapSummary(r *usecase.CampReport) CampSummaryStatsResponse {
 		manualVisitRatio = float32(r.ManualVisits) / float32(r.TotalVisits) * 100
 	}
 
+	bottleneckRanking := make([]BottleneckRankingResponse, 0, len(r.CornerReports))
+	for _, cr := range r.CornerReports {
+		bottleneckRanking = append(bottleneckRanking, BottleneckRankingResponse{
+			CornerID:            string(cr.CornerID),
+			CornerName:          cr.CornerName,
+			AvgDeviationSeconds: float32(cr.AvgDeviationSec),
+		})
+	}
+	// 컷오프 없이 전체 코너를 평균편차 내림차순으로 보여준다(analytics-model.md §1.1) — 실시간
+	// 대시보드의 "병목" 이진 판정(표본/비율 임계치)과는 별개 지표다.
+	sort.SliceStable(bottleneckRanking, func(i, j int) bool {
+		return bottleneckRanking[i].AvgDeviationSeconds > bottleneckRanking[j].AvgDeviationSeconds
+	})
+
 	return CampSummaryStatsResponse{
 		TotalGroups:            r.TotalGroups,
 		FinishedGroupCount:     r.FinishedGroups,
@@ -115,6 +130,12 @@ func mapSummary(r *usecase.CampReport) CampSummaryStatsResponse {
 		ProgramDurationSeconds: r.ProgramDurationSec,
 		AvgDeviationSeconds:    float32(r.AvgDeviationSec),
 		ManualVisitRatio:       manualVisitRatio,
+		RuleOverrideCount:      r.RuleOverrideCount,
+		TrackOperationCount:    r.TrackOperationCount,
+		// ExceptionApprovalCount: 중복 방문 예외 승인 기능은 #171 이전에 전방위로 삭제되어
+		// 집계할 원장 데이터가 없다(missing_features_report_20260711.md §3.1). 항상 0.
+		ExceptionApprovalCount: 0,
+		BottleneckRanking:      bottleneckRanking,
 	}
 }
 
@@ -148,6 +169,19 @@ func mapReport(r *usecase.CampReport) CampReportResponse {
 			GroupName:            gr.GroupName,
 			CompletedCount:       gr.CompletedCount,
 			TotalDurationSeconds: gr.TotalDurationSec,
+		})
+	}
+	for _, tr := range r.TrackReports {
+		manualVisitRatio := float32(0)
+		if tr.CompletedCount > 0 {
+			manualVisitRatio = float32(tr.ManualCount) / float32(tr.CompletedCount) * 100
+		}
+		res.TrackStats = append(res.TrackStats, TrackStatsResponse{
+			TrackID:             string(tr.TrackID),
+			TrackNo:             tr.TrackNo,
+			HandledVisitCount:   tr.CompletedCount,
+			AvgDeviationSeconds: int(tr.AvgDeviationSec),
+			ManualVisitRatio:    manualVisitRatio,
 		})
 	}
 	return res
