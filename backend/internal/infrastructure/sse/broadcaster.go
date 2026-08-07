@@ -65,20 +65,29 @@ func (b *BroadcasterImpl) Broadcast(ctx context.Context, campID domain.CampID, e
 	}
 	b.mu.RUnlock()
 
-	// 임시 진단 로그: #184 공지사항 messages_changed fan-out을 확인한 뒤 제거한다.
-	if event == usecase.EventMessagesChanged {
-		slog.DebugContext(ctx, "SSE broadcast dispatched",
+	// ctx는 usecase 계층이 커밋 이후 전달하는 요청 ctx이므로 trace_id를 그대로 담고 있다
+	// (DEVELOPER_GUIDE.md §3.2). event 종류와 무관하게 모든 broadcast에 상시 기록한다 —
+	// 과거 #184 진단 목적으로 messages_changed에만 걸려있던 임시 로그를 일반화한 것이다.
+	slog.DebugContext(ctx, "SSE broadcast dispatched",
+		"event", event,
+		"camp_id", campID,
+		"scope_kind", scope.Kind,
+		"scope_track_id", scope.TrackID,
+		"delivered_admin_subscribers", deliveredAdminSubs,
+		"delivered_track_subscribers", deliveredTrackSubs,
+		"full_admin_subscribers", len(fullAdminSubs),
+		"full_track_subscribers", len(fullTrackSubs),
+	)
+
+	if len(fullAdminSubs) > 0 || len(fullTrackSubs) > 0 {
+		// 버퍼가 가득 찬 구독자는 SSE 소비가 발행 속도를 못 따라가고 있다는 신호이므로,
+		// 연결을 끊기 전에 운영자가 알아챌 수 있도록 Warn으로 남긴다.
+		slog.WarnContext(ctx, "SSE subscriber buffer full, disconnecting",
+			"event", event,
 			"camp_id", campID,
-			"scope_kind", scope.Kind,
-			"scope_track_id", scope.TrackID,
-			"delivered_admin_subscribers", deliveredAdminSubs,
-			"delivered_track_subscribers", deliveredTrackSubs,
 			"full_admin_subscribers", len(fullAdminSubs),
 			"full_track_subscribers", len(fullTrackSubs),
 		)
-	}
-
-	if len(fullAdminSubs) > 0 || len(fullTrackSubs) > 0 {
 		b.removeFullSubscribers(campID, fullAdminSubs, fullTrackSubs)
 	}
 	return nil

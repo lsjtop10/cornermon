@@ -145,17 +145,19 @@ func (h *EventHandler) streamEvents(c echo.Context, ch <-chan usecase.SSEMessage
 				return err
 			}
 			if _, err := c.Response().Write([]byte(formatted)); err != nil {
-				return err
-			}
-			c.Response().Flush()
-			// 임시 진단 로그: #184 공지사항 messages_changed SSE write를 확인한 뒤 제거한다.
-			if msg.Event == usecase.EventMessagesChanged {
-				slog.DebugContext(ctx, "SSE event written",
+				// SSE 스트리밍 도중 발생하는 write 실패는 ErrorHandler 미들웨어를 거치지 않고
+				// 여기서 바로 반환되므로, trace_id를 남길 수 있는 유일한 지점에서 직접 로그한다.
+				// ctx는 이 SSE 연결 수명 동안 고정된 값으로, 알림을 유발한 요청의 trace_id와는
+				// 다르다 — DEVELOPER_GUIDE.md §4.3 "trace_id 상관관계 한계" 참고.
+				slog.WarnContext(ctx, "SSE event write failed",
 					"event", msg.Event,
 					"scope_kind", msg.Scope.Kind,
 					"scope_track_id", msg.Scope.TrackID,
+					"error", err,
 				)
+				return err
 			}
+			c.Response().Flush()
 		case <-ticker.C:
 			if _, err := c.Response().Write([]byte(":heartbeat\n\n")); err != nil {
 				return err

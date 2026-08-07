@@ -215,6 +215,22 @@ func (r *pgBadgeRepository) queries(ctx context.Context) *db.Queries {
 usecase는 이 구현을 모르고 인터페이스로만 호출하므로, 브로드캐스터 구현을 교체해도(예: Redis
 pub/sub로 전환) usecase 코드는 변경되지 않습니다.
 
+#### 4.3.1 trace_id 상관관계 한계 (Issue #187)
+
+인프라 로그(Postgres tracer, SSE broadcaster/event handler)는 `*Context` 계열 slog 호출로
+`ctx`의 `trace_id`를 전파하지만, 두 경로의 `ctx` 수명이 다르다는 점을 알고 상관 분석해야 합니다.
+
+- **요청 trace_id**: `web.Logger()`가 HTTP 요청 1건마다 생성/전파합니다. `Broadcast(ctx, ...)`
+  호출은 usecase가 트랜잭션 커밋 이후 이 요청 ctx로 호출하므로, "무엇이 이 알림을 유발했는가"는
+  `BroadcasterImpl.Broadcast`의 `SSE broadcast dispatched` 로그 trace_id로 추적할 수 있습니다.
+- **SSE 연결 trace_id**: `EventHandler.streamEvents`의 `ctx`는 SSE 연결이 열린 시점(구독
+  요청)의 ctx로, 연결이 유지되는 동안 고정됩니다. 이후 그 연결로 전달되는 모든 이벤트의 write
+  로그(`SSE event write failed` 등)는 연결 시점의 trace_id를 공유할 뿐, 알림을 유발한 원본
+  요청의 trace_id와는 다릅니다.
+- 따라서 "어떤 요청이 어떤 클라이언트에게 무엇을 언제 전달했는가"를 추적하려면 두 로그를
+  `trace_id`가 아니라 `event`/`scope`/타임스탬프로 연결해야 합니다. 두 trace_id를 동일시하지
+  마세요.
+
 ## 5. 인증
 
 - 모든 토큰(진행자 트랙 PIN 세션, 기기 신뢰 토큰, 관리자 access/refresh)은 **opaque token**이며

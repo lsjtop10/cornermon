@@ -1,12 +1,67 @@
 package sse
 
 import (
+	"bytes"
 	"context"
+	"log/slog"
+	"strings"
 	"testing"
 
 	"cornermon/backend/internal/domain"
+	"cornermon/backend/internal/errs"
 	"cornermon/backend/internal/usecase"
 )
+
+// withCapturedLogger는 slog 기본 로거를 버퍼를 향하는 JSON 핸들러(운영 설정과 동일하게
+// errs.SlogWrappedHandler로 감쌈)로 교체하고, 테스트 종료 시 원복하는 cleanup 함수를 등록한다.
+func withCapturedLogger(t *testing.T) *bytes.Buffer {
+	t.Helper()
+	buf := &bytes.Buffer{}
+	original := slog.Default()
+	slog.SetDefault(slog.New(errs.NewSlogWrappedHandler(slog.NewJSONHandler(buf, &slog.HandlerOptions{Level: slog.LevelDebug}))))
+	t.Cleanup(func() { slog.SetDefault(original) })
+	return buf
+}
+
+func TestShouldLogTraceID_WhenBroadcastDispatched(t *testing.T) {
+	// Arrange
+	buf := withCapturedLogger(t)
+	broadcaster := NewBroadcaster()
+	ctx := context.WithValue(context.Background(), errs.TraceIDKey, "trace-broadcast")
+
+	// Act
+	err := broadcaster.Broadcast(ctx, "camp-a", usecase.EventCampUpdated, usecase.CampScope())
+
+	// Assert
+	if err != nil {
+		t.Fatalf("Broadcast() error = %v", err)
+	}
+	if !strings.Contains(buf.String(), `"trace_id":"trace-broadcast"`) {
+		t.Errorf("expected log to contain trace_id, got: %s", buf.String())
+	}
+}
+
+func TestShouldLogTraceID_WhenSubscriberBufferFull(t *testing.T) {
+	// Arrange
+	broadcaster := NewBroadcaster()
+	admin, _ := broadcaster.SubscribeAdmin(context.Background(), "camp-a")
+	for range subscriberBufferSize {
+		_ = broadcaster.Broadcast(context.Background(), "camp-a", usecase.EventCampUpdated, usecase.CampScope())
+	}
+	buf := withCapturedLogger(t)
+	ctx := context.WithValue(context.Background(), errs.TraceIDKey, "trace-full")
+
+	// Act
+	_ = broadcaster.Broadcast(ctx, "camp-a", usecase.EventCampUpdated, usecase.CampScope())
+
+	// Assert
+	for range subscriberBufferSize {
+		<-admin
+	}
+	if !strings.Contains(buf.String(), `"trace_id":"trace-full"`) {
+		t.Errorf("expected buffer-full warning log to contain trace_id, got: %s", buf.String())
+	}
+}
 
 func TestShouldIsolateSubscribersWhenBroadcastingAcrossCamps(t *testing.T) {
 	// Arrange
