@@ -1,5 +1,4 @@
 import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import 'package:cornermon/admin/features/setup_wizard/setup_wizard_state.dart';
@@ -8,6 +7,7 @@ import 'package:cornermon/admin/session/selected_camp_provider.dart';
 import 'package:cornermon/shared/api/ids.dart';
 import 'package:cornermon/shared/api/providers/camp_providers.dart';
 import 'package:cornermon/shared/api/providers/corner_track_providers.dart';
+import 'package:cornermon/shared/logging/app_logger.dart';
 
 part 'setup_wizard_provider.g.dart';
 
@@ -98,11 +98,13 @@ class SetupWizard extends _$SetupWizard {
         state = state.copyWith(createdCampId: campId);
       }
     } catch (error, stackTrace) {
-      debugPrint(
-        '[setup_wizard] _createCamp failed: '
-        '${error is DioException ? 'DioException type=${error.type} statusCode=${error.response?.statusCode} message=${error.message} error=${error.error}' : '${error.runtimeType} $error'}'
-        '\n$stackTrace',
-      );
+      // DioException은 LoggingInterceptor(#131)가 이미 기록한다 — 여기서 로깅이
+      // 필요한 건 네트워크 계층을 거치지 않는 에러(_createCamp의 StateError 등)뿐이다.
+      if (error is! DioException) {
+        ref
+            .read(appLoggerProvider)
+            .error('setup_wizard', '_createCamp failed', error: error, stackTrace: stackTrace);
+      }
       state = state.copyWith(
         isSubmitting: false,
         submitError: '캠프를 만들지 못했습니다. 다시 시도해주세요.',
@@ -146,11 +148,14 @@ class SetupWizard extends _$SetupWizard {
           ),
         );
       } catch (error, stackTrace) {
-        debugPrint(
-          '[setup_wizard] corner "${row.name}" failed: '
-          '${error is DioException ? 'DioException type=${error.type} statusCode=${error.response?.statusCode} message=${error.message} error=${error.error}' : '${error.runtimeType} $error'}'
-          '\n$stackTrace',
-        );
+        if (error is! DioException) {
+          ref.read(appLoggerProvider).error(
+            'setup_wizard',
+            'corner "${row.name}" failed',
+            error: error,
+            stackTrace: stackTrace,
+          );
+        }
         _replaceRow(
           index,
           row.copyWith(

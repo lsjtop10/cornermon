@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -11,6 +12,7 @@ import 'package:cornermon/shared/design_system/tokens/typography.dart';
 import 'package:cornermon/shared/design_system/widgets/empty_state.dart';
 import 'package:cornermon/facilitator/session/facilitator_broadcast_provider.dart';
 import 'package:cornermon/facilitator/session/track_session_provider.dart';
+import 'package:cornermon/shared/logging/app_logger.dart';
 import 'package:cornermon/shared/widgets/local_time_label.dart';
 
 /// B6 공지함 — 진입 시 안읽은 공지를 자동 읽음 처리한다(screen-spec-facilitator.md B6).
@@ -120,7 +122,15 @@ class _BroadcastInboxScreenState extends ConsumerState<BroadcastInboxScreen> {
       }
     } catch (error, stackTrace) {
       _readRequestedIds.removeAll(targets.map((m) => m.id!));
-      debugPrint('broadcast read request failed: $error\n$stackTrace');
+      // DioException은 LoggingInterceptor(#131)가 네트워크 계층에서 이미 기록한다.
+      if (error is! DioException) {
+        ref.read(appLoggerProvider).error(
+          'broadcast_inbox',
+          'read request failed',
+          error: error,
+          stackTrace: stackTrace,
+        );
+      }
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,

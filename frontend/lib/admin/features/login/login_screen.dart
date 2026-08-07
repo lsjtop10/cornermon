@@ -27,11 +27,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   Future<void> _submit() async {
-    debugPrint(
-      '[login] _submit tapped: isSubmitting=$_isSubmitting '
-      'idEmpty=${_idController.text.trim().isEmpty} '
-      'passwordEmpty=${_passwordController.text.isEmpty}',
-    );
     if (_isSubmitting) return;
     if (_idController.text.trim().isEmpty || _passwordController.text.isEmpty) {
       setState(() {});
@@ -42,11 +37,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       await ref
           .read(loginErrorProvider.notifier)
           .submit(_idController.text.trim(), _passwordController.text);
-      debugPrint('[login] submit() completed without throwing');
-    } catch (error, stackTrace) {
-      debugPrint(
-        '[login] _submit caught: ${error.runtimeType} $error\n$stackTrace',
-      );
+    } catch (_) {
+      // loginErrorProvider가 화면에 보여줄 상태(errorText)와 로그를 이미 남겼다
+      // (#131) — 여기서는 finally의 _isSubmitting 해제만 필요해 별도 처리 없이 삼킨다.
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
