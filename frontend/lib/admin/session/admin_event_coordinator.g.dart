@@ -74,7 +74,7 @@ final class AdminEventCoordinatorProvider
 }
 
 String _$adminEventCoordinatorHash() =>
-    r'6817c7f6fb7eec2cbcec538e5b019c35c63096de';
+    r'5dc5f18e8427d5d303658ad88a59278a0beb29e4';
 
 /// `TrackEventCoordinator`(`facilitator/features/main_track/track_event_coordinator.dart`)와
 /// 대칭되는 admin 쪽 디스패처. 연결상태 자체는 이미 `AdminConnection`

@@ -11,6 +11,7 @@ import 'package:cornermon/shared/api/sse/track_event_stream.dart';
 import 'package:cornermon/facilitator/session/device_trust_provider.dart';
 import 'package:cornermon/facilitator/session/facilitator_broadcast_provider.dart';
 import 'package:cornermon/facilitator/session/track_session_provider.dart';
+import 'package:cornermon/shared/util/notice_feedback.dart';
 
 part 'track_event_coordinator.g.dart';
 
@@ -70,10 +71,12 @@ class TrackEventCoordinator extends _$TrackEventCoordinator {
             // facade provider만 invalidate하면 내부 family의 HTTP 결과는 캐시된 채다.
             // 실제 목록 provider를 무효화해야 새 공지를 GET으로 다시 가져온다.
             ref.invalidate(broadcastMessageListProvider(campId));
+            ref.read(noticeFeedbackProvider).notify();
           }
         } else if (isThisTrack) {
           ref.invalidate(trackMessageListProvider(trackId, background: true));
           ref.invalidate(unreadDirectMessageCountProvider(trackId));
+          ref.read(noticeFeedbackProvider).notify();
         }
         break;
       case SseEventEventEnum.trackDeleted:

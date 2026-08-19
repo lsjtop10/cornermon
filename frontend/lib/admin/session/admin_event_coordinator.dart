@@ -10,6 +10,7 @@ import 'package:cornermon/shared/api/providers/message_providers.dart';
 import 'package:cornermon/shared/api/providers/report_providers.dart';
 import 'package:cornermon/shared/api/sse/admin_event_stream.dart';
 import 'package:cornermon/shared/design_system/widgets/connection_banner.dart';
+import 'package:cornermon/shared/util/notice_feedback.dart';
 import 'admin_session_provider.dart';
 import 'selected_camp_provider.dart';
 
@@ -75,6 +76,7 @@ class AdminEventCoordinator extends _$AdminEventCoordinator {
       case SseEventEventEnum.messagesChanged:
         ref.invalidate(broadcastMessageListProvider(campId));
         ref.invalidate(trackMessageListProvider);
+        ref.read(noticeFeedbackProvider).notify();
         break;
       case SseEventEventEnum.trackDeleted:
         ref.invalidate(trackListProvider(campId));
