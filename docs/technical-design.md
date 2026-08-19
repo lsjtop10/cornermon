@@ -138,8 +138,8 @@ DB 트랜잭션 경계는 `usecase` 계층이 잡고, 위반 시 롤백한다 �
 
 **1단계: 기기 등록 요청 및 토큰 발급**
 - 클라이언트(모바일 앱)가 최초 실행 시 `POST /device-registrations`를 호출하며, 요청 body에 `registrationCode`(등록 코드), `deviceName`(기기명), `deviceModel`(기종), `displayName`(관리자 화면 표시용 이름, 진행자 입력)을 담는다.
-  - `campId` 원문은 진행자에게 노출되지 않는다(§domain-model.md 2.4-b). 대신 `Camp` 생성 시점에 campId를 SHA-256 해싱한 뒤 Crockford Base32로 인코딩해 미리 계산해 둔 `registrationCode`를 관리자가 진행자에게 구두/메신저로 공유한다.
-  - 서버는 `registrationCode` → `campId`를 `camps.registration_code` 유니크 컬럼으로 O(1) 조회해 역참조한다. 매 요청마다 해시를 재계산하지 않는다.
+  - `campId` 원문은 진행자에게 노출되지 않는다(§domain-model.md 2.4-b). 대신 `Camp` 생성 시점에 `crypto/rand`로 무작위 생성해 Crockford Base32로 인코딩한 `registrationCode`를 관리자가 진행자에게 구두/메신저로 공유한다. campId를 해싱해 만들지 않는 이유는 campId 자체가 다른 API 응답에 노출되는 비밀 아닌 값이라, 해시 입력으로 쓰면 코드를 역산할 수 있기 때문이다(이슈 #217).
+  - 서버는 `registrationCode` → `campId`를 `camps.registration_code` 유니크 컬럼으로 O(1) 조회해 역참조한다.
   - 일치하는 캠프가 없으면 404(`CAMP_NOT_FOUND`), 캠프가 `ACTIVE`가 아니면 400(`INVALID_TRANSITION`)을 반환한다.
 - 서버는 opaque token을 생성해 DB에는 **SHA256 해시만 저장**하고, **평문 토큰은 응답 body의 `deviceToken` 필드로만 한 번 전달**한다(`DeviceRegistrationCreatedResponse`).
   - 이 토큰을 "한 번만" 클라이언트에 노출하는 이유: 클라이언트가 안전하게 저장(iOS Keychain, Android Keystore)해야 하고, 이후로는 모든 요청에서 `Authorization: Bearer <토큰>`으로 사용한다. 평문은 절대 두 번째 회선을 타지 않는다.

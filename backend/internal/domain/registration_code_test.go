@@ -7,42 +7,25 @@ import (
 	"cornermon/backend/internal/domain"
 )
 
-func TestGenerateRegistrationCodeShoudReturnSameCodeWhenCalledTwiceWithSameCampID(t *testing.T) {
-	// Arrange
-	campID := domain.CampID("camp-1")
+func TestGenerateRegistrationCodeShoudReturnDifferentCodeWhenCalledTwice(t *testing.T) {
+	// Arrange (no campId input anymore — code is random, not derived from any value)
 
 	// Act
-	first := domain.GenerateRegistrationCode(campID)
-	second := domain.GenerateRegistrationCode(campID)
+	first := domain.GenerateRegistrationCode()
+	second := domain.GenerateRegistrationCode()
 
 	// Assert
-	if first != second {
-		t.Fatalf("expected deterministic code, got %q and %q", first, second)
-	}
-}
-
-func TestGenerateRegistrationCodeShoudReturnDifferentCodeWhenCampIDDiffers(t *testing.T) {
-	// Arrange
-	campA := domain.CampID("camp-1")
-	campB := domain.CampID("camp-2")
-
-	// Act
-	codeA := domain.GenerateRegistrationCode(campA)
-	codeB := domain.GenerateRegistrationCode(campB)
-
-	// Assert
-	if codeA == codeB {
-		t.Fatalf("expected different codes for different camp IDs, got %q for both", codeA)
+	if first == second {
+		t.Fatalf("expected two random calls to differ (40-bit space), got %q for both", first)
 	}
 }
 
 func TestGenerateRegistrationCodeShoudReturnEightCrockfordCharsWhenCalled(t *testing.T) {
 	// Arrange
-	campID := domain.CampID("camp-1")
 	const crockfordAlphabet = "0123456789ABCDEFGHJKMNPQRSTVWXYZ"
 
 	// Act
-	code := domain.GenerateRegistrationCode(campID)
+	code := domain.GenerateRegistrationCode()
 
 	// Assert
 	if len(code) != 8 {

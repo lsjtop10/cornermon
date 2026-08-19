@@ -34,7 +34,7 @@ func NewCamp(id CampID, name string, startAt, endAt time.Time) (*Camp, error) {
 	}
 	return &Camp{
 		id:                   id,
-		registrationCode:     GenerateRegistrationCode(id),
+		registrationCode:     GenerateRegistrationCode(),
 		name:                 name,
 		startAt:              startAt,
 		endAt:                endAt,

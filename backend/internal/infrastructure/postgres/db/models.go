@@ -111,7 +111,7 @@ type Camp struct {
 	BottleneckMinSamples int32 `json:"bottleneck_min_samples"`
 	// 목표 시간 대비 지연 비율(%) 임계값
 	BottleneckRatioPct int32 `json:"bottleneck_ratio_pct"`
-	// 기기 등록 코드 (campId 해시, Crockford Base32, 진행자에게 공유)
+	// 기기 등록 코드 (crypto/rand 무작위 생성, Crockford Base32, 진행자에게 공유)
 	RegistrationCode string `json:"registration_code"`
 }
 
