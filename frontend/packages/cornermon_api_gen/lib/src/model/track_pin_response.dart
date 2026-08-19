@@ -124,3 +124,4 @@ class _$TrackPinResponseSerializer implements PrimitiveSerializer<TrackPinRespon
     return result.build();
   }
 }
+

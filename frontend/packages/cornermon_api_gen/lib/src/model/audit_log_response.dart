@@ -349,3 +349,4 @@ class AuditLogResponseActionEnum extends EnumClass {
   static BuiltSet<AuditLogResponseActionEnum> get values => _$auditLogResponseActionEnumValues;
   static AuditLogResponseActionEnum valueOf(String name) => _$auditLogResponseActionEnumValueOf(name);
 }
+

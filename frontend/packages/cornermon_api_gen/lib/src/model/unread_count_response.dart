@@ -105,3 +105,4 @@ class _$UnreadCountResponseSerializer implements PrimitiveSerializer<UnreadCount
     return result.build();
   }
 }
+

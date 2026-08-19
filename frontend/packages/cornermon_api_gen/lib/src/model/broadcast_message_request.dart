@@ -105,3 +105,4 @@ class _$BroadcastMessageRequestSerializer implements PrimitiveSerializer<Broadca
     return result.build();
   }
 }
+

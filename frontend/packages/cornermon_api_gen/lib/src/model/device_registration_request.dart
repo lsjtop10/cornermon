@@ -195,3 +195,4 @@ class DeviceRegistrationRequestRoleEnum extends EnumClass {
   static BuiltSet<DeviceRegistrationRequestRoleEnum> get values => _$deviceRegistrationRequestRoleEnumValues;
   static DeviceRegistrationRequestRoleEnum valueOf(String name) => _$deviceRegistrationRequestRoleEnumValueOf(name);
 }
+

@@ -9,9 +9,11 @@ part of 'serializers.dart';
 Serializers _$serializers = (Serializers().toBuilder()
       ..add(AdminLoginRequest.serializer)
       ..add(AdminLoginResponse.serializer)
+      ..add(AdminOperationCountResponse.serializer)
       ..add(AdminResponse.serializer)
       ..add(AdminResponseRoleEnum.serializer)
       ..add(AdminSessionResponse.serializer)
+      ..add(AnnouncementReadStatResponse.serializer)
       ..add(AssignBadgeRequest.serializer)
       ..add(AuditLogPageResponse.serializer)
       ..add(AuditLogResponse.serializer)
@@ -63,14 +65,18 @@ Serializers _$serializers = (Serializers().toBuilder()
       ..add(MessageResponse.serializer)
       ..add(MessageResponseChannelTypeEnum.serializer)
       ..add(MessageResponseSenderRoleEnum.serializer)
+      ..add(OperationalStatsResponse.serializer)
       ..add(ReplaceTrackRequest.serializer)
       ..add(SSENotification.serializer)
       ..add(SSENotificationEventEnum.serializer)
       ..add(SSEScope.serializer)
       ..add(SSEScopeKindEnum.serializer)
       ..add(ScanAssignBadgeRequest.serializer)
+      ..add(TimelineBucketResponse.serializer)
+      ..add(TimelineStatsResponse.serializer)
       ..add(TrackLoginRequest.serializer)
       ..add(TrackLoginResponse.serializer)
+      ..add(TrackMessageCountResponse.serializer)
       ..add(TrackPINExportResponse.serializer)
       ..add(TrackPinResponse.serializer)
       ..add(TrackResponse.serializer)
@@ -88,6 +94,18 @@ Serializers _$serializers = (Serializers().toBuilder()
       ..add(VisitSummaryResponse.serializer)
       ..add(VisitSummaryResponseInputMethodEnum.serializer)
       ..add(VisitSummaryResponseStatusEnum.serializer)
+      ..addBuilderFactory(
+          const FullType(
+              BuiltList, const [const FullType(AdminOperationCountResponse)]),
+          () => ListBuilder<AdminOperationCountResponse>())
+      ..addBuilderFactory(
+          const FullType(
+              BuiltList, const [const FullType(AnnouncementReadStatResponse)]),
+          () => ListBuilder<AnnouncementReadStatResponse>())
+      ..addBuilderFactory(
+          const FullType(
+              BuiltList, const [const FullType(TrackMessageCountResponse)]),
+          () => ListBuilder<TrackMessageCountResponse>())
       ..addBuilderFactory(
           const FullType(BuiltList, const [const FullType(AuditLogResponse)]),
           () => ListBuilder<AuditLogResponse>())
@@ -119,6 +137,10 @@ Serializers _$serializers = (Serializers().toBuilder()
       ..addBuilderFactory(
           const FullType(BuiltList, const [const FullType(String)]),
           () => ListBuilder<String>())
+      ..addBuilderFactory(
+          const FullType(
+              BuiltList, const [const FullType(TimelineBucketResponse)]),
+          () => ListBuilder<TimelineBucketResponse>())
       ..addBuilderFactory(
           const FullType(
               BuiltList, const [const FullType(TrackPINExportResponse)]),

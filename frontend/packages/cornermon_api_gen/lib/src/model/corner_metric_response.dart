@@ -123,3 +123,4 @@ class _$CornerMetricResponseSerializer implements PrimitiveSerializer<CornerMetr
     return result.build();
   }
 }
+

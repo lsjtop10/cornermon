@@ -105,3 +105,4 @@ class _$HealthResponseSerializer implements PrimitiveSerializer<HealthResponse> 
     return result.build();
   }
 }
+

@@ -141,3 +141,4 @@ class _$BulkUpdateCornersRequestCornersInnerSerializer implements PrimitiveSeria
     return result.build();
   }
 }
+

@@ -105,3 +105,4 @@ class _$DirectMessageRequestSerializer implements PrimitiveSerializer<DirectMess
     return result.build();
   }
 }
+

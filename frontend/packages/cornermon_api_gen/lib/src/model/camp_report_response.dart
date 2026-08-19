@@ -5,10 +5,11 @@
 // ignore_for_file: unused_element
 import 'package:cornermon_api_gen/src/model/camp_summary_stats_response.dart';
 import 'package:built_collection/built_collection.dart';
+import 'package:cornermon_api_gen/src/model/operational_stats_response.dart';
 import 'package:cornermon_api_gen/src/model/corner_stats_response.dart';
 import 'package:cornermon_api_gen/src/model/group_stats_response.dart';
+import 'package:cornermon_api_gen/src/model/timeline_stats_response.dart';
 import 'package:cornermon_api_gen/src/model/track_stats_response.dart';
-import 'package:built_value/json_object.dart';
 import 'package:built_value/built_value.dart';
 import 'package:built_value/serializer.dart';
 
@@ -40,13 +41,13 @@ abstract class CampReportResponse implements Built<CampReportResponse, CampRepor
   BuiltList<GroupStatsResponse>? get groupStats;
 
   @BuiltValueField(wireName: r'operationalStats')
-  JsonObject? get operationalStats;
+  OperationalStatsResponse? get operationalStats;
 
   @BuiltValueField(wireName: r'summary')
   CampSummaryStatsResponse? get summary;
 
   @BuiltValueField(wireName: r'timeline')
-  JsonObject? get timeline;
+  TimelineStatsResponse? get timeline;
 
   @BuiltValueField(wireName: r'trackStats')
   BuiltList<TrackStatsResponse>? get trackStats;
@@ -106,7 +107,7 @@ class _$CampReportResponseSerializer implements PrimitiveSerializer<CampReportRe
       yield r'operationalStats';
       yield serializers.serialize(
         object.operationalStats,
-        specifiedType: const FullType(JsonObject),
+        specifiedType: const FullType(OperationalStatsResponse),
       );
     }
     if (object.summary != null) {
@@ -120,7 +121,7 @@ class _$CampReportResponseSerializer implements PrimitiveSerializer<CampReportRe
       yield r'timeline';
       yield serializers.serialize(
         object.timeline,
-        specifiedType: const FullType(JsonObject),
+        specifiedType: const FullType(TimelineStatsResponse),
       );
     }
     if (object.trackStats != null) {
@@ -184,9 +185,9 @@ class _$CampReportResponseSerializer implements PrimitiveSerializer<CampReportRe
         case r'operationalStats':
           final valueDes = serializers.deserialize(
             value,
-            specifiedType: const FullType(JsonObject),
-          ) as JsonObject;
-          result.operationalStats = valueDes;
+            specifiedType: const FullType(OperationalStatsResponse),
+          ) as OperationalStatsResponse;
+          result.operationalStats.replace(valueDes);
           break;
         case r'summary':
           final valueDes = serializers.deserialize(
@@ -198,9 +199,9 @@ class _$CampReportResponseSerializer implements PrimitiveSerializer<CampReportRe
         case r'timeline':
           final valueDes = serializers.deserialize(
             value,
-            specifiedType: const FullType(JsonObject),
-          ) as JsonObject;
-          result.timeline = valueDes;
+            specifiedType: const FullType(TimelineStatsResponse),
+          ) as TimelineStatsResponse;
+          result.timeline.replace(valueDes);
           break;
         case r'trackStats':
           final valueDes = serializers.deserialize(
@@ -237,3 +238,4 @@ class _$CampReportResponseSerializer implements PrimitiveSerializer<CampReportRe
     return result.build();
   }
 }
+

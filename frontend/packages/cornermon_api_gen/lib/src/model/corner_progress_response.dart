@@ -160,3 +160,4 @@ class CornerProgressResponseStatusEnum extends EnumClass {
   static BuiltSet<CornerProgressResponseStatusEnum> get values => _$cornerProgressResponseStatusEnumValues;
   static CornerProgressResponseStatusEnum valueOf(String name) => _$cornerProgressResponseStatusEnumValueOf(name);
 }
+

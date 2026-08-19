@@ -123,3 +123,4 @@ class _$AdminLoginRequestSerializer implements PrimitiveSerializer<AdminLoginReq
     return result.build();
   }
 }
+

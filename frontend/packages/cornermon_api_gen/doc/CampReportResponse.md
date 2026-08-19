@@ -12,9 +12,9 @@ Name | Type | Description | Notes
 **cornerStats** | [**BuiltList&lt;CornerStatsResponse&gt;**](CornerStatsResponse.md) |  | [optional] 
 **generatedAt** | [**DateTime**](DateTime.md) |  | [optional] 
 **groupStats** | [**BuiltList&lt;GroupStatsResponse&gt;**](GroupStatsResponse.md) |  | [optional] 
-**operationalStats** | [**JsonObject**](.md) |  | [optional] 
+**operationalStats** | [**OperationalStatsResponse**](OperationalStatsResponse.md) |  | [optional] 
 **summary** | [**CampSummaryStatsResponse**](CampSummaryStatsResponse.md) |  | [optional] 
-**timeline** | [**JsonObject**](.md) |  | [optional] 
+**timeline** | [**TimelineStatsResponse**](TimelineStatsResponse.md) |  | [optional] 
 **trackStats** | [**BuiltList&lt;TrackStatsResponse&gt;**](TrackStatsResponse.md) |  | [optional] 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
