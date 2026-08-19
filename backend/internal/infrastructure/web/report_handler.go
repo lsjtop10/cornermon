@@ -17,7 +17,15 @@ type ReportHandler struct {
 	querier       usecase.ReportQuerier
 }
 
-type TimelineStatsResponse struct{} // @name TimelineStatsResponse
+type TimelineStatsResponse struct {
+	Buckets []TimelineBucketResponse `json:"buckets"`
+} // @name TimelineStatsResponse
+
+type TimelineBucketResponse struct {
+	BucketStart         time.Time `json:"bucketStart" format:"date-time"`
+	InProgressCount     int       `json:"inProgressCount"`
+	CumulativeCompleted int       `json:"cumulativeCompleted"`
+} // @name TimelineBucketResponse
 
 type OperationalStatsResponse struct{} // @name OperationalStatsResponse
 
@@ -184,6 +192,15 @@ func mapReport(r *usecase.CampReport) CampReportResponse {
 			ManualVisitRatio:    manualVisitRatio,
 		})
 	}
+	timelineBuckets := make([]TimelineBucketResponse, 0, len(r.Timeline))
+	for _, b := range r.Timeline {
+		timelineBuckets = append(timelineBuckets, TimelineBucketResponse{
+			BucketStart:         b.BucketStart,
+			InProgressCount:     b.InProgressCount,
+			CumulativeCompleted: b.CumulativeCompleted,
+		})
+	}
+	res.Timeline = TimelineStatsResponse{Buckets: timelineBuckets}
 	return res
 }
 

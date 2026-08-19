@@ -755,7 +755,22 @@ definitions:
       qrPayload:
         type: string
     type: object
+  TimelineBucketResponse:
+    properties:
+      bucketStart:
+        format: date-time
+        type: string
+      cumulativeCompleted:
+        type: integer
+      inProgressCount:
+        type: integer
+    type: object
   TimelineStatsResponse:
+    properties:
+      buckets:
+        items:
+          $ref: '#/definitions/TimelineBucketResponse'
+        type: array
     type: object
   TrackLoginRequest:
     properties:

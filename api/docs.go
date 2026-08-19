@@ -4138,8 +4138,31 @@ const docTemplate = `{
                 }
             }
         },
+        "TimelineBucketResponse": {
+            "type": "object",
+            "properties": {
+                "bucketStart": {
+                    "type": "string",
+                    "format": "date-time"
+                },
+                "cumulativeCompleted": {
+                    "type": "integer"
+                },
+                "inProgressCount": {
+                    "type": "integer"
+                }
+            }
+        },
         "TimelineStatsResponse": {
-            "type": "object"
+            "type": "object",
+            "properties": {
+                "buckets": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/TimelineBucketResponse"
+                    }
+                }
+            }
         },
         "TrackLoginRequest": {
             "type": "object",

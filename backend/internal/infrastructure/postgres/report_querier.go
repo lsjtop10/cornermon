@@ -32,50 +32,82 @@ func (r *pgReportQuerier) queries(ctx context.Context) *db.Queries {
 
 func (r *pgReportQuerier) QueryCampReport(ctx context.Context, campID domain.CampID) (*usecase.CampReport, error) {
 	q := r.queries(ctx)
+	src := campReportSource{campID: campID, now: r.nowFn()}
 
-	dbCamp, err := q.GetCamp(ctx, string(campID))
+	var err error
+	src.camp, err = q.GetCamp(ctx, string(campID))
 	if err != nil {
 		return nil, errs.Wrap(ctx, err)
 	}
 
-	dbGroups, err := q.ListGroupsByCamp(ctx, string(campID))
+	src.groups, err = q.ListGroupsByCamp(ctx, string(campID))
 	if err != nil {
 		return nil, errs.Wrap(ctx, err)
 	}
 
-	dbCorners, err := q.ListCornersByCamp(ctx, string(campID))
+	src.corners, err = q.ListCornersByCamp(ctx, string(campID))
 	if err != nil {
 		return nil, errs.Wrap(ctx, err)
 	}
 
-	dbVisits, err := q.ListVisitsByCamp(ctx, string(campID))
+	src.visits, err = q.ListVisitsByCamp(ctx, string(campID))
 	if err != nil {
 		return nil, errs.Wrap(ctx, err)
 	}
 
-	dbTracks, err := q.ListTracksByCamp(ctx, string(campID))
+	src.tracks, err = q.ListTracksByCamp(ctx, string(campID))
 	if err != nil {
 		return nil, errs.Wrap(ctx, err)
 	}
 
-	dbAuditLogs, err := q.ListAuditLogsByCamp(ctx, pgtype.Text{String: string(campID), Valid: true})
+	src.auditLogs, err = q.ListAuditLogsByCamp(ctx, pgtype.Text{String: string(campID), Valid: true})
 	if err != nil {
 		return nil, errs.Wrap(ctx, err)
 	}
 
-	return calculateCampReport(campID, dbCamp, dbGroups, dbCorners, dbVisits, dbTracks, dbAuditLogs, r.nowFn())
+	return calculateCampReport(src)
 }
 
-func calculateCampReport(campID domain.CampID, dbCamp db.Camp, dbGroups []db.Group, dbCorners []db.Corner, dbVisits []db.ListVisitsByCampRow, dbTracks []db.Track, dbAuditLogs []db.AuditLog, now time.Time) (*usecase.CampReport, error) {
-	totalGroups := len(dbGroups)
+// campReportSource는 캠프 결과 리포트 집계에 필요한 원장 로우 전체를 한데 묶는다.
+// calculateCampReport가 값 하나 넘어가는 위치 인자 8~9개를 받게 하는 대신 이 구조체 하나를
+// 받게 해, 호출부/테스트 픽스처에서 어떤 슬라이스가 무엇인지 필드명으로 드러나게 한다.
+type campReportSource struct {
+	campID    domain.CampID
+	camp      db.Camp
+	groups    []db.Group
+	corners   []db.Corner
+	visits    []db.ListVisitsByCampRow
+	tracks    []db.Track
+	auditLogs []db.AuditLog
+	now       time.Time
+}
+
+// calculateCampReport는 캠프 종료 시(또는 진행 중 조회 시) 1회성으로 도는 사후 배치 집계다
+// (analytics-model.md §0.2 "사후 지표"). 이 집계를 SQL(GROUP BY/윈도우 함수)이 아니라 Go에서
+// 계산하는 이유:
+//  1. 같은 방문 로우 집합에서 조/코너/트랙/5분 버킷이라는 서로 다른 4개 차원으로 동시에 접어야
+//     한다. sqlc는 쿼리 하나당 결과 행 모양이 고정이라, 이 다차원 집계를 SQL로 그대로 옮기면
+//     차원마다 별도 쿼리를 왕복하거나 CTE/윈도우 함수를 겹겹이 쌓아야 해서 오히려 복잡해진다.
+//  2. 캠프 규모 상한(조 20·코너 10·트랙 40 안팎, 방문 최대 수백 건)에서 O(방문 수) 완전탐색은
+//     비용이 무시할 만큼 작다 — DB 쪽 최적화로 얻을 성능 이득이 없다.
+//  3. median/표준편차/목표시간편차비율처럼 도메인이 정의한 통계(analytics-model.md §1)는 Go
+//     단위 테스트(report_querier_test.go)로 결정론적으로 검증하기가 SQL을 스냅샷 테스트하는
+//     것보다 쉽다.
+//
+// 이 함수 자체는 ctx/DB 접근이 없는 순수 함수다 — sqlc row 타입에 결합되어 있다는 점은 남는
+// 트레이드오프이지만(스키마 변경에 취약), 조회 전용 read model이 애그리거트 경계를 가로질러
+// 여러 테이블을 한 번에 다루는 것 자체는 DEVELOPER_GUIDE.md CQRS 절이 명시적으로 허용하는
+// 형태다(권한/비즈니스 로직 없는 리포트 통계는 Handler→Read-Only Outbound Port→DB 직행 허용).
+func calculateCampReport(src campReportSource) (*usecase.CampReport, error) {
+	totalGroups := len(src.groups)
 	finishedGroupsCount := 0
 
-	groupReports := make([]usecase.GroupReport, 0, len(dbGroups))
+	groupReports := make([]usecase.GroupReport, 0, len(src.groups))
 	groupCompletedVisits := make(map[string][]db.ListVisitsByCampRow)
 	cornerDurations := make(map[string][]float64)
 	trackCompletedVisits := make(map[string][]db.ListVisitsByCampRow)
 
-	for _, dbG := range dbGroups {
+	for _, dbG := range src.groups {
 		g, err := mapGroup(dbG)
 		if err != nil {
 			return nil, err
@@ -95,7 +127,7 @@ func calculateCampReport(campID domain.CampID, dbCamp db.Camp, dbGroups []db.Gro
 		})
 	}
 
-	for _, v := range dbVisits {
+	for _, v := range src.visits {
 		if v.Status == "COMPLETED" {
 			groupCompletedVisits[v.GroupID] = append(groupCompletedVisits[v.GroupID], v)
 			trackCompletedVisits[v.TrackID] = append(trackCompletedVisits[v.TrackID], v)
@@ -107,7 +139,7 @@ func calculateCampReport(campID domain.CampID, dbCamp db.Camp, dbGroups []db.Gro
 		}
 	}
 
-	totalVisits := len(dbVisits)
+	totalVisits := len(src.visits)
 	completedVisitsCount := 0
 	manualVisitsCount := 0
 
@@ -152,26 +184,28 @@ func calculateCampReport(campID domain.CampID, dbCamp db.Camp, dbGroups []db.Gro
 	}
 
 	programDurationSec := 0
+	var timeline []usecase.TimelineBucket
 	var firstVisitStart time.Time
 	hasFirstVisit := false
-	for _, v := range dbVisits {
+	for _, v := range src.visits {
 		if v.StartedAt.Valid && (!hasFirstVisit || v.StartedAt.Time.Before(firstVisitStart)) {
 			firstVisitStart = v.StartedAt.Time
 			hasFirstVisit = true
 		}
 	}
 	if hasFirstVisit {
-		endRef := now
-		if dbCamp.EndedAt.Valid {
-			endRef = dbCamp.EndedAt.Time
+		endRef := src.now
+		if src.camp.EndedAt.Valid {
+			endRef = src.camp.EndedAt.Time
 		}
 		if endRef.After(firstVisitStart) {
 			programDurationSec = int(endRef.Sub(firstVisitStart).Seconds())
 		}
+		timeline = buildTimeline(src.visits, firstVisitStart, endRef)
 	}
 
-	cornerReports := make([]usecase.CornerReport, 0, len(dbCorners))
-	for _, dbC := range dbCorners {
+	cornerReports := make([]usecase.CornerReport, 0, len(src.corners))
+	for _, dbC := range src.corners {
 		durations := cornerDurations[dbC.ID]
 		completedCount := len(durations)
 
@@ -227,8 +261,8 @@ func calculateCampReport(campID domain.CampID, dbCamp db.Camp, dbGroups []db.Gro
 		})
 	}
 
-	trackReports := make([]usecase.TrackReport, 0, len(dbTracks))
-	for _, dbT := range dbTracks {
+	trackReports := make([]usecase.TrackReport, 0, len(src.tracks))
+	for _, dbT := range src.tracks {
 		completedVisits := trackCompletedVisits[dbT.ID]
 		completedCount := len(completedVisits)
 
@@ -260,7 +294,7 @@ func calculateCampReport(campID domain.CampID, dbCamp db.Camp, dbGroups []db.Gro
 	}
 
 	ruleOverrideCount, trackOperationCount := 0, 0
-	for _, log := range dbAuditLogs {
+	for _, log := range src.auditLogs {
 		if !log.Success {
 			continue
 		}
@@ -273,7 +307,7 @@ func calculateCampReport(campID domain.CampID, dbCamp db.Camp, dbGroups []db.Gro
 	}
 
 	report := &usecase.CampReport{
-		CampID:              campID,
+		CampID:              src.campID,
 		TotalGroups:         totalGroups,
 		FinishedGroups:      finishedGroupsCount,
 		TotalVisits:         totalVisits,
@@ -286,7 +320,49 @@ func calculateCampReport(campID domain.CampID, dbCamp db.Camp, dbGroups []db.Gro
 		TrackReports:        trackReports,
 		RuleOverrideCount:   ruleOverrideCount,
 		TrackOperationCount: trackOperationCount,
+		Timeline:            timeline,
 	}
 
 	return report, nil
+}
+
+// buildTimeline은 5분 단위 버킷 시계열을 만든다(analytics-model.md §1.5). start를 5분 단위로
+// 내림(floor) 정렬해 첫 버킷을 잡고, end 이전까지 버킷을 채운다. 사후 배치 집계라 버킷×방문
+// 완전탐색(O(n·m))으로 충분하다(analytics-model.md §0.2).
+func buildTimeline(dbVisits []db.ListVisitsByCampRow, start, end time.Time) []usecase.TimelineBucket {
+	if !start.Before(end) {
+		return nil
+	}
+
+	const bucketSize = 5 * time.Minute
+	buckets := make([]usecase.TimelineBucket, 0)
+	for bucketStart := start.Truncate(bucketSize); bucketStart.Before(end); bucketStart = bucketStart.Add(bucketSize) {
+		bucketEnd := bucketStart.Add(bucketSize)
+
+		inProgressCount := 0
+		cumulativeCompleted := 0
+		for _, v := range dbVisits {
+			if !v.StartedAt.Valid || v.StartedAt.Time.After(bucketStart) {
+				continue
+			}
+			if v.Status == "COMPLETED" && v.EndedAt.Valid {
+				if v.EndedAt.Time.After(bucketStart) {
+					inProgressCount++
+				}
+				if !v.EndedAt.Time.After(bucketEnd) {
+					cumulativeCompleted++
+				}
+				continue
+			}
+			// ended_at이 없는(아직 진행 중이던) 방문은 버킷 시작 시각 기준 계속 진행 중이었다.
+			inProgressCount++
+		}
+
+		buckets = append(buckets, usecase.TimelineBucket{
+			BucketStart:         bucketStart,
+			InProgressCount:     inProgressCount,
+			CumulativeCompleted: cumulativeCompleted,
+		})
+	}
+	return buckets
 }
