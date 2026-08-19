@@ -66,13 +66,13 @@ func (s *AdminAuthService) Login(
 		return "", nil, withErrorContext("auth_admin.login", "repository.get_admin", err, map[string]any{"username": username})
 	}
 	if admin == nil {
-		err = withErrorContext("auth_admin.login", "validate_admin", errors.New("invalid username or password"), map[string]any{"username": username, "admin_found": false})
+		err = withErrorContext("auth_admin.login", "validate_admin", domain.ErrAdminInvalidCredentials, map[string]any{"username": username, "admin_found": false})
 		s.recordAuditLog(ctx, domain.None[domain.CampID](), "anonymous", "anonymous", ActionAdminLogin, username, username, false, errorAuditMetadata(err, nil))
 		return "", nil, err
 	}
 
 	if err := verifyPassword(admin.PasswordHash(), password); err != nil {
-		err = withErrorContext("auth_admin.login", "validate_password", errors.New("invalid username or password"), map[string]any{"username": username})
+		err = withErrorContext("auth_admin.login", "validate_password", domain.ErrAdminInvalidCredentials, map[string]any{"username": username})
 		s.recordAuditLog(ctx, domain.None[domain.CampID](), "anonymous", "anonymous", ActionAdminLogin, username, username, false, errorAuditMetadata(err, nil))
 		return "", nil, err
 	}
