@@ -39,6 +39,7 @@ dependencies:
   go_router: ^17.3.0
   flutter_secure_storage: ^10.3.1
   dio: ^5.5.0
+  uuid: ^4.5.0 # TraceIdInterceptor에서 요청별 trace_id(UUIDv7) 생성에 직접 사용 — 기존엔 전이 의존성이었음
   mobile_scanner: ^7.4.0
   collection: ^1.19.0 # B3 QR 스캔 onDetect에서 barcodes.firstOrNull 직접 사용 — 기존엔 전이 의존성이었음
   one_of: '>=1.5.0 <2.0.0' # cornermon_api_gen이 이미 이 버전으로 고정 — oneOf 요청 바디(방문 시작) 구성에 직접 필요
