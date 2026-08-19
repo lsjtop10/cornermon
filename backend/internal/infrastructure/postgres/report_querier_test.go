@@ -89,7 +89,10 @@ func TestCalculateCampReport(t *testing.T) {
 		}
 
 		// Act
-		report, err := calculateCampReport(campID, dbCamp, dbGroups, dbCorners, dbVisits, dbTracks, dbAuditLogs, now)
+		report, err := calculateCampReport(campReportSource{
+			campID: campID, camp: dbCamp, groups: dbGroups, corners: dbCorners, visits: dbVisits,
+			tracks: dbTracks, auditLogs: dbAuditLogs, now: now,
+		})
 
 		// Assert
 		if err != nil {
@@ -240,7 +243,9 @@ func TestCalculateCampReport(t *testing.T) {
 		}
 
 		// Act
-		report, err := calculateCampReport(campID, dbCamp, dbGroups, dbCorners, dbVisits, nil, nil, now)
+		report, err := calculateCampReport(campReportSource{
+			campID: campID, camp: dbCamp, groups: dbGroups, corners: dbCorners, visits: dbVisits, now: now,
+		})
 
 		// Assert
 		if err != nil {
