@@ -2,6 +2,7 @@ package domain_test
 
 import (
 	"errors"
+	"strings"
 	"testing"
 	"time"
 
@@ -208,8 +209,14 @@ func TestNewCampShoudCreatePendingCampWhenValid(t *testing.T) {
 	if camp.Status() != domain.CampPending || camp.BottleneckMinSamples() != 3 || camp.BottleneckRatioPct() != 20 {
 		t.Fatalf("unexpected defaults: %+v", camp)
 	}
-	if camp.RegistrationCode() != domain.GenerateRegistrationCode("camp-1") {
-		t.Fatalf("expected deterministic registration code, got %q", camp.RegistrationCode())
+	const crockfordAlphabet = "0123456789ABCDEFGHJKMNPQRSTVWXYZ"
+	if len(camp.RegistrationCode()) != 8 {
+		t.Fatalf("expected 8-character registration code, got %q", camp.RegistrationCode())
+	}
+	for _, r := range camp.RegistrationCode() {
+		if !strings.ContainsRune(crockfordAlphabet, r) {
+			t.Fatalf("registration code %q contains character %q outside Crockford Base32 alphabet", camp.RegistrationCode(), r)
+		}
 	}
 }
 

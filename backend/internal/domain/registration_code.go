@@ -1,8 +1,9 @@
 package domain
 
 import (
-	"crypto/sha256"
+	"crypto/rand"
 	"encoding/base32"
+	"fmt"
 )
 
 // crockfordAlphabet은 가독성을 위해 혼동되기 쉬운 I/L/O/U를 제외한 Crockford Base32 문자셋입니다.
@@ -10,14 +11,19 @@ const crockfordAlphabet = "0123456789ABCDEFGHJKMNPQRSTVWXYZ"
 
 var registrationCodeEncoding = base32.NewEncoding(crockfordAlphabet).WithPadding(base32.NoPadding)
 
-// registrationCodeHashBytes는 40비트(8자 Crockford Base32)로 인코딩하기 위해 사용하는 해시 길이입니다.
-const registrationCodeHashBytes = 5
+// registrationCodeRandomBytes는 40비트(8자 Crockford Base32)로 인코딩하기 위해 사용하는
+// 난수 바이트 길이입니다.
+const registrationCodeRandomBytes = 5
 
-// GenerateRegistrationCode는 campId를 SHA-256으로 해싱한 뒤 앞 5바이트(40비트)를
-// Crockford Base32로 인코딩해 8자 등록 코드를 결정적으로 생성합니다.
-// 같은 campId는 항상 같은 코드를 반환하므로, 매 요청마다 재계산하지 않고 Camp 생성 시점에
-// 한 번 계산해 저장하는 용도로 쓰입니다.
-func GenerateRegistrationCode(id CampID) string {
-	sum := sha256.Sum256([]byte(id))
-	return registrationCodeEncoding.EncodeToString(sum[:registrationCodeHashBytes])
+// GenerateRegistrationCode는 crypto/rand로 40비트를 뽑아 Crockford Base32 8자 등록 코드를
+// 생성합니다. campId를 입력으로 받지 않습니다 — campId는 GET /camps 응답에 그대로 노출되는
+// 비밀 아닌 값이라, 과거처럼 이를 해싱해 코드를 만들면 campId를 아는 사람이 등록 코드를
+// 역산할 수 있게 됩니다(이슈 #217). crypto/rand 실패는 OS 엔트로피 소스 고갈 등 프로세스
+// 자체가 불안정한 상황이므로 즉시 panic으로 드러냅니다.
+func GenerateRegistrationCode() string {
+	buf := make([]byte, registrationCodeRandomBytes)
+	if _, err := rand.Read(buf); err != nil {
+		panic(fmt.Sprintf("domain: failed to generate registration code: %v", err))
+	}
+	return registrationCodeEncoding.EncodeToString(buf)
 }
