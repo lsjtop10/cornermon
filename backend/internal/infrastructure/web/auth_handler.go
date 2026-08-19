@@ -94,13 +94,23 @@ func (h *AuthHandler) AdminLogin(c echo.Context) error {
 	deviceInfo := c.Request().UserAgent()
 	access, _, err := h.adminAuth.Login(c.Request().Context(), req.ID, req.Password, deviceInfo)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusUnauthorized, ErrorResponse{Code: CodeUnauthorized, Message: err.Error()}).SetInternal(err)
+		return adminLoginHTTPError(err)
 	}
 
 	return c.JSON(http.StatusOK, AdminLoginResponse{
 		AccessToken:      access,
 		ExpiresInSeconds: int(usecase.AdminAccessTokenTTL.Seconds()),
 	})
+}
+
+// adminLoginHTTPError는 잘못된 아이디/비밀번호(도메인 검증 실패)만 401로 매핑한다.
+// 그 외 에러(DB 커넥션 끊김 등 인프라 실패)는 echo.HTTPError로 감싸지 않고 그대로 반환해
+// ErrorHandler가 500으로 처리하도록 한다 (trackLoginHTTPError와 동일한 패턴).
+func adminLoginHTTPError(err error) error {
+	if errors.Is(err, domain.ErrAdminInvalidCredentials) {
+		return echo.NewHTTPError(http.StatusUnauthorized, ErrorResponse{Code: CodeUnauthorized, Message: "invalid username or password"}).SetInternal(err)
+	}
+	return err
 }
 
 // @Summary      관리자 로그아웃

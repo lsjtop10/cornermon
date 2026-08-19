@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -113,6 +114,33 @@ func TestAdminAuthService_Login(t *testing.T) {
 		// Assert
 		if err == nil {
 			t.Fatal("expected error, got nil")
+		}
+		if !errors.Is(err, domain.ErrAdminInvalidCredentials) {
+			t.Errorf("expected errors.Is(err, domain.ErrAdminInvalidCredentials) to be true, got %v", err)
+		}
+	})
+
+	t.Run("ShouldFailLoginAdminWithInvalidCredentialsErrorWhenUsernameNotFound", func(t *testing.T) {
+		// Arrange
+		admins := NewMockAdminRepository()
+		sessions := NewMockAdminSessionRepository()
+		auditLogs := &MockAuditLogRepository{}
+		tx := &MockTxManager{}
+		facSessions := NewMockFacilitatorSessionRepository()
+		tracks := NewMockTrackRepository()
+		corners := NewMockCornerRepository()
+		broadcaster := &MockBroadcaster{}
+
+		s := NewAdminAuthService(admins, sessions, facSessions, tracks, corners, broadcaster, auditLogs, tx)
+
+		// Act
+		_, _, err := s.Login(context.Background(), "no-such-admin", "any-password", "PC")
+
+		// Assert
+		// 아이디가 존재하지 않는 경우와 비밀번호가 틀린 경우를 호출부에서 같은 sentinel로
+		// 구분 없이 401 처리할 수 있어야 하므로 동일한 에러여야 한다.
+		if !errors.Is(err, domain.ErrAdminInvalidCredentials) {
+			t.Errorf("expected errors.Is(err, domain.ErrAdminInvalidCredentials) to be true, got %v", err)
 		}
 	})
 }

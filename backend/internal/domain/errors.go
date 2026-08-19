@@ -37,6 +37,7 @@ var (
 	ErrAdminInvalidRole         = errors.New("admin: invalid role")
 	ErrAdminSelfDeleteForbidden = errors.New("admin: cannot delete self")
 	ErrAdminLastSystemAdmin     = errors.New("admin: cannot delete last system admin")
+	ErrAdminInvalidCredentials  = errors.New("admin: invalid username or password")
 )
 
 type DeviceLockedError struct {
