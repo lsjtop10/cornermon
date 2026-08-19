@@ -54,7 +54,7 @@ class _ReportTabsState extends State<ReportTabs> {
           child: switch (_selectedIndex) {
             0 => summary == null
                 ? const Center(child: Text('요약 데이터가 없습니다'))
-                : ReportSummaryTab(summary: summary),
+                : ReportSummaryTab(summary: summary, report: widget.report),
             1 => ReportCornerStatsTab(report: widget.report),
             _ => ReportGroupStatsTab(report: widget.report),
           },

@@ -5,6 +5,9 @@ import 'package:cornermon/shared/design_system/tokens/colors.dart';
 import 'package:cornermon/shared/design_system/tokens/typography.dart';
 import 'package:cornermon/shared/util/duration_format.dart';
 import 'bottleneck_top3.dart';
+import 'operational_stats_section.dart';
+import 'timeline_section.dart';
+import 'track_stats_section.dart';
 
 /// 캠프 레벨 요약 카드 그리드(완주율/평균편차/수동 처리 비율) + 코너별 병목 랭킹 Top3.
 ///
@@ -20,8 +23,9 @@ import 'bottleneck_top3.dart';
 /// `completionRate`가 없을 때만 `finishedGroupCount/totalGroups`를 직접 계산해 퍼센트로
 /// 변환한 값으로 폴백한다(둘 다 없으면 0%).
 class ReportSummaryTab extends StatelessWidget {
-  const ReportSummaryTab({required this.summary, super.key});
+  const ReportSummaryTab({required this.summary, required this.report, super.key});
   final api.CampSummaryStats summary;
+  final api.CampReport report;
 
   @override
   Widget build(BuildContext context) {
@@ -70,6 +74,16 @@ class ReportSummaryTab extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         BottleneckTop3(ranking: ranking),
+        const SizedBox(height: 32),
+        TrackStatsSection(
+          trackStats: report.trackStats?.toList() ?? const <api.TrackStats>[],
+        ),
+        const SizedBox(height: 32),
+        TimelineSection(timeline: report.timeline ?? api.TimelineStats((b) {})),
+        const SizedBox(height: 32),
+        OperationalStatsSection(
+          stats: report.operationalStats ?? api.OperationalStats((b) {}),
+        ),
       ],
     );
   }
