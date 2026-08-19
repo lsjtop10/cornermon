@@ -10,6 +10,7 @@ import 'package:cornermon/shared/design_system/tokens/typography.dart';
 import 'package:cornermon/shared/design_system/widgets/app_button.dart';
 import 'package:cornermon/shared/design_system/widgets/app_tag.dart';
 import 'package:cornermon/shared/design_system/widgets/confirm_modal.dart';
+import 'package:cornermon/shared/logging/app_logger.dart';
 import '_admin_management_connection_state.dart';
 
 /// SYSTEM_ADMIN 전용 관리자 목록의 행. 본인 행은 삭제 버튼을 노출하지 않는다 — 본인
@@ -46,11 +47,8 @@ class _AdminListTileState extends ConsumerState<AdminListTile> {
       await container.read(provider.future).whenComplete(sub.close);
       ref.invalidate(adminListProvider);
       ref.read(adminManagementConnectionLostProvider.notifier).set(false);
-    } on DioException catch (error, stackTrace) {
-      debugPrint(
-        '[admin_management] delete admin failed: type=${error.type} '
-        'statusCode=${error.response?.statusCode}\n$stackTrace',
-      );
+    } on DioException catch (error) {
+      // DioException은 LoggingInterceptor(#131)가 네트워크 계층에서 이미 기록한다.
       if (isConnectionLost(error)) {
         ref.read(adminManagementConnectionLostProvider.notifier).set(true);
       } else if (mounted) {
@@ -59,7 +57,12 @@ class _AdminListTileState extends ConsumerState<AdminListTile> {
         ).showSnackBar(const SnackBar(content: Text('삭제에 실패했습니다. 잠시 후 다시 시도해주세요.')));
       }
     } catch (error, stackTrace) {
-      debugPrint('[admin_management] delete admin failed: $error\n$stackTrace');
+      ref.read(appLoggerProvider).error(
+        'admin_management',
+        'delete admin failed',
+        error: error,
+        stackTrace: stackTrace,
+      );
       if (mounted) {
         ScaffoldMessenger.of(
           context,

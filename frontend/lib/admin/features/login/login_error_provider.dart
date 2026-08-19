@@ -1,8 +1,9 @@
 import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import 'package:cornermon/admin/session/admin_session_provider.dart';
+import 'package:cornermon/shared/api/dio_error.dart';
+import 'package:cornermon/shared/logging/app_logger.dart';
 
 part 'login_error_provider.g.dart';
 
@@ -29,18 +30,18 @@ class LoginError extends _$LoginError {
     state = null;
     try {
       await ref.read(adminSessionProvider.notifier).login(loginId, password);
-    } on DioException catch (error, stackTrace) {
-      final detail =
-          'DioException type=${error.type} statusCode=${error.response?.statusCode} '
-          'message=${error.message} error=${error.error}';
-      debugPrint('[login] $detail\n$stackTrace');
+    } on DioException catch (error) {
+      // DioException은 LoggingInterceptor(#131)가 네트워크 계층에서 이미 기록한다.
+      final detail = describeDioError(error);
       state = error.response?.statusCode == 401
           ? const AdminLoginInvalidCredentials()
           : AdminLoginServerError(detail);
       rethrow;
     } catch (error, stackTrace) {
       final detail = '${error.runtimeType} $error';
-      debugPrint('[login] non-Dio error $detail\n$stackTrace');
+      ref
+          .read(appLoggerProvider)
+          .error('login', 'non-Dio error', error: error, stackTrace: stackTrace);
       state = AdminLoginServerError(detail);
       rethrow;
     }

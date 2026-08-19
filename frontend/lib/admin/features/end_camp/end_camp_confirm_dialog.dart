@@ -11,16 +11,14 @@ import 'package:cornermon/shared/design_system/tokens/colors.dart';
 import 'package:cornermon/shared/design_system/tokens/spacing.dart';
 import 'package:cornermon/shared/design_system/tokens/typography.dart';
 import 'package:cornermon/shared/design_system/widgets/app_button.dart';
+import 'package:cornermon/shared/logging/app_logger.dart';
 
 /// POST end-camp 실패를 사용자 문구로 변환한다(camp_handler.go EndCamp 참고).
-/// 인식 못한 코드(네트워크 오류, 5xx 등)는 원문을 로그로만 남기고 일반 문구로 대체한다.
+/// 인식 못한 코드(네트워크 오류, 5xx 등)는 일반 문구로 대체한다. DioException은
+/// LoggingInterceptor(#131)가 네트워크 계층에서 이미 기록하므로, 그 외 에러만
+/// 여기서 직접 로깅한다.
 String _describeEndError(Object error, StackTrace stackTrace) {
   if (error is DioException) {
-    debugPrint(
-      '[end_camp] failed: type=${error.type} '
-      'statusCode=${error.response?.statusCode} '
-      'body=${error.response?.data}\n$stackTrace',
-    );
     final code = (error.response?.data is Map)
         ? (error.response?.data as Map)['code'] as String?
         : null;
@@ -28,7 +26,7 @@ String _describeEndError(Object error, StackTrace stackTrace) {
       return '종료할 수 없는 캠프 상태이거나 정리 중인 방문이 있습니다.';
     }
   } else {
-    debugPrint('[end_camp] failed: $error\n$stackTrace');
+    appLogger.error('end_camp', 'failed', error: error, stackTrace: stackTrace);
   }
   return '종료 처리에 실패했습니다. 잠시 후 다시 시도해주세요.';
 }

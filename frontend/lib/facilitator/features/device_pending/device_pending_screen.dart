@@ -8,6 +8,7 @@ import 'package:cornermon/shared/design_system/tokens/colors.dart';
 import 'package:cornermon/shared/design_system/tokens/spacing.dart';
 import 'package:cornermon/shared/design_system/tokens/typography.dart';
 import 'package:cornermon/shared/design_system/widgets/app_button.dart';
+import 'package:cornermon/shared/logging/app_logger.dart';
 import '../../session/device_trust_provider.dart';
 
 /// B0. 신뢰되지 않은 기기는 이 화면만 볼 수 있고 PIN 화면(B1)에 도달하지 못한다.
@@ -131,12 +132,8 @@ class _RegistrationFormState extends ConsumerState<_RegistrationForm> {
       await ref
           .read(deviceTrustProvider.notifier)
           .requestRegistration(code, displayName: displayName);
-    } on DioException catch (error, stackTrace) {
-      debugPrint(
-        '[device_pending] registration failed: type=${error.type} '
-        'statusCode=${error.response?.statusCode} '
-        'body=${error.response?.data}\n$stackTrace',
-      );
+    } on DioException catch (error) {
+      // DioException은 LoggingInterceptor(#131)가 네트워크 계층에서 이미 기록한다.
       if (!mounted) return;
       // 등록 코드로 캠프를 찾지 못한 경우에만 404를 반환한다(device_handler.go
       // RegisterDevice: CampNotFound → 404). 그 외(네트워크 오류, 5xx 등)를 같은
@@ -147,7 +144,9 @@ class _RegistrationFormState extends ConsumerState<_RegistrationForm> {
             : '등록 요청에 실패했습니다. 잠시 후 다시 시도해주세요.',
       );
     } catch (error, stackTrace) {
-      debugPrint('[device_pending] registration failed: $error\n$stackTrace');
+      ref
+          .read(appLoggerProvider)
+          .error('device_pending', 'registration failed', error: error, stackTrace: stackTrace);
       if (!mounted) return;
       setState(() => _errorText = '등록 요청에 실패했습니다. 잠시 후 다시 시도해주세요.');
     } finally {

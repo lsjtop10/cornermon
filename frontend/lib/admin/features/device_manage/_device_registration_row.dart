@@ -12,6 +12,7 @@ import 'package:cornermon/shared/design_system/tokens/spacing.dart';
 import 'package:cornermon/shared/design_system/tokens/typography.dart';
 import 'package:cornermon/shared/design_system/widgets/app_button.dart';
 import 'package:cornermon/shared/design_system/widgets/confirm_modal.dart';
+import 'package:cornermon/shared/logging/app_logger.dart';
 import 'package:cornermon/shared/widgets/local_time_label.dart';
 import '_device_manage_connection_state.dart';
 
@@ -48,19 +49,20 @@ class _DeviceRegistrationRowState extends ConsumerState<DeviceRegistrationRow> {
       await action();
       ref.invalidate(deviceRegistrationListProvider(widget.campId));
       ref.read(deviceManageConnectionLostProvider.notifier).set(false);
-    } on DioException catch (error, stackTrace) {
-      debugPrint(
-        '[device_manage] action failed: type=${error.type} '
-        'statusCode=${error.response?.statusCode} '
-        'body=${error.response?.data}\n$stackTrace',
-      );
+    } on DioException catch (error) {
+      // DioException은 LoggingInterceptor(#131)가 네트워크 계층에서 이미 기록한다.
       if (isConnectionLost(error)) {
         ref.read(deviceManageConnectionLostProvider.notifier).set(true);
       } else {
         _showSnackBar('요청이 실패했습니다. 잠시 후 다시 시도해주세요.');
       }
     } catch (error, stackTrace) {
-      debugPrint('[device_manage] action failed: $error\n$stackTrace');
+      ref.read(appLoggerProvider).error(
+        'device_manage',
+        'action failed',
+        error: error,
+        stackTrace: stackTrace,
+      );
       _showSnackBar('요청이 실패했습니다. 잠시 후 다시 시도해주세요.');
     } finally {
       if (mounted) setState(() => _isBusy = false);

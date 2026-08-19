@@ -12,6 +12,7 @@ import 'package:cornermon/shared/design_system/tokens/spacing.dart';
 import 'package:cornermon/shared/design_system/tokens/typography.dart';
 import 'package:cornermon/shared/design_system/widgets/app_button.dart';
 import 'package:cornermon/shared/design_system/widgets/confirm_modal.dart';
+import 'package:cornermon/shared/logging/app_logger.dart';
 import '_admin_management_connection_state.dart';
 
 /// 로그인한 관리자 본인의 비밀번호 변경과, CORNER_OPERATOR인 경우의 본인 탈퇴를
@@ -46,11 +47,8 @@ class _MyAccountCardState extends ConsumerState<MyAccountCard> {
       await action();
       ref.read(adminManagementConnectionLostProvider.notifier).set(false);
       return true;
-    } on DioException catch (error, stackTrace) {
-      debugPrint(
-        '[admin_management] my account action failed: type=${error.type} '
-        'statusCode=${error.response?.statusCode}\n$stackTrace',
-      );
+    } on DioException catch (error) {
+      // DioException은 LoggingInterceptor(#131)가 네트워크 계층에서 이미 기록한다.
       if (isConnectionLost(error)) {
         ref.read(adminManagementConnectionLostProvider.notifier).set(true);
       } else {
@@ -58,7 +56,12 @@ class _MyAccountCardState extends ConsumerState<MyAccountCard> {
       }
       return false;
     } catch (error, stackTrace) {
-      debugPrint('[admin_management] my account action failed: $error\n$stackTrace');
+      ref.read(appLoggerProvider).error(
+        'admin_management',
+        'my account action failed',
+        error: error,
+        stackTrace: stackTrace,
+      );
       _showSnackBar('요청이 실패했습니다. 잠시 후 다시 시도해주세요.');
       return false;
     } finally {

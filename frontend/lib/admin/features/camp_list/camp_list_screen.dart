@@ -109,11 +109,8 @@ Future<void> _confirmLogout(BuildContext context, WidgetRef ref) async {
 
   try {
     await ref.read(adminSessionProvider.notifier).logout();
-  } on DioException catch (error, stackTrace) {
-    debugPrint(
-      '[camp_list] logout failed: type=${error.type} '
-      'statusCode=${error.response?.statusCode}\n$stackTrace',
-    );
+  } on DioException catch (error) {
+    // DioException은 LoggingInterceptor(#131)가 네트워크 계층에서 이미 기록한다.
     if (isConnectionLost(error)) return;
     if (!context.mounted) return;
     ScaffoldMessenger.of(

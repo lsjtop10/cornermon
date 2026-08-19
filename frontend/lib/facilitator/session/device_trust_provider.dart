@@ -3,7 +3,6 @@ import 'dart:io';
 
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import 'package:cornermon/shared/api/domain_aliases.dart';
@@ -105,12 +104,9 @@ class DeviceTrust extends _$DeviceTrust {
       _pollTimer?.cancel();
       await store.write(_deviceStatusKey, newStatus.name);
       state = AsyncData(newStatus);
-    } on DioException catch (error, stackTrace) {
+    } on DioException {
       // 일시적 네트워크 오류로 폴링 자체를 멈추지 않는다 — 다음 tick에 재시도.
-      debugPrint(
-        '[device_trust] polling failed: type=${error.type} '
-        'statusCode=${error.response?.statusCode}\n$stackTrace',
-      );
+      // LoggingInterceptor(#131)가 네트워크 계층에서 이미 기록한다.
     }
   }
 
@@ -156,11 +152,8 @@ class DeviceTrust extends _$DeviceTrust {
       // 등록된 기기로 취급하지 않는다. 응답이 불완전한 경우만 위에서 보존한다.
       await clearRegistration();
       return DeviceTrustRecovery.cleared;
-    } on DioException catch (error, stackTrace) {
-      debugPrint(
-        '[device_trust] unauthorized recovery failed: '
-        'type=${error.type} statusCode=${error.response?.statusCode}\n$stackTrace',
-      );
+    } on DioException {
+      // LoggingInterceptor(#131)가 네트워크 계층에서 이미 기록한다.
       return DeviceTrustRecovery.unresolved;
     }
   }
