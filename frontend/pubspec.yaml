@@ -47,6 +47,7 @@ dependencies:
   built_collection: ^5.1.1 # audit_log_metadata_dialog에서 AuditLog.metadata(BuiltMap) 직접 사용 — 기존엔 전이 의존성이었음
   pdf: ^3.11.1
   printing: ^5.13.4
+  fl_chart: ^1.2.0 # 리포트 요약 탭 타임라인 섹션(5분 버킷 진행중/누적완료 라인 차트, #227) 직접 사용
   share_plus: ^12.0.1
   file_saver: ^0.4.0
   cornermon_api_gen:
