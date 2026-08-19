@@ -23,6 +23,7 @@ else
 endif
 endif
 
+BUILD_NUMBER := $(shell git rev-list --count HEAD)
 
 run-admin:unlock-keychain
 	flutter run --dart-define-from-file=env/dev.json -t lib/main_admin.dart --flavor admin
@@ -37,14 +38,14 @@ run-facilitator-prod:unlock-keychain
 	flutter run --release --dart-define-from-file=env/prod.json -t lib/main_facilitator.dart --flavor facilitator
 
 build-admin:unlock-keychain
-	flutter build ipa --release --dart-define-from-file=env/prod.json -t lib/main_admin.dart --flavor admin
-	flutter build apk --release --dart-define-from-file=env/prod.json -t lib/main_admin.dart --flavor admin
+	flutter build ipa --release --dart-define-from-file=env/prod.json -t lib/main_admin.dart --flavor admin --build-number=$(BUILD_NUMBER)
+	flutter build apk --release --dart-define-from-file=env/prod.json -t lib/main_admin.dart --flavor admin --build-number=$(BUILD_NUMBER)
 	mv build/ios/ipa/cornermon.ipa build/ios/ipa/cornermon-admin.ipa
 
 
 build-facilitator:unlock-keychain
-	flutter build ipa --release --dart-define-from-file=env/prod.json -t lib/main_facilitator.dart --flavor facilitator
-	flutter build apk --release --dart-define-from-file=env/prod.json -t lib/main_facilitator.dart --flavor facilitator
+	flutter build ipa --release --dart-define-from-file=env/prod.json -t lib/main_facilitator.dart --flavor facilitator --build-number=$(BUILD_NUMBER)
+	flutter build apk --release --dart-define-from-file=env/prod.json -t lib/main_facilitator.dart --flavor facilitator --build-number=$(BUILD_NUMBER)
 	mv build/ios/ipa/cornermon.ipa build/ios/ipa/cornermon-facilitator.ipa
 
 
