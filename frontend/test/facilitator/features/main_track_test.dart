@@ -15,7 +15,7 @@ import 'package:cornermon/shared/api/sse/track_event_stream.dart';
 import 'package:cornermon/shared/api/sse/sse_event_receipt.dart';
 import 'package:cornermon/shared/design_system/tokens/colors.dart';
 import 'package:cornermon/shared/design_system/tokens/spacing.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 

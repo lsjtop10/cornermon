@@ -1,7 +1,7 @@
 KEY_PASS ?= 
 FLUTTER_ANDROID_BASE_IMAGE ?= ghcr.io/cirruslabs/android-sdk:36
-FLUTTER_VERSION ?= 3.44.7
-FLUTTER_DOCKER_IMAGE ?= cornermon-flutter:3.44.7
+FLUTTER_VERSION ?= 3.47.0
+FLUTTER_DOCKER_IMAGE ?= cornermon-flutter:3.47.0
 FLUTTER_DOCKERFILE ?= Dockerfile.flutter
 FLUTTER_DOCKER_CONTAINER ?= cornermon-flutter-check
 FLUTTER_PUB_CACHE_VOLUME ?= cornermon-flutter-pub-cache

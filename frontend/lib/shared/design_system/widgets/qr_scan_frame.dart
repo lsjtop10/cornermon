@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:cornermon/shared/design_system/tokens/colors.dart';
 
 /// 카메라 프리뷰 위 스캔 가이드 프레임(진행자 B3, 관리자 조 등록 카메라 QR 탭 공용) —

@@ -1,7 +1,7 @@
 import 'package:cornermon/facilitator/features/device_pending/device_pending_screen.dart';
 import 'package:cornermon/facilitator/session/device_trust_provider.dart';
 import 'package:cornermon/shared/design_system/widgets/app_button.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../test_utils/widget_test_helpers.dart';
