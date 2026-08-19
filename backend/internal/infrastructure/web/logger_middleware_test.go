@@ -12,6 +12,7 @@ import (
 	"cornermon/backend/internal/errs"
 	"cornermon/backend/internal/infrastructure/web"
 
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 )
 
@@ -46,6 +47,52 @@ func TestLoggerShouldLogTraceIDExactlyOnceWhenRequestSucceeds(t *testing.T) {
 	logLine := buf.String()
 	if count := strings.Count(logLine, `"trace_id"`); count != 1 {
 		t.Errorf("expected trace_id to appear exactly once, got %d in: %s", count, logLine)
+	}
+}
+
+func TestLoggerShouldGenerateUuidV7TraceIDWhenHeaderIsAbsent(t *testing.T) {
+	// arrange — 헤더가 없어 미들웨어가 자체 생성하는 경로(#131): 프론트가 이미 매
+	// 요청 X-Trace-ID를 보내므로 실제로는 프론트 없는 클라이언트(curl 등)에서만 탄다.
+	e := echo.New()
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/camps", nil)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+	next := func(c echo.Context) error { return c.NoContent(http.StatusOK) }
+
+	// act
+	if err := web.Logger()(next)(c); err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	// assert — 문자열 정렬이 생성 시각 순서에 가깝도록 v4(완전 랜덤)가 아닌 v7이어야 한다.
+	traceID := rec.Header().Get("X-Trace-ID")
+	parsed, err := uuid.Parse(traceID)
+	if err != nil {
+		t.Fatalf("expected X-Trace-ID to be a valid UUID, got %q: %v", traceID, err)
+	}
+	if parsed.Version() != 7 {
+		t.Errorf("expected UUID version 7, got version %d (%q)", parsed.Version(), traceID)
+	}
+}
+
+func TestLoggerShouldReuseClientProvidedTraceIDWhenHeaderIsPresent(t *testing.T) {
+	// arrange — 프론트의 TraceIdInterceptor가 이미 v7로 선생성해 보내는 일반적인
+	// 경로(#131): 클라이언트가 보낸 값은 형식과 무관하게 그대로 재사용해야 한다.
+	e := echo.New()
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/camps", nil)
+	req.Header.Set("X-Trace-ID", "client-provided-id")
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+	next := func(c echo.Context) error { return c.NoContent(http.StatusOK) }
+
+	// act
+	if err := web.Logger()(next)(c); err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	// assert
+	if got := rec.Header().Get("X-Trace-ID"); got != "client-provided-id" {
+		t.Errorf("expected X-Trace-ID to be echoed back unchanged, got %q", got)
 	}
 }
 
