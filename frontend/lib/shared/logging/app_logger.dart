@@ -70,7 +70,7 @@ class AppLogger {
       stackTrace: stackTrace,
     );
     _buffer.add(record);
-    debugPrint(record.toLine());
+    debugPrint(record.toConsoleLine());
   }
 }
 

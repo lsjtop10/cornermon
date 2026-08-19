@@ -18,6 +18,9 @@ analyzer:
     - windows/**
     - macos/**
     - linux/**
+    # openapi-generator 산출물(자체 "DO NOT MODIFY" 표기) — unused_import 등은
+    # 생성기 템플릿 이슈라 여기서 고치는 대신 analyze 대상에서 제외한다.
+    - packages/cornermon_api_gen/**
   plugins:
     - import_lint
 
