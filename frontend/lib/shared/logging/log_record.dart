@@ -28,7 +28,8 @@ class LogRecord {
   final Object? error;
   final StackTrace? stackTrace;
 
-  /// 콘솔 출력·내보내기 텍스트 모두가 공유하는 한 줄(+스택트레이스) 포맷.
+  /// 내보내기(진단 export, #131 UC-4) 텍스트 포맷 — 스택트레이스를 잘라내지 않고
+  /// 전체를 담는다. 사후 필드 이슈 분석이 목적이라 여기서는 장황함이 곧 목표다.
   String toLine() {
     final levelTag = level.name.toUpperCase();
     final traceSuffix = traceId == null ? '' : ' trace_id=$traceId';
@@ -37,6 +38,27 @@ class LogRecord {
     );
     if (error != null) buffer.write('\n$error');
     if (stackTrace != null) buffer.write('\n$stackTrace');
+    return buffer.toString();
+  }
+
+  /// 콘솔 출력 전용 포맷. [toLine]과 내용은 같지만 스택트레이스를 앞부분
+  /// [maxStackLines]줄로 잘라낸다 — 전체 스택은 이미 링버퍼(및 export)에 남으므로,
+  /// 개발 중 터미널을 매 요청마다 수십 줄로 채우지 않기 위함이다.
+  String toConsoleLine({int maxStackLines = 4}) {
+    final levelTag = level.name.toUpperCase();
+    final traceSuffix = traceId == null ? '' : ' trace_id=$traceId';
+    final buffer = StringBuffer(
+      '${timestamp.toIso8601String()} [$levelTag][$tag] $message$traceSuffix',
+    );
+    if (error != null) buffer.write('\n$error');
+    if (stackTrace != null) {
+      final lines = stackTrace.toString().trimRight().split('\n');
+      final shown = lines.take(maxStackLines).join('\n');
+      buffer.write('\n$shown');
+      if (lines.length > maxStackLines) {
+        buffer.write('\n  ... (${lines.length - maxStackLines} more, see exportSnapshot)');
+      }
+    }
     return buffer.toString();
   }
 }
