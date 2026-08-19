@@ -300,6 +300,11 @@ type CampReport struct {
 	AvgDeviationSec    float64 // 모든 COMPLETED 방문의 (실제 소요시간 - 목표시간) 평균
 	CornerReports      []CornerReport
 	GroupReports       []GroupReport
+	TrackReports       []TrackReport
+	// RuleOverrideCount는 캠프 기간 중 성공한 코너 규칙 변경(CORNER_UPDATE) 감사 로그 수입니다.
+	RuleOverrideCount int
+	// TrackOperationCount는 캠프 기간 중 성공한 트랙 생성/삭제/교체 감사 로그 수입니다.
+	TrackOperationCount int
 }
 
 // CornerReport는 코너별 분석 집계 DTO입니다.
@@ -312,6 +317,19 @@ type CornerReport struct {
 	StdDevDurationSec      float64
 	AvgDeviationSec        float64
 	PositiveDeviationRatio float64
+}
+
+// TrackReport는 트랙별 분석 집계 DTO입니다. DELETED된 과거 트랙도 포함합니다
+// (analytics-model.md §1.3).
+type TrackReport struct {
+	TrackID domain.TrackID
+	TrackNo int
+	// CompletedCount는 이 트랙에서 COMPLETED된 방문 수입니다.
+	CompletedCount int
+	// ManualCount는 CompletedCount 중 input_method=MANUAL인 방문 수입니다.
+	ManualCount int
+	// AvgDeviationSec은 COMPLETED 방문들의 (실제 소요시간 - 목표시간) 평균입니다. 표본이 없으면 0.
+	AvgDeviationSec float64
 }
 
 // GroupReport는 조별 분석 집계 DTO입니다.

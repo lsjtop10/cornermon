@@ -108,6 +108,71 @@ func TestMapReportShouldMapCampAndGroupAggregatesWhenReportProvided(t *testing.T
 	}
 }
 
+func TestMapSummaryShouldRankBottlenecksByDeviationDescWhenCornerReportsProvided(t *testing.T) {
+	// Arrange
+	report := &usecase.CampReport{
+		CampID: "camp-1",
+		CornerReports: []usecase.CornerReport{
+			{CornerID: "corner-1", CornerName: "코너 1", CompletedCount: 2, AvgDeviationSec: 40},
+			{CornerID: "corner-2", CornerName: "코너 2", CompletedCount: 0, AvgDeviationSec: 0},
+			{CornerID: "corner-3", CornerName: "코너 3", CompletedCount: 5, AvgDeviationSec: 120},
+		},
+		RuleOverrideCount:   3,
+		TrackOperationCount: 2,
+	}
+
+	// Act
+	summary := mapSummary(report)
+
+	// Assert
+	if len(summary.BottleneckRanking) != 3 {
+		t.Fatalf("expected 3 bottleneck entries (no cutoff), got %d", len(summary.BottleneckRanking))
+	}
+	if got := summary.BottleneckRanking[0].CornerID; got != "corner-3" {
+		t.Errorf("expected corner-3 ranked first, got %s", got)
+	}
+	if got := summary.BottleneckRanking[len(summary.BottleneckRanking)-1].CornerID; got != "corner-2" {
+		t.Errorf("expected corner-2 (0 completed) ranked last, got %s", got)
+	}
+	if summary.RuleOverrideCount != 3 {
+		t.Errorf("expected RuleOverrideCount 3, got %d", summary.RuleOverrideCount)
+	}
+	if summary.TrackOperationCount != 2 {
+		t.Errorf("expected TrackOperationCount 2, got %d", summary.TrackOperationCount)
+	}
+	if summary.ExceptionApprovalCount != 0 {
+		t.Errorf("expected ExceptionApprovalCount always 0 (feature removed), got %d", summary.ExceptionApprovalCount)
+	}
+}
+
+func TestMapReportShouldMapTrackStatsAndManualRatioWhenTrackReportsProvided(t *testing.T) {
+	// Arrange
+	report := &usecase.CampReport{
+		CampID: "camp-1",
+		TrackReports: []usecase.TrackReport{
+			{TrackID: "track-1", TrackNo: 1, CompletedCount: 4, ManualCount: 1, AvgDeviationSec: -30},
+			{TrackID: "track-2", TrackNo: 2, CompletedCount: 0, ManualCount: 0, AvgDeviationSec: 0},
+		},
+	}
+
+	// Act
+	res := mapReport(report)
+
+	// Assert
+	if len(res.TrackStats) != 2 {
+		t.Fatalf("expected 2 track stats, got %d", len(res.TrackStats))
+	}
+	if got := res.TrackStats[0].ManualVisitRatio; got != float32(25) {
+		t.Errorf("expected track-1 ManualVisitRatio 25, got %f", got)
+	}
+	if got := res.TrackStats[0].AvgDeviationSeconds; got != -30 {
+		t.Errorf("expected track-1 AvgDeviationSeconds -30, got %d", got)
+	}
+	if got := res.TrackStats[1].ManualVisitRatio; got != 0 {
+		t.Errorf("expected track-2 ManualVisitRatio 0 (no completed visits), got %f", got)
+	}
+}
+
 func TestGetCurrentReportShoudKeepCampScopeWhenRequestsRunConcurrently(t *testing.T) {
 	// Arrange
 	camps := &campRepositoryStub{camps: map[domain.CampID]*domain.Camp{
