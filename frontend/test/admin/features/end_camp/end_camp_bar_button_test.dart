@@ -9,6 +9,7 @@ import 'package:cornermon/shared/api/providers/camp_providers.dart';
 import 'package:cornermon/shared/api/providers/report_providers.dart';
 import 'package:cornermon/shared/design_system/widgets/app_button.dart';
 import 'package:cornermon_api_gen/cornermon_api_gen.dart';
+import 'package:dio/dio.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -254,9 +255,16 @@ void main() {
           liveSummaryProvider(campId).overrideWith(
             (ref) async => _summary(finishedGroupCount: 0, totalGroups: 0),
           ),
-          endCampProvider(
-            campId,
-          ).overrideWith((ref) async => throw Exception('이미 종료된 캠프')),
+          endCampProvider(campId).overrideWith(
+            (ref) async => throw DioException(
+              requestOptions: RequestOptions(path: '/camps/camp-1/end'),
+              response: Response(
+                requestOptions: RequestOptions(path: '/camps/camp-1/end'),
+                statusCode: 409,
+                data: {'code': 'CAMP_STATE_CONFLICT', 'message': 'x'},
+              ),
+            ),
+          ),
         ],
         child: const MaterialApp(home: Scaffold(body: EndCampBarButton())),
       ),
@@ -271,9 +279,13 @@ void main() {
       await tester.pump(const Duration(seconds: 1));
     }
 
-    // assert
+    // assert — 서버 원문(ErrorResponse.code/message)이 아닌 가공된 안내 문구만 노출한다
     expect(find.text('코너학습을 종료할까요?'), findsOneWidget);
-    expect(find.textContaining('이미 종료된 캠프'), findsOneWidget);
+    expect(
+      find.textContaining('종료할 수 없는 캠프 상태이거나 정리 중인 방문이 있습니다.'),
+      findsOneWidget,
+    );
+    expect(find.textContaining('CAMP_STATE_CONFLICT'), findsNothing);
   });
 
   testWidgets(
