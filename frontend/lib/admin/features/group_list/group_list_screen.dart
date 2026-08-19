@@ -13,7 +13,7 @@ import 'package:cornermon/shared/design_system/widgets/app_tag.dart';
 import 'package:cornermon/shared/design_system/widgets/pill_tab_bar.dart';
 import 'package:cornermon/shared/design_system/widgets/qr_scan_frame.dart';
 import 'package:collection/collection.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';

@@ -1,5 +1,4 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:cornermon/admin/router/admin_router.dart';
@@ -22,11 +21,9 @@ class AdminApp extends ConsumerWidget {
       routerConfig: ref.watch(adminRouterProvider),
       locale: const Locale('ko', 'KR'),
       supportedLocales: const [Locale('ko', 'KR')],
-      localizationsDelegates: const [
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
+      // material_ui의 GlobalMaterialLocalizations.delegates는 Widgets/Cupertino
+      // delegate를 함께 묶어 제공한다(Flutter 3.47, material_ui 1.0 표준 설정).
+      localizationsDelegates: GlobalMaterialLocalizations.delegates,
       builder: (context, child) {
         final bannerState = ref.watch(adminConnectionBannerStateProvider);
         return Column(

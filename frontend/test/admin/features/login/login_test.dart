@@ -7,7 +7,7 @@ import 'package:cornermon/shared/api/providers/auth_device_trust_providers.dart'
 import 'package:cornermon/shared/auth/secure_token_store.dart';
 import 'package:cornermon_api_gen/cornermon_api_gen.dart';
 import 'package:dio/dio.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// `AdminApp`(`MaterialApp.router`)의 `scaffoldMessengerKey`로 등록되는 전역 키.
 ///
