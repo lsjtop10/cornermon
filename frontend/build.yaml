@@ -10,8 +10,10 @@ targets:
             - lib/shared/api/sse/*.dart
             - lib/shared/auth/*.dart
             - lib/shared/network/*.dart
+            - lib/shared/util/*.dart
             - lib/facilitator/session/*.dart
             - lib/facilitator/features/**/*.dart
             - lib/facilitator/router/*.dart
+            - lib/facilitator/realtime/*.dart
             - lib/admin/session/*.dart
             - lib/admin/features/**/*.dart

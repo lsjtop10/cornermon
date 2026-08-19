@@ -8,8 +8,20 @@ import 'package:cornermon/shared/api/providers/corner_track_providers.dart';
 import 'package:cornermon/shared/api/providers/message_providers.dart';
 import 'package:cornermon/shared/api/sse/admin_event_stream.dart';
 import 'package:cornermon/shared/api/sse/sse_event_receipt.dart';
+import 'package:cornermon/shared/util/notice_feedback.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+/// 실제 구현은 HapticFeedback/SystemSound 플랫폼 채널을 건드리므로, 호출 횟수만
+/// 기록하는 가짜로 대체한다(FakeTrackSession 등과 동일한 관례).
+class FakeNoticeFeedback implements NoticeFeedback {
+  int notifyCalls = 0;
+
+  @override
+  void notify() {
+    notifyCalls++;
+  }
+}
 
 void main() {
   final campId = CampId('camp-1');
@@ -17,6 +29,7 @@ void main() {
 
   late StreamController<SseEventReceipt> eventController;
   late ProviderContainer container;
+  late FakeNoticeFeedback fakeNoticeFeedback;
   late int broadcastListBuildCount;
   late int threadMessageListBuildCount;
   late int previewMessageListBuildCount;
@@ -36,6 +49,7 @@ void main() {
   setUp(() {
     eventController = StreamController<SseEventReceipt>();
     eventSequence = 0;
+    fakeNoticeFeedback = FakeNoticeFeedback();
     broadcastListBuildCount = 0;
     threadMessageListBuildCount = 0;
     previewMessageListBuildCount = 0;
@@ -43,6 +57,7 @@ void main() {
     container = ProviderContainer(
       overrides: [
         adminEventsProvider(campId).overrideWith((ref) => eventController.stream),
+        noticeFeedbackProvider.overrideWithValue(fakeNoticeFeedback),
         broadcastMessageListProvider(campId).overrideWith((ref) async {
           broadcastListBuildCount++;
           return <Message>[];
@@ -167,6 +182,25 @@ void main() {
 
       // assert
       expect(broadcastListBuildCount, greaterThan(baseline));
+    },
+  );
+
+  test(
+    'ShouldTriggerNoticeFeedbackWhenMessagesChangedArrives',
+    () async {
+      // arrange
+      final event = SseEvent(
+        (b) => b
+          ..event = SseEventEventEnum.messagesChanged
+          ..scope.kind = SseScopeKind.track
+          ..scope.trackId = trackId.value,
+      );
+
+      // act
+      await pushAndSettle(event);
+
+      // assert — 이슈 #218: 공지/메시지 수신 시 소리+진동 피드백을 준다.
+      expect(fakeNoticeFeedback.notifyCalls, 1);
     },
   );
 }

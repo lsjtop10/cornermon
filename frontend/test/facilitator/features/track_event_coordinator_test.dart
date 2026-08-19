@@ -10,8 +10,20 @@ import 'package:cornermon/shared/api/providers/message_providers.dart';
 import 'package:cornermon/shared/api/providers/visit_providers.dart';
 import 'package:cornermon/shared/api/sse/track_event_stream.dart';
 import 'package:cornermon/shared/api/sse/sse_event_receipt.dart';
+import 'package:cornermon/shared/util/notice_feedback.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+/// 실제 구현은 HapticFeedback/SystemSound 플랫폼 채널을 건드리므로, 호출 횟수만
+/// 기록하는 가짜로 대체한다(FakeTrackSession 등과 동일한 관례).
+class FakeNoticeFeedback implements NoticeFeedback {
+  int notifyCalls = 0;
+
+  @override
+  void notify() {
+    notifyCalls++;
+  }
+}
 
 /// 실제 handleTermination은 secure storage(플랫폼 채널)를 건드리므로, 강제종료 3종 분기가
 /// 올바른 사유로 호출되는지만 기록하는 가짜 세션으로 대체한다.
@@ -58,6 +70,7 @@ void main() {
   late ProviderContainer container;
   late FakeTrackSession fakeTrackSession;
   late FakeDeviceTrust fakeDeviceTrust;
+  late FakeNoticeFeedback fakeNoticeFeedback;
   late int currentVisitBuildCount;
   late int rawBroadcastListBuildCount;
   late int trackMessageListBuildCount;
@@ -81,6 +94,7 @@ void main() {
     eventSequence = 0;
     fakeTrackSession = FakeTrackSession();
     fakeDeviceTrust = FakeDeviceTrust();
+    fakeNoticeFeedback = FakeNoticeFeedback();
     currentVisitBuildCount = 0;
     rawBroadcastListBuildCount = 0;
     trackMessageListBuildCount = 0;
@@ -94,6 +108,7 @@ void main() {
         ).overrideWith((ref) => eventController.stream),
         trackSessionProvider.overrideWith(() => fakeTrackSession),
         deviceTrustProvider.overrideWith(() => fakeDeviceTrust),
+        noticeFeedbackProvider.overrideWithValue(fakeNoticeFeedback),
         currentVisitProvider(trackId).overrideWith((ref) {
           currentVisitBuildCount++;
           return null;
@@ -245,6 +260,41 @@ void main() {
   );
 
   test(
+    'ShouldTriggerNoticeFeedbackWhenMessagesChangedScopeIsCamp',
+    () async {
+      // arrange — 이슈 #218: camp scope(공지)도 피드백 대상이다.
+      fakeTrackSession.setSession(
+        TrackSessionAuthenticated(
+          trackToken: 'token',
+          track: Track(
+            (b) => b
+              ..id = trackId.value
+              ..cornerId = 'corner-1'
+              ..trackNo = 1
+              ..status = TrackStatus.ACTIVE,
+          ),
+          corner: Corner(
+            (b) => b
+              ..id = 'corner-1'
+              ..campId = 'camp-1',
+          ),
+        ),
+      );
+      final event = SseEvent(
+        (b) => b
+          ..event = SseEventEventEnum.messagesChanged
+          ..scope.kind = SseScopeKind.camp,
+      );
+
+      // act
+      await pushAndSettle(event);
+
+      // assert
+      expect(fakeNoticeFeedback.notifyCalls, 1);
+    },
+  );
+
+  test(
     'ShouldInvalidateTrackMessageListWhenMessagesChangedScopeIsOwnTrack',
     () async {
       // arrange
@@ -305,6 +355,44 @@ void main() {
 
       // assert
       expect(unreadDirectCountBuildCount, greaterThan(baseline));
+    },
+  );
+
+  test(
+    'ShouldTriggerNoticeFeedbackWhenMessagesChangedScopeIsOwnTrack',
+    () async {
+      // arrange — 이슈 #218: 자기 트랙 앞 다이렉트 메시지도 피드백 대상이다.
+      final event = SseEvent(
+        (b) => b
+          ..event = SseEventEventEnum.messagesChanged
+          ..scope.kind = SseScopeKind.track
+          ..scope.trackId = trackId.value,
+      );
+
+      // act
+      await pushAndSettle(event);
+
+      // assert
+      expect(fakeNoticeFeedback.notifyCalls, 1);
+    },
+  );
+
+  test(
+    'ShouldNotTriggerNoticeFeedbackWhenMessagesChangedScopeIsAnotherTrack',
+    () async {
+      // arrange — 다른 트랙 앞 다이렉트 메시지에는 반응하지 않는다(기존 scope 방어 로직 회귀 검증).
+      final event = SseEvent(
+        (b) => b
+          ..event = SseEventEventEnum.messagesChanged
+          ..scope.kind = SseScopeKind.track
+          ..scope.trackId = otherTrackId.value,
+      );
+
+      // act
+      await pushAndSettle(event);
+
+      // assert
+      expect(fakeNoticeFeedback.notifyCalls, 0);
     },
   );
 
