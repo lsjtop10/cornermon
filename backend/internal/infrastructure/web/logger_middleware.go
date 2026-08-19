@@ -21,10 +21,19 @@ func Logger() echo.MiddlewareFunc {
 			start := time.Now()
 			c.Set(requestStartKey, start)
 
-			// Trace ID 추출 또는 생성
+			// Trace ID 추출 또는 생성. 프론트가 항상 UUIDv7로 선생성해서 보내므로
+			// (frontend/lib/shared/api/client/trace_id_interceptor.dart) 여기서 새로
+			// 만드는 경우(#131) — 헤더가 아예 없는 요청 — 도 v7로 맞춘다: 문자열 정렬이
+			// 생성 시각 순서에 가까워져 로그를 훑어볼 때 도움이 된다.
 			traceID := c.Request().Header.Get("X-Trace-ID")
 			if traceID == "" {
-				traceID = uuid.New().String()
+				if generated, err := uuid.NewV7(); err == nil {
+					traceID = generated.String()
+				} else {
+					// crypto/rand 실패 등 극히 드문 경우에만 v4로 대체 — trace_id
+					// 생성 실패로 요청 자체를 막지 않는다.
+					traceID = uuid.New().String()
+				}
 			}
 
 			// Context에 trace_id 바인딩
