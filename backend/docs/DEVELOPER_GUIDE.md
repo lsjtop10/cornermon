@@ -215,6 +215,37 @@ func (r *pgBadgeRepository) queries(ctx context.Context) *db.Queries {
 usecase는 이 구현을 모르고 인터페이스로만 호출하므로, 브로드캐스터 구현을 교체해도(예: Redis
 pub/sub로 전환) usecase 코드는 변경되지 않습니다.
 
+#### 4.3.1 trace_id 상관관계 한계와 causation_id (Issue #187)
+
+요청 trace_id(HTTP 요청 1건 단위)와 SSE 연결의 ctx(연결 수명 전체, 여러 요청에 걸침)는
+서로 다른 수명을 가지므로 같은 이름(`trace_id`)이라고 해서 같은 것을 가리키지 않습니다.
+이 혼동을 막기 위해 SSE 관련 로그는 세 필드를 구분해서 씁니다.
+
+- **`trace_id`** (모든 `*Context` slog 호출에 `errs.SlogWrappedHandler`가 자동 주입): 그
+  로그 라인을 호출한 시점의 ctx가 가진 trace_id — 의미는 호출 위치마다 다릅니다.
+- **`connection_id`** (`EventHandler.streamEvents`가 명시적으로 남김): SSE 연결이 열릴 때
+  (구독 요청) 발급된 trace_id로, 그 연결이 살아있는 동안 고정됩니다. 이 연결로 전달되는
+  모든 이벤트의 로그가 같은 `connection_id`를 공유합니다. `EventHandler` 로그의 `trace_id`는
+  결국 이 값과 동일합니다.
+- **`causation_id`** (`usecase.SSEMessage.CausationID`, `BroadcasterImpl.Broadcast`가
+  message에 실어 SSE 연결까지 전달): 이 알림을 유발한 원본 요청/커맨드를 가리키는 식별자.
+  CQRS/이벤트 소싱의 **Causation ID** 패턴("이 이벤트가 왜 존재하는가"에 대한 이벤트 자신의
+  계보 메타데이터, `CorrelationID`와 자매 개념)을 그대로 따른 것으로, 로그 상관분석용 부가
+  정보가 아니라 `SSEMessage`가 스스로 알아야 할 정상적인 메타데이터로 봅니다.
+
+  **구현상으로는 지금 HTTP 요청의 trace_id를 그대로 재사용**하고 있습니다 — 커밋까지 이어진
+  이 요청을 가리키는 식별자가 코드베이스에 trace_id 말고는 아직 없어서 택한 재사용일 뿐,
+  `CausationID`의 정의가 "trace_id"라는 뜻은 아닙니다. 별도의 커맨드/이벤트 ID 체계가
+  생기면 그쪽으로 교체될 수 있는 자리입니다. `Broadcast` 호출 시점의 `trace_id`와 값은
+  같지만, 이후 message에 실려 SSE 연결(다른 `connection_id`를 가진 여러 구독자)에까지
+  전달되어 `EventHandler`의 `SSE event delivered`/`SSE event write failed` 로그에도 그대로
+  남습니다.
+
+즉 "어떤 요청이 발행한 알림을 어떤 연결이 언제 받았는가"는 `causation_id`로 두 계층의
+로그를 조인해서 추적하고, "이 연결 자체에 무슨 일이 있었는가"는 `connection_id`로 봅니다.
+`trace_id`만 보고 두 로그를 엮으면 안 됩니다 — SSE 쪽 `trace_id`는 발행 요청이 아니라
+연결 자신을 가리키기 때문입니다.
+
 ## 5. 인증
 
 - 모든 토큰(진행자 트랙 PIN 세션, 기기 신뢰 토큰, 관리자 access/refresh)은 **opaque token**이며

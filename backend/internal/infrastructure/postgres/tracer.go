@@ -52,8 +52,11 @@ func (t *SlogQueryTracer) TraceQueryEnd(ctx context.Context, _ *pgx.Conn, data p
 		argsToLog = "[]"
 	}
 
+	// ctx는 pgx가 TraceQueryStart에서 반환한 값을 그대로 되돌려주므로, 요청 미들웨어가 심어둔
+	// trace_id를 여전히 담고 있다. *Context 계열 slog 호출을 써야 errs.SlogWrappedHandler가
+	// trace_id를 로그에 자동으로 채워 넣는다 — 전역 slog.Error/Warn/Debug는 이 ctx를 버린다.
 	if data.Err != nil {
-		slog.Error("Database query error",
+		slog.ErrorContext(ctx, "Database query error",
 			"sql", qd.sql,
 			"args", argsToLog,
 			"duration", duration,
@@ -63,7 +66,7 @@ func (t *SlogQueryTracer) TraceQueryEnd(ctx context.Context, _ *pgx.Conn, data p
 	}
 
 	if t.SlowQueryThreshold > 0 && duration > t.SlowQueryThreshold {
-		slog.Warn("Slow query detected",
+		slog.WarnContext(ctx, "Slow query detected",
 			"sql", qd.sql,
 			"args", argsToLog,
 			"duration", duration,
@@ -71,7 +74,7 @@ func (t *SlogQueryTracer) TraceQueryEnd(ctx context.Context, _ *pgx.Conn, data p
 		return
 	}
 
-	slog.Debug("Database query",
+	slog.DebugContext(ctx, "Database query",
 		"sql", qd.sql,
 		"args", argsToLog,
 		"duration", duration,

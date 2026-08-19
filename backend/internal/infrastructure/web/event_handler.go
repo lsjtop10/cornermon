@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"cornermon/backend/internal/domain"
+	"cornermon/backend/internal/errs"
 	"cornermon/backend/internal/usecase"
 
 	"github.com/labstack/echo/v4"
@@ -116,6 +117,11 @@ func (h *EventHandler) TrackEvents(c echo.Context) error {
 
 func (h *EventHandler) streamEvents(c echo.Context, ch <-chan usecase.SSEMessage) error {
 	ctx := c.Request().Context()
+	// connectionID는 이 SSE 연결이 열릴 때(구독 요청) 발급된 trace_id로, 연결이 유지되는
+	// 동안 고정된다. 이 연결로 전달되는 각 메시지의 causation_id(발행을 유발한 요청의
+	// CausationID)와는 별개의 수명을 가지므로 로그에서 두 값을 구분해 남긴다 — DEVELOPER_GUIDE.md
+	// §4.3.1 참고.
+	connectionID := errs.TraceIDFromContext(ctx)
 	if _, err := c.Response().Write([]byte("data: connected\n\n")); err != nil {
 		return err
 	}
@@ -145,17 +151,28 @@ func (h *EventHandler) streamEvents(c echo.Context, ch <-chan usecase.SSEMessage
 				return err
 			}
 			if _, err := c.Response().Write([]byte(formatted)); err != nil {
-				return err
-			}
-			c.Response().Flush()
-			// 임시 진단 로그: #184 공지사항 messages_changed SSE write를 확인한 뒤 제거한다.
-			if msg.Event == usecase.EventMessagesChanged {
-				slog.DebugContext(ctx, "SSE event written",
+				// SSE 스트리밍 도중 발생하는 write 실패는 ErrorHandler 미들웨어를 거치지 않고
+				// 여기서 바로 반환되므로, 이 지점에서 직접 로그한다.
+				slog.WarnContext(ctx, "SSE event write failed",
 					"event", msg.Event,
 					"scope_kind", msg.Scope.Kind,
 					"scope_track_id", msg.Scope.TrackID,
+					"connection_id", connectionID,
+					"causation_id", msg.CausationID,
+					"error", err,
 				)
+				return err
 			}
+			c.Response().Flush()
+			// broadcaster의 "SSE broadcast dispatched" 로그와 causation_id로 조인하면
+			// "어떤 요청이 발행한 알림을 어떤 연결이 언제 받았는지" 추적할 수 있다.
+			slog.DebugContext(ctx, "SSE event delivered",
+				"event", msg.Event,
+				"scope_kind", msg.Scope.Kind,
+				"scope_track_id", msg.Scope.TrackID,
+				"connection_id", connectionID,
+				"causation_id", msg.CausationID,
+			)
 		case <-ticker.C:
 			if _, err := c.Response().Write([]byte(":heartbeat\n\n")); err != nil {
 				return err
