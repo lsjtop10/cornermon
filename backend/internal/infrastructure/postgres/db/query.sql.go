@@ -719,6 +719,50 @@ func (q *Queries) ListAllBadges(ctx context.Context) ([]Badge, error) {
 	return items, nil
 }
 
+const listAnnouncementReceiptSummaryByCamp = `-- name: ListAnnouncementReceiptSummaryByCamp :many
+SELECT a.id AS announcement_id, a.content AS announcement_content,
+       COUNT(r.track_id) AS total_recipients,
+       COUNT(r.track_id) FILTER (WHERE r.read_at IS NOT NULL) AS read_count
+FROM announcements a
+LEFT JOIN announcement_receipts r ON r.announcement_id = a.id
+WHERE a.camp_id = $1
+GROUP BY a.id, a.content
+`
+
+type ListAnnouncementReceiptSummaryByCampRow struct {
+	AnnouncementID      string `json:"announcement_id"`
+	AnnouncementContent string `json:"announcement_content"`
+	TotalRecipients     int64  `json:"total_recipients"`
+	ReadCount           int64  `json:"read_count"`
+}
+
+// 공지별 읽음 도달률(analytics-model.md §1.6) 집계 전용. 수신 대상이 없던 공지(발송 시점에
+// 트랙이 하나도 없던 경우)도 LEFT JOIN으로 0/0 행이 남는다.
+func (q *Queries) ListAnnouncementReceiptSummaryByCamp(ctx context.Context, campID string) ([]ListAnnouncementReceiptSummaryByCampRow, error) {
+	rows, err := q.db.Query(ctx, listAnnouncementReceiptSummaryByCamp, campID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListAnnouncementReceiptSummaryByCampRow
+	for rows.Next() {
+		var i ListAnnouncementReceiptSummaryByCampRow
+		if err := rows.Scan(
+			&i.AnnouncementID,
+			&i.AnnouncementContent,
+			&i.TotalRecipients,
+			&i.ReadCount,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listAnnouncementReceiptViews = `-- name: ListAnnouncementReceiptViews :many
 SELECT ar.track_id, t.track_no, c.name AS corner_name, ar.read_at
 FROM announcement_receipts ar

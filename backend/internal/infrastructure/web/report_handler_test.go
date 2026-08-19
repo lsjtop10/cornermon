@@ -216,6 +216,48 @@ func TestMapReportShouldKeepTimelineBucketsEmptyWhenNoVisitsOccurred(t *testing.
 	}
 }
 
+func TestMapReportShouldMapOperationalStatsWhenReportProvidesOperational(t *testing.T) {
+	// Arrange
+	report := &usecase.CampReport{
+		CampID: "camp-1",
+		Operational: usecase.OperationalStats{
+			PinLoginSuccessCount: 4,
+			PinLoginFailureCount: 1,
+			DeviceRequestCount:   2,
+			DeviceApprovedCount:  1,
+			DeviceRejectedCount:  1,
+			DeviceRevokedCount:   0,
+			AdminOperationCounts: []usecase.AdminOperationCount{
+				{AdminID: "admin-1", AdminName: "admin1", Count: 3},
+			},
+			TrackDirectMessageCounts: []usecase.TrackMessageCount{
+				{TrackID: "track-1", TrackLabel: "코너1 · 1번 트랙", Count: 2},
+			},
+			AnnouncementReadStats: []usecase.AnnouncementReadStat{
+				{AnnouncementID: "ann-1", AnnouncementContent: "공지", TotalRecipients: 5, ReadCount: 3},
+			},
+		},
+	}
+
+	// Act
+	res := mapReport(report)
+
+	// Assert
+	got := res.OperationalStats
+	if got.PinLoginSuccessCount != 4 || got.PinLoginFailureCount != 1 {
+		t.Errorf("expected PIN success=4 failure=1, got %+v", got)
+	}
+	if len(got.AdminOperationCounts) != 1 || got.AdminOperationCounts[0].AdminName != "admin1" || got.AdminOperationCounts[0].Count != 3 {
+		t.Errorf("expected 1 admin operation count entry, got %+v", got.AdminOperationCounts)
+	}
+	if len(got.TrackDirectMessageCounts) != 1 || got.TrackDirectMessageCounts[0].Count != 2 {
+		t.Errorf("expected 1 track message count entry, got %+v", got.TrackDirectMessageCounts)
+	}
+	if len(got.AnnouncementReadStats) != 1 || got.AnnouncementReadStats[0].ReadCount != 3 {
+		t.Errorf("expected 1 announcement read stat entry, got %+v", got.AnnouncementReadStats)
+	}
+}
+
 func TestGetCurrentReportShoudKeepCampScopeWhenRequestsRunConcurrently(t *testing.T) {
 	// Arrange
 	camps := &campRepositoryStub{camps: map[domain.CampID]*domain.Camp{

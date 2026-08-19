@@ -14,6 +14,16 @@ definitions:
       expiresInSeconds:
         type: integer
     type: object
+  AdminOperationCountResponse:
+    properties:
+      adminId:
+        format: uuid
+        type: string
+      adminName:
+        type: string
+      count:
+        type: integer
+    type: object
   AdminResponse:
     properties:
       id:
@@ -41,6 +51,18 @@ definitions:
       lastUsedAt:
         format: date-time
         type: string
+    type: object
+  AnnouncementReadStatResponse:
+    properties:
+      announcementContent:
+        type: string
+      announcementId:
+        format: uuid
+        type: string
+      readCount:
+        type: integer
+      totalRecipients:
+        type: integer
     type: object
   AssignBadgeRequest:
     properties:
@@ -707,6 +729,31 @@ definitions:
         type: string
     type: object
   OperationalStatsResponse:
+    properties:
+      adminOperationCounts:
+        items:
+          $ref: '#/definitions/AdminOperationCountResponse'
+        type: array
+      announcementReadStats:
+        items:
+          $ref: '#/definitions/AnnouncementReadStatResponse'
+        type: array
+      deviceApprovedCount:
+        type: integer
+      deviceRejectedCount:
+        type: integer
+      deviceRequestCount:
+        type: integer
+      deviceRevokedCount:
+        type: integer
+      pinLoginFailureCount:
+        type: integer
+      pinLoginSuccessCount:
+        type: integer
+      trackDirectMessageCounts:
+        items:
+          $ref: '#/definitions/TrackMessageCountResponse'
+        type: array
     type: object
   ReplaceTrackRequest:
     properties:
@@ -784,6 +831,16 @@ definitions:
       track:
         $ref: '#/definitions/TrackResponse'
       trackToken:
+        type: string
+    type: object
+  TrackMessageCountResponse:
+    properties:
+      count:
+        type: integer
+      trackId:
+        format: uuid
+        type: string
+      trackLabel:
         type: string
     type: object
   TrackPINExportResponse:

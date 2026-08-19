@@ -65,6 +65,11 @@ func (r *pgReportQuerier) QueryCampReport(ctx context.Context, campID domain.Cam
 		return nil, errs.Wrap(ctx, err)
 	}
 
+	src.announcementReceipts, err = q.ListAnnouncementReceiptSummaryByCamp(ctx, string(campID))
+	if err != nil {
+		return nil, errs.Wrap(ctx, err)
+	}
+
 	return calculateCampReport(src)
 }
 
@@ -72,14 +77,15 @@ func (r *pgReportQuerier) QueryCampReport(ctx context.Context, campID domain.Cam
 // calculateCampReport가 값 하나 넘어가는 위치 인자 8~9개를 받게 하는 대신 이 구조체 하나를
 // 받게 해, 호출부/테스트 픽스처에서 어떤 슬라이스가 무엇인지 필드명으로 드러나게 한다.
 type campReportSource struct {
-	campID    domain.CampID
-	camp      db.Camp
-	groups    []db.Group
-	corners   []db.Corner
-	visits    []db.ListVisitsByCampRow
-	tracks    []db.Track
-	auditLogs []db.AuditLog
-	now       time.Time
+	campID               domain.CampID
+	camp                 db.Camp
+	groups               []db.Group
+	corners              []db.Corner
+	visits               []db.ListVisitsByCampRow
+	tracks               []db.Track
+	auditLogs            []db.AuditLog
+	announcementReceipts []db.ListAnnouncementReceiptSummaryByCampRow
+	now                  time.Time
 }
 
 // calculateCampReport는 캠프 종료 시(또는 진행 중 조회 시) 1회성으로 도는 사후 배치 집계다
@@ -294,16 +300,69 @@ func calculateCampReport(src campReportSource) (*usecase.CampReport, error) {
 	}
 
 	ruleOverrideCount, trackOperationCount := 0, 0
+	operational := usecase.OperationalStats{}
+	adminOpCounts := make(map[string]*usecase.AdminOperationCount)
+	trackMsgCounts := make(map[string]*usecase.TrackMessageCount)
 	for _, log := range src.auditLogs {
+		action := usecase.AuditAction(log.Action)
+
+		// PIN 로그인은 성공/실패 둘 다 의미 있는 지표라 success 필터 이전에 먼저 센다.
+		if action == usecase.ActionFacilitatorLogin {
+			if log.Success {
+				operational.PinLoginSuccessCount++
+			} else {
+				operational.PinLoginFailureCount++
+			}
+		}
+
 		if !log.Success {
 			continue
 		}
-		switch usecase.AuditAction(log.Action) {
+
+		switch action {
 		case usecase.ActionCornerUpdate:
 			ruleOverrideCount++
 		case usecase.ActionTrackCreate, usecase.ActionTrackDelete, usecase.ActionTrackReplace:
 			trackOperationCount++
+		case usecase.ActionDeviceRequest:
+			operational.DeviceRequestCount++
+		case usecase.ActionDeviceApproved:
+			operational.DeviceApprovedCount++
+		case usecase.ActionDeviceRejected:
+			operational.DeviceRejectedCount++
+		case usecase.ActionDeviceRevoked:
+			operational.DeviceRevokedCount++
+		case usecase.ActionMessageDirect:
+			entry, ok := trackMsgCounts[log.Actor]
+			if !ok {
+				entry = &usecase.TrackMessageCount{TrackID: domain.TrackID(log.Actor), TrackLabel: log.ActorName.String}
+				trackMsgCounts[log.Actor] = entry
+			}
+			entry.Count++
 		}
+
+		if usecase.IsAdminAuditAction(action) {
+			entry, ok := adminOpCounts[log.Actor]
+			if !ok {
+				entry = &usecase.AdminOperationCount{AdminID: log.Actor, AdminName: log.ActorName.String}
+				adminOpCounts[log.Actor] = entry
+			}
+			entry.Count++
+		}
+	}
+	for _, entry := range adminOpCounts {
+		operational.AdminOperationCounts = append(operational.AdminOperationCounts, *entry)
+	}
+	for _, entry := range trackMsgCounts {
+		operational.TrackDirectMessageCounts = append(operational.TrackDirectMessageCounts, *entry)
+	}
+	for _, ar := range src.announcementReceipts {
+		operational.AnnouncementReadStats = append(operational.AnnouncementReadStats, usecase.AnnouncementReadStat{
+			AnnouncementID:      ar.AnnouncementID,
+			AnnouncementContent: ar.AnnouncementContent,
+			TotalRecipients:     int(ar.TotalRecipients),
+			ReadCount:           int(ar.ReadCount),
+		})
 	}
 
 	report := &usecase.CampReport{
@@ -321,6 +380,7 @@ func calculateCampReport(src campReportSource) (*usecase.CampReport, error) {
 		RuleOverrideCount:   ruleOverrideCount,
 		TrackOperationCount: trackOperationCount,
 		Timeline:            timeline,
+		Operational:         operational,
 	}
 
 	return report, nil

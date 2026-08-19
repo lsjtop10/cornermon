@@ -43,6 +43,9 @@ type Querier interface {
 	ListAdminSessionsByAdmin(ctx context.Context, adminID string) ([]AdminSession, error)
 	ListAdmins(ctx context.Context) ([]Admin, error)
 	ListAllBadges(ctx context.Context) ([]Badge, error)
+	// 공지별 읽음 도달률(analytics-model.md §1.6) 집계 전용. 수신 대상이 없던 공지(발송 시점에
+	// 트랙이 하나도 없던 경우)도 LEFT JOIN으로 0/0 행이 남는다.
+	ListAnnouncementReceiptSummaryByCamp(ctx context.Context, campID string) ([]ListAnnouncementReceiptSummaryByCampRow, error)
 	ListAnnouncementReceiptViews(ctx context.Context, announcementID string) ([]ListAnnouncementReceiptViewsRow, error)
 	ListAnnouncementReceiptsByAnnouncement(ctx context.Context, announcementID string) ([]AnnouncementReceipt, error)
 	ListAnnouncementViewsByCampAndTrack(ctx context.Context, arg ListAnnouncementViewsByCampAndTrackParams) ([]ListAnnouncementViewsByCampAndTrackRow, error)

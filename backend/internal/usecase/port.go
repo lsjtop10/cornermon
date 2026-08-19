@@ -306,6 +306,7 @@ type CampReport struct {
 	// TrackOperationCount는 캠프 기간 중 성공한 트랙 생성/삭제/교체 감사 로그 수입니다.
 	TrackOperationCount int
 	Timeline            []TimelineBucket
+	Operational         OperationalStats
 }
 
 // TimelineBucket은 5분 단위 시계열 버킷 DTO입니다(analytics-model.md §1.5).
@@ -315,6 +316,43 @@ type TimelineBucket struct {
 	InProgressCount int
 	// CumulativeCompleted는 버킷 종료 시각까지 COMPLETED로 누적된 방문 수입니다.
 	CumulativeCompleted int
+}
+
+// OperationalStats는 운영/보안 지표 DTO입니다(analytics-model.md §1.6). 감사 로그 기반이며
+// 성공한 이벤트만 카운트합니다(PIN 로그인은 예외 — 성공/실패 둘 다 의미 있는 지표라 둘 다 셉니다).
+type OperationalStats struct {
+	PinLoginSuccessCount int
+	PinLoginFailureCount int
+	DeviceRequestCount   int
+	DeviceApprovedCount  int
+	DeviceRejectedCount  int
+	DeviceRevokedCount   int
+	AdminOperationCounts []AdminOperationCount
+	// TrackDirectMessageCounts는 트랙이 관리자에게 보낸 다이렉트 메시지(도움 요청 등) 발신 횟수입니다.
+	TrackDirectMessageCounts []TrackMessageCount
+	AnnouncementReadStats    []AnnouncementReadStat
+}
+
+// AdminOperationCount는 관리자별 조작 횟수 DTO입니다.
+type AdminOperationCount struct {
+	AdminID   string
+	AdminName string
+	Count     int
+}
+
+// TrackMessageCount는 트랙별 다이렉트 메시지 발신 횟수 DTO입니다.
+type TrackMessageCount struct {
+	TrackID    domain.TrackID
+	TrackLabel string
+	Count      int
+}
+
+// AnnouncementReadStat은 공지별 읽음 도달률 DTO입니다.
+type AnnouncementReadStat struct {
+	AnnouncementID      string
+	AnnouncementContent string
+	TotalRecipients     int
+	ReadCount           int
 }
 
 // CornerReport는 코너별 분석 집계 DTO입니다.
