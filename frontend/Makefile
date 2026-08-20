@@ -32,10 +32,10 @@ run-facilitator:unlock-keychain
 	flutter run --dart-define-from-file=env/dev.json -t lib/main_facilitator.dart --flavor facilitator
 
 run-admin-prod:unlock-keychain
-	flutter run --release --dart-define-from-file=env/prod.json -t lib/main_admin.dart --flavor admin
+	flutter run --dart-define-from-file=env/prod.json -t lib/main_admin.dart --flavor admin
 
 run-facilitator-prod:unlock-keychain
-	flutter run --release --dart-define-from-file=env/prod.json -t lib/main_facilitator.dart --flavor facilitator
+	flutter run --dart-define-from-file=env/prod.json -t lib/main_facilitator.dart --flavor facilitator
 
 build-admin:unlock-keychain
 	flutter build ipa --release --dart-define-from-file=env/prod.json -t lib/main_admin.dart --flavor admin --build-number=$(BUILD_NUMBER)
