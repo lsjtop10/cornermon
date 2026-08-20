@@ -41,7 +41,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          next == ApiEnvironment.demo ? '심사용 서버로 전환됨' : '운영 서버로 전환됨',
+          next == ApiEnvironment.demo ? '데모로 전환됨' : '운영으로 전환됨',
         ),
       ),
     );
