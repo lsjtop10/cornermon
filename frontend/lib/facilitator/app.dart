@@ -1,11 +1,14 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../shared/api/ids.dart';
-import '../shared/design_system/theme/facilitator_theme.dart';
-import 'realtime/track_event_coordinator.dart';
-import 'router/facilitator_router.dart';
-import 'session/track_session_provider.dart';
+import 'package:cornermon/facilitator/realtime/track_event_coordinator.dart';
+import 'package:cornermon/facilitator/router/facilitator_router.dart';
+import 'package:cornermon/facilitator/session/track_session_provider.dart';
+import 'package:cornermon/shared/api/ids.dart';
+import 'package:cornermon/shared/config/active_api_environment_provider.dart';
+import 'package:cornermon/shared/config/api_environment.dart';
+import 'package:cornermon/shared/design_system/theme/facilitator_theme.dart';
+import 'package:cornermon/shared/design_system/widgets/demo_environment_banner.dart';
 
 class FacilitatorApp extends ConsumerWidget {
   const FacilitatorApp({super.key});
@@ -25,6 +28,20 @@ class FacilitatorApp extends ConsumerWidget {
       routerConfig: ref.watch(facilitatorRouterProvider),
       theme: FacilitatorTheme.lightTheme,
       darkTheme: FacilitatorTheme.darkTheme,
+      builder: (context, child) {
+        final isDemo = ref.watch(activeApiEnvironmentProvider) == ApiEnvironment.demo;
+        return Column(
+          children: [
+            DemoEnvironmentBanner(
+              visible: isDemo,
+              onExitDemo: () => ref
+                  .read(activeApiEnvironmentProvider.notifier)
+                  .switchTo(ApiEnvironment.production),
+            ),
+            Expanded(child: child ?? const SizedBox.shrink()),
+          ],
+        );
+      },
     );
   }
 }

@@ -1,8 +1,9 @@
 import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../config/active_api_environment_provider.dart';
-import '../../config/api_environment.dart';
+import 'package:cornermon/shared/config/active_api_environment_provider.dart';
+import 'package:cornermon/shared/config/api_environment.dart';
+
 import '../../config/app_env.dart';
 import 'auth_interceptor.dart';
 import 'logging_interceptor.dart';
