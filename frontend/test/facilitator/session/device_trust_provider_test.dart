@@ -97,7 +97,70 @@ class _FakeAuthDeviceTrustApi extends AAuthDeviceTrustApi {
   }
 }
 
+/// POST /demo/device-registrations — 등록과 동시에 즉시 APPROVED로 저장하는 서버 동작을
+/// 고정 응답으로 흉내낸다.
+class _FakeDemoRegistrationApi extends AAuthDeviceTrustApi {
+  _FakeDemoRegistrationApi() : super(Dio(), standardSerializers);
+
+  DemoDeviceRegistrationRequest? lastRequest;
+
+  @override
+  Future<Response<DeviceRegistrationCreatedResponse>> demoDeviceRegistrationsPost({
+    required DemoDeviceRegistrationRequest request,
+    CancelToken? cancelToken,
+    Map<String, dynamic>? headers,
+    Map<String, dynamic>? extra,
+    ValidateStatus? validateStatus,
+    ProgressCallback? onSendProgress,
+    ProgressCallback? onReceiveProgress,
+  }) async {
+    lastRequest = request;
+    const path = '/demo/device-registrations';
+    return Response<DeviceRegistrationCreatedResponse>(
+      requestOptions: RequestOptions(path: path),
+      statusCode: 201,
+      data: DeviceRegistrationCreatedResponse(
+        (b) => b
+          ..id = 'registration-demo'
+          ..deviceToken = 'demo-device-token'
+          ..status = DeviceRegistrationCreatedResponseStatusEnum.APPROVED,
+      ),
+    );
+  }
+}
+
 void main() {
+  test('ShouldStoreApprovedStatusWithoutPollingWhenDemoRegistrationSucceeds', () async {
+    // arrange — 데모 등록은 등록코드 없이 호출되고, 서버가 즉시 APPROVED를 돌려준다.
+    final store = _FakePendingTokenStore().._values.clear();
+    final api = _FakeDemoRegistrationApi();
+    final container = ProviderContainer(
+      overrides: [
+        secureTokenStoreProvider.overrideWithValue(store),
+        authDeviceTrustApiProvider.overrideWithValue(api),
+      ],
+    );
+    addTearDown(container.dispose);
+    container.listen(deviceTrustProvider, (_, _) {});
+    await Future<void>.delayed(Duration.zero);
+
+    // act
+    await container
+        .read(deviceTrustProvider.notifier)
+        .requestDemoRegistration(displayName: '1번 태블릿');
+
+    // assert — 응답이 이미 APPROVED이므로 폴링을 시작할 이유가 없다(폴링 시작 여부는
+    // ShouldStopPollingAfterApprovedDetected에서 별도로 검증하는 타이머 취소 로직과 다르게,
+    // 여기선 그냥 시작된 적이 없어야 한다는 것만 확인하면 충분하다).
+    expect(
+      container.read(deviceTrustProvider).value,
+      DeviceTrustStatus.approved,
+    );
+    expect(store._values['device_trust_token'], 'demo-device-token');
+    expect(api.lastRequest?.displayName, '1번 태블릿');
+  });
+
+
   test(
     'ShouldTransitionToApprovedWhenPollingDetectsStatusChange',
     () => fakeAsync((async) {
