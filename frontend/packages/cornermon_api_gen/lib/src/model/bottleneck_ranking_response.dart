@@ -141,3 +141,4 @@ class _$BottleneckRankingResponseSerializer implements PrimitiveSerializer<Bottl
     return result.build();
   }
 }
+

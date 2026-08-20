@@ -16,11 +16,11 @@ class _$CampReportResponse extends CampReportResponse {
   @override
   final BuiltList<GroupStatsResponse>? groupStats;
   @override
-  final JsonObject? operationalStats;
+  final OperationalStatsResponse? operationalStats;
   @override
   final CampSummaryStatsResponse? summary;
   @override
-  final JsonObject? timeline;
+  final TimelineStatsResponse? timeline;
   @override
   final BuiltList<TrackStatsResponse>? trackStats;
 
@@ -115,9 +115,10 @@ class CampReportResponseBuilder
   set groupStats(ListBuilder<GroupStatsResponse>? groupStats) =>
       _$this._groupStats = groupStats;
 
-  JsonObject? _operationalStats;
-  JsonObject? get operationalStats => _$this._operationalStats;
-  set operationalStats(JsonObject? operationalStats) =>
+  OperationalStatsResponseBuilder? _operationalStats;
+  OperationalStatsResponseBuilder get operationalStats =>
+      _$this._operationalStats ??= OperationalStatsResponseBuilder();
+  set operationalStats(OperationalStatsResponseBuilder? operationalStats) =>
       _$this._operationalStats = operationalStats;
 
   CampSummaryStatsResponseBuilder? _summary;
@@ -126,9 +127,11 @@ class CampReportResponseBuilder
   set summary(CampSummaryStatsResponseBuilder? summary) =>
       _$this._summary = summary;
 
-  JsonObject? _timeline;
-  JsonObject? get timeline => _$this._timeline;
-  set timeline(JsonObject? timeline) => _$this._timeline = timeline;
+  TimelineStatsResponseBuilder? _timeline;
+  TimelineStatsResponseBuilder get timeline =>
+      _$this._timeline ??= TimelineStatsResponseBuilder();
+  set timeline(TimelineStatsResponseBuilder? timeline) =>
+      _$this._timeline = timeline;
 
   ListBuilder<TrackStatsResponse>? _trackStats;
   ListBuilder<TrackStatsResponse> get trackStats =>
@@ -147,9 +150,9 @@ class CampReportResponseBuilder
       _cornerStats = $v.cornerStats?.toBuilder();
       _generatedAt = $v.generatedAt;
       _groupStats = $v.groupStats?.toBuilder();
-      _operationalStats = $v.operationalStats;
+      _operationalStats = $v.operationalStats?.toBuilder();
       _summary = $v.summary?.toBuilder();
-      _timeline = $v.timeline;
+      _timeline = $v.timeline?.toBuilder();
       _trackStats = $v.trackStats?.toBuilder();
       _$v = null;
     }
@@ -178,9 +181,9 @@ class CampReportResponseBuilder
             cornerStats: _cornerStats?.build(),
             generatedAt: generatedAt,
             groupStats: _groupStats?.build(),
-            operationalStats: operationalStats,
+            operationalStats: _operationalStats?.build(),
             summary: _summary?.build(),
-            timeline: timeline,
+            timeline: _timeline?.build(),
             trackStats: _trackStats?.build(),
           );
     } catch (_) {
@@ -191,10 +194,12 @@ class CampReportResponseBuilder
 
         _$failedField = 'groupStats';
         _groupStats?.build();
-
+        _$failedField = 'operationalStats';
+        _operationalStats?.build();
         _$failedField = 'summary';
         _summary?.build();
-
+        _$failedField = 'timeline';
+        _timeline?.build();
         _$failedField = 'trackStats';
         _trackStats?.build();
       } catch (e) {

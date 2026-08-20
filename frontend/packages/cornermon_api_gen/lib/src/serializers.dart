@@ -16,8 +16,10 @@ import 'package:cornermon_api_gen/src/model/date.dart';
 
 import 'package:cornermon_api_gen/src/model/admin_login_request.dart';
 import 'package:cornermon_api_gen/src/model/admin_login_response.dart';
+import 'package:cornermon_api_gen/src/model/admin_operation_count_response.dart';
 import 'package:cornermon_api_gen/src/model/admin_response.dart';
 import 'package:cornermon_api_gen/src/model/admin_session_response.dart';
+import 'package:cornermon_api_gen/src/model/announcement_read_stat_response.dart';
 import 'package:cornermon_api_gen/src/model/assign_badge_request.dart';
 import 'package:cornermon_api_gen/src/model/audit_log_page_response.dart';
 import 'package:cornermon_api_gen/src/model/audit_log_response.dart';
@@ -56,12 +58,16 @@ import 'package:cornermon_api_gen/src/model/group_response.dart';
 import 'package:cornermon_api_gen/src/model/group_stats_response.dart';
 import 'package:cornermon_api_gen/src/model/health_response.dart';
 import 'package:cornermon_api_gen/src/model/message_response.dart';
+import 'package:cornermon_api_gen/src/model/operational_stats_response.dart';
 import 'package:cornermon_api_gen/src/model/replace_track_request.dart';
 import 'package:cornermon_api_gen/src/model/sse_notification.dart';
 import 'package:cornermon_api_gen/src/model/sse_scope.dart';
 import 'package:cornermon_api_gen/src/model/scan_assign_badge_request.dart';
+import 'package:cornermon_api_gen/src/model/timeline_bucket_response.dart';
+import 'package:cornermon_api_gen/src/model/timeline_stats_response.dart';
 import 'package:cornermon_api_gen/src/model/track_login_request.dart';
 import 'package:cornermon_api_gen/src/model/track_login_response.dart';
+import 'package:cornermon_api_gen/src/model/track_message_count_response.dart';
 import 'package:cornermon_api_gen/src/model/track_pin_export_response.dart';
 import 'package:cornermon_api_gen/src/model/track_pin_response.dart';
 import 'package:cornermon_api_gen/src/model/track_response.dart';
@@ -78,8 +84,10 @@ part 'serializers.g.dart';
 @SerializersFor([
   AdminLoginRequest,
   AdminLoginResponse,
+  AdminOperationCountResponse,
   AdminResponse,
   AdminSessionResponse,
+  AnnouncementReadStatResponse,
   AssignBadgeRequest,
   AuditLogPageResponse,
   AuditLogResponse,
@@ -118,12 +126,16 @@ part 'serializers.g.dart';
   GroupStatsResponse,
   HealthResponse,
   MessageResponse,
+  OperationalStatsResponse,
   ReplaceTrackRequest,
   SSENotification,
   SSEScope,
   ScanAssignBadgeRequest,
+  TimelineBucketResponse,
+  TimelineStatsResponse,
   TrackLoginRequest,
   TrackLoginResponse,
+  TrackMessageCountResponse,
   TrackPINExportResponse,
   TrackPinResponse,
   TrackResponse,

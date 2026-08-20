@@ -105,3 +105,4 @@ class _$BulkGenerateBadgesRequestSerializer implements PrimitiveSerializer<BulkG
     return result.build();
   }
 }
+

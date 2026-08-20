@@ -288,3 +288,4 @@ class DeviceRegistrationResponseStatusEnum extends EnumClass {
   static BuiltSet<DeviceRegistrationResponseStatusEnum> get values => _$deviceRegistrationResponseStatusEnumValues;
   static DeviceRegistrationResponseStatusEnum valueOf(String name) => _$deviceRegistrationResponseStatusEnumValueOf(name);
 }
+

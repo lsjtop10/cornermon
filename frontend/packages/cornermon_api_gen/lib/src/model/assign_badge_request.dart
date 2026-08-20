@@ -123,3 +123,4 @@ class _$AssignBadgeRequestSerializer implements PrimitiveSerializer<AssignBadgeR
     return result.build();
   }
 }
+

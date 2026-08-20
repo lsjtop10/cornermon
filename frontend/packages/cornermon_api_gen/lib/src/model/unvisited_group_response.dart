@@ -123,3 +123,4 @@ class _$UnvisitedGroupResponseSerializer implements PrimitiveSerializer<Unvisite
     return result.build();
   }
 }
+

@@ -107,3 +107,4 @@ class _$BulkUpdateCornersRequestSerializer implements PrimitiveSerializer<BulkUp
     return result.build();
   }
 }
+

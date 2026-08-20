@@ -143,3 +143,4 @@ class _$TrackLoginResponseSerializer implements PrimitiveSerializer<TrackLoginRe
     return result.build();
   }
 }
+
