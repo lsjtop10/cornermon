@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter/services.dart';
 
+import 'package:cornermon/shared/config/active_api_environment_provider.dart';
+import 'package:cornermon/shared/config/api_environment.dart';
 import 'package:cornermon/shared/design_system/tokens/colors.dart';
 import 'package:cornermon/shared/design_system/tokens/spacing.dart';
 import 'package:cornermon/shared/design_system/tokens/typography.dart';
@@ -104,6 +106,23 @@ class _RegistrationFormState extends ConsumerState<_RegistrationForm> {
   String? _errorText;
   bool _isSubmitting = false;
 
+  // App Store 심사/스태프 연습용 히든 진입점. 아이콘 롱프레스로만 켜지고, 화면엔 새 UI가
+  // 추가되지 않는다 — 켜지면 등록 코드 입력란이 사라지고 표시이름만 받는 폼으로 바뀐다.
+  // 자세한 배경은 frontend/docs/artifacts/plan/20260820_앱스토어_심사용_데모환경_프론트_plan_.md.
+  bool _demoModeUnlocked = false;
+
+  void _unlockDemoMode() {
+    if (_demoModeUnlocked) return;
+    ref
+        .read(activeApiEnvironmentProvider.notifier)
+        .switchTo(ApiEnvironment.demo);
+    setState(() {
+      _demoModeUnlocked = true;
+      _codeController.clear();
+      _errorText = null;
+    });
+  }
+
   @override
   void initState() {
     super.initState();
@@ -121,7 +140,8 @@ class _RegistrationFormState extends ConsumerState<_RegistrationForm> {
   Future<void> _submit() async {
     final code = _codeController.text.trim();
     final displayName = _displayNameController.text.trim();
-    if (code.isEmpty || displayName.isEmpty || _isSubmitting) return;
+    if (displayName.isEmpty || _isSubmitting) return;
+    if (!_demoModeUnlocked && code.isEmpty) return;
 
     setState(() {
       _isSubmitting = true;
@@ -129,12 +149,28 @@ class _RegistrationFormState extends ConsumerState<_RegistrationForm> {
     });
 
     try {
-      await ref
-          .read(deviceTrustProvider.notifier)
-          .requestRegistration(code, displayName: displayName);
+      if (_demoModeUnlocked) {
+        await ref
+            .read(deviceTrustProvider.notifier)
+            .requestDemoRegistration(displayName: displayName);
+      } else {
+        await ref
+            .read(deviceTrustProvider.notifier)
+            .requestRegistration(code, displayName: displayName);
+      }
     } on DioException catch (error) {
       // DioException은 LoggingInterceptor(#131)가 네트워크 계층에서 이미 기록한다.
       if (!mounted) return;
+      if (_demoModeUnlocked) {
+        // demo_handler.go: 404는 데모 모드가 비활성(운영 빌드) 또는 데모 캠프 미생성 —
+        // 등록 코드 오류와는 원인이 아예 다르므로 별도 문구로 구분한다.
+        setState(
+          () => _errorText = error.response?.statusCode == 404
+              ? '연습 모드를 사용할 수 없는 환경입니다.'
+              : '등록 요청에 실패했습니다. 잠시 후 다시 시도해주세요.',
+        );
+        return;
+      }
       // 등록 코드로 캠프를 찾지 못한 경우에만 404를 반환한다(device_handler.go
       // RegisterDevice: CampNotFound → 404). 그 외(네트워크 오류, 5xx 등)를 같은
       // 문구로 뭉개면 실제 원인을 알 수 없으므로 구분해서 보여준다.
@@ -159,7 +195,7 @@ class _RegistrationFormState extends ConsumerState<_RegistrationForm> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final colors = isDark ? AppColors.dark : AppColors.light;
     final canSubmit =
-        _codeController.text.trim().isNotEmpty &&
+        (_demoModeUnlocked || _codeController.text.trim().isNotEmpty) &&
         _displayNameController.text.trim().isNotEmpty &&
         !_isSubmitting;
 
@@ -173,10 +209,13 @@ class _RegistrationFormState extends ConsumerState<_RegistrationForm> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            Icons.phonelink_lock_outlined,
-            size: 64.0,
-            color: colors.textDisabled,
+          GestureDetector(
+            onLongPress: _unlockDemoMode,
+            child: Icon(
+              Icons.phonelink_lock_outlined,
+              size: 64.0,
+              color: colors.textDisabled,
+            ),
           ),
           const SizedBox(height: AppSpacing.space6),
           Text(
@@ -194,37 +233,41 @@ class _RegistrationFormState extends ConsumerState<_RegistrationForm> {
           ],
           const SizedBox(height: AppSpacing.space2),
           Text(
-            '관리자에게 받은 등록 코드를 입력하세요',
+            _demoModeUnlocked
+                ? '표시 이름만 입력하면 바로 등록됩니다'
+                : '관리자에게 받은 등록 코드를 입력하세요',
             style: AppTypography.body.copyWith(color: colors.textSecondary),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: AppSpacing.space6),
-          TextField(
-            controller: _codeController,
-            enabled: !_isSubmitting,
-            textAlign: TextAlign.left,
+          if (!_demoModeUnlocked) ...[
+            const SizedBox(height: AppSpacing.space6),
+            TextField(
+              controller: _codeController,
+              enabled: !_isSubmitting,
+              textAlign: TextAlign.left,
 
-            // 등록 코드의 알파벳은 대문자여야 한다는 요구사항 반영
-            keyboardType: TextInputType.url,
-            textCapitalization: TextCapitalization.characters,
-            inputFormatters: [
-              TextInputFormatter.withFunction((oldValue, newValue) {
-                return TextEditingValue(
-                  text: newValue.text.toUpperCase(),
-                  selection: newValue.selection,
-                );
-              }),
-            ],
+              // 등록 코드의 알파벳은 대문자여야 한다는 요구사항 반영
+              keyboardType: TextInputType.url,
+              textCapitalization: TextCapitalization.characters,
+              inputFormatters: [
+                TextInputFormatter.withFunction((oldValue, newValue) {
+                  return TextEditingValue(
+                    text: newValue.text.toUpperCase(),
+                    selection: newValue.selection,
+                  );
+                }),
+              ],
 
-            decoration: InputDecoration(
-              labelText: '등록 코드',
-              hintText: '7ZQK3M2X',
-              hintStyle: TextStyle(color: colors.textSecondary),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12.0),
+              decoration: InputDecoration(
+                labelText: '등록 코드',
+                hintText: '7ZQK3M2X',
+                hintStyle: TextStyle(color: colors.textSecondary),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12.0),
+                ),
               ),
             ),
-          ),
+          ],
 
           const SizedBox(height: AppSpacing.space4),
           TextField(
@@ -255,7 +298,7 @@ class _RegistrationFormState extends ConsumerState<_RegistrationForm> {
             variant: AppButtonVariant.primary,
             size: AppButtonSize.comfortable,
             width: AppButtonWidth.fill,
-            label: '등록 요청',
+            label: _demoModeUnlocked ? '연습 등록' : '등록 요청',
             onPressed: canSubmit ? _submit : null,
           ),
         ],
