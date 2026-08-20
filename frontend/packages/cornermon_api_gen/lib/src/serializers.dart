@@ -41,6 +41,7 @@ import 'package:cornermon_api_gen/src/model/create_admin_request.dart';
 import 'package:cornermon_api_gen/src/model/create_camp_request.dart';
 import 'package:cornermon_api_gen/src/model/create_corner_request.dart';
 import 'package:cornermon_api_gen/src/model/create_tracks_request.dart';
+import 'package:cornermon_api_gen/src/model/demo_device_registration_request.dart';
 import 'package:cornermon_api_gen/src/model/device_registration_created_response.dart';
 import 'package:cornermon_api_gen/src/model/device_registration_request.dart';
 import 'package:cornermon_api_gen/src/model/device_registration_response.dart';
@@ -102,6 +103,7 @@ part 'serializers.g.dart';
   CreateCampRequest,
   CreateCornerRequest,
   CreateTracksRequest,
+  DemoDeviceRegistrationRequest,
   DeviceRegistrationCreatedResponse,
   DeviceRegistrationRequest,
   DeviceRegistrationResponse,

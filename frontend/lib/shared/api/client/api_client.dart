@@ -1,6 +1,9 @@
 import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import 'package:cornermon/shared/config/active_api_environment_provider.dart';
+import 'package:cornermon/shared/config/api_environment.dart';
+
 import '../../config/app_env.dart';
 import 'auth_interceptor.dart';
 import 'logging_interceptor.dart';
@@ -11,9 +14,13 @@ part 'api_client.g.dart';
 
 @Riverpod(keepAlive: true)
 Dio apiClient(Ref ref) {
+  final environment = ref.watch(activeApiEnvironmentProvider);
   final dio = Dio(
     BaseOptions(
-      baseUrl: AppEnv.apiBaseUrl,
+      baseUrl: switch (environment) {
+        ApiEnvironment.production => AppEnv.apiBaseUrl,
+        ApiEnvironment.demo => AppEnv.demoApiBaseUrl,
+      },
       connectTimeout: const Duration(milliseconds: AppEnv.apiConnectTimeoutMs),
       receiveTimeout: const Duration(milliseconds: AppEnv.apiReceiveTimeoutMs),
     ),

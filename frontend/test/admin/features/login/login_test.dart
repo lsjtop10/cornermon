@@ -5,6 +5,8 @@ import 'package:cornermon/admin/features/login/login_screen.dart';
 import 'package:cornermon/admin/session/admin_session_provider.dart';
 import 'package:cornermon/shared/api/providers/auth_device_trust_providers.dart';
 import 'package:cornermon/shared/auth/secure_token_store.dart';
+import 'package:cornermon/shared/config/active_api_environment_provider.dart';
+import 'package:cornermon/shared/config/api_environment.dart';
 import 'package:cornermon_api_gen/cornermon_api_gen.dart';
 import 'package:dio/dio.dart';
 import 'package:material_ui/material_ui.dart';
@@ -129,6 +131,31 @@ void main() {
         isNull,
       );
       pending.complete();
+    },
+  );
+
+  testWidgets(
+    'toggles the active API environment when the footer caption is long-pressed',
+    (tester) async {
+      // arrange — 새 UI 추가 없이 기존 하단 캡션 텍스트에 얹힌 히든 진입점을 검증한다.
+      await tester.pumpWidget(_app([]));
+
+      // act — 첫 롱프레스: 운영 → 데모.
+      await tester.longPress(find.text('로그인 상태는 안전하게 유지됩니다.'));
+      await tester.pump();
+
+      // assert — 토스트 없이 상태만 즉시 반영된다(피드백은 DemoEnvironmentBanner가 대신함).
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(LoginScreen)),
+      );
+      expect(container.read(activeApiEnvironmentProvider), ApiEnvironment.demo);
+
+      // act — 두 번째 롱프레스: 데모 → 운영으로 되돌아간다.
+      await tester.longPress(find.text('로그인 상태는 안전하게 유지됩니다.'));
+      await tester.pump();
+
+      // assert
+      expect(container.read(activeApiEnvironmentProvider), ApiEnvironment.production);
     },
   );
 }

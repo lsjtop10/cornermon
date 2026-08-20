@@ -5,6 +5,9 @@ import 'package:device_info_plus/device_info_plus.dart';
 import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import 'package:cornermon_api_gen/cornermon_api_gen.dart'
+    show DemoDeviceRegistrationRequest, DemoDeviceRegistrationRequestBuilder;
+
 import 'package:cornermon/shared/api/domain_aliases.dart';
 import 'package:cornermon/shared/api/providers/auth_device_trust_providers.dart';
 import 'package:cornermon/shared/auth/secure_token_store.dart';
@@ -178,7 +181,39 @@ class DeviceTrust extends _$DeviceTrust {
       ),
     );
 
-    final registration = response.data;
+    await _applyRegistrationResponse(response.data, store);
+  }
+
+  /// POST /demo/device-registrations. App Store 심사/스태프 연습 전용 — 등록코드가 없고,
+  /// 서버가 등록과 동시에 즉시 APPROVED로 저장하므로 여기서도 그 응답 그대로를 반영한다
+  /// (별도 "즉시 승인" 분기 없이 [requestRegistration]과 동일하게 상태를 저장할 뿐이고,
+  /// 실제로 상태가 PENDING이 아니라서 폴링이 자연히 시작되지 않는다). 호출 전 활성 API
+  /// 환경이 데모로 전환돼 있어야 한다 — 이 메서드 자체는 환경을 건드리지 않는다
+  /// (그 책임은 [ActiveApiEnvironment]에 남겨 둔다, OCP: 신뢰기기 등록 로직에
+  /// 환경 전환 분기를 얹지 않는다).
+  Future<void> requestDemoRegistration({required String displayName}) async {
+    final api = ref.read(authDeviceTrustApiProvider);
+    final store = ref.read(secureTokenStoreProvider);
+    final deviceModel = await _resolveDeviceModel();
+
+    final response = await api.demoDeviceRegistrationsPost(
+      request: DemoDeviceRegistrationRequest(
+        (DemoDeviceRegistrationRequestBuilder b) => b
+          ..deviceName = _defaultDeviceName()
+          ..deviceModel = deviceModel
+          ..displayName = displayName,
+      ),
+    );
+
+    await _applyRegistrationResponse(response.data, store);
+  }
+
+  /// [requestRegistration]/[requestDemoRegistration] 공통 후처리: 응답 검증 → 토큰 저장 →
+  /// 상태 반영 → PENDING이면 폴링 시작.
+  Future<void> _applyRegistrationResponse(
+    DeviceRegistrationCreated? registration,
+    SecureTokenStore store,
+  ) async {
     if (registration == null ||
         registration.id == null ||
         registration.status == null ||
