@@ -5,8 +5,12 @@ import (
 )
 
 type Handlers struct {
-	Auth            *AuthHandler
-	Device          *DeviceHandler
+	Auth   *AuthHandler
+	Device *DeviceHandler
+	// Demo는 App Store 심사용 데모 배포(DEMO_CAMP_NAME 환경변수가 설정된 경우)에서만
+	// non-nil이다. nil이면 /demo/device-registrations 라우트 자체가 등록되지 않아, 운영
+	// 배포에서는 이 엔드포인트가 echo의 표준 404로 "존재하지 않는 것처럼" 보인다.
+	Demo            *DemoHandler
 	Camp            *CampHandler
 	Corner          *CornerHandler
 	Track           *TrackHandler
@@ -39,6 +43,10 @@ func RegisterRoutes(e *echo.Echo, h *Handlers, adminAuth AuthAdminUsecase, track
 
 	v1.POST("/device-registrations", h.Device.RequestRegistration)
 	v1.GET("/device-registrations/me", h.Device.GetMyRegistrationStatus)
+
+	if h.Demo != nil {
+		v1.POST("/demo/device-registrations", h.Demo.RequestDemoRegistration)
+	}
 
 	admin := v1.Group("")
 	admin.Use(AdminAuthMiddleware(adminAuth))

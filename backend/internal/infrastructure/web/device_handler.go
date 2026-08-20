@@ -16,6 +16,7 @@ import (
 type DeviceTrustUsecase interface {
 	GetMyRegistrationStatus(ctx context.Context, deviceToken string) (*usecase.DeviceRegistrationStatusView, error)
 	RequestRegistration(ctx context.Context, registrationCode string, deviceName, deviceModel, displayName string) (string, *domain.DeviceRegistration, error)
+	RequestDemoRegistration(ctx context.Context, deviceName, deviceModel, displayName string) (string, *domain.DeviceRegistration, error)
 	ApproveDevice(ctx context.Context, regID domain.DeviceRegistrationID, actorAdminID domain.AdminID) (*domain.DeviceRegistration, error)
 	RejectDevice(ctx context.Context, regID domain.DeviceRegistrationID, actorAdminID domain.AdminID) (*domain.DeviceRegistration, error)
 	RevokeDevice(ctx context.Context, regID domain.DeviceRegistrationID, actorAdminID domain.AdminID) (*domain.DeviceRegistration, error)

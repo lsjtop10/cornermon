@@ -257,3 +257,60 @@ func TestDeviceRegistrationRoutesShouldBeScopedToCamp(t *testing.T) {
 		t.Fatal("expected legacy device registration route to be absent")
 	}
 }
+
+func TestDemoDeviceRegistrationRouteShouldOnlyExistWhenDemoHandlerIsSet(t *testing.T) {
+	t.Run("ShouldRespondIdenticallyToAnyUndefinedRouteWhenDemoHandlerIsNil", func(t *testing.T) {
+		// Arrange - 운영 배포와 동일한 상태(DEMO_CAMP_NAME 미설정 → Handlers.Demo == nil).
+		//
+		// echo v4는 같은 prefix("/api/v1")를 공유하는 여러 Group(v1 자신 + admin/track/
+		// message 서브그룹)이 있을 때, 그 prefix 아래의 미등록 경로 전부를 마지막에 등록된
+		// 서브그룹의 미들웨어(여기서는 AdminAuthMiddleware)로 흘려보낸다 — 그래서 진짜
+		// 존재하지 않는 라우트도 echo 표준 404가 아니라 401 "missing token"을 반환한다.
+		// 이건 이번 변경과 무관한 기존 라우터 동작이며, 오히려 우리 목적엔 더 잘 맞는다 —
+		// /demo/device-registrations를 두드려도 다른 아무 존재하지 않는 경로와 완전히
+		// 동일한 응답이 나와서 "이 경로가 특별히 존재하는지"에 대한 신호가 전혀 없다.
+		e := echo.New()
+		RegisterRoutes(e, &Handlers{Auth: &AuthHandler{}, Device: &DeviceHandler{}}, adminAuthForMessageRoutes{}, trackAuthForMessageRoutes{})
+
+		// Act
+		demoReq := httptest.NewRequest(http.MethodPost, "/api/v1/demo/device-registrations", strings.NewReader(`{}`))
+		demoReq.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		demoRec := httptest.NewRecorder()
+		e.ServeHTTP(demoRec, demoReq)
+
+		bogusReq := httptest.NewRequest(http.MethodPost, "/api/v1/totally-bogus-path-xyz", strings.NewReader(`{}`))
+		bogusReq.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		bogusRec := httptest.NewRecorder()
+		e.ServeHTTP(bogusRec, bogusReq)
+
+		// Assert
+		if demoRec.Code != bogusRec.Code || demoRec.Body.String() != bogusRec.Body.String() {
+			t.Fatalf("expected /demo/device-registrations to respond identically to an undefined route, got demo=%d %q bogus=%d %q",
+				demoRec.Code, demoRec.Body.String(), bogusRec.Code, bogusRec.Body.String())
+		}
+		for _, route := range e.Routes() {
+			if route.Path == "/api/v1/demo/device-registrations" {
+				t.Fatal("expected /demo/device-registrations route to be absent when Demo handler is nil")
+			}
+		}
+	})
+
+	t.Run("ShouldRegisterRouteWhenDemoHandlerIsSet", func(t *testing.T) {
+		// Arrange - review 배포와 동일한 상태(DEMO_CAMP_NAME 설정 → Handlers.Demo != nil).
+		e := echo.New()
+		RegisterRoutes(e, &Handlers{Auth: &AuthHandler{}, Device: &DeviceHandler{}, Demo: NewDemoHandler(&listDeviceTrustStub{})}, adminAuthForMessageRoutes{}, trackAuthForMessageRoutes{})
+
+		// Act
+		found := false
+		for _, route := range e.Routes() {
+			if route.Method == http.MethodPost && route.Path == "/api/v1/demo/device-registrations" {
+				found = true
+			}
+		}
+
+		// Assert
+		if !found {
+			t.Fatal("expected /demo/device-registrations route to be registered when Demo handler is set")
+		}
+	})
+}

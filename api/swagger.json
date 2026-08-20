@@ -2052,6 +2052,46 @@
                 }
             }
         },
+        "/demo/device-registrations": {
+            "post": {
+                "description": "이 엔드포인트는 DEMO_CAMP_NAME 환경변수가 설정된 배포(App Store 리뷰 전용)에서만 존재한다. 등록과 동시에 즉시 승인 상태로 저장되므로 관리자 승인 대기가 없다. 운영 배포에는 이 라우트 자체가 등록되지 않는다.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "A. Auth \u0026 Device Trust"
+                ],
+                "summary": "App Store 심사용 데모 기기 등록",
+                "parameters": [
+                    {
+                        "description": "등록 정보",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/DemoDeviceRegistrationRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/DeviceRegistrationCreatedResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "NOT_FOUND: 데모 모드가 비활성화되었거나 데모 캠프를 찾을 수 없음",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/device-registrations": {
             "post": {
                 "description": "기기가 서버에 등록을 요청한다. 이후 관리자의 승인 대기.",
@@ -3686,6 +3726,22 @@
                 },
                 "count": {
                     "type": "integer"
+                }
+            }
+        },
+        "DemoDeviceRegistrationRequest": {
+            "type": "object",
+            "properties": {
+                "deviceModel": {
+                    "type": "string",
+                    "example": "iPad Pro 11 2022"
+                },
+                "deviceName": {
+                    "type": "string"
+                },
+                "displayName": {
+                    "type": "string",
+                    "example": "1번 태블릿"
                 }
             }
         },
