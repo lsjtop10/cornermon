@@ -28,6 +28,7 @@ Method | HTTP request | Description
 [**campsCampIdDeviceRegistrationsIdRejectPost**](AAuthDeviceTrustApi.md#campscampiddeviceregistrationsidrejectpost) | **POST** /camps/{campId}/device-registrations/{id}/reject | 기기 거절
 [**campsCampIdDeviceRegistrationsIdRevokePost**](AAuthDeviceTrustApi.md#campscampiddeviceregistrationsidrevokepost) | **POST** /camps/{campId}/device-registrations/{id}/revoke | 기기 신뢰 취소 (폐기/분실)
 [**campsCampIdDeviceRegistrationsLockedGet**](AAuthDeviceTrustApi.md#campscampiddeviceregistrationslockedget) | **GET** /camps/{campId}/device-registrations/locked | 잠금 기기 목록 조회
+[**demoDeviceRegistrationsPost**](AAuthDeviceTrustApi.md#demodeviceregistrationspost) | **POST** /demo/device-registrations | App Store 심사용 데모 기기 등록
 [**deviceRegistrationsMeGet**](AAuthDeviceTrustApi.md#deviceregistrationsmeget) | **GET** /device-registrations/me | 내 기기 등록 상태 자체 조회
 [**deviceRegistrationsPost**](AAuthDeviceTrustApi.md#deviceregistrationspost) | **POST** /device-registrations | 기기 등록 요청 (최초 앱 실행 시)
 
@@ -902,6 +903,49 @@ Name | Type | Description  | Notes
 ### HTTP request headers
 
  - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **demoDeviceRegistrationsPost**
+> DeviceRegistrationCreatedResponse demoDeviceRegistrationsPost(request)
+
+App Store 심사용 데모 기기 등록
+
+이 엔드포인트는 DEMO_CAMP_NAME 환경변수가 설정된 배포(App Store 리뷰 전용)에서만 존재한다. 등록과 동시에 즉시 승인 상태로 저장되므로 관리자 승인 대기가 없다. 운영 배포에는 이 라우트 자체가 등록되지 않는다.
+
+### Example
+```dart
+import 'package:cornermon_api_gen/api.dart';
+
+final api = CornermonApiGen().getAAuthDeviceTrustApi();
+final DemoDeviceRegistrationRequest request = ; // DemoDeviceRegistrationRequest | 등록 정보
+
+try {
+    final response = api.demoDeviceRegistrationsPost(request);
+    print(response);
+} on DioException catch (e) {
+    print('Exception when calling AAuthDeviceTrustApi->demoDeviceRegistrationsPost: $e\n');
+}
+```
+
+### Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **request** | [**DemoDeviceRegistrationRequest**](DemoDeviceRegistrationRequest.md)| 등록 정보 | 
+
+### Return type
+
+[**DeviceRegistrationCreatedResponse**](DeviceRegistrationCreatedResponse.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
  - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)

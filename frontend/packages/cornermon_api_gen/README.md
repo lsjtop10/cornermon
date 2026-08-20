@@ -83,6 +83,7 @@ Class | Method | HTTP request | Description
 [*AAuthDeviceTrustApi*](doc/AAuthDeviceTrustApi.md) | [**campsCampIdDeviceRegistrationsIdRejectPost**](doc/AAuthDeviceTrustApi.md#campscampiddeviceregistrationsidrejectpost) | **POST** /camps/{campId}/device-registrations/{id}/reject | 기기 거절
 [*AAuthDeviceTrustApi*](doc/AAuthDeviceTrustApi.md) | [**campsCampIdDeviceRegistrationsIdRevokePost**](doc/AAuthDeviceTrustApi.md#campscampiddeviceregistrationsidrevokepost) | **POST** /camps/{campId}/device-registrations/{id}/revoke | 기기 신뢰 취소 (폐기/분실)
 [*AAuthDeviceTrustApi*](doc/AAuthDeviceTrustApi.md) | [**campsCampIdDeviceRegistrationsLockedGet**](doc/AAuthDeviceTrustApi.md#campscampiddeviceregistrationslockedget) | **GET** /camps/{campId}/device-registrations/locked | 잠금 기기 목록 조회
+[*AAuthDeviceTrustApi*](doc/AAuthDeviceTrustApi.md) | [**demoDeviceRegistrationsPost**](doc/AAuthDeviceTrustApi.md#demodeviceregistrationspost) | **POST** /demo/device-registrations | App Store 심사용 데모 기기 등록
 [*AAuthDeviceTrustApi*](doc/AAuthDeviceTrustApi.md) | [**deviceRegistrationsMeGet**](doc/AAuthDeviceTrustApi.md#deviceregistrationsmeget) | **GET** /device-registrations/me | 내 기기 등록 상태 자체 조회
 [*AAuthDeviceTrustApi*](doc/AAuthDeviceTrustApi.md) | [**deviceRegistrationsPost**](doc/AAuthDeviceTrustApi.md#deviceregistrationspost) | **POST** /device-registrations | 기기 등록 요청 (최초 앱 실행 시)
 [*BCampCornerTrackApi*](doc/BCampCornerTrackApi.md) | [**tracksIdMigrateSessionPost**](doc/BCampCornerTrackApi.md#tracksidmigratesessionpost) | **POST** /tracks/{id}/migrate-session | 교체된 트랙의 세션 마이그레이션
@@ -166,6 +167,7 @@ Class | Method | HTTP request | Description
  - [CreateCampRequest](doc/CreateCampRequest.md)
  - [CreateCornerRequest](doc/CreateCornerRequest.md)
  - [CreateTracksRequest](doc/CreateTracksRequest.md)
+ - [DemoDeviceRegistrationRequest](doc/DemoDeviceRegistrationRequest.md)
  - [DeviceRegistrationCreatedResponse](doc/DeviceRegistrationCreatedResponse.md)
  - [DeviceRegistrationRequest](doc/DeviceRegistrationRequest.md)
  - [DeviceRegistrationResponse](doc/DeviceRegistrationResponse.md)
