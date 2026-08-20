@@ -1,6 +1,8 @@
 package web
 
 import (
+	"net/http"
+
 	"github.com/labstack/echo/v4"
 )
 
@@ -183,4 +185,15 @@ func RegisterRoutes(e *echo.Echo, h *Handlers, adminAuth AuthAdminUsecase, track
 	if h.Event != nil {
 		track.GET("/events/track/:trackId", h.Event.TrackEvents)
 	}
+
+	// echo v4는 Group.Use()를 호출하면 그 그룹 전용 404 폴백을 그룹 자신의 prefix에 자동
+	// 등록하고, 그 폴백에도 그룹 미들웨어(AdminAuthMiddleware 등)를 그대로 씌운다. admin/
+	// track/message 그룹이 전부 v1과 같은 prefix("/api/v1")를 공유하는 구조라, 이 자동
+	// 등록이 서로 덮어써서 실제로 존재하지 않는 경로조차 401을 반환하게 된다 — 진짜 404여야
+	// 할 요청이 "인증되지 않음"으로 잘못 응답하는 기존 버그다. 가장 마지막에 v1 자신의
+	// prefix로 명시적인 404 핸들러를 등록해 이 자동 등록들을 덮어쓴다(라우팅 트리 노드당
+	// notFoundHandler는 마지막 등록이 이긴다) — 인증 미들웨어를 타지 않는 순수 404가 된다.
+	v1.RouteNotFound("/*", func(c echo.Context) error {
+		return echo.NewHTTPError(http.StatusNotFound, ErrorResponse{Code: CodeNotFound, Message: "not found"})
+	})
 }
