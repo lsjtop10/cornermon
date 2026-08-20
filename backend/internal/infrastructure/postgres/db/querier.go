@@ -22,6 +22,9 @@ type Querier interface {
 	GetBadge(ctx context.Context, id string) (Badge, error)
 	GetBadgeByQRPayload(ctx context.Context, qrPayload string) (Badge, error)
 	GetCamp(ctx context.Context, id string) (Camp, error)
+	// App Store 심사용 데모 캠프를 이름으로 조회하기 위한 전용 쿼리 (DEMO_CAMP_NAME).
+	// name은 UNIQUE 제약이 없으므로 여러 행이 일치할 수 있어 LIMIT 1로 첫 번째만 취한다.
+	GetCampByName(ctx context.Context, name string) (Camp, error)
 	GetCampByRegistrationCode(ctx context.Context, registrationCode string) (Camp, error)
 	GetCompletedVisitByGroupAndCorner(ctx context.Context, arg GetCompletedVisitByGroupAndCornerParams) (Visit, error)
 	GetCorner(ctx context.Context, id string) (Corner, error)

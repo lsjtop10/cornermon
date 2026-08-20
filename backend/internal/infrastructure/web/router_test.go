@@ -257,3 +257,105 @@ func TestDeviceRegistrationRoutesShouldBeScopedToCamp(t *testing.T) {
 		t.Fatal("expected legacy device registration route to be absent")
 	}
 }
+
+func TestDemoDeviceRegistrationRouteShouldOnlyExistWhenDemoHandlerIsSet(t *testing.T) {
+	t.Run("ShouldReturnPlain404WhenDemoHandlerIsNil", func(t *testing.T) {
+		// Arrange - 운영 배포와 동일한 상태(DEMO_CAMP_NAME 미설정 → Handlers.Demo == nil).
+		e := echo.New()
+		RegisterRoutes(e, &Handlers{Auth: &AuthHandler{}, Device: &DeviceHandler{}}, adminAuthForMessageRoutes{}, trackAuthForMessageRoutes{})
+
+		// Act
+		req := httptest.NewRequest(http.MethodPost, "/api/v1/demo/device-registrations", strings.NewReader(`{}`))
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		rec := httptest.NewRecorder()
+		e.ServeHTTP(rec, req)
+
+		// Assert - 도메인 에러를 4xx로 매핑한 결과도, 인증 미들웨어를 거쳐 나온 401도 아닌,
+		// 라우트 자체가 없어서 나오는 순수 404여야 한다.
+		if rec.Code != http.StatusNotFound {
+			t.Fatalf("expected status 404 when Demo handler is nil, got %d: %s", rec.Code, rec.Body.String())
+		}
+		if !strings.Contains(rec.Body.String(), string(CodeNotFound)) {
+			t.Fatalf("expected body to contain %s, got %s", CodeNotFound, rec.Body.String())
+		}
+		for _, route := range e.Routes() {
+			if route.Path == "/api/v1/demo/device-registrations" {
+				t.Fatal("expected /demo/device-registrations route to be absent when Demo handler is nil")
+			}
+		}
+	})
+
+	t.Run("ShouldRegisterRouteWhenDemoHandlerIsSet", func(t *testing.T) {
+		// Arrange - review 배포와 동일한 상태(DEMO_CAMP_NAME 설정 → Handlers.Demo != nil).
+		e := echo.New()
+		RegisterRoutes(e, &Handlers{Auth: &AuthHandler{}, Device: &DeviceHandler{}, Demo: NewDemoHandler(&listDeviceTrustStub{})}, adminAuthForMessageRoutes{}, trackAuthForMessageRoutes{})
+
+		// Act
+		found := false
+		for _, route := range e.Routes() {
+			if route.Method == http.MethodPost && route.Path == "/api/v1/demo/device-registrations" {
+				found = true
+			}
+		}
+
+		// Assert
+		if !found {
+			t.Fatal("expected /demo/device-registrations route to be registered when Demo handler is set")
+		}
+	})
+}
+
+// echo v4는 Group.Use()를 호출한 그룹마다 자기 prefix에 404 폴백을 자동 등록하고, 그
+// 폴백에도 그룹 미들웨어를 그대로 씌운다. admin/track/message 그룹이 v1과 같은 prefix를
+// 공유해서 이 자동 등록들이 서로 덮어쓰며, 고치기 전에는 진짜 존재하지 않는 경로조차
+// AdminAuthMiddleware를 타고 401을 반환했다 — 이 테스트는 그 회귀를 막는다.
+func TestUndefinedRouteShouldReturnPlain404RegardlessOfHowManyAuthGroupsShareThePrefix(t *testing.T) {
+	// Arrange - message 그룹까지 포함해 v1과 prefix를 공유하는 서브그룹을 최대한 채운다.
+	e := echo.New()
+	RegisterRoutes(e, &Handlers{
+		Auth:    &AuthHandler{},
+		Device:  &DeviceHandler{},
+		Message: NewMessageHandler(&messageUsecaseForHandler{}, nil, nil),
+	}, adminAuthForMessageRoutes{}, trackAuthForMessageRoutes{})
+
+	// Act
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/totally-bogus-path-xyz", nil)
+	rec := httptest.NewRecorder()
+	e.ServeHTTP(rec, req)
+
+	// Assert
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("expected status 404 for a route that was never registered, got %d: %s", rec.Code, rec.Body.String())
+	}
+}
+
+// 위 404 수정이 실제 인증이 필요한 라우트의 인증 요구까지 없애버리지 않았는지 확인한다.
+func TestRealProtectedRoutesShouldStillRequireAuthAfter404Fix(t *testing.T) {
+	e := echo.New()
+	RegisterRoutes(e, &Handlers{
+		Auth:    &AuthHandler{},
+		Device:  &DeviceHandler{},
+		Message: NewMessageHandler(&messageUsecaseForHandler{}, nil, nil),
+	}, adminAuthForMessageRoutes{}, trackAuthForMessageRoutes{})
+
+	for _, tc := range []struct {
+		name   string
+		method string
+		path   string
+	}{
+		{name: "admin route", method: http.MethodGet, path: "/api/v1/auth/track/sessions"},
+		{name: "track route", method: http.MethodPost, path: "/api/v1/auth/track/logout"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			// Act - 토큰 없이 호출
+			req := httptest.NewRequest(tc.method, tc.path, nil)
+			rec := httptest.NewRecorder()
+			e.ServeHTTP(rec, req)
+
+			// Assert - 여전히 401이어야 한다 (404로 바뀌면 안 됨 = 라우트는 실제로 존재)
+			if rec.Code != http.StatusUnauthorized {
+				t.Fatalf("expected status 401 for %s without token, got %d: %s", tc.path, rec.Code, rec.Body.String())
+			}
+		})
+	}
+}

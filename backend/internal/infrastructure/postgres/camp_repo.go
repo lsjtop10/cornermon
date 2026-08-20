@@ -27,15 +27,9 @@ func (r *pgCampRepository) queries(ctx context.Context) *db.Queries {
 	return db.New(r.pool)
 }
 
-func (r *pgCampRepository) Get(ctx context.Context, id domain.CampID) (*domain.Camp, error) {
-	row, err := r.queries(ctx).GetCamp(ctx, string(id))
-	if err != nil {
-		if err == pgx.ErrNoRows {
-			return nil, nil
-		}
-		return nil, errs.Wrap(ctx, err)
-	}
-
+// mapCamp는 db.Camp row를 domain.Camp로 변환합니다. Get/GetByRegistrationCode/GetByName이
+// 공유합니다.
+func mapCamp(row db.Camp) *domain.Camp {
 	camp := domain.NewCampFromProps(domain.CampProps{
 		ID:                   domain.CampID(row.ID),
 		RegistrationCode:     row.RegistrationCode,
@@ -59,7 +53,18 @@ func (r *pgCampRepository) Get(ctx context.Context, id domain.CampID) (*domain.C
 		camp.SetEndedAt(domain.None[time.Time]())
 	}
 
-	return camp, nil
+	return camp
+}
+
+func (r *pgCampRepository) Get(ctx context.Context, id domain.CampID) (*domain.Camp, error) {
+	row, err := r.queries(ctx).GetCamp(ctx, string(id))
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, nil
+		}
+		return nil, errs.Wrap(ctx, err)
+	}
+	return mapCamp(row), nil
 }
 
 func (r *pgCampRepository) GetByRegistrationCode(ctx context.Context, code string) (*domain.Camp, error) {
@@ -70,31 +75,19 @@ func (r *pgCampRepository) GetByRegistrationCode(ctx context.Context, code strin
 		}
 		return nil, errs.Wrap(ctx, err)
 	}
+	return mapCamp(row), nil
+}
 
-	camp := domain.NewCampFromProps(domain.CampProps{
-		ID:                   domain.CampID(row.ID),
-		RegistrationCode:     row.RegistrationCode,
-		Name:                 row.Name,
-		StartAt:              row.StartAt.Time,
-		EndAt:                row.EndAt.Time,
-		Status:               domain.CampStatus(row.Status),
-		BottleneckMinSamples: int(row.BottleneckMinSamples),
-		BottleneckRatioPct:   int(row.BottleneckRatioPct),
-	})
-
-	if row.ActivatedAt.Valid {
-		camp.SetActivatedAt(domain.Some(row.ActivatedAt.Time))
-	} else {
-		camp.SetActivatedAt(domain.None[time.Time]())
+// GetByName은 App Store 심사용 데모 캠프를 이름으로 조회하는 용도로만 쓰인다.
+func (r *pgCampRepository) GetByName(ctx context.Context, name string) (*domain.Camp, error) {
+	row, err := r.queries(ctx).GetCampByName(ctx, name)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, nil
+		}
+		return nil, errs.Wrap(ctx, err)
 	}
-
-	if row.EndedAt.Valid {
-		camp.SetEndedAt(domain.Some(row.EndedAt.Time))
-	} else {
-		camp.SetEndedAt(domain.None[time.Time]())
-	}
-
-	return camp, nil
+	return mapCamp(row), nil
 }
 
 func (r *pgCampRepository) Save(ctx context.Context, camp *domain.Camp) error {
