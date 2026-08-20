@@ -2,6 +2,8 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:cornermon/admin/features/login/login_error_provider.dart';
+import 'package:cornermon/shared/config/active_api_environment_provider.dart';
+import 'package:cornermon/shared/config/api_environment.dart';
 import 'package:cornermon/shared/design_system/tokens/colors.dart';
 import 'package:cornermon/shared/design_system/tokens/spacing.dart';
 import 'package:cornermon/shared/design_system/tokens/typography.dart';
@@ -24,6 +26,25 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     _idController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  // App Store 심사/스태프 연습용 히든 진입점. 화면엔 새 UI가 추가되지 않고, 이미 항상 떠
+  // 있던 하단 캡션 텍스트를 롱프레스하면 운영↔데모 서버가 토글된다. 로그인 자체는 기존
+  // 흐름 그대로이고, 이후 요청이 어느 서버로 나가는지만 바뀐다 — 자세한 배경은
+  // frontend/docs/artifacts/plan/20260820_앱스토어_심사용_데모환경_프론트_plan_.md.
+  void _toggleApiEnvironment() {
+    final notifier = ref.read(activeApiEnvironmentProvider.notifier);
+    final next = ref.read(activeApiEnvironmentProvider) == ApiEnvironment.demo
+        ? ApiEnvironment.production
+        : ApiEnvironment.demo;
+    notifier.switchTo(next);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          next == ApiEnvironment.demo ? '심사용 서버로 전환됨' : '운영 서버로 전환됨',
+        ),
+      ),
+    );
   }
 
   Future<void> _submit() async {
@@ -128,7 +149,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       ],
                     ),
                     const SizedBox(height: AppSpacing.space4),
-                    Text('로그인 상태는 안전하게 유지됩니다.', style: AppTypography.caption),
+                    GestureDetector(
+                      onLongPress: _toggleApiEnvironment,
+                      child: Text(
+                        '로그인 상태는 안전하게 유지됩니다.',
+                        style: AppTypography.caption,
+                      ),
+                    ),
                   ],
                 ),
               ),

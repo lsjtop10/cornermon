@@ -5,6 +5,8 @@ import 'package:cornermon/admin/features/login/login_screen.dart';
 import 'package:cornermon/admin/session/admin_session_provider.dart';
 import 'package:cornermon/shared/api/providers/auth_device_trust_providers.dart';
 import 'package:cornermon/shared/auth/secure_token_store.dart';
+import 'package:cornermon/shared/config/active_api_environment_provider.dart';
+import 'package:cornermon/shared/config/api_environment.dart';
 import 'package:cornermon_api_gen/cornermon_api_gen.dart';
 import 'package:dio/dio.dart';
 import 'package:material_ui/material_ui.dart';
@@ -129,6 +131,36 @@ void main() {
         isNull,
       );
       pending.complete();
+    },
+  );
+
+  testWidgets(
+    'toggles the active API environment when the footer caption is long-pressed',
+    (tester) async {
+      // arrange — 새 UI 추가 없이 기존 하단 캡션 텍스트에 얹힌 히든 진입점을 검증한다.
+      await tester.pumpWidget(_app([]));
+
+      // act — 첫 롱프레스: 운영 → 데모.
+      await tester.longPress(find.text('로그인 상태는 안전하게 유지됩니다.'));
+
+      // assert — 상태 전환은 즉시 반영되고, 스낵바 문구는 진입 애니메이션이 끝난 뒤 보인다.
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(LoginScreen)),
+      );
+      expect(container.read(activeApiEnvironmentProvider), ApiEnvironment.demo);
+      await tester.pump(const Duration(milliseconds: 750));
+      expect(find.text('심사용 서버로 전환됨'), findsOneWidget);
+
+      // act — 두 번째 롱프레스: 데모 → 운영으로 되돌아간다. 첫 스낵바의 자동 소멸 타이머는
+      // (pumpAndSettle이 기다려주지 않는) 실제 Timer라서, 명시적으로 그 시간만큼 흘려보내야
+      // 두 번째 스낵바가 큐에 밀리지 않고 바로 뜬다.
+      await tester.pump(const Duration(seconds: 5));
+      await tester.longPress(find.text('로그인 상태는 안전하게 유지됩니다.'));
+
+      // assert — 상태 전환은 즉시 반영되고, 스낵바 문구는 진입 애니메이션이 끝난 뒤 보인다.
+      expect(container.read(activeApiEnvironmentProvider), ApiEnvironment.production);
+      await tester.pump(const Duration(milliseconds: 750));
+      expect(find.text('운영 서버로 전환됨'), findsOneWidget);
     },
   );
 }
