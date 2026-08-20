@@ -275,7 +275,11 @@ class _RegistrationFormState extends ConsumerState<_RegistrationForm> {
             enabled: !_isSubmitting,
             textAlign: TextAlign.left,
             decoration: InputDecoration(
-              labelText: '관리자 표시 이름',
+              // 데모 모드에는 관리자 승인 대기 개념이 없다(자동승인) — 심사관/연습
+              // 사용자에게 "관리자"라는 용어를 노출할 이유가 없으므로 라벨만 중립적으로 바꾼다.
+              // 실제로 서버에 저장되는 필드(displayName)와 그 의미(관리자 화면 표시용 이름,
+              // technical-design.md §기기 신뢰 인증)는 동일 — 라벨 문구만의 문제.
+              labelText: _demoModeUnlocked ? '표시 이름' : '관리자 표시 이름',
               hintText: '1번 태블릿',
               hintStyle: TextStyle(color: colors.textSecondary),
               border: OutlineInputBorder(
