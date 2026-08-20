@@ -17,6 +17,13 @@ type DeviceTrustService struct {
 	broadcaster Broadcaster
 	tx          TxManager
 
+	// demoCampName은 App Store 심사용 데모 엔드포인트(RequestDemoRegistration) 전용이다.
+	// 운영 배포에서는 항상 빈 문자열 — 그 경우 RequestDemoRegistration은 항상 실패한다.
+	// 이 값이 비어 있지 않은 배포에서만 DemoHandler가 라우팅에 등록되므로(cmd/server/main.go),
+	// 이 필드가 빈 문자열인 채로 이 메서드가 외부에서 호출될 일 자체가 없다 — 아래 체크는
+	// 그럼에도 방어적으로 남겨둔 것이다.
+	demoCampName string
+
 	nowFn  func() time.Time
 	uuidFn func() string
 }
@@ -33,16 +40,18 @@ func NewDeviceTrustService(
 	auditLogs AuditLogRepository,
 	broadcaster Broadcaster,
 	tx TxManager,
+	demoCampName string,
 ) *DeviceTrustService {
 	return &DeviceTrustService{
-		camps:       camps,
-		devices:     devices,
-		admins:      admins,
-		auditLogs:   auditLogs,
-		broadcaster: broadcaster,
-		tx:          tx,
-		nowFn:       func() time.Time { return time.Now().UTC() },
-		uuidFn:      uuid.NewString,
+		camps:        camps,
+		devices:      devices,
+		admins:       admins,
+		auditLogs:    auditLogs,
+		broadcaster:  broadcaster,
+		tx:           tx,
+		demoCampName: demoCampName,
+		nowFn:        func() time.Time { return time.Now().UTC() },
+		uuidFn:       uuid.NewString,
 	}
 }
 
@@ -99,6 +108,74 @@ func (s *DeviceTrustService) RequestRegistration(
 
 	s.recordAuditLog(ctx, domain.Some(campID()), "anonymous", "anonymous", ActionDeviceRequest, string(reg.ID()), displayName, true, nil)
 	_ = s.broadcaster.Broadcast(ctx, campID(), EventDeviceRegistrationUpdated, CampScope())
+	return plainToken, reg, nil
+}
+
+// RequestDemoRegistration - App Store 심사용 데모 엔드포인트 전용. registrationCode 입력이
+// 없다 — 캠프를 demoCampName(배포 시 운영자가 미리 정한 캠프 이름)으로 식별한다. 등록과
+// 동시에 즉시 승인 상태로 저장하므로, 이 메서드를 거치는 흐름에는 관리자 승인 단계가 없다.
+// 기존 RequestRegistration/ApproveDevice는 이 메서드에서 전혀 호출되지 않는다 — 완전히
+// 별도 경로이므로 진행자가 쓰는 실제 등록 흐름은 이 코드의 존재로 영향받지 않는다.
+func (s *DeviceTrustService) RequestDemoRegistration(
+	ctx context.Context,
+	deviceName, deviceModel, displayName string,
+) (string, *domain.DeviceRegistration, error) {
+
+	if s.demoCampName == "" {
+		return "", nil, withErrorContext("device.request_demo_registration", "validate_demo_camp_name", domain.ErrCampNotFound, nil)
+	}
+
+	camp, err := s.camps.GetByName(ctx, s.demoCampName)
+	if err != nil {
+		return "", nil, withErrorContext("device.request_demo_registration", "repository.get_camp_by_name", err, nil)
+	}
+	if camp == nil {
+		return "", nil, withErrorContext("device.request_demo_registration", "find_demo_camp", domain.ErrCampNotFound, map[string]any{"camp_found": false})
+	}
+	campID := camp.ID()
+
+	plainToken, tokenHash, err := generateOpaqueToken()
+	if err != nil {
+		return "", nil, withErrorContext("device.request_demo_registration", "generate_token", err, nil)
+	}
+
+	now := s.nowFn()
+	regID := domain.DeviceRegistrationID(s.uuidFn())
+	reg := domain.NewDeviceRegistrationFromProps(domain.DeviceRegistrationProps{
+		ID:                regID,
+		CampID:            campID,
+		DeviceName:        deviceName,
+		DeviceModel:       deviceModel,
+		DisplayName:       displayName,
+		Status:            domain.DevicePending,
+		TokenHash:         tokenHash,
+		FailedPinAttempts: 0,
+		LockedUntil:       domain.None[time.Time](),
+		ApprovedAt:        domain.None[time.Time](),
+		CreatedAt:         now,
+	})
+
+	// 아직 저장하지 않은 상태이므로, RequestRegistration→ApproveDevice처럼 두 번 저장할
+	// 필요 없이 메모리상에서 바로 승인 상태로 전이시킨 뒤 한 번만 저장한다.
+	if err := reg.Approve(now); err != nil {
+		return "", nil, withErrorContext("device.request_demo_registration", "domain.approve", err, map[string]any{"device_id": string(regID)})
+	}
+
+	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
+		if err := s.devices.Save(ctx, reg); err != nil {
+			return withErrorContext("device.request_demo_registration", "repository.save_device", err, map[string]any{"device_id": string(reg.ID())})
+		}
+		return nil
+	})
+
+	if err != nil {
+		s.recordAuditLog(ctx, domain.Some(campID), "system", "system:demo_auto_approve", ActionDeviceRequest, "", displayName, false, errorAuditMetadata(err, nil))
+		return "", nil, err
+	}
+
+	s.recordAuditLog(ctx, domain.Some(campID), "system", "system:demo_auto_approve", ActionDeviceRequest, string(reg.ID()), displayName, true, nil)
+	s.recordAuditLog(ctx, domain.Some(campID), "system", "system:demo_auto_approve", ActionDeviceApproved, string(reg.ID()), displayName, true, nil)
+	_ = s.broadcaster.Broadcast(ctx, campID, EventDeviceRegistrationUpdated, CampScope())
 	return plainToken, reg, nil
 }
 

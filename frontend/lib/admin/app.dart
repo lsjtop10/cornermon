@@ -5,8 +5,11 @@ import 'package:cornermon/admin/router/admin_router.dart';
 import 'package:cornermon/admin/session/admin_event_coordinator.dart';
 import 'package:cornermon/admin/theme/admin_theme_mode_provider.dart';
 import 'package:cornermon/admin/widgets/admin_scaffold_messenger_key.dart';
+import 'package:cornermon/shared/config/active_api_environment_provider.dart';
+import 'package:cornermon/shared/config/api_environment.dart';
 import 'package:cornermon/shared/design_system/theme/admin_theme.dart';
 import 'package:cornermon/shared/design_system/widgets/connection_banner.dart';
+import 'package:cornermon/shared/design_system/widgets/demo_environment_banner.dart';
 
 class AdminApp extends ConsumerWidget {
   const AdminApp({super.key});
@@ -26,8 +29,15 @@ class AdminApp extends ConsumerWidget {
       localizationsDelegates: GlobalMaterialLocalizations.delegates,
       builder: (context, child) {
         final bannerState = ref.watch(adminConnectionBannerStateProvider);
+        final isDemo = ref.watch(activeApiEnvironmentProvider) == ApiEnvironment.demo;
         return Column(
           children: [
+            DemoEnvironmentBanner(
+              visible: isDemo,
+              onExitDemo: () => ref
+                  .read(activeApiEnvironmentProvider.notifier)
+                  .switchTo(ApiEnvironment.production),
+            ),
             ConnectionBanner(state: bannerState),
             Expanded(child: child ?? const SizedBox.shrink()),
           ],

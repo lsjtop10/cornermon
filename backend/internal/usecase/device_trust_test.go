@@ -22,7 +22,7 @@ func TestDeviceTrustService_RequestRegistration(t *testing.T) {
 		broadcaster := &MockBroadcaster{}
 		tx := &MockTxManager{}
 
-		s := NewDeviceTrustService(camps, devices, NewMockAdminRepository(), auditLogs, broadcaster, tx)
+		s := NewDeviceTrustService(camps, devices, NewMockAdminRepository(), auditLogs, broadcaster, tx, "")
 		s.nowFn = func() time.Time { return now }
 		s.uuidFn = func() string { return "device-uuid" }
 
@@ -67,7 +67,7 @@ func TestDeviceTrustService_RequestRegistration(t *testing.T) {
 		broadcaster := &MockBroadcaster{}
 		tx := &MockTxManager{}
 
-		s := NewDeviceTrustService(camps, devices, NewMockAdminRepository(), auditLogs, broadcaster, tx)
+		s := NewDeviceTrustService(camps, devices, NewMockAdminRepository(), auditLogs, broadcaster, tx, "")
 
 		// Act
 		_, _, err := s.RequestRegistration(context.Background(), "UNKNOWN1", "iPad-1", "iPad Pro", "1번 태블릿")
@@ -89,7 +89,7 @@ func TestDeviceTrustService_RequestRegistration(t *testing.T) {
 		broadcaster := &MockBroadcaster{}
 		tx := &MockTxManager{}
 
-		s := NewDeviceTrustService(camps, devices, NewMockAdminRepository(), auditLogs, broadcaster, tx)
+		s := NewDeviceTrustService(camps, devices, NewMockAdminRepository(), auditLogs, broadcaster, tx, "")
 
 		// Act
 		_, registration, err := s.RequestRegistration(context.Background(), "REGCODE1", "iPad-1", "iPad Pro", "1번 태블릿")
@@ -100,6 +100,102 @@ func TestDeviceTrustService_RequestRegistration(t *testing.T) {
 		}
 		if registration == nil || registration.Status() != domain.DevicePending {
 			t.Fatalf("expected pending registration, got %+v", registration)
+		}
+	})
+}
+
+func TestDeviceTrustService_RequestDemoRegistration(t *testing.T) {
+	t.Run("ShouldReturnCampNotFoundWhenDemoCampNameIsEmpty", func(t *testing.T) {
+		// Arrange - demoCampName을 빈 문자열로 둔다(운영 기본값).
+		camps := NewMockCampRepository()
+		camp := domain.NewCampFromProps(domain.CampProps{ID: "camp-1", Name: "App Store Review Demo", RegistrationCode: "REGCODE1", Status: domain.CampActive})
+		camps.Save(context.Background(), camp)
+
+		devices := NewMockDeviceRegistrationRepository()
+		auditLogs := &MockAuditLogRepository{}
+		broadcaster := &MockBroadcaster{}
+		tx := &MockTxManager{}
+
+		s := NewDeviceTrustService(camps, devices, NewMockAdminRepository(), auditLogs, broadcaster, tx, "")
+
+		// Act
+		_, _, err := s.RequestDemoRegistration(context.Background(), "iPad-1", "iPad Pro", "1번 태블릿")
+
+		// Assert
+		if !errors.Is(err, domain.ErrCampNotFound) {
+			t.Fatalf("expected ErrCampNotFound, got %v", err)
+		}
+	})
+
+	t.Run("ShouldReturnCampNotFoundWhenNoCampMatchesDemoCampName", func(t *testing.T) {
+		// Arrange - demoCampName은 설정되어 있지만 일치하는 캠프가 없다.
+		camps := NewMockCampRepository()
+		devices := NewMockDeviceRegistrationRepository()
+		auditLogs := &MockAuditLogRepository{}
+		broadcaster := &MockBroadcaster{}
+		tx := &MockTxManager{}
+
+		s := NewDeviceTrustService(camps, devices, NewMockAdminRepository(), auditLogs, broadcaster, tx, "App Store Review Demo")
+
+		// Act
+		_, _, err := s.RequestDemoRegistration(context.Background(), "iPad-1", "iPad Pro", "1번 태블릿")
+
+		// Assert
+		if !errors.Is(err, domain.ErrCampNotFound) {
+			t.Fatalf("expected ErrCampNotFound, got %v", err)
+		}
+	})
+
+	t.Run("ShouldCreateApprovedRegistrationWhenDemoCampNameMatches", func(t *testing.T) {
+		// Arrange
+		now := time.Now()
+		camps := NewMockCampRepository()
+		camp := domain.NewCampFromProps(domain.CampProps{ID: "camp-1", Name: "App Store Review Demo", RegistrationCode: "REGCODE1", Status: domain.CampActive})
+		camps.Save(context.Background(), camp)
+
+		devices := NewMockDeviceRegistrationRepository()
+		auditLogs := &MockAuditLogRepository{}
+		broadcaster := &MockBroadcaster{}
+		tx := &MockTxManager{}
+
+		s := NewDeviceTrustService(camps, devices, NewMockAdminRepository(), auditLogs, broadcaster, tx, "App Store Review Demo")
+		s.nowFn = func() time.Time { return now }
+		s.uuidFn = func() string { return "device-uuid" }
+
+		// Act
+		plainToken, reg, err := s.RequestDemoRegistration(context.Background(), "iPad-1", "iPad Pro 11 2022", "1번 태블릿")
+
+		// Assert
+		if err != nil {
+			t.Fatalf("expected no error, got %v", err)
+		}
+		if plainToken == "" {
+			t.Fatal("expected plain token, got empty")
+		}
+		if reg.CampID() != "camp-1" {
+			t.Errorf("expected campID resolved to 'camp-1', got '%s'", reg.CampID())
+		}
+		if reg.Status() != domain.DeviceApproved {
+			t.Errorf("expected status 'APPROVED', got %s", reg.Status())
+		}
+
+		persisted, _ := devices.Get(context.Background(), reg.ID())
+		if persisted == nil || persisted.Status() != domain.DeviceApproved {
+			t.Fatalf("expected persisted registration to be APPROVED, got %+v", persisted)
+		}
+
+		if len(broadcaster.Broadcasts) != 1 ||
+			broadcaster.Broadcasts[0].CampID != "camp-1" ||
+			broadcaster.Broadcasts[0].Event != EventDeviceRegistrationUpdated ||
+			broadcaster.Broadcasts[0].Scope != CampScope() {
+			t.Errorf("expected EventDeviceRegistrationUpdated broadcast, got %v", broadcaster.Broadcasts)
+		}
+
+		if len(auditLogs.Logs) != 2 {
+			t.Fatalf("expected 2 audit logs (request + auto-approve), got %d", len(auditLogs.Logs))
+		}
+		if auditLogs.Logs[0].Actor() != "system" || auditLogs.Logs[1].Actor() != "system" {
+			t.Errorf("expected both audit logs to have actor 'system', got %+v", auditLogs.Logs)
 		}
 	})
 }
@@ -134,7 +230,7 @@ func TestDeviceTrustService_ShouldReturnUpdatedRegistrationWhenDeviceStatusChang
 			admins := NewMockAdminRepository()
 			admins.Admins["admin-1"] = domain.NewAdminFromProps(domain.AdminProps{ID: "admin-1", Username: "김관리"})
 
-			s := NewDeviceTrustService(camps, devices, admins, auditLogs, broadcaster, tx)
+			s := NewDeviceTrustService(camps, devices, admins, auditLogs, broadcaster, tx, "")
 			s.nowFn = func() time.Time { return now }
 			s.uuidFn = func() string { return "audit-uuid" }
 
@@ -190,7 +286,7 @@ func TestDeviceTrustService_GetMyRegistrationStatus(t *testing.T) {
 		broadcaster := &MockBroadcaster{}
 		tx := &MockTxManager{}
 
-		s := NewDeviceTrustService(camps, devices, NewMockAdminRepository(), auditLogs, broadcaster, tx)
+		s := NewDeviceTrustService(camps, devices, NewMockAdminRepository(), auditLogs, broadcaster, tx, "")
 		s.nowFn = func() time.Time { return now }
 		s.uuidFn = func() string { return "device-uuid" }
 

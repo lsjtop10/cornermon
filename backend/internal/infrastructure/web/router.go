@@ -1,12 +1,18 @@
 package web
 
 import (
+	"net/http"
+
 	"github.com/labstack/echo/v4"
 )
 
 type Handlers struct {
-	Auth            *AuthHandler
-	Device          *DeviceHandler
+	Auth   *AuthHandler
+	Device *DeviceHandler
+	// Demo는 App Store 심사용 데모 배포(DEMO_CAMP_NAME 환경변수가 설정된 경우)에서만
+	// non-nil이다. nil이면 /demo/device-registrations 라우트 자체가 등록되지 않아, 운영
+	// 배포에서는 이 엔드포인트가 echo의 표준 404로 "존재하지 않는 것처럼" 보인다.
+	Demo            *DemoHandler
 	Camp            *CampHandler
 	Corner          *CornerHandler
 	Track           *TrackHandler
@@ -39,6 +45,10 @@ func RegisterRoutes(e *echo.Echo, h *Handlers, adminAuth AuthAdminUsecase, track
 
 	v1.POST("/device-registrations", h.Device.RequestRegistration)
 	v1.GET("/device-registrations/me", h.Device.GetMyRegistrationStatus)
+
+	if h.Demo != nil {
+		v1.POST("/demo/device-registrations", h.Demo.RequestDemoRegistration)
+	}
 
 	admin := v1.Group("")
 	admin.Use(AdminAuthMiddleware(adminAuth))
@@ -175,4 +185,15 @@ func RegisterRoutes(e *echo.Echo, h *Handlers, adminAuth AuthAdminUsecase, track
 	if h.Event != nil {
 		track.GET("/events/track/:trackId", h.Event.TrackEvents)
 	}
+
+	// echo v4는 Group.Use()를 호출하면 그 그룹 전용 404 폴백을 그룹 자신의 prefix에 자동
+	// 등록하고, 그 폴백에도 그룹 미들웨어(AdminAuthMiddleware 등)를 그대로 씌운다. admin/
+	// track/message 그룹이 전부 v1과 같은 prefix("/api/v1")를 공유하는 구조라, 이 자동
+	// 등록이 서로 덮어써서 실제로 존재하지 않는 경로조차 401을 반환하게 된다 — 진짜 404여야
+	// 할 요청이 "인증되지 않음"으로 잘못 응답하는 기존 버그다. 가장 마지막에 v1 자신의
+	// prefix로 명시적인 404 핸들러를 등록해 이 자동 등록들을 덮어쓴다(라우팅 트리 노드당
+	// notFoundHandler는 마지막 등록이 이긴다) — 인증 미들웨어를 타지 않는 순수 404가 된다.
+	v1.RouteNotFound("/*", func(c echo.Context) error {
+		return echo.NewHTTPError(http.StatusNotFound, ErrorResponse{Code: CodeNotFound, Message: "not found"})
+	})
 }

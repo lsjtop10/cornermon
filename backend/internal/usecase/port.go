@@ -23,6 +23,9 @@ type TrackPINProtector interface {
 type CampRepository interface {
 	Get(ctx context.Context, id domain.CampID) (*domain.Camp, error)
 	GetByRegistrationCode(ctx context.Context, code string) (*domain.Camp, error)
+	// GetByName은 App Store 심사용 데모 캠프를 이름으로 조회하는 용도로만 쓰인다
+	// (DeviceTrustService.RequestDemoRegistration). name은 UNIQUE 제약이 없다.
+	GetByName(ctx context.Context, name string) (*domain.Camp, error)
 	List(ctx context.Context) ([]*domain.Camp, error)
 	Save(ctx context.Context, camp *domain.Camp) error
 }

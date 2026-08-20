@@ -16,6 +16,7 @@ import 'package:cornermon_api_gen/src/model/admin_response.dart';
 import 'package:cornermon_api_gen/src/model/admin_session_response.dart';
 import 'package:cornermon_api_gen/src/model/change_admin_password_request.dart';
 import 'package:cornermon_api_gen/src/model/create_admin_request.dart';
+import 'package:cornermon_api_gen/src/model/demo_device_registration_request.dart';
 import 'package:cornermon_api_gen/src/model/device_registration_created_response.dart';
 import 'package:cornermon_api_gen/src/model/device_registration_request.dart';
 import 'package:cornermon_api_gen/src/model/device_registration_response.dart';
@@ -1470,6 +1471,101 @@ class AAuthDeviceTrustApi {
     }
 
     return Response<BuiltList<DeviceRegistrationResponse>>(
+      data: _responseData,
+      headers: _response.headers,
+      isRedirect: _response.isRedirect,
+      requestOptions: _response.requestOptions,
+      redirects: _response.redirects,
+      statusCode: _response.statusCode,
+      statusMessage: _response.statusMessage,
+      extra: _response.extra,
+    );
+  }
+
+  /// App Store 심사용 데모 기기 등록
+  /// 이 엔드포인트는 DEMO_CAMP_NAME 환경변수가 설정된 배포(App Store 리뷰 전용)에서만 존재한다. 등록과 동시에 즉시 승인 상태로 저장되므로 관리자 승인 대기가 없다. 운영 배포에는 이 라우트 자체가 등록되지 않는다.
+  ///
+  /// Parameters:
+  /// * [request] - 등록 정보
+  /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
+  /// * [headers] - Can be used to add additional headers to the request
+  /// * [extras] - Can be used to add flags to the request
+  /// * [validateStatus] - A [ValidateStatus] callback that can be used to determine request success based on the HTTP status of the response
+  /// * [onSendProgress] - A [ProgressCallback] that can be used to get the send progress
+  /// * [onReceiveProgress] - A [ProgressCallback] that can be used to get the receive progress
+  ///
+  /// Returns a [Future] containing a [Response] with a [DeviceRegistrationCreatedResponse] as data
+  /// Throws [DioException] if API call or serialization fails
+  Future<Response<DeviceRegistrationCreatedResponse>> demoDeviceRegistrationsPost({
+    required DemoDeviceRegistrationRequest request,
+    CancelToken? cancelToken,
+    Map<String, dynamic>? headers,
+    Map<String, dynamic>? extra,
+    ValidateStatus? validateStatus,
+    ProgressCallback? onSendProgress,
+    ProgressCallback? onReceiveProgress,
+  }) async {
+    final _path = r'/demo/device-registrations';
+    final _options = Options(
+      method: r'POST',
+      headers: <String, dynamic>{
+        ...?headers,
+      },
+      extra: <String, dynamic>{
+        'secure': <Map<String, String>>[],
+        ...?extra,
+      },
+      contentType: 'application/json',
+      validateStatus: validateStatus,
+    );
+
+    dynamic _bodyData;
+
+    try {
+      const _type = FullType(DemoDeviceRegistrationRequest);
+      _bodyData = _serializers.serialize(request, specifiedType: _type);
+
+    } catch(error, stackTrace) {
+      throw DioException(
+         requestOptions: _options.compose(
+          _dio.options,
+          _path,
+        ),
+        type: DioExceptionType.unknown,
+        error: error,
+        stackTrace: stackTrace,
+      );
+    }
+
+    final _response = await _dio.request<Object>(
+      _path,
+      data: _bodyData,
+      options: _options,
+      cancelToken: cancelToken,
+      onSendProgress: onSendProgress,
+      onReceiveProgress: onReceiveProgress,
+    );
+
+    DeviceRegistrationCreatedResponse? _responseData;
+
+    try {
+      final rawResponse = _response.data;
+      _responseData = rawResponse == null ? null : _serializers.deserialize(
+        rawResponse,
+        specifiedType: const FullType(DeviceRegistrationCreatedResponse),
+      ) as DeviceRegistrationCreatedResponse;
+
+    } catch (error, stackTrace) {
+      throw DioException(
+        requestOptions: _response.requestOptions,
+        response: _response,
+        type: DioExceptionType.unknown,
+        error: error,
+        stackTrace: stackTrace,
+      );
+    }
+
+    return Response<DeviceRegistrationCreatedResponse>(
       data: _responseData,
       headers: _response.headers,
       isRedirect: _response.isRedirect,

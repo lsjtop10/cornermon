@@ -33,7 +33,7 @@ final class DeviceTrustProvider
   DeviceTrust create() => DeviceTrust();
 }
 
-String _$deviceTrustHash() => r'c46ad0d7768b91b0ba5a9b42409cf964791e4803';
+String _$deviceTrustHash() => r'425923d9ea862eb05f03f6e7c502820ab46ed5a9';
 
 abstract class _$DeviceTrust extends $AsyncNotifier<DeviceTrustStatus> {
   FutureOr<DeviceTrustStatus> build();

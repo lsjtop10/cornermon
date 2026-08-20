@@ -34,13 +34,24 @@ class _ScriptedSseClient extends SseClient {
   }) {
     final index = callCount;
     final succeed = index < _script.length ? _script[index] : _script.last;
+    // 스크립트의 마지막 항목(그 이후는 반복되는 _script.last)인가 — 여기서 성공하면 그 뒤로도
+    // 영원히 성공이므로 "연결이 계속 유지된 채 끝난다"로 취급해 close하지 않는다. 그보다 앞의
+    // 성공은 다음 스크립트 항목을 소비할 수 있도록 연결이 끝나야(재연결 루프가 돌아야) 한다 —
+    // 그러지 않으면 스크립트 중간의 성공 이후 항목들은 영원히 connect()가 호출되지 않는다.
+    final isFinalScriptedOutcome = index >= _script.length - 1;
     final controller = StreamController<SSENotification>();
 
     if (succeed) {
       onConnected?.call();
-      // 연결을 계속 살아있게 둔다(도메인 이벤트는 이 테스트의 관심사가 아님) — controller를
-      // 절대 close/addError하지 않는다.
-      addTearDown(controller.close);
+      if (isFinalScriptedOutcome) {
+        // 연결을 계속 살아있게 둔다(도메인 이벤트는 이 테스트의 관심사가 아님) — controller를
+        // 절대 close/addError하지 않는다.
+        addTearDown(controller.close);
+      } else {
+        // 서버가 정상 종료(done)한 것처럼 에러 없이 닫아, 프로덕션 재연결 루프가 다음
+        // 스크립트 항목으로 넘어가게 한다.
+        scheduleMicrotask(controller.close);
+      }
     } else {
       onDisconnected?.call();
       scheduleMicrotask(() {

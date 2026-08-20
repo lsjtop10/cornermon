@@ -33,6 +33,7 @@ doc/CreateCampRequest.md
 doc/CreateCornerRequest.md
 doc/CreateTracksRequest.md
 doc/DReportApi.md
+doc/DemoDeviceRegistrationRequest.md
 doc/DeviceRegistrationCreatedResponse.md
 doc/DeviceRegistrationRequest.md
 doc/DeviceRegistrationResponse.md
@@ -113,6 +114,7 @@ lib/src/model/create_camp_request.dart
 lib/src/model/create_corner_request.dart
 lib/src/model/create_tracks_request.dart
 lib/src/model/date.dart
+lib/src/model/demo_device_registration_request.dart
 lib/src/model/device_registration_created_response.dart
 lib/src/model/device_registration_request.dart
 lib/src/model/device_registration_response.dart

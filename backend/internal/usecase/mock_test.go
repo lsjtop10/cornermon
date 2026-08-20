@@ -41,6 +41,15 @@ func (r *MockCampRepository) GetByRegistrationCode(ctx context.Context, code str
 	return nil, nil
 }
 
+func (r *MockCampRepository) GetByName(ctx context.Context, name string) (*domain.Camp, error) {
+	for _, camp := range r.Camps {
+		if camp.Name() == name {
+			return camp, nil
+		}
+	}
+	return nil, nil
+}
+
 func (r *MockCampRepository) Save(ctx context.Context, camp *domain.Camp) error {
 	r.Camps[camp.ID()] = camp
 	return nil

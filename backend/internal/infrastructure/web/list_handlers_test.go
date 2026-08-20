@@ -39,6 +39,12 @@ func (s *listDeviceTrustStub) RequestRegistration(_ context.Context, registratio
 	}
 	return "token", s.requestedReg, nil
 }
+func (s *listDeviceTrustStub) RequestDemoRegistration(_ context.Context, _, _, _ string) (string, *domain.DeviceRegistration, error) {
+	if s.requestErr != nil {
+		return "", nil, s.requestErr
+	}
+	return "token", s.requestedReg, nil
+}
 func (s *listDeviceTrustStub) ApproveDevice(context.Context, domain.DeviceRegistrationID, domain.AdminID) (*domain.DeviceRegistration, error) {
 	return s.mutatedDevice, s.mutationErr
 }

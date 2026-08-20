@@ -157,7 +157,11 @@ func main() {
 	// Initialize Usecases
 	authAdminService := usecase.NewAdminAuthService(adminRepo, adminSessionRepo, facilitatorSessionRepo, trackRepo, cornerRepo, broadcaster, auditLogRepo, txManager)
 
-	deviceTrustService := usecase.NewDeviceTrustService(campRepo, deviceRepo, adminRepo, auditLogRepo, broadcaster, txManager)
+	// DEMO_CAMP_NAME은 App Store 심사용 review 배포에서만 설정한다. 운영에서는 빈 문자열로
+	// 두므로 RequestDemoRegistration이 항상 실패하고, 아래에서 demoHandler도 nil로 남아
+	// /demo/device-registrations 라우트 자체가 등록되지 않는다.
+	demoCampName := os.Getenv("DEMO_CAMP_NAME")
+	deviceTrustService := usecase.NewDeviceTrustService(campRepo, deviceRepo, adminRepo, auditLogRepo, broadcaster, txManager, demoCampName)
 	cornerService := usecase.NewCornerService(campRepo, cornerRepo, trackRepo, groupRepo, adminRepo, auditLogRepo, broadcaster, txManager)
 	cornerViewQuerier := postgres.NewCornerViewQuerier(pool)
 	groupService := usecase.NewGroupService(campRepo, cornerRepo, trackRepo, groupRepo, badgeRepo, visitRepo, adminRepo, auditLogRepo, txManager)
@@ -174,6 +178,10 @@ func main() {
 	// Initialize Handlers
 	authHandler := web.NewAuthHandler(authAdminService, authFacilitatorService, deviceTrustService)
 	deviceHandler := web.NewDeviceHandler(deviceTrustService)
+	var demoHandler *web.DemoHandler
+	if demoCampName != "" {
+		demoHandler = web.NewDemoHandler(deviceTrustService)
+	}
 	campHandler := web.NewCampHandler(campService)
 	cornerHandler := web.NewCornerHandler(cornerService, cornerViewQuerier)
 	trackHandler := web.NewTrackHandler(trackService)
@@ -192,6 +200,7 @@ func main() {
 	handlers := &web.Handlers{
 		Auth:            authHandler,
 		Device:          deviceHandler,
+		Demo:            demoHandler,
 		Camp:            campHandler,
 		Corner:          cornerHandler,
 		Track:           trackHandler,
