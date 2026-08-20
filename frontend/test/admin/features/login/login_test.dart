@@ -142,25 +142,20 @@ void main() {
 
       // act — 첫 롱프레스: 운영 → 데모.
       await tester.longPress(find.text('로그인 상태는 안전하게 유지됩니다.'));
+      await tester.pump();
 
-      // assert — 상태 전환은 즉시 반영되고, 스낵바 문구는 진입 애니메이션이 끝난 뒤 보인다.
+      // assert — 토스트 없이 상태만 즉시 반영된다(피드백은 DemoEnvironmentBanner가 대신함).
       final container = ProviderScope.containerOf(
         tester.element(find.byType(LoginScreen)),
       );
       expect(container.read(activeApiEnvironmentProvider), ApiEnvironment.demo);
-      await tester.pump(const Duration(milliseconds: 750));
-      expect(find.text('데모로 전환됨'), findsOneWidget);
 
-      // act — 두 번째 롱프레스: 데모 → 운영으로 되돌아간다. 첫 스낵바의 자동 소멸 타이머는
-      // (pumpAndSettle이 기다려주지 않는) 실제 Timer라서, 명시적으로 그 시간만큼 흘려보내야
-      // 두 번째 스낵바가 큐에 밀리지 않고 바로 뜬다.
-      await tester.pump(const Duration(seconds: 5));
+      // act — 두 번째 롱프레스: 데모 → 운영으로 되돌아간다.
       await tester.longPress(find.text('로그인 상태는 안전하게 유지됩니다.'));
+      await tester.pump();
 
-      // assert — 상태 전환은 즉시 반영되고, 스낵바 문구는 진입 애니메이션이 끝난 뒤 보인다.
+      // assert
       expect(container.read(activeApiEnvironmentProvider), ApiEnvironment.production);
-      await tester.pump(const Duration(milliseconds: 750));
-      expect(find.text('운영으로 전환됨'), findsOneWidget);
     },
   );
 }

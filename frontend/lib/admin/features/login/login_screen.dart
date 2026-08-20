@@ -32,19 +32,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   // 있던 하단 캡션 텍스트를 롱프레스하면 운영↔데모 서버가 토글된다. 로그인 자체는 기존
   // 흐름 그대로이고, 이후 요청이 어느 서버로 나가는지만 바뀐다 — 자세한 배경은
   // frontend/docs/artifacts/plan/20260820_앱스토어_심사용_데모환경_프론트_plan_.md.
+  //
+  // 전환 결과를 토스트로 따로 알리지 않는다 — 데모 환경으로 전환된 즉시
+  // DemoEnvironmentBanner(builder에 항상 떠 있음)가 나타나므로 그것으로 충분한 피드백이고,
+  // 토스트를 더하면 오히려 중복이었다.
   void _toggleApiEnvironment() {
     final notifier = ref.read(activeApiEnvironmentProvider.notifier);
     final next = ref.read(activeApiEnvironmentProvider) == ApiEnvironment.demo
         ? ApiEnvironment.production
         : ApiEnvironment.demo;
     notifier.switchTo(next);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          next == ApiEnvironment.demo ? '데모로 전환됨' : '운영으로 전환됨',
-        ),
-      ),
-    );
   }
 
   Future<void> _submit() async {
