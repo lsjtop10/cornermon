@@ -4,6 +4,11 @@ SELECT * FROM camps WHERE id = $1;
 -- name: GetCampByRegistrationCode :one
 SELECT * FROM camps WHERE registration_code = $1;
 
+-- name: GetCampByName :one
+-- App Store 심사용 데모 캠프를 이름으로 조회하기 위한 전용 쿼리 (DEMO_CAMP_NAME).
+-- name은 UNIQUE 제약이 없으므로 여러 행이 일치할 수 있어 LIMIT 1로 첫 번째만 취한다.
+SELECT * FROM camps WHERE name = $1 LIMIT 1;
+
 -- name: SaveCamp :exec
 INSERT INTO camps (id, name, start_at, end_at, activated_at, ended_at, status, bottleneck_min_samples, bottleneck_ratio_pct, registration_code)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
