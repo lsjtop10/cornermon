@@ -8,6 +8,13 @@ class AppEnv {
     defaultValue: 'http://localhost/api/v1',
   );
 
+  /// App Store 심사용 review 배포의 base URL. review 빌드에만 --dart-define으로 주입되고,
+  /// 그 외 빌드에서는 빈 문자열로 남는다 — 값이 없으면 데모 환경으로 전환해도 갈 곳이 없어
+  /// 사실상 no-op이 된다(운영 빌드에 review URL을 심을 이유가 없으므로 이게 정상 상태).
+  static const String demoApiBaseUrl = String.fromEnvironment(
+    'DEMO_API_BASE_URL',
+  );
+
   static const int apiConnectTimeoutMs = int.fromEnvironment(
     'API_CONNECT_TIMEOUT_MS',
     defaultValue: 5000,
