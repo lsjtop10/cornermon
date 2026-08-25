@@ -225,7 +225,7 @@ class _WizardFooter extends ConsumerWidget {
             : () async {
                 final completed = await notifier.submit();
                 if (completed && context.mounted) {
-                  context.go('/corner-track-manage');
+                  context.go('/dashboard');
                 }
               };
     }

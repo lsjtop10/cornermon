@@ -3,6 +3,7 @@ import 'package:cornermon/admin/session/selected_camp_provider.dart';
 import 'package:cornermon/shared/api/domain_aliases.dart' as api;
 import 'package:cornermon/shared/api/providers/badge_providers.dart';
 import 'package:cornermon/shared/api/providers/group_providers.dart';
+import 'package:cornermon/shared/design_system/tokens/spacing.dart';
 import 'package:cornermon/shared/design_system/widgets/app_button.dart';
 import 'package:cornermon/shared/design_system/widgets/empty_state.dart';
 import 'package:cornermon/shared/design_system/widgets/app_tag.dart';
@@ -126,7 +127,7 @@ class _BadgePrecreateScreenState extends ConsumerState<BadgePrecreateScreen> {
         title: const Text('QR 배지 관리'),
       ),
       body: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(AppSpacing.space6),
         child: badges.when(
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (error, _) => EmptyState(
@@ -148,7 +149,7 @@ class _BadgePrecreateScreenState extends ConsumerState<BadgePrecreateScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Wrap(
-                  spacing: 12,
+                  spacing: AppSpacing.space3,
                   crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
                     SizedBox(
@@ -177,12 +178,12 @@ class _BadgePrecreateScreenState extends ConsumerState<BadgePrecreateScreen> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: AppSpacing.space5),
                 Text(
                   '미배정 $unassigned장 · 배정됨 ${items.length - unassigned}장',
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: AppSpacing.space4),
                 Expanded(
                   child: items.isEmpty
                       ? const EmptyState(
@@ -212,6 +213,9 @@ class BadgeTable extends StatelessWidget {
       margin: EdgeInsets.zero,
       child: SingleChildScrollView(
         child: DataTable(
+          headingRowHeight: 48,
+          dataRowMinHeight: 48,
+          dataRowMaxHeight: 48,
           columns: const [
             DataColumn(label: Text('배지 ID')),
             DataColumn(label: Text('상태')),

@@ -3,13 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:cornermon/admin/features/admin_management/admin_management_screen.dart';
-import 'package:cornermon/admin/features/admin_stub_screen.dart';
 import 'package:cornermon/admin/features/login/login_screen.dart';
 import 'package:cornermon/admin/features/camp_list/camp_list_screen.dart';
 import 'package:cornermon/admin/features/badge_precreate/badge_precreate_screen.dart';
 import 'package:cornermon/admin/features/dashboard/dashboard_screen.dart';
 import 'package:cornermon/admin/features/corner_detail/corner_detail_screen.dart';
-import 'package:cornermon/admin/features/track_bulk_manage/track_bulk_manage_screen.dart';
 import 'package:cornermon/admin/features/group_list/group_list_screen.dart';
 import 'package:cornermon/admin/features/group_detail/group_detail_screen.dart';
 import 'package:cornermon/admin/features/setup_wizard/setup_wizard_screen.dart';
@@ -35,7 +33,6 @@ const _campIndependentLocations = {
 };
 const _preparingLocations = {
   '/dashboard',
-  '/corner-track-manage',
   '/groups',
   '/devices',
   '/settings',
@@ -52,7 +49,6 @@ final adminRouterProvider = Provider<GoRouter>((ref) {
       _route('/login', (_, _) => const LoginScreen()),
       _route('/setup-wizard', (_, _) => const SetupWizardScreen()),
       _route('/camps', (_, _) => const CampListScreen()),
-      _plainRoute('/camps/start', 'A0-e 코너학습 시작'),
       _route('/badges', (_, _) => const BadgePrecreateScreen()),
       _route('/admins', (_, _) => const AdminManagementScreen()),
       _route(
@@ -66,10 +62,6 @@ final adminRouterProvider = Provider<GoRouter>((ref) {
             cornerId: CornerId(state.pathParameters['cornerId']!),
           ),
         ),
-      ),
-      _route(
-        '/corner-track-manage',
-        (_, _) => const AdminScaffold(body: TrackBulkManageScreen()),
       ),
       _route('/groups', (_, _) => const AdminScaffold(body: GroupListScreen())),
       _route(
@@ -117,9 +109,6 @@ GoRoute _route(String path, _PageBuilder builder) => GoRoute(
   pageBuilder: (context, state) =>
       NoTransitionPage(key: state.pageKey, child: builder(context, state)),
 );
-
-GoRoute _plainRoute(String path, String title) =>
-    _route(path, (_, _) => AdminStubScreen(title: title));
 
 String? _redirect(Ref ref, String location) {
   if (ref.read(adminSessionProvider) is AdminSessionUnauthenticated) {

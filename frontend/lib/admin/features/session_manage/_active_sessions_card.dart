@@ -13,28 +13,18 @@ import 'package:cornermon/shared/design_system/tokens/typography.dart';
 import 'package:cornermon/shared/design_system/widgets/app_button.dart';
 import 'package:cornermon/shared/design_system/widgets/empty_state.dart';
 
-class ActiveSessionsCard extends ConsumerStatefulWidget {
+/// 잠긴 기기와 달리 활성 세션 자체는 "잘못된 상태"가 아니라 정상 운영 중인 진행자
+/// 목록이라, 잠긴 기기 섹션처럼 긴급 톤을 입히지 않는다 — 다만 그 아래 관리자 세션보다는
+/// 자주 확인할 목록이라 Card 무게는 유지한다. 목록에 이미 뜬 트랙을 그 자리에서 강제
+/// 로그아웃할 수 있으므로, ID를 직접 타이핑해 넣는 별도 입력창은 두지 않는다.
+class ActiveSessionsCard extends ConsumerWidget {
   const ActiveSessionsCard({required this.campId, super.key});
   final CampId campId;
 
-  @override
-  ConsumerState<ActiveSessionsCard> createState() => _ActiveSessionsCardState();
-}
-
-class _ActiveSessionsCardState extends ConsumerState<ActiveSessionsCard> {
-  final _manualTrackId = TextEditingController();
-
-  @override
-  void dispose() {
-    _manualTrackId.dispose();
-    super.dispose();
-  }
-
-  Future<void> _forceLogout(String trackId) async {
+  Future<void> _forceLogout(WidgetRef ref, String trackId) async {
     if (trackId.trim().isEmpty) return;
     await ref.read(forceLogoutTrackProvider(TrackId(trackId.trim())).future);
-    ref.invalidate(activeSessionListProvider(widget.campId));
-    if (mounted) _manualTrackId.clear();
+    ref.invalidate(activeSessionListProvider(campId));
   }
 
   String _trackLabel(String? trackId, List<api.Track> tracks) {
@@ -44,11 +34,11 @@ class _ActiveSessionsCardState extends ConsumerState<ActiveSessionsCard> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final colors = isDark ? AppColors.dark : AppColors.light;
-    final sessions = ref.watch(activeSessionListProvider(widget.campId));
-    final tracks = ref.watch(trackListProvider(widget.campId));
+    final sessions = ref.watch(activeSessionListProvider(campId));
+    final tracks = ref.watch(trackListProvider(campId));
 
     return Card(
       child: Padding(
@@ -57,7 +47,7 @@ class _ActiveSessionsCardState extends ConsumerState<ActiveSessionsCard> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              '② 활성 진행자 세션',
+              '활성 진행자 세션',
               style: AppTypography.title3.copyWith(color: colors.textPrimary),
             ),
             const SizedBox(height: AppSpacing.space3),
@@ -81,9 +71,8 @@ class _ActiveSessionsCardState extends ConsumerState<ActiveSessionsCard> {
                       variant: AppButtonVariant.secondary,
                       size: AppButtonSize.compact,
                       label: '재시도',
-                      onPressed: () => ref.invalidate(
-                        activeSessionListProvider(widget.campId),
-                      ),
+                      onPressed: () =>
+                          ref.invalidate(activeSessionListProvider(campId)),
                     ),
                   ],
                 );
@@ -120,7 +109,7 @@ class _ActiveSessionsCardState extends ConsumerState<ActiveSessionsCard> {
                               size: AppButtonSize.compact,
                               label: '강제 로그아웃',
                               onPressed: () =>
-                                  _forceLogout(session.trackId ?? ''),
+                                  _forceLogout(ref, session.trackId ?? ''),
                             ),
                           ],
                         ),
@@ -128,31 +117,6 @@ class _ActiveSessionsCardState extends ConsumerState<ActiveSessionsCard> {
                   ],
                 );
               },
-            ),
-            const Divider(height: AppSpacing.space6),
-            Text(
-              '트랙 ID로 직접 강제 로그아웃',
-              style: AppTypography.caption.copyWith(
-                color: colors.textSecondary,
-              ),
-            ),
-            const SizedBox(height: AppSpacing.space2),
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _manualTrackId,
-                    decoration: const InputDecoration(hintText: '트랙 ID'),
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.space2),
-                AppButton(
-                  variant: AppButtonVariant.secondary,
-                  size: AppButtonSize.compact,
-                  label: '강제 로그아웃',
-                  onPressed: () => _forceLogout(_manualTrackId.text),
-                ),
-              ],
             ),
           ],
         ),

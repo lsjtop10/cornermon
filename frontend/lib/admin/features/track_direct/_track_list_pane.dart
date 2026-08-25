@@ -8,7 +8,7 @@ import 'package:cornermon/shared/design_system/tokens/colors.dart';
 import 'package:cornermon/shared/design_system/tokens/typography.dart';
 import 'package:cornermon/shared/design_system/widgets/empty_state.dart';
 import 'package:cornermon/shared/widgets/local_time_label.dart';
-import 'track_direct_providers.dart';
+import 'package:cornermon/admin/features/track_direct/track_direct_providers.dart';
 
 class TrackListPane extends ConsumerWidget {
   const TrackListPane({required this.campId, super.key});

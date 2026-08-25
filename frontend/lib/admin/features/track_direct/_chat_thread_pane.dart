@@ -11,7 +11,7 @@ import 'package:cornermon/shared/design_system/tokens/typography.dart';
 import 'package:cornermon/shared/design_system/widgets/app_button.dart';
 import 'package:cornermon/shared/design_system/widgets/empty_state.dart';
 import 'package:cornermon/shared/widgets/local_time_label.dart';
-import 'track_direct_providers.dart';
+import 'package:cornermon/admin/features/track_direct/track_direct_providers.dart';
 
 class ChatThreadPane extends ConsumerStatefulWidget {
   const ChatThreadPane({

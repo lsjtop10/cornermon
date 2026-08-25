@@ -22,7 +22,7 @@ bool isConnectionLost(DioException error) => switch (error.type) {
 /// 클라이언트가 재생성 전이라 모르는 코드(백엔드가 새로 추가한 값 등)는 null로 취급해
 /// 호출부의 기본 분기를 타게 한다.
 /// DioException을 사람이 읽을 수 있는 단일 진단 문자열로 통일 포맷팅한다(#131).
-/// `login_error_provider.dart`/`setup_wizard_provider.dart`/`device_pending_screen.dart`
+/// `login/state/login_error_state.dart`/`setup_wizard/actions/setup_wizard_actions.dart`/`device_pending_screen.dart`
 /// 등이 각자 재구현하던 `type/statusCode/message/error` 추출을 대체한다.
 String describeDioError(DioException error) =>
     'DioException type=${error.type} statusCode=${error.response?.statusCode} '

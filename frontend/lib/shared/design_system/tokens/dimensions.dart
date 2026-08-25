@@ -3,12 +3,14 @@
 class AppDimensions {
   AppDimensions._();
 
-  static const double controlHeightCompact = 34.0;
+  // compact는 §design-system.md 3.2/7-3이 요구하는 관리자(iPad) 44×44pt 최소
+  // 터치 타겟에 맞춘다 — 예전 34pt는 그 기준에 미달했던 값(2026-08-21 수정).
+  static const double controlHeightCompact = 44.0;
   static const double controlHeightComfortable = 52.0;
 
   static const double controlRadiusCompact = 9.0;
   static const double controlRadiusComfortable = 12.0;
 
-  static const double iconButtonCompact = 34.0;
+  static const double iconButtonCompact = 44.0;
   static const double iconButtonComfortable = 38.0;
 }

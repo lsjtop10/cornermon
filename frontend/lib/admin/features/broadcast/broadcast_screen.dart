@@ -7,7 +7,7 @@ import 'package:cornermon/shared/design_system/widgets/empty_state.dart';
 import '_broadcast_history_list.dart';
 import '_broadcast_receipt_grid.dart';
 import '_new_broadcast_modal.dart';
-import 'broadcast_selection_provider.dart';
+import 'package:cornermon/admin/features/broadcast/broadcast_selection_provider.dart';
 
 class BroadcastScreen extends ConsumerWidget {
   const BroadcastScreen({super.key});

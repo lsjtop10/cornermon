@@ -11,7 +11,7 @@ import 'package:cornermon/shared/design_system/widgets/app_button.dart';
 import 'package:cornermon/shared/design_system/widgets/app_tag.dart';
 import 'package:cornermon/shared/design_system/widgets/confirm_modal.dart';
 import 'package:cornermon/shared/logging/app_logger.dart';
-import '_admin_management_connection_state.dart';
+import 'package:cornermon/admin/features/admin_management/_admin_management_connection_state.dart';
 
 /// SYSTEM_ADMIN 전용 관리자 목록의 행. 본인 행은 삭제 버튼을 노출하지 않는다 — 본인
 /// 탈퇴는 아래 [_MyAccountCard]에서 별도로 처리하며(백엔드는 SYSTEM_ADMIN 본인 삭제를

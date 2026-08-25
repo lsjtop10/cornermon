@@ -39,41 +39,46 @@ void main() {
   final campId = CampId('camp-1');
 
   group('SessionManageScreen', () {
-    testWidgets(
-      'ShouldShowNotImplementedMessageWhenLockedDevicesReturns501',
-      (tester) async {
-        // arrange / act
-        await _pump(
-          tester,
-          campId: campId,
-          extraOverrides: [
-            lockedDeviceListProvider(campId).overrideWith(
-              (ref) async => throw const NotImplementedException('locked-devices'),
-            ),
-            activeSessionListProvider(campId).overrideWith((ref) async => []),
-            trackListProvider(campId).overrideWith((ref) async => []),
-            adminSessionListProvider.overrideWith((ref) async => []),
-          ],
-        );
-
-        // assert
-        expect(
-          find.text('기기 잠금 조회는 백엔드 배포 후 제공됩니다(Issue #70)'),
-          findsOneWidget,
-        );
-      },
-    );
-
-    testWidgets('ShouldReleaseLockoutWhenManualDeviceIdSubmitted', (
+    testWidgets('ShouldShowNotImplementedMessageWhenLockedDevicesReturns501', (
       tester,
     ) async {
-      // arrange
+      // arrange / act
+      await _pump(
+        tester,
+        campId: campId,
+        extraOverrides: [
+          lockedDeviceListProvider(campId).overrideWith(
+            (ref) async =>
+                throw const NotImplementedException('locked-devices'),
+          ),
+          activeSessionListProvider(campId).overrideWith((ref) async => []),
+          trackListProvider(campId).overrideWith((ref) async => []),
+          adminSessionListProvider.overrideWith((ref) async => []),
+        ],
+      );
+
+      // assert
+      expect(find.text('기기 잠금 조회는 백엔드 배포 후 제공됩니다(Issue #70)'), findsOneWidget);
+    });
+
+    testWidgets('ShouldReleaseLockoutWhenReleaseButtonTapped', (tester) async {
+      // arrange: ID를 직접 입력하는 경로는 없다 — 목록에 뜬 기기를 그 자리에서
+      // 해제하는 버튼만 있다.
       String? releasedDeviceId;
       await _pump(
         tester,
         campId: campId,
         extraOverrides: [
-          lockedDeviceListProvider(campId).overrideWith((ref) async => []),
+          lockedDeviceListProvider(campId).overrideWith(
+            (ref) async => [
+              DeviceRegistrationResponse(
+                (b) => b
+                  ..id = 'device-99'
+                  ..deviceName = '테스트 기기'
+                  ..failedPinAttempts = 5,
+              ),
+            ],
+          ),
           activeSessionListProvider(campId).overrideWith((ref) async => []),
           trackListProvider(campId).overrideWith((ref) async => []),
           adminSessionListProvider.overrideWith((ref) async => []),
@@ -84,23 +89,27 @@ void main() {
       );
 
       // act
-      await tester.enterText(find.widgetWithText(TextField, '기기 ID'), 'device-99');
-      await tester.tap(find.text('해제 실행'));
+      await tester.tap(find.text('잠금 해제'));
       await tester.pumpAndSettle();
 
       // assert
       expect(releasedDeviceId, 'device-99');
     });
 
-    testWidgets('ShouldForceLogoutWhenManualTrackIdSubmitted', (tester) async {
-      // arrange
+    testWidgets('ShouldForceLogoutWhenForceLogoutButtonTapped', (tester) async {
+      // arrange: ID를 직접 입력하는 경로는 없다 — 목록에 뜬 세션을 그 자리에서
+      // 강제 로그아웃하는 버튼만 있다.
       TrackId? loggedOutTrackId;
       await _pump(
         tester,
         campId: campId,
         extraOverrides: [
           lockedDeviceListProvider(campId).overrideWith((ref) async => []),
-          activeSessionListProvider(campId).overrideWith((ref) async => []),
+          activeSessionListProvider(campId).overrideWith(
+            (ref) async => [
+              FacilitatorSessionResponse((b) => b..trackId = 'track-7'),
+            ],
+          ),
           trackListProvider(campId).overrideWith((ref) async => []),
           adminSessionListProvider.overrideWith((ref) async => []),
           forceLogoutTrackProvider(TrackId('track-7')).overrideWith((
@@ -114,7 +123,6 @@ void main() {
       // act
       await tester.drag(find.byType(ListView), const Offset(0, -400));
       await tester.pumpAndSettle();
-      await tester.enterText(find.widgetWithText(TextField, '트랙 ID'), 'track-7');
       await tester.tap(find.text('강제 로그아웃').last);
       await tester.pumpAndSettle();
 
@@ -122,48 +130,47 @@ void main() {
       expect(loggedOutTrackId?.value, 'track-7');
     });
 
-    testWidgets(
-      'ShouldRequireConfirmationBeforeRevokingAdminSession',
-      (tester) async {
-        // arrange
-        var revokeCalls = 0;
-        await _pump(
-          tester,
-          campId: campId,
-          extraOverrides: [
-            lockedDeviceListProvider(campId).overrideWith((ref) async => []),
-            activeSessionListProvider(campId).overrideWith((ref) async => []),
-            trackListProvider(campId).overrideWith((ref) async => []),
-            adminSessionListProvider.overrideWith(
-              (ref) async => [
-                AdminSessionResponse(
-                  (b) => b
-                    ..id = 'sess-1'
-                    ..adminId = 'admin-1'
-                    ..deviceInfo = 'iPad #1'
-                    ..createdAt = DateTime(2026, 1, 1)
-                    ..lastUsedAt = DateTime(2026, 1, 2),
-                ),
-              ],
-            ),
-            revokeAdminSessionProvider('sess-1').overrideWith((ref) async {
-              revokeCalls++;
-            }),
-          ],
-        );
+    testWidgets('ShouldRequireConfirmationBeforeRevokingAdminSession', (
+      tester,
+    ) async {
+      // arrange
+      var revokeCalls = 0;
+      await _pump(
+        tester,
+        campId: campId,
+        extraOverrides: [
+          lockedDeviceListProvider(campId).overrideWith((ref) async => []),
+          activeSessionListProvider(campId).overrideWith((ref) async => []),
+          trackListProvider(campId).overrideWith((ref) async => []),
+          adminSessionListProvider.overrideWith(
+            (ref) async => [
+              AdminSessionResponse(
+                (b) => b
+                  ..id = 'sess-1'
+                  ..adminId = 'admin-1'
+                  ..deviceInfo = 'iPad #1'
+                  ..createdAt = DateTime(2026, 1, 1)
+                  ..lastUsedAt = DateTime(2026, 1, 2),
+              ),
+            ],
+          ),
+          revokeAdminSessionProvider('sess-1').overrideWith((ref) async {
+            revokeCalls++;
+          }),
+        ],
+      );
 
-        // act: tap then cancel
-        await tester.drag(find.byType(ListView), const Offset(0, -800));
-        await tester.pumpAndSettle();
-        await tester.tap(find.text('세션 종료'));
-        await tester.pumpAndSettle();
-        expect(find.text('현재 세션을 종료하면 즉시 로그아웃됩니다'), findsOneWidget);
-        await tester.tap(find.text('취소'));
-        await tester.pumpAndSettle();
+      // act: tap then cancel
+      await tester.drag(find.byType(ListView), const Offset(0, -800));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('세션 종료'));
+      await tester.pumpAndSettle();
+      expect(find.text('현재 세션을 종료하면 즉시 로그아웃됩니다'), findsOneWidget);
+      await tester.tap(find.text('취소'));
+      await tester.pumpAndSettle();
 
-        // assert
-        expect(revokeCalls, 0);
-      },
-    );
+      // assert
+      expect(revokeCalls, 0);
+    });
   });
 }

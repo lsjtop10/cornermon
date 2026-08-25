@@ -2,7 +2,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:cornermon/admin/session/selected_camp_provider.dart';
-import 'report_view_provider.dart';
+import 'package:cornermon/admin/features/report/report_view_provider.dart';
 import 'widgets/report_empty_state.dart';
 import 'widgets/report_tabs.dart';
 

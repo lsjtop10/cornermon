@@ -40,7 +40,7 @@ class GroupDetailScreen extends ConsumerWidget {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, _) => Center(child: Text('조를 불러오지 못했습니다.\n$error')),
         data: (value) => ListView(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(AppSpacing.space6),
           children: [
             _GroupSummaryHeader(group: value),
             const SizedBox(height: AppSpacing.space6),
@@ -96,7 +96,7 @@ class GroupDetailScreen extends ConsumerWidget {
             ),
             visits.when(
               loading: () => const Padding(
-                padding: EdgeInsets.all(24),
+                padding: EdgeInsets.all(AppSpacing.space6),
                 child: Center(child: CircularProgressIndicator()),
               ),
               error: (error, _) => Text('방문 이력을 불러오지 못했습니다.\n$error'),
@@ -114,10 +114,13 @@ class GroupDetailScreen extends ConsumerWidget {
                   );
                 return Card(
                   clipBehavior: Clip.antiAlias,
-                  margin: const EdgeInsets.only(top: 8),
+                  margin: const EdgeInsets.only(top: AppSpacing.space2),
                   child: SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     child: DataTable(
+                      headingRowHeight: 48,
+                      dataRowMinHeight: 48,
+                      dataRowMaxHeight: 48,
                       columns: const [
                         DataColumn(label: Text('코너')),
                         DataColumn(label: Text('트랙')),

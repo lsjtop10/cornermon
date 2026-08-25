@@ -8,7 +8,7 @@ import 'package:cornermon/shared/design_system/widgets/app_button.dart';
 import 'package:cornermon/shared/design_system/widgets/connection_banner.dart';
 import 'package:cornermon/shared/design_system/widgets/empty_state.dart';
 import '_admin_list_tile.dart';
-import '_admin_management_connection_state.dart';
+import 'package:cornermon/admin/features/admin_management/_admin_management_connection_state.dart';
 import '_create_admin_dialog.dart';
 import '_my_account_card.dart';
 

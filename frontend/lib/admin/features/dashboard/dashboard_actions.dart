@@ -1,10 +1,14 @@
+import 'package:cornermon/admin/features/dashboard/_dashboard_connection_state.dart';
 import 'package:cornermon/admin/features/dashboard/dashboard_entries.dart';
+import 'package:cornermon/shared/api/dio_error.dart';
 import 'package:cornermon/shared/api/ids.dart';
 import 'package:cornermon/shared/api/providers/corner_track_providers.dart';
 import 'package:cornermon/shared/design_system/tokens/colors.dart';
+import 'package:cornermon/shared/design_system/tokens/spacing.dart';
 import 'package:cornermon/shared/design_system/tokens/typography.dart';
 import 'package:cornermon/shared/design_system/widgets/app_button.dart';
 import 'package:cornermon/shared/design_system/widgets/confirm_modal.dart';
+import 'package:dio/dio.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -45,7 +49,7 @@ Future<void> showAddCornerDialog(
               autofocus: true,
               decoration: const InputDecoration(labelText: '코너 이름'),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.space3),
             TextField(
               controller: minutesController,
               keyboardType: TextInputType.number,
@@ -72,10 +76,23 @@ Future<void> showAddCornerDialog(
   final name = nameController.text.trim();
   final minutes = int.tryParse(minutesController.text) ?? 10;
   if (name.isEmpty) return;
-  await runAction(
-    () => ref.read(createCornerProvider(campId, name, minutes).future),
-  );
-  ref.invalidate(cornerListProvider(campId));
+  try {
+    await runAction(
+      () => ref.read(createCornerProvider(campId, name, minutes).future),
+    );
+    ref.invalidate(cornerListProvider(campId));
+    ref.read(dashboardConnectionLostProvider.notifier).set(false);
+  } on DioException catch (error) {
+    // DioException은 LoggingInterceptor(#131)가 네트워크 계층에서 이미 기록한다 —
+    // 커넥션 유실(dio_error.dart:isConnectionLost)만 상단 배너로, 그 외는 SnackBar로.
+    if (isConnectionLost(error)) {
+      ref.read(dashboardConnectionLostProvider.notifier).set(true);
+    } else if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('코너 추가에 실패했습니다. 잠시 후 다시 시도해주세요.')),
+      );
+    }
+  }
 }
 
 Future<void> deleteCorner(
@@ -105,6 +122,15 @@ Future<void> deleteCorner(
       () => ref.read(deleteCornerProvider(CornerId(entry.corner.id!)).future),
     );
     ref.invalidate(cornerListProvider(campId));
+    ref.read(dashboardConnectionLostProvider.notifier).set(false);
+  } on DioException catch (error) {
+    if (isConnectionLost(error)) {
+      ref.read(dashboardConnectionLostProvider.notifier).set(true);
+    } else if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('코너 삭제에 실패했습니다. 잠시 후 다시 시도해주세요.')),
+      );
+    }
   } catch (_) {
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(

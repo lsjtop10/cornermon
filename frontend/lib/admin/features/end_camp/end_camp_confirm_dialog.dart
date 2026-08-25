@@ -11,6 +11,7 @@ import 'package:cornermon/shared/design_system/tokens/colors.dart';
 import 'package:cornermon/shared/design_system/tokens/spacing.dart';
 import 'package:cornermon/shared/design_system/tokens/typography.dart';
 import 'package:cornermon/shared/design_system/widgets/app_button.dart';
+import 'package:cornermon/shared/design_system/widgets/confirm_modal.dart';
 import 'package:cornermon/shared/logging/app_logger.dart';
 
 /// POST end-camp 실패를 사용자 문구로 변환한다(camp_handler.go EndCamp 참고).
@@ -83,22 +84,10 @@ class _EndCampConfirmDialogState extends ConsumerState<EndCampConfirmDialog> {
         ? AppColors.dark
         : AppColors.light;
     final summary = ref.watch(liveSummaryProvider(widget.campId));
-    return AlertDialog(
-      backgroundColor: colors.bgSurfaceRaised,
+    return ConfirmModalShell(
+      kind: ConfirmModalKind.softConfirm,
+      title: '코너학습을 종료할까요?',
       constraints: const BoxConstraints(minWidth: 480, maxWidth: 640),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      title: Row(
-        children: [
-          Icon(Icons.warning_amber_rounded, color: colors.warning, size: 28),
-          const SizedBox(width: AppSpacing.space3),
-          Expanded(
-            child: Text(
-              '코너학습을 종료할까요?',
-              style: AppTypography.title3.copyWith(color: colors.textPrimary),
-            ),
-          ),
-        ],
-      ),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,

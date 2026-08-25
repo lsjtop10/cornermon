@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 
 import 'package:cornermon/shared/api/domain_aliases.dart' as api;
 import 'package:cornermon/shared/design_system/tokens/colors.dart';
+import 'package:cornermon/shared/design_system/tokens/spacing.dart';
 import 'package:cornermon/shared/design_system/tokens/typography.dart';
 
 /// 요약 탭 하위 섹션 — 운영/보안 지표(analytics-model.md §1.6). `exceptionApprovalCount`는
@@ -27,7 +28,7 @@ class OperationalStatsSection extends StatelessWidget {
           '운영/보안 지표',
           style: AppTypography.title3.copyWith(color: colors.textPrimary),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSpacing.space3),
         Row(
           children: [
             Expanded(
@@ -37,7 +38,7 @@ class OperationalStatsSection extends StatelessWidget {
                     '${stats.pinLoginSuccessCount ?? 0} / ${stats.pinLoginFailureCount ?? 0}',
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppSpacing.space3),
             Expanded(
               child: _CountCard(
                 label: '기기 등록 요청',
@@ -46,7 +47,7 @@ class OperationalStatsSection extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSpacing.space3),
         Row(
           children: [
             Expanded(
@@ -56,7 +57,7 @@ class OperationalStatsSection extends StatelessWidget {
                     '${stats.deviceApprovedCount ?? 0} / ${stats.deviceRejectedCount ?? 0}',
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppSpacing.space3),
             Expanded(
               child: _CountCard(
                 label: '기기 등록 회수',
@@ -66,16 +67,16 @@ class OperationalStatsSection extends StatelessWidget {
           ],
         ),
         if (adminOps.isNotEmpty) ...[
-          const SizedBox(height: 20),
+          const SizedBox(height: AppSpacing.space5),
           _SubsectionTitle('관리자별 조작 횟수', colors),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.space2),
           for (final op in adminOps)
             _KeyValueRow(label: op.adminName ?? '관리자', value: '${op.count ?? 0}건'),
         ],
         if (trackMessages.isNotEmpty) ...[
-          const SizedBox(height: 20),
+          const SizedBox(height: AppSpacing.space5),
           _SubsectionTitle('트랙별 다이렉트 메시지 발신 횟수', colors),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.space2),
           for (final msg in trackMessages)
             _KeyValueRow(
               label: msg.trackLabel ?? '트랙',
@@ -83,9 +84,9 @@ class OperationalStatsSection extends StatelessWidget {
             ),
         ],
         if (announcementReads.isNotEmpty) ...[
-          const SizedBox(height: 20),
+          const SizedBox(height: AppSpacing.space5),
           _SubsectionTitle('공지별 읽음 도달률', colors),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.space2),
           for (final read in announcementReads)
             _KeyValueRow(
               label: read.announcementContent ?? '공지',
@@ -122,7 +123,7 @@ class _KeyValueRow extends StatelessWidget {
         ? AppColors.dark
         : AppColors.light;
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.space1),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -133,7 +134,7 @@ class _KeyValueRow extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppSpacing.space3),
           Text(
             value,
             style: AppTypography.bodyEmphasis.copyWith(color: colors.textSecondary),
@@ -156,7 +157,10 @@ class _CountCard extends StatelessWidget {
         : AppColors.light;
     return Card(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.space4,
+          vertical: AppSpacing.space3,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -164,7 +168,7 @@ class _CountCard extends StatelessWidget {
               label,
               style: AppTypography.label.copyWith(color: colors.textSecondary),
             ),
-            const SizedBox(height: 2),
+            const SizedBox(height: AppSpacing.space1),
             Text(
               value,
               style: AppTypography.title2.copyWith(color: colors.textPrimary),

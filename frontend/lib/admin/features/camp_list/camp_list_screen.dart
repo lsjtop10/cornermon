@@ -5,6 +5,7 @@ import 'package:cornermon/shared/api/dio_error.dart';
 import 'package:cornermon/shared/api/domain_aliases.dart' as api;
 import 'package:cornermon/shared/api/ids.dart';
 import 'package:cornermon/shared/api/providers/camp_providers.dart';
+import 'package:cornermon/shared/design_system/tokens/spacing.dart';
 import 'package:cornermon/shared/design_system/widgets/app_button.dart';
 import 'package:cornermon/shared/design_system/widgets/confirm_modal.dart';
 import 'package:cornermon/shared/design_system/widgets/empty_state.dart';
@@ -23,19 +24,31 @@ class CampListScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('캠프 목록'),
+        // 3단 위계: 계정 관리(아이콘) < QR 배지 관리/새 캠프 시작(1차 버튼 2개) < 로그아웃(아이콘) —
+        // QR 배지 관리는 캠프를 정하기도 전에 하는 핵심 준비 작업(screen-spec-admin.md
+        // A0-d)이라, "관리자 계정 관리"와 묶여 톱니바퀴 메뉴 뒤에 있으면 처음 쓰는
+        // 관리자에게는 계정 설정 정도로만 읽힌다 — "새 캠프 시작"과 동급으로 승격한다
+        // (critique frontend-lib-admin 2026-08-25 P2 참고).
         actions: [
-          TextButton.icon(
-            onPressed: () => context.push('/admins'),
-            icon: const Icon(Icons.admin_panel_settings_outlined),
-            label: const Text('관리자 계정 관리'),
+          Tooltip(
+            message: '관리자 계정 관리',
+            child: AppButton(
+              variant: AppButtonVariant.iconOnly,
+              size: AppButtonSize.compact,
+              icon: Icons.admin_panel_settings_outlined,
+              label: '관리자 계정 관리',
+              onPressed: () => context.push('/admins'),
+            ),
           ),
-          const SizedBox(width: 8),
-          TextButton.icon(
+          const SizedBox(width: AppSpacing.space3),
+          AppButton(
+            variant: AppButtonVariant.secondary,
+            size: AppButtonSize.compact,
+            icon: Icons.qr_code_2_outlined,
+            label: 'QR 배지 관리',
             onPressed: () => context.go('/badges'),
-            icon: const Icon(Icons.qr_code),
-            label: const Text('QR 배지 관리'),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppSpacing.space3),
           AppButton(
             variant: AppButtonVariant.primary,
             size: AppButtonSize.compact,
@@ -43,13 +56,18 @@ class CampListScreen extends ConsumerWidget {
             label: '새 캠프 시작',
             onPressed: () => context.go('/setup-wizard'),
           ),
-          const SizedBox(width: 8),
-          TextButton.icon(
-            onPressed: () => _confirmLogout(context, ref),
-            icon: const Icon(Icons.logout),
-            label: const Text('로그아웃'),
+          const SizedBox(width: AppSpacing.space4),
+          Tooltip(
+            message: '로그아웃',
+            child: AppButton(
+              variant: AppButtonVariant.iconOnly,
+              size: AppButtonSize.compact,
+              icon: Icons.logout,
+              label: '로그아웃',
+              onPressed: () => _confirmLogout(context, ref),
+            ),
           ),
-          const SizedBox(width: 18),
+          const SizedBox(width: AppSpacing.space5),
         ],
       ),
       body: camps.when(
@@ -73,7 +91,7 @@ class CampListScreen extends ConsumerWidget {
           }
 
           return ListView(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(AppSpacing.space6),
             children: [
               CampSection(
                 status: api.CampStatus.ACTIVE,
@@ -133,15 +151,15 @@ class CampSection extends StatelessWidget {
       _ => '',
     };
     return Padding(
-      padding: const EdgeInsets.only(bottom: 28),
+      padding: const EdgeInsets.only(bottom: AppSpacing.space6),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(title, style: Theme.of(context).textTheme.titleLarge),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.space3),
           Wrap(
-            spacing: 12,
-            runSpacing: 12,
+            spacing: AppSpacing.space3,
+            runSpacing: AppSpacing.space3,
             children: [for (final camp in camps) CampCard(camp: camp)],
           ),
         ],
@@ -161,11 +179,9 @@ class CampCard extends ConsumerWidget {
         : camp.isPending
         ? '준비 중'
         : '종료됨';
-    final destination = camp.isActive
-        ? '/dashboard'
-        : camp.isPending
-        ? '/corner-track-manage'
-        : '/report';
+    // PENDING/ACTIVE 모두 대시보드 하나로 들어간다 — 카드형/트랙별 뷰는 그 안의 토글일
+    // 뿐 별도 경로가 아니다(critique frontend-lib-admin 2026-08-25 후속 반영).
+    final destination = camp.isEnded ? '/report' : '/dashboard';
     final dates = [camp.startAt, camp.endAt]
         .whereType<DateTime>()
         .map(
@@ -186,7 +202,7 @@ class CampCard extends ConsumerWidget {
             context.go(destination);
           },
           child: Padding(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(AppSpacing.space5),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -198,13 +214,13 @@ class CampCard extends ConsumerWidget {
                       ? AppTagTone.warning
                       : AppTagTone.neutral,
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: AppSpacing.space3),
                 Text(
                   camp.name ?? '이름 없는 캠프',
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
                 if (dates.isNotEmpty) ...[
-                  const SizedBox(height: 8),
+                  const SizedBox(height: AppSpacing.space2),
                   Text(dates),
                 ],
               ],

@@ -13,7 +13,7 @@ import 'package:cornermon/shared/design_system/tokens/typography.dart';
 import 'package:cornermon/shared/design_system/widgets/app_button.dart';
 import 'package:cornermon/shared/design_system/widgets/confirm_modal.dart';
 import 'package:cornermon/shared/logging/app_logger.dart';
-import '_admin_management_connection_state.dart';
+import 'package:cornermon/admin/features/admin_management/_admin_management_connection_state.dart';
 
 /// 로그인한 관리자 본인의 비밀번호 변경과, CORNER_OPERATOR인 경우의 본인 탈퇴를
 /// 담당한다. SYSTEM_ADMIN은 본인 탈퇴가 항상 금지되므로(마지막 시스템 관리자 보호와

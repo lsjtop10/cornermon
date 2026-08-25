@@ -3,6 +3,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:cornermon/shared/api/providers/auth_device_trust_providers.dart';
+import 'package:cornermon/shared/design_system/tokens/spacing.dart';
 import 'package:cornermon/shared/design_system/widgets/app_button.dart';
 
 class CreateAdminDialog extends ConsumerStatefulWidget {
@@ -71,7 +72,7 @@ class _CreateAdminDialogState extends ConsumerState<CreateAdminDialog> {
               onChanged: (_) => setState(() {}),
               decoration: const InputDecoration(labelText: '아이디'),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.space3),
             TextField(
               controller: _password,
               enabled: !_busy,
@@ -81,7 +82,7 @@ class _CreateAdminDialogState extends ConsumerState<CreateAdminDialog> {
               decoration: const InputDecoration(labelText: '초기 비밀번호'),
             ),
             if (_errorText != null) ...[
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSpacing.space2),
               Text(
                 _errorText!,
                 style: TextStyle(color: Theme.of(context).colorScheme.error),

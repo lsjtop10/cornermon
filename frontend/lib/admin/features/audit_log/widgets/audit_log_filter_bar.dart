@@ -9,10 +9,10 @@ import 'package:cornermon/shared/design_system/tokens/typography.dart';
 import 'package:cornermon/shared/design_system/widgets/app_button.dart';
 import 'package:cornermon/shared/design_system/widgets/app_dropdown.dart';
 
-import '../audit_log_action_labels.dart';
-import '../audit_log_filter_state.dart';
-import '../audit_log_known_actions.dart';
-import '../audit_log_page_notifier.dart';
+import 'package:cornermon/admin/features/audit_log/audit_log_action_labels.dart';
+import 'package:cornermon/admin/features/audit_log/audit_log_filter_state.dart';
+import 'package:cornermon/admin/features/audit_log/audit_log_known_actions.dart';
+import 'package:cornermon/admin/features/audit_log/audit_log_page_notifier.dart';
 
 const _actorDebounce = Duration(milliseconds: 300);
 

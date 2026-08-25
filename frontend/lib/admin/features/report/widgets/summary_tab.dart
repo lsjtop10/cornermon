@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 
 import 'package:cornermon/shared/api/domain_aliases.dart' as api;
 import 'package:cornermon/shared/design_system/tokens/colors.dart';
+import 'package:cornermon/shared/design_system/tokens/spacing.dart';
 import 'package:cornermon/shared/design_system/tokens/typography.dart';
 import 'package:cornermon/shared/util/duration_format.dart';
 import 'bottleneck_top3.dart';
@@ -46,41 +47,45 @@ class ReportSummaryTab extends StatelessWidget {
       ),
     );
 
+    // 페이지 여백은 §design-system.md 3.2 관리자 그리드 마진(24pt)을 그대로 쓰되,
+    // 탭 안에서 이어지는 5개 섹션 사이 간격은 space6(24pt)로 통일해 32pt이던 이전
+    // 간격보다 조밀하게 붙인다 — 태블릿 가로 화면에서 스크롤 없이 더 많은 섹션이
+    // 한눈에 들어오게 하는 밀도 우선 원칙(§0-1)의 적용.
     return ListView(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(AppSpacing.space6),
       children: [
         Row(
           children: [
             Expanded(
               child: _SummaryCard(label: '완주율', value: '$completionRatePct%'),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppSpacing.space3),
             Expanded(
               child: _SummaryCard(
                 label: '평균편차',
                 value: formatSignedMmSs(summary.avgDeviationSeconds ?? 0),
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppSpacing.space3),
             Expanded(
               child: _SummaryCard(label: '수동 처리 비율', value: '$manualRatioPct%'),
             ),
           ],
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: AppSpacing.space6),
         Text(
           '코너별 병목 랭킹 Top3',
           style: AppTypography.title3.copyWith(color: colors.textPrimary),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSpacing.space3),
         BottleneckTop3(ranking: ranking),
-        const SizedBox(height: 32),
+        const SizedBox(height: AppSpacing.space6),
         TrackStatsSection(
           trackStats: report.trackStats?.toList() ?? const <api.TrackStats>[],
         ),
-        const SizedBox(height: 32),
+        const SizedBox(height: AppSpacing.space6),
         TimelineSection(timeline: report.timeline ?? api.TimelineStats((b) {})),
-        const SizedBox(height: 32),
+        const SizedBox(height: AppSpacing.space6),
         OperationalStatsSection(
           stats: report.operationalStats ?? api.OperationalStats((b) {}),
         ),
@@ -101,7 +106,10 @@ class _SummaryCard extends StatelessWidget {
         : AppColors.light;
     return Card(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.space4,
+          vertical: AppSpacing.space3,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -109,7 +117,7 @@ class _SummaryCard extends StatelessWidget {
               label,
               style: AppTypography.label.copyWith(color: colors.textSecondary),
             ),
-            const SizedBox(height: 2),
+            const SizedBox(height: AppSpacing.space1),
             Text(
               value,
               style: AppTypography.display.copyWith(color: colors.textPrimary),
