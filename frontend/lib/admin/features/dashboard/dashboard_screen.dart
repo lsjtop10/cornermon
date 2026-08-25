@@ -200,20 +200,25 @@ class DashboardScreen extends ConsumerWidget {
                         // 카드 하나가 ~150px로 짓눌리고, 카드 내부는 이미 1줄+말줄임표로
                         // 고정돼 있어(위 CornerStatusCard 주석) 결과가 대부분 잘려
                         // 보였다(#241). 폭이 좁을 땐 1열로 펴서 각 카드가 거의 전체
-                        // 폭을 쓰게 한다.
+                        // 폭을 쓴다 — 그래도 "활성 N트랙 중 M 진행중 · 목표 N분"처럼
+                        // 동적으로 길어지는 줄은 여전히 잘렸어서(#241 후속), 전체 폭에서도
+                        // 2줄까지 허용하고 그만큼 카드를 더 키운다
+                        // (_cornerCardExtentFor 참고).
                         gridDelegate: context.isPhoneWidth
-                            ? const SliverGridDelegateWithFixedCrossAxisCount(
+                            ? SliverGridDelegateWithFixedCrossAxisCount(
                                 crossAxisCount: 1,
-                                mainAxisExtent: 242,
+                                mainAxisExtent: _cornerCardExtent(phone: true),
                                 crossAxisSpacing: AppSpacing.space3,
                                 mainAxisSpacing: AppSpacing.space3,
                               )
-                            : const SliverGridDelegateWithMaxCrossAxisExtent(
+                            : SliverGridDelegateWithMaxCrossAxisExtent(
                                 maxCrossAxisExtent: 260,
                                 // 카드 헤더 행의 삭제 아이콘 버튼이 컴팩트 컨트롤 표준
                                 // (AppDimensions.iconButtonCompact, 44pt)만큼 높이를
                                 // 차지하므로 220pt 기준값 + 그 여유분(22pt)을 더한다.
-                                mainAxisExtent: 242,
+                                mainAxisExtent: _cornerCardExtent(
+                                  phone: false,
+                                ),
                                 crossAxisSpacing: AppSpacing.space3,
                                 mainAxisSpacing: AppSpacing.space3,
                               ),
@@ -584,6 +589,10 @@ class CornerStatusCard extends StatelessWidget {
     final busyTrackCount = tracks
         .where((track) => track.operationalStatus?.name == 'BUSY')
         .length;
+    // 태블릿/PC 폭 카드는 1줄 고정이지만, 스마트폰 폭은 전체 화면을 다 써도
+    // "활성 N트랙 중 M 진행중 · 목표 N분"류 동적 텍스트가 여전히 잘렸다(#241 후속) —
+    // 2줄까지 허용하고 카드 높이(_cornerCardExtent)도 그만큼 키운다.
+    final captionMaxLines = context.isPhoneWidth ? 2 : 1;
     return Card(
       clipBehavior: Clip.antiAlias,
       child: InkWell(
@@ -667,9 +676,9 @@ class CornerStatusCard extends StatelessWidget {
               const SizedBox(height: AppSpacing.space1),
               Text(
                 '활성 ${tracks.length}트랙 중 $busyTrackCount 진행중 · 목표 ${entry.corner.targetMinutes ?? 0}분',
-                // 이 카드는 GridView mainAxisExtent(242)로 높이가 고정돼 있어, 값이 커져
-                // 줄바꿈되면 RenderFlex overflow로 크래시한다 — 1줄로 고정해 방지한다.
-                maxLines: 1,
+                // GridView mainAxisExtent(_cornerCardExtent)가 이 줄 수 기준으로 잡혀
+                // 있어 카드 높이가 고정된 채로도 오버플로하지 않는다.
+                maxLines: captionMaxLines,
                 overflow: TextOverflow.ellipsis,
                 style: AppTypography.caption.copyWith(
                   color: colors.textSecondary,
@@ -681,7 +690,7 @@ class CornerStatusCard extends StatelessWidget {
                   sampleCount: metric?.sampleCount ?? 0,
                   avgDeviationSeconds: entry.avgDeviationSeconds,
                 ),
-                maxLines: 1,
+                maxLines: captionMaxLines,
                 overflow: TextOverflow.ellipsis,
                 style: AppTypography.caption.copyWith(
                   color: entry.corner.isBottleneck ?? false
@@ -715,6 +724,13 @@ class CornerStatusCard extends StatelessWidget {
   }
 }
 
+// 태블릿/PC는 1줄 고정 기준값(220pt+아이콘 버튼 여유 22pt), 스마트폰은 "활성 N트랙
+// 중 M 진행중 · 목표 N분"류 동적 텍스트 2줄까지 허용하는 만큼(캡션 2줄 몫 42px)
+// 더 키운다 — 실제 카드(CornerStatusCard)·로딩 스켈레톤(_CornerGridSkeleton)이
+// 반드시 같은 값을 쓰도록 한 곳에 둔다(스켈레톤만 따로 242로 고정해뒀다가 로딩
+// 완료 후 스마트폰 폭에서 레이아웃이 튀었던 문제, #241 후속).
+double _cornerCardExtent({required bool phone}) => phone ? 288 : 242;
+
 class _CornerGridSkeleton extends StatelessWidget {
   const _CornerGridSkeleton();
 
@@ -726,12 +742,20 @@ class _CornerGridSkeleton extends StatelessWidget {
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-        maxCrossAxisExtent: 260,
-        mainAxisExtent: 242, // 로딩 완료 후 카드 그리드와 동일 높이(레이아웃 점프 방지)
-        crossAxisSpacing: AppSpacing.space3,
-        mainAxisSpacing: AppSpacing.space3,
-      ),
+      gridDelegate: context.isPhoneWidth
+          ? SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 1,
+              mainAxisExtent: _cornerCardExtent(phone: true),
+              crossAxisSpacing: AppSpacing.space3,
+              mainAxisSpacing: AppSpacing.space3,
+            )
+          : SliverGridDelegateWithMaxCrossAxisExtent(
+              maxCrossAxisExtent: 260,
+              // 로딩 완료 후 카드 그리드와 동일 높이(레이아웃 점프 방지)
+              mainAxisExtent: _cornerCardExtent(phone: false),
+              crossAxisSpacing: AppSpacing.space3,
+              mainAxisSpacing: AppSpacing.space3,
+            ),
       itemCount: 10,
       itemBuilder: (context, index) => Container(
         decoration: BoxDecoration(
