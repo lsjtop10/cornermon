@@ -13,7 +13,7 @@ import 'package:cornermon/shared/design_system/tokens/typography.dart';
 import 'package:cornermon/shared/design_system/widgets/app_button.dart';
 import 'package:cornermon/shared/design_system/widgets/confirm_modal.dart';
 import 'package:cornermon/shared/logging/app_logger.dart';
-import 'package:cornermon/admin/features/admin_management/_admin_management_connection_state.dart';
+import 'package:cornermon/admin/widgets/connection_lost_provider.dart';
 
 /// 로그인한 관리자 본인의 비밀번호 변경과, CORNER_OPERATOR인 경우의 본인 탈퇴를
 /// 담당한다. SYSTEM_ADMIN은 본인 탈퇴가 항상 금지되므로(마지막 시스템 관리자 보호와
@@ -45,12 +45,12 @@ class _MyAccountCardState extends ConsumerState<MyAccountCard> {
     setState(() => _isBusy = true);
     try {
       await action();
-      ref.read(adminManagementConnectionLostProvider.notifier).set(false);
+      ref.read(connectionLostProvider('admin_management').notifier).set(false);
       return true;
     } on DioException catch (error) {
       // DioException은 LoggingInterceptor(#131)가 네트워크 계층에서 이미 기록한다.
       if (isConnectionLost(error)) {
-        ref.read(adminManagementConnectionLostProvider.notifier).set(true);
+        ref.read(connectionLostProvider('admin_management').notifier).set(true);
       } else {
         _showSnackBar('요청이 실패했습니다. 잠시 후 다시 시도해주세요.');
       }

@@ -17,4 +17,5 @@ targets:
             - lib/facilitator/router/*.dart
             - lib/facilitator/realtime/*.dart
             - lib/admin/session/*.dart
+            - lib/admin/widgets/*.dart
             - lib/admin/features/**/*.dart

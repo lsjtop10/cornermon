@@ -14,7 +14,7 @@ import 'package:cornermon/shared/design_system/widgets/app_button.dart';
 import 'package:cornermon/shared/design_system/widgets/confirm_modal.dart';
 import 'package:cornermon/shared/logging/app_logger.dart';
 import 'package:cornermon/shared/widgets/local_time_label.dart';
-import 'package:cornermon/admin/features/device_manage/_device_manage_connection_state.dart';
+import 'package:cornermon/admin/widgets/connection_lost_provider.dart';
 
 class DeviceRegistrationRow extends ConsumerStatefulWidget {
   const DeviceRegistrationRow({
@@ -48,11 +48,11 @@ class _DeviceRegistrationRowState extends ConsumerState<DeviceRegistrationRow> {
     try {
       await action();
       ref.invalidate(deviceRegistrationListProvider(widget.campId));
-      ref.read(deviceManageConnectionLostProvider.notifier).set(false);
+      ref.read(connectionLostProvider('device_manage').notifier).set(false);
     } on DioException catch (error) {
       // DioException은 LoggingInterceptor(#131)가 네트워크 계층에서 이미 기록한다.
       if (isConnectionLost(error)) {
-        ref.read(deviceManageConnectionLostProvider.notifier).set(true);
+        ref.read(connectionLostProvider('device_manage').notifier).set(true);
       } else {
         _showSnackBar('요청이 실패했습니다. 잠시 후 다시 시도해주세요.');
       }
