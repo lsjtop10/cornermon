@@ -29,6 +29,9 @@ class VisitActions extends _$VisitActions {
     if (data == null) {
       throw Exception('방문 시작 응답이 올바르지 않습니다.');
     }
+    // trackUpdated SSE를 기다리면 브로드캐스트 왕복만큼(2~3초) 타이머 시작이 늦어진다
+    // (이슈 #239) — 이미 받은 응답으로 커스텀 이벤트 코디네이터보다 먼저 갱신한다.
+    ref.invalidate(currentVisitProvider(trackId));
     return data;
   }
 
@@ -47,6 +50,7 @@ class VisitActions extends _$VisitActions {
     if (data == null) {
       throw Exception('방문 시작 응답이 올바르지 않습니다.');
     }
+    ref.invalidate(currentVisitProvider(trackId));
     return data;
   }
 

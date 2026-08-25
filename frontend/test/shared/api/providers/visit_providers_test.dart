@@ -181,6 +181,26 @@ void main() {
     expect(fakeApi.capturedTrackId, 'track-1');
   });
 
+  test('ShouldRefreshCurrentVisitImmediatelyAfterStartByQr', () async {
+    // arrange — SSE trackUpdated 브로드캐스트를 기다리지 않고도 즉시 갱신되어야 한다(이슈 #239).
+    final visit = _buildVisitSummary();
+    final fakeApi = _FakeVisitScanFlowApi()..startVisitData = visit;
+    final container = ProviderContainer(
+      overrides: [visitScanFlowApiProvider.overrideWithValue(fakeApi)],
+    );
+    addTearDown(container.dispose);
+    await container.read(currentVisitProvider(trackId).future); // 최초 null 캐시
+    final notifier = container.read(visitActionsProvider(trackId).notifier);
+
+    // act
+    await notifier.startByQr('qr-token-abc');
+    fakeApi.currentVisitData = visit; // 시작 직후 서버에도 이미 반영된 상태
+    final result = await container.read(currentVisitProvider(trackId).future);
+
+    // assert
+    expect(result, same(visit));
+  });
+
   test('ShouldThrowWhenStartVisitReturnsNullData', () async {
     // arrange
     final fakeApi = _FakeVisitScanFlowApi(); // startVisitData 미설정 -> null
