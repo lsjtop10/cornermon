@@ -73,10 +73,6 @@ void main() {
           ),
         ),
         GoRoute(path: '/dashboard', builder: (_, _) => const Text('dashboard')),
-        GoRoute(
-          path: '/corner-track-manage',
-          builder: (_, _) => const Text('manage'),
-        ),
         GoRoute(path: '/report', builder: (_, _) => const Text('report')),
       ],
     );
@@ -99,7 +95,9 @@ void main() {
     await tester.tap(find.text('준비 캠프'));
     await tester.pumpAndSettle();
     expect(container.read(selectedCampIdProvider), CampId('pending'));
-    expect(find.text('manage'), findsOneWidget);
+    // PENDING도 ACTIVE와 같은 /dashboard로 들어간다 — 카드형/트랙별 뷰는 그 안의
+    // 토글일 뿐 별도 경로가 아니다.
+    expect(find.text('dashboard'), findsOneWidget);
 
     router.go('/');
     await tester.pumpAndSettle();
@@ -130,6 +128,8 @@ void main() {
     await tester.pumpAndSettle();
 
     // act / assert
+    // '새 캠프 시작'과 동급의 1차 버튼으로 승격된 뒤로는 톱니바퀴 메뉴를 거치지 않고
+    // 바로 눌린다(critique frontend-lib-admin 2026-08-25 P2 참고).
     await tester.tap(find.text('QR 배지 관리'));
     await tester.pumpAndSettle();
     expect(find.text('badges'), findsOneWidget);
@@ -165,8 +165,9 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // act
-      await tester.tap(find.text('관리자 계정 관리'));
+      // act — 관리자 계정 관리는 iconOnly 버튼이라 라벨 텍스트가 아니라 아이콘/툴팁으로
+      // 찾는다(로그아웃 버튼과 동일한 패턴).
+      await tester.tap(find.byIcon(Icons.admin_panel_settings_outlined));
       await tester.pumpAndSettle();
       expect(find.text('admins'), findsOneWidget);
 
@@ -217,7 +218,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // act
-    await tester.tap(find.text('로그아웃'));
+    await tester.tap(find.byTooltip('로그아웃'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('진행'));
     await tester.pumpAndSettle();
@@ -243,7 +244,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // act
-    await tester.tap(find.text('로그아웃'));
+    await tester.tap(find.byTooltip('로그아웃'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('취소'));
     await tester.pumpAndSettle();

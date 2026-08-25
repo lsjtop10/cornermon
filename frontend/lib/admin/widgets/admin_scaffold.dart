@@ -42,7 +42,7 @@ class AdminScaffold extends ConsumerWidget {
                           Align(
                             alignment: Alignment.centerRight,
                             child: Padding(
-                              padding: const EdgeInsets.all(12),
+                              padding: const EdgeInsets.all(AppSpacing.space3),
                               child: StartCampButton(),
                             ),
                           ),
@@ -51,7 +51,7 @@ class AdminScaffold extends ConsumerWidget {
                           Align(
                             alignment: Alignment.centerRight,
                             child: Padding(
-                              padding: const EdgeInsets.all(12),
+                              padding: const EdgeInsets.all(AppSpacing.space3),
                               child: EndCampBarButton(),
                             ),
                           ),

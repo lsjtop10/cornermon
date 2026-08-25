@@ -7,6 +7,7 @@ import 'package:cornermon/shared/design_system/tokens/colors.dart';
 import 'package:cornermon/shared/design_system/tokens/spacing.dart';
 import 'package:cornermon/shared/design_system/tokens/typography.dart';
 import 'package:cornermon/shared/design_system/widgets/app_button.dart';
+import 'package:cornermon/shared/design_system/widgets/confirm_modal.dart';
 import 'package:cornermon/shared/logging/app_logger.dart';
 
 class StartCampButton extends ConsumerWidget {
@@ -78,20 +79,10 @@ class _StartCampConfirmDialogState
     final colors = Theme.of(context).brightness == Brightness.dark
         ? AppColors.dark
         : AppColors.light;
-    return AlertDialog(
-      backgroundColor: colors.bgSurfaceRaised,
+    return ConfirmModalShell(
+      kind: ConfirmModalKind.softConfirm,
+      title: '코너학습을 시작할까요?',
       constraints: const BoxConstraints(minWidth: 480, maxWidth: 640),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      title: Row(
-        children: [
-          Icon(Icons.warning_amber_rounded, color: colors.warning, size: 28),
-          const SizedBox(width: AppSpacing.space3),
-          Text(
-            '코너학습을 시작할까요?',
-            style: AppTypography.title3.copyWith(color: colors.textPrimary),
-          ),
-        ],
-      ),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,

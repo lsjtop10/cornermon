@@ -3,6 +3,7 @@ import 'package:material_ui/material_ui.dart';
 
 import 'package:cornermon/shared/api/domain_aliases.dart' as api;
 import 'package:cornermon/shared/design_system/tokens/colors.dart';
+import 'package:cornermon/shared/design_system/tokens/spacing.dart';
 import 'package:cornermon/shared/design_system/tokens/typography.dart';
 import 'package:cornermon/shared/design_system/widgets/empty_state.dart';
 
@@ -28,7 +29,7 @@ class TimelineSection extends StatelessWidget {
           '시간대별 처리량 추이',
           style: AppTypography.title3.copyWith(color: colors.textPrimary),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSpacing.space3),
         if (buckets.isEmpty)
           const EmptyState(message: '타임라인 데이터가 없습니다', icon: Icons.show_chart)
         else
@@ -58,12 +59,12 @@ class _TimelineChart extends StatelessWidget {
 
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSpacing.space4),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _Legend(colors: colors),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.space3),
             SizedBox(
               height: 220,
               child: LineChart(
@@ -145,7 +146,7 @@ class _Legend extends StatelessWidget {
     return Row(
       children: [
         _LegendItem(color: colors.brandPrimary, label: '진행중 방문 수'),
-        const SizedBox(width: 16),
+        const SizedBox(width: AppSpacing.space4),
         _LegendItem(color: colors.statusAlert, label: '누적 완료 방문 수'),
       ],
     );

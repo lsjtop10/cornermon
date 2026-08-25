@@ -260,7 +260,7 @@ void main() {
     await _pumpApp(tester, container);
 
     // act
-    container.read(adminRouterProvider).go('/corner-track-manage');
+    container.read(adminRouterProvider).go('/dashboard');
     await tester.pumpAndSettle();
     await tester.tap(find.text('코너학습 시작'));
     await tester.pumpAndSettle();
@@ -269,7 +269,9 @@ void main() {
 
     // assert
     expect(calls, 1);
-    expect(find.text('대시보드'), findsOneWidget);
+    // 사이드바 항목과 AppBar 타이틀이 둘 다 '대시보드'라 2개가 나온다(이 화면의
+    // 시작 지점도 이미 /dashboard라 AppBar 타이틀은 새로 생긴 게 아니다).
+    expect(find.text('대시보드'), findsWidgets);
     expect(find.byType(AdminSidebar), findsOneWidget);
   });
 

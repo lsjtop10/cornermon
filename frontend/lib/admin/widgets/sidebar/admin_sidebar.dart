@@ -32,11 +32,16 @@ class AdminSidebar extends ConsumerWidget {
         ('대시보드', Icons.dashboard_outlined, '/dashboard'),
         ('조 현황', Icons.groups_outlined, '/groups'),
         ('기기 관리', Icons.devices_outlined, '/devices'),
+        ('세션 관리', Icons.lock_open_outlined, '/sessions'),
         ('메시지', Icons.message_outlined, '/messages/broadcast'),
+        ('리포트', Icons.assessment_outlined, '/report'),
         ('감사 로그', Icons.history_outlined, '/audit-log'),
         ('설정', Icons.settings_outlined, '/settings'),
       ],
       SidebarMode.preparing => const [
+        // 대시보드 안의 카드형/트랙별 뷰 토글이 예전 '코너·트랙' 항목을 대체한다 —
+        // PENDING/ACTIVE 모두 진입점은 '대시보드' 하나로 통일했다(critique
+        // frontend-lib-admin 2026-08-25 후속 반영).
         ('대시보드', Icons.dashboard_outlined, '/dashboard'),
         ('조 현황', Icons.groups_outlined, '/groups'),
         ('기기 관리', Icons.devices_outlined, '/devices'),

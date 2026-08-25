@@ -13,8 +13,8 @@ import 'package:cornermon/shared/design_system/tokens/typography.dart';
 import 'package:cornermon/shared/design_system/widgets/connection_banner.dart';
 import 'package:cornermon/shared/design_system/widgets/empty_state.dart';
 import 'package:cornermon/shared/design_system/widgets/pill_tab_bar.dart';
-import '_device_manage_connection_state.dart';
-import '_device_registration_row.dart';
+import 'package:cornermon/admin/features/device_manage/_device_manage_connection_state.dart';
+import 'package:cornermon/admin/features/device_manage/_device_registration_row.dart';
 
 class DeviceManageScreen extends ConsumerStatefulWidget {
   const DeviceManageScreen({super.key});
@@ -195,7 +195,7 @@ class _DeviceRegistrationList extends ConsumerWidget {
         await ref.read(deviceRegistrationListProvider(campId).future);
       },
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSpacing.space4),
         child: Card(
           clipBehavior: Clip.antiAlias,
           margin: EdgeInsets.zero,

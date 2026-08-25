@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 
 import 'package:cornermon/shared/api/domain_aliases.dart' as api;
+import 'package:cornermon/shared/design_system/tokens/spacing.dart';
 import 'package:cornermon/shared/design_system/widgets/pill_tab_bar.dart';
 import 'package:cornermon/admin/features/report/report_export_button.dart';
 import 'corner_stats_tab.dart';
@@ -44,7 +45,7 @@ class _ReportTabsState extends State<ReportTabs> {
             // 탭 전환과 무관하게 항상 보이는 고정 PDF 내보내기 버튼(screen-spec "탭 우측
             // PDF로 내보내기" 문구).
             Padding(
-              padding: const EdgeInsets.only(right: 16),
+              padding: const EdgeInsets.only(right: AppSpacing.space4),
               child: ReportExportButton(report: widget.report),
             ),
           ],

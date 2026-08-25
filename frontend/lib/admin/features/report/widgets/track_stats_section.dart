@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 
 import 'package:cornermon/shared/api/domain_aliases.dart' as api;
 import 'package:cornermon/shared/design_system/tokens/colors.dart';
+import 'package:cornermon/shared/design_system/tokens/spacing.dart';
 import 'package:cornermon/shared/design_system/tokens/typography.dart';
 import 'package:cornermon/shared/design_system/widgets/empty_state.dart';
 import 'track_stats_row.dart';
@@ -25,7 +26,7 @@ class TrackStatsSection extends StatelessWidget {
           '트랙별 통계',
           style: AppTypography.title3.copyWith(color: colors.textPrimary),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSpacing.space3),
         if (trackStats.isEmpty)
           const EmptyState(message: '트랙 데이터가 없습니다', icon: Icons.route_outlined)
         else
@@ -35,6 +36,9 @@ class TrackStatsSection extends StatelessWidget {
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: DataTable(
+                headingRowHeight: 48,
+                dataRowMinHeight: 48,
+                dataRowMaxHeight: 48,
                 columns: const [
                   DataColumn(label: Text('트랙')),
                   DataColumn(label: Text('처리 건수')),

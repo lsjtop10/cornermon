@@ -10,6 +10,10 @@ import 'package:cornermon/shared/design_system/widgets/confirm_modal.dart';
 import 'package:cornermon/shared/design_system/widgets/empty_state.dart';
 import 'package:cornermon/shared/widgets/local_time_label.dart';
 
+/// 이 화면을 여는 진짜 이유(잠긴 기기·활성 세션)에 비해 관리자 자신의 세션 정리는
+/// 훨씬 낮은 빈도의 부수 작업이다 — 그래서 위 두 섹션과 달리 Card로 감싸지 않고,
+/// 구분선 하나로 갈라진 옅은 무게의 하위 섹션으로 둔다(같은 크기의 카드 3개를 나열하지
+/// 않는다 — §craft-floor.md "Same-size cards" 금지 항목).
 class AdminSessionsCard extends ConsumerWidget {
   const AdminSessionsCard({super.key});
 
@@ -34,100 +38,99 @@ class AdminSessionsCard extends ConsumerWidget {
       ref.invalidate(adminSessionListProvider);
     }
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.space4),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              '③ 관리자 세션',
-              style: AppTypography.title3.copyWith(color: colors.textPrimary),
-            ),
-            const SizedBox(height: AppSpacing.space3),
-            sessions.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (error, _) => Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '관리자 세션 목록을 불러오지 못했습니다',
-                    style: AppTypography.body.copyWith(color: colors.danger),
-                  ),
-                  const SizedBox(height: AppSpacing.space2),
-                  AppButton(
-                    variant: AppButtonVariant.secondary,
-                    size: AppButtonSize.compact,
-                    label: '재시도',
-                    onPressed: () => ref.invalidate(adminSessionListProvider),
-                  ),
-                ],
-              ),
-              data: (items) {
-                if (items.isEmpty) {
-                  return const EmptyState(
-                    message: '관리자 세션이 없습니다',
-                    icon: Icons.admin_panel_settings_outlined,
-                  );
-                }
-                return Column(
-                  children: [
-                    for (final session in items)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(
-                          vertical: AppSpacing.space2,
-                        ),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    session.deviceInfo ?? '기기 정보 없음',
-                                    style: AppTypography.bodyEmphasis.copyWith(
-                                      color: colors.textPrimary,
-                                    ),
-                                  ),
-                                  if (session.lastUsedAt != null)
-                                    Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Text(
-                                          '마지막 활동 ',
-                                          style: AppTypography.caption.copyWith(
-                                            color: colors.textSecondary,
-                                          ),
-                                        ),
-                                        DefaultTextStyle.merge(
-                                          style: AppTypography.caption.copyWith(
-                                            color: colors.textSecondary,
-                                          ),
-                                          child: LocalTimeLabel(
-                                            dateTime: session.lastUsedAt!,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                ],
-                              ),
-                            ),
-                            AppButton(
-                              variant: AppButtonVariant.destructive,
-                              size: AppButtonSize.compact,
-                              label: '세션 종료',
-                              onPressed: () => revoke(session.id ?? ''),
-                            ),
-                          ],
-                        ),
-                      ),
-                  ],
-                );
-              },
-            ),
-          ],
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Divider(height: 1, color: colors.border),
+        const SizedBox(height: AppSpacing.space4),
+        Text(
+          '관리자 세션',
+          style: AppTypography.bodyEmphasis.copyWith(
+            color: colors.textSecondary,
+          ),
         ),
-      ),
+        const SizedBox(height: AppSpacing.space3),
+        sessions.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (error, _) => Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '관리자 세션 목록을 불러오지 못했습니다',
+                style: AppTypography.body.copyWith(color: colors.danger),
+              ),
+              const SizedBox(height: AppSpacing.space2),
+              AppButton(
+                variant: AppButtonVariant.secondary,
+                size: AppButtonSize.compact,
+                label: '재시도',
+                onPressed: () => ref.invalidate(adminSessionListProvider),
+              ),
+            ],
+          ),
+          data: (items) {
+            if (items.isEmpty) {
+              return const EmptyState(
+                message: '관리자 세션이 없습니다',
+                icon: Icons.admin_panel_settings_outlined,
+              );
+            }
+            return Column(
+              children: [
+                for (final session in items)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: AppSpacing.space2,
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                session.deviceInfo ?? '기기 정보 없음',
+                                style: AppTypography.bodyEmphasis.copyWith(
+                                  color: colors.textPrimary,
+                                ),
+                              ),
+                              if (session.lastUsedAt != null)
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      '마지막 활동 ',
+                                      style: AppTypography.caption.copyWith(
+                                        color: colors.textSecondary,
+                                      ),
+                                    ),
+                                    DefaultTextStyle.merge(
+                                      style: AppTypography.caption.copyWith(
+                                        color: colors.textSecondary,
+                                      ),
+                                      child: LocalTimeLabel(
+                                        dateTime: session.lastUsedAt!,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                            ],
+                          ),
+                        ),
+                        AppButton(
+                          variant: AppButtonVariant.destructive,
+                          size: AppButtonSize.compact,
+                          label: '세션 종료',
+                          onPressed: () => revoke(session.id ?? ''),
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
+            );
+          },
+        ),
+      ],
     );
   }
 }

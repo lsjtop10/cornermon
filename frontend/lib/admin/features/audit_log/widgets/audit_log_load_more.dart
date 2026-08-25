@@ -6,7 +6,7 @@ import 'package:cornermon/shared/design_system/tokens/spacing.dart';
 import 'package:cornermon/shared/design_system/tokens/typography.dart';
 import 'package:cornermon/shared/design_system/widgets/app_button.dart';
 
-import '../audit_log_page_notifier.dart';
+import 'package:cornermon/admin/features/audit_log/audit_log_page_notifier.dart';
 
 /// 무한 스크롤 대신 명시적 "더 보기" 버튼(plan §2.3) — 진입 빈도가 낮은 화면이라
 /// 스크롤 리스너 도입 비용을 들이지 않는다는 결정.

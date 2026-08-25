@@ -1,7 +1,12 @@
+import 'package:cornermon/admin/features/dashboard/_corner_group_section.dart';
+import 'package:cornermon/admin/features/dashboard/_corner_status_pill.dart';
+import 'package:cornermon/admin/features/dashboard/_dashboard_connection_state.dart';
 import 'package:cornermon/admin/features/dashboard/dashboard_actions.dart';
 import 'package:cornermon/admin/features/dashboard/dashboard_entries.dart';
 import 'package:cornermon/admin/features/dashboard/dashboard_state.dart';
-import 'package:cornermon/admin/features/track_bulk_manage/track_pin_export_controller.dart';
+import 'package:cornermon/admin/features/dashboard/_inline_pill_tabs.dart';
+import 'package:cornermon/admin/features/dashboard/dashboard_track_grouping.dart';
+import 'package:cornermon/admin/features/dashboard/track_pin_export_controller.dart';
 import 'package:cornermon/admin/features/track_direct/track_direct_providers.dart';
 import 'package:cornermon/admin/session/selected_camp_provider.dart';
 import 'package:cornermon/shared/api/domain_aliases.dart' as api;
@@ -10,6 +15,8 @@ import 'package:cornermon/shared/api/providers/corner_track_providers.dart'
     hide deleteCorner;
 import 'package:cornermon/shared/api/providers/report_providers.dart';
 import 'package:cornermon/shared/design_system/tokens/colors.dart';
+import 'package:cornermon/shared/design_system/tokens/dimensions.dart';
+import 'package:cornermon/shared/design_system/tokens/spacing.dart';
 import 'package:cornermon/shared/design_system/tokens/typography.dart';
 import 'package:cornermon/shared/design_system/widgets/app_button.dart';
 import 'package:cornermon/shared/design_system/widgets/app_dropdown.dart';
@@ -24,6 +31,12 @@ import 'package:go_router/go_router.dart';
 
 final dashboardPinExportButtonKey = GlobalKey();
 
+/// A1. 캠프 하나의 코너·트랙 현황을 보여주는 대시보드 — PENDING/ACTIVE 모두 사이드바
+/// '대시보드' 항목 하나가 유일한 진입점이다. 카드형(코너 그리드)과 트랙별(코너 안에
+/// 트랙을 펼친 목록)은 별도 화면이 아니라 [DashboardView] 하나로 전환되는, 같은
+/// 필터·정렬 결과의 다른 렌더링일 뿐이다(노션의 뷰 전환과 동일한 발상) — 예전엔
+/// '코너·트랙'이라는 별도 사이드바 항목(PENDING)과 '트랙별 보기 →' 버튼(ACTIVE)으로
+/// 진입 경로 자체가 상태마다 달라 일관성이 없었다.
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
   @override
@@ -32,6 +45,8 @@ class DashboardScreen extends ConsumerWidget {
     if (id == null) {
       return const Scaffold(body: EmptyState(message: '선택된 캠프가 없습니다'));
     }
+    final connectionLost = ref.watch(dashboardConnectionLostProvider);
+    final view = ref.watch(dashboardViewProvider);
     final corners = ref.watch(cornerListProvider(id));
     final summary = ref.watch(liveSummaryProvider(id));
     final selectedCamp = ref.watch(selectedCampProvider).asData?.value;
@@ -50,7 +65,7 @@ class DashboardScreen extends ConsumerWidget {
         title: const Text('대시보드'),
         actions: [
           Padding(
-            padding: const EdgeInsets.only(right: 12),
+            padding: const EdgeInsets.only(right: AppSpacing.space3),
             child: ExportActionButton(
               key: dashboardPinExportButtonKey,
               icon: Icons.download_outlined,
@@ -110,21 +125,33 @@ class DashboardScreen extends ConsumerWidget {
           ]);
         },
         child: ListView(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(AppSpacing.space6),
           children: [
-            const ConnectionBanner(state: ConnectionBannerState.hidden),
+            // 앱 전역 SSE 연결배너(admin/app.dart)와 별개로, 이 배너는 코너 추가/삭제가
+            // 커넥션 유실로 실패했을 때만 뜬다 — device_manage_screen.dart와 동일한 패턴
+            // (_dashboard_connection_state.dart 참고).
+            ConnectionBanner(
+              state: connectionLost
+                  ? ConnectionBannerState.disconnected
+                  : ConnectionBannerState.hidden,
+            ),
             _SummaryBar(
               summary: summary,
               unreadDirectCount: unreadDirectCount,
               isActive: isActive,
             ),
-            const SizedBox(height: 20),
-            _Controls(isActive: isActive, campId: id),
-            const SizedBox(height: 12),
-            _Filters(),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.space6),
+            _Toolbar(campId: id),
+            const SizedBox(height: AppSpacing.space6),
             corners.when(
-              loading: () => const _CornerGridSkeleton(),
+              loading: () => view == DashboardView.cards
+                  ? const _CornerGridSkeleton()
+                  : const Padding(
+                      padding: EdgeInsets.symmetric(
+                        vertical: AppSpacing.space6,
+                      ),
+                      child: Center(child: CircularProgressIndicator()),
+                    ),
               error: (error, _) => SizedBox(
                 height: 300,
                 child: EmptyState(
@@ -142,7 +169,8 @@ class DashboardScreen extends ConsumerWidget {
                 final entries = buildDashboardEntries(items, ranking);
                 final visible = sortEntries(
                   filterEntries(entries, ref.watch(dashboardFilterProvider)),
-                  ref.watch(dashboardSortProvider),
+                  ref.watch(dashboardSortKeyProvider),
+                  ref.watch(dashboardSortAscendingProvider),
                 );
                 if (visible.isEmpty) {
                   final noCorners = items.isEmpty;
@@ -162,31 +190,42 @@ class DashboardScreen extends ConsumerWidget {
                     ),
                   );
                 }
-                return GridView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                    maxCrossAxisExtent: 260,
-                    mainAxisExtent: 220,
-                    crossAxisSpacing: 12,
-                    mainAxisSpacing: 12,
-                  ),
-                  itemCount: visible.length,
-                  itemBuilder: (context, index) {
-                    final entry = visible[index];
-                    return CornerStatusCard(
-                      entry: entry,
-                      onTap: () =>
-                          context.go('/dashboard/corners/${entry.corner.id}'),
-                      onCreateTrack: entry.inactive
-                          ? () => context.go(
+                return view == DashboardView.cards
+                    ? GridView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        gridDelegate:
+                            const SliverGridDelegateWithMaxCrossAxisExtent(
+                              maxCrossAxisExtent: 260,
+                              // 카드 헤더 행의 삭제 아이콘 버튼이 컴팩트 컨트롤 표준
+                              // (AppDimensions.iconButtonCompact, 44pt)만큼 높이를
+                              // 차지하므로 220pt 기준값 + 그 여유분(22pt)을 더한다.
+                              mainAxisExtent: 242,
+                              crossAxisSpacing: AppSpacing.space3,
+                              mainAxisSpacing: AppSpacing.space3,
+                            ),
+                        itemCount: visible.length,
+                        itemBuilder: (context, index) {
+                          final entry = visible[index];
+                          return CornerStatusCard(
+                            entry: entry,
+                            onTap: () => context.go(
                               '/dashboard/corners/${entry.corner.id}',
-                            )
-                          : null,
-                      onDelete: () => deleteCorner(context, ref, id, entry),
-                    );
-                  },
-                );
+                            ),
+                            onCreateTrack: entry.inactive
+                                ? () => context.go(
+                                    '/dashboard/corners/${entry.corner.id}',
+                                  )
+                                : null,
+                            onDelete: () =>
+                                deleteCorner(context, ref, id, entry),
+                          );
+                        },
+                      )
+                    : _TrackListView(
+                        campId: id,
+                        corners: [for (final entry in visible) entry.corner],
+                      );
               },
             ),
           ],
@@ -211,56 +250,45 @@ class _SummaryBar extends StatelessWidget {
     loading: () => const LinearProgressIndicator(),
     error: (_, _) => const Text('요약을 불러오지 못했습니다'),
     data: (item) {
-      final tiles = [
-        ('완주율', '${(item.completionRate ?? 0).round()}%'),
+      final tiles = <({String label, String value, String? route})>[
         (
-          '미완주 조',
-          '${(item.totalGroups ?? 0) - (item.finishedGroupCount ?? 0)}',
+          label: '완주율',
+          value: '${(item.completionRate ?? 0).round()}%',
+          route: null,
         ),
         (
-          '경과시간',
-          '${(item.programDurationSeconds ?? 0) ~/ 3600}시간 ${((item.programDurationSeconds ?? 0) % 3600) ~/ 60}분',
+          label: '미완주 조',
+          value:
+              '${(item.totalGroups ?? 0) - (item.finishedGroupCount ?? 0)}',
+          route: null,
         ),
-        if (isActive) ('안읽은 다이렉트', '$unreadDirectCount'),
+        (
+          label: '경과시간',
+          value:
+              '${(item.programDurationSeconds ?? 0) ~/ 3600}시간 ${((item.programDurationSeconds ?? 0) % 3600) ~/ 60}분',
+          route: null,
+        ),
+        if (isActive)
+          (
+            label: '안읽은 다이렉트',
+            value: '$unreadDirectCount',
+            route: '/messages/direct',
+          ),
       ];
-      final colors = Theme.of(context).brightness == Brightness.dark
-          ? AppColors.dark
-          : AppColors.light;
+      // 관리자 화면의 1차 타겟은 iPad 가로(§design-system.md 3.2)이므로 균등 분할
+      // Row를 유지한다 — Expanded는 구조적으로 오버플로하지 않아 세로 모드(지원은
+      // 하되 최적화 대상은 아님)에서도 안전하다. 2행으로 흘려보내는 Wrap은 오히려
+      // 본문 높이를 예측 불가능하게 늘려 아래 코너 그리드/빈 상태를 밀어내므로
+      // 채택하지 않는다.
       return Row(
         children: [
           for (var i = 0; i < tiles.length; i++) ...[
-            if (i > 0) const SizedBox(width: 12),
+            if (i > 0) const SizedBox(width: AppSpacing.space3),
             Expanded(
-              child: Card(
-                child: InkWell(
-                  onTap: tiles[i].$1 == '안읽은 다이렉트'
-                      ? () => context.go('/messages/direct')
-                      : null,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          tiles[i].$1,
-                          style: AppTypography.label.copyWith(
-                            color: colors.textSecondary,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          tiles[i].$2,
-                          style: AppTypography.display.copyWith(
-                            color: colors.textPrimary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
+              child: _SummaryTile(
+                label: tiles[i].label,
+                value: tiles[i].value,
+                route: tiles[i].route,
               ),
             ),
           ],
@@ -270,62 +298,68 @@ class _SummaryBar extends StatelessWidget {
   );
 }
 
-class _Controls extends ConsumerWidget {
-  const _Controls({required this.isActive, required this.campId});
-  final bool isActive;
-  final CampId campId;
+class _SummaryTile extends StatelessWidget {
+  const _SummaryTile({required this.label, required this.value, this.route});
+
+  final String label;
+  final String value;
+  final String? route;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) => Wrap(
-    spacing: 12,
-    runSpacing: 8,
-    crossAxisAlignment: WrapCrossAlignment.center,
-    children: [
-      AppDropdown<CornerSortOption>(
-        value: ref.watch(dashboardSortProvider),
-        onChanged: (value) {
-          if (value != null) {
-            ref.read(dashboardSortProvider.notifier).select(value);
-          }
-        },
-        items: const [
-          DropdownMenuItem(
-            value: CornerSortOption.cornerNo,
-            child: Text('코너번호순'),
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).brightness == Brightness.dark
+        ? AppColors.dark
+        : AppColors.light;
+    // 탭 가능한 타일만 시각적으로 다르게 표시한다(§design-system.md 0-6 —
+    // 히트박스와 시각 신호는 항상 일치해야 한다) — 나머지 정보성 타일과 똑같은
+    // Card 모양이면서 실제로는 하나만 눌리는 상황을 피한다.
+    final tappable = route != null;
+    return Card(
+      child: InkWell(
+        onTap: tappable ? () => context.go(route!) : null,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.space4,
+            vertical: AppSpacing.space3,
           ),
-          DropdownMenuItem(value: CornerSortOption.name, child: Text('이름순')),
-          DropdownMenuItem(
-            value: CornerSortOption.avgDeviationDesc,
-            child: Text('평균편차 높은순'),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      label,
+                      style: AppTypography.label.copyWith(
+                        color: colors.textSecondary,
+                      ),
+                    ),
+                  ),
+                  if (tappable)
+                    Icon(
+                      Icons.chevron_right,
+                      size: 16,
+                      color: colors.textSecondary,
+                    ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.space1),
+              Text(
+                value,
+                // 4분할 Row의 좁은 타일 폭에서 "경과시간" 같은 긴 값이 display(36px)로
+                // 줄바꿈되면 같은 Row의 다른 타일과 카드 높이가 어긋나므로 1줄로 고정한다.
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppTypography.display.copyWith(
+                  color: colors.textPrimary,
+                ),
+              ),
+            ],
           ),
-          DropdownMenuItem(
-            value: CornerSortOption.avgDeviationAsc,
-            child: Text('평균편차 낮은순'),
-          ),
-        ],
-      ),
-      AppButton(
-        variant: AppButtonVariant.secondary,
-        size: AppButtonSize.compact,
-        icon: Icons.add,
-        label: '코너 추가',
-        onPressed: () => showAddCornerDialog(context, ref, campId),
-      ),
-      AppButton(
-        variant: AppButtonVariant.secondary,
-        size: AppButtonSize.compact,
-        label: '트랙별 보기 →',
-        onPressed: () => context.go('/corner-track-manage'),
-      ),
-      if (isActive)
-        AppButton(
-          variant: AppButtonVariant.primary,
-          size: AppButtonSize.compact,
-          label: '공지 발송',
-          onPressed: () => context.go('/messages/broadcast'),
         ),
-    ],
-  );
+      ),
+    );
+  }
 }
 
 const _cornerFilterLabels = {
@@ -336,19 +370,133 @@ const _cornerFilterLabels = {
   CornerFilterChip.bottleneckOnly: '병목만',
 };
 
-class _Filters extends ConsumerWidget {
+const _cornerSortLabels = {
+  CornerSortKey.cornerNo: '코너번호순',
+  CornerSortKey.name: '이름순',
+  CornerSortKey.avgDeviation: '평균편차순',
+};
+
+/// 필터·정렬·뷰 전환·추가를 한 줄에 모은다 — 조 현황 화면(group_list_screen.dart)과
+/// 정확히 같은 순서(필터 → 정렬 기준 → 정렬 방향 → 추가)와 같은 위젯 형태(정렬은
+/// 라벨 있는 드롭다운 + 방향 토글 아이콘, 추가는 라벨 있는 툴바 버튼)를 쓴다 —
+/// 예전엔 이 화면은 드롭다운, 조 현황은 아이콘 전용 팝업으로 서로 다른 형태였다
+/// (critique frontend-lib-admin 2026-08-25 후속 반영).
+class _Toolbar extends ConsumerWidget {
+  const _Toolbar({required this.campId});
+  final CampId campId;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final selected = ref.watch(dashboardFilterProvider);
-    return PillTabBar(
-      tabs: [
-        for (final value in CornerFilterChip.values)
-          PillTab(label: _cornerFilterLabels[value]!),
+    final ascending = ref.watch(dashboardSortAscendingProvider);
+    final view = ref.watch(dashboardViewProvider);
+    return Wrap(
+      spacing: AppSpacing.space3,
+      runSpacing: AppSpacing.space2,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        // 이 툴바는 필터·정렬·뷰 전환·추가가 한 Wrap 안에서 나란히 흘러야 해서,
+        // 그 줄을 혼자 차지하는 공용 PillTabBar 대신 내용만큼만 차지하는
+        // InlinePillTabs를 쓴다(_inline_pill_tabs.dart 참고 — 이 화면만의 레이아웃
+        // 요구사항으로 다른 화면이 쓰는 공용 위젯을 바꾸지 않기 위함).
+        InlinePillTabs(
+          tabs: [
+            for (final value in CornerFilterChip.values)
+              PillTab(label: _cornerFilterLabels[value]!),
+          ],
+          selectedIndex: CornerFilterChip.values.indexOf(
+            ref.watch(dashboardFilterProvider),
+          ),
+          onSelected: (index) => ref
+              .read(dashboardFilterProvider.notifier)
+              .select(CornerFilterChip.values[index]),
+        ),
+        AppDropdown<CornerSortKey>(
+          value: ref.watch(dashboardSortKeyProvider),
+          onChanged: (value) {
+            if (value != null) {
+              ref.read(dashboardSortKeyProvider.notifier).select(value);
+            }
+          },
+          items: [
+            for (final key in CornerSortKey.values)
+              DropdownMenuItem(value: key, child: Text(_cornerSortLabels[key]!)),
+          ],
+        ),
+        Tooltip(
+          message: ascending ? '오름차순' : '내림차순',
+          child: AppButton(
+            variant: AppButtonVariant.iconOnly,
+            size: AppButtonSize.compact,
+            icon: ascending ? Icons.arrow_upward : Icons.arrow_downward,
+            label: ascending ? '오름차순' : '내림차순',
+            onPressed: () =>
+                ref.read(dashboardSortAscendingProvider.notifier).toggle(),
+          ),
+        ),
+        // 노션 스타일 뷰 전환 — 카드형/트랙별은 같은 필터·정렬 결과의 다른 렌더링일
+        // 뿐이라 화면 이동이 아니라 이 토글 하나로 바뀐다. PENDING/ACTIVE 모두 항상
+        // 같은 자리에 노출한다(예전엔 PENDING만 사이드바 '코너·트랙' 항목, ACTIVE만
+        // 이 자리의 '트랙별 보기 →' 버튼으로 진입 방식 자체가 상태마다 달랐다).
+        //
+        // 구조적으로 "여러 옵션 중 하나 선택"이라는 점에서 왼쪽의 필터와 성격이
+        // 같다 — 새 토글 컴포넌트를 만드는 대신 같은 InlinePillTabs를 재사용한다.
+        // (칠해진 캡슐로 만든 첫 시도는 "선택=텍스트 색만 바뀜, 배경은 채우지 않는다"
+        // 원칙과 충돌해 바로 옆 필터와 서로 다른 "선택됨" 문법이 됐었다.)
+        InlinePillTabs(
+          tabs: const [PillTab(label: '카드형'), PillTab(label: '트랙별')],
+          selectedIndex: DashboardView.values.indexOf(view),
+          onSelected: (index) => ref
+              .read(dashboardViewProvider.notifier)
+              .select(DashboardView.values[index]),
+        ),
+        AppButton(
+          variant: AppButtonVariant.secondary,
+          size: AppButtonSize.compact,
+          icon: Icons.add,
+          label: '코너 추가',
+          onPressed: () => showAddCornerDialog(context, ref, campId),
+        ),
       ],
-      selectedIndex: CornerFilterChip.values.indexOf(selected),
-      onSelected: (index) => ref
-          .read(dashboardFilterProvider.notifier)
-          .select(CornerFilterChip.values[index]),
+    );
+  }
+}
+
+/// "트랙별" 뷰 — 카드형과 같은 필터·정렬을 거친 [corners]를 트랙 단위로 펼쳐 보여주는
+/// 순수 조회 렌더링이다. 코너/트랙 생성·삭제·수정은 카드형 뷰(코너)와 코너 상세
+/// 화면(트랙)에 그대로 남아있다 — 이 뷰 자체에는 액션을 두지 않는다.
+class _TrackListView extends ConsumerWidget {
+  const _TrackListView({required this.campId, required this.corners});
+
+  final CampId campId;
+  final List<api.Corner> corners;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final tracks = ref.watch(trackListProvider(campId));
+    return tracks.when(
+      loading: () => const Padding(
+        padding: EdgeInsets.symmetric(vertical: AppSpacing.space6),
+        child: Center(child: CircularProgressIndicator()),
+      ),
+      error: (error, _) => SizedBox(
+        height: 300,
+        child: EmptyState(
+          message: '트랙을 불러오지 못했습니다.\n$error',
+          actionLabel: '재시도',
+          onAction: () => ref.invalidate(trackListProvider(campId)),
+        ),
+      ),
+      data: (items) {
+        final active = items
+            .where((track) => track.status == api.TrackStatus.ACTIVE)
+            .toList();
+        final groups = groupTracksByCorner(corners, active);
+        return Column(
+          children: [
+            for (final group in groups) CornerGroupSection(group: group),
+          ],
+        );
+      },
     );
   }
 }
@@ -372,20 +520,7 @@ class CornerStatusCard extends StatelessWidget {
     final colors = Theme.of(context).brightness == Brightness.dark
         ? AppColors.dark
         : AppColors.light;
-    final status = entry.corner.status;
-    final presentation = switch (status) {
-      api.CornerOperationalStatus.BUSY => (
-        color: colors.statusIdle,
-        icon: '●',
-        label: '정상',
-      ),
-      api.CornerOperationalStatus.IDLE => (
-        color: colors.quiet,
-        icon: '○',
-        label: '유휴',
-      ),
-      _ => (color: colors.statusInactive, icon: '✕', label: '미가동'),
-    };
+    final presentation = cornerStatusPresentation(entry.corner.status, colors);
     final metric = entry.corner.cornerMetric;
     final List<api.TrackSummary> tracks =
         entry.corner.activeTracks?.toList() ?? [];
@@ -410,7 +545,7 @@ class CornerStatusCard extends StatelessWidget {
               ),
             ),
           ),
-          padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 12),
+          padding: const EdgeInsets.all(AppSpacing.space3),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
@@ -421,43 +556,64 @@ class CornerStatusCard extends StatelessWidget {
                   Expanded(
                     child: Text(
                       entry.corner.name ?? '코너',
+                      // 코너 이름은 관리자가 자유 입력하는 값이라 길이가 보장되지 않는다 —
+                      // 이 카드는 고정 높이(mainAxisExtent: 242)라 줄바꿈을 허용하면
+                      // 하단 내용(트랙 생성 버튼 등)이 Card의 clip에 잘려나간다.
+                      // "스캔(훑어보기)" 원칙(§design-system.md 0-1)에도 축약이 더 맞다.
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: AppTypography.bodyEmphasis.copyWith(
                         color: colors.textPrimary,
                       ),
                     ),
                   ),
                   if (entry.corner.isBottleneck ?? false)
-                    _CornerStatusPill(
+                    CornerStatusPill(
                       color: colors.statusAlert,
                       icon: '▲',
                       label: '병목',
                     ),
                   if (onDelete != null)
-                    SizedBox(
-                      width: 28,
-                      height: 28,
-                      child: IconButton(
-                        tooltip: '코너 삭제',
-                        padding: EdgeInsets.zero,
-                        iconSize: 18,
-                        onPressed: onDelete,
-                        icon: Icon(
-                          Icons.delete_outline,
-                          color: colors.textSecondary,
-                        ),
+                    IconButton(
+                      // 진행 중인 방문이 있으면 deleteCorner()가 실제로도 하드 블록한다 —
+                      // §design-system.md 4.2가 처방한 대로 "누르고 나서 막기"가 아니라
+                      // 버튼을 사전 비활성화 + 이유 툴팁으로 안내한다.
+                      tooltip: entry.hasBusyTrack
+                          ? '진행 중인 방문이 있어 삭제할 수 없습니다'
+                          : '코너 삭제',
+                      iconSize: 18,
+                      // 시각적으로는 컴팩트하게 유지하되, 탭 영역은 이 앱의 컴팩트 밀도
+                      // 컨트롤 표준(AppDimensions.iconButtonCompact, 44pt — §design-system.md
+                      // 7-3의 관리자 최소 터치 타겟)과 맞춘다.
+                      constraints: const BoxConstraints(
+                        minWidth: AppDimensions.iconButtonCompact,
+                        minHeight: AppDimensions.iconButtonCompact,
+                      ),
+                      padding: EdgeInsets.zero,
+                      visualDensity: VisualDensity.compact,
+                      onPressed: entry.hasBusyTrack ? null : onDelete,
+                      icon: Icon(
+                        Icons.delete_outline,
+                        color: entry.hasBusyTrack
+                            ? colors.textDisabled
+                            : colors.textSecondary,
                       ),
                     ),
                 ],
               ),
-              const SizedBox(height: 8),
-              _CornerStatusPill(
+              const SizedBox(height: AppSpacing.space2),
+              CornerStatusPill(
                 color: presentation.color,
                 icon: presentation.icon,
                 label: presentation.label,
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: AppSpacing.space1),
               Text(
                 '활성 ${tracks.length}트랙 중 $busyTrackCount 진행중 · 목표 ${entry.corner.targetMinutes ?? 0}분',
+                // 이 카드는 GridView mainAxisExtent(242)로 높이가 고정돼 있어, 값이 커져
+                // 줄바꿈되면 RenderFlex overflow로 크래시한다 — 1줄로 고정해 방지한다.
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: AppTypography.caption.copyWith(
                   color: colors.textSecondary,
                 ),
@@ -468,6 +624,8 @@ class CornerStatusCard extends StatelessWidget {
                   sampleCount: metric?.sampleCount ?? 0,
                   avgDeviationSeconds: entry.avgDeviationSeconds,
                 ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: AppTypography.caption.copyWith(
                   color: entry.corner.isBottleneck ?? false
                       ? colors.statusAlert
@@ -483,8 +641,8 @@ class CornerStatusCard extends StatelessWidget {
                       minimumSize: Size.zero,
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
+                        horizontal: AppSpacing.space2,
+                        vertical: AppSpacing.space1,
                       ),
                     ),
                     onPressed: onCreateTrack,
@@ -513,9 +671,9 @@ class _CornerGridSkeleton extends StatelessWidget {
       physics: const NeverScrollableScrollPhysics(),
       gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
         maxCrossAxisExtent: 260,
-        mainAxisExtent: 220,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
+        mainAxisExtent: 242, // 로딩 완료 후 카드 그리드와 동일 높이(레이아웃 점프 방지)
+        crossAxisSpacing: AppSpacing.space3,
+        mainAxisSpacing: AppSpacing.space3,
       ),
       itemCount: 10,
       itemBuilder: (context, index) => Container(
@@ -523,34 +681,6 @@ class _CornerGridSkeleton extends StatelessWidget {
           color: colors.textDisabled.withValues(alpha: .08),
           borderRadius: BorderRadius.circular(12),
         ),
-      ),
-    );
-  }
-}
-
-class _CornerStatusPill extends StatelessWidget {
-  const _CornerStatusPill({
-    required this.color,
-    required this.icon,
-    required this.label,
-  });
-
-  final Color color;
-  final String icon;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    final opacity = Theme.of(context).brightness == Brightness.dark ? .20 : .12;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: opacity),
-        borderRadius: BorderRadius.circular(100),
-      ),
-      child: Text(
-        '$icon  $label',
-        style: Theme.of(context).textTheme.labelLarge?.copyWith(color: color),
       ),
     );
   }

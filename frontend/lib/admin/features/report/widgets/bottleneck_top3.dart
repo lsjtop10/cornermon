@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 
 import 'package:cornermon/shared/api/domain_aliases.dart' as api;
 import 'package:cornermon/shared/design_system/tokens/colors.dart';
+import 'package:cornermon/shared/design_system/tokens/spacing.dart';
 import 'package:cornermon/shared/design_system/tokens/typography.dart';
 import 'package:cornermon/shared/design_system/widgets/empty_state.dart';
 import 'package:cornermon/shared/util/duration_format.dart';
@@ -26,7 +27,7 @@ class BottleneckTop3 extends StatelessWidget {
       children: [
         for (var i = 0; i < top3.length; i++)
           Card(
-            margin: const EdgeInsets.only(bottom: 8),
+            margin: const EdgeInsets.only(bottom: AppSpacing.space2),
             child: ListTile(
               leading: CircleAvatar(
                 backgroundColor: colors.brandPrimary.withValues(alpha: .12),

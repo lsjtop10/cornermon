@@ -6,9 +6,9 @@ import 'package:cornermon/admin/session/selected_camp_provider.dart';
 import 'package:cornermon/admin/widgets/message_tab_bar.dart';
 import 'package:cornermon/shared/api/domain_aliases.dart' as api;
 import 'package:cornermon/shared/design_system/widgets/empty_state.dart';
-import '_chat_thread_pane.dart';
-import '_track_list_pane.dart';
-import 'track_direct_providers.dart';
+import 'package:cornermon/admin/features/track_direct/_chat_thread_pane.dart';
+import 'package:cornermon/admin/features/track_direct/_track_list_pane.dart';
+import 'package:cornermon/admin/features/track_direct/track_direct_providers.dart';
 
 class TrackDirectScreen extends ConsumerWidget {
   const TrackDirectScreen({super.key});

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:cornermon/shared/api/ids.dart';
 import 'package:cornermon/shared/api/providers/message_providers.dart';
+import 'package:cornermon/shared/design_system/tokens/spacing.dart';
 import 'package:cornermon/shared/design_system/widgets/app_button.dart';
 
 class NewBroadcastModal extends ConsumerStatefulWidget {
@@ -59,7 +60,7 @@ class _NewBroadcastModalState extends ConsumerState<NewBroadcastModal> {
               decoration: const InputDecoration(labelText: '공지 내용'),
             ),
             if (_errorText != null) ...[
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSpacing.space2),
               Text(_errorText!, style: const TextStyle(color: Colors.red)),
             ],
           ],

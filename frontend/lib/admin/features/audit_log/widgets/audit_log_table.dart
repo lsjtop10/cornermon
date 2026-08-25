@@ -6,7 +6,7 @@ import 'package:cornermon/shared/design_system/tokens/spacing.dart';
 import 'package:cornermon/shared/design_system/tokens/typography.dart';
 import 'package:cornermon/shared/design_system/widgets/empty_state.dart';
 
-import '../audit_log_action_labels.dart';
+import 'package:cornermon/admin/features/audit_log/audit_log_action_labels.dart';
 import 'audit_log_metadata_dialog.dart';
 
 const _columnFlex = [3, 2, 2, 2, 2];

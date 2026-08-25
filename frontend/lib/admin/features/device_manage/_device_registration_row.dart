@@ -14,7 +14,7 @@ import 'package:cornermon/shared/design_system/widgets/app_button.dart';
 import 'package:cornermon/shared/design_system/widgets/confirm_modal.dart';
 import 'package:cornermon/shared/logging/app_logger.dart';
 import 'package:cornermon/shared/widgets/local_time_label.dart';
-import '_device_manage_connection_state.dart';
+import 'package:cornermon/admin/features/device_manage/_device_manage_connection_state.dart';
 
 class DeviceRegistrationRow extends ConsumerStatefulWidget {
   const DeviceRegistrationRow({

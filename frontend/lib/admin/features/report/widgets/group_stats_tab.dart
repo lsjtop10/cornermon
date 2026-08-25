@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 
 import 'package:cornermon/shared/api/domain_aliases.dart' as api;
+import 'package:cornermon/shared/design_system/tokens/spacing.dart';
 import 'package:cornermon/shared/design_system/widgets/empty_state.dart';
 import 'package:cornermon/admin/entities/report_ext.dart';
 import 'group_stats_row.dart';
@@ -24,7 +25,7 @@ class ReportGroupStatsTab extends StatelessWidget {
     final totalCorners = report.cornerStats?.length;
 
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpacing.space4),
       child: Card(
         clipBehavior: Clip.antiAlias,
         margin: EdgeInsets.zero,
@@ -32,6 +33,10 @@ class ReportGroupStatsTab extends StatelessWidget {
           child: SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: DataTable(
+              // §design-system.md 4.5 관리자 테이블 행 높이(48pt).
+              headingRowHeight: 48,
+              dataRowMinHeight: 48,
+              dataRowMaxHeight: 48,
               columns: const [
                 DataColumn(label: Text('조')),
                 DataColumn(label: Text('완주 여부')),

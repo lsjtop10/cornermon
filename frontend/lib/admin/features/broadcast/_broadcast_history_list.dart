@@ -8,7 +8,7 @@ import 'package:cornermon/shared/design_system/tokens/colors.dart';
 import 'package:cornermon/shared/design_system/tokens/typography.dart';
 import 'package:cornermon/shared/design_system/widgets/empty_state.dart';
 import 'package:cornermon/shared/widgets/local_time_label.dart';
-import 'broadcast_selection_provider.dart';
+import 'package:cornermon/admin/features/broadcast/broadcast_selection_provider.dart';
 
 class BroadcastHistoryList extends ConsumerWidget {
   const BroadcastHistoryList({required this.campId, super.key});

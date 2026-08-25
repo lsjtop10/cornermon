@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:cornermon/admin/features/dashboard/dashboard_entries.dart';
 import 'package:cornermon/admin/features/dashboard/dashboard_screen.dart';
 import 'package:cornermon/admin/features/dashboard/dashboard_state.dart';
-import 'package:cornermon/admin/features/track_bulk_manage/track_pin_export_controller.dart';
+import 'package:cornermon/admin/features/dashboard/track_pin_export_controller.dart';
 import 'package:cornermon/admin/features/track_direct/track_direct_providers.dart';
 import 'package:cornermon/admin/session/selected_camp_provider.dart';
 import 'package:cornermon/shared/api/ids.dart';
@@ -74,12 +74,14 @@ Future<void> _pumpDashboard(
   WidgetTester tester, {
   required CampId campId,
   required List<CornerResponse> corners,
+  List<TrackResponse>? tracks,
   CampSummaryStatsResponse? summary,
   List<String>? deletedCornerIds,
   List<String>? createdCornerNames,
   CornerResponse? createdCorner,
   Future<ExportTracksResponse> Function()? exportTracks,
   ShareFile? shareFile,
+  CampResponseStatusEnum status = CampResponseStatusEnum.ACTIVE,
 }) async {
   final router = GoRouter(
     initialLocation: '/dashboard',
@@ -89,10 +91,6 @@ Future<void> _pumpDashboard(
         path: '/dashboard/corners/:cornerId',
         builder: (_, state) =>
             Text('corner ${state.pathParameters['cornerId']}'),
-      ),
-      GoRoute(
-        path: '/corner-track-manage',
-        builder: (_, _) => const Text('manage'),
       ),
       GoRoute(
         path: '/messages/broadcast',
@@ -113,10 +111,11 @@ Future<void> _pumpDashboard(
             (b) => b
               ..id = campId.value
               ..name = '테스트 캠프'
-              ..status = CampResponseStatusEnum.ACTIVE,
+              ..status = status,
           ),
         ),
         cornerListProvider(campId).overrideWith((ref) async => corners),
+        trackListProvider(campId).overrideWith((ref) async => tracks ?? []),
         liveSummaryProvider(
           campId,
         ).overrideWith((ref) async => summary ?? _summary()),
@@ -156,7 +155,7 @@ void main() {
         _corner('1', '코너 1', CornerResponseStatusEnum.BUSY),
       ], []);
       // act
-      final sorted = sortEntries(entries, CornerSortOption.cornerNo);
+      final sorted = sortEntries(entries, CornerSortKey.cornerNo, true);
       // assert
       expect(sorted.map((entry) => entry.corner.id), ['1', '2', '10']);
     });
@@ -175,11 +174,11 @@ void main() {
       ];
       // act / assert
       expect(
-        sortEntries(entries, CornerSortOption.avgDeviationDesc).last.corner.id,
+        sortEntries(entries, CornerSortKey.avgDeviation, false).last.corner.id,
         'inactive',
       );
       expect(
-        sortEntries(entries, CornerSortOption.avgDeviationAsc).last.corner.id,
+        sortEntries(entries, CornerSortKey.avgDeviation, true).last.corner.id,
         'inactive',
       );
     });
@@ -199,20 +198,26 @@ void main() {
 
       // act / assert
       expect(
-        sortEntries(entries, CornerSortOption.name).map((e) => e.corner.id),
+        sortEntries(
+          entries,
+          CornerSortKey.name,
+          true,
+        ).map((e) => e.corner.id),
         ['a', 'b'],
       );
       expect(
         sortEntries(
           entries,
-          CornerSortOption.avgDeviationDesc,
+          CornerSortKey.avgDeviation,
+          false,
         ).map((e) => e.corner.id),
         ['b', 'a'],
       );
       expect(
         sortEntries(
           entries,
-          CornerSortOption.avgDeviationAsc,
+          CornerSortKey.avgDeviation,
+          true,
         ).map((e) => e.corner.id),
         ['a', 'b'],
       );
@@ -420,24 +425,104 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('direct'), findsOneWidget);
 
-      await _pumpDashboard(
-        tester,
-        campId: campId,
-        corners: [_corner('corner-1', '코너 1', CornerResponseStatusEnum.BUSY)],
-      );
-      await tester.tap(find.text('트랙별 보기 →'));
-      await tester.pumpAndSettle();
-      expect(find.text('manage'), findsOneWidget);
-
-      await _pumpDashboard(
-        tester,
-        campId: campId,
-        corners: [_corner('corner-1', '코너 1', CornerResponseStatusEnum.BUSY)],
-      );
-      await tester.tap(find.text('공지 발송'));
-      await tester.pumpAndSettle();
-      expect(find.text('broadcast'), findsOneWidget);
+      // '공지 발송'은 사이드바 '메시지' 항목과 중복 진입 경로라 삭제됐다
+      // (라우팅 재설계 — 한 화면 = 하나의 진입 경로).
     });
+
+    testWidgets(
+      'ShoudSwitchToTrackViewWhenViewToggleTappedRegardlessOfCampStatus',
+      (tester) async {
+        // arrange: 카드형/트랙별 전환은 화면 이동이 아니라 같은 대시보드 안의 뷰
+        // 토글이다 — PENDING/ACTIVE 모두 항상 같은 자리에 있어야 한다(예전엔 PENDING만
+        // 사이드바 '코너·트랙' 항목, ACTIVE만 '트랙별 보기 →' 버튼으로 진입 경로 자체가
+        // 상태마다 달랐다).
+        final campId = CampId('camp-1');
+        await _pumpDashboard(
+          tester,
+          campId: campId,
+          corners: [_corner('corner-1', '코너 1', CornerResponseStatusEnum.BUSY)],
+          tracks: [
+            TrackResponse(
+              (b) => b
+                ..id = 'track-1'
+                ..cornerId = 'corner-1'
+                ..trackNo = 1
+                ..status = TrackResponseStatusEnum.ACTIVE
+                ..operationalStatus = TrackResponseOperationalStatusEnum.IDLE,
+            ),
+          ],
+          status: CampResponseStatusEnum.PENDING,
+        );
+        expect(find.byType(GridView), findsOneWidget);
+
+        // act
+        await tester.tap(find.text('트랙별'));
+        await tester.pumpAndSettle();
+
+        // assert: 카드 그리드 대신 코너별로 묶인 트랙 테이블이 보인다
+        expect(find.byType(GridView), findsNothing);
+        expect(find.byType(DataTable), findsOneWidget);
+        expect(find.text('1번'), findsOneWidget);
+
+        // act: 다시 카드형으로 되돌릴 수 있다
+        await tester.tap(find.text('카드형'));
+        await tester.pumpAndSettle();
+
+        // assert
+        expect(find.byType(GridView), findsOneWidget);
+      },
+    );
+
+    testWidgets('ShouldShowZombieCornerAsEmptyGroupInTrackView', (
+      tester,
+    ) async {
+      // arrange: 트랙 없는 좀비 코너도 트랙별 뷰에서 그룹으로는 보여야 한다
+      await _pumpDashboard(
+        tester,
+        campId: CampId('camp-1'),
+        corners: [_corner('zombie', '좀비 코너', CornerResponseStatusEnum.INACTIVE)],
+        tracks: const [],
+      );
+
+      // act
+      await tester.tap(find.text('트랙별'));
+      await tester.pumpAndSettle();
+
+      // assert
+      expect(find.text('좀비 코너'), findsOneWidget);
+      expect(find.text('연결된 트랙이 없습니다'), findsOneWidget);
+    });
+
+    testWidgets(
+      'ShoudNavigateToCornerDetailWhenTrackViewGroupHeaderTapped',
+      (tester) async {
+        // arrange
+        await _pumpDashboard(
+          tester,
+          campId: CampId('camp-1'),
+          corners: [_corner('corner-1', '코너 A', CornerResponseStatusEnum.IDLE)],
+          tracks: [
+            TrackResponse(
+              (b) => b
+                ..id = 'track-1'
+                ..cornerId = 'corner-1'
+                ..trackNo = 1
+                ..status = TrackResponseStatusEnum.ACTIVE
+                ..operationalStatus = TrackResponseOperationalStatusEnum.IDLE,
+            ),
+          ],
+        );
+        await tester.tap(find.text('트랙별'));
+        await tester.pumpAndSettle();
+
+        // act
+        await tester.tap(find.text('코너 A'));
+        await tester.pumpAndSettle();
+
+        // assert
+        expect(find.text('corner corner-1'), findsOneWidget);
+      },
+    );
 
     testWidgets('ShouldCreateCornerWhenAddCornerDialogConfirmed', (
       tester,
@@ -464,47 +549,51 @@ void main() {
       expect(createdNames, ['새 코너']);
     });
 
-    testWidgets('ShouldDeleteCornerWhenDeleteIconConfirmedAndBlockWhenBusy', (
-      tester,
-    ) async {
-      // arrange: corner-1은 IDLE 트랙만 있어 삭제 가능, corner-2는 BUSY 트랙이 있어
-      // 하드 블록 대상이다
-      final campId = CampId('camp-1');
-      final deletedIds = <String>[];
-      await _pumpDashboard(
-        tester,
-        campId: campId,
-        corners: [
-          _corner('corner-1', '코너 1', CornerResponseStatusEnum.IDLE),
-          _corner(
-            'corner-2',
-            '코너 2',
-            CornerResponseStatusEnum.BUSY,
-            hasBusyTrack: true,
+    testWidgets(
+      'ShouldDeleteCornerWhenDeleteIconConfirmedAndPreDisableWhenBusy',
+      (tester) async {
+        // arrange: corner-1은 IDLE 트랙만 있어 삭제 가능, corner-2는 BUSY 트랙이 있어
+        // 삭제 아이콘 자체가 사전 비활성화된다(§design-system.md 4.2 — "누르고 나서
+        // 막기"가 아니라 비활성화+이유 툴팁으로 안내한다).
+        final campId = CampId('camp-1');
+        final deletedIds = <String>[];
+        await _pumpDashboard(
+          tester,
+          campId: campId,
+          corners: [
+            _corner('corner-1', '코너 1', CornerResponseStatusEnum.IDLE),
+            _corner(
+              'corner-2',
+              '코너 2',
+              CornerResponseStatusEnum.BUSY,
+              hasBusyTrack: true,
+            ),
+          ],
+          deletedCornerIds: deletedIds,
+        );
+
+        // assert: BUSY 트랙이 있는 코너의 삭제 아이콘은 눌러도 반응하지 않는다
+        final deleteButtons = find.byIcon(Icons.delete_outline);
+        expect(deleteButtons, findsNWidgets(2));
+        final busyButton = tester.widget<IconButton>(
+          find.ancestor(
+            of: deleteButtons.at(1),
+            matching: find.byType(IconButton),
           ),
-        ],
-        deletedCornerIds: deletedIds,
-      );
+        );
+        expect(busyButton.onPressed, isNull);
+        expect(busyButton.tooltip, '진행 중인 방문이 있어 삭제할 수 없습니다');
 
-      // act: BUSY 트랙이 있는 코너는 하드 블록 모달만 뜨고 삭제되지 않아야 한다
-      final deleteButtons = find.byIcon(Icons.delete_outline);
-      expect(deleteButtons, findsNWidgets(2));
-      await tester.tap(deleteButtons.at(1));
-      await tester.pumpAndSettle();
-      expect(find.text('작업할 수 없습니다'), findsOneWidget);
-      await tester.tap(find.text('확인'));
-      await tester.pumpAndSettle();
-      expect(deletedIds, isEmpty);
+        // act: IDLE 트랙만 있는 코너는 소프트 확인 후 삭제된다
+        await tester.tap(deleteButtons.at(0));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('진행'));
+        await tester.pumpAndSettle();
 
-      // act: IDLE 트랙만 있는 코너는 소프트 확인 후 삭제된다
-      await tester.tap(deleteButtons.at(0));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('진행'));
-      await tester.pumpAndSettle();
-
-      // assert
-      expect(deletedIds, ['corner-1']);
-    });
+        // assert
+        expect(deletedIds, ['corner-1']);
+      },
+    );
 
     testWidgets('ShouldShowExportAllPinsActionInAppBar', (tester) async {
       // arrange

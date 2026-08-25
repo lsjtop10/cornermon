@@ -5,7 +5,7 @@ import 'package:cornermon/shared/api/domain_aliases.dart' as api;
 import 'package:cornermon/shared/api/ids.dart';
 import 'package:cornermon/shared/export/export_action_menu.dart';
 import 'package:cornermon/shared/export/export_file.dart';
-import 'report_export_controller.dart';
+import 'package:cornermon/admin/features/report/report_export_controller.dart';
 
 /// 탭 우측 고정 PDF 내보내기 버튼. `campId`는 `selectedCampIdProvider`를 다시 watch하지
 /// 않고 `report.campId`를 그대로 쓴다(이미 응답 안에 있음, §0 확인됨).

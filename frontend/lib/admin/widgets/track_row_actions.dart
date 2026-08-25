@@ -2,6 +2,7 @@ import 'package:cornermon/admin/features/corner_detail/track_pin_pdf.dart';
 import 'package:cornermon/shared/api/domain_aliases.dart' as api;
 import 'package:cornermon/shared/api/ids.dart';
 import 'package:cornermon/shared/api/providers/corner_track_providers.dart';
+import 'package:cornermon/shared/design_system/tokens/spacing.dart';
 import 'package:cornermon/shared/design_system/widgets/app_button.dart';
 import 'package:cornermon/shared/design_system/widgets/confirm_modal.dart';
 import 'package:cornermon/shared/export/export_action_menu.dart';
@@ -220,7 +221,7 @@ class _ReplaceTrackDialogState extends State<ReplaceTrackDialog> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text('${widget.track.trackNo ?? '-'}번 트랙을 새 코너로 이동합니다.'),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSpacing.space3),
         DropdownButtonFormField<api.Corner>(
           initialValue: _corner,
           decoration: const InputDecoration(labelText: '신규 코너'),
@@ -233,7 +234,7 @@ class _ReplaceTrackDialogState extends State<ReplaceTrackDialog> {
           ],
           onChanged: (value) => setState(() => _corner = value),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSpacing.space3),
         const Text('PIN 카드 재인쇄가 필요합니다. 접속 중인 기기가 있다면 자동 재인증됩니다.'),
       ],
     ),

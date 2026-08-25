@@ -5,8 +5,8 @@ import 'package:cornermon/shared/api/domain_aliases.dart';
 import 'package:cornermon/shared/api/ids.dart';
 import 'package:cornermon/shared/api/providers/audit_log_providers.dart';
 
-import 'audit_log_filter_state.dart';
-import 'audit_log_known_actions.dart';
+import 'package:cornermon/admin/features/audit_log/audit_log_filter_state.dart';
+import 'package:cornermon/admin/features/audit_log/audit_log_known_actions.dart';
 
 /// 서버 기본값과 동일한 페이지 크기 — plan §0 `limit`(기본 50).
 const auditLogPageLimit = 50;

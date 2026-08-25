@@ -9,6 +9,7 @@ import 'package:cornermon/shared/api/providers/badge_providers.dart';
 import 'package:cornermon/shared/design_system/tokens/spacing.dart';
 import 'package:cornermon/shared/design_system/tokens/typography.dart';
 import 'package:cornermon/shared/design_system/widgets/app_button.dart';
+import 'package:cornermon/shared/design_system/widgets/app_dropdown.dart';
 import 'package:cornermon/shared/design_system/widgets/app_tag.dart';
 import 'package:cornermon/shared/design_system/widgets/pill_tab_bar.dart';
 import 'package:cornermon/shared/design_system/widgets/qr_scan_frame.dart';
@@ -33,30 +34,13 @@ class _GroupListScreenState extends ConsumerState<GroupListScreen> {
   GroupSortColumn _sortColumn = GroupSortColumn.name;
   bool _ascending = true;
 
-  void _sortBy(GroupSortColumn column) => setState(() {
-    _ascending = _sortColumn == column ? !_ascending : true;
-    _sortColumn = column;
-  });
-
   @override
   Widget build(BuildContext context) {
     final campId = ref.watch(selectedCampIdProvider);
     if (campId == null) return const SizedBox.shrink();
     final groups = ref.watch(groupListProvider(campId));
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('조 현황'),
-        actions: [
-          IconButton(
-            tooltip: '조 등록',
-            onPressed: () => showDialog<void>(
-              context: context,
-              builder: (_) => _RegisterGroupDialog(campId: campId),
-            ),
-            icon: const Icon(Icons.person_add),
-          ),
-        ],
-      ),
+      appBar: AppBar(title: const Text('조 현황')),
       body: groups.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, _) => Center(child: Text('조를 불러오지 못했습니다.\n$error')),
@@ -86,62 +70,93 @@ class _GroupListScreenState extends ConsumerState<GroupListScreen> {
                   return _ascending ? compare : -compare;
                 });
           return Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(AppSpacing.space4),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Row(
+                // 대시보드 툴바(dashboard_screen.dart의 _Toolbar)와 같은 순서·형태로
+                // 맞춘다 — 필터 → 정렬 기준(라벨 있는 드롭다운) → 정렬 방향(아이콘
+                // 토글) → 추가(라벨 있는 버튼). 예전엔 정렬이 아이콘 전용 팝업메뉴라
+                // 대시보드의 드롭다운과 서로 다른 형태였다(critique frontend-lib-admin
+                // 2026-08-25 후속 반영).
+                Wrap(
+                  spacing: AppSpacing.space3,
+                  runSpacing: AppSpacing.space2,
+                  crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
-                    Expanded(
-                      child: PillTabBar(
-                        selectedIndex: GroupStatusFilter.values.indexOf(
-                          _filter,
-                        ),
-                        tabs: [
-                          for (final filter in GroupStatusFilter.values)
-                            PillTab(
-                              label: switch (filter) {
-                                GroupStatusFilter.all => '전체',
-                                GroupStatusFilter.finished => '완주',
-                                GroupStatusFilter.partial => '부분완주',
-                              },
-                            ),
-                        ],
-                        onSelected: (index) => setState(
-                          () => _filter = GroupStatusFilter.values[index],
-                        ),
+                    PillTabBar(
+                      selectedIndex: GroupStatusFilter.values.indexOf(
+                        _filter,
+                      ),
+                      tabs: [
+                        for (final filter in GroupStatusFilter.values)
+                          PillTab(
+                            label: switch (filter) {
+                              GroupStatusFilter.all => '전체',
+                              GroupStatusFilter.finished => '완주',
+                              GroupStatusFilter.partial => '부분완주',
+                            },
+                          ),
+                      ],
+                      onSelected: (index) => setState(
+                        () => _filter = GroupStatusFilter.values[index],
                       ),
                     ),
                     Text(
                       '${visible.length}/${items.length}건',
                       style: AppTypography.caption,
                     ),
-                    PopupMenuButton<GroupSortColumn>(
-                      tooltip: '정렬',
-                      icon: Icon(
-                        _ascending
-                            ? Icons.arrow_upward_outlined
-                            : Icons.arrow_downward_outlined,
-                      ),
-                      onSelected: _sortBy,
-                      itemBuilder: (context) => const [
-                        PopupMenuItem(
+                    AppDropdown<GroupSortColumn>(
+                      value: _sortColumn,
+                      onChanged: (value) {
+                        if (value != null) {
+                          setState(() => _sortColumn = value);
+                        }
+                      },
+                      items: const [
+                        DropdownMenuItem(
                           value: GroupSortColumn.name,
                           child: Text('조 이름순'),
                         ),
-                        PopupMenuItem(
+                        DropdownMenuItem(
                           value: GroupSortColumn.status,
                           child: Text('상태순'),
                         ),
-                        PopupMenuItem(
+                        DropdownMenuItem(
                           value: GroupSortColumn.completedCount,
                           child: Text('완료 코너 수순'),
                         ),
                       ],
                     ),
+                    Tooltip(
+                      message: _ascending ? '오름차순' : '내림차순',
+                      child: AppButton(
+                        variant: AppButtonVariant.iconOnly,
+                        size: AppButtonSize.compact,
+                        icon: _ascending
+                            ? Icons.arrow_upward
+                            : Icons.arrow_downward,
+                        label: _ascending ? '오름차순' : '내림차순',
+                        onPressed: () =>
+                            setState(() => _ascending = !_ascending),
+                      ),
+                    ),
+                    // 코너 대시보드의 "코너 추가"와 같은 패턴(툴바의 라벨 있는 버튼)으로
+                    // 통일한다 — 이전엔 AppBar 아이콘 전용 버튼이라 같은 사이드바 안
+                    // 형제 화면인데도 "새 레코드 만들기" 발견성이 서로 달랐다.
+                    AppButton(
+                      variant: AppButtonVariant.secondary,
+                      size: AppButtonSize.compact,
+                      icon: Icons.add,
+                      label: '조 등록',
+                      onPressed: () => showDialog<void>(
+                        context: context,
+                        builder: (_) => _RegisterGroupDialog(campId: campId),
+                      ),
+                    ),
                   ],
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: AppSpacing.space3),
                 Expanded(
                   child: RefreshIndicator(
                     onRefresh: () async =>
@@ -337,7 +352,7 @@ class _RegisterGroupDialogState extends ConsumerState<_RegisterGroupDialog> {
               onSelectionChanged: (value) =>
                   setState(() => _tab = value.single),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.space3),
             if (_tab == 0)
               SizedBox(
                 height: 220,
