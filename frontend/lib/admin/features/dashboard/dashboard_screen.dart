@@ -673,7 +673,10 @@ class CornerStatusCard extends StatelessWidget {
               // 라벨로 나눠서 한 줄에 나란히 둔다 — 각 라벨 자체는 항상 짧아서
               // 줄바꿈이 필요 없다.
               _CornerCardStatRow(
-                primary: '활성 ${tracks.length}트랙 중 $busyTrackCount 진행중',
+                // "N트랙 중 M 진행중"보다 group_detail_screen.dart의 진행률
+                // 표기(§design-system.md 진행률 "완료/전체")와 같은 "M/N" 축약이
+                // 더 간결하다.
+                primary: '진행중 $busyTrackCount/${tracks.length}트랙',
                 secondary: '목표 ${entry.corner.targetMinutes ?? 0}분',
                 color: colors.textSecondary,
               ),

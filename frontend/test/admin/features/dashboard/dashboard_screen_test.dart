@@ -772,9 +772,9 @@ void main() {
       tester.view.devicePixelRatio = 1.0;
       final campId = CampId('camp-1');
 
-      // act — bottleneck + hasBusyTrack은 "활성 N트랙 중 M 진행중 · 목표 N분"과
-      // 병목 부제 줄을 모두 길게 만들어(#241 후속 신고: 전체 폭에서도 "목···"으로
-      // 잘림) 두 캡션 줄의 오버플로 여지를 실제로 건드린다.
+      // act — bottleneck + hasBusyTrack은 진행중/목표 줄과 병목 부제 줄을 모두
+      // 채워서(#241 후속 신고: 전체 폭에서도 "목···"으로 잘림) 두 캡션 줄의
+      // 오버플로 여지를 실제로 건드린다.
       await _pumpDashboard(
         tester,
         campId: campId,
