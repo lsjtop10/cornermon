@@ -1,4 +1,4 @@
-import 'package:cornermon/admin/features/report/report_export_controller.dart';
+import 'package:cornermon/admin/features/report/actions/report_export_actions.dart';
 import 'package:cornermon/shared/api/ids.dart';
 import 'package:cornermon/shared/api/providers/report_providers.dart';
 import 'package:cornermon/shared/export/export_file.dart';

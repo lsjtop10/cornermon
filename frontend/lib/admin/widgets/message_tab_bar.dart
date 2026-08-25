@@ -2,7 +2,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:cornermon/admin/features/track_direct/track_direct_providers.dart';
+import 'package:cornermon/admin/features/track_direct/state/track_direct_state.dart';
 import 'package:cornermon/admin/session/selected_camp_provider.dart';
 import 'package:cornermon/shared/design_system/widgets/pill_tab_bar.dart';
 

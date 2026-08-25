@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:cornermon/admin/features/end_camp/end_camp_bar_button.dart';
+import 'package:cornermon/admin/features/end_camp/widgets/end_camp_bar_button.dart';
 import 'package:cornermon/admin/session/selected_camp_provider.dart';
 import 'package:cornermon/admin/widgets/admin_scaffold.dart';
 import 'package:cornermon/admin/widgets/admin_scaffold_messenger_key.dart';

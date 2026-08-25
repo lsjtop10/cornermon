@@ -4,10 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cornermon/admin/session/selected_camp_provider.dart';
 import 'package:cornermon/admin/widgets/message_tab_bar.dart';
 import 'package:cornermon/shared/design_system/widgets/empty_state.dart';
-import '_broadcast_history_list.dart';
-import '_broadcast_receipt_grid.dart';
-import '_new_broadcast_modal.dart';
-import 'package:cornermon/admin/features/broadcast/broadcast_selection_provider.dart';
+import 'widgets/broadcast_history_list.dart';
+import 'widgets/broadcast_receipt_grid.dart';
+import 'widgets/new_broadcast_modal.dart';
+import 'package:cornermon/admin/features/broadcast/state/broadcast_selection_state.dart';
 
 class BroadcastScreen extends ConsumerWidget {
   const BroadcastScreen({super.key});

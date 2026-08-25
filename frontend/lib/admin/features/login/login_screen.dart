@@ -1,7 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:cornermon/admin/features/login/login_error_provider.dart';
+import 'package:cornermon/admin/features/login/state/login_error_state.dart';
 import 'package:cornermon/shared/config/active_api_environment_provider.dart';
 import 'package:cornermon/shared/config/api_environment.dart';
 import 'package:cornermon/shared/design_system/tokens/colors.dart';

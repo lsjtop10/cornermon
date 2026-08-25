@@ -1,6 +1,6 @@
-import 'package:cornermon/admin/features/audit_log/audit_log_filter_state.dart';
-import 'package:cornermon/admin/features/audit_log/audit_log_known_actions.dart';
-import 'package:cornermon/admin/features/audit_log/audit_log_page_notifier.dart';
+import 'package:cornermon/admin/features/audit_log/state/audit_log_filter_state.dart';
+import 'package:cornermon/admin/features/audit_log/state/audit_log_known_actions.dart';
+import 'package:cornermon/admin/features/audit_log/state/audit_log_page_state.dart';
 import 'package:cornermon/admin/session/selected_camp_provider.dart';
 import 'package:cornermon/shared/api/domain_aliases.dart';
 import 'package:cornermon/shared/api/ids.dart';

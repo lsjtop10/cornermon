@@ -235,3 +235,55 @@ AppButton(
   onPressed: canSubmit ? _submit : null,
 );
 ```
+
+## 6. `lib/admin/features/<name>/` 내부 파일 배치 컨벤션
+
+경량 FSD 구조라 `ui/model/api` 같은 세그먼트를 강제하지 않는다 — 파일이 늘어나 정리가
+필요해질 때만 아래 규칙으로 하위 폴더를 도입한다. feature 디렉토리 자체는 원칙적으로
+`screen-spec-admin.md`의 화면 ID(A0, A1, A2 ...) 1개당 1개다 (스텁이 이후 다른 화면에
+흡수되는 등 도메인상 정당한 예외는 있다 — 예: A2B가 A1의 "트랙별 뷰"로 흡수된
+`track_bulk_manage` → `dashboard`).
+
+### 6.1 진입점
+
+라우터가 참조하는 화면 위젯은 `<feature>_screen.dart`에 둔다. `end_camp`/`start_camp`처럼
+독립 라우트 없이 다른 화면(대시보드 툴바 등)에 embed되는 액션 전용 feature는 예외 —
+`_screen.dart`가 없어도 된다.
+
+### 6.2 상태/액션 파일 접미사와 `state/`/`actions/` 폴더
+
+같은 역할(Riverpod 상태, 부수효과 실행)을 가리키는 파일이 feature마다 `controller`/
+`provider`/`notifier`로 제각각이던 것을 아래 두 접미사로 통일한다:
+
+| 접미사 | 담는 것 | 예 |
+|---|---|---|
+| `_state.dart` | 화면 상태를 표현하는 Notifier/데이터 클래스. `BuildContext` 없이 동기적으로 값만 바꾼다 | `dashboard_state.dart`, `login_error_state.dart` |
+| `_actions.dart` | `BuildContext`+`WidgetRef`로 사용자 확인/입력을 받고 mutating API를 호출한 뒤 관련 목록을 invalidate하는 함수(또는 `AsyncNotifier<void>` 컨트롤러) | `dashboard_actions.dart`, `end_camp_actions.dart` |
+
+`_state.dart`/`_actions.dart` 파일(과 SSE 연결배너 상태 같은 인접 상태 파일, 순수 계산/
+엔티티 매핑 로직처럼 그 상태를 만들어내는 파일)은 각각 `state/`, `actions/` 하위 폴더에
+둔다 — `widgets/`와 마찬가지로 feature 루트에는 원칙적으로 `<feature>_screen.dart`만
+남긴다. `state/`/`actions/` 안에서는 접두 `_`를 떼고 파일명은 그대로 유지한다(feature
+접두사를 다시 떼지 않는다 — 한 폴더에 `dashboard_actions.dart`와
+`track_pin_export_actions.dart`처럼 여러 파일이 들어갈 수 있어 이름이 겹치면 안 된다).
+
+PDF/엑셀 생성 같은 부수효과 없는 순수 포맷 빌더(`report_pdf.dart`, `track_pin_pdf.dart`,
+`badge_sticker_pdf.dart`)처럼 상태도 액션도 아닌 파일은 굳이 이 두 폴더에 끼워 넣지
+않고 feature 루트에 남겨도 된다.
+
+### 6.3 위젯의 `widgets/` 폴더
+
+feature 루트에 있던 화면 조각 위젯은 전부 `widgets/`로 모은다(과거엔 위젯 파일이 3개
+이상이거나 `screen.dart`가 300줄을 넘을 때만 승격했지만, 지금은 `state/`/`actions/`와
+맞춰 위젯이 하나뿐이어도 `widgets/`에 둔다). `<feature>_screen.dart`가 300줄을 넘으면
+그 안에 인라인으로 있던 위젯 클래스부터 파일별로 뽑아 `widgets/`로 옮긴다.
+
+- `widgets/` 안 파일은 파일명에서 `_` 접두를 뗀다 — 그 파일이 내보내는 최상위 클래스는
+  public이어야 한다(`_admin_list_tile.dart` → `widgets/admin_list_tile.dart`의
+  `AdminListTile`). 그 안에서만 쓰는 보조 클래스는 여전히 `_`로 private 유지.
+- `screen.dart`는 각 위젯을 조립하는 코드만 남긴다. 위젯 간에만 공유하는 사소한 헬퍼는
+  해당 위젯 파일에 두고, 화면 전체가 쓰는 포맷터 등은 `screen.dart`에 남겨도 된다.
+- 기존 예시: `audit_log/widgets/`, `report/widgets/`, `settings/widgets/`,
+  `dashboard/widgets/`, `corner_detail/widgets/`, `group_list/widgets/`,
+  `group_detail/widgets/`, `end_camp/widgets/`, `start_camp/widgets/`,
+  `track_direct/widgets/`, `device_manage/widgets/`.

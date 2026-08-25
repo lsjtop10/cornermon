@@ -3,7 +3,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:cornermon/shared/api/domain_aliases.dart' as api;
 import 'package:cornermon/shared/design_system/tokens/spacing.dart';
 import 'package:cornermon/shared/design_system/widgets/pill_tab_bar.dart';
-import 'package:cornermon/admin/features/report/report_export_button.dart';
+import 'package:cornermon/admin/features/report/widgets/report_export_button.dart';
 import 'corner_stats_tab.dart';
 import 'group_stats_tab.dart';
 import 'summary_tab.dart';

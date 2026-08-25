@@ -1,4 +1,4 @@
-import 'package:cornermon/admin/features/track_direct/track_direct_providers.dart';
+import 'package:cornermon/admin/features/track_direct/state/track_direct_state.dart';
 import 'package:cornermon/shared/api/ids.dart';
 import 'package:cornermon/shared/api/providers/corner_track_providers.dart';
 import 'package:cornermon/shared/api/providers/message_providers.dart';

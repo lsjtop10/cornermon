@@ -1,5 +1,5 @@
-import 'package:cornermon/admin/features/audit_log/audit_log_filter_state.dart';
-import 'package:cornermon/admin/features/audit_log/audit_log_known_actions.dart';
+import 'package:cornermon/admin/features/audit_log/state/audit_log_filter_state.dart';
+import 'package:cornermon/admin/features/audit_log/state/audit_log_known_actions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 

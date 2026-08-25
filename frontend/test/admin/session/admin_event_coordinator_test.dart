@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:cornermon/admin/features/track_direct/track_direct_providers.dart';
+import 'package:cornermon/admin/features/track_direct/state/track_direct_state.dart';
 import 'package:cornermon/admin/session/admin_event_coordinator.dart';
 import 'package:cornermon/shared/api/domain_aliases.dart';
 import 'package:cornermon/shared/api/ids.dart';

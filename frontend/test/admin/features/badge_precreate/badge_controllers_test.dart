@@ -1,4 +1,4 @@
-import 'package:cornermon/admin/features/badge_precreate/badge_controllers.dart';
+import 'package:cornermon/admin/features/badge_precreate/actions/badge_precreate_actions.dart';
 import 'package:cornermon/shared/api/providers/badge_providers.dart';
 import 'package:cornermon/shared/export/export_file.dart';
 import 'package:cornermon_api_gen/cornermon_api_gen.dart';

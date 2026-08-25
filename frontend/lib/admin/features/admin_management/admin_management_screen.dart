@@ -7,10 +7,10 @@ import 'package:cornermon/shared/design_system/tokens/spacing.dart';
 import 'package:cornermon/shared/design_system/widgets/app_button.dart';
 import 'package:cornermon/shared/design_system/widgets/connection_banner.dart';
 import 'package:cornermon/shared/design_system/widgets/empty_state.dart';
-import '_admin_list_tile.dart';
-import 'package:cornermon/admin/features/admin_management/_admin_management_connection_state.dart';
-import '_create_admin_dialog.dart';
-import '_my_account_card.dart';
+import 'widgets/admin_list_tile.dart';
+import 'package:cornermon/admin/features/admin_management/state/admin_management_connection_state.dart';
+import 'widgets/create_admin_dialog.dart';
+import 'widgets/my_account_card.dart';
 
 /// 캠프와 무관한 전역 화면 — `/camps`, `/badges`처럼 `_campIndependentLocations`에
 /// 등록되어 `AdminScaffold`(캠프 사이드바) 없이 독립적으로 라우팅된다.

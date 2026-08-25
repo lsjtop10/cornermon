@@ -1,4 +1,4 @@
-import 'package:cornermon/admin/features/badge_precreate/badge_controllers.dart';
+import 'package:cornermon/admin/features/badge_precreate/actions/badge_precreate_actions.dart';
 import 'package:cornermon/admin/session/selected_camp_provider.dart';
 import 'package:cornermon/shared/api/domain_aliases.dart' as api;
 import 'package:cornermon/shared/api/providers/badge_providers.dart';

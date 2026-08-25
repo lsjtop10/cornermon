@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:cornermon/shared/design_system/widgets/empty_state.dart';
 
-import 'package:cornermon/admin/features/audit_log/audit_log_page_notifier.dart';
+import 'package:cornermon/admin/features/audit_log/state/audit_log_page_state.dart';
 import 'widgets/audit_log_filter_bar.dart';
 import 'widgets/audit_log_load_more.dart';
 import 'widgets/audit_log_table.dart';

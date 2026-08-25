@@ -1,7 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:cornermon/admin/features/settings/update_camp_controller.dart';
+import 'package:cornermon/admin/features/settings/actions/update_camp_actions.dart';
 import 'package:cornermon/shared/api/domain_aliases.dart' as api;
 import 'package:cornermon/shared/api/ids.dart';
 import 'package:cornermon/shared/design_system/tokens/colors.dart';
@@ -11,9 +11,9 @@ import 'package:cornermon/shared/design_system/widgets/app_button.dart';
 import 'package:cornermon/shared/design_system/widgets/korean_date_picker.dart';
 
 /// A15 설정 — 캠프 이름/기간 수정 섹션.
-/// 저장은 `UpdateCampController`(`update_camp_controller.dart`)를 통해 수행하며,
+/// 저장은 `UpdateCampController`(`settings/actions/update_camp_actions.dart`)를 통해 수행하며,
 /// 성공 시 `selectedCampSnapshotProvider`가 직접 갱신되어 재조회 없이
-/// 사이드바 캠프명 등 다른 화면에 즉시 반영된다(`start_camp_controller.dart`와 동일 패턴).
+/// 사이드바 캠프명 등 다른 화면에 즉시 반영된다(`start_camp/actions/start_camp_actions.dart`와 동일 패턴).
 class CampInfoSection extends ConsumerStatefulWidget {
   const CampInfoSection({required this.camp, super.key});
 

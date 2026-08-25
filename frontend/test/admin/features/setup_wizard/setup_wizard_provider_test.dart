@@ -1,5 +1,5 @@
-import 'package:cornermon/admin/features/setup_wizard/setup_wizard_provider.dart';
-import 'package:cornermon/admin/features/setup_wizard/setup_wizard_state.dart';
+import 'package:cornermon/admin/features/setup_wizard/actions/setup_wizard_actions.dart';
+import 'package:cornermon/admin/features/setup_wizard/state/setup_wizard_state.dart';
 import 'package:cornermon/admin/session/selected_camp_provider.dart';
 import 'package:cornermon/shared/api/ids.dart';
 import 'package:cornermon/shared/api/providers/camp_providers.dart';

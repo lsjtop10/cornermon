@@ -1,4 +1,4 @@
-import 'package:cornermon/admin/features/end_camp/end_camp_controller.dart';
+import 'package:cornermon/admin/features/end_camp/actions/end_camp_actions.dart';
 import 'package:cornermon/admin/session/selected_camp_provider.dart';
 import 'package:cornermon/shared/api/ids.dart';
 import 'package:cornermon/shared/api/providers/camp_providers.dart';

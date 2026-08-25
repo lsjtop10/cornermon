@@ -1,4 +1,4 @@
-import 'package:cornermon/admin/features/device_manage/_device_registration_row.dart';
+import 'package:cornermon/admin/features/device_manage/widgets/device_registration_row.dart';
 import 'package:cornermon/shared/api/ids.dart';
 import 'package:cornermon_api_gen/cornermon_api_gen.dart';
 import 'package:material_ui/material_ui.dart';

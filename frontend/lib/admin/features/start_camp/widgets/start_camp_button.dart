@@ -1,0 +1,121 @@
+import 'package:cornermon/admin/features/start_camp/actions/start_camp_actions.dart';
+import 'package:dio/dio.dart';
+import 'package:material_ui/material_ui.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'package:cornermon/shared/design_system/tokens/colors.dart';
+import 'package:cornermon/shared/design_system/tokens/spacing.dart';
+import 'package:cornermon/shared/design_system/tokens/typography.dart';
+import 'package:cornermon/shared/design_system/widgets/app_button.dart';
+import 'package:cornermon/shared/design_system/widgets/confirm_modal.dart';
+import 'package:cornermon/shared/logging/app_logger.dart';
+
+class StartCampButton extends ConsumerWidget {
+  const StartCampButton({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) => AppButton(
+    variant: AppButtonVariant.primary,
+    size: AppButtonSize.compact,
+    icon: Icons.play_arrow,
+    label: '코너학습 시작',
+    onPressed: () => showDialog<void>(
+      context: context,
+      builder: (_) => const StartCampConfirmDialog(),
+    ),
+  );
+}
+
+/// POST start-camp 실패를 사용자 문구로 변환한다(camp_handler.go StartCamp 참고).
+/// 인식 못한 코드(네트워크 오류, 5xx 등)는 일반 문구로 대체한다. DioException은
+/// LoggingInterceptor(#131)가 네트워크 계층에서 이미 기록하므로, 그 외 에러만
+/// 여기서 직접 로깅한다.
+String _describeStartError(Object error, StackTrace stackTrace) {
+  if (error is DioException) {
+    final code = (error.response?.data is Map)
+        ? (error.response?.data as Map)['code'] as String?
+        : null;
+    if (code == 'CAMP_STATE_CONFLICT') {
+      return '이미 시작되었거나 시작할 수 없는 캠프 상태입니다.';
+    }
+  } else {
+    appLogger.error('start_camp', 'failed', error: error, stackTrace: stackTrace);
+  }
+  return '시작 확정에 실패했습니다. 잠시 후 다시 시도해주세요.';
+}
+
+class StartCampConfirmDialog extends ConsumerStatefulWidget {
+  const StartCampConfirmDialog({super.key});
+
+  @override
+  ConsumerState<StartCampConfirmDialog> createState() =>
+      _StartCampConfirmDialogState();
+}
+
+class _StartCampConfirmDialogState
+    extends ConsumerState<StartCampConfirmDialog> {
+  bool _submitting = false;
+  String? _error;
+
+  Future<void> _confirm() async {
+    setState(() {
+      _submitting = true;
+      _error = null;
+    });
+    try {
+      await ref.read(startCampControllerProvider.notifier).confirm();
+      final result = ref.read(startCampControllerProvider);
+      if (result.hasError) throw result.error!;
+      if (mounted) Navigator.pop(context);
+    } catch (error, stackTrace) {
+      if (mounted) setState(() => _error = _describeStartError(error, stackTrace));
+    } finally {
+      if (mounted) setState(() => _submitting = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).brightness == Brightness.dark
+        ? AppColors.dark
+        : AppColors.light;
+    return ConfirmModalShell(
+      kind: ConfirmModalKind.softConfirm,
+      title: '코너학습을 시작할까요?',
+      constraints: const BoxConstraints(minWidth: 480, maxWidth: 640),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'PIN 카드는 이미 발급돼 있으니 시작 전까지는 로그인이 거부됩니다',
+            style: AppTypography.body.copyWith(color: colors.textSecondary),
+          ),
+          if (_error != null)
+            Padding(
+              padding: const EdgeInsets.only(top: AppSpacing.space3),
+              child: Semantics(
+                liveRegion: true,
+                child: Text(
+                  _error!,
+                  style: AppTypography.caption.copyWith(color: colors.danger),
+                ),
+              ),
+            ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: _submitting ? null : () => Navigator.pop(context),
+          child: const Text('취소'),
+        ),
+        AppButton(
+          variant: AppButtonVariant.primary,
+          size: AppButtonSize.compact,
+          label: _submitting ? '시작 확정 중…' : '시작 확정',
+          onPressed: _submitting ? null : _confirm,
+        ),
+      ],
+    );
+  }
+}

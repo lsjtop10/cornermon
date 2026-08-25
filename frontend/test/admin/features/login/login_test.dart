@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:cornermon/admin/features/login/login_error_provider.dart';
+import 'package:cornermon/admin/features/login/state/login_error_state.dart';
 import 'package:cornermon/admin/features/login/login_screen.dart';
 import 'package:cornermon/admin/session/admin_session_provider.dart';
 import 'package:cornermon/shared/api/providers/auth_device_trust_providers.dart';

@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:cornermon/admin/session/selected_camp_provider.dart';
 import 'package:cornermon/admin/widgets/sidebar/admin_sidebar.dart';
-import 'package:cornermon/admin/features/end_camp/end_camp_bar_button.dart';
-import 'package:cornermon/admin/features/start_camp/start_camp_button.dart';
+import 'package:cornermon/admin/features/end_camp/widgets/end_camp_bar_button.dart';
+import 'package:cornermon/admin/features/start_camp/widgets/start_camp_button.dart';
 import 'package:cornermon/shared/design_system/tokens/spacing.dart';
 
 class AdminScaffold extends ConsumerWidget {

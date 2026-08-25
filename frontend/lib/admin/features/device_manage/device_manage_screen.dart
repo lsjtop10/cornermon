@@ -13,8 +13,8 @@ import 'package:cornermon/shared/design_system/tokens/typography.dart';
 import 'package:cornermon/shared/design_system/widgets/connection_banner.dart';
 import 'package:cornermon/shared/design_system/widgets/empty_state.dart';
 import 'package:cornermon/shared/design_system/widgets/pill_tab_bar.dart';
-import 'package:cornermon/admin/features/device_manage/_device_manage_connection_state.dart';
-import 'package:cornermon/admin/features/device_manage/_device_registration_row.dart';
+import 'package:cornermon/admin/features/device_manage/state/device_manage_connection_state.dart';
+import 'package:cornermon/admin/features/device_manage/widgets/device_registration_row.dart';
 
 class DeviceManageScreen extends ConsumerStatefulWidget {
   const DeviceManageScreen({super.key});

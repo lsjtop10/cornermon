@@ -4,9 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cornermon/admin/session/selected_camp_provider.dart';
 import 'package:cornermon/shared/design_system/tokens/spacing.dart';
 import 'package:cornermon/shared/design_system/widgets/empty_state.dart';
-import '_active_sessions_card.dart';
-import '_admin_sessions_card.dart';
-import '_locked_devices_card.dart';
+import 'widgets/active_sessions_card.dart';
+import 'widgets/admin_sessions_card.dart';
+import 'widgets/locked_devices_card.dart';
 
 class SessionManageScreen extends ConsumerWidget {
   const SessionManageScreen({super.key});

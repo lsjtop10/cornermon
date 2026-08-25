@@ -1,7 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:cornermon/admin/features/settings/update_camp_controller.dart';
+import 'package:cornermon/admin/features/settings/actions/update_camp_actions.dart';
 import 'package:cornermon/shared/api/domain_aliases.dart' as api;
 import 'package:cornermon/shared/api/ids.dart';
 import 'package:cornermon/shared/design_system/tokens/colors.dart';

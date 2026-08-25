@@ -1,8 +1,8 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:cornermon/admin/features/setup_wizard/setup_wizard_provider.dart';
-import 'package:cornermon/admin/features/setup_wizard/setup_wizard_state.dart';
+import 'package:cornermon/admin/features/setup_wizard/actions/setup_wizard_actions.dart';
+import 'package:cornermon/admin/features/setup_wizard/state/setup_wizard_state.dart';
 import 'package:cornermon/admin/features/setup_wizard/setup_wizard_templates.dart';
 import 'package:cornermon/shared/design_system/tokens/colors.dart';
 import 'package:cornermon/shared/design_system/tokens/spacing.dart';
