@@ -297,7 +297,9 @@ JOIN LATERAL (
             'cornerId', t.corner_id,
             'trackNo', t.track_no,
             'status', t.status,
-            'operationalStatus', CASE WHEN t.current_visit_id IS NULL THEN 'IDLE' ELSE 'BUSY' END
+            'operationalStatus', CASE WHEN EXISTS (
+                SELECT 1 FROM visits v WHERE v.track_id = t.id AND v.status = 'IN_PROGRESS'
+            ) THEN 'BUSY' ELSE 'IDLE' END
         ) ORDER BY t.track_no),
         '[]'::jsonb
     ) AS active_tracks
@@ -491,7 +493,7 @@ func (q *Queries) GetInProgressVisitByTrack(ctx context.Context, trackID string)
 }
 
 const getTrack = `-- name: GetTrack :one
-SELECT id, corner_id, track_no, status, pin_hash, pin_ciphertext, current_visit_id, deleted_at, unread_by_admin_count, unread_by_track_count FROM tracks WHERE id = $1
+SELECT id, corner_id, track_no, status, pin_hash, pin_ciphertext, deleted_at, unread_by_admin_count, unread_by_track_count FROM tracks WHERE id = $1
 `
 
 func (q *Queries) GetTrack(ctx context.Context, id string) (Track, error) {
@@ -504,7 +506,6 @@ func (q *Queries) GetTrack(ctx context.Context, id string) (Track, error) {
 		&i.Status,
 		&i.PinHash,
 		&i.PinCiphertext,
-		&i.CurrentVisitID,
 		&i.DeletedAt,
 		&i.UnreadByAdminCount,
 		&i.UnreadByTrackCount,
@@ -615,7 +616,7 @@ func (q *Queries) ListActiveFacilitatorSessionsByTrack(ctx context.Context, trac
 }
 
 const listActiveTracksByCamp = `-- name: ListActiveTracksByCamp :many
-SELECT t.id, t.corner_id, t.track_no, t.status, t.pin_hash, t.pin_ciphertext, t.current_visit_id, t.deleted_at, t.unread_by_admin_count, t.unread_by_track_count FROM tracks t
+SELECT t.id, t.corner_id, t.track_no, t.status, t.pin_hash, t.pin_ciphertext, t.deleted_at, t.unread_by_admin_count, t.unread_by_track_count FROM tracks t
 JOIN corners c ON t.corner_id = c.id
 WHERE c.camp_id = $1 AND c.deleted_at IS NULL AND t.status = 'ACTIVE'
 `
@@ -636,7 +637,6 @@ func (q *Queries) ListActiveTracksByCamp(ctx context.Context, campID string) ([]
 			&i.Status,
 			&i.PinHash,
 			&i.PinCiphertext,
-			&i.CurrentVisitID,
 			&i.DeletedAt,
 			&i.UnreadByAdminCount,
 			&i.UnreadByTrackCount,
@@ -1092,7 +1092,9 @@ JOIN LATERAL (
             'cornerId', t.corner_id,
             'trackNo', t.track_no,
             'status', t.status,
-            'operationalStatus', CASE WHEN t.current_visit_id IS NULL THEN 'IDLE' ELSE 'BUSY' END
+            'operationalStatus', CASE WHEN EXISTS (
+                SELECT 1 FROM visits v WHERE v.track_id = t.id AND v.status = 'IN_PROGRESS'
+            ) THEN 'BUSY' ELSE 'IDLE' END
         ) ORDER BY t.track_no),
         '[]'::jsonb
     ) AS active_tracks
@@ -1416,7 +1418,7 @@ func (q *Queries) ListPendingDeviceRegistrationsByCamp(ctx context.Context, camp
 }
 
 const listTracksByCamp = `-- name: ListTracksByCamp :many
-SELECT t.id, t.corner_id, t.track_no, t.status, t.pin_hash, t.pin_ciphertext, t.current_visit_id, t.deleted_at, t.unread_by_admin_count, t.unread_by_track_count FROM tracks t
+SELECT t.id, t.corner_id, t.track_no, t.status, t.pin_hash, t.pin_ciphertext, t.deleted_at, t.unread_by_admin_count, t.unread_by_track_count FROM tracks t
 JOIN corners c ON t.corner_id = c.id
 WHERE c.camp_id = $1 AND c.deleted_at IS NULL
 `
@@ -1437,7 +1439,6 @@ func (q *Queries) ListTracksByCamp(ctx context.Context, campID string) ([]Track,
 			&i.Status,
 			&i.PinHash,
 			&i.PinCiphertext,
-			&i.CurrentVisitID,
 			&i.DeletedAt,
 			&i.UnreadByAdminCount,
 			&i.UnreadByTrackCount,
@@ -1453,7 +1454,7 @@ func (q *Queries) ListTracksByCamp(ctx context.Context, campID string) ([]Track,
 }
 
 const listTracksByCorner = `-- name: ListTracksByCorner :many
-SELECT id, corner_id, track_no, status, pin_hash, pin_ciphertext, current_visit_id, deleted_at, unread_by_admin_count, unread_by_track_count FROM tracks WHERE corner_id = $1
+SELECT id, corner_id, track_no, status, pin_hash, pin_ciphertext, deleted_at, unread_by_admin_count, unread_by_track_count FROM tracks WHERE corner_id = $1
 `
 
 func (q *Queries) ListTracksByCorner(ctx context.Context, cornerID string) ([]Track, error) {
@@ -1472,7 +1473,6 @@ func (q *Queries) ListTracksByCorner(ctx context.Context, cornerID string) ([]Tr
 			&i.Status,
 			&i.PinHash,
 			&i.PinCiphertext,
-			&i.CurrentVisitID,
 			&i.DeletedAt,
 			&i.UnreadByAdminCount,
 			&i.UnreadByTrackCount,
@@ -1978,13 +1978,12 @@ func (q *Queries) SaveMessage(ctx context.Context, arg SaveMessageParams) error 
 }
 
 const saveTrack = `-- name: SaveTrack :exec
-INSERT INTO tracks (id, corner_id, track_no, status, pin_hash, pin_ciphertext, current_visit_id, deleted_at, unread_by_admin_count, unread_by_track_count)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+INSERT INTO tracks (id, corner_id, track_no, status, pin_hash, pin_ciphertext, deleted_at, unread_by_admin_count, unread_by_track_count)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 ON CONFLICT (id) DO UPDATE SET
     status = EXCLUDED.status,
     pin_hash = EXCLUDED.pin_hash,
     pin_ciphertext = EXCLUDED.pin_ciphertext,
-    current_visit_id = EXCLUDED.current_visit_id,
     deleted_at = EXCLUDED.deleted_at,
     unread_by_admin_count = EXCLUDED.unread_by_admin_count,
     unread_by_track_count = EXCLUDED.unread_by_track_count
@@ -1997,7 +1996,6 @@ type SaveTrackParams struct {
 	Status             string             `json:"status"`
 	PinHash            string             `json:"pin_hash"`
 	PinCiphertext      pgtype.Text        `json:"pin_ciphertext"`
-	CurrentVisitID     pgtype.Text        `json:"current_visit_id"`
 	DeletedAt          pgtype.Timestamptz `json:"deleted_at"`
 	UnreadByAdminCount int32              `json:"unread_by_admin_count"`
 	UnreadByTrackCount int32              `json:"unread_by_track_count"`
@@ -2011,7 +2009,6 @@ func (q *Queries) SaveTrack(ctx context.Context, arg SaveTrackParams) error {
 		arg.Status,
 		arg.PinHash,
 		arg.PinCiphertext,
-		arg.CurrentVisitID,
 		arg.DeletedAt,
 		arg.UnreadByAdminCount,
 		arg.UnreadByTrackCount,

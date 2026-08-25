@@ -11,7 +11,6 @@ import (
 
 type CampService struct {
 	camps       CampRepository
-	tracks      TrackRepository
 	devices     DeviceRegistrationRepository
 	visits      VisitRepository
 	groups      GroupRepository
@@ -27,7 +26,6 @@ type CampService struct {
 
 func NewCampService(
 	camps CampRepository,
-	tracks TrackRepository,
 	devices DeviceRegistrationRepository,
 	visits VisitRepository,
 	groups GroupRepository,
@@ -39,7 +37,6 @@ func NewCampService(
 ) *CampService {
 	return &CampService{
 		camps:       camps,
-		tracks:      tracks,
 		devices:     devices,
 		visits:      visits,
 		groups:      groups,
@@ -217,19 +214,8 @@ func (s *CampService) EndCamp(
 				return withErrorContext("camp.end", "validate_group", domain.ErrCornerNotInItinerary, map[string]any{"group_id": string(visit.GroupID()), "visit_id": string(visit.ID()), "group_found": false})
 			}
 
-			track, err := s.tracks.Get(ctx, visit.TrackID())
-			if err != nil {
-				return withErrorContext("camp.end", "repository.get_track", err, map[string]any{"track_id": string(visit.TrackID()), "visit_id": string(visit.ID())})
-			}
-			if track == nil {
-				return withErrorContext("camp.end", "validate_track", domain.ErrTrackNotActive, map[string]any{"track_id": string(visit.TrackID()), "visit_id": string(visit.ID()), "track_found": false})
-			}
-
 			if err := visit.Complete(now); err != nil {
 				return withErrorContext("camp.end", "domain.visit_complete", err, map[string]any{"visit_id": string(visit.ID())})
-			}
-			if _, err := track.CompleteVisit(now); err != nil {
-				return withErrorContext("camp.end", "domain.track_complete_visit", err, map[string]any{"track_id": string(track.ID())})
 			}
 			if err := group.MarkVisitCompleted(visit.CornerID()); err != nil {
 				return withErrorContext("camp.end", "domain.group_mark_completed", err, map[string]any{"group_id": string(group.ID()), "corner_id": string(visit.CornerID())})
@@ -237,9 +223,6 @@ func (s *CampService) EndCamp(
 
 			if err := s.visits.Save(ctx, visit); err != nil {
 				return withErrorContext("camp.end", "repository.save_visit", err, map[string]any{"visit_id": string(visit.ID())})
-			}
-			if err := s.tracks.Save(ctx, track); err != nil {
-				return withErrorContext("camp.end", "repository.save_track", err, map[string]any{"track_id": string(track.ID())})
 			}
 			if err := s.groups.Save(ctx, group); err != nil {
 				return withErrorContext("camp.end", "repository.save_group", err, map[string]any{"group_id": string(group.ID())})

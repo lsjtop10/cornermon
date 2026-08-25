@@ -21,13 +21,6 @@ type CampEndedEvent struct {
 	occurredAt time.Time
 }
 
-// Track.CompleteVisit 성공 시 반환 — 세션 무효화와는 무관하지만, usecase가 감사 로그/SSE 스냅샷을
-// Visit.Complete(now)와 동일한 시각으로 정합성 있게 구성할 수 있도록 트랙이 비워진 시각을 함께 돌려준다.
-type TrackFreedEvent struct {
-	trackID    TrackID
-	occurredAt time.Time
-}
-
 func (t *TrackDeletedEvent) TrackID() TrackID {
 	return t.trackID
 }
@@ -102,32 +95,6 @@ func NewCampEndedEventFromProps(p CampEndedEventProps) *CampEndedEvent {
 func NewCampEndedEventValFromProps(p CampEndedEventProps) CampEndedEvent {
 	return CampEndedEvent{
 		campID:     p.CampID,
-		occurredAt: p.OccurredAt,
-	}
-}
-
-func (t *TrackFreedEvent) TrackID() TrackID {
-	return t.trackID
-}
-
-func (t *TrackFreedEvent) OccurredAt() time.Time {
-	return t.occurredAt
-}
-
-type TrackFreedEventProps struct {
-	TrackID    TrackID
-	OccurredAt time.Time
-}
-
-func NewTrackFreedEventFromProps(p TrackFreedEventProps) *TrackFreedEvent {
-	return &TrackFreedEvent{
-		trackID:    p.TrackID,
-		occurredAt: p.OccurredAt,
-	}
-}
-func NewTrackFreedEventValFromProps(p TrackFreedEventProps) TrackFreedEvent {
-	return TrackFreedEvent{
-		trackID:    p.TrackID,
 		occurredAt: p.OccurredAt,
 	}
 }

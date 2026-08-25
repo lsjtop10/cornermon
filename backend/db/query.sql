@@ -52,7 +52,9 @@ JOIN LATERAL (
             'cornerId', t.corner_id,
             'trackNo', t.track_no,
             'status', t.status,
-            'operationalStatus', CASE WHEN t.current_visit_id IS NULL THEN 'IDLE' ELSE 'BUSY' END
+            'operationalStatus', CASE WHEN EXISTS (
+                SELECT 1 FROM visits v WHERE v.track_id = t.id AND v.status = 'IN_PROGRESS'
+            ) THEN 'BUSY' ELSE 'IDLE' END
         ) ORDER BY t.track_no),
         '[]'::jsonb
     ) AS active_tracks
@@ -86,7 +88,9 @@ JOIN LATERAL (
             'cornerId', t.corner_id,
             'trackNo', t.track_no,
             'status', t.status,
-            'operationalStatus', CASE WHEN t.current_visit_id IS NULL THEN 'IDLE' ELSE 'BUSY' END
+            'operationalStatus', CASE WHEN EXISTS (
+                SELECT 1 FROM visits v WHERE v.track_id = t.id AND v.status = 'IN_PROGRESS'
+            ) THEN 'BUSY' ELSE 'IDLE' END
         ) ORDER BY t.track_no),
         '[]'::jsonb
     ) AS active_tracks
@@ -115,13 +119,12 @@ JOIN corners c ON t.corner_id = c.id
 WHERE c.camp_id = $1 AND c.deleted_at IS NULL AND t.status = 'ACTIVE';
 
 -- name: SaveTrack :exec
-INSERT INTO tracks (id, corner_id, track_no, status, pin_hash, pin_ciphertext, current_visit_id, deleted_at, unread_by_admin_count, unread_by_track_count)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+INSERT INTO tracks (id, corner_id, track_no, status, pin_hash, pin_ciphertext, deleted_at, unread_by_admin_count, unread_by_track_count)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 ON CONFLICT (id) DO UPDATE SET
     status = EXCLUDED.status,
     pin_hash = EXCLUDED.pin_hash,
     pin_ciphertext = EXCLUDED.pin_ciphertext,
-    current_visit_id = EXCLUDED.current_visit_id,
     deleted_at = EXCLUDED.deleted_at,
     unread_by_admin_count = EXCLUDED.unread_by_admin_count,
     unread_by_track_count = EXCLUDED.unread_by_track_count;

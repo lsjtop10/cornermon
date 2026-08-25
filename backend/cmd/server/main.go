@@ -167,13 +167,13 @@ func main() {
 	groupService := usecase.NewGroupService(campRepo, cornerRepo, trackRepo, groupRepo, badgeRepo, visitRepo, adminRepo, auditLogRepo, txManager)
 	badgeService := usecase.NewBadgeService(badgeRepo, groupRepo, adminRepo, auditLogRepo, txManager)
 	visitService := usecase.NewVisitService(campRepo, cornerRepo, trackRepo, visitRepo, groupRepo, badgeRepo, facilitatorSessionRepo, auditLogRepo, broadcaster, txManager)
-	trackService := usecase.NewTrackService(campRepo, cornerRepo, trackRepo, facilitatorSessionRepo, adminRepo, auditLogRepo, broadcaster, txManager, trackPINProtector)
+	trackService := usecase.NewTrackService(campRepo, cornerRepo, trackRepo, visitRepo, facilitatorSessionRepo, adminRepo, auditLogRepo, broadcaster, txManager, trackPINProtector)
 	reportService := usecase.NewReportService(campRepo, reportQuerier)
 	authFacilitatorService := usecase.NewFacilitatorAuthService(campRepo, cornerRepo, trackRepo, deviceRepo, facilitatorSessionRepo, auditLogRepo, broadcaster, txManager)
 	messageService := usecase.NewMessageService(cornerRepo, trackRepo, messageRepo, auditLogRepo, broadcaster, txManager)
 	announcementService := usecase.NewAnnouncementService(announcementRepo, announcementReceiptRepo, campRepo, trackRepo, facilitatorSessionRepo, adminRepo, txManager, auditLogRepo, broadcaster)
 	announcementQueryService := usecase.NewAnnouncementQueryService(announcementQuerier, trackRepo, cornerRepo)
-	campService := usecase.NewCampService(campRepo, trackRepo, deviceRepo, visitRepo, groupRepo, facilitatorSessionRepo, adminRepo, auditLogRepo, broadcaster, txManager)
+	campService := usecase.NewCampService(campRepo, deviceRepo, visitRepo, groupRepo, facilitatorSessionRepo, adminRepo, auditLogRepo, broadcaster, txManager)
 
 	// Initialize Handlers
 	authHandler := web.NewAuthHandler(authAdminService, authFacilitatorService, deviceTrustService)

@@ -14,6 +14,7 @@ type TrackService struct {
 	camps        CampRepository
 	corners      CornerRepository
 	tracks       TrackRepository
+	visits       VisitRepository
 	sessions     FacilitatorSessionRepository
 	admins       AdminRepository
 	auditLogs    AuditLogRepository
@@ -37,6 +38,7 @@ func NewTrackService(
 	camps CampRepository,
 	corners CornerRepository,
 	tracks TrackRepository,
+	visits VisitRepository,
 	sessions FacilitatorSessionRepository,
 	admins AdminRepository,
 	auditLogs AuditLogRepository,
@@ -52,6 +54,7 @@ func NewTrackService(
 		camps:        camps,
 		corners:      corners,
 		tracks:       tracks,
+		visits:       visits,
 		sessions:     sessions,
 		admins:       admins,
 		auditLogs:    auditLogs,
@@ -115,13 +118,12 @@ func (s *TrackService) CreateTrack(
 		}
 
 		track = domain.NewTrackFromProps(domain.TrackProps{
-			ID:             domain.TrackID(s.uuidFn()),
-			CornerID:       cornerID,
-			TrackNo:        nextTrackNo,
-			Status:         domain.TrackActive,
-			PINHash:        hashPIN,
-			PINCiphertext:  pinCiphertext,
-			CurrentVisitID: domain.None[domain.VisitID](),
+			ID:            domain.TrackID(s.uuidFn()),
+			CornerID:      cornerID,
+			TrackNo:       nextTrackNo,
+			Status:        domain.TrackActive,
+			PINHash:       hashPIN,
+			PINCiphertext: pinCiphertext,
 		})
 
 		if err := s.tracks.Save(ctx, track); err != nil {
@@ -162,6 +164,14 @@ func (s *TrackService) DeleteTrack(
 	var targetLabel string
 
 	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
+		inProgress, err := s.visits.GetInProgressByTrack(ctx, trackID)
+		if err != nil {
+			return withErrorContext("track.delete", "repository.get_in_progress_visit", err, map[string]any{"track_id": string(trackID)})
+		}
+		if inProgress != nil {
+			return withErrorContext("track.delete", "validate_track_busy", domain.ErrTrackDeleteBlocked, map[string]any{"track_id": string(trackID)})
+		}
+
 		if _, err := track.Delete(now); err != nil {
 			return withErrorContext("track.delete", "domain.delete", err, map[string]any{"track_id": string(trackID)})
 		}
@@ -269,6 +279,14 @@ func (s *TrackService) ReplaceTrack(
 	var newTrack *domain.Track
 
 	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
+		inProgress, err := s.visits.GetInProgressByTrack(ctx, oldTrackID)
+		if err != nil {
+			return withErrorContext("track.replace", "repository.get_in_progress_visit", err, map[string]any{"old_track_id": string(oldTrackID)})
+		}
+		if inProgress != nil {
+			return withErrorContext("track.replace", "validate_track_busy", domain.ErrTrackDeleteBlocked, map[string]any{"old_track_id": string(oldTrackID)})
+		}
+
 		if _, err := oldTrack.Delete(now); err != nil {
 			return withErrorContext("track.replace", "domain.delete_old", err, map[string]any{"old_track_id": string(oldTrackID)})
 		}
@@ -291,13 +309,12 @@ func (s *TrackService) ReplaceTrack(
 
 		newTrackID := domain.TrackID(s.uuidFn())
 		newTrack = domain.NewTrackFromProps(domain.TrackProps{
-			ID:             newTrackID,
-			CornerID:       newCornerID,
-			TrackNo:        nextTrackNo,
-			Status:         domain.TrackActive,
-			PINHash:        hashPIN,
-			PINCiphertext:  pinCiphertext,
-			CurrentVisitID: domain.None[domain.VisitID](),
+			ID:            newTrackID,
+			CornerID:      newCornerID,
+			TrackNo:       nextTrackNo,
+			Status:        domain.TrackActive,
+			PINHash:       hashPIN,
+			PINCiphertext: pinCiphertext,
 		})
 
 		if err := s.tracks.Save(ctx, newTrack); err != nil {
@@ -417,12 +434,23 @@ func (s *TrackService) encryptPIN(ctx context.Context, pin string) (string, erro
 }
 
 // ListTracksByCamp
-func (s *TrackService) ListTracksByCamp(ctx context.Context, campID domain.CampID) ([]*domain.Track, error) {
+// ListTracksByCamp는 캠프의 트랙 목록과 함께, 각 트랙이 현재 진행 중인 방문을 가졌는지(busy)를
+// 반환한다. Track은 더 이상 자신의 가동 상태를 들고 있지 않으므로(Visit이 단일 진실 공급원)
+// 호출자가 busyTrackIDs로 OperationalStatus를 계산해야 한다.
+func (s *TrackService) ListTracksByCamp(ctx context.Context, campID domain.CampID) ([]*domain.Track, map[domain.TrackID]bool, error) {
 	tracks, err := s.tracks.ListByCamp(ctx, campID)
 	if err != nil {
-		return nil, withErrorContext("track.list_by_camp", "repository.list_tracks", err, map[string]any{"camp_id": string(campID)})
+		return nil, nil, withErrorContext("track.list_by_camp", "repository.list_tracks", err, map[string]any{"camp_id": string(campID)})
 	}
-	return tracks, nil
+	inProgress, err := s.visits.ListInProgressByCamp(ctx, campID)
+	if err != nil {
+		return nil, nil, withErrorContext("track.list_by_camp", "repository.list_in_progress_visits", err, map[string]any{"camp_id": string(campID)})
+	}
+	busyTrackIDs := make(map[domain.TrackID]bool, len(inProgress))
+	for _, v := range inProgress {
+		busyTrackIDs[v.TrackID()] = true
+	}
+	return tracks, busyTrackIDs, nil
 }
 
 func (s *TrackService) ExportTrackPIN(ctx context.Context, trackID domain.TrackID) (*domain.Track, string, error) {

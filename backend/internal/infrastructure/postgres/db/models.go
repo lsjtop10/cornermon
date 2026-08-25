@@ -216,8 +216,6 @@ type Track struct {
 	PinHash string `json:"pin_hash"`
 	// PIN 재인쇄 전용 AES-256-GCM 암호문
 	PinCiphertext pgtype.Text `json:"pin_ciphertext"`
-	// 현재 진행 중인 방문(Visit)의 식별자
-	CurrentVisitID pgtype.Text `json:"current_visit_id"`
 	// 논리적 삭제 시간
 	DeletedAt          pgtype.Timestamptz `json:"deleted_at"`
 	UnreadByAdminCount int32              `json:"unread_by_admin_count"`

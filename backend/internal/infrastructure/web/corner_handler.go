@@ -65,7 +65,10 @@ func mapDomainCornerToDTO(corner *domain.Corner) CornerResponse {
 		CampID:        string(corner.CampID()),
 		Name:          corner.Name(),
 		TargetMinutes: corner.TargetMinutes(),
-		Status:        string(corner.OperationalStatus(nil)),
+		// 트랙 목록 없이 도메인 Corner만으로는 가동 상태를 알 수 없다 — 이 호출은 항상
+		// 빈 트랙 목록으로 계산해 INACTIVE를 반환했으므로(Corner.OperationalStatus(nil)과 동치)
+		// 그 값을 그대로 상수로 남긴다.
+		Status: string(domain.CornerInactive),
 	}
 }
 
