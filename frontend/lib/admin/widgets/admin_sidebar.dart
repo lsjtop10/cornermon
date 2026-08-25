@@ -17,13 +17,22 @@ SidebarMode sidebarModeFor(CampStatus status) => switch (status) {
 };
 
 class AdminSidebar extends ConsumerWidget {
-  const AdminSidebar({required this.mode, super.key});
+  const AdminSidebar({
+    required this.mode,
+    this.forceCollapsed = false,
+    super.key,
+  });
 
   final SidebarMode mode;
 
+  // 스마트폰 폭(AdminScaffold가 판단)에서 강제로 접힌 상태로 렌더링한다 — 사용자가
+  // 이전에 펼쳐둔 상태(adminSidebarExtendedProvider)는 건드리지 않고 표시만 덮어써서,
+  // 태블릿 폭으로 돌아오면 원래 펼침 상태가 그대로 복원된다(#241).
+  final bool forceCollapsed;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isExtended = ref.watch(adminSidebarExtendedProvider);
+    final isExtended = ref.watch(adminSidebarExtendedProvider) && !forceCollapsed;
     final colors = Theme.of(context).brightness == Brightness.dark
         ? AppColors.dark
         : AppColors.light;
@@ -69,16 +78,18 @@ class AdminSidebar extends ConsumerWidget {
             colors: colors,
             onTap: () => _goToCamps(context, ref),
           ),
-          const SizedBox(height: 2),
-          _SidebarButton(
-            icon: isExtended ? Icons.chevron_left : Icons.chevron_right,
-            label: '사이드바 접기',
-            extended: isExtended,
-            selected: false,
-            colors: colors,
-            onTap: () =>
-                ref.read(adminSidebarExtendedProvider.notifier).toggle(),
-          ),
+          if (!forceCollapsed) ...[
+            const SizedBox(height: 2),
+            _SidebarButton(
+              icon: isExtended ? Icons.chevron_left : Icons.chevron_right,
+              label: '사이드바 접기',
+              extended: isExtended,
+              selected: false,
+              colors: colors,
+              onTap: () =>
+                  ref.read(adminSidebarExtendedProvider.notifier).toggle(),
+            ),
+          ],
           const SizedBox(height: 2),
           _SidebarButton(
             icon: Theme.of(context).brightness == Brightness.dark

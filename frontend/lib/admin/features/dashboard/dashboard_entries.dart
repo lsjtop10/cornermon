@@ -77,7 +77,12 @@ List<CornerDashboardEntry> sortEntries(
   return result;
 }
 
-String formatCornerCardSubtitle({
+/// 코너 카드 하단의 평균/최근 정보 — 예전엔 " · "로 한 문자열에 이어붙여서, 좁은
+/// 카드 폭에서 그 문자열 전체가 줄바꿈되거나 말줄임표로 잘렸다(#241 후속:
+/// "라벨을 왜 한 줄에 다 이어붙이냐"는 지적). 두 정보는 서로 다른 사실이니
+/// 애초에 별개 라벨로 돌려줘서 호출부가 각자 한 줄씩 그리게 한다 — 각 라벨
+/// 자체는 항상 짧아서 줄바꿈이 필요 없다.
+({String duration, String sampleCount}) formatCornerCardSubtitle({
   required int avgDurationSeconds,
   required int sampleCount,
   num? avgDeviationSeconds,
@@ -87,5 +92,8 @@ String formatCornerCardSubtitle({
   final deviation = avgDeviationSeconds == null
       ? ''
       : ' (${avgDeviationSeconds >= 0 ? '+' : '-'}${duration(avgDeviationSeconds.abs())})';
-  return '평균 ${duration(avgDurationSeconds)}$deviation · 최근 $sampleCount건';
+  return (
+    duration: '평균 ${duration(avgDurationSeconds)}$deviation',
+    sampleCount: '최근 $sampleCount건',
+  );
 }

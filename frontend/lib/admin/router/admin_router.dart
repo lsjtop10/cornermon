@@ -85,8 +85,24 @@ final adminRouterProvider = Provider<GoRouter>((ref) {
         (_, _) => const AdminScaffold(body: BroadcastScreen()),
       ),
       _route(
+        '/messages/broadcast/:messageId',
+        (_, state) => AdminScaffold(
+          body: BroadcastScreen(
+            messageId: MessageId(state.pathParameters['messageId']!),
+          ),
+        ),
+      ),
+      _route(
         '/messages/direct',
         (_, _) => const AdminScaffold(body: TrackDirectScreen()),
+      ),
+      _route(
+        '/messages/direct/:trackId',
+        (_, state) => AdminScaffold(
+          body: TrackDirectScreen(
+            trackId: TrackId(state.pathParameters['trackId']!),
+          ),
+        ),
       ),
       _route('/report', (_, _) => const AdminScaffold(body: ReportScreen())),
       _route(

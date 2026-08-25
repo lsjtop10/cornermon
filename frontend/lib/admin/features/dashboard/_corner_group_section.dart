@@ -6,6 +6,7 @@ import 'package:cornermon/shared/design_system/tokens/colors.dart';
 import 'package:cornermon/shared/design_system/tokens/spacing.dart';
 import 'package:cornermon/shared/design_system/tokens/typography.dart';
 import 'package:cornermon/shared/design_system/widgets/status_badge.dart';
+import 'package:cornermon/shared/design_system/widgets/responsive_context.dart';
 
 import '_corner_status_pill.dart';
 import 'package:cornermon/admin/features/dashboard/dashboard_track_grouping.dart';
@@ -134,40 +135,105 @@ class _CornerGroupSectionState extends State<CornerGroupSection> {
 /// §design-system.md 4.5의 관리자 iPad 테이블 규칙(정렬 가능한 컬럼 헤더는 이 뷰
 /// 자체가 이미 카드형과 정렬을 공유하므로 생략, 행 높이 48pt, zebra 없이 구분선만)을
 /// 따른다 — corner_detail_screen.dart의 _TrackTable과 같은 시각 언어.
+///
+/// 스마트폰 폭에서는 그 코너 상세와 마찬가지로 표 대신 구분선으로 나뉜 행으로
+/// 바꾼다(#241 polish) — 3열짜리라 5열인 코너 상세보다 덜 심각했지만, DataTable
+/// 기본 열 패딩만으로도 가로 스크롤이 필요해 "같은 시각 언어"라던 두 화면이
+/// 폭 대응에서만 서로 달랐다.
 class _TrackTable extends StatelessWidget {
   const _TrackTable({required this.tracks});
 
   final List<api.Track> tracks;
 
   @override
-  Widget build(BuildContext context) => SingleChildScrollView(
-    scrollDirection: Axis.horizontal,
-    child: DataTable(
-      dataRowMinHeight: 48,
-      dataRowMaxHeight: 48,
-      columns: const [
-        DataColumn(label: Text('트랙')),
-        DataColumn(label: Text('상태')),
-        DataColumn(label: Text('현재 조')),
-      ],
-      rows: [
-        for (final track in tracks)
-          DataRow(
-            cells: [
-              DataCell(Text('${track.trackNo ?? '-'}번')),
-              DataCell(
-                StatusBadge(
-                  status:
-                      track.operationalStatus ==
-                          api.TrackOperationalStatus.BUSY
-                      ? TrackVisualStatus.busy
-                      : TrackVisualStatus.idle,
+  Widget build(BuildContext context) {
+    if (context.isPhoneWidth) {
+      return Column(
+        children: [
+          for (var i = 0; i < tracks.length; i++) ...[
+            if (i > 0) const Divider(height: 1),
+            _TrackRow(track: tracks[i]),
+          ],
+        ],
+      );
+    }
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: DataTable(
+        dataRowMinHeight: 48,
+        dataRowMaxHeight: 48,
+        columns: const [
+          DataColumn(label: Text('트랙')),
+          DataColumn(label: Text('상태')),
+          DataColumn(label: Text('현재 조')),
+        ],
+        rows: [
+          for (final track in tracks)
+            DataRow(
+              cells: [
+                DataCell(Text('${track.trackNo ?? '-'}번')),
+                DataCell(
+                  StatusBadge(
+                    status:
+                        track.operationalStatus ==
+                            api.TrackOperationalStatus.BUSY
+                        ? TrackVisualStatus.busy
+                        : TrackVisualStatus.idle,
+                  ),
                 ),
-              ),
-              DataCell(Text(track.currentVisit?.groupId ?? '-')),
-            ],
+                DataCell(Text(track.currentVisit?.groupId ?? '-')),
+              ],
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TrackRow extends StatelessWidget {
+  const _TrackRow({required this.track});
+
+  final api.Track track;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).brightness == Brightness.dark
+        ? AppColors.dark
+        : AppColors.light;
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.space4,
+        vertical: AppSpacing.space3,
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${track.trackNo ?? '-'}번 트랙',
+                  style: AppTypography.bodyEmphasis.copyWith(
+                    color: colors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.space1),
+                Text(
+                  '현재 조: ${track.currentVisit?.groupId ?? '-'}',
+                  style: AppTypography.caption.copyWith(
+                    color: colors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
           ),
-      ],
-    ),
-  );
+          StatusBadge(
+            status: track.operationalStatus == api.TrackOperationalStatus.BUSY
+                ? TrackVisualStatus.busy
+                : TrackVisualStatus.idle,
+          ),
+        ],
+      ),
+    );
+  }
 }

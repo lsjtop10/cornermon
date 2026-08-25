@@ -8,14 +8,6 @@ import 'package:cornermon/shared/api/providers/message_providers.dart';
 
 part 'track_direct_providers.g.dart';
 
-@riverpod
-class SelectedDirectTrackId extends _$SelectedDirectTrackId {
-  @override
-  TrackId? build() => null;
-
-  void select(TrackId id) => state = id;
-}
-
 /// A11 좌측 트랙 목록 한 행에 필요한 파생 데이터.
 class TrackDirectSummary {
   const TrackDirectSummary({

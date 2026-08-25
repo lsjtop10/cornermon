@@ -84,7 +84,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(AppSpacing.space6),
           child: SizedBox(
-            width: 400,
+            // 스마트폰 폭(400 + 좌우 padding 미만)에서는 카드 자체가 오버플로했다 —
+            // 화면 폭을 넘지 않는 선에서만 400을 상한으로 둔다(#241).
+            width: (MediaQuery.sizeOf(context).width - AppSpacing.space6 * 2)
+                .clamp(0, 400),
             child: Card(
               child: Padding(
                 padding: const EdgeInsets.all(AppSpacing.space6),

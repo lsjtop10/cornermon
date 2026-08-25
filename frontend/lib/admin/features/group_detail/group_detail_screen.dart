@@ -220,7 +220,12 @@ class _ItineraryStatusList extends StatelessWidget {
           crossAxisCount: _itineraryColumnCount(constraints.maxWidth),
           mainAxisSpacing: AppSpacing.space2,
           crossAxisSpacing: AppSpacing.space2,
-          childAspectRatio: 2.0,
+          // childAspectRatio(2.0)는 셀 높이를 폭에 비례시켜서, 2열(폰 폭)처럼 셀이
+          // 좁아지면 카드 높이도 같이 줄어 코너 이름+AppTag 두 줄이 못 들어가고
+          // "BOTTOM OVERFLOWED"가 났다 — 내용 기준 고정 높이로 바꿔 열 수와
+          // 무관하게 항상 들어가게 한다(bodyEmphasis 1줄 + space1 + AppTag +
+          // 상하 패딩 space2*2 ≈ 72px, 여유를 더해 84).
+          mainAxisExtent: 84,
         ),
         itemCount: items.length,
         itemBuilder: (context, index) => _ItineraryStatusCard(

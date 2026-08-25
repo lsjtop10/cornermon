@@ -15,7 +15,7 @@ import 'package:cornermon/shared/design_system/widgets/pill_tab_bar.dart';
 /// 요구사항 때문에 공용 위젯의 기본 동작을 바꾸면 그 화면들의 검증되지 않은
 /// 변경이 된다. 필요한 화면이 늘어나면 그때 `shared/design_system/widgets`로
 /// 승격을 고려한다.
-class InlinePillTabs extends StatelessWidget {
+class InlinePillTabs extends StatefulWidget {
   const InlinePillTabs({
     required this.tabs,
     required this.selectedIndex,
@@ -28,23 +28,55 @@ class InlinePillTabs extends StatelessWidget {
   final ValueChanged<int> onSelected;
 
   @override
+  State<InlinePillTabs> createState() => _InlinePillTabsState();
+}
+
+class _InlinePillTabsState extends State<InlinePillTabs> {
+  // pill_tab_bar.dart와 동일한 이유(#241) — Scrollbar가 PrimaryScrollController에
+  // 자동으로 못 붙어 죽는 걸 명시적 컨트롤러 공유로 막는다.
+  final _controller = ScrollController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.symmetric(
       horizontal: AppSpacing.space4,
       vertical: AppSpacing.space2,
     ),
-    child: Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        for (var i = 0; i < tabs.length; i++) ...[
-          if (i > 0) const SizedBox(width: AppSpacing.space2),
-          _InlinePillTabButton(
-            tab: tabs[i],
-            selected: i == selectedIndex,
-            onTap: () => onSelected(i),
-          ),
-        ],
-      ],
+    // 탭 5개(전체/진행중/유휴/미가동/병목만) 합이 스마트폰 폭 툴바 줄에서 그대로
+    // RenderFlex 오버플로를 냈다(#241) — 가로 스크롤로 감싸되, `Wrap`이 주는
+    // 느슨한 제약에서는 내용이 다 들어가면 여전히 내용 폭만큼만 차지해
+    // `mainAxisSize.min`이었던 기존 "다른 툴바 항목과 한 줄에 나란히" 동작을
+    // 그대로 유지한다(SingleChildScrollView는 child 폭이 제약보다 작으면
+    // 그 작은 폭 그대로 보고한다 — Wrap 형제 배치에 영향 없음).
+    // Scrollbar는 넘치지 않으면 아무것도 안 그리므로, 잘려서 스크롤이 필요한
+    // 폭에서만 "더 있다"는 티가 조건 분기 없이 붙는다 — 마지막 탭이 화면
+    // 끝에서 반쯤 잘려 보이기만 하고 스크롤 가능하다는 신호가 없던 문제 보정.
+    child: Scrollbar(
+      controller: _controller,
+      thumbVisibility: true,
+      child: SingleChildScrollView(
+        controller: _controller,
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (var i = 0; i < widget.tabs.length; i++) ...[
+              if (i > 0) const SizedBox(width: AppSpacing.space2),
+              _InlinePillTabButton(
+                tab: widget.tabs[i],
+                selected: i == widget.selectedIndex,
+                onTap: () => widget.onSelected(i),
+              ),
+            ],
+          ],
+        ),
+      ),
     ),
   );
 }

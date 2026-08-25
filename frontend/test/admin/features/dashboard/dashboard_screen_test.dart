@@ -263,11 +263,16 @@ void main() {
     });
 
     test('ShoudOmitDeviationWhenNoRankingExists', () {
-      // arrange / act / assert
-      expect(
-        formatCornerCardSubtitle(avgDurationSeconds: 640, sampleCount: 10),
-        '평균 10:40 · 최근 10건',
+      // arrange / act
+      final subtitle = formatCornerCardSubtitle(
+        avgDurationSeconds: 640,
+        sampleCount: 10,
       );
+
+      // assert — #241 후속: 두 정보를 " · "로 이어붙인 문자열 하나가 아니라
+      // 서로 다른 라벨로 분리돼야 한다(라벨을 왜 한 줄에 다 넣냐는 지적).
+      expect(subtitle.duration, '평균 10:40');
+      expect(subtitle.sampleCount, '최근 10건');
     });
   });
 
@@ -492,6 +497,43 @@ void main() {
       expect(find.text('좀비 코너'), findsOneWidget);
       expect(find.text('연결된 트랙이 없습니다'), findsOneWidget);
     });
+
+    // #241 polish — 트랙별 뷰의 코너 그룹 내부 트랙 표(DataTable, 3열)도 코너 상세와
+    // 같은 시각 언어라던 문서 주석과 달리 폰 폭 대응이 안 돼 있었다. 폰 폭에서는
+    // DataTable 대신 구분선 행으로 바뀌는지 확인한다.
+    testWidgets(
+      'ShouldShowTrackRowsInsteadOfDataTableAtPhoneWidth',
+      (tester) async {
+        // arrange
+        addTearDown(tester.view.reset);
+        tester.view.physicalSize = const Size(360, 800);
+        tester.view.devicePixelRatio = 1.0;
+        await _pumpDashboard(
+          tester,
+          campId: CampId('camp-1'),
+          corners: [_corner('corner-1', '코너 1', CornerResponseStatusEnum.BUSY)],
+          tracks: [
+            TrackResponse(
+              (b) => b
+                ..id = 'track-1'
+                ..cornerId = 'corner-1'
+                ..trackNo = 1
+                ..status = TrackResponseStatusEnum.ACTIVE
+                ..operationalStatus = TrackResponseOperationalStatusEnum.IDLE,
+            ),
+          ],
+        );
+
+        // act
+        await tester.tap(find.text('트랙별'));
+        await tester.pumpAndSettle();
+
+        // assert
+        expect(find.byType(DataTable), findsNothing);
+        expect(find.text('1번 트랙'), findsOneWidget);
+        expect(tester.takeException(), isNull);
+      },
+    );
 
     testWidgets(
       'ShoudNavigateToCornerDetailWhenTrackViewGroupHeaderTapped',
@@ -718,6 +760,38 @@ void main() {
       // assert
       expect(cornerCalls, greaterThanOrEqualTo(2));
       expect(summaryCalls, greaterThanOrEqualTo(2));
+    });
+
+    // #241 — 요약 타일 4개(다이렉트 안읽음 포함 4번째까지)와 필터 탭·코너 카드가
+    // 스마트폰 폭(360px, iPhone SE급 최소 폭)에서 RenderFlex 오버플로 없이 렌더링되는지.
+    // 회귀 시 pumpAndSettle 단계에서 FlutterError로 테스트가 실패한다.
+    testWidgets('ShoudRenderWithoutOverflowAtPhoneWidth', (tester) async {
+      // arrange
+      addTearDown(tester.view.reset);
+      tester.view.physicalSize = const Size(360, 800);
+      tester.view.devicePixelRatio = 1.0;
+      final campId = CampId('camp-1');
+
+      // act — bottleneck + hasBusyTrack은 진행중/목표 줄과 병목 부제 줄을 모두
+      // 채워서(#241 후속 신고: 전체 폭에서도 "목···"으로 잘림) 두 캡션 줄의
+      // 오버플로 여지를 실제로 건드린다.
+      await _pumpDashboard(
+        tester,
+        campId: campId,
+        corners: [
+          _corner(
+            'corner-1',
+            '아주 긴 코너 이름 테스트용',
+            CornerResponseStatusEnum.BUSY,
+            bottleneck: true,
+            hasBusyTrack: true,
+          ),
+          _corner('corner-2', '코너 2', CornerResponseStatusEnum.IDLE),
+        ],
+      );
+
+      // assert
+      expect(tester.takeException(), isNull);
     });
   });
 }

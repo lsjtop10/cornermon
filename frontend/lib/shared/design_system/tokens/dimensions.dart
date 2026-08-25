@@ -13,4 +13,8 @@ class AppDimensions {
 
   static const double iconButtonCompact = 44.0;
   static const double iconButtonComfortable = 38.0;
+
+  // 이 폭 미만이면 관리자 앱을 스마트폰으로 본다고 판단한다(Material 3 compact/medium
+  // window size class 경계값 그대로 채용, #241).
+  static const double phoneBreakpoint = 600.0;
 }

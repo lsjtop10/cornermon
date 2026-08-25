@@ -10,6 +10,7 @@ import 'package:cornermon/shared/design_system/widgets/app_button.dart';
 import 'package:cornermon/shared/design_system/widgets/confirm_modal.dart';
 import 'package:cornermon/shared/design_system/widgets/empty_state.dart';
 import 'package:cornermon/shared/design_system/widgets/app_tag.dart';
+import 'package:cornermon/shared/design_system/widgets/responsive_context.dart';
 import 'package:dio/dio.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -21,6 +22,9 @@ class CampListScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final camps = ref.watch(campListProvider);
+    // 좁은 폭(스마트폰)에서는 라벨 있는 버튼 2개가 AppBar 밖으로 넘친다 — 진입 경로가
+    // 막히면 모니터링 화면 자체에 못 들어가므로 아이콘 전용으로 좁힌다(#241).
+    final isPhone = context.isPhoneWidth;
     return Scaffold(
       appBar: AppBar(
         title: const Text('캠프 목록'),
@@ -42,7 +46,9 @@ class CampListScreen extends ConsumerWidget {
           ),
           const SizedBox(width: AppSpacing.space3),
           AppButton(
-            variant: AppButtonVariant.secondary,
+            variant: isPhone
+                ? AppButtonVariant.iconOnly
+                : AppButtonVariant.secondary,
             size: AppButtonSize.compact,
             icon: Icons.qr_code_2_outlined,
             label: 'QR 배지 관리',
@@ -50,7 +56,9 @@ class CampListScreen extends ConsumerWidget {
           ),
           const SizedBox(width: AppSpacing.space3),
           AppButton(
-            variant: AppButtonVariant.primary,
+            variant: isPhone
+                ? AppButtonVariant.iconOnly
+                : AppButtonVariant.primary,
             size: AppButtonSize.compact,
             icon: Icons.add,
             label: '새 캠프 시작',
