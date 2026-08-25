@@ -48,10 +48,9 @@ func mapCornerView(id, campID, name string, targetMinutes int32, avgDurationSeco
 	return view, nil
 }
 
-// deriveCornerStatus는 domain.Corner.OperationalStatus와 동일한 규칙(활성 트랙 없음=INACTIVE,
-// BUSY 트랙 존재=BUSY, 그 외 IDLE)을 이미 조회된 ActiveTracks에서 다시 계산한다. 도메인 메서드는
-// []*domain.Track을 받는데 이 조회 경로는 jsonb_agg로 이미 TrackView를 얻으므로 도메인 엔티티를
-// 다시 로드하지 않고 여기서 같은 규칙을 적용한다.
+// deriveCornerStatus는 코너의 파생 운영 상태를 계산한다 (활성 트랙 없음=INACTIVE, BUSY 트랙
+// 존재=BUSY, 그 외 IDLE). 각 트랙의 BUSY/IDLE 자체는 SQL 쪽(ListCornerViewsByCamp/GetCornerView의
+// EXISTS 서브쿼리, visits가 단일 진실 공급원)에서 이미 계산되어 jsonb_agg로 넘어온다.
 func deriveCornerStatus(tracks []usecase.TrackView) domain.CornerOperationalStatus {
 	if len(tracks) == 0 {
 		return domain.CornerInactive

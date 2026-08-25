@@ -39,12 +39,6 @@ func mapTrack(row db.Track) *domain.Track {
 		UnreadByTrackCount: int(row.UnreadByTrackCount),
 	})
 
-	if row.CurrentVisitID.Valid {
-		t.SetCurrentVisitID(domain.Some(domain.VisitID(row.CurrentVisitID.String)))
-	} else {
-		t.SetCurrentVisitID(domain.None[domain.VisitID]())
-	}
-
 	if row.DeletedAt.Valid {
 		t.SetDeletedAt(domain.Some(row.DeletedAt.Time))
 	} else {
@@ -99,10 +93,6 @@ func (r *pgTrackRepository) Save(ctx context.Context, track *domain.Track) error
 		Status:        string(track.Status()),
 		PinHash:       track.PINHash(),
 		PinCiphertext: pgtype.Text{String: track.PINCiphertext(), Valid: track.PINCiphertext() != ""},
-	}
-
-	if val, ok := track.CurrentVisitID().Value(); ok {
-		params.CurrentVisitID = pgtype.Text{String: string(val), Valid: true}
 	}
 
 	if val, ok := track.DeletedAt().Value(); ok {
