@@ -1,4 +1,4 @@
-import 'package:cornermon/admin/features/dashboard/_dashboard_connection_state.dart';
+import 'package:cornermon/admin/widgets/connection_lost_provider.dart';
 import 'package:cornermon/admin/features/dashboard/dashboard_entries.dart';
 import 'package:cornermon/shared/api/dio_error.dart';
 import 'package:cornermon/shared/api/ids.dart';
@@ -81,12 +81,12 @@ Future<void> showAddCornerDialog(
       () => ref.read(createCornerProvider(campId, name, minutes).future),
     );
     ref.invalidate(cornerListProvider(campId));
-    ref.read(dashboardConnectionLostProvider.notifier).set(false);
+    ref.read(connectionLostProvider('dashboard').notifier).set(false);
   } on DioException catch (error) {
     // DioException은 LoggingInterceptor(#131)가 네트워크 계층에서 이미 기록한다 —
     // 커넥션 유실(dio_error.dart:isConnectionLost)만 상단 배너로, 그 외는 SnackBar로.
     if (isConnectionLost(error)) {
-      ref.read(dashboardConnectionLostProvider.notifier).set(true);
+      ref.read(connectionLostProvider('dashboard').notifier).set(true);
     } else if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('코너 추가에 실패했습니다. 잠시 후 다시 시도해주세요.')),
@@ -122,10 +122,10 @@ Future<void> deleteCorner(
       () => ref.read(deleteCornerProvider(CornerId(entry.corner.id!)).future),
     );
     ref.invalidate(cornerListProvider(campId));
-    ref.read(dashboardConnectionLostProvider.notifier).set(false);
+    ref.read(connectionLostProvider('dashboard').notifier).set(false);
   } on DioException catch (error) {
     if (isConnectionLost(error)) {
-      ref.read(dashboardConnectionLostProvider.notifier).set(true);
+      ref.read(connectionLostProvider('dashboard').notifier).set(true);
     } else if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('코너 삭제에 실패했습니다. 잠시 후 다시 시도해주세요.')),

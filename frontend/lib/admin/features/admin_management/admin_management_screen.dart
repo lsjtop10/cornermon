@@ -8,7 +8,7 @@ import 'package:cornermon/shared/design_system/widgets/app_button.dart';
 import 'package:cornermon/shared/design_system/widgets/connection_banner.dart';
 import 'package:cornermon/shared/design_system/widgets/empty_state.dart';
 import '_admin_list_tile.dart';
-import 'package:cornermon/admin/features/admin_management/_admin_management_connection_state.dart';
+import 'package:cornermon/admin/widgets/connection_lost_provider.dart';
 import '_create_admin_dialog.dart';
 import '_my_account_card.dart';
 
@@ -20,7 +20,7 @@ class AdminManagementScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final currentAdmin = ref.watch(currentAdminProvider);
-    final connectionLost = ref.watch(adminManagementConnectionLostProvider);
+    final connectionLost = ref.watch(connectionLostProvider('admin_management'));
 
     return Scaffold(
       // 뒤로가기 버튼은 명시하지 않는다 — 캠프 목록에서 context.push('/admins')로 들어와

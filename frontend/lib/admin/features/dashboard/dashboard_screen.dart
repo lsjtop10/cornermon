@@ -1,6 +1,6 @@
 import 'package:cornermon/admin/features/dashboard/_corner_group_section.dart';
 import 'package:cornermon/admin/features/dashboard/_corner_status_pill.dart';
-import 'package:cornermon/admin/features/dashboard/_dashboard_connection_state.dart';
+import 'package:cornermon/admin/widgets/connection_lost_provider.dart';
 import 'package:cornermon/admin/features/dashboard/dashboard_actions.dart';
 import 'package:cornermon/admin/features/dashboard/dashboard_entries.dart';
 import 'package:cornermon/admin/features/dashboard/dashboard_state.dart';
@@ -45,7 +45,7 @@ class DashboardScreen extends ConsumerWidget {
     if (id == null) {
       return const Scaffold(body: EmptyState(message: '선택된 캠프가 없습니다'));
     }
-    final connectionLost = ref.watch(dashboardConnectionLostProvider);
+    final connectionLost = ref.watch(connectionLostProvider('dashboard'));
     final view = ref.watch(dashboardViewProvider);
     final corners = ref.watch(cornerListProvider(id));
     final summary = ref.watch(liveSummaryProvider(id));
@@ -129,7 +129,7 @@ class DashboardScreen extends ConsumerWidget {
           children: [
             // 앱 전역 SSE 연결배너(admin/app.dart)와 별개로, 이 배너는 코너 추가/삭제가
             // 커넥션 유실로 실패했을 때만 뜬다 — device_manage_screen.dart와 동일한 패턴
-            // (_dashboard_connection_state.dart 참고).
+            // (connection_lost_provider.dart 참고).
             ConnectionBanner(
               state: connectionLost
                   ? ConnectionBannerState.disconnected

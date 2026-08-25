@@ -11,7 +11,7 @@ import 'package:cornermon/shared/design_system/widgets/app_button.dart';
 import 'package:cornermon/shared/design_system/widgets/app_tag.dart';
 import 'package:cornermon/shared/design_system/widgets/confirm_modal.dart';
 import 'package:cornermon/shared/logging/app_logger.dart';
-import 'package:cornermon/admin/features/admin_management/_admin_management_connection_state.dart';
+import 'package:cornermon/admin/widgets/connection_lost_provider.dart';
 
 /// SYSTEM_ADMIN 전용 관리자 목록의 행. 본인 행은 삭제 버튼을 노출하지 않는다 — 본인
 /// 탈퇴는 아래 [_MyAccountCard]에서 별도로 처리하며(백엔드는 SYSTEM_ADMIN 본인 삭제를
@@ -46,11 +46,11 @@ class _AdminListTileState extends ConsumerState<AdminListTile> {
       final sub = container.listen(provider, (_, _) {});
       await container.read(provider.future).whenComplete(sub.close);
       ref.invalidate(adminListProvider);
-      ref.read(adminManagementConnectionLostProvider.notifier).set(false);
+      ref.read(connectionLostProvider('admin_management').notifier).set(false);
     } on DioException catch (error) {
       // DioException은 LoggingInterceptor(#131)가 네트워크 계층에서 이미 기록한다.
       if (isConnectionLost(error)) {
-        ref.read(adminManagementConnectionLostProvider.notifier).set(true);
+        ref.read(connectionLostProvider('admin_management').notifier).set(true);
       } else if (mounted) {
         ScaffoldMessenger.of(
           context,
