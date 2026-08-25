@@ -44,33 +44,40 @@ class _PillTabBarState extends State<PillTabBar> {
   }
 
   @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.symmetric(
-      horizontal: AppSpacing.space4,
-      vertical: AppSpacing.space2,
-    ),
-    // 탭 라벨 합이 화면 폭을 넘으면(스마트폰 폭 + 긴 라벨) Row가 그대로
-    // RenderFlex 오버플로를 냈다 — 가로 스크롤로 감싸 넘칠 때만 스크롤되게
-    // 한다(#241). 다 들어갈 땐 기존과 동일하게 내용 폭만큼만 차지한다.
-    // Scrollbar는 스크롤할 내용이 없으면(다 들어가는 폭) 스스로 아무것도 그리지
-    // 않으므로, 넘칠 때만 "더 있다"는 티가 나는 걸 조건 분기 없이 얻는다.
-    child: Scrollbar(
-      controller: _controller,
-      thumbVisibility: true,
-      child: SingleChildScrollView(
+  Widget build(BuildContext context) => Align(
+    // SingleChildScrollView는 내용 폭만큼만 차지해서(Row였던 이전과 달리
+    // 더는 자체적으로 폭을 채우지 않는다), crossAxisAlignment.center인
+    // 부모 Column 아래에서는 가운데로 밀려 보이는 회귀가 났다 — 항상
+    // 왼쪽에 붙도록 명시한다.
+    alignment: Alignment.centerLeft,
+    child: Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.space4,
+        vertical: AppSpacing.space2,
+      ),
+      // 탭 라벨 합이 화면 폭을 넘으면(스마트폰 폭 + 긴 라벨) Row가 그대로
+      // RenderFlex 오버플로를 냈다 — 가로 스크롤로 감싸 넘칠 때만 스크롤되게
+      // 한다(#241). 다 들어갈 땐 기존과 동일하게 내용 폭만큼만 차지한다.
+      // Scrollbar는 스크롤할 내용이 없으면(다 들어가는 폭) 스스로 아무것도 그리지
+      // 않으므로, 넘칠 때만 "더 있다"는 티가 나는 걸 조건 분기 없이 얻는다.
+      child: Scrollbar(
         controller: _controller,
-        scrollDirection: Axis.horizontal,
-        child: Row(
-          children: [
-            for (var i = 0; i < widget.tabs.length; i++) ...[
-              if (i > 0) const SizedBox(width: AppSpacing.space2),
-              _PillTabButton(
-                tab: widget.tabs[i],
-                selected: i == widget.selectedIndex,
-                onTap: () => widget.onSelected(i),
-              ),
+        thumbVisibility: true,
+        child: SingleChildScrollView(
+          controller: _controller,
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              for (var i = 0; i < widget.tabs.length; i++) ...[
+                if (i > 0) const SizedBox(width: AppSpacing.space2),
+                _PillTabButton(
+                  tab: widget.tabs[i],
+                  selected: i == widget.selectedIndex,
+                  onTap: () => widget.onSelected(i),
+                ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     ),
