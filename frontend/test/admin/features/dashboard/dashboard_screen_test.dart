@@ -493,6 +493,43 @@ void main() {
       expect(find.text('연결된 트랙이 없습니다'), findsOneWidget);
     });
 
+    // #241 polish — 트랙별 뷰의 코너 그룹 내부 트랙 표(DataTable, 3열)도 코너 상세와
+    // 같은 시각 언어라던 문서 주석과 달리 폰 폭 대응이 안 돼 있었다. 폰 폭에서는
+    // DataTable 대신 구분선 행으로 바뀌는지 확인한다.
+    testWidgets(
+      'ShouldShowTrackRowsInsteadOfDataTableAtPhoneWidth',
+      (tester) async {
+        // arrange
+        addTearDown(tester.view.reset);
+        tester.view.physicalSize = const Size(360, 800);
+        tester.view.devicePixelRatio = 1.0;
+        await _pumpDashboard(
+          tester,
+          campId: CampId('camp-1'),
+          corners: [_corner('corner-1', '코너 1', CornerResponseStatusEnum.BUSY)],
+          tracks: [
+            TrackResponse(
+              (b) => b
+                ..id = 'track-1'
+                ..cornerId = 'corner-1'
+                ..trackNo = 1
+                ..status = TrackResponseStatusEnum.ACTIVE
+                ..operationalStatus = TrackResponseOperationalStatusEnum.IDLE,
+            ),
+          ],
+        );
+
+        // act
+        await tester.tap(find.text('트랙별'));
+        await tester.pumpAndSettle();
+
+        // assert
+        expect(find.byType(DataTable), findsNothing);
+        expect(find.text('1번 트랙'), findsOneWidget);
+        expect(tester.takeException(), isNull);
+      },
+    );
+
     testWidgets(
       'ShoudNavigateToCornerDetailWhenTrackViewGroupHeaderTapped',
       (tester) async {
