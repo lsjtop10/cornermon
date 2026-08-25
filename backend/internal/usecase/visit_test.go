@@ -23,10 +23,9 @@ func TestVisitService_StartVisitByQR(t *testing.T) {
 
 		tracks := NewMockTrackRepository()
 		track := domain.NewTrackFromProps(domain.TrackProps{ID: "track-1",
-			CornerID:       "corner-1",
-			TrackNo:        4,
-			Status:         domain.TrackActive,
-			CurrentVisitID: domain.None[domain.VisitID](),
+			CornerID: "corner-1",
+			TrackNo:  4,
+			Status:   domain.TrackActive,
 		})
 		tracks.Save(context.Background(), track)
 
@@ -85,9 +84,8 @@ func TestVisitService_StartVisitByQR(t *testing.T) {
 		}
 
 		// Verify side effects
-		updatedTrack, _ := tracks.Get(context.Background(), "track-1")
-		currVisitVal, ok := updatedTrack.CurrentVisitID().Value()
-		if !ok || currVisitVal != "visit-1" {
+		inProgress, _ := visits.GetInProgressByTrack(context.Background(), "track-1")
+		if inProgress == nil || inProgress.ID() != "visit-1" {
 			t.Errorf("expected track to have current visit 'visit-1'")
 		}
 
@@ -165,9 +163,8 @@ func TestVisitService_StartVisitByQR(t *testing.T) {
 		corners := NewMockCornerRepository()
 		tracks := NewMockTrackRepository()
 		track := domain.NewTrackFromProps(domain.TrackProps{ID: "track-1",
-			CornerID:       "corner-1",
-			Status:         domain.TrackActive,
-			CurrentVisitID: domain.Some[domain.VisitID]("visit-0"),
+			CornerID: "corner-1",
+			Status:   domain.TrackActive,
 		})
 		tracks.Save(context.Background(), track)
 
@@ -200,6 +197,7 @@ func TestVisitService_StartVisitByQR(t *testing.T) {
 		sessions.Save(context.Background(), session)
 
 		visits := NewMockVisitRepository()
+		_ = visits.Save(context.Background(), domain.NewVisit("visit-0", "group-0", "corner-1", "track-1", domain.VisitManual, now))
 		auditLogs := &MockAuditLogRepository{}
 		broadcaster := &MockBroadcaster{}
 		tx := &MockTxManager{}
@@ -224,9 +222,8 @@ func TestVisitService_CompleteVisit(t *testing.T) {
 		corners := NewMockCornerRepository()
 		tracks := NewMockTrackRepository()
 		track := domain.NewTrackFromProps(domain.TrackProps{ID: "track-1",
-			CornerID:       "corner-1",
-			Status:         domain.TrackActive,
-			CurrentVisitID: domain.Some[domain.VisitID]("visit-1"),
+			CornerID: "corner-1",
+			Status:   domain.TrackActive,
 		})
 		tracks.Save(context.Background(), track)
 
@@ -275,9 +272,9 @@ func TestVisitService_CompleteVisit(t *testing.T) {
 			t.Errorf("expected visit status Completed, got %s", completedVisit.Status())
 		}
 
-		updatedTrack, _ := tracks.Get(context.Background(), "track-1")
-		if updatedTrack.CurrentVisitID().IsSet() {
-			t.Errorf("expected track CurrentVisitID to be cleared")
+		inProgress, _ := visits.GetInProgressByTrack(context.Background(), "track-1")
+		if inProgress != nil {
+			t.Errorf("expected no in-progress visit left on track")
 		}
 
 		updatedGroup, _ := groups.Get(context.Background(), "group-1")
@@ -303,9 +300,8 @@ func TestVisitService_CompleteVisit(t *testing.T) {
 		corners := NewMockCornerRepository()
 		tracks := NewMockTrackRepository()
 		track := domain.NewTrackFromProps(domain.TrackProps{ID: "track-1",
-			CornerID:       "corner-1",
-			Status:         domain.TrackActive,
-			CurrentVisitID: domain.None[domain.VisitID](),
+			CornerID: "corner-1",
+			Status:   domain.TrackActive,
 		})
 		tracks.Save(context.Background(), track)
 

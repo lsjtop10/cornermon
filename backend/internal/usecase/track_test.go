@@ -30,7 +30,7 @@ func TestTrackService_ExportTrackPINs(t *testing.T) {
 		ID: "track-1", CornerID: "corner-1", TrackNo: 7,
 		Status: domain.TrackActive, PINCiphertext: "482910",
 	}))
-	service := NewTrackService(NewMockCampRepository(), corners, tracks, NewMockFacilitatorSessionRepository(), NewMockAdminRepository(),
+	service := NewTrackService(NewMockCampRepository(), corners, tracks, NewMockVisitRepository(), NewMockFacilitatorSessionRepository(), NewMockAdminRepository(),
 		&MockAuditLogRepository{}, &MockBroadcaster{}, &MockTxManager{}, passthroughTrackPINProtector{})
 
 	// Act
@@ -68,7 +68,7 @@ func TestTrackService_CreateTrack(t *testing.T) {
 		admins := NewMockAdminRepository()
 		admins.Admins["admin-1"] = domain.NewAdminFromProps(domain.AdminProps{ID: "admin-1", Username: "김관리"})
 
-		s := NewTrackService(camps, corners, tracks, sessions, admins, auditLogs, broadcaster, tx)
+		s := NewTrackService(camps, corners, tracks, NewMockVisitRepository(), sessions, admins, auditLogs, broadcaster, tx)
 		s.nowFn = func() time.Time { return now }
 		s.uuidFn = func() string { return "track-uuid-1" }
 
@@ -130,7 +130,7 @@ func TestTrackService_CreateTrack(t *testing.T) {
 		broadcaster := &MockBroadcaster{}
 		tx := &MockTxManager{}
 
-		s := NewTrackService(camps, corners, tracks, sessions, NewMockAdminRepository(), auditLogs, broadcaster, tx)
+		s := NewTrackService(camps, corners, tracks, NewMockVisitRepository(), sessions, NewMockAdminRepository(), auditLogs, broadcaster, tx)
 
 		// Act
 		_, _, err := s.CreateTrack(context.Background(), "camp-1", "corner-1", "admin-1")
@@ -153,9 +153,8 @@ func TestTrackService_DeleteTrack(t *testing.T) {
 
 		tracks := NewMockTrackRepository()
 		track := domain.NewTrackFromProps(domain.TrackProps{ID: "track-1",
-			CornerID:       "corner-1",
-			Status:         domain.TrackActive,
-			CurrentVisitID: domain.None[domain.VisitID](),
+			CornerID: "corner-1",
+			Status:   domain.TrackActive,
 		})
 		tracks.Save(context.Background(), track)
 
@@ -171,7 +170,7 @@ func TestTrackService_DeleteTrack(t *testing.T) {
 		broadcaster := &MockBroadcaster{}
 		tx := &MockTxManager{}
 
-		s := NewTrackService(camps, corners, tracks, sessions, NewMockAdminRepository(), auditLogs, broadcaster, tx)
+		s := NewTrackService(camps, corners, tracks, NewMockVisitRepository(), sessions, NewMockAdminRepository(), auditLogs, broadcaster, tx)
 		s.nowFn = func() time.Time { return now }
 		s.uuidFn = func() string { return "audit-uuid" }
 
@@ -210,18 +209,20 @@ func TestTrackService_DeleteTrack(t *testing.T) {
 		corners := NewMockCornerRepository()
 		tracks := NewMockTrackRepository()
 		track := domain.NewTrackFromProps(domain.TrackProps{ID: "track-1",
-			CornerID:       "corner-1",
-			Status:         domain.TrackActive,
-			CurrentVisitID: domain.Some[domain.VisitID]("visit-1"),
+			CornerID: "corner-1",
+			Status:   domain.TrackActive,
 		})
 		tracks.Save(context.Background(), track)
+
+		visits := NewMockVisitRepository()
+		_ = visits.Save(context.Background(), domain.NewVisit("visit-1", "group-1", "corner-1", "track-1", domain.VisitManual, now))
 
 		sessions := NewMockFacilitatorSessionRepository()
 		auditLogs := &MockAuditLogRepository{}
 		broadcaster := &MockBroadcaster{}
 		tx := &MockTxManager{}
 
-		s := NewTrackService(camps, corners, tracks, sessions, NewMockAdminRepository(), auditLogs, broadcaster, tx)
+		s := NewTrackService(camps, corners, tracks, visits, sessions, NewMockAdminRepository(), auditLogs, broadcaster, tx)
 		s.nowFn = func() time.Time { return now }
 
 		// Act
@@ -245,7 +246,7 @@ func TestReplaceTrackShoudMigrateSessionAndBroadcastAfterSuccess(t *testing.T) {
 	sessions := NewMockFacilitatorSessionRepository()
 	_ = sessions.Save(context.Background(), domain.NewFacilitatorSessionFromProps(domain.FacilitatorSessionProps{ID: "session-1", TrackID: "track-old", CreatedAt: now}))
 	broadcaster := &MockBroadcaster{}
-	service := NewTrackService(NewMockCampRepository(), corners, tracks, sessions, NewMockAdminRepository(), &MockAuditLogRepository{}, broadcaster, &MockTxManager{})
+	service := NewTrackService(NewMockCampRepository(), corners, tracks, NewMockVisitRepository(), sessions, NewMockAdminRepository(), &MockAuditLogRepository{}, broadcaster, &MockTxManager{})
 	service.nowFn = func() time.Time { return now }
 	service.uuidFn = func() string { return "track-new" }
 
@@ -278,7 +279,7 @@ func TestReplaceTrackShoudRejectDifferentCampBeforeMutation(t *testing.T) {
 	original := domain.NewTrackFromProps(domain.TrackProps{ID: "track-old", CornerID: "corner-old", Status: domain.TrackActive})
 	_ = tracks.Save(context.Background(), original)
 	broadcaster := &MockBroadcaster{}
-	service := NewTrackService(NewMockCampRepository(), corners, tracks, NewMockFacilitatorSessionRepository(), NewMockAdminRepository(), &MockAuditLogRepository{}, broadcaster, &MockTxManager{})
+	service := NewTrackService(NewMockCampRepository(), corners, tracks, NewMockVisitRepository(), NewMockFacilitatorSessionRepository(), NewMockAdminRepository(), &MockAuditLogRepository{}, broadcaster, &MockTxManager{})
 
 	// Act
 	_, _, err := service.ReplaceTrack(context.Background(), "track-old", "corner-new", "admin-1")
@@ -298,9 +299,11 @@ func TestReplaceTrackShoudPreserveBusyTrackWhenRejected(t *testing.T) {
 	_ = corners.Save(context.Background(), domain.NewCornerFromProps(domain.CornerProps{ID: "corner-old", CampID: "camp-1"}))
 	_ = corners.Save(context.Background(), domain.NewCornerFromProps(domain.CornerProps{ID: "corner-new", CampID: "camp-1"}))
 	tracks := NewMockTrackRepository()
-	original := domain.NewTrackFromProps(domain.TrackProps{ID: "track-old", CornerID: "corner-old", Status: domain.TrackActive, CurrentVisitID: domain.Some[domain.VisitID]("visit-1")})
+	original := domain.NewTrackFromProps(domain.TrackProps{ID: "track-old", CornerID: "corner-old", Status: domain.TrackActive})
 	_ = tracks.Save(context.Background(), original)
-	service := NewTrackService(NewMockCampRepository(), corners, tracks, NewMockFacilitatorSessionRepository(), NewMockAdminRepository(), &MockAuditLogRepository{}, &MockBroadcaster{}, &MockTxManager{})
+	visits := NewMockVisitRepository()
+	_ = visits.Save(context.Background(), domain.NewVisit("visit-1", "group-1", "corner-old", "track-old", domain.VisitManual, time.Now()))
+	service := NewTrackService(NewMockCampRepository(), corners, tracks, visits, NewMockFacilitatorSessionRepository(), NewMockAdminRepository(), &MockAuditLogRepository{}, &MockBroadcaster{}, &MockTxManager{})
 
 	// Act
 	_, _, err := service.ReplaceTrack(context.Background(), "track-old", "corner-new", "admin-1")

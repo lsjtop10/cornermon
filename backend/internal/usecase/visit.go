@@ -95,9 +95,13 @@ func (s *VisitService) StartVisitByQR(
 				"track_id": string(session.TrackID()), "track_found": track != nil, "track_status": status,
 			})
 		}
-		if track.CurrentVisitID().IsSet() {
+		inProgress, err := s.visits.GetInProgressByTrack(ctx, track.ID())
+		if err != nil {
+			return withErrorContext("visit.start_qr", "repository.get_in_progress_visit", err, map[string]any{"track_id": string(track.ID())})
+		}
+		if inProgress != nil {
 			return withErrorContext("visit.start_qr", "validate_track_busy", domain.ErrTrackBusy, map[string]any{
-				"track_id": string(session.TrackID()), "current_visit_id": "",
+				"track_id": string(session.TrackID()), "current_visit_id": string(inProgress.ID()),
 			})
 		}
 
@@ -150,17 +154,8 @@ func (s *VisitService) StartVisitByQR(
 		visitID := domain.VisitID(s.uuidFn())
 		visit = domain.NewVisit(visitID, group.ID(), track.CornerID(), track.ID(), domain.VisitQRScan, now)
 
-		if err := track.StartVisit(visitID); err != nil {
-			return withErrorContext("visit.start_qr", "domain.track_start_visit", err, map[string]any{
-				"track_id": string(track.ID()), "visit_id": string(visitID),
-			})
-		}
-
 		if err := s.visits.Save(ctx, visit); err != nil {
 			return withErrorContext("visit.start_qr", "repository.save_visit", err, map[string]any{"visit_id": string(visit.ID())})
-		}
-		if err := s.tracks.Save(ctx, track); err != nil {
-			return withErrorContext("visit.start_qr", "repository.save_track", err, map[string]any{"track_id": string(track.ID())})
 		}
 		if err := s.groups.Save(ctx, group); err != nil {
 			return withErrorContext("visit.start_qr", "repository.save_group", err, map[string]any{"group_id": string(group.ID())})
@@ -225,9 +220,13 @@ func (s *VisitService) StartVisitManual(
 				"track_id": string(session.TrackID()), "track_found": track != nil, "track_status": status,
 			})
 		}
-		if track.CurrentVisitID().IsSet() {
+		inProgress, err := s.visits.GetInProgressByTrack(ctx, track.ID())
+		if err != nil {
+			return withErrorContext("visit.start_manual", "repository.get_in_progress_visit", err, map[string]any{"track_id": string(track.ID())})
+		}
+		if inProgress != nil {
 			return withErrorContext("visit.start_manual", "validate_track_busy", domain.ErrTrackBusy, map[string]any{
-				"track_id": string(session.TrackID()), "current_visit_id": "",
+				"track_id": string(session.TrackID()), "current_visit_id": string(inProgress.ID()),
 			})
 		}
 
@@ -266,17 +265,8 @@ func (s *VisitService) StartVisitManual(
 		visitID := domain.VisitID(s.uuidFn())
 		visit = domain.NewVisit(visitID, group.ID(), track.CornerID(), track.ID(), domain.VisitManual, now)
 
-		if err := track.StartVisit(visitID); err != nil {
-			return withErrorContext("visit.start_manual", "domain.track_start_visit", err, map[string]any{
-				"track_id": string(track.ID()), "visit_id": string(visitID),
-			})
-		}
-
 		if err := s.visits.Save(ctx, visit); err != nil {
 			return withErrorContext("visit.start_manual", "repository.save_visit", err, map[string]any{"visit_id": string(visit.ID())})
-		}
-		if err := s.tracks.Save(ctx, track); err != nil {
-			return withErrorContext("visit.start_manual", "repository.save_track", err, map[string]any{"track_id": string(track.ID())})
 		}
 		if err := s.groups.Save(ctx, group); err != nil {
 			return withErrorContext("visit.start_manual", "repository.save_group", err, map[string]any{"group_id": string(group.ID())})
@@ -341,19 +331,14 @@ func (s *VisitService) CompleteVisit(
 			})
 		}
 
-		activeVisitID, ok := track.CurrentVisitID().Value()
-		if !ok {
+		visit, err = s.visits.GetInProgressByTrack(ctx, track.ID())
+		if err != nil {
+			return withErrorContext("visit.complete", "repository.get_visit", err, map[string]any{"track_id": string(track.ID())})
+		}
+		if visit == nil {
 			return withErrorContext("visit.complete", "validate_track_busy", domain.ErrTrackNotBusy, map[string]any{
 				"track_id": string(session.TrackID()),
 			})
-		}
-
-		visit, err = s.visits.Get(ctx, activeVisitID)
-		if err != nil {
-			return withErrorContext("visit.complete", "repository.get_visit", err, map[string]any{"visit_id": string(activeVisitID)})
-		}
-		if visit == nil {
-			return withErrorContext("visit.complete", "validate_visit", domain.ErrTrackNotBusy, map[string]any{"visit_id": string(activeVisitID), "visit_found": false})
 		}
 
 		group, err := s.groups.GetForUpdate(ctx, visit.GroupID())
@@ -371,10 +356,6 @@ func (s *VisitService) CompleteVisit(
 			return withErrorContext("visit.complete", "domain.visit_complete", err, map[string]any{"visit_id": string(visit.ID())})
 		}
 
-		if _, err := track.CompleteVisit(now); err != nil {
-			return withErrorContext("visit.complete", "domain.track_complete_visit", err, map[string]any{"track_id": string(track.ID())})
-		}
-
 		if err := group.MarkVisitCompleted(visit.CornerID()); err != nil {
 			return withErrorContext("visit.complete", "domain.group_mark_completed", err, map[string]any{
 				"group_id": string(group.ID()), "corner_id": string(visit.CornerID()),
@@ -383,9 +364,6 @@ func (s *VisitService) CompleteVisit(
 
 		if err := s.visits.Save(ctx, visit); err != nil {
 			return withErrorContext("visit.complete", "repository.save_visit", err, map[string]any{"visit_id": string(visit.ID())})
-		}
-		if err := s.tracks.Save(ctx, track); err != nil {
-			return withErrorContext("visit.complete", "repository.save_track", err, map[string]any{"track_id": string(track.ID())})
 		}
 		if err := s.groups.Save(ctx, group); err != nil {
 			return withErrorContext("visit.complete", "repository.save_group", err, map[string]any{"group_id": string(group.ID())})
