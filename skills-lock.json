@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "skills": {
+    "impeccable": {
+      "source": "pbakaus/impeccable",
+      "sourceType": "github",
+      "skillPath": ".agents/skills/impeccable/SKILL.md",
+      "computedHash": "37354ec7825c618102ef4c03062c866f95752d799f7825da69438c697e0ee05e"
+    },
+    "ui-ux-pro-max": {
+      "source": "nextlevelbuilder/ui-ux-pro-max-skill",
+      "sourceType": "github",
+      "skillPath": ".claude/skills/ui-ux-pro-max/SKILL.md",
+      "computedHash": "523b8063c07eedd2b8a1ca94d7a0be9ad340026bd9f21a1eda0b6be2a855298f"
+    }
+  }
+}

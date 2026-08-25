@@ -5,3 +5,13 @@ backend/bin
 ./build
 
 .env.docker
+
+__pycache__/
+*.pyc
+
+# personal / environment-specific — not shared with the team
+sync-watch
+.claude/settings.local.json
+.claude/RESUME.md
+.claude/worktrees/
+.impeccable/
