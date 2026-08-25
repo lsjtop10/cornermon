@@ -8,19 +8,26 @@ import 'package:cornermon/shared/design_system/tokens/colors.dart';
 import 'package:cornermon/shared/design_system/tokens/typography.dart';
 import 'package:cornermon/shared/design_system/widgets/empty_state.dart';
 import 'package:cornermon/shared/widgets/local_time_label.dart';
-import 'package:cornermon/admin/features/broadcast/broadcast_selection_provider.dart';
 
 class BroadcastHistoryList extends ConsumerWidget {
-  const BroadcastHistoryList({required this.campId, super.key});
+  const BroadcastHistoryList({
+    required this.campId,
+    required this.selectedId,
+    required this.onSelect,
+    super.key,
+  });
 
   final CampId campId;
+  // 선택 상태의 소스는 라우트 파라미터(BroadcastScreen)다 — track_direct의
+  // TrackListPane과 동일한 이유로 provider를 직접 쓰지 않는다(#241).
+  final MessageId? selectedId;
+  final ValueChanged<MessageId> onSelect;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final colors = isDark ? AppColors.dark : AppColors.light;
     final messages = ref.watch(broadcastMessageListProvider(campId));
-    final selectedId = ref.watch(selectedBroadcastIdProvider);
 
     return messages.when(
       loading: () => const Center(child: CircularProgressIndicator()),
@@ -56,9 +63,7 @@ class BroadcastHistoryList extends ConsumerWidget {
                 subtitle: message.sentAt != null
                     ? LocalTimeLabel(dateTime: message.sentAt!)
                     : null,
-                onTap: () => ref
-                    .read(selectedBroadcastIdProvider.notifier)
-                    .select(MessageId(message.id ?? '')),
+                onTap: () => onSelect(MessageId(message.id ?? '')),
               );
             },
           ),

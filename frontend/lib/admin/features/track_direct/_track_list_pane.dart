@@ -11,9 +11,19 @@ import 'package:cornermon/shared/widgets/local_time_label.dart';
 import 'package:cornermon/admin/features/track_direct/track_direct_providers.dart';
 
 class TrackListPane extends ConsumerWidget {
-  const TrackListPane({required this.campId, super.key});
+  const TrackListPane({
+    required this.campId,
+    required this.selectedTrackId,
+    required this.onSelect,
+    super.key,
+  });
 
   final CampId campId;
+  // 선택 상태의 소스는 라우트 파라미터(TrackDirectScreen)다 — 이 위젯은 provider를
+  // 직접 읽고 쓰지 않고 값과 콜백만 받는다(#241, 태블릿/폰 화면 모두 이 위젯 하나를
+  // 그대로 재사용하기 위함).
+  final TrackId? selectedTrackId;
+  final ValueChanged<TrackId> onSelect;
 
   Future<void> _openThread(
     BuildContext context,
@@ -25,7 +35,7 @@ class TrackListPane extends ConsumerWidget {
     // 탭 직후에는 아직 ChatThreadPane이 provider를 watch하기 전일 수 있다. 임시 구독으로
     // 자동 dispose를 막아 읽음 처리 GET이 취소되지 않도록 한다.
     final subscription = container.listen(readProvider, (_, _) {});
-    ref.read(selectedDirectTrackIdProvider.notifier).select(trackId);
+    onSelect(trackId);
     try {
       await container.read(readProvider.future);
       // 읽음 처리 응답은 스레드 provider에만 반영된다. 미리보기는 별도 family 인스턴스이므로
@@ -42,7 +52,7 @@ class TrackListPane extends ConsumerWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final colors = isDark ? AppColors.dark : AppColors.light;
     final summaries = ref.watch(trackDirectSummariesProvider(campId));
-    final selected = ref.watch(selectedDirectTrackIdProvider);
+    final selected = selectedTrackId;
 
     return summaries.when(
       // 마지막 메시지 변경은 summary의 하위 메시지 provider를 재조회시키므로 reload 상태가
