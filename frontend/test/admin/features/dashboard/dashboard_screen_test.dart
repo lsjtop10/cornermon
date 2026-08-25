@@ -263,11 +263,16 @@ void main() {
     });
 
     test('ShoudOmitDeviationWhenNoRankingExists', () {
-      // arrange / act / assert
-      expect(
-        formatCornerCardSubtitle(avgDurationSeconds: 640, sampleCount: 10),
-        '평균 10:40 · 최근 10건',
+      // arrange / act
+      final subtitle = formatCornerCardSubtitle(
+        avgDurationSeconds: 640,
+        sampleCount: 10,
       );
+
+      // assert — #241 후속: 두 정보를 " · "로 이어붙인 문자열 하나가 아니라
+      // 서로 다른 라벨로 분리돼야 한다(라벨을 왜 한 줄에 다 넣냐는 지적).
+      expect(subtitle.duration, '평균 10:40');
+      expect(subtitle.sampleCount, '최근 10건');
     });
   });
 
