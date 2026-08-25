@@ -2,7 +2,7 @@
 .env
 backend/.env
 backend/bin
-./build
+./build/
 
 .env.docker
 
