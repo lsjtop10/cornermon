@@ -2,7 +2,7 @@ import 'package:cornermon/admin/features/track_direct/track_direct_providers.dar
 import 'package:cornermon/admin/router/admin_router.dart';
 import 'package:cornermon/admin/session/admin_session_provider.dart';
 import 'package:cornermon/admin/session/selected_camp_provider.dart';
-import 'package:cornermon/admin/widgets/sidebar/admin_sidebar.dart';
+import 'package:cornermon/admin/widgets/admin_sidebar.dart';
 import 'package:cornermon/shared/api/domain_aliases.dart' hide AdminSession;
 import 'package:cornermon/shared/api/ids.dart';
 import 'package:cornermon/shared/api/providers/badge_providers.dart';

@@ -719,5 +719,29 @@ void main() {
       expect(cornerCalls, greaterThanOrEqualTo(2));
       expect(summaryCalls, greaterThanOrEqualTo(2));
     });
+
+    // #241 — 요약 타일 4개(다이렉트 안읽음 포함 4번째까지)와 필터 탭·코너 카드가
+    // 스마트폰 폭(360px, iPhone SE급 최소 폭)에서 RenderFlex 오버플로 없이 렌더링되는지.
+    // 회귀 시 pumpAndSettle 단계에서 FlutterError로 테스트가 실패한다.
+    testWidgets('ShoudRenderWithoutOverflowAtPhoneWidth', (tester) async {
+      // arrange
+      addTearDown(tester.view.reset);
+      tester.view.physicalSize = const Size(360, 800);
+      tester.view.devicePixelRatio = 1.0;
+      final campId = CampId('camp-1');
+
+      // act
+      await _pumpDashboard(
+        tester,
+        campId: campId,
+        corners: [
+          _corner('corner-1', '아주 긴 코너 이름 테스트용', CornerResponseStatusEnum.BUSY),
+          _corner('corner-2', '코너 2', CornerResponseStatusEnum.IDLE),
+        ],
+      );
+
+      // assert
+      expect(tester.takeException(), isNull);
+    });
   });
 }

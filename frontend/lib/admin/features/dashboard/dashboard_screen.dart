@@ -23,6 +23,7 @@ import 'package:cornermon/shared/design_system/widgets/app_dropdown.dart';
 import 'package:cornermon/shared/design_system/widgets/empty_state.dart';
 import 'package:cornermon/shared/design_system/widgets/connection_banner.dart';
 import 'package:cornermon/shared/design_system/widgets/pill_tab_bar.dart';
+import 'package:cornermon/shared/design_system/widgets/responsive_context.dart';
 import 'package:cornermon/shared/export/export_action_menu.dart';
 import 'package:cornermon/shared/export/export_file.dart';
 import 'package:material_ui/material_ui.dart';
@@ -194,16 +195,28 @@ class DashboardScreen extends ConsumerWidget {
                     ? GridView.builder(
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
-                        gridDelegate:
-                            const SliverGridDelegateWithMaxCrossAxisExtent(
-                              maxCrossAxisExtent: 260,
-                              // 카드 헤더 행의 삭제 아이콘 버튼이 컴팩트 컨트롤 표준
-                              // (AppDimensions.iconButtonCompact, 44pt)만큼 높이를
-                              // 차지하므로 220pt 기준값 + 그 여유분(22pt)을 더한다.
-                              mainAxisExtent: 242,
-                              crossAxisSpacing: AppSpacing.space3,
-                              mainAxisSpacing: AppSpacing.space3,
-                            ),
+                        // maxCrossAxisExtent(260)는 태블릿/PC 전제 값 — 스마트폰 콘텐츠
+                        // 폭(~300px)에서는 260이 두 번 안 들어가는데도 2열을 강제해
+                        // 카드 하나가 ~150px로 짓눌리고, 카드 내부는 이미 1줄+말줄임표로
+                        // 고정돼 있어(위 CornerStatusCard 주석) 결과가 대부분 잘려
+                        // 보였다(#241). 폭이 좁을 땐 1열로 펴서 각 카드가 거의 전체
+                        // 폭을 쓰게 한다.
+                        gridDelegate: context.isPhoneWidth
+                            ? const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 1,
+                                mainAxisExtent: 242,
+                                crossAxisSpacing: AppSpacing.space3,
+                                mainAxisSpacing: AppSpacing.space3,
+                              )
+                            : const SliverGridDelegateWithMaxCrossAxisExtent(
+                                maxCrossAxisExtent: 260,
+                                // 카드 헤더 행의 삭제 아이콘 버튼이 컴팩트 컨트롤 표준
+                                // (AppDimensions.iconButtonCompact, 44pt)만큼 높이를
+                                // 차지하므로 220pt 기준값 + 그 여유분(22pt)을 더한다.
+                                mainAxisExtent: 242,
+                                crossAxisSpacing: AppSpacing.space3,
+                                mainAxisSpacing: AppSpacing.space3,
+                              ),
                         itemCount: visible.length,
                         itemBuilder: (context, index) {
                           final entry = visible[index];
@@ -275,35 +288,66 @@ class _SummaryBar extends StatelessWidget {
             route: '/messages/direct',
           ),
       ];
-      // 관리자 화면의 1차 타겟은 iPad 가로(§design-system.md 3.2)이므로 균등 분할
-      // Row를 유지한다 — Expanded는 구조적으로 오버플로하지 않아 세로 모드(지원은
-      // 하되 최적화 대상은 아님)에서도 안전하다. 2행으로 흘려보내는 Wrap은 오히려
-      // 본문 높이를 예측 불가능하게 늘려 아래 코너 그리드/빈 상태를 밀어내므로
-      // 채택하지 않는다.
-      return Row(
-        children: [
-          for (var i = 0; i < tiles.length; i++) ...[
-            if (i > 0) const SizedBox(width: AppSpacing.space3),
-            Expanded(
-              child: _SummaryTile(
-                label: tiles[i].label,
-                value: tiles[i].value,
-                route: tiles[i].route,
-              ),
-            ),
-          ],
-        ],
+      // 관리자 화면의 1차 타겟은 iPad 가로(§design-system.md 3.2)라 태블릿/PC 폭에서는
+      // 4분할 Row를 유지한다 — Expanded는 구조적으로 오버플로하지 않는다. 스마트폰 폭은
+      // 이전엔 "지원하되 최적화 대상 아님"으로 명시적으로 배제했었지만(§design-system.md
+      // 3.2), 이슈 241로 그 전제가 바뀌어 4칸이 짓눌리는 폭에서는 2열로 접는다(#241).
+      // 아래로 흐르는 만큼 본문 높이가 늘어나는 건 이 폭에서는 의도된 트레이드오프다.
+      return LayoutBuilder(
+        builder: (context, constraints) {
+          if (constraints.maxWidth >= AppDimensions.phoneBreakpoint) {
+            return Row(
+              children: [
+                for (var i = 0; i < tiles.length; i++) ...[
+                  if (i > 0) const SizedBox(width: AppSpacing.space3),
+                  Expanded(
+                    child: _SummaryTile(
+                      label: tiles[i].label,
+                      value: tiles[i].value,
+                      route: tiles[i].route,
+                    ),
+                  ),
+                ],
+              ],
+            );
+          }
+          final tileWidth = (constraints.maxWidth - AppSpacing.space3) / 2;
+          return Wrap(
+            spacing: AppSpacing.space3,
+            runSpacing: AppSpacing.space3,
+            children: [
+              for (final tile in tiles)
+                SizedBox(
+                  width: tileWidth,
+                  child: _SummaryTile(
+                    label: tile.label,
+                    value: tile.value,
+                    route: tile.route,
+                    // 2열 폭(~150px)에서는 display(36px)로 "0시간 0분" 같은 값이
+                    // 말줄임표로 잘렸다 — 한 단계 작은 title2로 낮춘다(#241).
+                    compact: true,
+                  ),
+                ),
+            ],
+          );
+        },
       );
     },
   );
 }
 
 class _SummaryTile extends StatelessWidget {
-  const _SummaryTile({required this.label, required this.value, this.route});
+  const _SummaryTile({
+    required this.label,
+    required this.value,
+    this.route,
+    this.compact = false,
+  });
 
   final String label;
   final String value;
   final String? route;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
@@ -328,10 +372,24 @@ class _SummaryTile extends StatelessWidget {
               Row(
                 children: [
                   Expanded(
-                    child: Text(
-                      label,
-                      style: AppTypography.label.copyWith(
-                        color: colors.textSecondary,
+                    // compact(2열 폭)에서는 "안읽은 다이렉트"처럼 라벨이 2줄로
+                    // 감싸이는 타일만 카드가 더 커져 같은 줄의 다른 타일과 높이가
+                    // 어긋났다(#241) — 2줄 몫을 항상 예약해 1줄 라벨도 같은 높이로
+                    // 맞춘다. 4분할(태블릿/PC)에서는 라벨이 늘 1줄에 들어가므로
+                    // 예약이 불필요해 그대로 둔다.
+                    child: SizedBox(
+                      height: compact
+                          ? AppTypography.label.fontSize! *
+                                AppTypography.label.height! *
+                                2
+                          : null,
+                      child: Text(
+                        label,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTypography.label.copyWith(
+                          color: colors.textSecondary,
+                        ),
                       ),
                     ),
                   ),
@@ -350,9 +408,8 @@ class _SummaryTile extends StatelessWidget {
                 // 줄바꿈되면 같은 Row의 다른 타일과 카드 높이가 어긋나므로 1줄로 고정한다.
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: AppTypography.display.copyWith(
-                  color: colors.textPrimary,
-                ),
+                style: (compact ? AppTypography.title2 : AppTypography.display)
+                    .copyWith(color: colors.textPrimary),
               ),
             ],
           ),
