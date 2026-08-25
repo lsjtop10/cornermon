@@ -32,6 +32,14 @@ class ExportFile {
         mimeType: MimeType.microsoftExcel,
       );
 
+  factory ExportFile.zip({required String name, required Uint8List bytes}) =>
+      ExportFile(
+        name: name,
+        bytes: bytes,
+        fileExtension: 'zip',
+        mimeType: MimeType.zip,
+      );
+
   final String name;
   final Uint8List bytes;
   final String fileExtension;

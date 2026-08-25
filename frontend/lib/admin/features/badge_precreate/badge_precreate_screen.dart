@@ -1,10 +1,12 @@
 import 'package:cornermon/admin/features/badge_precreate/badge_controllers.dart';
+import 'package:cornermon/admin/features/badge_precreate/badge_export_options.dart';
 import 'package:cornermon/admin/session/selected_camp_provider.dart';
 import 'package:cornermon/shared/api/domain_aliases.dart' as api;
 import 'package:cornermon/shared/api/providers/badge_providers.dart';
 import 'package:cornermon/shared/api/providers/group_providers.dart';
 import 'package:cornermon/shared/design_system/tokens/spacing.dart';
 import 'package:cornermon/shared/design_system/widgets/app_button.dart';
+import 'package:cornermon/shared/design_system/widgets/app_dropdown.dart';
 import 'package:cornermon/shared/design_system/widgets/empty_state.dart';
 import 'package:cornermon/shared/design_system/widgets/app_tag.dart';
 import 'package:cornermon/shared/export/export_action_menu.dart';
@@ -23,9 +25,23 @@ class BadgePrecreateScreen extends ConsumerStatefulWidget {
 class _BadgePrecreateScreenState extends ConsumerState<BadgePrecreateScreen> {
   final _quantity = TextEditingController(text: '40');
   bool _busy = false;
+
+  BadgeExportFormat _format = BadgeExportFormat.pdfSheet;
+  PaperSizePreset _paperPreset = PaperSizePreset.a4;
+  final _customWidthMm = TextEditingController(text: '100');
+  final _customHeightMm = TextEditingController(text: '150');
+  QrSizeMmPreset? _qrSizeMmPreset = QrSizeMmPreset.medium;
+  final _customQrSizeMm = TextEditingController(text: '35');
+  QrResolutionPreset? _qrResolutionPreset = QrResolutionPreset.medium;
+  final _customQrResolutionPx = TextEditingController(text: '512');
+
   @override
   void dispose() {
     _quantity.dispose();
+    _customWidthMm.dispose();
+    _customHeightMm.dispose();
+    _customQrSizeMm.dispose();
+    _customQrResolutionPx.dispose();
     super.dispose();
   }
 
@@ -33,6 +49,28 @@ class _BadgePrecreateScreenState extends ConsumerState<BadgePrecreateScreen> {
     final value = int.tryParse(_quantity.text);
     return value != null && value >= 1 ? value : null;
   }
+
+  PaperSize get _paperSize => _paperPreset == PaperSizePreset.custom
+      ? PaperSize.custom(
+          widthMm: double.tryParse(_customWidthMm.text) ?? 100,
+          heightMm: double.tryParse(_customHeightMm.text) ?? 150,
+        )
+      : PaperSize.preset(_paperPreset);
+
+  double get _qrSizeMm => _qrSizeMmPreset != null
+      ? qrSizeMmPresetValues[_qrSizeMmPreset]!
+      : double.tryParse(_customQrSizeMm.text) ?? 35;
+
+  int get _qrResolutionPx => _qrResolutionPreset != null
+      ? qrResolutionPresetValues[_qrResolutionPreset]!
+      : int.tryParse(_customQrResolutionPx.text) ?? 512;
+
+  BadgeExportSettings get _exportSettings => BadgeExportSettings(
+    format: _format,
+    paperSize: _paperSize,
+    qrSizeMm: _qrSizeMm,
+    qrResolutionPx: _qrResolutionPx,
+  );
 
   Future<void> _generate() async {
     final count = _count;
@@ -68,11 +106,12 @@ class _BadgePrecreateScreenState extends ConsumerState<BadgePrecreateScreen> {
     setState(() => _busy = true);
     try {
       final controller = ref.read(badgeExportControllerProvider.notifier);
+      final settings = _exportSettings;
       final saveResult = action == ExportAction.saveToDevice
-          ? await controller.exportAndSave()
+          ? await controller.exportAndSave(settings)
           : null;
       final shared = action == ExportAction.shareWithApp
-          ? await controller.exportAndShare()
+          ? await controller.exportAndShare(settings)
           : saveResult != null;
       final result = ref.read(badgeExportControllerProvider);
       if (result.hasError) {
@@ -91,12 +130,15 @@ class _BadgePrecreateScreenState extends ConsumerState<BadgePrecreateScreen> {
         return;
       }
       if (mounted) {
+        final formatLabel = _format == BadgeExportFormat.pdfSheet
+            ? 'PDF'
+            : '이미지';
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
               action == ExportAction.saveToDevice
-                  ? 'PDF를 저장했습니다'
-                  : 'PDF를 내보냈습니다',
+                  ? '$formatLabel를 저장했습니다'
+                  : '$formatLabel를 내보냈습니다',
             ),
           ),
         );
@@ -105,7 +147,7 @@ class _BadgePrecreateScreenState extends ConsumerState<BadgePrecreateScreen> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('PDF 내보내기 실패: $error')));
+        ).showSnackBar(SnackBar(content: Text('내보내기 실패: $error')));
       }
     } finally {
       if (mounted) {
@@ -113,6 +155,122 @@ class _BadgePrecreateScreenState extends ConsumerState<BadgePrecreateScreen> {
       }
     }
   }
+
+  /// 용지·QR 크기 설정 — 라벨 프린터 등 비표준 크기에 대응하기 위한 옵션(#249).
+  /// [_format]에 따라 PDF(용지+QR mm) / 이미지(QR 해상도px) 중 필요한 컨트롤만 보여준다.
+  Widget _buildExportSettings() => Wrap(
+    spacing: AppSpacing.space3,
+    runSpacing: AppSpacing.space2,
+    crossAxisAlignment: WrapCrossAlignment.center,
+    children: [
+      AppDropdown<BadgeExportFormat>(
+        value: _format,
+        items: const [
+          DropdownMenuItem(
+            value: BadgeExportFormat.pdfSheet,
+            child: Text('PDF 시트'),
+          ),
+          DropdownMenuItem(
+            value: BadgeExportFormat.images,
+            child: Text('개별 이미지'),
+          ),
+        ],
+        onChanged: (value) => setState(() => _format = value!),
+      ),
+      if (_format == BadgeExportFormat.pdfSheet) ...[
+        AppDropdown<PaperSizePreset>(
+          value: _paperPreset,
+          items: const [
+            DropdownMenuItem(value: PaperSizePreset.a4, child: Text('A4')),
+            DropdownMenuItem(
+              value: PaperSizePreset.letter,
+              child: Text('Letter'),
+            ),
+            DropdownMenuItem(
+              value: PaperSizePreset.custom,
+              child: Text('커스텀(mm)'),
+            ),
+          ],
+          onChanged: (value) => setState(() => _paperPreset = value!),
+        ),
+        if (_paperPreset == PaperSizePreset.custom) ...[
+          SizedBox(
+            width: 90,
+            child: TextField(
+              controller: _customWidthMm,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(labelText: '가로mm'),
+            ),
+          ),
+          SizedBox(
+            width: 90,
+            child: TextField(
+              controller: _customHeightMm,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(labelText: '세로mm'),
+            ),
+          ),
+        ],
+        AppDropdown<QrSizeMmPreset?>(
+          value: _qrSizeMmPreset,
+          items: const [
+            DropdownMenuItem(
+              value: QrSizeMmPreset.small,
+              child: Text('QR 작게(25mm)'),
+            ),
+            DropdownMenuItem(
+              value: QrSizeMmPreset.medium,
+              child: Text('QR 보통(35mm)'),
+            ),
+            DropdownMenuItem(
+              value: QrSizeMmPreset.large,
+              child: Text('QR 크게(45mm)'),
+            ),
+            DropdownMenuItem(value: null, child: Text('QR 커스텀(mm)')),
+          ],
+          onChanged: (value) => setState(() => _qrSizeMmPreset = value),
+        ),
+        if (_qrSizeMmPreset == null)
+          SizedBox(
+            width: 90,
+            child: TextField(
+              controller: _customQrSizeMm,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(labelText: 'QR mm'),
+            ),
+          ),
+      ] else ...[
+        AppDropdown<QrResolutionPreset?>(
+          value: _qrResolutionPreset,
+          items: const [
+            DropdownMenuItem(
+              value: QrResolutionPreset.small,
+              child: Text('해상도 작게(256px)'),
+            ),
+            DropdownMenuItem(
+              value: QrResolutionPreset.medium,
+              child: Text('해상도 보통(512px)'),
+            ),
+            DropdownMenuItem(
+              value: QrResolutionPreset.large,
+              child: Text('해상도 크게(1024px)'),
+            ),
+            DropdownMenuItem(value: null, child: Text('해상도 커스텀(px)')),
+          ],
+          onChanged: (value) => setState(() => _qrResolutionPreset = value),
+        ),
+        if (_qrResolutionPreset == null)
+          SizedBox(
+            width: 90,
+            child: TextField(
+              controller: _customQrResolutionPx,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(labelText: '해상도px'),
+            ),
+          ),
+      ],
+    ],
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -172,12 +330,14 @@ class _BadgePrecreateScreenState extends ConsumerState<BadgePrecreateScreen> {
                     ),
                     ExportActionButton(
                       icon: Icons.ios_share,
-                      label: '스티커 PDF로 내보내기',
+                      label: '스티커 내보내기',
                       busy: _busy,
                       onSelected: _export,
                     ),
                   ],
                 ),
+                const SizedBox(height: AppSpacing.space3),
+                _buildExportSettings(),
                 const SizedBox(height: AppSpacing.space5),
                 Text(
                   '미배정 $unassigned장 · 배정됨 ${items.length - unassigned}장',

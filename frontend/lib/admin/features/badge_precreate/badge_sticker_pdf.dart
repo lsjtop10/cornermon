@@ -4,11 +4,20 @@ import 'package:cornermon/shared/api/domain_aliases.dart' as api;
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
-Future<Uint8List> buildBadgeStickerPdf(List<api.Badge> badges) async {
+/// 배지 스티커 시트 PDF를 만든다.
+///
+/// [pageFormat]은 용지 크기(A4/Letter/커스텀 mm, #249), [qrSizeMm]은 QR 코드 한 변의
+/// 길이(mm)다. 라벨 프린터 등 비표준 용지에 맞추기 위해 둘 다 호출부에서 조절한다.
+Future<Uint8List> buildBadgeStickerPdf(
+  List<api.Badge> badges, {
+  PdfPageFormat pageFormat = PdfPageFormat.a4,
+  double qrSizeMm = 35,
+}) async {
+  final qrSize = qrSizeMm * PdfPageFormat.mm;
   final document = pw.Document();
   document.addPage(
     pw.MultiPage(
-      pageFormat: PdfPageFormat.a4,
+      pageFormat: pageFormat,
       build: (_) => [
         pw.GridView(
           crossAxisCount: 3,
@@ -25,8 +34,8 @@ Future<Uint8List> buildBadgeStickerPdf(List<api.Badge> badges) async {
                     pw.BarcodeWidget(
                       barcode: pw.Barcode.qrCode(),
                       data: badge.qrPayload ?? badge.id ?? '',
-                      width: 110,
-                      height: 110,
+                      width: qrSize,
+                      height: qrSize,
                     ),
                     pw.SizedBox(height: 8),
                     pw.Text(
