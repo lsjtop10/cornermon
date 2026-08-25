@@ -51,9 +51,13 @@ func NewTrackHandler(svc *usecase.TrackService) *TrackHandler {
 	return &TrackHandler{svc: svc}
 }
 
-func mapDomainTrackToDTO(track *domain.Track) TrackResponse {
+func mapDomainTrackToDTO(track *domain.Track, busy bool) TrackResponse {
 	if track == nil {
 		return TrackResponse{}
+	}
+	operationalStatus := domain.TrackIdle
+	if busy {
+		operationalStatus = domain.TrackBusy
 	}
 	return TrackResponse{
 		TrackSummaryResponse: TrackSummaryResponse{
@@ -61,7 +65,7 @@ func mapDomainTrackToDTO(track *domain.Track) TrackResponse {
 			CornerID:          string(track.CornerID()),
 			TrackNo:           track.TrackNo(),
 			Status:            string(track.Status()),
-			OperationalStatus: string(track.OperationalStatus()),
+			OperationalStatus: string(operationalStatus),
 		},
 	}
 }
@@ -79,13 +83,13 @@ func (h *TrackHandler) ListTracks(c echo.Context) error {
 	if campID == "" {
 		return echo.NewHTTPError(http.StatusBadRequest, ErrorResponse{Code: CodeBadRequest, Message: "campId is required"})
 	}
-	tracks, err := h.svc.ListTracksByCamp(c.Request().Context(), campID)
+	tracks, busyTrackIDs, err := h.svc.ListTracksByCamp(c.Request().Context(), campID)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, ErrorResponse{Code: CodeInternalError, Message: err.Error()}).SetInternal(err)
 	}
 	res := make([]TrackResponse, len(tracks))
 	for i, tr := range tracks {
-		res[i] = mapDomainTrackToDTO(tr)
+		res[i] = mapDomainTrackToDTO(tr, busyTrackIDs[tr.ID()])
 	}
 	return c.JSON(http.StatusOK, res)
 }
@@ -119,7 +123,7 @@ func (h *TrackHandler) CreateTracks(c echo.Context) error {
 		if err != nil {
 			return trackHTTPError(err)
 		}
-		res = append(res, TrackPinResponse{Track: mapDomainTrackToDTO(track), PIN: pin})
+		res = append(res, TrackPinResponse{Track: mapDomainTrackToDTO(track, false), PIN: pin})
 	}
 	return c.JSON(http.StatusCreated, res)
 }
@@ -210,7 +214,7 @@ func (h *TrackHandler) ReplaceTrack(c echo.Context) error {
 	if err != nil {
 		return trackHTTPError(err)
 	}
-	return c.JSON(http.StatusOK, TrackPinResponse{Track: mapDomainTrackToDTO(track), PIN: pin})
+	return c.JSON(http.StatusOK, TrackPinResponse{Track: mapDomainTrackToDTO(track, false), PIN: pin})
 }
 
 // @Summary      PIN 재발급
@@ -228,7 +232,7 @@ func (h *TrackHandler) RegeneratePin(c echo.Context) error {
 	if err != nil {
 		return trackHTTPError(err)
 	}
-	return c.JSON(http.StatusOK, TrackPinResponse{Track: mapDomainTrackToDTO(track), PIN: plainPIN})
+	return c.JSON(http.StatusOK, TrackPinResponse{Track: mapDomainTrackToDTO(track, false), PIN: plainPIN})
 }
 
 // @Summary      트랙 인증 정보 전체 내보내기
@@ -274,7 +278,7 @@ func (h *TrackHandler) ExportTrackSingle(c echo.Context) error {
 		return trackHTTPError(err)
 	}
 	c.Response().Header().Set("Cache-Control", "no-store")
-	return c.JSON(http.StatusOK, TrackPinResponse{Track: mapDomainTrackToDTO(track), PIN: pin})
+	return c.JSON(http.StatusOK, TrackPinResponse{Track: mapDomainTrackToDTO(track, false), PIN: pin})
 }
 
 func trackHTTPError(err error) error {
