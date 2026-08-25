@@ -1,9 +1,11 @@
 import 'package:cornermon/admin/features/badge_precreate/badge_controllers.dart';
+import 'package:cornermon/admin/features/badge_precreate/badge_export_options.dart';
 import 'package:cornermon/shared/api/providers/badge_providers.dart';
 import 'package:cornermon/shared/export/export_file.dart';
 import 'package:cornermon_api_gen/cornermon_api_gen.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:share_plus/share_plus.dart';
 
 void main() {
   test('ShoudGenerateBadgesWhenQuantityIsValid', () async {
@@ -122,5 +124,81 @@ void main() {
     // assert
     expect(result, ExportSaveResult.cancelled);
     expect(container.read(badgeExportControllerProvider).hasError, isFalse);
+  });
+
+  test('ShoudShareOneFilePerBadgeWhenImageFormatIsSelected', () async {
+    // arrange
+    ShareParams? sharedParams;
+    final container = ProviderContainer(
+      overrides: [
+        exportUnassignedBadgesProvider.overrideWith(
+          (_) async => [
+            BadgeResponse(
+              (b) => b
+                ..id = 'badge-1'
+                ..shortId = 'B-0001'
+                ..qrPayload = 'payload',
+            ),
+            BadgeResponse(
+              (b) => b
+                ..id = 'badge-2'
+                ..shortId = 'B-0002'
+                ..qrPayload = 'payload',
+            ),
+          ],
+        ),
+        badgeFilesShareProvider.overrideWithValue((params) async {
+          sharedParams = params;
+        }),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    // act
+    final shared = await container
+        .read(badgeExportControllerProvider.notifier)
+        .exportAndShare(
+          const BadgeExportSettings(format: BadgeExportFormat.images),
+        );
+
+    // assert
+    expect(shared, isTrue);
+    expect(sharedParams?.files, hasLength(2));
+    expect(sharedParams?.fileNameOverrides, ['B-0001.png', 'B-0002.png']);
+  });
+
+  test('ShoudSaveZipWhenImageFormatIsSelected', () async {
+    // arrange
+    ExportFile? savedFile;
+    final container = ProviderContainer(
+      overrides: [
+        exportUnassignedBadgesProvider.overrideWith(
+          (_) async => [
+            BadgeResponse(
+              (b) => b
+                ..id = 'badge-1'
+                ..shortId = 'B-0001'
+                ..qrPayload = 'payload',
+            ),
+          ],
+        ),
+        saveExportFileProvider.overrideWithValue((file) async {
+          savedFile = file;
+          return ExportSaveResult.saved;
+        }),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    // act
+    final result = await container
+        .read(badgeExportControllerProvider.notifier)
+        .exportAndSave(
+          const BadgeExportSettings(format: BadgeExportFormat.images),
+        );
+
+    // assert
+    expect(result, ExportSaveResult.saved);
+    expect(savedFile?.fileExtension, 'zip');
   });
 }

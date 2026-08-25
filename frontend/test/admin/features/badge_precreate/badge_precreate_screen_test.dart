@@ -87,6 +87,31 @@ void main() {
     expect(find.text('B-0001'), findsOneWidget);
   });
 
+  testWidgets('ShoudSwitchToImageResolutionOptionsWhenImageFormatIsSelected', (
+    tester,
+  ) async {
+    // arrange
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [badgeListProvider.overrideWith((ref) async => const [])],
+        child: const MaterialApp(home: BadgePrecreateScreen()),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('A4'), findsOneWidget);
+    expect(find.text('해상도 보통(512px)'), findsNothing);
+
+    // act
+    await tester.tap(find.text('PDF 시트'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('개별 이미지').last);
+    await tester.pumpAndSettle();
+
+    // assert
+    expect(find.text('A4'), findsNothing);
+    expect(find.text('해상도 보통(512px)'), findsOneWidget);
+  });
+
   testWidgets('ShoudRenderAssignedBadgeWithGroupNameWhenGroupExists', (
     tester,
   ) async {

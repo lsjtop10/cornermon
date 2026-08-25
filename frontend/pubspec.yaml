@@ -47,6 +47,9 @@ dependencies:
   built_collection: ^5.1.1 # audit_log_metadata_dialog에서 AuditLog.metadata(BuiltMap) 직접 사용 — 기존엔 전이 의존성이었음
   pdf: ^3.11.1
   printing: ^5.13.4
+  barcode: ^2.2.9 # 배지 QR 이미지 내보내기(#249)에서 Barcode.make로 모듈 좌표 직접 사용 — 기존엔 pdf의 전이 의존성이었음
+  image: ^4.3.0 # 배지 QR 이미지 내보내기(#249)에서 PNG 인코딩에 직접 사용 — 기존엔 excel의 전이 의존성이었음
+  archive: ^3.6.1 # 배지 QR 이미지 여러 장을 zip으로 묶어 저장(#249)할 때 직접 사용 — 기존엔 excel의 전이 의존성이었음
   fl_chart: ^1.2.0 # 리포트 요약 탭 타임라인 섹션(5분 버킷 진행중/누적완료 라인 차트, #227) 직접 사용
   share_plus: ^12.0.1
   file_saver: ^0.4.0
