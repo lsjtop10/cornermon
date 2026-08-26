@@ -703,7 +703,11 @@ class CornerStatusCard extends StatelessWidget {
               // 자기 줄에 그린다(formatCornerCardSubtitle이 별도 필드로 분리).
               if (subtitle.deviation != null)
                 Text(
-                  subtitle.deviation!,
+                  // "평균"과 같은 2글자 한글 라벨(+공백)을 붙인다 — 한글은
+                  // 글자별 폭이 고르기 때문에(고정폭에 가까움) 라벨 폭이
+                  // 위 줄의 "평균 "과 거의 같아져, 값(M:SS)의 시작 위치가
+                  // 임의의 여백 없이도 자연스럽게 맞춰진다.
+                  '편차 ${subtitle.deviation!}',
                   style: AppTypography.caption.copyWith(
                     color: durationColor,
                     fontWeight: FontWeight.w700,
