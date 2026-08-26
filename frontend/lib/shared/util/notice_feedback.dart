@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/services.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -5,21 +7,38 @@ part 'notice_feedback.g.dart';
 
 /// 공지/메시지 수신 시 사용자에게 주는 소리+진동 피드백.
 ///
-/// `HapticFeedback`/`SystemSound`는 OS의 UI 알림 사운드 채널을 그대로 쓰므로, 기기가
-/// 무음/진동/벨소리 모드일 때의 동작(소리 유무)을 앱이 직접 판단하지 않고 OS에 위임한다
-/// (이슈 #218). 커스텀 사운드 asset을 재생하는 방식(예: audioplayers)은 미디어 재생
-/// 카테고리라 무음 모드를 자동으로 존중하지 않으므로 의도적으로 채택하지 않았다.
+/// 소리·진동 여부는 네이티브의 "알림음 재생" API(Android `RingtoneManager`+`Vibrator`,
+/// iOS `AudioServicesPlaySystemSound`)를 MethodChannel로 호출해 네이티브가 통째로
+/// 결정한다. 둘 다 별도 권한 없이 무음/진동/벨소리 모드를 OS가 알아서 존중한다.
+/// 처음엔 `SystemSound.play(SystemSoundType.click)`을 썼으나, 버튼 탭 등 입력
+/// 피드백음과 구분이 안 될 만큼 미약해 실제 알림으로 인지되지 않는다는 문제가 있었다
+/// (그리고 `.alert`는 애초에 Flutter 엔진이 Android/iOS 임베더에서 구현하지 않아 무음이었다
+/// — macOS/Linux 데스크톱에서만 NSBeep/gdk_display_beep으로 소리가 남).
+///
+/// Flutter의 `HapticFeedback.vibrate()`(Android `View.performHapticFeedback` 기반)는
+/// 실기기에서 링거 모드가 진동일 때 진동이 아예 안 오는 경우가 있어 기각 —
+/// Android 쪽 네이티브 코드가 `AudioManager.ringerMode`를 직접 보고 진동 모드일 때
+/// `Vibrator`로 직접 진동시킨다(더 신뢰 가능).
+///
+/// 커스텀 사운드 asset을 재생하는 방식(예: audioplayers)은 여전히 기각 — 미디어 재생
+/// 카테고리라 무음 모드를 자동으로 존중하지 않는다.
+///
+/// 이 채널은 "앱이 켜져 있고 SSE로 연결된 채 다른 화면을 보고 있을 때" 피드백만
+/// 다룬다. 앱이 완전히 백그라운드/종료된 상태의 푸시 알림(FCM/APNs)은 트리거와
+/// 인프라가 다른 별도 작업이다.
 abstract class NoticeFeedback {
   void notify();
 }
 
 class SystemNoticeFeedback implements NoticeFeedback {
+  static const _channel = MethodChannel('cornermon/notice_sound');
+
   const SystemNoticeFeedback();
 
   @override
   void notify() {
-    HapticFeedback.vibrate();
-    SystemSound.play(SystemSoundType.alert);
+    // 네이티브 쪽 실패(예: 조용한 기기 설정)로 앱이 죽으면 안 되므로 결과는 무시한다.
+    unawaited(_channel.invokeMethod('playNoticeSound').catchError((_) {}));
   }
 }
 

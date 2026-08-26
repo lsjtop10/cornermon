@@ -1,5 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.CAMERA"/>
+    <!-- 공지 수신 시 진동 모드에서 직접 진동시키는 데 필요(이슈 #218, notice_feedback.dart) -->
+    <uses-permission android:name="android.permission.VIBRATE"/>
     <application
         android:label="${appName}"
         android:name="${applicationName}"
