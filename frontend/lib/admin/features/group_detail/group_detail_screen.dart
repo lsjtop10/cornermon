@@ -185,8 +185,8 @@ class _GroupSummaryHeader extends StatelessWidget {
       AppTag(
         label: group.isFinished == true ? '완주' : '진행 중',
         tone: group.isFinished == true
-            ? AppTagTone.success
-            : AppTagTone.warning,
+            ? AppTagTone.neutral
+            : AppTagTone.success,
       ),
     ],
   );
@@ -258,11 +258,11 @@ class _ItineraryStatusCard extends StatelessWidget {
     final presentation = switch (progress.status) {
       api.VisitStatusPerCorner.COMPLETED => (
         label: '완료',
-        tone: AppTagTone.success,
+        tone: AppTagTone.neutral,
       ),
       api.VisitStatusPerCorner.IN_PROGRESS => (
         label: '방문 중',
-        tone: AppTagTone.warning,
+        tone: AppTagTone.success,
       ),
       _ => (label: '미방문', tone: AppTagTone.neutral),
     };

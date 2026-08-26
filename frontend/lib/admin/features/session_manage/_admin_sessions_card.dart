@@ -118,7 +118,9 @@ class AdminSessionsCard extends ConsumerWidget {
                           ),
                         ),
                         AppButton(
-                          variant: AppButtonVariant.destructive,
+                          // 세션 종료도 다시 로그인하면 원상복구되는 되돌릴 수 있는
+                          // 액션이라 빨강(destructive)까지는 필요 없다.
+                          variant: AppButtonVariant.secondary,
                           size: AppButtonSize.compact,
                           label: '세션 종료',
                           onPressed: () => revoke(session.id ?? ''),

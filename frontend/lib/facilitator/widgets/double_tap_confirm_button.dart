@@ -86,7 +86,9 @@ class _DoubleTapConfirmButtonState extends State<DoubleTapConfirmButton> {
           child: Center(
             child: Text(
               widget.armedLabel,
-              style: AppTypography.bodyEmphasis.copyWith(color: colors.quiet),
+              style: AppTypography.bodyEmphasis.copyWith(
+                color: colors.textPrimary,
+              ),
             ),
           ),
         ),

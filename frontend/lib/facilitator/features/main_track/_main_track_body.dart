@@ -194,7 +194,7 @@ class _BusyBodyState extends ConsumerState<_BusyBody> {
     final progress = targetSeconds != null && targetSeconds > 0
         ? (elapsedSeconds / targetSeconds).clamp(0.0, 1.0).toDouble()
         : null;
-    final progressColor = isOverTarget ? colors.statusAlert : colors.statusIdle;
+    final progressColor = isOverTarget ? colors.statusAlert : colors.success;
 
     return Padding(
       padding: const EdgeInsets.all(AppSpacing.space6),

@@ -679,6 +679,7 @@ class CornerStatusCard extends StatelessWidget {
                 primary: '진행중 $busyTrackCount/${tracks.length}트랙',
                 secondary: '목표 ${entry.corner.targetMinutes ?? 0}분',
                 color: colors.textSecondary,
+                secondaryColor: colors.statusLimited,
               ),
               _CornerCardStatRow(
                 primary: subtitle.duration,
@@ -721,12 +722,16 @@ class _CornerCardStatRow extends StatelessWidget {
     required this.primary,
     required this.secondary,
     required this.color,
+    this.secondaryColor,
     this.bold = false,
   });
 
   final String primary;
   final String secondary;
   final Color color;
+  // 목표시간(관리자가 정한 제약값)처럼 오른쪽 라벨만 다른 시멘틱을 가질 때만 지정한다
+  // — 지정 안 하면 왼쪽과 같은 [color].
+  final Color? secondaryColor;
   final bool bold;
 
   @override
@@ -746,7 +751,7 @@ class _CornerCardStatRow extends StatelessWidget {
           ),
         ),
         const SizedBox(width: AppSpacing.space2),
-        Text(secondary, style: style),
+        Text(secondary, style: style.copyWith(color: secondaryColor ?? color)),
       ],
     );
   }

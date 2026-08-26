@@ -219,7 +219,7 @@ class CampCard extends ConsumerWidget {
                   tone: camp.isActive
                       ? AppTagTone.success
                       : camp.isPending
-                      ? AppTagTone.warning
+                      ? AppTagTone.ready
                       : AppTagTone.neutral,
                 ),
                 const SizedBox(height: AppSpacing.space3),
