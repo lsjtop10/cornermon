@@ -33,6 +33,7 @@ class GroupDetailScreen extends ConsumerWidget {
         leading: IconButton(
           onPressed: () => context.go('/groups'),
           icon: const Icon(Icons.arrow_back),
+          tooltip: '조 현황으로 돌아가기',
         ),
         title: const Text('조 상세'),
       ),

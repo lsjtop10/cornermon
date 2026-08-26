@@ -87,8 +87,7 @@ class _AuditLogRow extends StatelessWidget {
             bottom: BorderSide(color: colors.border),
           ),
           color: isFailure
-              // ignore: deprecated_member_use
-              ? colors.danger.withOpacity(isDark(context) ? 0.10 : 0.06)
+              ? colors.danger.withValues(alpha: isDark(context) ? 0.10 : 0.06)
               : null,
         ),
         padding: const EdgeInsets.symmetric(
@@ -182,8 +181,7 @@ class _ResultBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 4.0),
       decoration: BoxDecoration(
-        // ignore: deprecated_member_use
-        color: color.withOpacity(opacity),
+        color: color.withValues(alpha: opacity),
         borderRadius: BorderRadius.circular(100.0),
       ),
       child: Row(

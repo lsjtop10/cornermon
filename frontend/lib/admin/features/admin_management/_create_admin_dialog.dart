@@ -3,6 +3,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:cornermon/shared/api/providers/auth_device_trust_providers.dart';
+import 'package:cornermon/shared/design_system/tokens/colors.dart';
 import 'package:cornermon/shared/design_system/tokens/spacing.dart';
 import 'package:cornermon/shared/design_system/widgets/app_button.dart';
 
@@ -59,6 +60,9 @@ class _CreateAdminDialogState extends ConsumerState<CreateAdminDialog> {
   Widget build(BuildContext context) {
     final canSubmit =
         !_busy && _username.text.trim().isNotEmpty && _password.text.isNotEmpty;
+    final colors = Theme.of(context).brightness == Brightness.dark
+        ? AppColors.dark
+        : AppColors.light;
     return AlertDialog(
       title: const Text('운영 관리자 추가'),
       content: SizedBox(
@@ -83,9 +87,16 @@ class _CreateAdminDialogState extends ConsumerState<CreateAdminDialog> {
             ),
             if (_errorText != null) ...[
               const SizedBox(height: AppSpacing.space2),
-              Text(
-                _errorText!,
-                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              // 다이얼로그가 이미 떠 있는 상태에서 나타나는 동적 오류라, 다이얼로그
+              // 자체의 오픈 시점 announcement와 달리 스크린리더가 자동으로 다시
+              // 읽어주지 않는다 — end_camp/start_camp 확인 다이얼로그와 같은 이유로
+              // liveRegion을 명시한다.
+              Semantics(
+                liveRegion: true,
+                child: Text(
+                  _errorText!,
+                  style: TextStyle(color: colors.danger),
+                ),
               ),
             ],
           ],

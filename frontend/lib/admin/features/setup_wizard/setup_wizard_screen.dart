@@ -31,6 +31,7 @@ class SetupWizardScreen extends ConsumerWidget {
         leading: IconButton(
           onPressed: () => context.go('/camps'),
           icon: const Icon(Icons.arrow_back),
+          tooltip: '캠프 목록으로 돌아가기',
         ),
       ),
       body: SafeArea(
