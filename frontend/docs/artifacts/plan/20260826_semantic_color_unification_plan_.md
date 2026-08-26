@@ -96,3 +96,7 @@ class AppColors {
 - [x] `flutter analyze`/`flutter test` 통과 (`make docker-check`)
 - [x] 신규 토큰(시안/마젠타) 텍스트 대비가 WCAG AA(4.5:1) 이상인지 배경색 위에서 육안 확인
 - [x] 관리자 삭제/회원 탈퇴/기기 회수/캠프 종료(2곳)는 아웃라인 빨강, 강제 로그아웃/세션 종료는 중립(secondary)으로 표시됨 — 병목 카드 좌측 보더 등 실제 경고만 여전히 solid 빨강으로 대비됨
+
+## 추가 수정: 뱃지 틴트 배경 대비 재조정 (2026-08-26 후속)
+
+97번 항목을 실측해보니 신규 토큰뿐 아니라 기존 `statusActive`/`statusInactive`/`warning`도 뱃지(자기 색 12%/20% 틴트 배경 위 같은 색 텍스트) 실사용 기준 4.5:1 미달이었다 — 흰/검 배경 기준으로는 통과해 보이지만 실제 배경은 그보다 훨씬 옅다. 뱃지 패턴으로 실제 쓰이는 토큰(`statusActive`/`success`, `statusAlert`/`danger`, `statusInactive`, `warning`, `statusReady`, 다크 모드 `statusNormal`)만 값을 조정했다 — 미사용 토큰(`info`)과 이미 통과한 값(`statusNormal` 라이트, `statusLimited`)은 그대로 뒀다.

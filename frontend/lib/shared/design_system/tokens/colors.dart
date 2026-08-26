@@ -43,6 +43,12 @@ class AppColors {
   final Color statusReady;
   final Color statusLimited;
 
+  // 아래 상태/피드백 색 중 실제로 뱃지(AppTag/StatusBadge/CornerStatusPill,
+  // ConnectionBanner)에서 "자기 색의 12~25% 틴트 배경 위에 같은 색으로 텍스트를
+  // 그리는" 용법으로 쓰이는 값은 그 실사용 배경 기준 WCAG AA(4.5:1)를 만족하도록
+  // 값을 골랐다 — 흰/검 배경 기준 대비만 확인하면 통과하는 것처럼 보이지만, 실제
+  // 배경은 그보다 훨씬 옅은 틴트라 원색 자체가 더 진하거나(라이트) 밝아야(다크)
+  // 한다. 뱃지로 쓰이지 않는 info(현재 미사용)는 대상에서 제외했다.
   static const light = AppColors(
     bgCanvas: Color(0xFFF5F6F8),
     bgSurface: Color(0xFFFFFFFF),
@@ -54,14 +60,14 @@ class AppColors {
     brandPrimary: Color(0xFF2F6FED),
     brandPrimaryPressed: Color(0xFF1F53C2),
     statusNormal: Color(0xFF23262B),
-    statusActive: Color(0xFF12A150),
-    statusAlert: Color(0xFFD64545),
-    statusInactive: Color(0xFF8A94A6),
-    success: Color(0xFF12A150),
-    warning: Color(0xFFE5A100),
-    danger: Color(0xFFD64545),
+    statusActive: Color(0xFF0E7B3D),
+    statusAlert: Color(0xFFC72C2C),
+    statusInactive: Color(0xFF616C7F),
+    success: Color(0xFF0E7B3D),
+    warning: Color(0xFF875F00),
+    danger: Color(0xFFC72C2C),
     info: Color(0xFF2F6FED),
-    statusReady: Color(0xFF0891B2),
+    statusReady: Color(0xFF06748E),
     statusLimited: Color(0xFFA21CAF),
   );
 
@@ -75,13 +81,13 @@ class AppColors {
     textDisabled: Color(0xFF5C636E),
     brandPrimary: Color(0xFF5B8DF6),
     brandPrimaryPressed: Color(0xFF84A7F8),
-    statusNormal: Color(0xFF7A8290),
+    statusNormal: Color(0xFF9BA1AB),
     statusActive: Color(0xFF3DD68C),
-    statusAlert: Color(0xFFF17070),
-    statusInactive: Color(0xFF6B7280),
+    statusAlert: Color(0xFFF27C7C),
+    statusInactive: Color(0xFFBABDC5),
     success: Color(0xFF3DD68C),
     warning: Color(0xFFF2C14E),
-    danger: Color(0xFFF17070),
+    danger: Color(0xFFF27C7C),
     info: Color(0xFF5B8DF6),
     statusReady: Color(0xFF22D3EE),
     statusLimited: Color(0xFFE879F9),
