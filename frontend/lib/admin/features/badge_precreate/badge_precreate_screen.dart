@@ -9,7 +9,7 @@ import 'package:cornermon/shared/design_system/widgets/app_button.dart';
 import 'package:cornermon/shared/design_system/widgets/app_dropdown.dart';
 import 'package:cornermon/shared/design_system/widgets/empty_state.dart';
 import 'package:cornermon/shared/design_system/widgets/app_tag.dart';
-import 'package:cornermon/shared/export/export_action_menu.dart';
+import 'package:cornermon/shared/export/export_action_menu.dart' show ExportAction;
 import 'package:cornermon/shared/export/export_file.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -156,9 +156,38 @@ class _BadgePrecreateScreenState extends ConsumerState<BadgePrecreateScreen> {
     }
   }
 
+  /// 스티커 내보내기 버튼 → 용지·QR 크기 선택 + 저장/공유를 한 다이얼로그에서 처리한다(#249 보완).
+  /// [setDialogState]로 다이얼로그 자신을 다시 그려야 드롭다운 변경이 반영된다.
+  Future<void> _openExportDialog() async {
+    final action = await showDialog<ExportAction>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text('스티커 내보내기'),
+          content: SingleChildScrollView(
+            child: _buildExportSettings(setDialogState),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () =>
+                  Navigator.pop(dialogContext, ExportAction.saveToDevice),
+              child: const Text('기기에 저장'),
+            ),
+            TextButton(
+              onPressed: () =>
+                  Navigator.pop(dialogContext, ExportAction.shareWithApp),
+              child: const Text('다른 앱으로 공유'),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (action != null) await _export(action);
+  }
+
   /// 용지·QR 크기 설정 — 라벨 프린터 등 비표준 크기에 대응하기 위한 옵션(#249).
   /// [_format]에 따라 PDF(용지+QR mm) / 이미지(QR 해상도px) 중 필요한 컨트롤만 보여준다.
-  Widget _buildExportSettings() => Wrap(
+  Widget _buildExportSettings(StateSetter setState) => Wrap(
     spacing: AppSpacing.space3,
     runSpacing: AppSpacing.space2,
     crossAxisAlignment: WrapCrossAlignment.center,
@@ -328,16 +357,15 @@ class _BadgePrecreateScreenState extends ConsumerState<BadgePrecreateScreen> {
                           : null,
                       onPressed: _count == null || _busy ? null : _generate,
                     ),
-                    ExportActionButton(
+                    AppButton(
+                      variant: AppButtonVariant.secondary,
+                      size: AppButtonSize.compact,
                       icon: Icons.ios_share,
                       label: '스티커 내보내기',
-                      busy: _busy,
-                      onSelected: _export,
+                      onPressed: _busy ? null : _openExportDialog,
                     ),
                   ],
                 ),
-                const SizedBox(height: AppSpacing.space3),
-                _buildExportSettings(),
                 const SizedBox(height: AppSpacing.space5),
                 Text(
                   '미배정 $unassigned장 · 배정됨 ${items.length - unassigned}장',

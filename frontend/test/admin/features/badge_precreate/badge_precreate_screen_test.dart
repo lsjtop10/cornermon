@@ -98,10 +98,13 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+
+    // act
+    await tester.tap(find.text('스티커 내보내기'));
+    await tester.pumpAndSettle();
     expect(find.text('A4'), findsOneWidget);
     expect(find.text('해상도 보통(512px)'), findsNothing);
 
-    // act
     await tester.tap(find.text('PDF 시트'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('개별 이미지').last);
