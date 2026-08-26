@@ -33,6 +33,10 @@ void main() {
   late int broadcastListBuildCount;
   late int threadMessageListBuildCount;
   late int previewMessageListBuildCount;
+  // 이슈 #256: notify 여부가 목록 마지막 항목의 senderRole에 좌우되므로, 테스트별로
+  // 반환값을 바꿔 끼울 수 있어야 한다.
+  late List<Message> broadcastListResult;
+  late List<Message> threadMessageListResult;
 
   // 스트림 이벤트 전달 → AsyncValue 갱신 → ref.listen 콜백 → invalidate/rebuild가
   // 모두 마이크로태스크를 거쳐 일어나므로, 한 틱을 흘려보내야 결과를 관찰할 수 있다.
@@ -53,6 +57,8 @@ void main() {
     broadcastListBuildCount = 0;
     threadMessageListBuildCount = 0;
     previewMessageListBuildCount = 0;
+    broadcastListResult = <Message>[];
+    threadMessageListResult = <Message>[];
 
     container = ProviderContainer(
       overrides: [
@@ -60,12 +66,12 @@ void main() {
         noticeFeedbackProvider.overrideWithValue(fakeNoticeFeedback),
         broadcastMessageListProvider(campId).overrideWith((ref) async {
           broadcastListBuildCount++;
-          return <Message>[];
+          return broadcastListResult;
         }),
         // ChatThreadPane이 실제로 watch하는 것과 동일한 인자(trackId, background: true).
         trackMessageListProvider(trackId, background: true).overrideWith((ref) async {
           threadMessageListBuildCount++;
-          return <Message>[];
+          return threadMessageListResult;
         }),
         // trackDirectSummariesProvider가 내부적으로 조합하는 소스들.
         trackListProvider(campId).overrideWith(
@@ -164,16 +170,16 @@ void main() {
   );
 
   test(
-    'ShouldInvalidateBroadcastListWhenMessagesChangedArrives',
+    'ShouldInvalidateBroadcastListWhenMessagesChangedScopeIsCamp',
     () async {
-      // arrange
+      // arrange — 공지는 camp scope로 온다(이슈 #256: track scope 이벤트는 무관한
+      // 목록이므로 더 이상 함께 무효화하지 않는다).
       await container.read(broadcastMessageListProvider(campId).future);
       final baseline = broadcastListBuildCount;
       final event = SseEvent(
         (b) => b
           ..event = SseEventEventEnum.messagesChanged
-          ..scope.kind = SseScopeKind.track
-          ..scope.trackId = trackId.value,
+          ..scope.kind = SseScopeKind.camp,
       );
 
       // act
@@ -186,9 +192,19 @@ void main() {
   );
 
   test(
-    'ShouldTriggerNoticeFeedbackWhenMessagesChangedArrives',
+    'ShouldTriggerNoticeFeedbackWhenMessagesChangedScopeIsOwnTrackAndSenderIsTrack',
     () async {
-      // arrange
+      // arrange — 이슈 #218: 트랙이 보낸 다이렉트 메시지는 피드백 대상이다.
+      threadMessageListResult = [
+        Message(
+          (b) => b
+            ..id = 'dm-1'
+            ..channelType = MessageChannelType.DIRECT
+            ..senderRole = MessageSenderRoleEnum.TRACK
+            ..content = '진행자 발신'
+            ..sentAt = DateTime.utc(2026, 8, 26),
+        ),
+      ];
       final event = SseEvent(
         (b) => b
           ..event = SseEventEventEnum.messagesChanged
@@ -199,8 +215,66 @@ void main() {
       // act
       await pushAndSettle(event);
 
-      // assert — 이슈 #218: 공지/메시지 수신 시 소리+진동 피드백을 준다.
+      // assert
       expect(fakeNoticeFeedback.notifyCalls, 1);
+    },
+  );
+
+  test(
+    'ShouldNotTriggerNoticeFeedbackWhenMessagesChangedScopeIsOwnTrackAndSenderIsSelf',
+    () async {
+      // arrange — 이슈 #256: 관리자 본인이 보낸 DM의 반향으로는 알림음이 울리면 안 된다.
+      threadMessageListResult = [
+        Message(
+          (b) => b
+            ..id = 'dm-1'
+            ..channelType = MessageChannelType.DIRECT
+            ..senderRole = MessageSenderRoleEnum.ADMIN
+            ..content = '관리자 발신'
+            ..sentAt = DateTime.utc(2026, 8, 26),
+        ),
+      ];
+      final event = SseEvent(
+        (b) => b
+          ..event = SseEventEventEnum.messagesChanged
+          ..scope.kind = SseScopeKind.track
+          ..scope.trackId = trackId.value,
+      );
+
+      // act
+      await pushAndSettle(event);
+
+      // assert
+      expect(fakeNoticeFeedback.notifyCalls, 0);
+    },
+  );
+
+  test(
+    'ShouldNotTriggerNoticeFeedbackWhenMessagesChangedScopeIsCampAndSenderIsSelf',
+    () async {
+      // arrange — 이슈 #256: 관리자 본인이 보낸 공지의 반향으로는 알림음이 울리면 안 된다.
+      // (공지는 관리자만 보낼 수 있어 senderRole은 항상 ADMIN이다.)
+      broadcastListResult = [
+        Message(
+          (b) => b
+            ..id = 'broadcast-1'
+            ..channelType = MessageChannelType.BROADCAST
+            ..senderRole = MessageSenderRoleEnum.ADMIN
+            ..content = '공지'
+            ..sentAt = DateTime.utc(2026, 8, 26),
+        ),
+      ];
+      final event = SseEvent(
+        (b) => b
+          ..event = SseEventEventEnum.messagesChanged
+          ..scope.kind = SseScopeKind.camp,
+      );
+
+      // act
+      await pushAndSettle(event);
+
+      // assert
+      expect(fakeNoticeFeedback.notifyCalls, 0);
     },
   );
 }

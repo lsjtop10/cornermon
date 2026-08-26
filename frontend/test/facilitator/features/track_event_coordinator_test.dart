@@ -76,6 +76,9 @@ void main() {
   late int trackMessageListBuildCount;
   late int unreadDirectCountBuildCount;
   late int trackCornerBuildCount;
+  // 이슈 #256: notify 여부가 목록 마지막 항목의 senderRole에 좌우되므로, 테스트별로
+  // 반환값을 바꿔 끼울 수 있어야 한다.
+  late List<Message> trackMessageListResult;
 
   // 스트림 이벤트 전달 → AsyncValue 갱신 → ref.listen 콜백 → invalidate/rebuild가
   // 모두 마이크로태스크를 거쳐 일어나므로, 한 틱을 흘려보내야 결과를 관찰할 수 있다.
@@ -100,6 +103,7 @@ void main() {
     trackMessageListBuildCount = 0;
     unreadDirectCountBuildCount = 0;
     trackCornerBuildCount = 0;
+    trackMessageListResult = <Message>[];
 
     container = ProviderContainer(
       overrides: [
@@ -121,7 +125,7 @@ void main() {
         ),
         trackMessageListProvider(trackId, background: true).overrideWith((ref) {
           trackMessageListBuildCount++;
-          return <Message>[];
+          return trackMessageListResult;
         }),
         unreadDirectMessageCountProvider(trackId).overrideWith((ref) async {
           unreadDirectCountBuildCount++;
@@ -359,9 +363,19 @@ void main() {
   );
 
   test(
-    'ShouldTriggerNoticeFeedbackWhenMessagesChangedScopeIsOwnTrack',
+    'ShouldTriggerNoticeFeedbackWhenMessagesChangedScopeIsOwnTrackAndSenderIsAdmin',
     () async {
-      // arrange — 이슈 #218: 자기 트랙 앞 다이렉트 메시지도 피드백 대상이다.
+      // arrange — 이슈 #218: 관리자가 보낸 다이렉트 메시지는 피드백 대상이다.
+      trackMessageListResult = [
+        Message(
+          (b) => b
+            ..id = 'dm-1'
+            ..channelType = MessageChannelType.DIRECT
+            ..senderRole = MessageSenderRoleEnum.ADMIN
+            ..content = '관리자 답장'
+            ..sentAt = DateTime.utc(2026, 8, 26),
+        ),
+      ];
       final event = SseEvent(
         (b) => b
           ..event = SseEventEventEnum.messagesChanged
@@ -374,6 +388,36 @@ void main() {
 
       // assert
       expect(fakeNoticeFeedback.notifyCalls, 1);
+    },
+  );
+
+  test(
+    'ShouldNotTriggerNoticeFeedbackWhenMessagesChangedScopeIsOwnTrackAndSenderIsSelf',
+    () async {
+      // arrange — 이슈 #256: 본인(TRACK)이 보낸 다이렉트 메시지의 반향으로는
+      // 알림음이 울리면 안 된다.
+      trackMessageListResult = [
+        Message(
+          (b) => b
+            ..id = 'dm-1'
+            ..channelType = MessageChannelType.DIRECT
+            ..senderRole = MessageSenderRoleEnum.TRACK
+            ..content = '진행자 발신'
+            ..sentAt = DateTime.utc(2026, 8, 26),
+        ),
+      ];
+      final event = SseEvent(
+        (b) => b
+          ..event = SseEventEventEnum.messagesChanged
+          ..scope.kind = SseScopeKind.track
+          ..scope.trackId = trackId.value,
+      );
+
+      // act
+      await pushAndSettle(event);
+
+      // assert
+      expect(fakeNoticeFeedback.notifyCalls, 0);
     },
   );
 

@@ -76,7 +76,13 @@ class TrackEventCoordinator extends _$TrackEventCoordinator {
         } else if (isThisTrack) {
           ref.invalidate(trackMessageListProvider(trackId, background: true));
           ref.invalidate(unreadDirectMessageCountProvider(trackId));
-          ref.read(noticeFeedbackProvider).notify();
+          unawaited(
+            _notifyIfFromAdmin(
+              ref.read(
+                trackMessageListProvider(trackId, background: true).future,
+              ),
+            ),
+          );
         }
         break;
       case SseEventEventEnum.trackDeleted:
@@ -103,6 +109,16 @@ class TrackEventCoordinator extends _$TrackEventCoordinator {
         break;
       default:
         break; // groups_updated/lockout_alert 등 관리자 전용 알림은 진행자 화면과 무관
+    }
+  }
+
+  /// 방금 재조회한 트랙 메시지 목록의 최신 항목이 관리자 발신일 때만 알림음을 울린다.
+  /// messagesChanged는 발신자 구분 없는 이벤트라, 본인(TRACK)이 보낸 메시지의 반향으로
+  /// 자기 알림음이 울리던 문제(#256)를 REST 응답의 senderRole로 걸러낸다.
+  Future<void> _notifyIfFromAdmin(Future<List<Message>> messages) async {
+    final list = await messages;
+    if (list.isNotEmpty && list.last.senderRole == MessageSenderRoleEnum.ADMIN) {
+      ref.read(noticeFeedbackProvider).notify();
     }
   }
 
