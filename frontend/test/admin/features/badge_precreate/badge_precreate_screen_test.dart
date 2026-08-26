@@ -98,10 +98,13 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+
+    // act
+    await tester.tap(find.text('스티커 내보내기'));
+    await tester.pumpAndSettle();
     expect(find.text('A4'), findsOneWidget);
     expect(find.text('해상도 보통(512px)'), findsNothing);
 
-    // act
     await tester.tap(find.text('PDF 시트'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('개별 이미지').last);
@@ -111,6 +114,38 @@ void main() {
     expect(find.text('A4'), findsNothing);
     expect(find.text('해상도 보통(512px)'), findsOneWidget);
   });
+
+  testWidgets(
+    'ShoudShowCustomPaperAndQrSizeFieldsWithoutLayoutErrorWhenCustomIsSelected',
+    (tester) async {
+      // arrange
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [badgeListProvider.overrideWith((ref) async => const [])],
+          child: const MaterialApp(home: BadgePrecreateScreen()),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('스티커 내보내기'));
+      await tester.pumpAndSettle();
+
+      // act
+      await tester.tap(find.text('A4'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('커스텀(mm)'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('QR 보통(35mm)'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('QR 커스텀(mm)').last);
+      await tester.pumpAndSettle();
+
+      // assert — 다이얼로그 고정폭이 없으면 Column stretch가 폭을 못 구해 레이아웃 오류가 난다.
+      expect(tester.takeException(), isNull);
+      expect(find.widgetWithText(TextField, '가로mm'), findsOneWidget);
+      expect(find.widgetWithText(TextField, '세로mm'), findsOneWidget);
+      expect(find.widgetWithText(TextField, 'QR mm'), findsOneWidget);
+    },
+  );
 
   testWidgets('ShoudRenderAssignedBadgeWithGroupNameWhenGroupExists', (
     tester,

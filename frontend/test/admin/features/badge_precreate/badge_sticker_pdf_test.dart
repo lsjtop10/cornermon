@@ -1,4 +1,5 @@
-import 'package:cornermon/admin/features/badge_precreate/badge_sticker_pdf.dart';
+import 'package:cornermon/admin/features/badge_precreate/badge_sticker_pdf.dart'
+    show buildBadgeStickerPdf, gridChildAspectRatioFor, gridColumnsFor;
 import 'package:cornermon_api_gen/cornermon_api_gen.dart';
 import 'package:pdf/pdf.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -53,4 +54,39 @@ void main() {
     // assert
     expect(String.fromCharCodes(bytes.take(4)), '%PDF');
   });
+
+  test(
+    'ShoudIncreaseGridColumnsWhenQrSizeShrinksOnSamePage',
+    () {
+      // QR을 줄였는데 열 개수가 그대로면 셀이 헐렁해 보이는 리그레션(#249 리뷰)을 막는다.
+      // arrange
+      const wideQr = 35 * PdfPageFormat.mm;
+      const narrowQr = 15 * PdfPageFormat.mm;
+
+      // act
+      final columnsForWideQr = gridColumnsFor(PdfPageFormat.a4, wideQr);
+      final columnsForNarrowQr = gridColumnsFor(PdfPageFormat.a4, narrowQr);
+
+      // assert
+      expect(columnsForNarrowQr, greaterThan(columnsForWideQr));
+    },
+  );
+
+  test(
+    'ShoudReturnHeightOverWidthRatioNotInvertedForGridChildAspectRatio',
+    () {
+      // pw.GridView는 childAspectRatio를 height=width*ratio로 쓴다(Flutter
+      // SliverGridDelegate와 반대). width/height를 잘못 넣으면 셀 높이가 QR+텍스트보다
+      // 작게 잡혀 QR이 셀 밖으로 넘치는 리그레션이었다 — ratio가 1보다 커야
+      // (텍스트만큼 더 높아야) 한다는 걸 고정한다.
+      // arrange
+      const qrSize = 35 * PdfPageFormat.mm;
+
+      // act
+      final ratio = gridChildAspectRatioFor(qrSize);
+
+      // assert
+      expect(ratio, greaterThan(1));
+    },
+  );
 }
