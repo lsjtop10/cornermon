@@ -133,8 +133,11 @@ class AppButton extends StatelessWidget {
         case AppButtonVariant.destructive:
           // 되돌릴 수 없는 액션(삭제/탈퇴/회수/캠프 종료) 전용 — 빨강 자체는 남기되
           // 꽉 채운 배경(solid)이 화면마다 남발되면 진짜 경고(병목 보더 등)가 묻힌다는
-          // 피드백으로 아웃라인으로 다운그레이드했다(design-system.md §4.2).
-          bgColor = Colors.transparent;
+          // 피드백으로 아웃라인으로 다운그레이드했다(design-system.md §4.2). 배경을
+          // 완전 투명으로 두니 secondary(중립 아웃라인)와 무게감이 구분되지 않아
+          // 밋밋해 보였다 — AppTag/StatusBadge가 이미 쓰는 "자기 색 12%/20% 틴트"
+          // 패턴을 그대로 재사용해 옅은 무게만 더한다.
+          bgColor = colors.danger.withValues(alpha: isDark ? .20 : .12);
           textColor = colors.danger;
           borderSide = BorderSide(color: colors.danger);
           break;
