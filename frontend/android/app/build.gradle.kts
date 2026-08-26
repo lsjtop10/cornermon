@@ -16,7 +16,8 @@ plugins {
 
 android {
     namespace = "com.cornermon.cornermon"
-    compileSdk = flutter.compileSdkVersion
+    // flutter_secure_storage 11.x가 SDK 37 컴파일을 요구 (#259) — Flutter 기본값(36)보다 명시적으로 높여야 함
+    compileSdk = 37
     ndkVersion = flutter.ndkVersion
 
     flavorDimensions.add("app")
