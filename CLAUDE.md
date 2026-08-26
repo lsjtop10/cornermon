@@ -50,7 +50,7 @@ developer guide.
   facilitator clients clear local credentials without a REST refresh, and recover missed
   termination through `GET /device-registrations/me`.
 - **API Change Protocol**: per `workflow/Collaborate.md`, frontend opens a PR first, then
-  backend implements and **must update `api/openapi.yaml`** before merging.
+  backend implements and **must update `api/swagger.yaml`** before merging.
 
 ---
 
@@ -69,9 +69,6 @@ developer guide.
 Naming in code must map 1:1 to these ubiquitous language terms (`workflow/implement.md`).
 
 ---
-## scope of work
-
-사용자가 명시하지 않는 이상 백엔드 작업은 백엔드 폴더만 프론트엔드 작업은 프론트엔드 폴더만 수정합니다.
 
 ## 보고 필수
 
