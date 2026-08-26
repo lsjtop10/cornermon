@@ -14,8 +14,6 @@ Future<Uint8List> buildBadgeStickerPdf(
   double qrSizeMm = 35,
 }) async {
   final qrSize = qrSizeMm * PdfPageFormat.mm;
-  final cellWidth = qrSize + _cellPadding;
-  final cellHeight = qrSize + _cellPadding + _textBlockHeight;
   final crossAxisCount = gridColumnsFor(pageFormat, qrSize);
   final document = pw.Document();
   document.addPage(
@@ -24,7 +22,7 @@ Future<Uint8List> buildBadgeStickerPdf(
       build: (_) => [
         pw.GridView(
           crossAxisCount: crossAxisCount,
-          childAspectRatio: cellWidth / cellHeight,
+          childAspectRatio: gridChildAspectRatioFor(qrSize),
           children: [
             for (final badge in badges)
               pw.Container(
@@ -74,3 +72,15 @@ int gridColumnsFor(PdfPageFormat pageFormat, double qrSize) =>
       1,
       20,
     );
+
+/// [qrSize](pt)짜리 QR + 아래 텍스트가 들어갈 셀의 childAspectRatio를 계산한다.
+///
+/// 주의: `pw.GridView`의 childAspectRatio는 width/height가 아니라
+/// `childMainAxis(높이) = childCrossAxis(너비) * childAspectRatio` 식으로 쓰인다
+/// (Flutter의 SliverGridDelegate와 반대 방향). height/width를 넣어야 하며,
+/// 반대로 넣으면 셀 높이가 실제보다 작게 잡혀 QR+텍스트가 셀 밖으로 넘친다.
+double gridChildAspectRatioFor(double qrSize) {
+  final cellWidth = qrSize + _cellPadding;
+  final cellHeight = qrSize + _cellPadding + _textBlockHeight;
+  return cellHeight / cellWidth;
+}
