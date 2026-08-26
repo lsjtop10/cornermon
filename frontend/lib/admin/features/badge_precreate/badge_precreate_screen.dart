@@ -4,7 +4,9 @@ import 'package:cornermon/admin/session/selected_camp_provider.dart';
 import 'package:cornermon/shared/api/domain_aliases.dart' as api;
 import 'package:cornermon/shared/api/providers/badge_providers.dart';
 import 'package:cornermon/shared/api/providers/group_providers.dart';
+import 'package:cornermon/shared/design_system/tokens/colors.dart';
 import 'package:cornermon/shared/design_system/tokens/spacing.dart';
+import 'package:cornermon/shared/design_system/tokens/typography.dart';
 import 'package:cornermon/shared/design_system/widgets/app_button.dart';
 import 'package:cornermon/shared/design_system/widgets/app_dropdown.dart';
 import 'package:cornermon/shared/design_system/widgets/empty_state.dart';
@@ -163,9 +165,15 @@ class _BadgePrecreateScreenState extends ConsumerState<BadgePrecreateScreen> {
       context: context,
       builder: (dialogContext) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
-          title: const Text('스티커 내보내기'),
-          content: SingleChildScrollView(
-            child: _buildExportSettings(setDialogState),
+          title: Text(
+            '스티커 내보내기',
+            style: AppTypography.bodyEmphasis.copyWith(fontSize: 18),
+          ),
+          content: SizedBox(
+            width: 320,
+            child: SingleChildScrollView(
+              child: _buildExportSettings(setDialogState),
+            ),
           ),
           actions: [
             TextButton(
@@ -187,116 +195,132 @@ class _BadgePrecreateScreenState extends ConsumerState<BadgePrecreateScreen> {
 
   /// 용지·QR 크기 설정 — 라벨 프린터 등 비표준 크기에 대응하기 위한 옵션(#249).
   /// [_format]에 따라 PDF(용지+QR mm) / 이미지(QR 해상도px) 중 필요한 컨트롤만 보여준다.
-  Widget _buildExportSettings(StateSetter setState) => Wrap(
-    spacing: AppSpacing.space3,
-    runSpacing: AppSpacing.space2,
-    crossAxisAlignment: WrapCrossAlignment.center,
+  /// 각 드롭다운은 무엇을 고르는 값인지 알 수 있도록 레이블을 위에 붙인 폼 형태로 배치한다.
+  Widget _buildExportSettings(StateSetter setState) => Column(
+    mainAxisSize: MainAxisSize.min,
+    crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
-      AppDropdown<BadgeExportFormat>(
-        value: _format,
-        items: const [
-          DropdownMenuItem(
-            value: BadgeExportFormat.pdfSheet,
-            child: Text('PDF 시트'),
-          ),
-          DropdownMenuItem(
-            value: BadgeExportFormat.images,
-            child: Text('개별 이미지'),
-          ),
-        ],
-        onChanged: (value) => setState(() => _format = value!),
-      ),
-      if (_format == BadgeExportFormat.pdfSheet) ...[
-        AppDropdown<PaperSizePreset>(
-          value: _paperPreset,
+      _LabeledField(
+        label: '형식',
+        child: AppDropdown<BadgeExportFormat>(
+          value: _format,
           items: const [
-            DropdownMenuItem(value: PaperSizePreset.a4, child: Text('A4')),
             DropdownMenuItem(
-              value: PaperSizePreset.letter,
-              child: Text('Letter'),
+              value: BadgeExportFormat.pdfSheet,
+              child: Text('PDF 시트'),
             ),
             DropdownMenuItem(
-              value: PaperSizePreset.custom,
-              child: Text('커스텀(mm)'),
+              value: BadgeExportFormat.images,
+              child: Text('개별 이미지'),
             ),
           ],
-          onChanged: (value) => setState(() => _paperPreset = value!),
+          onChanged: (value) => setState(() => _format = value!),
+        ),
+      ),
+      const SizedBox(height: AppSpacing.space3),
+      if (_format == BadgeExportFormat.pdfSheet) ...[
+        _LabeledField(
+          label: '용지',
+          child: AppDropdown<PaperSizePreset>(
+            value: _paperPreset,
+            items: const [
+              DropdownMenuItem(value: PaperSizePreset.a4, child: Text('A4')),
+              DropdownMenuItem(
+                value: PaperSizePreset.letter,
+                child: Text('Letter'),
+              ),
+              DropdownMenuItem(
+                value: PaperSizePreset.custom,
+                child: Text('커스텀(mm)'),
+              ),
+            ],
+            onChanged: (value) => setState(() => _paperPreset = value!),
+          ),
         ),
         if (_paperPreset == PaperSizePreset.custom) ...[
-          SizedBox(
-            width: 90,
-            child: TextField(
-              controller: _customWidthMm,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(labelText: '가로mm'),
-            ),
-          ),
-          SizedBox(
-            width: 90,
-            child: TextField(
-              controller: _customHeightMm,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(labelText: '세로mm'),
-            ),
+          const SizedBox(height: AppSpacing.space3),
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _customWidthMm,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(labelText: '가로mm'),
+                ),
+              ),
+              const SizedBox(width: AppSpacing.space3),
+              Expanded(
+                child: TextField(
+                  controller: _customHeightMm,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(labelText: '세로mm'),
+                ),
+              ),
+            ],
           ),
         ],
-        AppDropdown<QrSizeMmPreset?>(
-          value: _qrSizeMmPreset,
-          items: const [
-            DropdownMenuItem(
-              value: QrSizeMmPreset.small,
-              child: Text('QR 작게(25mm)'),
-            ),
-            DropdownMenuItem(
-              value: QrSizeMmPreset.medium,
-              child: Text('QR 보통(35mm)'),
-            ),
-            DropdownMenuItem(
-              value: QrSizeMmPreset.large,
-              child: Text('QR 크게(45mm)'),
-            ),
-            DropdownMenuItem(value: null, child: Text('QR 커스텀(mm)')),
-          ],
-          onChanged: (value) => setState(() => _qrSizeMmPreset = value),
-        ),
-        if (_qrSizeMmPreset == null)
-          SizedBox(
-            width: 90,
-            child: TextField(
-              controller: _customQrSizeMm,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(labelText: 'QR mm'),
-            ),
+        const SizedBox(height: AppSpacing.space3),
+        _LabeledField(
+          label: 'QR 크기',
+          child: AppDropdown<QrSizeMmPreset?>(
+            value: _qrSizeMmPreset,
+            items: const [
+              DropdownMenuItem(
+                value: QrSizeMmPreset.small,
+                child: Text('QR 작게(25mm)'),
+              ),
+              DropdownMenuItem(
+                value: QrSizeMmPreset.medium,
+                child: Text('QR 보통(35mm)'),
+              ),
+              DropdownMenuItem(
+                value: QrSizeMmPreset.large,
+                child: Text('QR 크게(45mm)'),
+              ),
+              DropdownMenuItem(value: null, child: Text('QR 커스텀(mm)')),
+            ],
+            onChanged: (value) => setState(() => _qrSizeMmPreset = value),
           ),
+        ),
+        if (_qrSizeMmPreset == null) ...[
+          const SizedBox(height: AppSpacing.space3),
+          TextField(
+            controller: _customQrSizeMm,
+            keyboardType: TextInputType.number,
+            decoration: const InputDecoration(labelText: 'QR mm'),
+          ),
+        ],
       ] else ...[
-        AppDropdown<QrResolutionPreset?>(
-          value: _qrResolutionPreset,
-          items: const [
-            DropdownMenuItem(
-              value: QrResolutionPreset.small,
-              child: Text('해상도 작게(256px)'),
-            ),
-            DropdownMenuItem(
-              value: QrResolutionPreset.medium,
-              child: Text('해상도 보통(512px)'),
-            ),
-            DropdownMenuItem(
-              value: QrResolutionPreset.large,
-              child: Text('해상도 크게(1024px)'),
-            ),
-            DropdownMenuItem(value: null, child: Text('해상도 커스텀(px)')),
-          ],
-          onChanged: (value) => setState(() => _qrResolutionPreset = value),
-        ),
-        if (_qrResolutionPreset == null)
-          SizedBox(
-            width: 90,
-            child: TextField(
-              controller: _customQrResolutionPx,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(labelText: '해상도px'),
-            ),
+        _LabeledField(
+          label: '해상도',
+          child: AppDropdown<QrResolutionPreset?>(
+            value: _qrResolutionPreset,
+            items: const [
+              DropdownMenuItem(
+                value: QrResolutionPreset.small,
+                child: Text('해상도 작게(256px)'),
+              ),
+              DropdownMenuItem(
+                value: QrResolutionPreset.medium,
+                child: Text('해상도 보통(512px)'),
+              ),
+              DropdownMenuItem(
+                value: QrResolutionPreset.large,
+                child: Text('해상도 크게(1024px)'),
+              ),
+              DropdownMenuItem(value: null, child: Text('해상도 커스텀(px)')),
+            ],
+            onChanged: (value) => setState(() => _qrResolutionPreset = value),
           ),
+        ),
+        if (_qrResolutionPreset == null) ...[
+          const SizedBox(height: AppSpacing.space3),
+          TextField(
+            controller: _customQrResolutionPx,
+            keyboardType: TextInputType.number,
+            decoration: const InputDecoration(labelText: '해상도px'),
+          ),
+        ],
       ],
     ],
   );
@@ -437,6 +461,29 @@ class BadgeTable extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// 드롭다운이 무엇을 고르는 값인지 알 수 있게 레이블을 위에 붙이는 폼 필드.
+class _LabeledField extends StatelessWidget {
+  const _LabeledField({required this.label, required this.child});
+
+  final String label;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colors = isDark ? AppColors.dark : AppColors.light;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: AppTypography.label.copyWith(color: colors.textSecondary)),
+        const SizedBox(height: AppSpacing.space1),
+        child,
+      ],
     );
   }
 }
