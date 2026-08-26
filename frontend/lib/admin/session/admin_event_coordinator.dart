@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import 'package:cornermon/shared/api/domain_aliases.dart';
@@ -74,9 +76,32 @@ class AdminEventCoordinator extends _$AdminEventCoordinator {
         ref.invalidate(selectedCampProvider);
         break;
       case SseEventEventEnum.messagesChanged:
-        ref.invalidate(broadcastMessageListProvider(campId));
-        ref.invalidate(trackMessageListProvider);
-        ref.read(noticeFeedbackProvider).notify();
+        {
+          // 발신자 구분 없는 이벤트라, 관리자 본인이 보낸 공지/DM의 반향으로 자기 알림음이
+          // 울리던 문제(#256)가 있었다. scope로 재조회 대상을 좁히고, REST 응답의
+          // senderRole로 상대(TRACK) 발신 여부를 걸러낸 뒤에만 notify한다.
+          final scope = event.scope;
+          if (scope?.kind == SseScopeKind.camp) {
+            ref.invalidate(broadcastMessageListProvider(campId));
+            unawaited(
+              _notifyIfFromTrack(
+                ref.read(broadcastMessageListProvider(campId).future),
+              ),
+            );
+          } else if (scope?.kind == SseScopeKind.track && scope?.trackId != null) {
+            final trackId = TrackId(scope!.trackId!);
+            // 열린 스레드(background: true, ChatThreadPane)와 목록 미리보기
+            // (background: false, trackDirectSummariesProvider)는 서로 다른 family
+            // 인스턴스라 둘 다 무효화해야 한다.
+            ref.invalidate(trackMessageListProvider(trackId, background: true));
+            ref.invalidate(trackMessageListProvider(trackId, background: false));
+            unawaited(
+              _notifyIfFromTrack(
+                ref.read(trackMessageListProvider(trackId, background: true).future),
+              ),
+            );
+          }
+        }
         break;
       case SseEventEventEnum.trackDeleted:
         ref.invalidate(trackListProvider(campId));
@@ -103,6 +128,15 @@ class AdminEventCoordinator extends _$AdminEventCoordinator {
         break;
       default:
         break;
+    }
+  }
+
+  /// 방금 재조회한 목록의 최신 항목이 트랙(상대) 발신일 때만 알림음을 울린다.
+  /// [_handle]의 messagesChanged 분기 주석(#256) 참고.
+  Future<void> _notifyIfFromTrack(Future<List<Message>> messages) async {
+    final list = await messages;
+    if (list.isNotEmpty && list.last.senderRole == MessageSenderRoleEnum.TRACK) {
+      ref.read(noticeFeedbackProvider).notify();
     }
   }
 
