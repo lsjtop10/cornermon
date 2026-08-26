@@ -6,37 +6,39 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   test(
-    'ShouldPlayClickSoundNotAlertWhenNotified',
+    'ShouldInvokeNativeNoticeSoundChannelWhenNotified',
     () async {
       // arrange
-      // 이슈 #218: SystemSoundType.alert는 Android/iOS 임베더가 구현하지 않아
-      // 실기기에서 무음이었다(macOS/Linux 데스크톱에서만 소리가 남). 모바일에서
-      // 실제로 구현된 .click을 쓰는지 회귀 검증한다.
-      final calledMethods = <String>[];
-      final calledSoundTypes = <String>[];
-      TestDefaultBinaryMessengerBinding
-          .instance
-          .defaultBinaryMessenger
-          .setMockMethodCallHandler(SystemChannels.platform, (call) async {
-            calledMethods.add(call.method);
-            if (call.method == 'SystemSound.play') {
-              calledSoundTypes.add(call.arguments as String);
-            }
-            return null;
-          });
-      addTearDown(
-        () => TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-            .setMockMethodCallHandler(SystemChannels.platform, null),
-      );
+      // 이슈 #218 재수정: 소리는 `.click`(입력 피드백음과 구분 안 됨), 진동은
+      // `HapticFeedback.vibrate()`(실기기 진동 모드에서 안 올 때가 있음)를 각각
+      // 기각하고, 네이티브가 링거 모드를 보고 사운드/진동을 통째로 결정하는
+      // `cornermon/notice_sound` 채널 하나만 호출하는지 회귀 검증한다.
+      var noticeSoundInvoked = false;
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(
+            const MethodChannel('cornermon/notice_sound'),
+            (call) async {
+              if (call.method == 'playNoticeSound') {
+                noticeSoundInvoked = true;
+              }
+              return null;
+            },
+          );
+      addTearDown(() {
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+            .setMockMethodCallHandler(
+              const MethodChannel('cornermon/notice_sound'),
+              null,
+            );
+      });
       const feedback = SystemNoticeFeedback();
 
       // act
       feedback.notify();
+      await Future<void>.delayed(Duration.zero);
 
       // assert
-      expect(calledMethods, contains('HapticFeedback.vibrate'));
-      expect(calledSoundTypes, ['SystemSoundType.click']);
-      expect(calledSoundTypes, isNot(contains('SystemSoundType.alert')));
+      expect(noticeSoundInvoked, isTrue);
     },
   );
 }
