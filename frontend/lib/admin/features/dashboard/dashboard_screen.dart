@@ -682,12 +682,17 @@ class CornerStatusCard extends StatelessWidget {
                 secondaryColor: colors.statusLimited,
               ),
               _CornerCardStatRow(
+                // 편차가 두 자릿수 분(예: "-10:30")까지 커지면 "평균 M:SS (+M:SS)"
+                // 전체 길이가 좁은 카드 폭을 넘어 편차만 "...으로 잘려 보였다 —
+                // 잘라서 숨기면 정작 가장 중요한 병목 신호(편차)를 못 보게 되므로,
+                // 이 줄만 최대 2줄까지 줄바꿈을 허용한다.
                 primary: subtitle.duration,
                 secondary: subtitle.sampleCount,
                 color: entry.corner.isBottleneck ?? false
                     ? colors.statusAlert
                     : colors.textSecondary,
                 bold: true,
+                maxLines: 2,
               ),
               if (entry.inactive && onCreateTrack != null)
                 Align(
@@ -724,6 +729,7 @@ class _CornerCardStatRow extends StatelessWidget {
     required this.color,
     this.secondaryColor,
     this.bold = false,
+    this.maxLines = 1,
   });
 
   final String primary;
@@ -733,6 +739,10 @@ class _CornerCardStatRow extends StatelessWidget {
   // — 지정 안 하면 왼쪽과 같은 [color].
   final Color? secondaryColor;
   final bool bold;
+  // 평균 소요시간+편차처럼 값 자체가 늘어날 수 있는 라벨은 잘라서 숨기면 정작
+  // 가장 중요한 신호(편차)가 안 보이게 된다 — 그런 라벨만 2로 올려 줄바꿈을
+  // 허용한다. 기본값 1은 "각 라벨은 항상 짧다"는 원래 가정을 지킨다.
+  final int maxLines;
 
   @override
   Widget build(BuildContext context) {
@@ -741,11 +751,12 @@ class _CornerCardStatRow extends StatelessWidget {
       fontWeight: bold ? FontWeight.w700 : null,
     );
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Expanded(
           child: Text(
             primary,
-            maxLines: 1,
+            maxLines: maxLines,
             overflow: TextOverflow.ellipsis,
             style: style,
           ),
@@ -758,10 +769,11 @@ class _CornerCardStatRow extends StatelessWidget {
 }
 
 // 카드 헤더 행의 삭제 아이콘 버튼이 컴팩트 컨트롤 표준(AppDimensions.iconButtonCompact,
-// 44pt)만큼 높이를 차지하므로 220pt 기준값 + 그 여유분(22pt)을 더한다 — 실제 카드
-// (CornerStatusCard)·로딩 스켈레톤(_CornerGridSkeleton)이 반드시 같은 값을 쓰도록
-// 한 곳에 둔다.
-const double _cornerCardExtent = 242;
+// 44pt)만큼 높이를 차지하므로 220pt 기준값 + 그 여유분(22pt)을 더하고, 평균
+// 소요시간(편차) 줄이 최대 2줄까지 줄바꿈되는 만큼(caption line height ≈ 21pt)
+// 더 더한다 — 실제 카드(CornerStatusCard)·로딩 스켈레톤(_CornerGridSkeleton)이
+// 반드시 같은 값을 쓰도록 한 곳에 둔다.
+const double _cornerCardExtent = 264;
 
 class _CornerGridSkeleton extends StatelessWidget {
   const _CornerGridSkeleton();
