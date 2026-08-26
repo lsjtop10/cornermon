@@ -22,14 +22,14 @@
 
 ## 1. 컬러 시스템
 
-### 1.1 브랜드/뉴트럴 팔레트 (플레이스홀더 — 실제 캠프 브랜드 확정 시 교체)
+### 1.1 브랜드/뉴트럴 팔레트
 
 | 토큰 | Light | Dark | 용도 |
 |---|---|---|---|
 | `--color-bg-canvas` | `#F5F6F8` | `#0F1115` | 화면 최하단 배경 |
-| `--color-bg-surface` | `#FFFFFF` | `#1A1D23` | 카드/패널 |
-| `--color-bg-surface-raised` | `#FFFFFF` | `#22262E` | 모달/팝오버 |
-| `--color-border` | `#E2E5EA` | `#2E333D` | 구분선, 카드 테두리 |
+| `--color-bg-surface` | `#FFFFFF` | `#1E222B` | 카드/패널 |
+| `--color-bg-surface-raised` | `#FFFFFF` | `#272C36` | 모달/팝오버 |
+| `--color-border` | `#E2E5EA` | `#3A404C` | 구분선, 카드 테두리 |
 | `--color-text-primary` | `#14171C` | `#F2F3F5` | 본문/제목 |
 | `--color-text-secondary` | `#5B6370` | `#9AA2AF` | 보조 텍스트, 캡션 |
 | `--color-text-disabled` | `#A6ADB8` | `#5C636E` | 비활성 텍스트 |
@@ -42,10 +42,10 @@
 
 | 상태 | 토큰 | Light | Dark | 아이콘 | 의미 |
 |---|---|---|---|---|---|
-| 유휴 (IDLE) | `--color-status-normal` | `#23262B` | `#9BA1AB` | ○ 빈 원 | 트랙 있음, 처리 중인 조 없음 — 정상, 여유. 항공 계열 시멘틱의 "정상=그레이" 원칙을 따른다 |
+| 유휴 (IDLE) | `--color-status-normal` | `#23262B` | `#A3A9B2` | ○ 빈 원 | 트랙 있음, 처리 중인 조 없음 — 정상, 여유. 항공 계열 시멘틱의 "정상=그레이" 원칙을 따른다 |
 | 진행중 (BUSY) | `--color-status-active` | `#0E7B3D` | `#3DD68C` | ● 채운 원 | 트랙 있음, 조 처리 중 — 동작 중 |
-| 병목/지연 (DEVIATION+) | `--color-status-alert` | `#C72C2C` | `#F27C7C` | ▲ 삼각형 | 목표시간편차 지속 양수 — 개입 필요(구체적 판정 기준은 §domain-model.md 2.6-e) |
-| 미가동 (NO_TRACK) | `--color-status-inactive` | `#616C7F` | `#BABDC5` | ✕ 빗금 | ACTIVE 트랙 0개 — 서비스 불가 상태 |
+| 병목/지연 (DEVIATION+) | `--color-status-alert` | `#C72C2C` | `#F38787` | ▲ 삼각형 | 목표시간편차 지속 양수 — 개입 필요(구체적 판정 기준은 §domain-model.md 2.6-e) |
+| 미가동 (NO_TRACK) | `--color-status-inactive` | `#616C7F` | `#C3C6CD` | ✕ 빗금 | ACTIVE 트랙 0개 — 서비스 불가 상태 |
 
 - **BUSY와 ALERT를 혼동하지 말 것**: BUSY는 정상 가동을, ALERT(병목)는 그 가동이 "너무 오래" 지속되는 것을 뜻한다.
 - **채도 규칙**: 텍스트가 실제로 놓이는 배경 기준 4.5:1(WCAG AA) 이상을 만족해야 한다 — 이 네 색은 전부 뱃지(§4.3, 자기 색의 12%/다크 20% 틴트를 배경으로 같은 색 텍스트를 얹는 패턴)로도 쓰이므로, 흰/검 배경 기준이 아니라 그 옅은 틴트 배경 기준으로 값을 골랐다(2026-08-26 재조정 — 틴트 배경 기준 대비를 실측해보니 statusInactive 2.73:1 등 기존 값 대부분이 미달이었다). 다크모드는 반대로 명도를 올려 어두운 틴트 배경에서도 대비가 죽지 않게 했다.
@@ -58,7 +58,7 @@
 |---|---|---|---|
 | `--color-success` | `#0E7B3D` | `#3DD68C` | 저장 성공, 승인 완료 (상태색 `--color-status-active`와 의도적으로 통일 — "동작 중"과 "성공적으로 완료됨"은 같은 긍정 개념) |
 | `--color-warning` | `#875F00` | `#F2C14E` | 확인 게이트(§삭제 가드②), 주의 필요. `ConnectionBanner`는 15%/25% 틴트로 조금 더 진하게 써서 라이트 값은 그 기준(4.5:1)까지 맞췄다 |
-| `--color-danger` | `#C72C2C` | `#F27C7C` | 하드 블록 에러, 삭제 액션 (상태색 `--color-status-alert`와 통일) |
+| `--color-danger` | `#C72C2C` | `#F38787` | 하드 블록 에러, 삭제 액션 (상태색 `--color-status-alert`와 통일) |
 | `--color-info` | `#2F6FED` | `#5B8DF6` | 공지, 안내성 메시지 (현재 미사용 — 뱃지 틴트 패턴 대비 재조정 대상에서 제외) |
 | `--color-status-ready` | `#06748E` | `#22D3EE` | 캠프 PENDING(준비완료) 배지 전용 — "준비완료"라는 별도 상태 축 |
 | `--color-status-limited` | `#A21CAF` | `#E879F9` | 관리자가 정한, 진행자가 못 바꾸는 제약값(목표시간) 표시 |

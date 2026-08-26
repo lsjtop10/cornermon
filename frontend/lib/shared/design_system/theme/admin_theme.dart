@@ -104,6 +104,12 @@ class AdminTheme {
       ),
       cardTheme: CardThemeData(
         color: colors.bgSurface,
+        // 다크 배경 위 그림자는 잘 안 보여서(§design-system.md 6), 라이트만
+        // box-shadow(elevation)를 쓰고 다크는 배경 명도 단계(bgCanvas →
+        // bgSurface)로 입체감을 대신한다 — 의도적 결정이라 유지. 다만 그
+        // 단계 자체가 거의 안 갈리는 값이었던 게 "플랫해 보인다"는 진짜
+        // 원인이었다 — 여기가 아니라 colors.dart의 dark 팔레트 쪽에서
+        // 단차를 넓혀 고쳤다.
         elevation: colors == AppColors.light ? 1 : 0,
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
