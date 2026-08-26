@@ -272,7 +272,22 @@ void main() {
       // assert — #241 후속: 두 정보를 " · "로 이어붙인 문자열 하나가 아니라
       // 서로 다른 라벨로 분리돼야 한다(라벨을 왜 한 줄에 다 넣냐는 지적).
       expect(subtitle.duration, '평균 10:40');
+      expect(subtitle.deviation, isNull);
       expect(subtitle.sampleCount, '최근 10건');
+    });
+
+    test('ShoudReturnDeviationAsSeparateFieldWhenRankingExists', () {
+      // arrange / act — 편차를 duration 문자열에 이어붙이지 않아야 두 자릿수
+      // 분(예: -10:30)에서도 카드 폭을 넘어 잘리지 않고 각자 한 줄에 그려진다.
+      final subtitle = formatCornerCardSubtitle(
+        avgDurationSeconds: 640,
+        sampleCount: 10,
+        avgDeviationSeconds: -630,
+      );
+
+      // assert
+      expect(subtitle.duration, '평균 10:40');
+      expect(subtitle.deviation, '-10:30');
     });
   });
 

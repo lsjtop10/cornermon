@@ -77,23 +77,25 @@ List<CornerDashboardEntry> sortEntries(
   return result;
 }
 
-/// 코너 카드 하단의 평균/최근 정보 — 예전엔 " · "로 한 문자열에 이어붙여서, 좁은
-/// 카드 폭에서 그 문자열 전체가 줄바꿈되거나 말줄임표로 잘렸다(#241 후속:
-/// "라벨을 왜 한 줄에 다 이어붙이냐"는 지적). 두 정보는 서로 다른 사실이니
-/// 애초에 별개 라벨로 돌려줘서 호출부가 각자 한 줄씩 그리게 한다 — 각 라벨
-/// 자체는 항상 짧아서 줄바꿈이 필요 없다.
-({String duration, String sampleCount}) formatCornerCardSubtitle({
+/// 코너 카드 하단의 평균/편차/최근 정보 — 예전엔 " · "로 한 문자열에 이어붙여서,
+/// 좁은 카드 폭에서 그 문자열 전체가 줄바꿈되거나 말줄임표로 잘렸다(#241 후속:
+/// "라벨을 왜 한 줄에 다 이어붙이냐"는 지적). 이후 평균/편차를 한 문자열로
+/// 합쳐 돌려줬다가, 편차가 두 자릿수 분으로 커지면 그 문자열 자체가 다시
+/// 좁은 카드 폭을 넘어 말줄임표로 잘렸다 — 자동 줄바꿈에 맡기는 대신 편차를
+/// 아예 별도 필드로 분리해 호출부가 처음부터 자기 줄에 그리게 한다.
+({String duration, String? deviation, String sampleCount})
+formatCornerCardSubtitle({
   required int avgDurationSeconds,
   required int sampleCount,
   num? avgDeviationSeconds,
 }) {
   String duration(num seconds) =>
       '${seconds ~/ 60}:${(seconds % 60).round().toString().padLeft(2, '0')}';
-  final deviation = avgDeviationSeconds == null
-      ? ''
-      : ' (${avgDeviationSeconds >= 0 ? '+' : '-'}${duration(avgDeviationSeconds.abs())})';
   return (
-    duration: '평균 ${duration(avgDurationSeconds)}$deviation',
+    duration: '평균 ${duration(avgDurationSeconds)}',
+    deviation: avgDeviationSeconds == null
+        ? null
+        : '${avgDeviationSeconds >= 0 ? '+' : '-'}${duration(avgDeviationSeconds.abs())}',
     sampleCount: '최근 $sampleCount건',
   );
 }
