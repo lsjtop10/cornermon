@@ -11,15 +11,16 @@ class AppColors {
     required this.textDisabled,
     required this.brandPrimary,
     required this.brandPrimaryPressed,
-    required this.statusIdle,
-    required this.statusBusy,
+    required this.statusNormal,
+    required this.statusActive,
     required this.statusAlert,
     required this.statusInactive,
-    required this.quiet,
     required this.success,
     required this.warning,
     required this.danger,
     required this.info,
+    required this.statusReady,
+    required this.statusLimited,
   });
 
   final Color bgCanvas;
@@ -31,15 +32,16 @@ class AppColors {
   final Color textDisabled;
   final Color brandPrimary;
   final Color brandPrimaryPressed;
-  final Color statusIdle;
-  final Color statusBusy;
+  final Color statusNormal;
+  final Color statusActive;
   final Color statusAlert;
   final Color statusInactive;
-  final Color quiet;
   final Color success;
   final Color warning;
   final Color danger;
   final Color info;
+  final Color statusReady;
+  final Color statusLimited;
 
   static const light = AppColors(
     bgCanvas: Color(0xFFF5F6F8),
@@ -51,15 +53,16 @@ class AppColors {
     textDisabled: Color(0xFFA6ADB8),
     brandPrimary: Color(0xFF2F6FED),
     brandPrimaryPressed: Color(0xFF1F53C2),
-    statusIdle: Color(0xFF12A150),
-    statusBusy: Color(0xFFE5A100),
+    statusNormal: Color(0xFF23262B),
+    statusActive: Color(0xFF12A150),
     statusAlert: Color(0xFFD64545),
     statusInactive: Color(0xFF8A94A6),
-    quiet: Color(0xFF23262B),
     success: Color(0xFF12A150),
     warning: Color(0xFFE5A100),
     danger: Color(0xFFD64545),
     info: Color(0xFF2F6FED),
+    statusReady: Color(0xFF0891B2),
+    statusLimited: Color(0xFFA21CAF),
   );
 
   static const dark = AppColors(
@@ -72,14 +75,15 @@ class AppColors {
     textDisabled: Color(0xFF5C636E),
     brandPrimary: Color(0xFF5B8DF6),
     brandPrimaryPressed: Color(0xFF84A7F8),
-    statusIdle: Color(0xFF3DD68C),
-    statusBusy: Color(0xFFF2C14E),
+    statusNormal: Color(0xFF7A8290),
+    statusActive: Color(0xFF3DD68C),
     statusAlert: Color(0xFFF17070),
     statusInactive: Color(0xFF6B7280),
-    quiet: Color(0xFF7A8290),
     success: Color(0xFF3DD68C),
     warning: Color(0xFFF2C14E),
     danger: Color(0xFFF17070),
     info: Color(0xFF5B8DF6),
+    statusReady: Color(0xFF22D3EE),
+    statusLimited: Color(0xFFE879F9),
   );
 }

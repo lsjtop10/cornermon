@@ -13,12 +13,12 @@ import 'package:cornermon/shared/design_system/tokens/spacing.dart';
   AppColors colors,
 ) => switch (status) {
   api.CornerOperationalStatus.BUSY => (
-    color: colors.statusIdle,
+    color: colors.statusActive,
     icon: '●',
     label: '정상',
   ),
   api.CornerOperationalStatus.IDLE => (
-    color: colors.quiet,
+    color: colors.statusNormal,
     icon: '○',
     label: '유휴',
   ),

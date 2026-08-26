@@ -25,12 +25,12 @@ class StatusBadge extends StatelessWidget {
 
     switch (status) {
       case TrackVisualStatus.idle:
-        statusColor = colors.statusIdle;
+        statusColor = colors.statusNormal;
         symbol = '○';
         defaultLabel = '유휴';
         break;
       case TrackVisualStatus.busy:
-        statusColor = colors.statusBusy;
+        statusColor = colors.statusActive;
         symbol = '●';
         defaultLabel = '진행중';
         break;

@@ -3,7 +3,7 @@ import 'package:material_ui/material_ui.dart';
 import '../tokens/colors.dart';
 import '../tokens/typography.dart';
 
-enum AppTagTone { neutral, success, warning }
+enum AppTagTone { neutral, success, warning, ready }
 
 class AppTag extends StatelessWidget {
   const AppTag({
@@ -23,6 +23,7 @@ class AppTag extends StatelessWidget {
       AppTagTone.neutral => colors.textSecondary,
       AppTagTone.success => colors.success,
       AppTagTone.warning => colors.warning,
+      AppTagTone.ready => colors.statusReady,
     };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),

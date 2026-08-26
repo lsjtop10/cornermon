@@ -344,7 +344,8 @@ void main() {
             return false;
           }
           final border = (widget.decoration! as BoxDecoration).border;
-          return border is Border && border.left.color == AppColors.light.quiet;
+          return border is Border &&
+              border.left.color == AppColors.light.statusNormal;
         }),
         findsOneWidget,
       );
