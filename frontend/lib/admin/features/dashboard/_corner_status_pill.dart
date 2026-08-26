@@ -22,7 +22,7 @@ import 'package:cornermon/shared/design_system/tokens/spacing.dart';
     icon: '○',
     label: '유휴',
   ),
-  _ => (color: colors.statusInactive, icon: '✕', label: '미가동'),
+  _ => (color: colors.statusAlert, icon: '✕', label: '미가동'),
 };
 
 /// §design-system.md 4.3의 캡슐형 상태 뱃지 — 배경은 상태색 12%(다크 20%) 틴트,
