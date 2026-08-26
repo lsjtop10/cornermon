@@ -771,12 +771,13 @@ class _CornerCardStatRow extends StatelessWidget {
   }
 }
 
-// 카드 헤더 행의 삭제 아이콘 버튼이 컴팩트 컨트롤 표준(AppDimensions.iconButtonCompact,
-// 44pt)만큼 높이를 차지하므로 220pt 기준값 + 그 여유분(22pt)을 더하고, 편차가
-// 있을 때 자기 줄을 하나 더 차지하는 만큼(caption line height ≈ 21pt) 더
-// 더한다 — 실제 카드(CornerStatusCard)·로딩 스켈레톤(_CornerGridSkeleton)이
-// 반드시 같은 값을 쓰도록 한 곳에 둔다.
-const double _cornerCardExtent = 264;
+// 어림값(예: "220pt 기준값 + 여유분")을 계속 더해나가다 실제 필요한 높이보다
+// 훨씬 커져서 카드 하단에 빈 공간이 크게 남았다(사용자 리포트) — 대신
+// CornerStatusCard를 고정 높이 없이 렌더링해 tester.getSize()로 실측했다
+// (편차 있음/미가동+트랙생성 버튼/편차+트랙생성 버튼 동시 조합 중 최댓값
+// 203pt). 실측값에 작은 여유(≈5pt)만 더한다 — 실제 카드(CornerStatusCard)·
+// 로딩 스켈레톤(_CornerGridSkeleton)이 반드시 같은 값을 쓰도록 한 곳에 둔다.
+const double _cornerCardExtent = 208;
 
 class _CornerGridSkeleton extends StatelessWidget {
   const _CornerGridSkeleton();
