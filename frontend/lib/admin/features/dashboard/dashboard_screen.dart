@@ -14,6 +14,7 @@ import 'package:cornermon/shared/api/ids.dart';
 import 'package:cornermon/shared/api/providers/corner_track_providers.dart'
     hide deleteCorner;
 import 'package:cornermon/shared/api/providers/report_providers.dart';
+import 'package:cornermon/shared/util/duration_format.dart';
 import 'package:cornermon/shared/design_system/tokens/colors.dart';
 import 'package:cornermon/shared/design_system/tokens/dimensions.dart';
 import 'package:cornermon/shared/design_system/tokens/spacing.dart';
@@ -678,16 +679,21 @@ class CornerStatusCard extends StatelessWidget {
               _CornerCardStatRow(
                 // "N트랙 중 M 진행중"보다 group_detail_screen.dart의 진행률
                 // 표기(§design-system.md 진행률 "완료/전체")와 같은 "M/N" 축약이
-                // 더 간결하다.
+                // 더 간결하다. 오른쪽은 같은 줄의 "진행중"과 짝이 되는 표본
+                // 개수(최근 N건) — 목표시간은 아래 "평균"과 같은 소요시간
+                // 축이라 그 줄로 옮겼다.
                 primary: '진행중 $busyTrackCount/${tracks.length}트랙',
-                secondary: '목표 ${entry.corner.targetMinutes ?? 0}분',
+                secondary: subtitle.sampleCount,
                 color: colors.textSecondary,
-                secondaryColor: colors.statusLimited,
               ),
               _CornerCardStatRow(
                 primary: subtitle.duration,
-                secondary: subtitle.sampleCount,
+                // "평균"과 같은 소요시간 축이라 목표시간도 분이 아니라 같은
+                // mm:ss 포맷으로 맞춘다(§formatMmSs, 리포트 화면과 동일 포맷).
+                secondary:
+                    '목표: ${formatMmSs((entry.corner.targetMinutes ?? 0) * 60)}',
                 color: durationColor,
+                secondaryColor: colors.statusLimited,
                 bold: true,
               ),
               // 편차가 두 자릿수 분(예: "-10:30")까지 커지면 평균과 한 줄에
