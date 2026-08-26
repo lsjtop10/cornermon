@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:cornermon/shared/api/ids.dart';
 import 'package:cornermon/shared/api/providers/message_providers.dart';
+import 'package:cornermon/shared/design_system/tokens/colors.dart';
 import 'package:cornermon/shared/design_system/tokens/spacing.dart';
 import 'package:cornermon/shared/design_system/widgets/app_button.dart';
 
@@ -46,6 +47,9 @@ class _NewBroadcastModalState extends ConsumerState<NewBroadcastModal> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).brightness == Brightness.dark
+        ? AppColors.dark
+        : AppColors.light;
     return AlertDialog(
       title: const Text('새 공지 작성'),
       content: SizedBox(
@@ -61,7 +65,13 @@ class _NewBroadcastModalState extends ConsumerState<NewBroadcastModal> {
             ),
             if (_errorText != null) ...[
               const SizedBox(height: AppSpacing.space2),
-              Text(_errorText!, style: const TextStyle(color: Colors.red)),
+              // 다이얼로그가 이미 열린 상태에서 나타나는 동적 오류라 다이얼로그
+              // 오픈 시점의 announcement로는 스크린리더가 다시 읽어주지 않는다 —
+              // end_camp/start_camp 확인 다이얼로그와 같은 이유로 liveRegion 명시.
+              Semantics(
+                liveRegion: true,
+                child: Text(_errorText!, style: TextStyle(color: colors.danger)),
+              ),
             ],
           ],
         ),

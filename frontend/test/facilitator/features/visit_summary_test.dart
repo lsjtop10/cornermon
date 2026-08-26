@@ -101,9 +101,9 @@ void main() {
     );
     await tester.pump();
 
-    // assert: 편차 0 -> statusIdle
+    // assert: 편차 0 -> success
     final zeroDeviationText = tester.widget<Text>(find.text('+00:00'));
-    expect(zeroDeviationText.style?.color, AppColors.light.statusIdle);
+    expect(zeroDeviationText.style?.color, AppColors.light.success);
     await _drainAutoDismissTimer(tester);
 
     // act: 편차 음수
@@ -118,9 +118,9 @@ void main() {
     );
     await tester.pump();
 
-    // assert: 편차 음수 -> statusIdle
+    // assert: 편차 음수 -> success
     final negativeDeviationText = tester.widget<Text>(find.text('-00:30'));
-    expect(negativeDeviationText.style?.color, AppColors.light.statusIdle);
+    expect(negativeDeviationText.style?.color, AppColors.light.success);
     await _drainAutoDismissTimer(tester);
   });
 

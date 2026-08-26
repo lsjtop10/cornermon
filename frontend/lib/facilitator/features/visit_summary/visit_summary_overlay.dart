@@ -84,7 +84,7 @@ class _VisitSummaryOverlayState extends ConsumerState<VisitSummaryOverlay> {
     final deviation = widget.visit.deviationSeconds ?? 0;
     final deviationColor = deviation > 0
         ? colors.statusAlert
-        : colors.statusIdle;
+        : colors.success;
 
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
@@ -115,7 +115,7 @@ class _VisitSummaryOverlayState extends ConsumerState<VisitSummaryOverlay> {
                     ),
                   ),
                 ),
-                Icon(Icons.check_circle, color: colors.statusIdle, size: 64.0),
+                Icon(Icons.check_circle, color: colors.success, size: 64.0),
                 const SizedBox(height: AppSpacing.space4),
                 groupAsync.when(
                   data: (group) => Text(

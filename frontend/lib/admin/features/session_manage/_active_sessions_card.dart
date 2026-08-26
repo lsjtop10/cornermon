@@ -105,7 +105,9 @@ class ActiveSessionsCard extends ConsumerWidget {
                               ),
                             ),
                             AppButton(
-                              variant: AppButtonVariant.destructive,
+                              // 강제 로그아웃은 다시 로그인하면 원상복구되는 되돌릴 수
+                              // 있는 액션이라 빨강(destructive)까지는 필요 없다.
+                              variant: AppButtonVariant.secondary,
                               size: AppButtonSize.compact,
                               label: '강제 로그아웃',
                               onPressed: () =>

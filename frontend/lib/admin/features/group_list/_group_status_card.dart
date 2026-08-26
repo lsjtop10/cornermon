@@ -36,8 +36,8 @@ class GroupStatusCard extends StatelessWidget {
                 AppTag(
                   label: group.isFinished == true ? '완주' : '진행 중',
                   tone: group.isFinished == true
-                      ? AppTagTone.success
-                      : AppTagTone.warning,
+                      ? AppTagTone.neutral
+                      : AppTagTone.success,
                 ),
               ],
             ),

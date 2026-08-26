@@ -14,6 +14,7 @@ import 'package:cornermon/shared/api/ids.dart';
 import 'package:cornermon/shared/api/providers/corner_track_providers.dart'
     hide deleteCorner;
 import 'package:cornermon/shared/api/providers/report_providers.dart';
+import 'package:cornermon/shared/util/duration_format.dart';
 import 'package:cornermon/shared/design_system/tokens/colors.dart';
 import 'package:cornermon/shared/design_system/tokens/dimensions.dart';
 import 'package:cornermon/shared/design_system/tokens/spacing.dart';
@@ -586,6 +587,9 @@ class CornerStatusCard extends StatelessWidget {
       sampleCount: metric?.sampleCount ?? 0,
       avgDeviationSeconds: entry.avgDeviationSeconds,
     );
+    final durationColor = entry.corner.isBottleneck ?? false
+        ? colors.statusAlert
+        : colors.textSecondary;
     return Card(
       clipBehavior: Clip.antiAlias,
       child: InkWell(
@@ -675,19 +679,40 @@ class CornerStatusCard extends StatelessWidget {
               _CornerCardStatRow(
                 // "N트랙 중 M 진행중"보다 group_detail_screen.dart의 진행률
                 // 표기(§design-system.md 진행률 "완료/전체")와 같은 "M/N" 축약이
-                // 더 간결하다.
+                // 더 간결하다. 오른쪽은 같은 줄의 "진행중"과 짝이 되는 표본
+                // 개수(최근 N건) — 목표시간은 아래 "평균"과 같은 소요시간
+                // 축이라 그 줄로 옮겼다.
                 primary: '진행중 $busyTrackCount/${tracks.length}트랙',
-                secondary: '목표 ${entry.corner.targetMinutes ?? 0}분',
+                secondary: subtitle.sampleCount,
                 color: colors.textSecondary,
               ),
               _CornerCardStatRow(
                 primary: subtitle.duration,
-                secondary: subtitle.sampleCount,
-                color: entry.corner.isBottleneck ?? false
-                    ? colors.statusAlert
-                    : colors.textSecondary,
+                // "평균"과 같은 소요시간 축이라 목표시간도 분이 아니라 같은
+                // mm:ss 포맷으로 맞춘다(§formatMmSs, 리포트 화면과 동일 포맷).
+                secondary:
+                    '목표: ${formatMmSs((entry.corner.targetMinutes ?? 0) * 60)}',
+                color: durationColor,
+                secondaryColor: colors.statusLimited,
                 bold: true,
               ),
+              // 편차가 두 자릿수 분(예: "-10:30")까지 커지면 평균과 한 줄에
+              // 이어붙인 문자열 전체가 좁은 카드 폭을 넘어 편차만 "..."으로
+              // 잘려 보였다 — 잘라서 숨기면 정작 가장 중요한 병목 신호(편차)를
+              // 못 보게 되므로, 자동 줄바꿈에 기대는 대신 처음부터 편차만
+              // 자기 줄에 그린다(formatCornerCardSubtitle이 별도 필드로 분리).
+              if (subtitle.deviation != null)
+                Text(
+                  // "평균"과 같은 2글자 한글 라벨(+공백)을 붙인다 — 한글은
+                  // 글자별 폭이 고르기 때문에(고정폭에 가까움) 라벨 폭이
+                  // 위 줄의 "평균 "과 거의 같아져, 값(M:SS)의 시작 위치가
+                  // 임의의 여백 없이도 자연스럽게 맞춰진다.
+                  '편차 ${subtitle.deviation!}',
+                  style: AppTypography.caption.copyWith(
+                    color: durationColor,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
               if (entry.inactive && onCreateTrack != null)
                 Align(
                   alignment: Alignment.centerRight,
@@ -721,12 +746,16 @@ class _CornerCardStatRow extends StatelessWidget {
     required this.primary,
     required this.secondary,
     required this.color,
+    this.secondaryColor,
     this.bold = false,
   });
 
   final String primary;
   final String secondary;
   final Color color;
+  // 목표시간(관리자가 정한 제약값)처럼 오른쪽 라벨만 다른 시멘틱을 가질 때만 지정한다
+  // — 지정 안 하면 왼쪽과 같은 [color].
+  final Color? secondaryColor;
   final bool bold;
 
   @override
@@ -746,17 +775,19 @@ class _CornerCardStatRow extends StatelessWidget {
           ),
         ),
         const SizedBox(width: AppSpacing.space2),
-        Text(secondary, style: style),
+        Text(secondary, style: style.copyWith(color: secondaryColor ?? color)),
       ],
     );
   }
 }
 
-// 카드 헤더 행의 삭제 아이콘 버튼이 컴팩트 컨트롤 표준(AppDimensions.iconButtonCompact,
-// 44pt)만큼 높이를 차지하므로 220pt 기준값 + 그 여유분(22pt)을 더한다 — 실제 카드
-// (CornerStatusCard)·로딩 스켈레톤(_CornerGridSkeleton)이 반드시 같은 값을 쓰도록
-// 한 곳에 둔다.
-const double _cornerCardExtent = 242;
+// 어림값(예: "220pt 기준값 + 여유분")을 계속 더해나가다 실제 필요한 높이보다
+// 훨씬 커져서 카드 하단에 빈 공간이 크게 남았다(사용자 리포트) — 대신
+// CornerStatusCard를 고정 높이 없이 렌더링해 tester.getSize()로 실측했다
+// (편차 있음/미가동+트랙생성 버튼/편차+트랙생성 버튼 동시 조합 중 최댓값
+// 203pt). 실측값에 작은 여유(≈5pt)만 더한다 — 실제 카드(CornerStatusCard)·
+// 로딩 스켈레톤(_CornerGridSkeleton)이 반드시 같은 값을 쓰도록 한 곳에 둔다.
+const double _cornerCardExtent = 208;
 
 class _CornerGridSkeleton extends StatelessWidget {
   const _CornerGridSkeleton();

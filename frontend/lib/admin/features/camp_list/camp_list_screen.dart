@@ -5,7 +5,9 @@ import 'package:cornermon/shared/api/dio_error.dart';
 import 'package:cornermon/shared/api/domain_aliases.dart' as api;
 import 'package:cornermon/shared/api/ids.dart';
 import 'package:cornermon/shared/api/providers/camp_providers.dart';
+import 'package:cornermon/shared/design_system/tokens/colors.dart';
 import 'package:cornermon/shared/design_system/tokens/spacing.dart';
+import 'package:cornermon/shared/design_system/tokens/typography.dart';
 import 'package:cornermon/shared/design_system/widgets/app_button.dart';
 import 'package:cornermon/shared/design_system/widgets/confirm_modal.dart';
 import 'package:cornermon/shared/design_system/widgets/empty_state.dart';
@@ -182,6 +184,9 @@ class CampCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colors = Theme.of(context).brightness == Brightness.dark
+        ? AppColors.dark
+        : AppColors.light;
     final statusText = camp.isActive
         ? '진행 중'
         : camp.isPending
@@ -219,17 +224,30 @@ class CampCard extends ConsumerWidget {
                   tone: camp.isActive
                       ? AppTagTone.success
                       : camp.isPending
-                      ? AppTagTone.warning
+                      ? AppTagTone.ready
                       : AppTagTone.neutral,
                 ),
                 const SizedBox(height: AppSpacing.space3),
                 Text(
                   camp.name ?? '이름 없는 캠프',
+                  // 관리자가 자유 입력하는 값이라 길이가 보장되지 않는다 — 다른
+                  // 카드(코너/조 카드)와 같은 관례로 1줄로 축약한다.
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
                 if (dates.isNotEmpty) ...[
                   const SizedBox(height: AppSpacing.space2),
-                  Text(dates),
+                  // 스타일 없이 두면 앰비언트 기본 텍스트 스타일(본문과 같은
+                  // 굵기·명도)을 그대로 물려받아 캠프 이름과 시각적 위계가
+                  // 구분되지 않았다 — 다른 카드의 보조 정보와 같은 caption+
+                  // textSecondary로 낮춘다.
+                  Text(
+                    dates,
+                    style: AppTypography.caption.copyWith(
+                      color: colors.textSecondary,
+                    ),
+                  ),
                 ],
               ],
             ),

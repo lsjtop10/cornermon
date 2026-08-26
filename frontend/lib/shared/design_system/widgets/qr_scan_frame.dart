@@ -26,10 +26,10 @@ class QrScanFrame extends StatelessWidget {
         icon = null;
         break;
       case QrScanFrameState.success:
-        borderColor = colors.statusIdle;
+        borderColor = colors.success;
         icon = Icon(
           Icons.check_circle,
-          color: colors.statusIdle,
+          color: colors.success,
           size: iconSize,
         );
         break;

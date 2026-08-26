@@ -1,5 +1,6 @@
 import 'package:cornermon/admin/session/selected_camp_provider.dart';
 import 'package:cornermon/admin/widgets/track_row_actions.dart';
+import 'package:cornermon/admin/features/dashboard/_corner_status_pill.dart';
 import 'package:cornermon/shared/api/domain_aliases.dart' as api;
 import 'package:cornermon/shared/api/ids.dart';
 import 'package:cornermon/shared/api/providers/corner_track_providers.dart';
@@ -227,22 +228,7 @@ class _CornerStatusRow extends StatelessWidget {
     final colors = Theme.of(context).brightness == Brightness.dark
         ? AppColors.dark
         : AppColors.light;
-    final presentation = switch (status) {
-      api.CornerOperationalStatus.BUSY => (
-        color: colors.statusIdle,
-        icon: '●',
-        label: '정상',
-      ),
-      api.CornerOperationalStatus.IDLE => (
-        color: colors.quiet,
-        icon: '○',
-        label: '유휴',
-      ),
-      _ => (color: colors.statusInactive, icon: '✕', label: '미가동'),
-    };
-    final opacity = Theme.of(context).brightness == Brightness.dark
-        ? .20
-        : .12;
+    final presentation = cornerStatusPresentation(status, colors);
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -251,19 +237,10 @@ class _CornerStatusRow extends StatelessWidget {
           style: AppTypography.label.copyWith(color: colors.textSecondary),
         ),
         const SizedBox(width: AppSpacing.space2),
-        Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.space2,
-            vertical: AppSpacing.space1,
-          ),
-          decoration: BoxDecoration(
-            color: presentation.color.withValues(alpha: opacity),
-            borderRadius: BorderRadius.circular(100),
-          ),
-          child: Text(
-            '${presentation.icon}  ${presentation.label}',
-            style: AppTypography.label.copyWith(color: presentation.color),
-          ),
+        CornerStatusPill(
+          color: presentation.color,
+          icon: presentation.icon,
+          label: presentation.label,
         ),
       ],
     );
