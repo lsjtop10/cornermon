@@ -36,8 +36,8 @@ dependencies:
 
   flutter_riverpod: ^3.3.2
   riverpod_annotation: ^4.0.3
-  go_router: ^17.3.0
-  flutter_secure_storage: ^10.3.1
+  go_router: ^18.0.0
+  flutter_secure_storage: ^11.0.0
   dio: ^5.5.0
   uuid: ^4.5.0 # TraceIdInterceptor에서 요청별 trace_id(UUIDv7) 생성에 직접 사용 — 기존엔 전이 의존성이었음
   mobile_scanner: ^7.4.0
@@ -50,12 +50,13 @@ dependencies:
   barcode: ^2.2.9 # 배지 QR 이미지 내보내기(#249)에서 Barcode.make로 모듈 좌표 직접 사용 — 기존엔 pdf의 전이 의존성이었음
   image: ^4.3.0 # 배지 QR 이미지 내보내기(#249)에서 PNG 인코딩에 직접 사용 — 기존엔 excel의 전이 의존성이었음
   archive: ^3.6.1 # 배지 QR 이미지 여러 장을 zip으로 묶어 저장(#249)할 때 직접 사용 — 기존엔 excel의 전이 의존성이었음
+  # archive 4.x는 excel(^4.0.6, 미유지보수)이 archive ^3.6.1을 고정해서 아직 못 올림 (#259)
   fl_chart: ^1.2.0 # 리포트 요약 탭 타임라인 섹션(5분 버킷 진행중/누적완료 라인 차트, #227) 직접 사용
-  share_plus: ^12.0.1
+  share_plus: ^13.3.0
   file_saver: ^0.4.0
   cornermon_api_gen:
     path: packages/cornermon_api_gen
-  device_info_plus: ^12.4.0
+  device_info_plus: ^13.2.0
   connectivity_plus: ^7.3.0
   excel: ^4.0.6
   flutter_launcher_icons: ^0.14.4
