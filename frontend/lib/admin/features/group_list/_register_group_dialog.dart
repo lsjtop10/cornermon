@@ -2,16 +2,16 @@ import 'dart:async';
 
 import 'package:cornermon/shared/api/domain_aliases.dart' as api;
 import 'package:cornermon/shared/api/ids.dart';
-import 'package:cornermon/shared/api/providers/group_providers.dart';
 import 'package:cornermon/shared/api/providers/badge_providers.dart';
 import 'package:cornermon/shared/design_system/tokens/spacing.dart';
 import 'package:cornermon/shared/design_system/tokens/typography.dart';
 import 'package:cornermon/shared/design_system/widgets/app_button.dart';
 import 'package:cornermon/shared/design_system/widgets/qr_scan_frame.dart';
-import 'package:collection/collection.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+
+import '_register_group_actions.dart';
 
 class RegisterGroupDialog extends ConsumerStatefulWidget {
   const RegisterGroupDialog({super.key, required this.campId});
@@ -44,7 +44,7 @@ class _RegisterGroupDialogState extends ConsumerState<RegisterGroupDialog> {
   // — 진행자 QrScanScreen과 동일한 패턴(qr_scan_screen.dart 참고).
   void _onDetect(BarcodeCapture capture) {
     if (_scanned) return;
-    final token = capture.barcodes.firstOrNull?.rawValue;
+    final token = extractBadgePayload(capture);
     if (token == null) return;
     unawaited(_scannerController.stop());
     setState(() {
@@ -56,27 +56,21 @@ class _RegisterGroupDialogState extends ConsumerState<RegisterGroupDialog> {
   Future<void> _submit() async {
     if (_name.text.trim().isEmpty || _payload.text.trim().isEmpty) return;
     setState(() => _busy = true);
-    try {
-      await ref.read(
-        scanRegisterBadgeProvider(
-          widget.campId.value,
-          _payload.text.trim(),
-          _name.text.trim(),
-        ).future,
+    final success = await registerGroup(
+      ref,
+      campId: widget.campId,
+      payload: _payload.text.trim(),
+      name: _name.text.trim(),
+    );
+    if (!mounted) return;
+    if (success) {
+      Navigator.pop(context);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('이미 등록된 배지이거나 등록할 수 없습니다')),
       );
-      ref.invalidate(groupListProvider(widget.campId));
-      if (mounted) {
-        Navigator.pop(context);
-      }
-    } catch (_) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('이미 등록된 배지이거나 등록할 수 없습니다')),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _busy = false);
     }
+    setState(() => _busy = false);
   }
 
   @override
