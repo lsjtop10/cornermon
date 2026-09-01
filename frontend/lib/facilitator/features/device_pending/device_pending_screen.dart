@@ -108,16 +108,15 @@ class _RegistrationFormState extends ConsumerState<_RegistrationForm> {
 
   // App Store 심사/스태프 연습용 히든 진입점. 아이콘 롱프레스로만 켜지고, 화면엔 새 UI가
   // 추가되지 않는다 — 켜지면 등록 코드 입력란이 사라지고 표시이름만 받는 폼으로 바뀐다.
+  // 데모 상태는 activeApiEnvironmentProvider를 watch해서 파생시킨다(로컬 bool로 따로
+  // 들고 있으면 운영으로 되돌아왔을 때 꺼주는 로직이 빠지기 쉽다).
   // 자세한 배경은 frontend/docs/artifacts/plan/20260820_앱스토어_심사용_데모환경_프론트_plan_.md.
-  bool _demoModeUnlocked = false;
-
-  void _unlockDemoMode() {
-    if (_demoModeUnlocked) return;
+  void _unlockDemoMode(bool alreadyDemo) {
+    if (alreadyDemo) return;
     ref
         .read(activeApiEnvironmentProvider.notifier)
         .switchTo(ApiEnvironment.demo);
     setState(() {
-      _demoModeUnlocked = true;
       _codeController.clear();
       _errorText = null;
     });
@@ -138,10 +137,12 @@ class _RegistrationFormState extends ConsumerState<_RegistrationForm> {
   }
 
   Future<void> _submit() async {
+    final isDemo =
+        ref.read(activeApiEnvironmentProvider) == ApiEnvironment.demo;
     final code = _codeController.text.trim();
     final displayName = _displayNameController.text.trim();
     if (displayName.isEmpty || _isSubmitting) return;
-    if (!_demoModeUnlocked && code.isEmpty) return;
+    if (!isDemo && code.isEmpty) return;
 
     setState(() {
       _isSubmitting = true;
@@ -149,7 +150,7 @@ class _RegistrationFormState extends ConsumerState<_RegistrationForm> {
     });
 
     try {
-      if (_demoModeUnlocked) {
+      if (isDemo) {
         await ref
             .read(deviceTrustProvider.notifier)
             .requestDemoRegistration(displayName: displayName);
@@ -161,7 +162,7 @@ class _RegistrationFormState extends ConsumerState<_RegistrationForm> {
     } on DioException catch (error) {
       // DioException은 LoggingInterceptor(#131)가 네트워크 계층에서 이미 기록한다.
       if (!mounted) return;
-      if (_demoModeUnlocked) {
+      if (isDemo) {
         // demo_handler.go: 404는 데모 모드가 비활성(운영 빌드) 또는 데모 캠프 미생성 —
         // 등록 코드 오류와는 원인이 아예 다르므로 별도 문구로 구분한다.
         setState(
@@ -194,8 +195,15 @@ class _RegistrationFormState extends ConsumerState<_RegistrationForm> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final colors = isDark ? AppColors.dark : AppColors.light;
+    final isDemo =
+        ref.watch(activeApiEnvironmentProvider) == ApiEnvironment.demo;
+    // 데모/운영이 다른 문구·필드 구성을 한 곳에서만 분기한다 — build() 곳곳에
+    // isDemo 삼항연산자를 흩뿌리지 않기 위함.
+    final (subtitle, displayNameLabel, submitLabel) = isDemo
+        ? ('표시 이름만 입력하면 바로 등록됩니다', '표시 이름', '연습 등록')
+        : ('관리자에게 받은 등록 코드를 입력하세요', '관리자 표시 이름', '등록 요청');
     final canSubmit =
-        (_demoModeUnlocked || _codeController.text.trim().isNotEmpty) &&
+        (isDemo || _codeController.text.trim().isNotEmpty) &&
         _displayNameController.text.trim().isNotEmpty &&
         !_isSubmitting;
 
@@ -210,7 +218,7 @@ class _RegistrationFormState extends ConsumerState<_RegistrationForm> {
         mainAxisSize: MainAxisSize.min,
         children: [
           GestureDetector(
-            onLongPress: _unlockDemoMode,
+            onLongPress: () => _unlockDemoMode(isDemo),
             child: Icon(
               Icons.phonelink_lock_outlined,
               size: 64.0,
@@ -233,13 +241,11 @@ class _RegistrationFormState extends ConsumerState<_RegistrationForm> {
           ],
           const SizedBox(height: AppSpacing.space2),
           Text(
-            _demoModeUnlocked
-                ? '표시 이름만 입력하면 바로 등록됩니다'
-                : '관리자에게 받은 등록 코드를 입력하세요',
+            subtitle,
             style: AppTypography.body.copyWith(color: colors.textSecondary),
             textAlign: TextAlign.center,
           ),
-          if (!_demoModeUnlocked) ...[
+          if (!isDemo) ...[
             const SizedBox(height: AppSpacing.space6),
             TextField(
               controller: _codeController,
@@ -279,7 +285,7 @@ class _RegistrationFormState extends ConsumerState<_RegistrationForm> {
               // 사용자에게 "관리자"라는 용어를 노출할 이유가 없으므로 라벨만 중립적으로 바꾼다.
               // 실제로 서버에 저장되는 필드(displayName)와 그 의미(관리자 화면 표시용 이름,
               // technical-design.md §기기 신뢰 인증)는 동일 — 라벨 문구만의 문제.
-              labelText: _demoModeUnlocked ? '표시 이름' : '관리자 표시 이름',
+              labelText: displayNameLabel,
               hintText: '1번 태블릿',
               hintStyle: TextStyle(color: colors.textSecondary),
               border: OutlineInputBorder(
@@ -302,7 +308,7 @@ class _RegistrationFormState extends ConsumerState<_RegistrationForm> {
             variant: AppButtonVariant.primary,
             size: AppButtonSize.comfortable,
             width: AppButtonWidth.fill,
-            label: _demoModeUnlocked ? '연습 등록' : '등록 요청',
+            label: submitLabel,
             onPressed: canSubmit ? _submit : null,
           ),
         ],
