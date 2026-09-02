@@ -1,2 +1,7 @@
 ./.env
 ./bin
+
+# loadtest ops tool: compiled binary, run state, local config (has admin pw)
+/loadtest
+/loadtest-state.json
+cmd/loadtest/loadtest.yaml

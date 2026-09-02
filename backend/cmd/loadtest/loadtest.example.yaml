@@ -1,0 +1,22 @@
+# loadtest 하네스 설정. `cp loadtest.example.yaml loadtest.yaml` 후 값 채우기.
+#   cd backend && go run ./cmd/loadtest -config cmd/loadtest/loadtest.yaml
+# 생략한 키는 아래 기본값이 적용된다. -phases 플래그로 phases만 일회성 오버라이드 가능.
+
+base: https://cornermon-api-demo.orca.pe.kr/api/v1
+adminId: admin
+adminPassword: ""            # 필수
+
+corners: 10                  # 코너 수
+tracksPerCorner: 1           # 코너당 트랙 수 (진행자 수 = corners * tracksPerCorner)
+groups: 25                   # 조 수 = 코너당 방문 용량. 장시간 소크면 늘릴 것
+admins: 3                    # 동시 관리자 클라이언트 (SSE + 폴링)
+
+visitEvery: 3m               # 트랙별 방문 start/end 주기
+chatEvery: 20s               # 트랙별 채팅 발신 주기
+adminPoll: 5s                # 관리자별 live-summary 폴링 주기
+duration: 30m                # 소크 지속 시간
+
+campName: ""                 # 비우면 loadtest-<unix>
+stateFile: loadtest-state.json
+
+phases: [bootstrap, soak, teardown]
