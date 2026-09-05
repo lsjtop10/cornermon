@@ -67,6 +67,18 @@ func (c config) I(key string, def int) int {
 	return n
 }
 
+func (c config) F(key string, def float64) float64 {
+	v, ok := c.raw[key]
+	if !ok || v == "" {
+		return def
+	}
+	n, err := strconv.ParseFloat(v, 64)
+	if err != nil {
+		log.Fatalf("config %s: %v", key, err)
+	}
+	return n
+}
+
 // config is the flat key/value config file. The format is a deliberately tiny
 // YAML subset — one `key: value` per line, `#` comments, `key: [a, b]` lists —
 // so no YAML dependency is needed for ~a dozen scalars.
@@ -81,8 +93,11 @@ type config struct {
 	Groups          int
 	Admins          int
 	VisitEvery      time.Duration
+	VisitHoldFrac   float64 // fraction of VisitEvery a visit stays IN_PROGRESS (corner reads BUSY)
 	ChatEvery       time.Duration
+	ReadEvery       time.Duration // per-track: how often a facilitator checks/reads messages
 	AdminPoll       time.Duration
+	BroadcastEvery  time.Duration // admin: how often to send a camp-wide announcement
 	Duration        time.Duration
 	CampName        string
 	StateFile       string
@@ -118,8 +133,11 @@ func loadConfig() config {
 	c.Groups = c.I("groups", 25)
 	c.Admins = c.I("admins", 3)
 	c.VisitEvery = c.D("visitEvery", 3*time.Minute)
+	c.VisitHoldFrac = c.F("visitHoldFrac", 0.8)
 	c.ChatEvery = c.D("chatEvery", 20*time.Second)
+	c.ReadEvery = c.D("readEvery", 45*time.Second)
 	c.AdminPoll = c.D("adminPoll", 5*time.Second)
+	c.BroadcastEvery = c.D("broadcastEvery", 5*time.Minute)
 	c.Duration = c.D("duration", 30*time.Minute)
 	c.StateFile = c.S("stateFile", "loadtest-state.json")
 
@@ -474,10 +492,11 @@ func soak(ctx context.Context, c config, st state) {
 		}()
 	}
 	for i := 0; i < c.Admins; i++ {
+		sendsBroadcasts := i == 0 // one admin announces; the rest just watch + poll
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			runAdmin(ctx, c, st)
+			runAdmin(ctx, c, st, sendsBroadcasts)
 		}()
 	}
 
@@ -505,8 +524,10 @@ func runTrack(ctx context.Context, c config, st state, t track, pool *visitPool)
 
 	visitT := time.NewTicker(jitter(c.VisitEvery))
 	chatT := time.NewTicker(jitter(c.ChatEvery))
+	readT := time.NewTicker(jitter(c.ReadEvery))
 	defer visitT.Stop()
 	defer chatT.Stop()
+	defer readT.Stop()
 
 	for {
 		select {
@@ -525,7 +546,15 @@ func runTrack(ctx context.Context, c config, st state, t track, pool *visitPool)
 			if err != nil {
 				continue
 			}
-			time.Sleep(2 * time.Second) // group is "in the corner" briefly
+			// Corner reads BUSY for this long — a hardcoded couple of seconds here
+			// made corners look permanently IDLE against any realistic visitEvery,
+			// so it's a share of the cycle instead (see visitHoldFrac).
+			hold := time.Duration(float64(c.VisitEvery) * c.VisitHoldFrac)
+			select {
+			case <-time.After(hold):
+			case <-ctx.Done():
+				return
+			}
 			timed("visit_end", func() error {
 				return call(ctx, "POST", c.Base+"/tracks/"+t.ID+"/visits/current/end", t.Token, nil, nil, nil)
 			})
@@ -534,15 +563,31 @@ func runTrack(ctx context.Context, c config, st state, t track, pool *visitPool)
 				return call(ctx, "POST", c.Base+"/tracks/"+t.ID+"/messages", t.Token,
 					map[string]string{"content": "loadtest " + time.Now().Format("15:04:05")}, nil, nil)
 			})
+		case <-readT.C:
+			// Facilitator opening the chat screen: lists messages with
+			// background=true, which also marks the admin's unread ones read.
+			timed("track_read", func() error {
+				return call(ctx, "GET", c.Base+"/tracks/"+t.ID+"/messages?background=true", t.Token, nil, nil, nil)
+			})
 		}
 	}
 }
 
-func runAdmin(ctx context.Context, c config, st state) {
+func runAdmin(ctx context.Context, c config, st state, sendsBroadcasts bool) {
 	go streamSSE(ctx, c.Base+"/camps/"+st.CampID+"/events/admin", st.AdminToken, "admin_sse")
 
 	poll := time.NewTicker(jitter(c.AdminPoll))
 	defer poll.Stop()
+
+	// Only one admin sends announcements; a nil channel in the select below
+	// just never fires for the rest.
+	var broadcastC <-chan time.Time
+	if sendsBroadcasts {
+		broadcast := time.NewTicker(jitter(c.BroadcastEvery))
+		defer broadcast.Stop()
+		broadcastC = broadcast.C
+	}
+
 	for {
 		select {
 		case <-ctx.Done():
@@ -550,6 +595,11 @@ func runAdmin(ctx context.Context, c config, st state) {
 		case <-poll.C:
 			timed("admin_poll", func() error {
 				return call(ctx, "GET", c.Base+"/camps/"+st.CampID+"/reports/live-summary", st.AdminToken, nil, nil, nil)
+			})
+		case <-broadcastC:
+			timed("broadcast_send", func() error {
+				return call(ctx, "POST", c.Base+"/camps/"+st.CampID+"/messages/broadcast", st.AdminToken,
+					map[string]string{"content": "loadtest announcement " + time.Now().Format("15:04:05")}, nil, nil)
 			})
 		}
 	}
