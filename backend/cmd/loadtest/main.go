@@ -28,130 +28,87 @@ import (
 	"os"
 	"os/signal"
 	"sort"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
+
+	"gopkg.in/yaml.v3"
 )
 
 // ── config ──────────────────────────────────────────────────────────────────
 
-func (c config) D(key string, def time.Duration) time.Duration {
-	v, ok := c.raw[key]
-	if !ok || v == "" {
-		return def
-	}
-	d, err := time.ParseDuration(v)
+// Dur is a time.Duration that unmarshals from a YAML string like "3m" / "20s".
+type Dur time.Duration
+
+func (d Dur) D() time.Duration { return time.Duration(d) }
+
+func (d *Dur) UnmarshalYAML(n *yaml.Node) error {
+	v, err := time.ParseDuration(n.Value)
 	if err != nil {
-		log.Fatalf("config %s: %v", key, err)
+		return err
 	}
-	return d
+	*d = Dur(v)
+	return nil
 }
 
-func (c config) S(key, def string) string {
-	if v, ok := c.raw[key]; ok && v != "" {
-		return v
-	}
-	return def
-}
-
-func (c config) I(key string, def int) int {
-	v, ok := c.raw[key]
-	if !ok || v == "" {
-		return def
-	}
-	n, err := strconv.Atoi(v)
-	if err != nil {
-		log.Fatalf("config %s: %v", key, err)
-	}
-	return n
-}
-
-func (c config) F(key string, def float64) float64 {
-	v, ok := c.raw[key]
-	if !ok || v == "" {
-		return def
-	}
-	n, err := strconv.ParseFloat(v, 64)
-	if err != nil {
-		log.Fatalf("config %s: %v", key, err)
-	}
-	return n
-}
-
-// config is the flat key/value config file. The format is a deliberately tiny
-// YAML subset — one `key: value` per line, `#` comments, `key: [a, b]` lists —
-// so no YAML dependency is needed for ~a dozen scalars.
 type config struct {
-	raw map[string]string
-
-	Base            string
-	AdminID         string
-	AdminPW         string
-	Corners         int
-	TracksPerCorner int
-	Groups          int
-	Admins          int
-	VisitEvery      time.Duration
-	VisitHoldFrac   float64 // fraction of VisitEvery a visit stays IN_PROGRESS (corner reads BUSY)
-	ChatEvery       time.Duration
-	ReadEvery       time.Duration // per-track: how often a facilitator checks/reads messages
-	AdminPoll       time.Duration
-	BroadcastEvery  time.Duration // admin: how often to send a camp-wide announcement
-	Duration        time.Duration
-	CampName        string
-	StateFile       string
-	Phases          []string
+	Base            string   `yaml:"base"`
+	AdminID         string   `yaml:"adminId"`
+	AdminPW         string   `yaml:"adminPassword"`
+	Corners         int      `yaml:"corners"`
+	TracksPerCorner int      `yaml:"tracksPerCorner"`
+	Groups          int      `yaml:"groups"`
+	Admins          int      `yaml:"admins"`
+	VisitEvery      Dur      `yaml:"visitEvery"`
+	VisitHoldFrac   float64  `yaml:"visitHoldFrac"` // fraction of VisitEvery a visit stays IN_PROGRESS (corner reads BUSY)
+	ChatEvery       Dur      `yaml:"chatEvery"`
+	ReadEvery       Dur      `yaml:"readEvery"` // per-track: how often a facilitator checks/reads messages
+	AdminPoll       Dur      `yaml:"adminPoll"`
+	BroadcastEvery  Dur      `yaml:"broadcastEvery"` // admin: how often to send a camp-wide announcement
+	Duration        Dur      `yaml:"duration"`
+	CampName        string   `yaml:"campName"`
+	StateFile       string   `yaml:"stateFile"`
+	Phases          []string `yaml:"phases"`
 }
 
+// loadConfig reads the YAML config (path from -config) on top of built-in
+// defaults, so the file only needs to set what differs. -phases overrides the
+// file's phase list for one-off runs.
 func loadConfig() config {
-	path := flag.String("config", "loadtest.yaml", "path to config file")
+	path := flag.String("config", "loadtest.yaml", "path to YAML config")
 	phasesOverride := flag.String("phases", "", "comma list overriding config phases (bootstrap,soak,teardown)")
 	flag.Parse()
 
+	c := config{
+		Base:            "http://localhost:8080/api/v1",
+		AdminID:         "admin",
+		StateFile:       "loadtest-state.json",
+		Corners:         10,
+		TracksPerCorner: 1,
+		Groups:          25,
+		Admins:          3,
+		VisitEvery:      Dur(3 * time.Minute),
+		VisitHoldFrac:   0.8,
+		ChatEvery:       Dur(20 * time.Second),
+		ReadEvery:       Dur(45 * time.Second),
+		AdminPoll:       Dur(5 * time.Second),
+		BroadcastEvery:  Dur(5 * time.Minute),
+		Duration:        Dur(30 * time.Minute),
+		Phases:          []string{"bootstrap", "soak", "teardown"},
+	}
 	b, err := os.ReadFile(*path)
 	if err != nil {
 		log.Fatalf("read config %s: %v", *path, err)
 	}
-	c := config{raw: map[string]string{}}
-	for _, line := range strings.Split(string(b), "\n") {
-		if i := strings.IndexByte(line, '#'); i >= 0 {
-			line = line[:i]
-		}
-		k, v, ok := strings.Cut(line, ":")
-		if !ok {
-			continue
-		}
-		c.raw[strings.TrimSpace(k)] = strings.Trim(strings.TrimSpace(v), `"'`)
+	if err := yaml.Unmarshal(b, &c); err != nil {
+		log.Fatalf("parse config %s: %v", *path, err)
 	}
-
-	c.Base = c.S("base", "http://localhost:8080/api/v1")
-	c.AdminID = c.S("adminId", "admin")
-	c.AdminPW = c.S("adminPassword", "")
-	c.Corners = c.I("corners", 10)
-	c.TracksPerCorner = c.I("tracksPerCorner", 1)
-	c.Groups = c.I("groups", 25)
-	c.Admins = c.I("admins", 3)
-	c.VisitEvery = c.D("visitEvery", 3*time.Minute)
-	c.VisitHoldFrac = c.F("visitHoldFrac", 0.8)
-	c.ChatEvery = c.D("chatEvery", 20*time.Second)
-	c.ReadEvery = c.D("readEvery", 45*time.Second)
-	c.AdminPoll = c.D("adminPoll", 5*time.Second)
-	c.BroadcastEvery = c.D("broadcastEvery", 5*time.Minute)
-	c.Duration = c.D("duration", 30*time.Minute)
-	c.StateFile = c.S("stateFile", "loadtest-state.json")
-
-	phases := c.S("phases", "bootstrap, soak, teardown")
 	if *phasesOverride != "" {
-		phases = *phasesOverride
+		c.Phases = strings.Split(*phasesOverride, ",")
 	}
-	for _, p := range strings.Split(strings.Trim(phases, "[]"), ",") {
-		if p = strings.TrimSpace(p); p != "" {
-			c.Phases = append(c.Phases, p)
-		}
+	if c.CampName == "" {
+		c.CampName = fmt.Sprintf("loadtest-%d", time.Now().Unix())
 	}
-
-	c.CampName = c.S("campName", fmt.Sprintf("loadtest-%d", time.Now().Unix()))
 	return c
 }
 
@@ -198,20 +155,24 @@ func call(ctx context.Context, method, url, token string, body, out any, extra m
 	if err != nil {
 		return err
 	}
+
 	if body != nil {
 		req.Header.Set("Content-Type", "application/json")
 	}
 	if token != "" {
 		req.Header.Set("Authorization", "Bearer "+token)
 	}
+
 	for k, v := range extra {
 		req.Header.Set(k, v)
 	}
+
 	resp, err := api.Do(req)
 	if err != nil {
 		return err
 	}
 	defer resp.Body.Close()
+
 	raw, _ := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
 	if resp.StatusCode/100 != 2 {
 		return apiError{resp.StatusCode, string(raw)}
@@ -328,56 +289,151 @@ func printReport(elapsed time.Duration) {
 
 // ── bootstrap ───────────────────────────────────────────────────────────────
 
-func bootstrap(ctx context.Context, c config) (state, error) {
-	st := state{Base: c.Base}
+// adminCall is an already-authenticated request against c.Base as the admin.
+type adminCall func(method, path string, body, out any) error
 
+func adminLogin(ctx context.Context, c config) (string, error) {
 	var login struct {
 		AccessToken string `json:"accessToken"`
 	}
 	if err := call(ctx, "POST", c.Base+"/auth/admin/login", "",
 		map[string]string{"id": c.AdminID, "password": c.AdminPW}, &login, nil); err != nil {
-		return st, fmt.Errorf("admin login: %w", err)
+		return "", fmt.Errorf("admin login: %w", err)
 	}
-	st.AdminToken = login.AccessToken
-	adm := func(method, path string, body, out any) error {
-		return call(ctx, method, c.Base+path, st.AdminToken, body, out, nil)
-	}
+	return login.AccessToken, nil
+}
 
+func adminCaller(ctx context.Context, c config, token string) adminCall {
+	return func(method, path string, body, out any) error {
+		return call(ctx, method, c.Base+path, token, body, out, nil)
+	}
+}
+
+func createCamp(adm adminCall, name string) (id, regCode string, err error) {
 	var camp struct {
 		ID               string `json:"id"`
 		RegistrationCode string `json:"registrationCode"`
 	}
 	now := time.Now().UTC()
 	if err := adm("POST", "/camps", map[string]any{
-		"name":    c.CampName,
+		"name":    name,
 		"startAt": now.Add(-time.Hour).Format(time.RFC3339),
 		"endAt":   now.Add(7 * 24 * time.Hour).Format(time.RFC3339),
 	}, &camp); err != nil {
-		return st, fmt.Errorf("create camp: %w", err)
+		return "", "", fmt.Errorf("create camp: %w", err)
 	}
-	st.CampID, st.RegCode = camp.ID, camp.RegistrationCode
-	log.Printf("camp %s (%s) reg=%s", c.CampName, st.CampID, st.RegCode)
+	return camp.ID, camp.RegistrationCode, nil
+}
 
-	for i := 0; i < c.Corners; i++ {
+// createCornersAndTracks creates `corners` corners, each with `tracksPerCorner`
+// tracks, and returns every created track (without a facilitator token yet).
+func createCornersAndTracks(adm adminCall, campID string, corners, tracksPerCorner int) ([]track, error) {
+	var tracks []track
+	for i := 0; i < corners; i++ {
 		var corner struct {
 			ID string `json:"id"`
 		}
 		if err := adm("POST", "/corners", map[string]any{
-			"campId": st.CampID, "name": fmt.Sprintf("corner-%02d", i+1), "targetMinutes": 10,
+			"campId": campID, "name": fmt.Sprintf("corner-%02d", i+1), "targetMinutes": 10,
 		}, &corner); err != nil {
-			return st, fmt.Errorf("create corner %d: %w", i, err)
+			return nil, fmt.Errorf("create corner %d: %w", i, err)
 		}
 		var created []struct {
 			Track track `json:"track"`
 		}
 		if err := adm("POST", "/tracks", map[string]any{
-			"campId": st.CampID, "cornerId": corner.ID, "count": c.TracksPerCorner,
+			"campId": campID, "cornerId": corner.ID, "count": tracksPerCorner,
 		}, &created); err != nil {
-			return st, fmt.Errorf("create tracks for corner %d: %w", i, err)
+			return nil, fmt.Errorf("create tracks for corner %d: %w", i, err)
 		}
 		for _, t := range created {
-			st.Tracks = append(st.Tracks, track{ID: t.Track.ID, CornerID: corner.ID})
+			tracks = append(tracks, track{ID: t.Track.ID, CornerID: corner.ID})
 		}
+	}
+	return tracks, nil
+}
+
+// createGroups issues `n` badges and registers each into its own group,
+// returning the group IDs (visit capacity: one visit per group per corner).
+func createGroups(adm adminCall, campID string, n int) ([]string, error) {
+	var badges []struct {
+		ID string `json:"id"`
+	}
+	if err := adm("POST", "/badges/bulk-generate", map[string]any{"count": n}, &badges); err != nil {
+		return nil, fmt.Errorf("bulk-generate badges: %w", err)
+	}
+	groupIDs := make([]string, 0, len(badges))
+	for i, b := range badges {
+		var grp struct {
+			ID string `json:"id"`
+		}
+		if err := adm("POST", "/badges/"+b.ID+"/register", map[string]any{
+			"campId": campID, "groupName": fmt.Sprintf("group-%02d", i+1),
+		}, &grp); err != nil {
+			return nil, fmt.Errorf("register badge %d: %w", i, err)
+		}
+		groupIDs = append(groupIDs, grp.ID)
+	}
+	return groupIDs, nil
+}
+
+// provisionFacilitator registers, approves, and logs in one device for track
+// #i, returning the resulting track session token.
+func provisionFacilitator(ctx context.Context, c config, adm adminCall, campID, regCode string, t track, i int) (string, error) {
+	var dev struct {
+		ID          string `json:"id"`
+		DeviceToken string `json:"deviceToken"`
+	}
+	if err := call(ctx, "POST", c.Base+"/device-registrations", "", map[string]any{
+		"registrationCode": regCode,
+		"deviceName":       fmt.Sprintf("%s-dev-%03d", c.CampName, i),
+		"deviceModel":      "loadtest",
+		"displayName":      fmt.Sprintf("lt-%03d", i),
+		"role":             "FACILITATOR",
+	}, &dev, nil); err != nil {
+		return "", fmt.Errorf("register device %d: %w", i, err)
+	}
+	if err := adm("POST", "/camps/"+campID+"/device-registrations/"+dev.ID+"/approve", nil, nil); err != nil {
+		return "", fmt.Errorf("approve device %d: %w", i, err)
+	}
+	// PIN: /tracks/{id}/export returns {track:{id},pin}. Devices are approved in
+	// track order, but PINs aren't ordered — fetch this track's PIN explicitly.
+	var exp struct {
+		PIN string `json:"pin"`
+	}
+	if err := adm("GET", "/tracks/"+t.ID+"/export", nil, &exp); err != nil {
+		return "", fmt.Errorf("export track %d: %w", i, err)
+	}
+	var tl struct {
+		TrackToken string `json:"trackToken"`
+	}
+	if err := call(ctx, "POST", c.Base+"/auth/track/login", "",
+		map[string]string{"pin": exp.PIN}, &tl,
+		map[string]string{"X-Device-Token": dev.DeviceToken}); err != nil {
+		return "", fmt.Errorf("track login %d: %w", i, err)
+	}
+	return tl.TrackToken, nil
+}
+
+func bootstrap(ctx context.Context, c config) (state, error) {
+	st := state{Base: c.Base}
+
+	token, err := adminLogin(ctx, c)
+	if err != nil {
+		return st, err
+	}
+	st.AdminToken = token
+	adm := adminCaller(ctx, c, token)
+
+	st.CampID, st.RegCode, err = createCamp(adm, c.CampName)
+	if err != nil {
+		return st, err
+	}
+	log.Printf("camp %s (%s) reg=%s", c.CampName, st.CampID, st.RegCode)
+
+	st.Tracks, err = createCornersAndTracks(adm, st.CampID, c.Corners, c.TracksPerCorner)
+	if err != nil {
+		return st, err
 	}
 	log.Printf("%d corners, %d tracks", c.Corners, len(st.Tracks))
 
@@ -385,63 +441,18 @@ func bootstrap(ctx context.Context, c config) (state, error) {
 		return st, fmt.Errorf("start camp: %w", err)
 	}
 
-	var badges []struct {
-		ID string `json:"id"`
-	}
-	if err := adm("POST", "/badges/bulk-generate", map[string]any{"count": c.Groups}, &badges); err != nil {
-		return st, fmt.Errorf("bulk-generate badges: %w", err)
-	}
-	for i, b := range badges {
-		var grp struct {
-			ID string `json:"id"`
-		}
-		if err := adm("POST", "/badges/"+b.ID+"/register", map[string]any{
-			"campId": st.CampID, "groupName": fmt.Sprintf("group-%02d", i+1),
-		}, &grp); err != nil {
-			return st, fmt.Errorf("register badge %d: %w", i, err)
-		}
-		st.GroupIDs = append(st.GroupIDs, grp.ID)
+	st.GroupIDs, err = createGroups(adm, st.CampID, c.Groups)
+	if err != nil {
+		return st, err
 	}
 	log.Printf("%d groups", len(st.GroupIDs))
 
-	// One approved facilitator device per track, then track login for its PIN.
 	for i := range st.Tracks {
-		var dev struct {
-			ID          string `json:"id"`
-			DeviceToken string `json:"deviceToken"`
+		token, err := provisionFacilitator(ctx, c, adm, st.CampID, st.RegCode, st.Tracks[i], i)
+		if err != nil {
+			return st, err
 		}
-		if err := call(ctx, "POST", c.Base+"/device-registrations", "", map[string]any{
-			"registrationCode": st.RegCode,
-			"deviceName":       fmt.Sprintf("%s-dev-%03d", c.CampName, i),
-			"deviceModel":      "loadtest",
-			"displayName":      fmt.Sprintf("lt-%03d", i),
-			"role":             "FACILITATOR",
-		}, &dev, nil); err != nil {
-			return st, fmt.Errorf("register device %d: %w", i, err)
-		}
-		if err := adm("POST", "/camps/"+st.CampID+"/device-registrations/"+dev.ID+"/approve", nil, nil); err != nil {
-			return st, fmt.Errorf("approve device %d: %w", i, err)
-		}
-		var tl struct {
-			TrackToken string `json:"trackToken"`
-			Track      struct {
-				ID string `json:"id"`
-			} `json:"track"`
-		}
-		// PIN: /tracks/{id}/export returns {track:{id},pin}. Devices are approved in
-		// track order, but PINs aren't ordered — fetch this track's PIN explicitly.
-		var exp struct {
-			PIN string `json:"pin"`
-		}
-		if err := adm("GET", "/tracks/"+st.Tracks[i].ID+"/export", nil, &exp); err != nil {
-			return st, fmt.Errorf("export track %d: %w", i, err)
-		}
-		if err := call(ctx, "POST", c.Base+"/auth/track/login", "",
-			map[string]string{"pin": exp.PIN}, &tl,
-			map[string]string{"X-Device-Token": dev.DeviceToken}); err != nil {
-			return st, fmt.Errorf("track login %d: %w", i, err)
-		}
-		st.Tracks[i].Token = tl.TrackToken
+		st.Tracks[i].Token = token
 	}
 	log.Printf("%d facilitator devices approved + logged in", len(st.Tracks))
 	return st, nil
@@ -522,9 +533,9 @@ func soak(ctx context.Context, c config, st state) {
 func runTrack(ctx context.Context, c config, st state, t track, pool *visitPool) {
 	go streamSSE(ctx, c.Base+"/events/track/"+t.ID, t.Token, "track_sse")
 
-	visitT := time.NewTicker(jitter(c.VisitEvery))
-	chatT := time.NewTicker(jitter(c.ChatEvery))
-	readT := time.NewTicker(jitter(c.ReadEvery))
+	visitT := time.NewTicker(jitter(c.VisitEvery.D()))
+	chatT := time.NewTicker(jitter(c.ChatEvery.D()))
+	readT := time.NewTicker(jitter(c.ReadEvery.D()))
 	defer visitT.Stop()
 	defer chatT.Stop()
 	defer readT.Stop()
@@ -549,7 +560,7 @@ func runTrack(ctx context.Context, c config, st state, t track, pool *visitPool)
 			// Corner reads BUSY for this long — a hardcoded couple of seconds here
 			// made corners look permanently IDLE against any realistic visitEvery,
 			// so it's a share of the cycle instead (see visitHoldFrac).
-			hold := time.Duration(float64(c.VisitEvery) * c.VisitHoldFrac)
+			hold := time.Duration(float64(c.VisitEvery.D()) * c.VisitHoldFrac)
 			select {
 			case <-time.After(hold):
 			case <-ctx.Done():
@@ -576,14 +587,14 @@ func runTrack(ctx context.Context, c config, st state, t track, pool *visitPool)
 func runAdmin(ctx context.Context, c config, st state, sendsBroadcasts bool) {
 	go streamSSE(ctx, c.Base+"/camps/"+st.CampID+"/events/admin", st.AdminToken, "admin_sse")
 
-	poll := time.NewTicker(jitter(c.AdminPoll))
+	poll := time.NewTicker(jitter(c.AdminPoll.D()))
 	defer poll.Stop()
 
 	// Only one admin sends announcements; a nil channel in the select below
 	// just never fires for the rest.
 	var broadcastC <-chan time.Time
 	if sendsBroadcasts {
-		broadcast := time.NewTicker(jitter(c.BroadcastEvery))
+		broadcast := time.NewTicker(jitter(c.BroadcastEvery.D()))
 		defer broadcast.Stop()
 		broadcastC = broadcast.C
 	}
@@ -695,9 +706,9 @@ func main() {
 	}
 
 	if phases["soak"] {
-		soakCtx, cancel := context.WithTimeout(ctx, c.Duration)
+		soakCtx, cancel := context.WithTimeout(ctx, c.Duration.D())
 		defer cancel()
-		log.Printf("soak: %d tracks, %d admins, %s", len(st.Tracks), c.Admins, c.Duration)
+		log.Printf("soak: %d tracks, %d admins, %s", len(st.Tracks), c.Admins, c.Duration.D())
 		soak(soakCtx, c, st)
 	}
 
