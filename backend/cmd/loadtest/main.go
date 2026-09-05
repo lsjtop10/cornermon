@@ -463,14 +463,19 @@ func bootstrap(ctx context.Context, c config) (state, error) {
 // visitPool hands out (group, track-corner) pairs that haven't been used yet.
 // A group can visit each corner once; once a corner's groups are exhausted the
 // track's visit cycles are skipped (bump -groups if that starts early).
+//
+// A group also can't be at two corners at once — the server correctly rejects
+// that as ITINERARY_CONFLICT — so `busy` locks a group from take() until the
+// caller release()s it, covering the whole start→hold→end window.
 type visitPool struct {
 	mu   sync.Mutex
 	used map[string]map[string]bool // cornerID -> groupID -> done
+	busy map[string]bool            // groupID -> currently held by some track
 	all  []string
 }
 
 func newVisitPool(groups []string) *visitPool {
-	return &visitPool{used: map[string]map[string]bool{}, all: groups}
+	return &visitPool{used: map[string]map[string]bool{}, busy: map[string]bool{}, all: groups}
 }
 
 func (p *visitPool) take(cornerID string) (string, bool) {
@@ -482,12 +487,22 @@ func (p *visitPool) take(cornerID string) (string, bool) {
 		p.used[cornerID] = seen
 	}
 	for _, g := range rand.Perm(len(p.all)) {
-		if !seen[p.all[g]] {
-			seen[p.all[g]] = true
-			return p.all[g], true
+		gid := p.all[g]
+		if !seen[gid] && !p.busy[gid] {
+			seen[gid] = true
+			p.busy[gid] = true
+			return gid, true
 		}
 	}
 	return "", false
+}
+
+// release frees a group taken via take(), once its visit has ended (or failed
+// to start at all).
+func (p *visitPool) release(groupID string) {
+	p.mu.Lock()
+	delete(p.busy, groupID)
+	p.mu.Unlock()
 }
 
 func soak(ctx context.Context, c config, st state) {
@@ -555,6 +570,7 @@ func runTrack(ctx context.Context, c config, st state, t track, pool *visitPool)
 					map[string]string{"groupId": gid, "method": "MANUAL"}, nil, nil)
 			})
 			if err != nil {
+				pool.release(gid) // never actually started; free it back up
 				continue
 			}
 			// Corner reads BUSY for this long — a hardcoded couple of seconds here
@@ -564,11 +580,13 @@ func runTrack(ctx context.Context, c config, st state, t track, pool *visitPool)
 			select {
 			case <-time.After(hold):
 			case <-ctx.Done():
+				pool.release(gid)
 				return
 			}
 			timed("visit_end", func() error {
 				return call(ctx, "POST", c.Base+"/tracks/"+t.ID+"/visits/current/end", t.Token, nil, nil, nil)
 			})
+			pool.release(gid)
 		case <-chatT.C:
 			timed("chat_send", func() error {
 				return call(ctx, "POST", c.Base+"/tracks/"+t.ID+"/messages", t.Token,
