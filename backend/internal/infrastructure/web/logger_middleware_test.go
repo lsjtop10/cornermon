@@ -123,3 +123,39 @@ func TestLoggerShouldIncludeUserAgentAndDurationMsWhenRequestSucceeds(t *testing
 		t.Errorf("expected duration_ms to be a JSON number, got %v (%T)", parsed["duration_ms"], parsed["duration_ms"])
 	}
 }
+
+func TestLoggerShouldLogConnectionDurationMsWhenResponseIsSSE(t *testing.T) {
+	// arrange — SSE 핸들러는 next(c)가 클라이언트 접속 종료까지 블로킹되므로, 이 값을
+	// duration_ms로 찍으면 "느린 요청" 필터가 매 SSE 커넥션에 오탐한다(#분석 세션 참고).
+	// 경로 문자열이 아니라 실제 핸들러가 세팅하는 Content-Type으로 판별해야
+	// 나중에 "events"라는 이름의 SSE 아닌 리소스가 생겨도 오분류되지 않는다.
+	buf := withCapturedLogger(t)
+	e := echo.New()
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/camps/1/events/admin", nil)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+	next := func(c echo.Context) error {
+		c.Response().Header().Set(echo.HeaderContentType, "text/event-stream")
+		return c.NoContent(http.StatusOK)
+	}
+
+	// act
+	if err := web.Logger()(next)(c); err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	// assert
+	var parsed map[string]any
+	if err := json.Unmarshal(buf.Bytes(), &parsed); err != nil {
+		t.Fatalf("expected valid JSON log line, got error: %v, line: %s", err, buf.String())
+	}
+	if parsed["msg"] != "SSE connection closed" {
+		t.Errorf("expected msg 'SSE connection closed', got %v", parsed["msg"])
+	}
+	if _, ok := parsed["connection_duration_ms"].(float64); !ok {
+		t.Errorf("expected connection_duration_ms to be a JSON number, got %v (%T)", parsed["connection_duration_ms"], parsed["connection_duration_ms"])
+	}
+	if _, ok := parsed["duration_ms"]; ok {
+		t.Errorf("expected duration_ms to be absent for SSE responses, got %v", parsed["duration_ms"])
+	}
+}

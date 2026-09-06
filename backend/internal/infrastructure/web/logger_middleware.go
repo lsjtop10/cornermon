@@ -3,6 +3,7 @@ package web
 import (
 	"context"
 	"log/slog"
+	"strings"
 	"time"
 
 	"cornermon/backend/internal/errs"
@@ -55,13 +56,26 @@ func Logger() echo.MiddlewareFunc {
 			status := c.Response().Status
 			duration := time.Since(start)
 
+			// SSE 핸들러(setSSEHeaders)는 next(c)가 클라이언트 접속 종료까지 블로킹되므로,
+			// 이 duration은 응답 지연이 아니라 커넥션 유지 시간이다. duration_ms로 같이
+			// 찍으면 "느린 요청" 필터/알림이 SSE 커넥션마다 오탐한다. Content-Type으로
+			// 판별하는 이유: 경로 문자열(`/events/`)은 나중에 SSE 아닌 리소스가 같은
+			// 이름으로 생겨도 걸릴 수 있지만, Content-Type은 실제 SSE 핸들러만 세팅하는
+			// 응답의 실제 성격이라 안전하다.
+			msg := "Request completed"
+			durationField := slog.Float64("duration_ms", durationMs(duration))
+			if strings.HasPrefix(c.Response().Header().Get(echo.HeaderContentType), "text/event-stream") {
+				msg = "SSE connection closed"
+				durationField = slog.Float64("connection_duration_ms", durationMs(duration))
+			}
+
 			// 정상 처리 완료 시 INFO 레벨로 단 1회 로깅
 			// trace_id는 errs.SlogWrappedHandler가 ctx 기반으로 자동 1회 주입하므로 여기서는 찍지 않는다.
-			slog.InfoContext(ctx, "Request completed",
+			slog.InfoContext(ctx, msg,
 				slog.String("method", c.Request().Method),
 				slog.String("path", c.Request().URL.Path),
 				slog.Int("status", status),
-				slog.Float64("duration_ms", durationMs(duration)),
+				durationField,
 				slog.String("ip", c.RealIP()),
 				slog.String("user_agent", c.Request().UserAgent()),
 			)
