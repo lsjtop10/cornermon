@@ -3,6 +3,7 @@ import 'package:cornermon_api_gen/cornermon_api_gen.dart';
 import '../client/api_client.dart';
 import '../domain_aliases.dart';
 import '../ids.dart';
+import 'no_retry.dart';
 
 part 'message_providers.g.dart';
 
@@ -19,7 +20,7 @@ Future<List<Message>> broadcastMessageList(Ref ref, CampId campId) async {
   return response.data?.toList() ?? [];
 }
 
-@riverpod
+@Riverpod(retry: noRetry)
 Future<Message> sendBroadcastMessage(Ref ref, CampId campId, String content) async {
   final apiInstance = ref.watch(messageApiProvider);
   final response = await apiInstance.campsCampIdMessagesBroadcastPost(
@@ -33,7 +34,7 @@ Future<Message> sendBroadcastMessage(Ref ref, CampId campId, String content) asy
   return data;
 }
 
-@riverpod
+@Riverpod(retry: noRetry)
 Future<void> readBroadcastMessage(Ref ref, MessageId id) async {
   final apiInstance = ref.watch(messageApiProvider);
   await apiInstance.messagesBroadcastIdReadPost(id: id.value);
@@ -62,7 +63,7 @@ Future<List<Message>> trackMessageList(
   return response.data?.toList() ?? [];
 }
 
-@riverpod
+@Riverpod(retry: noRetry)
 Future<Message> sendDirectMessage(Ref ref, TrackId trackId, String content) async {
   final apiInstance = ref.watch(messageApiProvider);
   final response = await apiInstance.tracksTrackIdMessagesPost(

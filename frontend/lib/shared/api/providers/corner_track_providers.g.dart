@@ -338,7 +338,7 @@ final class BulkUpdateCornersProvider
     required BulkUpdateCornersFamily super.from,
     required List<CornerUpdateInput> super.argument,
   }) : super(
-         retry: null,
+         retry: noRetry,
          name: r'bulkUpdateCornersProvider',
          isAutoDispose: true,
          dependencies: null,
@@ -378,7 +378,7 @@ final class BulkUpdateCornersProvider
   }
 }
 
-String _$bulkUpdateCornersHash() => r'c75d37b88cbb508bfa65ccd26382f571c3e34cde';
+String _$bulkUpdateCornersHash() => r'16cef76b5b3f890d163b02edad48a0f1ce61d817';
 
 final class BulkUpdateCornersFamily extends $Family
     with
@@ -388,7 +388,7 @@ final class BulkUpdateCornersFamily extends $Family
         > {
   BulkUpdateCornersFamily._()
     : super(
-        retry: null,
+        retry: noRetry,
         name: r'bulkUpdateCornersProvider',
         dependencies: null,
         $allTransitiveDependencies: null,
@@ -717,7 +717,7 @@ final class BulkDeleteTracksProvider
     required BulkDeleteTracksFamily super.from,
     required List<TrackId> super.argument,
   }) : super(
-         retry: null,
+         retry: noRetry,
          name: r'bulkDeleteTracksProvider',
          isAutoDispose: true,
          dependencies: null,
@@ -756,13 +756,13 @@ final class BulkDeleteTracksProvider
   }
 }
 
-String _$bulkDeleteTracksHash() => r'b5c12bd29993e673d53f0f9fe552a9ea999a0ecd';
+String _$bulkDeleteTracksHash() => r'81e17de137a7d66d1dbc1e942cf24199534495bd';
 
 final class BulkDeleteTracksFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<void>, List<TrackId>> {
   BulkDeleteTracksFamily._()
     : super(
-        retry: null,
+        retry: noRetry,
         name: r'bulkDeleteTracksProvider',
         dependencies: null,
         $allTransitiveDependencies: null,
@@ -787,7 +787,7 @@ final class ReplaceTrackProvider
     required ReplaceTrackFamily super.from,
     required (TrackId, CornerId) super.argument,
   }) : super(
-         retry: null,
+         retry: noRetry,
          name: r'replaceTrackProvider',
          isAutoDispose: true,
          dependencies: null,
@@ -826,13 +826,13 @@ final class ReplaceTrackProvider
   }
 }
 
-String _$replaceTrackHash() => r'031600b2f257e4df96e1d10a753286817738a38b';
+String _$replaceTrackHash() => r'1f1b79bd8bf65c107b95395882cdd4732cb57b63';
 
 final class ReplaceTrackFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<TrackPin>, (TrackId, CornerId)> {
   ReplaceTrackFamily._()
     : super(
-        retry: null,
+        retry: noRetry,
         name: r'replaceTrackProvider',
         dependencies: null,
         $allTransitiveDependencies: null,
@@ -857,7 +857,7 @@ final class RegeneratePinProvider
     required RegeneratePinFamily super.from,
     required TrackId super.argument,
   }) : super(
-         retry: null,
+         retry: noRetry,
          name: r'regeneratePinProvider',
          isAutoDispose: true,
          dependencies: null,
@@ -896,13 +896,13 @@ final class RegeneratePinProvider
   }
 }
 
-String _$regeneratePinHash() => r'2fcaa7ba6ce38d7a363a0ccadf0929279c1c9edf';
+String _$regeneratePinHash() => r'7c21091dba5e92a0b829db14ff7da0b4f3c0745a';
 
 final class RegeneratePinFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<TrackPin>, TrackId> {
   RegeneratePinFamily._()
     : super(
-        retry: null,
+        retry: noRetry,
         name: r'regeneratePinProvider',
         dependencies: null,
         $allTransitiveDependencies: null,
