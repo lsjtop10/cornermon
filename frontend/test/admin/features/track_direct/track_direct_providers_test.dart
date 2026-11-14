@@ -50,10 +50,7 @@ void main() {
           cornerListProvider(campId).overrideWith(
             (ref) async => [_corner('c1', '코너 1')],
           ),
-          trackMessageListProvider(
-            TrackId('t1'),
-            background: false,
-          ).overrideWith((ref) async {
+          trackMessagePeekProvider(TrackId('t1')).overrideWith((ref) async {
             capturedBackground = false;
             return <MessageResponse>[];
           }),
@@ -78,10 +75,7 @@ void main() {
           cornerListProvider(campId).overrideWith(
             (ref) async => [_corner('c1', '코너 1')],
           ),
-          trackMessageListProvider(
-            TrackId('t1'),
-            background: false,
-          ).overrideWith(
+          trackMessagePeekProvider(TrackId('t1')).overrideWith(
             (ref) async => [
               _msg(
                 MessageResponseSenderRoleEnum.TRACK,
@@ -119,10 +113,7 @@ void main() {
             (ref) async => [_track('t1', 1, 'missing-corner')],
           ),
           cornerListProvider(campId).overrideWith((ref) async => []),
-          trackMessageListProvider(
-            TrackId('t1'),
-            background: false,
-          ).overrideWith((ref) async => []),
+          trackMessagePeekProvider(TrackId('t1')).overrideWith((ref) async => []),
         ],
       );
       addTearDown(container.dispose);
@@ -146,14 +137,8 @@ void main() {
           cornerListProvider(campId).overrideWith(
             (ref) async => [_corner('c1', '코너 1')],
           ),
-          trackMessageListProvider(
-            TrackId('empty'),
-            background: false,
-          ).overrideWith((ref) async => []),
-          trackMessageListProvider(
-            TrackId('active'),
-            background: false,
-          ).overrideWith(
+          trackMessagePeekProvider(TrackId('empty')).overrideWith((ref) async => []),
+          trackMessagePeekProvider(TrackId('active')).overrideWith(
             (ref) async => [
               _msg(
                 MessageResponseSenderRoleEnum.TRACK,

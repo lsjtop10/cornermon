@@ -74,6 +74,7 @@ void main() {
   late int currentVisitBuildCount;
   late int rawBroadcastListBuildCount;
   late int trackMessageListBuildCount;
+  late int trackMessagePeekBuildCount;
   late int unreadDirectCountBuildCount;
   late int trackCornerBuildCount;
   // 이슈 #256: notify 여부가 목록 마지막 항목의 senderRole에 좌우되므로, 테스트별로
@@ -101,6 +102,7 @@ void main() {
     currentVisitBuildCount = 0;
     rawBroadcastListBuildCount = 0;
     trackMessageListBuildCount = 0;
+    trackMessagePeekBuildCount = 0;
     unreadDirectCountBuildCount = 0;
     trackCornerBuildCount = 0;
     trackMessageListResult = <Message>[];
@@ -123,8 +125,13 @@ void main() {
             return <Message>[];
           },
         ),
-        trackMessageListProvider(trackId, background: true).overrideWith((ref) {
+        trackMessageThreadProvider(trackId).overrideWith((ref) {
           trackMessageListBuildCount++;
+          return trackMessageListResult;
+        }),
+        // 코디네이터의 알림음 판단은 읽음 처리 없는 Peek provider를 조회한다.
+        trackMessagePeekProvider(trackId).overrideWith((ref) {
+          trackMessagePeekBuildCount++;
           return trackMessageListResult;
         }),
         unreadDirectMessageCountProvider(trackId).overrideWith((ref) async {
@@ -146,7 +153,7 @@ void main() {
     container.listen(currentVisitProvider(trackId), (_, _) {});
     container.listen(broadcastMessageListProvider(CampId('camp-1')), (_, _) {});
     container.listen(
-      trackMessageListProvider(trackId, background: true),
+      trackMessageThreadProvider(trackId),
       (_, _) {},
     );
     container.listen(unreadDirectMessageCountProvider(trackId), (_, _) {});
@@ -303,6 +310,7 @@ void main() {
     () async {
       // arrange
       final baseline = trackMessageListBuildCount;
+      final peekBaseline = trackMessagePeekBuildCount;
       final event = SseEvent(
         (b) => b
           ..event = SseEventEventEnum.messagesChanged
@@ -313,8 +321,9 @@ void main() {
       // act
       await pushAndSettle(event);
 
-      // assert
+      // assert — Thread와 Peek는 서로 다른 캐시라 둘 다 다시 빌드돼야 한다.
       expect(trackMessageListBuildCount, greaterThan(baseline));
+      expect(trackMessagePeekBuildCount, greaterThan(peekBaseline));
     },
   );
 
@@ -322,7 +331,7 @@ void main() {
     'ShouldInvalidateTrackMessageListForEachRepeatedMessagesChanged',
     () async {
       // arrange — 같은 track scope의 payload가 연속으로 도착할 수 있다.
-      await container.read(trackMessageListProvider(trackId, background: true).future);
+      await container.read(trackMessageThreadProvider(trackId).future);
       final baseline = trackMessageListBuildCount;
       final event = SseEvent(
         (b) => b
@@ -333,9 +342,9 @@ void main() {
 
       // act
       await pushAndSettle(event);
-      await container.read(trackMessageListProvider(trackId, background: true).future);
+      await container.read(trackMessageThreadProvider(trackId).future);
       await pushAndSettle(event);
-      await container.read(trackMessageListProvider(trackId, background: true).future);
+      await container.read(trackMessageThreadProvider(trackId).future);
 
       // assert — 두 이벤트 모두 열린 다이렉트 목록을 다시 조회해야 한다.
       expect(trackMessageListBuildCount, greaterThanOrEqualTo(baseline + 2));

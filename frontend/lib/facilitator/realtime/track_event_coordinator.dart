@@ -74,12 +74,15 @@ class TrackEventCoordinator extends _$TrackEventCoordinator {
             ref.read(noticeFeedbackProvider).notify();
           }
         } else if (isThisTrack) {
-          ref.invalidate(trackMessageListProvider(trackId, background: true));
+          // 알림음 판단은 읽음 처리 없는 Peek로 한다. Thread로 조회하면 도착 즉시 읽음 처리돼
+          // 헤더 배지가 뜨지 않는다(두 provider의 차이는 message_providers.dart 참고).
+          ref.invalidate(trackMessageThreadProvider(trackId));
+          ref.invalidate(trackMessagePeekProvider(trackId));
           ref.invalidate(unreadDirectMessageCountProvider(trackId));
           unawaited(
             _notifyIfFromAdmin(
               ref.read(
-                trackMessageListProvider(trackId, background: true).future,
+                trackMessagePeekProvider(trackId).future,
               ),
             ),
           );
