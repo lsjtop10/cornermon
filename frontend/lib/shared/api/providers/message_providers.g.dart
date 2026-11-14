@@ -136,7 +136,7 @@ final class SendBroadcastMessageProvider
     required SendBroadcastMessageFamily super.from,
     required (CampId, String) super.argument,
   }) : super(
-         retry: null,
+         retry: noRetry,
          name: r'sendBroadcastMessageProvider',
          isAutoDispose: true,
          dependencies: null,
@@ -176,13 +176,13 @@ final class SendBroadcastMessageProvider
 }
 
 String _$sendBroadcastMessageHash() =>
-    r'dc9b52ebbc3fbd6a5c6796fe4480a1a576d8a14a';
+    r'cb75744856edd6c2393fabecde8cc8b2e1122ea6';
 
 final class SendBroadcastMessageFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<Message>, (CampId, String)> {
   SendBroadcastMessageFamily._()
     : super(
-        retry: null,
+        retry: noRetry,
         name: r'sendBroadcastMessageProvider',
         dependencies: null,
         $allTransitiveDependencies: null,
@@ -206,7 +206,7 @@ final class ReadBroadcastMessageProvider
     required ReadBroadcastMessageFamily super.from,
     required MessageId super.argument,
   }) : super(
-         retry: null,
+         retry: noRetry,
          name: r'readBroadcastMessageProvider',
          isAutoDispose: true,
          dependencies: null,
@@ -246,13 +246,13 @@ final class ReadBroadcastMessageProvider
 }
 
 String _$readBroadcastMessageHash() =>
-    r'b8388e67780a5fcb8e1012a0c3295cfe4ae61c18';
+    r'f662ae01d7c0cb5e9239dbef2c148a5d0f81b534';
 
 final class ReadBroadcastMessageFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<void>, MessageId> {
   ReadBroadcastMessageFamily._()
     : super(
-        retry: null,
+        retry: noRetry,
         name: r'readBroadcastMessageProvider',
         dependencies: null,
         $allTransitiveDependencies: null,
@@ -445,7 +445,7 @@ final class SendDirectMessageProvider
     required SendDirectMessageFamily super.from,
     required (TrackId, String) super.argument,
   }) : super(
-         retry: null,
+         retry: noRetry,
          name: r'sendDirectMessageProvider',
          isAutoDispose: true,
          dependencies: null,
@@ -484,13 +484,13 @@ final class SendDirectMessageProvider
   }
 }
 
-String _$sendDirectMessageHash() => r'87a8161b7dd20c3a08a62243394826b38af2a261';
+String _$sendDirectMessageHash() => r'69bcda61606b0abe6f1a9ac7a8c251aabb17cf41';
 
 final class SendDirectMessageFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<Message>, (TrackId, String)> {
   SendDirectMessageFamily._()
     : super(
-        retry: null,
+        retry: noRetry,
         name: r'sendDirectMessageProvider',
         dependencies: null,
         $allTransitiveDependencies: null,

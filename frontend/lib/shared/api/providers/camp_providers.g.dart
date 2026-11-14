@@ -379,7 +379,7 @@ final class StartCampProvider
     required StartCampFamily super.from,
     required CampId super.argument,
   }) : super(
-         retry: null,
+         retry: noRetry,
          name: r'startCampProvider',
          isAutoDispose: true,
          dependencies: null,
@@ -418,13 +418,13 @@ final class StartCampProvider
   }
 }
 
-String _$startCampHash() => r'b5651bfc834a8af6f91768cc8258cbabe592af5c';
+String _$startCampHash() => r'6e5b6843c36a43b38297ea489b293fd071392299';
 
 final class StartCampFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<Camp>, CampId> {
   StartCampFamily._()
     : super(
-        retry: null,
+        retry: noRetry,
         name: r'startCampProvider',
         dependencies: null,
         $allTransitiveDependencies: null,

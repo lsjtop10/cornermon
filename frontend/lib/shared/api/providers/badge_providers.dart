@@ -2,6 +2,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:cornermon_api_gen/cornermon_api_gen.dart';
 import '../domain_aliases.dart';
 import 'camp_providers.dart';
+import 'no_retry.dart';
 
 part 'badge_providers.g.dart';
 
@@ -12,7 +13,7 @@ Future<List<Badge>> badgeList(Ref ref) async {
   return response.data?.toList() ?? [];
 }
 
-@riverpod
+@Riverpod(retry: noRetry)
 Future<List<Badge>> bulkGenerateBadges(Ref ref, int count) async {
   final apiInstance = ref.watch(campApiProvider);
   final response = await apiInstance.badgesBulkGeneratePost(
@@ -28,7 +29,7 @@ Future<List<Badge>> exportUnassignedBadges(Ref ref) async {
   return response.data?.badges?.toList() ?? [];
 }
 
-@riverpod
+@Riverpod(retry: noRetry)
 Future<Badge> registerBadge(
   Ref ref,
   String badgeId,
@@ -51,7 +52,7 @@ Future<Badge> registerBadge(
   return data;
 }
 
-@riverpod
+@Riverpod(retry: noRetry)
 Future<Group> scanRegisterBadge(
   Ref ref,
   String campId,

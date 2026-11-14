@@ -76,7 +76,7 @@ Future<Corner> createCorner(
   return data;
 }
 
-@riverpod
+@Riverpod(retry: noRetry)
 Future<List<Corner>> bulkUpdateCorners(
   Ref ref,
   List<CornerUpdateInput> updates,
@@ -140,7 +140,7 @@ Future<List<TrackPin>> createTracksForCorner(
   return response.data?.toList() ?? [];
 }
 
-@riverpod
+@Riverpod(retry: noRetry)
 Future<void> bulkDeleteTracks(Ref ref, List<TrackId> trackIds) async {
   final apiInstance = ref.watch(campApiProvider);
   await apiInstance.tracksBulkDeleteDelete(
@@ -150,7 +150,7 @@ Future<void> bulkDeleteTracks(Ref ref, List<TrackId> trackIds) async {
   );
 }
 
-@riverpod
+@Riverpod(retry: noRetry)
 Future<TrackPin> replaceTrack(Ref ref, TrackId id, CornerId newCornerId) async {
   final apiInstance = ref.watch(campApiProvider);
   final response = await apiInstance.tracksIdReplacePut(
@@ -164,7 +164,7 @@ Future<TrackPin> replaceTrack(Ref ref, TrackId id, CornerId newCornerId) async {
   return data;
 }
 
-@riverpod
+@Riverpod(retry: noRetry)
 Future<TrackPin> regeneratePin(Ref ref, TrackId id) async {
   final apiInstance = ref.watch(campApiProvider);
   final response = await apiInstance.tracksIdRegeneratePinPost(id: id.value);

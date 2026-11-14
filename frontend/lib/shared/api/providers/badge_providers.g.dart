@@ -63,7 +63,7 @@ final class BulkGenerateBadgesProvider
     required BulkGenerateBadgesFamily super.from,
     required int super.argument,
   }) : super(
-         retry: null,
+         retry: noRetry,
          name: r'bulkGenerateBadgesProvider',
          isAutoDispose: true,
          dependencies: null,
@@ -104,13 +104,13 @@ final class BulkGenerateBadgesProvider
 }
 
 String _$bulkGenerateBadgesHash() =>
-    r'fd3d92b2e7cab41d7e81e32a8b751fa0e2732d49';
+    r'8129723ea5ff33f384bfdc2e5b73a4459c2f0512';
 
 final class BulkGenerateBadgesFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<List<Badge>>, int> {
   BulkGenerateBadgesFamily._()
     : super(
-        retry: null,
+        retry: noRetry,
         name: r'bulkGenerateBadgesProvider',
         dependencies: null,
         $allTransitiveDependencies: null,
@@ -174,7 +174,7 @@ final class RegisterBadgeProvider
     required RegisterBadgeFamily super.from,
     required (String, String, String) super.argument,
   }) : super(
-         retry: null,
+         retry: noRetry,
          name: r'registerBadgeProvider',
          isAutoDispose: true,
          dependencies: null,
@@ -213,13 +213,13 @@ final class RegisterBadgeProvider
   }
 }
 
-String _$registerBadgeHash() => r'd979c5536e3eb380c6deab760206a55b394811e1';
+String _$registerBadgeHash() => r'2c1d1900f813bdf765a3cecf382707c600dce859';
 
 final class RegisterBadgeFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<Badge>, (String, String, String)> {
   RegisterBadgeFamily._()
     : super(
-        retry: null,
+        retry: noRetry,
         name: r'registerBadgeProvider',
         dependencies: null,
         $allTransitiveDependencies: null,
@@ -246,7 +246,7 @@ final class ScanRegisterBadgeProvider
     required ScanRegisterBadgeFamily super.from,
     required (String, String, String) super.argument,
   }) : super(
-         retry: null,
+         retry: noRetry,
          name: r'scanRegisterBadgeProvider',
          isAutoDispose: true,
          dependencies: null,
@@ -285,13 +285,13 @@ final class ScanRegisterBadgeProvider
   }
 }
 
-String _$scanRegisterBadgeHash() => r'f768b431f627c64553ee458446240410e2b9a30c';
+String _$scanRegisterBadgeHash() => r'462d88fc33cafda003126c53862324dac825bd7d';
 
 final class ScanRegisterBadgeFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<Group>, (String, String, String)> {
   ScanRegisterBadgeFamily._()
     : super(
-        retry: null,
+        retry: noRetry,
         name: r'scanRegisterBadgeProvider',
         dependencies: null,
         $allTransitiveDependencies: null,
