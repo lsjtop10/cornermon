@@ -38,13 +38,10 @@ Future<List<TrackDirectSummary>> trackDirectSummaries(
 
   final summaries = await Future.wait(
     tracks.map((t) async {
-      // background: false — 좌측 목록 미리보기 조회일 뿐 스레드를 "열람"한 게 아니므로
-      // 읽음 처리하면 안 된다. 서버에서 true만 읽음 처리한다.
+      // Peek — 좌측 목록 미리보기 조회일 뿐 스레드를 "열람"한 게 아니므로
+      // 읽음 처리하면 안 된다. 읽음 처리는 Thread provider만 한다.
       final messages = await ref.watch(
-        trackMessageListProvider(
-          TrackId(t.id ?? ''),
-          background: false,
-        ).future,
+        trackMessagePeekProvider(TrackId(t.id ?? '')).future,
       );
       final unread = messages.where((m) => m.isFromTrack && m.isRead != true).length;
       return TrackDirectSummary(

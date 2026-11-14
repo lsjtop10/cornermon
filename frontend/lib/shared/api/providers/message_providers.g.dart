@@ -344,10 +344,18 @@ final class BroadcastReceiptsFamily extends $Family
   String toString() => r'broadcastReceiptsProvider';
 }
 
-@ProviderFor(trackMessageList)
-final trackMessageListProvider = TrackMessageListFamily._();
+/// 읽음 처리 없는 조회(`background=false`). 알림음 판단, 목록 미리보기처럼
+/// 스레드를 "열람"한 게 아닌 곳에서 쓴다. 여기서 읽음 처리하면 도착 즉시 미읽음이 0이 되어
+/// 헤더 배지가 뜨지 않는다.
 
-final class TrackMessageListProvider
+@ProviderFor(trackMessagePeek)
+final trackMessagePeekProvider = TrackMessagePeekFamily._();
+
+/// 읽음 처리 없는 조회(`background=false`). 알림음 판단, 목록 미리보기처럼
+/// 스레드를 "열람"한 게 아닌 곳에서 쓴다. 여기서 읽음 처리하면 도착 즉시 미읽음이 0이 되어
+/// 헤더 배지가 뜨지 않는다.
+
+final class TrackMessagePeekProvider
     extends
         $FunctionalProvider<
           AsyncValue<List<Message>>,
@@ -355,25 +363,28 @@ final class TrackMessageListProvider
           FutureOr<List<Message>>
         >
     with $FutureModifier<List<Message>>, $FutureProvider<List<Message>> {
-  TrackMessageListProvider._({
-    required TrackMessageListFamily super.from,
-    required (TrackId, {bool background, DateTime? after}) super.argument,
+  /// 읽음 처리 없는 조회(`background=false`). 알림음 판단, 목록 미리보기처럼
+  /// 스레드를 "열람"한 게 아닌 곳에서 쓴다. 여기서 읽음 처리하면 도착 즉시 미읽음이 0이 되어
+  /// 헤더 배지가 뜨지 않는다.
+  TrackMessagePeekProvider._({
+    required TrackMessagePeekFamily super.from,
+    required TrackId super.argument,
   }) : super(
          retry: null,
-         name: r'trackMessageListProvider',
+         name: r'trackMessagePeekProvider',
          isAutoDispose: true,
          dependencies: null,
          $allTransitiveDependencies: null,
        );
 
   @override
-  String debugGetCreateSourceHash() => _$trackMessageListHash();
+  String debugGetCreateSourceHash() => _$trackMessagePeekHash();
 
   @override
   String toString() {
-    return r'trackMessageListProvider'
+    return r'trackMessagePeekProvider'
         ''
-        '$argument';
+        '($argument)';
   }
 
   @$internal
@@ -384,19 +395,13 @@ final class TrackMessageListProvider
 
   @override
   FutureOr<List<Message>> create(Ref ref) {
-    final argument =
-        this.argument as (TrackId, {bool background, DateTime? after});
-    return trackMessageList(
-      ref,
-      argument.$1,
-      background: argument.background,
-      after: argument.after,
-    );
+    final argument = this.argument as TrackId;
+    return trackMessagePeek(ref, argument);
   }
 
   @override
   bool operator ==(Object other) {
-    return other is TrackMessageListProvider && other.argument == argument;
+    return other is TrackMessagePeekProvider && other.argument == argument;
   }
 
   @override
@@ -405,34 +410,122 @@ final class TrackMessageListProvider
   }
 }
 
-String _$trackMessageListHash() => r'a50a67dcd08517c151d153d96b2f2e08fde2d7ca';
+String _$trackMessagePeekHash() => r'56fb98a54ebf0c4cc113d4a81d55a129b6e5e118';
 
-final class TrackMessageListFamily extends $Family
-    with
-        $FunctionalFamilyOverride<
-          FutureOr<List<Message>>,
-          (TrackId, {bool background, DateTime? after})
-        > {
-  TrackMessageListFamily._()
+/// 읽음 처리 없는 조회(`background=false`). 알림음 판단, 목록 미리보기처럼
+/// 스레드를 "열람"한 게 아닌 곳에서 쓴다. 여기서 읽음 처리하면 도착 즉시 미읽음이 0이 되어
+/// 헤더 배지가 뜨지 않는다.
+
+final class TrackMessagePeekFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<List<Message>>, TrackId> {
+  TrackMessagePeekFamily._()
     : super(
         retry: null,
-        name: r'trackMessageListProvider',
+        name: r'trackMessagePeekProvider',
         dependencies: null,
         $allTransitiveDependencies: null,
         isAutoDispose: true,
       );
 
-  TrackMessageListProvider call(
-    TrackId trackId, {
-    bool background = false,
-    DateTime? after,
-  }) => TrackMessageListProvider._(
-    argument: (trackId, background: background, after: after),
-    from: this,
-  );
+  /// 읽음 처리 없는 조회(`background=false`). 알림음 판단, 목록 미리보기처럼
+  /// 스레드를 "열람"한 게 아닌 곳에서 쓴다. 여기서 읽음 처리하면 도착 즉시 미읽음이 0이 되어
+  /// 헤더 배지가 뜨지 않는다.
+
+  TrackMessagePeekProvider call(TrackId trackId) =>
+      TrackMessagePeekProvider._(argument: trackId, from: this);
 
   @override
-  String toString() => r'trackMessageListProvider';
+  String toString() => r'trackMessagePeekProvider';
+}
+
+/// 스레드 열람 조회(`background=true`). 서버에서 상대측 미확인 메시지를 읽음 처리하므로
+/// DM 화면이 실제로 열려 있을 때만 쓴다.
+
+@ProviderFor(trackMessageThread)
+final trackMessageThreadProvider = TrackMessageThreadFamily._();
+
+/// 스레드 열람 조회(`background=true`). 서버에서 상대측 미확인 메시지를 읽음 처리하므로
+/// DM 화면이 실제로 열려 있을 때만 쓴다.
+
+final class TrackMessageThreadProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<Message>>,
+          List<Message>,
+          FutureOr<List<Message>>
+        >
+    with $FutureModifier<List<Message>>, $FutureProvider<List<Message>> {
+  /// 스레드 열람 조회(`background=true`). 서버에서 상대측 미확인 메시지를 읽음 처리하므로
+  /// DM 화면이 실제로 열려 있을 때만 쓴다.
+  TrackMessageThreadProvider._({
+    required TrackMessageThreadFamily super.from,
+    required TrackId super.argument,
+  }) : super(
+         retry: null,
+         name: r'trackMessageThreadProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$trackMessageThreadHash();
+
+  @override
+  String toString() {
+    return r'trackMessageThreadProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<List<Message>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<List<Message>> create(Ref ref) {
+    final argument = this.argument as TrackId;
+    return trackMessageThread(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is TrackMessageThreadProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$trackMessageThreadHash() =>
+    r'cf77d74f7e63a5630d563002d457aa033d2e1600';
+
+/// 스레드 열람 조회(`background=true`). 서버에서 상대측 미확인 메시지를 읽음 처리하므로
+/// DM 화면이 실제로 열려 있을 때만 쓴다.
+
+final class TrackMessageThreadFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<List<Message>>, TrackId> {
+  TrackMessageThreadFamily._()
+    : super(
+        retry: null,
+        name: r'trackMessageThreadProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// 스레드 열람 조회(`background=true`). 서버에서 상대측 미확인 메시지를 읽음 처리하므로
+  /// DM 화면이 실제로 열려 있을 때만 쓴다.
+
+  TrackMessageThreadProvider call(TrackId trackId) =>
+      TrackMessageThreadProvider._(argument: trackId, from: this);
+
+  @override
+  String toString() => r'trackMessageThreadProvider';
 }
 
 @ProviderFor(sendDirectMessage)

@@ -68,8 +68,8 @@ void main() {
           broadcastListBuildCount++;
           return broadcastListResult;
         }),
-        // ChatThreadPane이 실제로 watch하는 것과 동일한 인자(trackId, background: true).
-        trackMessageListProvider(trackId, background: true).overrideWith((ref) async {
+        // ChatThreadPane이 실제로 watch하는 것과 동일한 provider(trackMessageThread).
+        trackMessageThreadProvider(trackId).overrideWith((ref) async {
           threadMessageListBuildCount++;
           return threadMessageListResult;
         }),
@@ -82,9 +82,9 @@ void main() {
         cornerListProvider(campId).overrideWith(
           (ref) async => [Corner((b) => b..id = 'corner-1'..name = '1번')],
         ),
-        // 좌측 목록 미리보기가 실제로 watch하는 인자(background: false) — messages_changed는
-        // family 전체를 무효화하므로 이 인스턴스도 함께 무효화되는지가 검증 대상이다.
-        trackMessageListProvider(trackId, background: false).overrideWith((ref) async {
+        // 좌측 목록 미리보기가 실제로 watch하는 provider(trackMessagePeek) — messages_changed가
+        // 이 provider도 함께 무효화하는지가 검증 대상이다.
+        trackMessagePeekProvider(trackId).overrideWith((ref) async {
           previewMessageListBuildCount++;
           return <Message>[];
         }),
@@ -97,15 +97,15 @@ void main() {
     // 재빌드(카운터 증가)를 관찰할 수 있다 — 리스너가 없으면 즉시 dispose되어 버린다.
     container.listen(adminEventCoordinatorProvider(campId), (_, _) {});
     container.listen(broadcastMessageListProvider(campId), (_, _) {});
-    container.listen(trackMessageListProvider(trackId, background: true), (_, _) {});
+    container.listen(trackMessageThreadProvider(trackId), (_, _) {});
     container.listen(trackDirectSummariesProvider(campId), (_, _) {});
   });
 
   test(
     'ShouldInvalidateOpenThreadMessageListWhenMessagesChangedArrives',
     () async {
-      // arrange — ChatThreadPane과 동일하게 open thread(background:true)를 먼저 한 번 읽는다.
-      await container.read(trackMessageListProvider(trackId, background: true).future);
+      // arrange — ChatThreadPane과 동일하게 open thread(trackMessageThread)를 먼저 한 번 읽는다.
+      await container.read(trackMessageThreadProvider(trackId).future);
       final baseline = threadMessageListBuildCount;
       final event = SseEvent(
         (b) => b
@@ -116,7 +116,7 @@ void main() {
 
       // act
       await pushAndSettle(event);
-      await container.read(trackMessageListProvider(trackId, background: true).future);
+      await container.read(trackMessageThreadProvider(trackId).future);
 
       // assert
       expect(threadMessageListBuildCount, greaterThan(baseline));

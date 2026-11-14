@@ -99,10 +99,7 @@ void main() {
         campId: campId,
         tracks: [_track('t1', 1, 'c1')],
         extraOverrides: [
-          trackMessageListProvider(
-            TrackId('t1'),
-            background: false,
-          ).overrideWith((ref) async => []),
+          trackMessagePeekProvider(TrackId('t1')).overrideWith((ref) async => []),
         ],
       );
 
@@ -119,14 +116,8 @@ void main() {
           campId: campId,
           tracks: [_track('t1', 1, 'c1')],
           extraOverrides: [
-            trackMessageListProvider(
-              TrackId('t1'),
-              background: false,
-            ).overrideWith((ref) async => []),
-            trackMessageListProvider(
-              TrackId('t1'),
-              background: true,
-            ).overrideWith((ref) async => []),
+            trackMessagePeekProvider(TrackId('t1')).overrideWith((ref) async => []),
+            trackMessageThreadProvider(TrackId('t1')).overrideWith((ref) async => []),
           ],
         );
 
@@ -149,14 +140,8 @@ void main() {
           campId: campId,
           tracks: [_track('t1', 1, 'c1')],
           extraOverrides: [
-            trackMessageListProvider(
-              TrackId('t1'),
-              background: false,
-            ).overrideWith((ref) async => []),
-            trackMessageListProvider(
-              TrackId('t1'),
-              background: true,
-            ).overrideWith((ref) async {
+            trackMessagePeekProvider(TrackId('t1')).overrideWith((ref) async => []),
+            trackMessageThreadProvider(TrackId('t1')).overrideWith((ref) async {
               markReadRequested = true;
               return [];
             }),
@@ -182,10 +167,7 @@ void main() {
           campId: campId,
           tracks: [_track('t1', 1, 'c1')],
           extraOverrides: [
-            trackMessageListProvider(
-              TrackId('t1'),
-              background: false,
-            ).overrideWith((ref) async {
+            trackMessagePeekProvider(TrackId('t1')).overrideWith((ref) async {
               messageRequestCount++;
               if (messageRequestCount == 1) {
                 return [
@@ -207,7 +189,7 @@ void main() {
 
         // act — SSE가 무효화하는 동일한 preview provider를 재조회한다.
         container.invalidate(
-          trackMessageListProvider(TrackId('t1'), background: false),
+          trackMessagePeekProvider(TrackId('t1')),
         );
         await tester.pump();
 
@@ -230,10 +212,7 @@ void main() {
           campId: campId,
           tracks: [_track('t1', 1, 'c1')],
           extraOverrides: [
-            trackMessageListProvider(
-              TrackId('t1'),
-              background: false,
-            ).overrideWith(
+            trackMessagePeekProvider(TrackId('t1')).overrideWith(
               (ref) async => [
                 _msg(
                   MessageResponseSenderRoleEnum.TRACK,
@@ -242,10 +221,7 @@ void main() {
                 ),
               ],
             ),
-            trackMessageListProvider(
-              TrackId('t1'),
-              background: true,
-            ).overrideWith(
+            trackMessageThreadProvider(TrackId('t1')).overrideWith(
               (ref) async => [
                 _msg(
                   MessageResponseSenderRoleEnum.TRACK,
@@ -277,14 +253,8 @@ void main() {
             _track('t1', 1, 'c1', status: TrackResponseStatusEnum.DELETED),
           ],
           extraOverrides: [
-            trackMessageListProvider(
-              TrackId('t1'),
-              background: false,
-            ).overrideWith((ref) async => []),
-            trackMessageListProvider(
-              TrackId('t1'),
-              background: true,
-            ).overrideWith((ref) async => []),
+            trackMessagePeekProvider(TrackId('t1')).overrideWith((ref) async => []),
+            trackMessageThreadProvider(TrackId('t1')).overrideWith((ref) async => []),
           ],
         );
 
@@ -314,14 +284,8 @@ void main() {
         campId: campId,
         tracks: [_track(trackId.value, 1, 'c1')],
         extraOverrides: [
-          trackMessageListProvider(
-            trackId,
-            background: false,
-          ).overrideWith((ref) async => messages),
-          trackMessageListProvider(
-            trackId,
-            background: true,
-          ).overrideWith((ref) async => messages),
+          trackMessagePeekProvider(trackId).overrideWith((ref) async => messages),
+          trackMessageThreadProvider(trackId).overrideWith((ref) async => messages),
           sendDirectMessageProvider(
             trackId,
             '확인했습니다',
@@ -369,14 +333,8 @@ void main() {
           campId: campId,
           tracks: [_track('t1', 1, 'c1')],
           extraOverrides: [
-            trackMessageListProvider(
-              TrackId('t1'),
-              background: false,
-            ).overrideWith((ref) async => []),
-            trackMessageListProvider(
-              TrackId('t1'),
-              background: true,
-            ).overrideWith((ref) async => []),
+            trackMessagePeekProvider(TrackId('t1')).overrideWith((ref) async => []),
+            trackMessageThreadProvider(TrackId('t1')).overrideWith((ref) async => []),
           ],
         );
 

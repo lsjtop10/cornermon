@@ -107,10 +107,7 @@ void main() {
           trackSessionProvider.overrideWith(
             () => _FakeTrackSession(buildAuthenticatedState()),
           ),
-          trackMessageListProvider(
-            trackId,
-            background: true,
-          ).overrideWith((ref) async => <Message>[]),
+          trackMessageThreadProvider(trackId).overrideWith((ref) async => <Message>[]),
         ]),
       ),
     );
@@ -133,10 +130,7 @@ void main() {
           trackSessionProvider.overrideWith(
             () => _FakeTrackSession(buildAuthenticatedState()),
           ),
-          trackMessageListProvider(
-            trackId,
-            background: true,
-          ).overrideWith((ref) async => <Message>[]),
+          trackMessageThreadProvider(trackId).overrideWith((ref) async => <Message>[]),
           trackDirectActionsProvider(trackId).overrideWith(() => fakeActions),
         ]),
       ),
@@ -170,10 +164,7 @@ void main() {
           trackSessionProvider.overrideWith(
             () => _FakeTrackSession(buildAuthenticatedState()),
           ),
-          trackMessageListProvider(
-            trackId,
-            background: true,
-          ).overrideWith((ref) async => messages),
+          trackMessageThreadProvider(trackId).overrideWith((ref) async => messages),
           trackDirectActionsProvider(trackId).overrideWith(() => fakeActions),
         ]),
       ),
@@ -211,10 +202,7 @@ void main() {
             trackSessionProvider.overrideWith(
               () => _FakeTrackSession(buildAuthenticatedState()),
             ),
-            trackMessageListProvider(
-              trackId,
-              background: true,
-            ).overrideWith((ref) => ref.watch(_incomingMessagesProvider)),
+            trackMessageThreadProvider(trackId).overrideWith((ref) => ref.watch(_incomingMessagesProvider)),
           ]),
         ),
       );
@@ -244,7 +232,7 @@ void main() {
       // assert
       expect(
         container
-            .read(trackMessageListProvider(trackId, background: true))
+            .read(trackMessageThreadProvider(trackId))
             .requireValue
             .last
             .content,
@@ -268,10 +256,7 @@ void main() {
           trackSessionProvider.overrideWith(
             () => _FakeTrackSession(buildAuthenticatedState()),
           ),
-          trackMessageListProvider(
-            trackId,
-            background: true,
-          ).overrideWith((ref) async => <Message>[]),
+          trackMessageThreadProvider(trackId).overrideWith((ref) async => <Message>[]),
           trackDirectActionsProvider(trackId).overrideWith(() => fakeActions),
         ]),
       ),
@@ -311,10 +296,7 @@ void main() {
           trackSessionProvider.overrideWith(
             () => _FakeTrackSession(buildAuthenticatedState()),
           ),
-          trackMessageListProvider(
-            trackId,
-            background: true,
-          ).overrideWith((ref) async => [newer, older]),
+          trackMessageThreadProvider(trackId).overrideWith((ref) async => [newer, older]),
         ]),
       ),
     );
@@ -338,10 +320,7 @@ void main() {
           trackSessionProvider.overrideWith(
             () => _FakeTrackSession(buildAuthenticatedState()),
           ),
-          trackMessageListProvider(
-            trackId,
-            background: true,
-          ).overrideWith((ref) async => <Message>[]),
+          trackMessageThreadProvider(trackId).overrideWith((ref) async => <Message>[]),
           trackDirectActionsProvider(trackId).overrideWith(() => fakeActions),
         ]),
       ),

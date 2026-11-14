@@ -90,14 +90,14 @@ class AdminEventCoordinator extends _$AdminEventCoordinator {
             );
           } else if (scope?.kind == SseScopeKind.track && scope?.trackId != null) {
             final trackId = TrackId(scope!.trackId!);
-            // 열린 스레드(background: true, ChatThreadPane)와 목록 미리보기
-            // (background: false, trackDirectSummariesProvider)는 서로 다른 family
-            // 인스턴스라 둘 다 무효화해야 한다.
-            ref.invalidate(trackMessageListProvider(trackId, background: true));
-            ref.invalidate(trackMessageListProvider(trackId, background: false));
+            // 열린 스레드(trackMessageThread, ChatThreadPane)와 목록 미리보기
+            // (trackMessagePeek, trackDirectSummariesProvider)는 서로 다른 provider라
+            // 둘 다 무효화해야 한다.
+            ref.invalidate(trackMessageThreadProvider(trackId));
+            ref.invalidate(trackMessagePeekProvider(trackId));
             unawaited(
               _notifyIfFromTrack(
-                ref.read(trackMessageListProvider(trackId, background: true).future),
+                ref.read(trackMessageThreadProvider(trackId).future),
               ),
             );
           }
@@ -153,7 +153,8 @@ class AdminEventCoordinator extends _$AdminEventCoordinator {
     ref.invalidate(campDetailProvider(campId));
     ref.invalidate(selectedCampProvider);
     ref.invalidate(broadcastMessageListProvider(campId));
-    ref.invalidate(trackMessageListProvider);
+    ref.invalidate(trackMessageThreadProvider);
+    ref.invalidate(trackMessagePeekProvider);
     ref.invalidate(adminSessionListProvider);
     ref.invalidate(deviceRegistrationListProvider(campId));
     ref.invalidate(lockedDeviceListProvider(campId));

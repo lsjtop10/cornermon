@@ -72,7 +72,7 @@ class _TrackDirectScreenState extends ConsumerState<TrackDirectScreen> {
     }
     final trackId = TrackId(sessionState.track.id!);
 
-    ref.listen(trackMessageListProvider(trackId, background: true), (_, next) {
+    ref.listen(trackMessageThreadProvider(trackId), (_, next) {
       if (next.hasValue) {
         ref.invalidate(unreadDirectMessageCountProvider(trackId));
       }
@@ -83,7 +83,7 @@ class _TrackDirectScreenState extends ConsumerState<TrackDirectScreen> {
       }
     });
     final messagesAsync = ref.watch(
-      trackMessageListProvider(trackId, background: true),
+      trackMessageThreadProvider(trackId),
     );
 
     return Scaffold(
@@ -298,7 +298,7 @@ Future<void> _send(
     // 화면의 ref로 invalidate한다 — action notifier는 위젯이 watch하지 않는 autoDispose라
     // 전송 직후 폐기되어 그 안에서 invalidate하면 유실될 수 있다.
     if (!context.mounted) return;
-    ref.invalidate(trackMessageListProvider(trackId, background: true));
+    ref.invalidate(trackMessageThreadProvider(trackId));
   } catch (_) {
     if (!context.mounted) return;
     ScaffoldMessenger.of(
